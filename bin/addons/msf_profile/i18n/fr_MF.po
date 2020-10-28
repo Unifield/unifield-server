@@ -3482,7 +3482,7 @@ msgstr "Comparaison"
 #: view:financing.contract.account.quadruplet:0
 #: view:financing.contract.contract:0
 msgid "Account/Destination/Funding Pool/Cost Centre"
-msgstr "Account/Destination/Funding Pool/Cost Centre"
+msgstr "Compte/Destination/Funding Pool/Centre de Coût"
 
 #. module: sync_client
 #: field:sync.monitor,data_push_send:0
@@ -8991,7 +8991,7 @@ msgstr "Transitions Sortantes"
 #. module: financing_contract
 #: view:financing.contract.contract:0
 msgid "Remove all couples"
-msgstr "Remove all couples"
+msgstr "Supprimer toutes les paires"
 
 #. modules: purchase, tender_flow, msf_outgoing, stock
 #: view:stock.picking:0
@@ -16049,7 +16049,7 @@ msgstr "Soft-closed date:"
 #. module: financing_contract
 #: view:financing.contract.contract:0
 msgid "Remove all quads"
-msgstr "Remove all quads"
+msgstr "Supprimer tous les quadruplets"
 
 #. modules: tender_flow, process, account_hq_entries, account_override, procurement_cycle, return_claim, finance, sync_client, account_mcdb, procurement_request, product_asset, board, stock_override, msf_button_access_rights, analytic_distribution, msf_homere_interface, hr, consumption_calculation, register_accounting, kit, base, procurement_report, threshold_value, purchase, account, msf_outgoing, resource, stock_move_tracking, msf_partner, procurement_auto, msf_field_access_rights, sale, transport_mgmt, procurement, sourcing, msf_audittrail, stock
 #: view:account.account:0
@@ -16457,8 +16457,14 @@ msgstr "\n"
 
 #. module: analytic_distribution
 #: view:account.analytic.account:0
-msgid "Remove all"
-msgstr "Tout supprimer"
+msgid "Remove all accounts/destinations"
+msgstr "Supprimer tous les comptes/destinations"
+
+#. modules: analytic_distribution, financing_contract
+#: view:account.analytic.account:0
+#: view:financing.contract.contract:0
+msgid "Remove all accounts"
+msgstr "Supprimer tous les comptes"
 
 #. module: vertical_integration
 #: code:addons/vertical_integration/report/hq_report_oca.py:176
@@ -29058,8 +29064,9 @@ msgstr "procurement.request.sourcing.document"
 msgid "This view can be used by accountants in order to quickly record entries in OpenERP. If you want to record a supplier invoice, start by recording the line of the expense account. OpenERP will propose to you automatically the Tax related to this account and the counterpart \"Account Payable\"."
 msgstr "Cette vue peut être utilisée par des comptables afin d'enregistrer rapidement des écritures comptables dans OpenERP. Si vous voulez enregistrer une facture fournisseur, commencez par enregistrer la ligne du compte de charge. OpenERP vous proposera automatiquement la taxe afférente à ce compte et la contrepartie \"Compte fournisseur\"."
 
-#. module: financing_contract
+#. modules: financing_contract, analytic_distribution
 #: field:financing.contract.format.line,account_destination_ids:0
+#: view:account.analytic.account:0
 msgid "Accounts/Destinations"
 msgstr "Comptes/Destinations"
 
@@ -53835,8 +53842,8 @@ msgstr "Statut validé de la commande de terrain"
 
 #. module: financing_contract
 #: field:financing.contract.format.line,quadruplet_update:0
-msgid "Internal Use Only"
-msgstr "Internal Use Only"
+msgid "Internal Use Only (deprecated - kept to manage old sync update)"
+msgstr "Usage Interne Uniquement (déprécié - conservé pour gérer les anciennes mises à jour via synch.)"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -60850,6 +60857,61 @@ msgstr "Transfer Interne"
 msgid "G/L Account"
 msgstr "Compte Grand Livre"
 
+#. modules: analytic_distribution, account, analytic_override, financing_contract
+#: view:account.analytic.account:0
+#: view:account.account:0
+#: field:account.analytic.account,fp_account_ids:0
+#: view:financing.contract.contract:0
+#: field:financing.contract.format.line,reporting_account_ids:0
+msgid "G/L Accounts"
+msgstr "Comptes Grand Livre"
+
+#. module: analytic_distribution
+#: report:funding.pool:0
+msgid "G/L Accounts:"
+msgstr "Comptes Grand Livre :"
+
+#. module: analytic_override
+#: help:account.analytic.account,fp_account_ids:0
+msgid "G/L accounts linked to the Funding Pool"
+msgstr "Comptes Grand Livre liés au Funding Pool"
+
+#. modules: analytic_override, financing_contract
+#: field:account.analytic.account,select_accounts_only:0
+#: field:financing.contract.format.line,reporting_select_accounts_only:0
+msgid "Select Accounts Only"
+msgstr "Sélectionner des Comptes Uniquement"
+
+#. module: account_override
+#: field:account.account,selected_in_fp:0
+msgid "Selected in Funding Pool"
+msgstr "Sélectionné dans le Funding Pool"
+
+#. module: account_override
+#: field:account.account,selectable_in_contract:0
+msgid "Selectable in Contract"
+msgstr "Sélectionnable dans le Contrat"
+
+#. module: account_override
+#: field:account.account,selected_in_contract:0
+msgid "Selected in Contract"
+msgstr "Sélectionné dans le Contrat"
+
+#. module: financing_contract
+#: sql_constraint:financing.contract.account.quadruplet:0
+msgid "not unique!"
+msgstr "non unique !"
+
+#. module: financing_contract
+#: field:financing.contract.format.line,quadruplet_sync_list:0
+msgid "Used to sync quad"
+msgstr "Utilisé pour synch. les quadruplets"
+
+#. module: financing_contract
+#: field:financing.contract.contract,quad_gen_date:0
+msgid "Date of last generation of quad"
+msgstr "Date de la dernière génération des quadruplets"
+
 #. module: purchase_override
 #: view:purchase.order.cancel.wizard:0
 msgid "Please confirm that you want to cancel all non-confirmed lines of this PO"
@@ -62001,10 +62063,10 @@ msgid "The amount without tax."
 msgstr "Le total hors-taxe"
 
 #. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_cash_return.py:800
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:824
 #, python-format
-msgid "All advance lines with account that depends on analytic distribution must have an allocation."
-msgstr "All advance lines with account that depends on analytic distribution must have an allocation."
+msgid "All advance lines with an account depending on an analytic distribution must have a valid allocation."
+msgstr "Toutes les lignes d'avance dont le compte dépend d'une distribution analytique doivent avoir une allocation valide."
 
 #. module: stock
 #: field:product.category,property_stock_account_output_categ:0
@@ -69594,7 +69656,6 @@ msgid "Canceled End"
 msgstr "Canceled End"
 
 #. modules: financing_contract, analytic_distribution
-#: field:financing.contract.account.quadruplet,account_destination_id:0
 #: field:account.analytic.account,tuple_destination_account_ids:0
 #: view:account.destination.link:0
 #: view:account.destination.link:0
@@ -94915,6 +94976,7 @@ msgstr "Facture venant de"
 #: view:account.destination.summary:0
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/account/report/invoice_excel_export.mako:75
+#: field:financing.contract.account.quadruplet,account_destination_id:0
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -105523,7 +105585,20 @@ msgid "Filter not implemented on Destinations."
 msgstr "Filtre non mis en oeuvre sur les Destinations."
 
 #. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:307
+#, python-format
+msgid "Filter not implemented on Funding Pools."
+msgstr "Filtre non mis en oeuvre sur les Funding Pools."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:312
+#, python-format
+msgid "Filter only compatible with a normal-type Cost Center."
+msgstr "Filtre compatible uniquement avec un Centre de Coût de type normal."
+
+#. module: analytic_override
 #: field:account.analytic.account,allow_all_cc:0
+#: field:account.analytic.account,allow_all_cc_with_fp:0
 msgid "Allow all Cost Centers"
 msgstr "Autoriser tous les Centres de Coût"
 
@@ -105539,16 +105614,38 @@ msgid "Destinations compatible with the Cost Center"
 msgstr "Destinations compatibles avec le Centre de Coût"
 
 #. module: analytic_override
+#: field:account.analytic.account,fp_compatible_with_cc_ids:0
+msgid "Funding Pools compatible with the Cost Center"
+msgstr "Funding Pools compatibles avec le Centre de Coût"
+
+#. module: analytic_override
+#: field:account.analytic.account,fp_compatible_with_acc_dest_ids:0
+msgid "Funding Pools compatible with the Account/Destination combination"
+msgstr "Funding Pools compatibles avec la combinaison Compte/Destination"
+
+#. module: analytic_override
 #: code:addons/analytic_override/analytic_account.py:347
 #, python-format
 msgid "Please remove the Cost Centers linked to the Destination before ticking this box."
 msgstr "Veuillez supprimer les Centres de Coût liés à la Destination avant de cocher cette case."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:347
+#, python-format
+msgid "Please remove the Cost Centers linked to the Funding Pool before ticking this box."
+msgstr "Veuillez supprimer les Centres de Coût liés au Funding Pool avant de cocher cette case."
 
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:246
 #, python-format
 msgid "The Cost Center %s is not compatible with the Destination %s."
 msgstr "Le Centre de Coût %s n'est pas compatible avec la Destination %s."
+
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:274
+#, python-format
+msgid "The Cost Center %s is not compatible with the Funding Pool %s."
+msgstr "Le Centre de Coût %s n'est pas compatible avec le Funding Pool %s."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:490
@@ -105898,6 +105995,12 @@ msgstr "Au moins une Ligne d'Ecriture Comptable utilisant le Compte \"%s - %s\" 
 #, python-format
 msgid "Employee %s: the Cost Center %s is not compatible with the Destination %s."
 msgstr "Employé %s : le Centre de Coût %s n'est pas compatible avec la Destination %s."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/hr.py:229
+#, python-format
+msgid "Employee %s: the Cost Center %s is not compatible with the Funding Pool %s."
+msgstr "Employé %s : le Centre de Coût %s n'est pas compatible avec le Funding Pool %s."
 
 #. module: msf_supply_doc_export
 #: report:po.follow.up_rml:0
@@ -110639,6 +110742,11 @@ msgstr "Instances ayant le CC comme CC sélectionné pour PO/FO"
 #: field:account.analytic.account,cc_missions:0
 msgid "Missions where the CC is added to"
 msgstr "Missions dans lesquelles le CC est ajouté"
+
+#. module: analytic_override
+#: field:account.analytic.account,cc_instance_ids:0
+msgid "Instances where the CC is added to"
+msgstr "Instances dans lesquelles le CC est ajouté"
 
 #. module: sync_client
 #: field:sync_client.survey.user,nb_displayed:0

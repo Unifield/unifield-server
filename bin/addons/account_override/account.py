@@ -363,6 +363,83 @@ class account_account(osv.osv):
                     ret[link['account_id'][0]] = True
         return ret
 
+    def _get_selected_in_fp(self, cr, uid, account_ids, name=False, args=False, context=None):
+        """
+        Returns True for the G/L accounts already selected in the Funding Pool:
+        they will be displayed in grey in the list and won't be re-selectable.
+        """
+        if context is None:
+            context = {}
+        if isinstance(account_ids, (int, long)):
+            account_ids = [account_ids]
+        selected = []
+        acc = context.get('accounts_selected')
+        if acc and isinstance(acc, list) and len(acc) == 1 and len(acc[0]) == 3:
+            selected = acc[0][2]
+        res = {}
+        for account_id in account_ids:
+            res[account_id] = account_id in selected
+        return res
+
+    def _get_false(self, cr, uid, ids, *a, **b):
+        """
+        Returns False for all ids
+        """
+        return {}.fromkeys(ids, False)
+
+    def _search_selectable_in_contract(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Returns a domain with the G/L accounts selectable in the contract in context.
+        The accounts must appear either in the G/L accounts or in the Account/Destination combinations linked to the
+        Funding Pools selected in the contract.
+        """
+        if context is None:
+            context = {}
+        contract_obj = self.pool.get('financing.contract.contract')
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        acc_ids = set()
+        if context.get('contract_id'):
+            contract = contract_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids'], context=context)
+            for contract_fp_line in contract.funding_pool_ids:
+                acc_ids.update([t[0] for t in
+                                analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, contract_fp_line.funding_pool_id.id, context=context)])
+        return [('id', 'in', list(acc_ids))]
+
+    def _get_selected_in_contract(self, cr, uid, account_ids, name=False, args=False, context=None):
+        """
+        Returns True for the G/L accounts already selected in the contract in context:
+        they will be displayed in grey in the list and won't be re-selectable.
+
+        As soon as an account has been selected in either G/L accounts only, acc/dest combinaisons, or quadruplets,
+        it is seen as already used.
+        """
+        if context is None:
+            context = {}
+        if isinstance(account_ids, (int, long)):
+            account_ids = [account_ids]
+        res = {}
+        selected = {}
+        current_obj = current_id = False
+        if context.get('contract_id'):
+            current_obj = self.pool.get('financing.contract.contract')
+            current_id = context['contract_id']
+        elif context.get('donor_id'):
+            current_obj = self.pool.get('financing.contract.donor')
+            current_id = context['donor_id']
+        if current_obj and current_id:
+            active_id = context.get('active_id', False)
+            for line in current_obj.browse(cr, uid, current_id, fields_to_fetch=['actual_line_ids'], context=context).actual_line_ids:
+                if not active_id or line.id != active_id:  # skip the current reporting line
+                    for account_destination in line.account_destination_ids:
+                        selected[account_destination.account_id.id] = True
+                    for account_quadruplet in line.account_quadruplet_ids:
+                        selected[account_quadruplet.account_id.id] = True
+                    for account in line.reporting_account_ids:
+                        selected[account.id] = True
+        for account_id in account_ids:
+            res[account_id] = account_id in selected
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'activation_date': fields.date('Active from', required=True),
@@ -400,6 +477,14 @@ class account_account(osv.osv):
         'has_partner_type_empty': fields.boolean('Empty'),  # US-1307 empty
 
         'inactivated_for_dest': fields.function(_get_inactivated_for_dest, method=True, type='boolean', string='Is inactive for destination given in context'),
+
+        'selected_in_fp': fields.function(_get_selected_in_fp, string='Selected in Funding Pool', method=True, store=False, type='boolean'),
+        # G/L acc. which CAN BE selected in the Financing Contract:
+        'selectable_in_contract': fields.function(_get_false, string='Selectable in Contract', method=True, store=False,
+                                                  type='boolean', fnct_search=_search_selectable_in_contract),
+        # G/L acc. which ARE currently selected in the Financing Contract:
+        'selected_in_contract': fields.function(_get_selected_in_contract, string='Selected in Contract', method=True,
+                                                store=False, type='boolean'),
     }
 
     _defaults = {

@@ -74,6 +74,10 @@ class contract(report_sxw.rml_parse):
                             str(quad.funding_pool_id.code),
                             str(quad.cost_center_id.code)]),
                         account_list, account_list_index)
+            elif line.reporting_account_ids:
+                # G/L Accounts Only selected
+                for account in line.reporting_account_ids:
+                    account_list_index = add_account_list_block_item(str(account.code), account_list, account_list_index)
             else:
                 # Case where we have some destination_ids
                 for account_destination in line.account_destination_ids:

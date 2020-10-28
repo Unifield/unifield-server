@@ -22,7 +22,7 @@
 from osv import fields, osv
 from analytic_distribution.destination_tools import many2many_sorted
 from account_override import ACCOUNT_RESTRICTED_AREA
-
+from tools.safe_eval import safe_eval
 
 class financing_contract_format_line(osv.osv):
 
@@ -63,50 +63,45 @@ class financing_contract_format_line(osv.osv):
         return domain
 
     # get list of accounts for duplet format lines
-    def _create_account_couple_domain(self, account_destination_list, general_domain):
-        if len(account_destination_list) == 0:
-            return False # Just make this condition to False
-        elif len(account_destination_list) == 1:
-            temp_domain = ['&',
-                           ('general_account_id', '=', account_destination_list[0].account_id.id),
-                           ('destination_id', '=', account_destination_list[0].destination_id.id)]
-
-            return temp_domain
-        else:
-            firstElement = self._create_account_couple_domain([account_destination_list[0]], general_domain)
-            secondElement = self._create_account_couple_domain(account_destination_list[1:], general_domain)
-
-            if firstElement and secondElement:
-                return ['|'] + firstElement + secondElement
-            elif firstElement:
-                return firstElement
-            return secondElement
+    def _create_account_couple_domain(self, account_destination_list):
+        """
+        Returns the domain corresponding to the list of acc/dest in param.
+        """
+        dom = []
+        if not account_destination_list:
+            return dom
+        first = True
+        for account_dest in account_destination_list:
+            dom += ['&', ('general_account_id', '=', account_dest.account_id.id), ('destination_id', '=', account_dest.destination_id.id)]
+            if not first:
+                dom.insert(0, '|')
+            else:
+                first = False
+        return dom
 
     # get list of accounts for quadruplet format lines
-    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=False):
-        if len(account_quadruplet_list) == 0:
-            return False
-        elif len(account_quadruplet_list) == 1:
-            if account_quadruplet_list[0].funding_pool_id.id in funding_pool_ids:
-                quad_element = account_quadruplet_list[0]
-                return ['&',
+    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=[]):
+        """
+        Returns the domain corresponding to the list of quadruplets in param.
+        """
+        dom = []
+        if not account_quadruplet_list:
+            return dom
+        first = True
+        for quad in account_quadruplet_list:
+            if quad.funding_pool_id.id in funding_pool_ids:
+                dom += ['&',
                         '&',
-                        ('general_account_id', '=', quad_element.account_id.id),
-                        ('destination_id', '=', quad_element.account_destination_id.id),
                         '&',
-                        ('cost_center_id', '=', quad_element.cost_center_id.id),
-                        ('account_id', '=', quad_element.funding_pool_id.id)]
-            else:
-                return False
-        else:
-            firstElement = self._create_account_quadruplet_domain([account_quadruplet_list[0]], funding_pool_ids)
-            secondElement = self._create_account_quadruplet_domain(account_quadruplet_list[1:], funding_pool_ids)
-
-            if firstElement and secondElement:
-                return ['|'] + firstElement + secondElement
-            elif firstElement:
-                return firstElement
-            return secondElement
+                        ('general_account_id', '=', quad.account_id.id),
+                        ('destination_id', '=', quad.account_destination_id.id),
+                        ('cost_center_id', '=', quad.cost_center_id.id),
+                        ('account_id', '=', quad.funding_pool_id.id)]
+                if not first:
+                    dom.insert(0, '|')
+                else:
+                    first = False
+        return dom
 
     def _get_number_of_childs(self, cr, uid, ids, field_name=None, arg=None, context=None):
         # Verifications
@@ -148,6 +143,13 @@ class financing_contract_format_line(osv.osv):
 
     def button_delete_all_couples(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'account_destination_ids':[(6, 0, [])]}, context=context )
+        return True
+
+    def button_remove_all_accounts(self, cr, uid, ids, context=None):
+        """
+        Removes all G/L accounts selected in the Reporting lines wizard
+        """
+        self.write(cr, uid, ids, {'reporting_account_ids': [(6, 0, [])]}, context=context)
         return True
 
     # Get the list of accounts for both duplet and quadruplet
@@ -224,20 +226,23 @@ class financing_contract_format_line(osv.osv):
 
                 # Account + destination domain
                 account_destination_quadruplet_ids = self._get_accounts_couple_and_quadruplets(browse_line)
-                account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'], False)
+                account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'])
                 # get the criteria for accounts of quadruplet mode
                 account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
-
-                if not account_couple_domain and not account_quadruplet_domain:
-                    return [('id', '=', '-1')]
+                # "Accounts Only" Domain
+                account_only_domain = []
+                if browse_line.reporting_select_accounts_only:
+                    account_only_domain = [('general_account_id', 'in', [a.id for a in browse_line.reporting_account_ids])]
 
                 accounts_criteria = ['&', '&', ] + non_corrected_domain
-                if account_couple_domain and account_quadruplet_domain:
-                    accounts_criteria += ['|'] + account_couple_domain + account_quadruplet_domain
-                elif account_couple_domain:
+                if account_couple_domain:
                     accounts_criteria += account_couple_domain
                 elif account_quadruplet_domain:
                     accounts_criteria += account_quadruplet_domain
+                elif account_only_domain:
+                    accounts_criteria += account_only_domain
+                else:
+                    return [('id', '=', -1)]
 
                 return accounts_criteria
             else:
@@ -404,6 +409,67 @@ class financing_contract_format_line(osv.osv):
 
         return res
 
+    def _get_quadruplet_sync_list(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        tmp_quad = {}
+        link_ids = set()
+        aa_ids = set()
+
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['account_quadruplet_ids'], context=context):
+            for quad in line.account_quadruplet_ids:
+                link_ids.add(quad.account_destination_link_id.id)
+                aa_ids.add(quad.funding_pool_id.id)
+                aa_ids.add(quad.cost_center_id.id)
+                tmp_quad.setdefault(line.id, []).append([quad.account_destination_link_id.id, quad.funding_pool_id.id, quad.cost_center_id.id])
+
+        if link_ids:
+            link_sdref = self.pool.get('account.destination.link').get_sd_ref(cr, uid, list(link_ids), context=context)
+        if aa_ids:
+            aa_sdref = self.pool.get('account.analytic.account').get_sd_ref(cr, uid, list(aa_ids), context=context)
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = []
+            for quad_list in tmp_quad.get(_id, []):
+                ret[_id].append([link_sdref.get(quad_list[0]), aa_sdref.get(quad_list[1]), aa_sdref.get(quad_list[2])])
+            ret[_id] = '%s' % ret[_id]
+        return ret
+
+
+    def _set_quadruplet_sync_list(self, cr, uid, id, name, value, arg, context):
+        quad_obj = self.pool.get('financing.contract.account.quadruplet')
+
+        value_list = safe_eval(value)
+        link_ids = set()
+        aa_ids = set()
+
+        cr.execute('delete from financing_contract_actual_account_quadruplets where actual_line_id = %s', (id, ))
+        for data in value_list:
+            link_ids.add(data[0])
+            aa_ids.add(data[1])
+            aa_ids.add(data[2])
+
+        if link_ids:
+            link_sdref = self.pool.get('account.destination.link').find_sd_ref(cr, uid, list(link_ids), context=context)
+        if aa_ids:
+            aa_sdref = self.pool.get('account.analytic.account').find_sd_ref(cr, uid, list(aa_ids), context=context)
+
+        for data in value_list:
+            quad_id = quad_obj.search(cr, uid, [('account_destination_link_id', '=', link_sdref.get(data[0])), ('funding_pool_id', '=', aa_sdref.get(data[1])), ('cost_center_id', '=', aa_sdref.get(data[2]))], context=context)
+            if not quad_id:
+                cr.execute('''INSERT INTO financing_contract_account_quadruplet (account_destination_name, account_id, cost_center_id, disabled, account_destination_link_id, funding_pool_id, account_destination_id) (select
+                    account_destination_name, account_id, cost_center_id, disabled, account_destination_link_id, funding_pool_id, account_destination_id
+                    from
+                        financing_contract_account_quadruplet_view
+                    where
+                        account_destination_link_id = %s and
+                        funding_pool_id = %s and
+                        cost_center_id = %s
+                ) RETURNING id
+                ''', (link_sdref.get(data[0]), aa_sdref.get(data[1]), aa_sdref.get(data[2])))
+                quad_id = cr.fetchone()
+            cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id, account_quadruplet_id) values (%s, %s)', (id, quad_id[0]))
+
+        return True
 
     _columns = {
         'name': fields.char('Name', size=64, required=True),
@@ -411,7 +477,7 @@ class financing_contract_format_line(osv.osv):
         'format_id': fields.many2one('financing.contract.format', 'Format'),
         'is_quadruplet': fields.boolean('Input CC/FP at line level?'),
         'account_destination_ids': many2many_sorted('account.destination.link', 'financing_contract_actual_account_destinations', 'actual_line_id', 'account_destination_id', string='Accounts/Destinations', domain=ACCOUNT_RESTRICTED_AREA['contract_reporting_lines']),
-        'account_quadruplet_ids': many2many_sorted('financing.contract.account.quadruplet', 'financing_contract_actual_account_quadruplets', 'actual_line_id', 'account_quadruplet_id', string='Accounts/Destinations/Funding Pools/Cost Centres'),
+        'account_quadruplet_ids': fields.many2many('financing.contract.account.quadruplet', 'financing_contract_actual_account_quadruplets', 'actual_line_id', 'account_quadruplet_id', string='Accounts/Destinations/Funding Pools/Cost Centres', order_by='account_destination_name asc, funding_pool_id asc, cost_center_id asc, id'),
         'parent_id': fields.many2one('financing.contract.format.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.format.line', 'parent_id', 'Child lines'),
         'line_type': fields.selection([('view','View'),
@@ -431,12 +497,23 @@ class financing_contract_format_line(osv.osv):
 
         'allocated_real': fields.function(_get_actual_amount, method=True, store=False, string="Funded - Actuals", type="float", readonly=True),
         'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly=True),
-        'quadruplet_update': fields.text('Internal Use Only'),
+        'quadruplet_update': fields.text('Internal Use Only (deprecated - kept to manage old sync update)'),
+        'quadruplet_sync_list': fields.function(_get_quadruplet_sync_list, method=True, string='Used to sync quad', type='text', fnct_inv=_set_quadruplet_sync_list),
         'instance_id': fields.many2one('msf.instance','Proprietary Instance'),
+        'reporting_select_accounts_only': fields.boolean(string="Select Accounts Only"),
+        'reporting_account_ids': fields.many2many('account.account', 'contract_format_line_account_rel', 'format_line_id', 'account_id',
+                                                  string='G/L Accounts',
+                                                  domain="[('type', '!=', 'view'),"
+                                                         " ('is_analytic_addicted', '=', True),"
+                                                         " ('active', 'in', ['t', 'f'])]",
+                                                  order_by='code'),
     }
+
+
 
     _defaults = {
         'is_quadruplet': False,
+        'reporting_select_accounts_only': False,
         'line_type': 'actual',
         'overhead_type': 'cost_percentage',
         'parent_id': lambda *a: False
@@ -445,36 +522,46 @@ class financing_contract_format_line(osv.osv):
     _order = 'code asc'
 
     # UF-2311: Calculate the quadruplet value before writing or creating the format line
-    def calculate_quaduplet(self, vals, context):
+    def calculate_quadruplet(self, cr, uid, vals, context):
+        # View Line Type = no items selected
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
             vals['project_amount'] = 0.0
             vals['account_destination_ids'] = [(6, 0, [])]
             vals['account_quadruplet_ids'] = [(6, 0, [])]
-        elif 'is_quadruplet' in vals: # If the vals contains quadruplet value, then check if it is true or false
-            if vals.get('is_quadruplet', False):
-                # delete account/destinations
-                vals['account_destination_ids'] = [(6, 0, [])]
-                if context.get('sync_update_execution'):
-                    quads_list = []
-                    if vals.get('quadruplet_update', False):
-                        quadrup_str = vals['quadruplet_update']
-                        quads_list = map(int, quadrup_str.split(','))
-                    vals['account_quadruplet_ids'] = [(6, 0, quads_list)]
-                else:
-                    temp = vals['account_quadruplet_ids']
-                    if temp[0]:
-                        vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
-            else:
-                vals['account_quadruplet_ids'] = [(6, 0, [])]
-                vals['quadruplet_update'] = '' # delete quadruplets
+            vals['quadruplet_update'] = ''
+            vals['reporting_account_ids'] = [(6, 0, [])]
+            vals['is_quadruplet'] = False
+            vals['reporting_select_accounts_only'] = False
+        # "Input CC/FP at line level" = quadruplets selected
+        elif vals.get('is_quadruplet'):
+            # reset the acc/dest and G/L accounts which might have been selected before ticking the box "Input CC/FP at line level"
+            vals['account_destination_ids'] = [(6, 0, [])]
+            vals['reporting_account_ids'] = [(6, 0, [])]
+            if context.get('sync_update_execution') and vals.get('quadruplet_update', False) and 'quadruplet_sync_list' not in vals:
+                # old sync update received
+                quadrup_str = vals['quadruplet_update']
+                quads_list = map(int, quadrup_str.split(','))
+                vals['account_quadruplet_ids'] = [(6, 0, self.pool.get('financing.contract.account.quadruplet').migrate_old_quad(cr, uid, quads_list))]
+        # "Select Accounts Only" = only G/L accounts selected: reset the acc/dest and quadruplets
+        elif vals.get('reporting_select_accounts_only'):
+            vals['account_destination_ids'] = [(6, 0, [])]
+            vals['account_quadruplet_ids'] = [(6, 0, [])]
+            vals['quadruplet_update'] = ''
+        # No boxes ticked = Accounts/Destinations selected: reset the G/L accounts and quadruplets
+        elif 'is_quadruplet' in vals and 'reporting_select_accounts_only' in vals and \
+                not vals['is_quadruplet'] and not vals['reporting_select_accounts_only']:
+            vals['reporting_account_ids'] = [(6, 0, [])]
+            vals['account_quadruplet_ids'] = [(6, 0, [])]
+            vals['quadruplet_update'] = ''
+
 
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
 
         # calculate the quadruplet combination
-        self.calculate_quaduplet(vals, context)
+        self.calculate_quadruplet(cr, uid, vals, context)
         return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -493,7 +580,7 @@ class financing_contract_format_line(osv.osv):
                 return True
 
         # calculate the quadruplet combination
-        self.calculate_quaduplet(vals, context)
+        self.calculate_quadruplet(cr, uid, vals, context)
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
 
     def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):
@@ -505,6 +592,7 @@ class financing_contract_format_line(osv.osv):
                 'parent_id': parent_id,
                 'line_type': browse_source_line.line_type,
                 'account_quadruplet_ids': [(6, 0, [])],
+                'reporting_account_ids': [(6, 0, [])],
             }
             account_destination_ids = [account_destination.id for account_destination in browse_source_line.account_destination_ids]
             format_line_vals['account_destination_ids'] = [(6, 0, account_destination_ids)]
@@ -512,6 +600,25 @@ class financing_contract_format_line(osv.osv):
             for child_line in browse_source_line.child_ids:
                 self.copy_format_line(cr, uid, child_line, destination_format_id, parent_line_id, context=context)
         return
+
+    def on_change_is_quadruplet(self, cr, uid, ids, is_quadruplet, context=None):
+        """
+        Ticking "Input CC/FP at line level?" automatically unticks "Select Accounts Only"
+        """
+        res = {}
+        if is_quadruplet:
+            res['value'] = {'reporting_select_accounts_only': False, }
+        return res
+
+    def on_change_reporting_select_accounts_only(self, cr, uid, ids, reporting_select_accounts_only, context=None):
+        """
+        Ticking "Select Accounts Only" automatically unticks "Input CC/FP at line level?"
+        """
+        res = {}
+        if reporting_select_accounts_only:
+            res['value'] = {'is_quadruplet': False, }
+        return res
+
 
 financing_contract_format_line()
 

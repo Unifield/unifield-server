@@ -53,6 +53,25 @@ class patch_scripts(osv.osv):
     }
 
     # UF19.0
+    def us_7243_migrate_contract_quad(self, cr, uid, *a, **b):
+        quad_obj = self.pool.get('financing.contract.account.quadruplet')
+        if not cr.table_exists('financing_contract_actual_account_quadruplets_old'):
+            cr.execute("create table financing_contract_actual_account_quadruplets_old as (select * from financing_contract_actual_account_quadruplets)")
+        already_migrated = {}
+        cr.execute('truncate financing_contract_actual_account_quadruplets')
+        cr.execute('select actual_line_id, account_quadruplet_id from financing_contract_actual_account_quadruplets_old')
+        nb_mig = 0
+        for x in cr.fetchall():
+            if x[1] not in already_migrated:
+                new_id = quad_obj.migrate_old_quad(cr, uid, [x[1]])
+                already_migrated[x[1]] = new_id and new_id[0]
+            if already_migrated.get(x[1]):
+                nb_mig += 1
+                cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id, account_quadruplet_id) values (%s, %s)', (x[0], already_migrated[x[1]]))
+
+        self._logger.warn('%d quad migrated' % (nb_mig,))
+        return True
+
     def us_2725_uf_write_date_on_products(self, cr, uid, *a, **b):
         '''
         Set the uf_write_date of products which don't have one to the date of creation
@@ -3910,10 +3929,7 @@ class patch_scripts(osv.osv):
             except Exception as e:
                 err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
                 self._logger.error(err_msg)
-                raise osv.except_osv(
-                    'Error',
-                    err_msg,
-                )
+                raise
 
 patch_scripts()
 
