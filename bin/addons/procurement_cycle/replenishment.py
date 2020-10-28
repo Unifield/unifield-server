@@ -947,16 +947,17 @@ class replenishment_segment(osv.osv):
             sum_line = {}
             for x in cr.fetchall():
                 sum_line[x[0]] = {
-                    'reserved_stock_qty': x[1] or 0,
-                    'pas_no_pipe_no_fmc': x[2] or 0,
-                    'expired_before_rdd': x[3] or 0,
-                    'expired_rdd_oc': x[4] or 0,
-                    'open_loan': x[5] or False,
-                    'open_donation': x[10] or False,
-                    'total_expiry_nocons_qty': x[6] or 0,
-                    'real_stock': x[7] or 0,
-                    'expired_qty_before_eta': x[8] or 0,
-                    'sleeping_qty': x[9] or 0,
+                    'reserved_stock_qty': x[1] or 0, # sum(reserved_stock)
+                    'pas_no_pipe_no_fmc': x[2] or 0, # sum(real_stock - expired_before_rdd)
+                    'expired_before_rdd': x[3] or 0, # sum(expired_before_rdd)
+                    'expired_rdd_oc': x[4] or 0, # sum(expired_between_rdd_oc)
+                    'open_loan': x[5] or False, # bool_or(open_loan)
+                    'open_donation': x[10] or False, # bool_or(open_donation)
+                    'total_expiry_nocons_qty': x[6] or 0, # sum(total_expiry_nocons_qty)
+                    'real_stock': x[7] or 0, # sum(real_stock)
+                    'expired_qty_before_eta': x[8] or 0, # sum(expired_qty_before_eta)
+                    'sleeping_qty': x[9] or 0, # sum(sleeping_qty)
+                    'missing_exp': False,
                 }
                 if review_id:
                     sum_line[x[0]]['pas_no_pipe_no_fmc'] -= sum_line[x[0]]['expired_rdd_oc']
@@ -969,22 +970,32 @@ class replenishment_segment(osv.osv):
             if review_id:
                 rdd = today + relativedelta(months=seg.projected_view, day=1, days=-1)
                 exp_by_month = {}
+
+                tmp_rdd = datetime.strptime(seg.date_next_order_received_modified or seg.date_next_order_received, '%Y-%m-%d')
+                tmp_oc = tmp_rdd + relativedelta(**normalize_td(seg.time_unit_lt, seg.order_coverage))
                 if seg.rule == 'cycle':
                     # sum expired by month
                     cr.execute('''
-                        select line.product_id, exp.month, sum(exp.quantity)
+                        select line.product_id, exp.month, sum(exp.quantity), line.fmc_version, exp.fmc_version, line.id
                             from replenishment_segment_line line
                             inner join replenishment_segment_line_amc amc on amc.segment_line_id = line.id
                             left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
                             where
                                 line.segment_id = %s and
-                                exp.month <= %s and
-                                line.fmc_version = exp.fmc_version
-                            group by line.product_id, exp.month
+                                exp.month <= %s
+                            group by line.product_id, exp.month, line.fmc_version, exp.fmc_version, line.id
                     ''', (seg.id, rdd.strftime('%Y-%m-%d')))
                     for x in cr.fetchall():
                         end_day_month = (datetime.strptime(x[1], '%Y-%m-%d')+relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
-                        if end_day_month < today.strftime('%Y-%m-%d'):
+                        if x[3] != x[4]:
+                            # FMC changed since last exp computation
+                            sum_line[x[5]]['missing_exp'] = True
+                            sum_line[x[5]]['pas_no_pipe_no_fmc'] += x[2]
+                            if end_day_month <= tmp_rdd.strftime('%Y-%m-%d'):
+                                sum_line[x[5]]['expired_before_rdd'] -= x[2]
+                            if end_day_month > tmp_rdd.strftime('%Y-%m-%d') and end_day_month <= tmp_oc.strftime('%Y-%m-%d'):
+                                sum_line[x[5]]['expired_rdd_oc'] -= x[2]
+                        elif end_day_month < today.strftime('%Y-%m-%d'):
                             product_already_exp[x[0]] = product_already_exp.setdefault(x[0], 0) + x[2]
                         else:
                             if x[0] not in exp_by_month:
@@ -1444,14 +1455,20 @@ class replenishment_segment(osv.osv):
                         #'avg_error_hmc_fmc': avg_error_hmc_fmc,
                         'std_dev_hmc_fmc': std_dev_hmc_fmc,
                         'coef_var_hmc_fmc': coef_var_hmc_fmc,
+                        'missing_exp': sum_line.get(line.id, {}).get('missing_exp', False),
                     })
+                    if sum_line.get(line.id, {}).get('missing_exp', False):
+                        wmsg = _('Missing data on expiring products')
+                        warnings.append(wmsg)
+                        warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Missing Exp.'))))
+
                     if review_id and line_data['coef_var_hmc_fmc'] and line_data['coef_var_hmc_fmc'] > line.segment_id.location_config_id.alert_threshold_deviation:
                         wmsg = _('Variation of HMC/FMC')
                         warnings.append(wmsg)
                         warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('HMC/FMC Dev.'))))
 
                     if warnings_html:
-                        line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
+                        line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="16" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
                         line_data['warning'] = "\n".join(warnings)
 
                     if seg.rule == 'cycle' or seg.hidden:
@@ -1873,6 +1890,22 @@ class replenishment_segment(osv.osv):
             'domain': [('segment_id', '=', seg.id)],
         }
 
+    def change_parent_id(self, cr, uid, ids, parent_id, context=None):
+        to_populate = [
+            'location_config_id', 'time_unit_lt', 'total_lt', 'internal_lt', 'external_lt', 'order_preparation_lt',
+            'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'previous_order_rdd', 'date_preparing',
+            'date_next_order_validated', 'date_next_order_received', 'date_next_order_received_modified', 'order_coverage',
+            'description', 'ir_requesting_location'
+        ]
+        values = {}
+        if not parent_id:
+            for f in to_populate:
+                values[f] = False
+        else:
+            parent_data = self.pool.get('replenishment.parent.segment').read(cr, uid, parent_id, to_populate, context=context)
+            for f in to_populate:
+                values[f] = parent_data[f]
+        return {'value': values}
 replenishment_segment()
 
 class replenishment_segment_line(osv.osv):
@@ -2205,7 +2238,7 @@ class replenishment_segment_line(osv.osv):
                 rr_fmc = getattr(line, 'rr_fmc_%d'%x)
                 rr_from = getattr(line, 'rr_fmc_from_%d'%x)
                 rr_to = getattr(line, 'rr_fmc_to_%d'%x)
-                md5_data.append('%s %s %s' % (rr_fmc, rr_from, rr_to))
+                md5_data.append('%s %s %s' % (rr_fmc or False, rr_from, rr_to))
                 if rr_from:
                     rr_from = datetime.strptime(rr_from, '%Y-%m-%d')
                     if rr_from.day != 1:
@@ -2230,7 +2263,13 @@ class replenishment_segment_line(osv.osv):
             if error:
                 raise osv.except_osv(_('Error'), _('Please correct the following FMC values:\n%s') % ("\n".join(error)))
 
-            cr.execute('update replenishment_segment_line set fmc_version=%s where id=%s', (hashlib.md5(''.join(md5_data)).hexdigest(), line.id))
+            fmc_version = hashlib.md5(''.join(md5_data)).hexdigest()
+            cr.execute('update replenishment_segment_line set fmc_version=%s where id=%s and fmc_version!=%s returning id', (fmc_version, line.id, fmc_version))
+            updated = cr.fetchone()
+            if updated and line.segment_id.state == 'complete':
+                instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+                cr.execute('update replenishment_segment_date_generation gen_date set full_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s', (updated[0], ))
+                cr.execute('update replenishment_segment_date_generation gen_date set review_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s and instance_id=%s', (updated[0], instance_id))
             return True
 
     def _uniq_prod_location(self, cr, uid, ids, context=None):
