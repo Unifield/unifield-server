@@ -176,8 +176,8 @@
                 <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" toolbar="1" expand_button="1">
                     <field name="name"/>
                     <field name="usage"/>
-                    <field name="stock_real" />
-                    <field name="stock_virtual" />
+                    <field name="stock_real_uom_rounding" />
+                    <field name="stock_virtual_uom_rounding" />
                 </tree>
             </field>
         </record>
