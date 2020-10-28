@@ -60863,6 +60863,7 @@ msgstr "Compte Grand Livre"
 #: field:account.analytic.account,fp_account_ids:0
 #: view:financing.contract.contract:0
 #: field:financing.contract.format.line,reporting_account_ids:0
+#: view:financing.contract.donor:0
 msgid "G/L Accounts"
 msgstr "Comptes Grand Livre"
 

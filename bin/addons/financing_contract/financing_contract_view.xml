@@ -147,7 +147,7 @@
                                                domain="[('can_be_used','=',True)]">
                                         </field>
                                         <field name="reporting_account_ids" colspan="4" string="G/L Accounts" nolabel="1"
-                                               context="{'from_contract': True, 'search_default_active': 1}"
+                                               context="{'from_grant_management': True, 'search_default_active': 1}"
                                                attrs="{'invisible': ['|',
                                                                      ('line_type', '=', 'view'),
                                                                      ('reporting_select_accounts_only', '=', False)]}"
@@ -337,9 +337,19 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
+                                        <field name="reporting_select_accounts_only" attrs="{'invisible': [('line_type', '=', 'view')]}"
+                                               colspan="2"/>
                                         <field name="account_destination_ids" colspan="4" string="Account/Destination"
                                                context="context" 
-                                               attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                               attrs="{'invisible': ['|',
+                                                                    ('line_type', '=', 'view'),
+                                                                    ('reporting_select_accounts_only', '=', True)]}"/>
+                                        <field name="reporting_account_ids" colspan="4" string="G/L Accounts"
+                                               context="{'from_grant_management': True, 'search_default_active': 1}"
+                                               attrs="{'invisible': ['|',
+                                                                     ('line_type', '=', 'view'),
+                                                                     ('reporting_select_accounts_only', '=', False)]}"
+                                        />
                                     </form>
                                 </field>
                             </page>
