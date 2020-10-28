@@ -20,8 +20,10 @@
 ##############################################################################
 
 import time
+import pooler
 
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 
@@ -54,24 +56,23 @@ class freight_manifest(report_sxw.rml_parse):
         return self.cur
 
     def getTotM3(self):
-        return self.voltot and round(self.voltot, 4) or '0.0'
+        return self.voltot and round(self.voltot, 4) or 0.0
 
     def getTotValue(self):
-        return self.formatLang(self.valtot and self.valtot or 0.)
+        return self.valtot and self.valtot or 0.0
 
     def getTotParce(self):
-        return self.parcetot and self.parcetot or '0.0'
+        return self.parcetot and self.parcetot or 0
 
     def getTotKg(self):
-        return self.formatLang(self.kgtot and self.kgtot or 0.)
+        return self.kgtot and self.kgtot or 0.0
 
     # BKLG_84
-    def get_group_lines(self, rml_line):
-        lines = rml_line[0].pack_family_memory_ids
+    def get_group_lines(self, report_data):
         lines_output = []
         line_obj = {}
 
-        for line in lines:
+        for line in report_data.pack_family_memory_ids:
             if line.not_shipped:
                 continue
             if line.currency_id:
@@ -155,22 +156,35 @@ class freight_manifest(report_sxw.rml_parse):
         return time.strftime('%d/%m/%Y',time.strptime(o.planned_date_of_arrival,'%Y-%m-%d'))
 
     def get_sum_additionnal(self, o):
-        nb = sum([x.nb_parcels or 0 for x in o[0].additional_items_ids])
+        nb = sum([x.nb_parcels or 0 for x in o.additional_items_ids])
         self.parcetot += nb
 
-        weigth = sum([x.weight or 0 for x in o[0].additional_items_ids])
+        weigth = sum([x.weight or 0 for x in o.additional_items_ids])
         self.kgtot += weigth
 
-        volume = sum([x.volume or 0 for x in o[0].additional_items_ids])/1000.0
+        volume = sum([x.volume or 0 for x in o.additional_items_ids])/1000.0
         self.voltot += volume
 
-        value = sum([x.value or 0 for x in o[0].additional_items_ids])
+        value = sum([x.value or 0 for x in o.additional_items_ids])
         self.valtot += value
         return [(nb, weigth, round(volume, 4), round(value, 2), self.cur)]
 
     def get_total(self):
         return [(self.parcetot, self.kgtot, round(self.voltot, 4), round(self.valtot, 2), self.cur)]
 
-report_sxw.report_sxw('report.msf.freight_manifest', 'shipment', 'addons/msf_printed_documents/report/freight_manifest.rml', parser=freight_manifest, header=False,)
+
+report_sxw.report_sxw('report.freight_manifest', 'shipment', 'addons/msf_outgoing/report/freight_manifest.rml', parser=freight_manifest)
+
+
+class freight_manifest_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(freight_manifest_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        a = super(freight_manifest_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+
+freight_manifest_xls('report.freight_manifest_xls', 'shipment', 'msf_outgoing/report/freight_manifest_xls.mako', parser=freight_manifest)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

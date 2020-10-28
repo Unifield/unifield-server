@@ -544,13 +544,15 @@ msgstr "Liste des Utilisateurs qui seront synchronisables. Pour\n"
 msgid "Accounts by type"
 msgstr "Comptes par type"
 
-#. modules: sale, order_types, purchase_override
+#. modules: sale, order_types, purchase_override, msf_outgoing
 #: report:order.type.donation.certificate:0
 #: report:order.type.gift.certificate:0
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:267
+#: report:freight_manifest:0
 #: report:msf.report_reception_in:0
 #: report:msf.sale.order:0
 msgid "Date :"
@@ -4261,7 +4263,9 @@ msgstr "Certificat de Don Gratuit"
 #: report:product.asset:0
 #: field:product.asset,invo_value:0
 #: field:product.manufacturer.attribute,value:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:297
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:338
+#: report:freight_manifest:0
 #: report:lot.stock.overview:0
 #: report:lot.stock.overview_all:0
 #: view:physical.inventory:0
@@ -5825,7 +5829,9 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:return.claim,description_return_claim:0
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:121
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:161
-#: report:msf.freight_manifest:0
+#: report:freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:293
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:333
 #: report:msf.report_reception_in:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:287
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:227
@@ -6837,6 +6843,12 @@ msgstr "Envoi de Marchandises"
 #: field:shipment.additionalitems,dg:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:436
 #: report:msf.freight_manifest:0
+#: field:stock.move.memory.picking,dg_check:0
+#: field:stock.move.memory.ppl,dg_check:0
+#: field:stock.move.memory.returnproducts,dg_check:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:299
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:340
+#: report:freight_manifest:0
 #: field:initial.stock.inventory.line,dg_check:0
 #: field:stock.inventory.line,dg_check:0
 #: field:stock.move,dg_check:0
@@ -8739,10 +8751,15 @@ msgstr "Coût Fonctionnel Total transport inclus"
 msgid "Finland"
 msgstr "Finlande"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "Parcels Missing :"
 msgstr "Colis manquants :"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:388
+msgid "Parcels Missing"
+msgstr "Colis manquants"
 
 #. modules: procurement, base, sale
 #: view:res.request:0
@@ -19606,8 +19623,8 @@ msgstr "Sourcer les lignes"
 msgid "You cannot remove lines on a RfQ created by a tender. Leave the lines with Unit price = 0.00 if you dont't have answer for them."
 msgstr "You cannot remove lines on a RfQ created by a tender. Leave the lines with Unit price = 0.00 if you dont't have answer for them."
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "FREIGHT MANIFEST"
 msgstr "MANIFESTE DE FRET"
 
@@ -19741,9 +19758,11 @@ msgstr "Activité Mensuelle par Document"
 msgid "Number of Layers"
 msgstr "Nombre d'étages"
 
-#. modules: financing_contract, sale, register_accounting
+#. modules: financing_contract, sale, register_accounting, msf_outgoing
 #: report:addons/financing_contract/report/project_expenses_xls.mako:588
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:318
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:358
+#: report:freight_manifest:0
 #: report:cash.inventory:0
 msgid "Sub-total"
 msgstr "Sous-total"
@@ -20055,11 +20074,11 @@ msgstr "Emballages Clients"
 msgid "Burundi"
 msgstr "Burundi"
 
-#. modules: purchase_override, sale, order_types
+#. modules: purchase_override, sale, order_types, msf_outgoing
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
-#: report:msf.freight_manifest:0
+#: report:freight_manifest:0
 #: report:msf.product_list:0
 #: report:msf.report_reception_in:0
 #: report:msf.sale.order:0
@@ -20104,10 +20123,15 @@ msgstr "Vous ne pouvez pas effecter de mouvements de/vers des zones de Transbord
 msgid "Leads & Opportunities"
 msgstr "Indices & Opportunités"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "EDD (Estimated Date of Departure) :"
 msgstr "EDD (Date Prévue de Départ) :"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:209
+msgid "EDD (Estimated Date of Departure)"
+msgstr "EDD (Date Prévue de Départ)"
 
 #. module: financing_contract
 #: view:financing.contract.contract:0
@@ -20518,7 +20542,9 @@ msgstr "The Purchase Order %s does not correspond to the current one (%s)."
 #: field:stock.move.in.processor,np_check:0
 #: field:stock.move.processor,np_check:0
 #: field:stock.picking,is_narcotic:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:300
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:341
+#: report:freight_manifest:0
 #: report:msf.report_reception_in:0
 #: field:initial.stock.inventory.line,np_check:0
 #: field:stock.inventory.line,np_check:0
@@ -21033,6 +21059,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: field:ppl.processor,name:0
 #: field:return.ppl.processor,name:0
 #: code:addons/mission_stock/mission_stock.py:52
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:405
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -24449,7 +24476,8 @@ msgstr "Produits Stoppés"
 #: field:account.direct.invoice.wizard.line,inactive_error:0
 #: field:wizard.account.invoice.line,inactive_error:0
 #: field:claim.event,description_claim_event:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:334
+#: report:freight_manifest:0
 #: report:msf.product_list:0
 #: report:msf.report_reception_in:0
 #: report:msf.sale.order:0
@@ -25000,7 +25028,8 @@ msgstr "Guide de Références"
 #: model:ir.model,name:msf_outgoing.model_memory_additionalitems
 #: model:ir.model,name:msf_outgoing.model_shipment_additionalitems
 #: field:shipment,additional_items_ids:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:330
+#: report:freight_manifest:0
 msgid "Additional Items"
 msgstr "Éléments supplémentaires"
 
@@ -28466,10 +28495,15 @@ msgstr "Contrat à terme"
 msgid "Future"
 msgstr "Futur"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "Parcels damaged :"
 msgstr "Colis endommagées :"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:399
+msgid "Parcels damaged"
+msgstr "Colis endommagées"
 
 #. module: base
 #: view:res.lang:0
@@ -31148,10 +31182,15 @@ msgstr "Compter uniquement les produits avec un niveau de stock différent de 0.
 msgid "The residual amount on a receivable or payable of a journal entry expressed in the company currency."
 msgstr "Le montant restant sur une écriture comptable de charge ou de dépense est exprimée dans la monnaie de la société."
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "Other remarks :"
 msgstr "Autres remarques :"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:401
+msgid "Other remarks"
+msgstr "Autres remarques"
 
 #. module: account_mcdb
 #: field:account.mcdb,display_free2:0
@@ -36964,6 +37003,7 @@ msgstr "Sur Plusieurs Documents"
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
 #: field:replenishment.inventory.review.line.exp,date:0
 #: field:replenishment.inventory.review.line.pas,date:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:407
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -45003,8 +45043,8 @@ msgstr "Si cochée, le nouveau plan de comptes ne contiendra pas ceci par défau
 msgid "Etc/Zulu"
 msgstr "Etc/Zulu"
 
-#. modules: sale, msf_doc_import
-#: report:msf.freight_manifest:0
+#. modules: sale, msf_doc_impor, msf_outgoing
+#: report:freight_manifest:0
 #: field:wizard.import.in.line.simulation.screen,imp_packing_list:0
 msgid "Packing list"
 msgstr "Liste de colisage"
@@ -45590,7 +45630,7 @@ msgstr "Vous devriez sélectionner au moins deux lignes à traiter."
 msgid "Activate the payroll feature"
 msgstr "Activer l'attribut Paie"
 
-#. modules: purchase, product, purchase_allocation_report, service_purchasing, consumption_calculation, sale, sales_followup, purchase_compare_rfq, sourcing, order_types, tender_flow, return_claim, purchase_followup, stock, stock_override
+#. modules: purchase, product, purchase_allocation_report, service_purchasing, consumption_calculation, sale, sales_followup, purchase_compare_rfq, sourcing, order_types, tender_flow, return_claim, purchase_followup, stock, stock_override, msf_outgoing
 #: selection:real.average.consumption,categ:0
 #: selection:stock.move,order_category:0
 #: view:product.product:0
@@ -45616,6 +45656,7 @@ msgstr "Activer l'attribut Paie"
 #: selection:tender,categ:0
 #: selection:stock.reception.wizard,order_category:0
 #: code:addons/stock_override/report/report_stock_move.py:532
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:229
 msgid "Transport"
 msgstr "Transport"
 
@@ -46515,6 +46556,7 @@ msgstr "Les projets suivants ne sont pas fermés sur le terrain :\n"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:409
 msgid "Signature"
 msgstr "Signature"
 
@@ -48000,10 +48042,16 @@ msgstr "Total Général Devise Fonctionnelle"
 msgid "Tax Case Name"
 msgstr "Nom du cas de Taxe"
 
-#. module: sale
-#: model:ir.actions.report.xml,name:sale.report_freight_manifest
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:202
+#: model:ir.actions.report.xml,name:msf_outgoing.report_freight_manifest
 msgid "Freight Manifest"
-msgstr "Manifeste du fret"
+msgstr "Manifeste de Fret"
+
+#. module: msf_outgoing
+#: model:ir.actions.report.xml,name:msf_outgoing.report_freight_manifest_xls
+msgid "Freight Manifest (xls)"
+msgstr "Manifeste de Fret (xls)"
 
 #. module: base
 #: view:res.lang:0
@@ -48133,11 +48181,13 @@ msgstr "Numéro de Compte"
 msgid "Location has children locations"
 msgstr "Zone a des Zones enfants"
 
-#. modules: purchase_override, sale
+#. modules: purchase_override, sale, msf_outgoing
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:271
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:272
+#: report:freight_manifest:0
 #: report:msf.report_reception_in:0
 #: report:msf.sale.order:0
 msgid "Signature :"
@@ -55422,8 +55472,10 @@ msgstr " Tenders should have exactly 6 columns in this order:\n"
 msgid "Workflow Instances"
 msgstr "Instances du Flux d'Information"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:294
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:335
+#: report:freight_manifest:0
 msgid "Parcels"
 msgstr "Colis"
 
@@ -55488,8 +55540,9 @@ msgstr "Veuillez choisir une fréquence pour cette règle !"
 msgid "Date of Order"
 msgstr "Date de Commande"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:390
+#: report:freight_manifest:0
 msgid "Freight Claim Report Made ? Yes / No"
 msgstr "Rapport de réclamation de Frêt fait ? Oui / Non"
 
@@ -62630,10 +62683,15 @@ msgstr "Europe/Copenhagen"
 msgid "EST5EDT"
 msgstr "EST5EDT"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "If so, claim reference :"
 msgstr "Si oui, référence de la réclamation :"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:395
+msgid "If so, claim reference"
+msgstr "Si oui, référence de la réclamation"
 
 #. module: analytic_distribution
 #: field:account.destination.link,destination_id:0
@@ -75707,6 +75765,12 @@ msgstr "Stock existant (zone interne)"
 
 #. modules: msf_outgoing, sale, specific_rules
 #: report:msf.freight_manifest:0
+#: field:stock.move.memory.picking,kc_check:0
+#: field:stock.move.memory.ppl,kc_check:0
+#: field:stock.move.memory.returnproducts,kc_check:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:298
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:339
+#: report:freight_manifest:0
 #: field:initial.stock.inventory.line,kc_check:0
 #: field:stock.inventory.line,kc_check:0
 #: field:stock.move,kc_check:0
@@ -77130,8 +77194,8 @@ msgstr "Ouvrir journal"
 msgid "Closed Article"
 msgstr "Article Fermé"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "Transport :"
 msgstr "Transport :"
 
@@ -77776,10 +77840,15 @@ msgstr "2ème Devise "
 msgid "The category of the new PO is not consistent with the category of the other POs being merged"
 msgstr "La catégorie du nouveau BC ne correspond pas à la catégorie des autres BCs fusionnées"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "EDA (Estimated Date of Arrival) :"
 msgstr "EDA (Date Prévue d'Arrivée) :"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:217
+msgid "EDA (Estimated Date of Arrival)"
+msgstr "EDA (Date Prévue d'Arrivée)"
 
 #. module: res_currency_tables
 #: model:ir.model,name:res_currency_tables.model_wizard_report_rates_table
@@ -80098,8 +80167,9 @@ msgstr "Objet de base"
 msgid "Unallocated PO"
 msgstr "BC non Alloué"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:291
+#: report:freight_manifest:0
 msgid "Your ref"
 msgstr "Votre réf"
 
@@ -81433,6 +81503,7 @@ msgstr "You have to select a closed register!"
 #: code:addons/stock/stock.py:1775
 #: field:stock.move.in.processor,ppl_name:0
 #: report:msf.report_reception_in:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:292
 #, python-format
 msgid "Packing List"
 msgstr "Liste de Colisage"
@@ -83302,8 +83373,10 @@ msgstr "ir.actions.act_window"
 msgid "No line found. Please add some lines before Journal Entry validation!"
 msgstr "Pas de ligne trouvée. Veuillez ajouter quelques lignes avant de valider l'entrée du Journal !"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:295
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:336
+#: report:freight_manifest:0
 msgid "Kgs"
 msgstr "Kgs"
 
@@ -85813,10 +85886,15 @@ msgstr "Asia/Yerevan"
 msgid "Theoretical Items"
 msgstr "Articles théoriques"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:freight_manifest:0
 msgid "TRANSIT via :"
 msgstr "TRANSIT via :"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:225
+msgid "TRANSIT via"
+msgstr "TRANSIT via"
 
 #. module: sync_client
 #: field:ir.model.data,sync_date:0
@@ -88301,9 +88379,11 @@ msgstr "Fusionner Inventaires"
 msgid "User Name"
 msgstr "Nom Utilisateur"
 
-#. modules: msf_outgoing, sale
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:296
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:337
 #: report:certificate.free.gift:0
-#: report:msf.freight_manifest:0
+#: report:freight_manifest:0
 msgid "m³"
 msgstr "m³"
 
@@ -90891,7 +90971,7 @@ msgstr "No destination found. An In-kind Donation account is probably missing fo
 msgid "This is the average delay in days between the confirmation of the customer order and the delivery of the finished products. It's the time you promise to your customers."
 msgstr "Ceci est le délai moyen (en jours) entre la confirmation de la commande terrain et la livraison des produits finis. C'est le délai promis à vos clients."
 
-#. modules: msf_budget, purchase, account, finance, account_mcdb, procurement_request, financing_contract, sale, msf_button_access_rights, register_accounting, msf_doc_import, analytic_distribution, stock
+#. modules: msf_budget, purchase, account, finance, account_mcdb, procurement_request, financing_contract, sale, msf_button_access_rights, register_accounting, msf_doc_import, analytic_distribution, stock, msf_outgoing
 #: report:account.analytic.account.balance:0
 #: report:account.analytic.account.inverted.balance:0
 #: report:account.analytic.account.quantity_cost_ledger:0
@@ -90930,7 +91010,8 @@ msgstr "Ceci est le délai moyen (en jours) entre la confirmation de la commande
 #: field:sale.order,amount_total:0
 #: view:sale.order.line:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:164
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:372
+#: report:freight_manifest:0
 #, python-format
 msgid "Total"
 msgstr "Total"
@@ -96227,7 +96308,8 @@ msgstr "Moment de Décision"
 #. modules: msf_outgoing, msf_printed_documents
 #: field:shipment,carrier_id:0
 #: view:shipment:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:237
+#: report:freight_manifest:0
 msgid "Carrier"
 msgstr "Transporteur"
 
@@ -102119,16 +102201,18 @@ msgstr " Import en cours... \n"
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:192
 #: view:shipment:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:238
+#: report:freight_manifest:0
 #, python-format
 msgid "Consignee"
 msgstr "Destinataire"
 
-#. modules: msf_doc_import, msf_outgoing,msf_printed_documents
+#. modules: msf_doc_import, msf_outgoing, msf_printed_documents
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:191
 #: view:shipment:0
-#: report:msf.freight_manifest:0
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:236
+#: report:freight_manifest:0
 #, python-format
 msgid "Shipper"
 msgstr "Expéditeur"
@@ -104370,8 +104454,9 @@ msgstr "Ajouter une ligne"
 msgid "Line's data summary"
 msgstr "Résumé des données ds lignes"
 
-#. module: sale
-#: report:msf.freight_manifest:0
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:290
+#: report:freight_manifest:0
 msgid "Our ref"
 msgstr "Notre ref"
 
@@ -110199,4 +110284,8 @@ msgstr "Cette action ne doit être exécutée que sur une instance de tests, cel
 msgid "Local Auto Configuration"
 msgstr "Auto Configuration Locale"
 
-
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:385
+#: report:freight_manifest:0
+msgid "Reception remarks"
+msgstr "Remarques de réception"

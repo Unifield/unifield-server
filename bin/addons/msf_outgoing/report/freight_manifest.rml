@@ -523,7 +523,7 @@
 
 
                 <tr>
-                    [[ repeatIn(get_group_lines(objects), 'line') ]]
+                    [[ repeatIn(get_group_lines(objects[0]), 'line') ]]
                     <td>
                         <parawrap style="LinesBlue">[[ line['ref'] ]]</parawrap>
                     </td>
@@ -667,7 +667,7 @@
                 </tr>
             </blockTable>
             <blockTable colWidths="555.0,30.0,42.0,38.0,62.0,45" style="ItemsTitle2">
-               [[ repeatIn(get_sum_additionnal(objects), 'add') ]]
+               [[ repeatIn(get_sum_additionnal(objects[0]), 'add') ]]
                 <tr>
                     <td>
                         <para style="Total" alignment="RIGHT">Sub-total</para>

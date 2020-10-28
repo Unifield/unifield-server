@@ -2,31 +2,51 @@
 <openerp>
     <data>
         <!-- delete packing list original report -->
-    	
-                
+        <report auto="False"
+                id="report_freight_manifest"
+                model="shipment"
+                name="freight_manifest"
+                header="False"
+                rml="addons/msf_outgoing/report/freight_manifest.rml"
+                string="Freight Manifest"
+                sequence="1" />
+
+        <report auto="False"
+                id="report_freight_manifest_xls"
+                model="shipment"
+                name="freight_manifest_xls"
+                header="False"
+                rml="msf_outgoing/report/freight_manifest_xls.mako"
+                report_type="webkit"
+                string="Freight Manifest (xls)"
+                sequence="2" />
+
         <report auto="False" 
                 id="report_invoice"
                 model="shipment"
                 name="invoice"
                 header="False"
                 rml="addons/msf_outgoing/report/invoice.rml"
-                string="Invoice" />
-                
+                string="Invoice"
+                sequence="3" />
+
         <report auto="False" 
                 id="report_certificate_free_gift" 
                 model="shipment" 
                 name="certificate.free.gift"
                 header="False"
                 rml="addons/msf_outgoing/report/certificate_free_gift.rml"
-                string="Free Gift Certificate" />
-                
+                string="Free Gift Certificate"
+                sequence="4" />
+
         <report auto="False" 
                 id="report_packing_list" 
                 model="shipment" 
                 name="packing.list"
                 header="False"
                 rml="addons/msf_outgoing/report/packing_list.rml"
-                string="Packing List" />
+                string="Packing List"
+                sequence="5" />
 
         <report auto="False"
                 id="report_packing_list_xls"
@@ -35,9 +55,10 @@
                 header="False"
                 report_type="webkit"
                 file="msf_outgoing/report/packing_list_xls.mako"
-                string="Packing List (xls)" />
-                
-                
+                string="Packing List (xls)"
+                sequence="6" />
+
+
         <report auto="False" 
                 id="picking_ticket" 
                 model="stock.picking" 
@@ -68,7 +89,7 @@
                 header="False"
                 menu="False"
                 auto="False" />
-                
+
         <report auto="False" 
                 id="labels" 
                 model="stock.picking" 
@@ -78,6 +99,6 @@
                 string="Labels"
                 view_ids="msf_outgoing.view_ppl_tree,msf_outgoing.view_ppl_form"
                 />
-    
+
     </data>
 </openerp>
