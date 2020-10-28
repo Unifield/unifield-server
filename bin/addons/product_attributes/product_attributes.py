@@ -1438,6 +1438,7 @@ class product_attributes(osv.osv):
                     _('Error'),
                     _('Batch and Expiry attributes do not conform')
                 )
+        self.clean_bn_ed(cr, uid, vals, context)
 
         intstat_code = False
         if vals.get('international_status'):
@@ -1562,6 +1563,10 @@ class product_attributes(osv.osv):
             fg['standard_ok']['selection'] = selection
         return fg
 
+    def clean_bn_ed(self, cr, uid, vals, context):
+        if vals and vals.get('batch_management'):
+            vals['perishable'] = True
+
     def clean_standard(self, cr, uid, vals, context):
         if vals and 'standard_ok' in vals:
             if vals['standard_ok'] == 'True':
@@ -1635,6 +1640,7 @@ class product_attributes(osv.osv):
             ids = [ids]
 
         self.clean_standard(cr, uid, vals, context)
+        self.clean_bn_ed(cr, uid, vals, context)
 
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
@@ -2885,6 +2891,15 @@ class product_attributes(osv.osv):
         cr.execute("delete from mission_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
 
         return True
+
+    def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
+        '''
+        batch management is modified -> modification of Expiry Date Mandatory (perishable)
+        '''
+        if batch_management:
+            return {'value': {'perishable': True}}
+        return {}
+
 
 
     _constraints = [
