@@ -363,7 +363,8 @@
             		<field name="item_kit_id" />
             		<field name="item_module" readonly="True" />
             		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" />
-            		<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
+            		<field name="comment" />
+					<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_asset_id" readonly="True" />
             		<field name="item_lot" readonly="True" />
@@ -386,7 +387,8 @@
             		<field name="item_kit_batch" />
             		<field name="item_module" readonly="True" />
             		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" string="Component/Product" />
-            		<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
+            		<field name="comment" />
+					<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_asset_id" readonly="True" />
             		<field name="item_lot" readonly="True" string="Component/BN" />
