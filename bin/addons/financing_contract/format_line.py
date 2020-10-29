@@ -156,12 +156,18 @@ class financing_contract_format_line(osv.osv):
 
     # Get the list of accounts for both duplet and quadruplet
     def _get_accounts_couple_and_quadruplets(self, browse_line):
+        """
+        Returns a dict with a list of browse records for acc/dest, quadruplets and "accounts only"
+        """
         account_destination_result = []
         account_quadruplet_result = []
-
+        account_gl_result = []
         if browse_line.line_type != 'view':
             if browse_line.is_quadruplet:
                 account_quadruplet_result = [account_quadruplet for account_quadruplet in browse_line.account_quadruplet_ids]
+            elif browse_line.reporting_select_accounts_only:
+                # this syntax's goal is to get a list of browse records instead of a browse_record_list
+                account_gl_result = [a for a in browse_line.reporting_account_ids]
             else:
                 account_destination_result = [account_destination for account_destination in browse_line.account_destination_ids]
         else:
@@ -169,8 +175,12 @@ class financing_contract_format_line(osv.osv):
                 temp = self._get_accounts_couple_and_quadruplets(child_line)
                 account_destination_result += temp['account_destination_list']
                 account_quadruplet_result += temp['account_quadruplet_list']
-        return {'account_destination_list': account_destination_result,
-                'account_quadruplet_list': account_quadruplet_result}
+                account_gl_result += temp['account_gl_list']
+        return {
+            'account_destination_list': account_destination_result,
+            'account_quadruplet_list': account_quadruplet_result,
+            'account_gl_list': account_gl_result,
+        }
 
     def _get_general_domain(self, cr, uid, browse_format, domain_type, context=None):
         # Method to get the domain (allocated or project) of a line
@@ -239,8 +249,9 @@ class financing_contract_format_line(osv.osv):
                     acc_domains += [account_quadruplet_domain]
                 # "Accounts Only" Domain
                 account_only_domain = []
-                if browse_line.reporting_select_accounts_only:
-                    account_only_domain = [('general_account_id', 'in', [a.id for a in browse_line.reporting_account_ids])]
+                if account_destination_quadruplet_ids['account_gl_list']:
+                    acc_ids = [a.id for a in account_destination_quadruplet_ids['account_gl_list']]
+                    account_only_domain = [('general_account_id', 'in', acc_ids)]
                 if account_only_domain:
                     acc_domains += [account_only_domain]
 
