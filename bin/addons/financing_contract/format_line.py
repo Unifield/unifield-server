@@ -225,24 +225,32 @@ class financing_contract_format_line(osv.osv):
             if format.eligibility_from_date and format.eligibility_to_date:
                 #### DUY US-385: MOVE THIS TO OUTSIDE OF THE ALL THE LOOPS
                 general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
+                accounts_criteria = ['&', '&', ] + non_corrected_domain
+                acc_domains = []
 
                 # Account + destination domain
                 account_destination_quadruplet_ids = self._get_accounts_couple_and_quadruplets(browse_line)
                 account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'])
+                if account_couple_domain:
+                    acc_domains += [account_couple_domain]
                 # get the criteria for accounts of quadruplet mode
                 account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
+                if account_quadruplet_domain:
+                    acc_domains += [account_quadruplet_domain]
                 # "Accounts Only" Domain
                 account_only_domain = []
                 if browse_line.reporting_select_accounts_only:
                     account_only_domain = [('general_account_id', 'in', [a.id for a in browse_line.reporting_account_ids])]
+                if account_only_domain:
+                    acc_domains += [account_only_domain]
 
-                accounts_criteria = ['&', '&', ] + non_corrected_domain
-                if account_couple_domain:
-                    accounts_criteria += account_couple_domain
-                elif account_quadruplet_domain:
-                    accounts_criteria += account_quadruplet_domain
-                elif account_only_domain:
-                    accounts_criteria += account_only_domain
+                # note: it's possible to have more than one domain in case several lines are grouped into a view
+                if len(acc_domains) == 1:
+                    accounts_criteria += acc_domains[0]
+                elif len(acc_domains) == 2:
+                    accounts_criteria += ['|'] + acc_domains[0] + acc_domains[1]
+                elif len(acc_domains) == 3:
+                    accounts_criteria += ['|'] + ['|'] + acc_domains[0] + acc_domains[1] + acc_domains[2]
                 else:
                     return [('id', '=', -1)]
 
