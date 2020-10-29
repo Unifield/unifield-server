@@ -110306,3 +110306,15 @@ msgstr "Remarques de réception"
 #: view:stock.move:0
 msgid "Ship Closed Date"
 msgstr "Date de Clôture de l'Expédition"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1658
+#, python-format
+msgid "The Order Type must be the same in all POs to be merged."
+msgstr "Le Type de Commande doit être le même dans tous les BdCs pour qu'ils soient fusionnés."
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1663
+#, python-format
+msgid "The Address of the Destination Partner must be the same in all DPOs to be merged."
+msgstr "L'Adresse du Partenaire de Destination doit être le même dans tous les BdCs directs pour qu'ils soient fusionnés."

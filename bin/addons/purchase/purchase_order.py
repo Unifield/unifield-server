@@ -1638,13 +1638,14 @@ class purchase_order(osv.osv):
 
         return order_infos
 
-    def do_merge(self, cr, uid, ids, context=None):
+    def do_merge(self, cr, uid, ids, tmpl_data=None, context=None):
         """
         To merge similar type of purchase orders.
         Orders will only be merged if:
         * Purchase Orders are in draft
         * Purchase Orders belong to the same partner
-        * Purchase Orders are have same stock location, same pricelist
+        * Purchase Orders are to have the same stock location, pricelist and order type
+        * Direct Purchase Orders are to have the same destination partner
         Lines will only be merged if:
         * Order lines are exactly the same except for the quantity and unit
 
@@ -1675,10 +1676,12 @@ class purchase_order(osv.osv):
             list_key.sort()
             return tuple(list_key)
 
-    # compute what the new orders should contain
+        # compute what the new orders should contain
 
         new_orders = {}
         old_po_name = {}
+        first_order_type = False
+        first_dest_partner = None
 
         for porder in [order for order in self.browse(cr, uid, ids, context=context) if order.state == 'draft']:
             # group PO to be merged together
@@ -1686,6 +1689,16 @@ class purchase_order(osv.osv):
             new_order = new_orders.setdefault(order_key, ({}, []))
             new_order[1].append(porder.id)
             order_infos = new_order[0]
+
+            if not first_order_type:
+                first_order_type = porder.order_type
+            elif first_order_type and first_order_type != porder.order_type:
+                raise osv.except_osv(_('Error'), _('The Order Type must be the same in all POs to be merged.'))
+            if porder.order_type == 'direct':
+                if first_dest_partner is None:
+                    first_dest_partner = porder.dest_address_id and porder.dest_address_id.id or False
+                elif first_dest_partner is not None and first_dest_partner != porder.dest_address_id.id:
+                    raise osv.except_osv(_('Error'), _('The Address of the Destination Partner must be the same in all DPOs to be merged.'))
 
             old_po_name[porder.id] = porder.name
             if not order_infos:
@@ -1720,6 +1733,13 @@ class purchase_order(osv.osv):
             # skip merges with only one order
             if len(old_ids) < 2:
                 continue
+
+            # US-6144: Set the dest_partner_id and related_sourcing_id to the one of the template PO
+            if tmpl_data and order_data['order_type'] == 'direct':
+                order_data.update({
+                    'dest_partner_id': tmpl_data.get('dest_partner_id', False),
+                    'related_sourcing_id': tmpl_data.get('related_sourcing_id', False),
+                })
 
             # create the new order
             neworder_id = self.create(cr, uid, order_data)
