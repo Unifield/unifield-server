@@ -92,6 +92,17 @@ class patch_scripts(osv.osv):
         cr.execute('''update replenishment_order_calc calc set parent_segment_id=seg.parent_id, time_unit_lt='d' from replenishment_segment seg where calc.segment_id=seg.id''')
         return True
 
+    def us_2725_uf_write_date_on_products(self, cr, uid, *a, **b):
+        '''
+        Set the uf_write_date of products which don't have one to the date of creation
+        '''
+
+        cr.execute('''
+            UPDATE product_product SET uf_write_date = uf_create_date WHERE uf_write_date is NULL
+        ''')
+        self._logger.warn('The uf_write_date has been modified on %s products' % (cr.rowcount,))
+
+        return True
 
     # UF18.0
     def uf18_0_migrate_acl(self, cr, uid, *a, **b):

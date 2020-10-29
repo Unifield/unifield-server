@@ -432,14 +432,6 @@ class stock_picking(osv.osv):
         # return updated move or False
         return out_move_id
 
-    def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook to update values for stock move if first encountered
-        '''
-        values = kwargs.get('values')
-        assert values is not None, 'missing values'
-        return values
-
     def _get_db_data_dict(self, cr, uid):
         """
         Get some data from data.xml file (like stock locations, Unifield setup...)
@@ -987,10 +979,7 @@ class stock_picking(osv.osv):
                 if diff_qty > 0.00 and move.state != 'cancel':
                     backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line and line.product_id.id))
                     if process_avg_sysint:
-                        # decrement qty of linked INTernal move:
-                        internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
-                        if internal_move:
-                            move_obj.write(cr, uid, internal_move, {'product_qty': diff_qty, 'product_uos_qty': diff_qty}, context=context)
+                        move_obj.decrement_sys_init(cr, uid, count, pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
                 elif not wizard.register_a_claim or not wizard.claim_replacement_picking_expected:
                     for sptc_values in move_sptc_values:
                         # track change that will be created:
@@ -1000,10 +989,9 @@ class stock_picking(osv.osv):
                             'sptc_values': sptc_values.copy(),
                         })
                     if process_avg_sysint:
-                        # cancel linked INTernal move (INT):
-                        internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
-                        if internal_move:
-                            move_obj.action_cancel(cr, uid, internal_move, context=context)
+                        # update SYS-INT:
+                        # min(move.product_qty, count) used if more qty is received
+                        move_obj.decrement_sys_init(cr, uid, min(move.product_qty, count), pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
 
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),

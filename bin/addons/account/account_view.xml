@@ -974,6 +974,36 @@
                 </search>
             </field>
         </record>
+
+        <!-- Tax Search View With Filters. To be used ONLY from the standard tax menu as it allows the selection of inactive taxes -->
+        <record id="view_account_tax_search_with_filters" model="ir.ui.view">
+            <field name="name">account.tax.search.with.filters</field>
+            <field name="model">account.tax</field>
+            <field name="type">search</field>
+            <field name="priority">99</field>
+            <field name="arch" type="xml">
+                <search string="Search Taxes">
+                    <group>
+                        <filter string="Active" name="filter_tax_active"
+                                domain="[('active', '=', True)]" icon="terp-check"/>
+                        <filter string="Inactive" name="filter_tax_inactive"
+                                domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Tax Included in Price" name="filter_tax_included"
+                                domain="[('price_include', '=', True)]" icon="gtk-save-as"/>
+                        <filter string="Tax Not Included in Price" name="filter_tax_not_included"
+                                domain="[('price_include', '=', False)]" icon="terp-dialog-close"/>
+                        <label string=""/>
+                    </group>
+                    <newline/>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
         <record id="view_tax_form" model="ir.ui.view">
             <field name="name">account.tax.form</field>
             <field name="model">account.tax</field>
@@ -1046,7 +1076,11 @@
             <field name="res_model">account.tax</field>
             <field name="view_type">form</field>
             <field name="view_id" ref="view_tax_tree"/>
-            <field name="domain">[('parent_id','=',False)]</field>
+            <field name="search_view_id" ref="view_account_tax_search_with_filters"/>
+            <field name="domain">[('parent_id', '=', False), ('active', 'in', ['t', 'f'])]</field>
+            <field name="context">{'search_default_filter_tax_active': 1,
+                                   'search_default_filter_tax_included': 1,
+                                   'search_default_filter_tax_not_included': 1}</field>
         </record>
         <menuitem action="action_tax_form" id="menu_action_tax_form" parent="next_id_27"/>
 

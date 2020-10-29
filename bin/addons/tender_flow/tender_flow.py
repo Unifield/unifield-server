@@ -1581,23 +1581,28 @@ price. Please set unit price on these lines or cancel them'''),
         """
         if context is None:
             context = {}
+
+        ir_model_obj = self.pool.get('ir.model.data')
         # the search view depends on the type we want to display
         if view_type == 'search':
             if context.get('rfq_ok', False):
                 # rfq search view
-                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'view_rfq_filter')
+                view = ir_model_obj.get_object_reference(cr, uid, 'tender_flow', 'view_rfq_filter')
                 if view:
                     view_id = view[1]
+            if context.get('po_from_partners', False):
+                context.pop('po_from_partners')
+                view_id = ir_model_obj.get_object_reference(cr, uid, 'purchase', 'view_purchase_order_filter')[1]
         if view_type == 'tree':
             # the view depends on po type
             if context.get('rfq_ok', False):
                 # rfq search view
-                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'view_rfq_tree')
+                view = ir_model_obj.get_object_reference(cr, uid, 'tender_flow', 'view_rfq_tree')
                 if view:
                     view_id = view[1]
         if view_type == 'form':
             if context.get('rfq_ok', False):
-                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'view_rfq_form')
+                view = ir_model_obj.get_object_reference(cr, uid, 'tender_flow', 'view_rfq_form')
                 if view:
                     view_id = view[1]
 

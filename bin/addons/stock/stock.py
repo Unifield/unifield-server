@@ -886,29 +886,6 @@ class stock_picking(osv.osv):
         res = kwargs['res']
         return res
 
-    def action_process(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None: context = {}
-        partial_id = self.pool.get("stock.partial.picking").create(
-            cr, uid, {}, context=dict(context, active_ids=ids))
-        res = {
-            'name':_("Products to Process"),
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': 'stock.partial.picking',
-            'res_id': partial_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': dict(context, active_ids=ids)
-        }
-        # hook on view dic
-        res = self._stock_picking_action_process_hook(cr, uid, ids, context=context, res=res,)
-        return res
-
     def _erase_prodlot_hook(self, cr, uid, id, context=None, *args, **kwargs):
         '''
         hook to keep the production lot when a stock move is copied

@@ -422,6 +422,9 @@ class stock_move_processor(osv.osv):
         """
         lot_manda = line.product_id.batch_management
         perishable = line.product_id.perishable
+
+        if (lot_manda or perishable) and line.prodlot_id and line.prodlot_id.product_id.id != line.product_id.id:
+            res = 'lot_not_linked_to_prod'
         if lot_manda:
             # Batch mandatory
             if not line.prodlot_id:
@@ -817,12 +820,6 @@ class stock_move_processor(osv.osv):
         """
         return vals
 
-    def _update_change_product_wr_vals(self, vals):
-        """
-        Allow other modules to override the write values when change product on a line
-        """
-        return vals
-
     """
     Model methods
     """
@@ -954,8 +951,9 @@ class stock_move_processor(osv.osv):
         wr_vals = {
             'change_reason': change_reason,
             'product_id': product_id,
+            'prodlot_id': False,
+            'expiry_date': False,
         }
-        self._update_change_product_wr_vals(vals=wr_vals)  # w/o overriding, just return wr_vals
         self.write(cr, uid, ids, wr_vals, context=context)
 
         pick_wiz_id = self.read(cr, uid, ids[0], ['wizard_id'], context=context)['wizard_id']

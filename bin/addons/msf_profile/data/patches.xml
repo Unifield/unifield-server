@@ -605,8 +605,13 @@
             <field name="method">uf18_0_migrate_acl</field>
         </record>
 
+        <!-- UF19.0 -->
         <record id="us7940_create_parent_seg" model="patch.scripts">
             <field name="method">us7940_create_parent_seg</field>
+        </record>
+
+        <record id="us_2725_uf_write_date_on_products" model="patch.scripts">
+            <field name="method">us_2725_uf_write_date_on_products</field>
         </record>
 
     </data>

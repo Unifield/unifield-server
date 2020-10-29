@@ -959,34 +959,6 @@ class stock_picking(osv.osv):
                 so_po_common.create_message_with_object_and_partner(cr, uid, 1002, item, partner, context)
         return res
 
-    def msg_close(self, cr, uid, source, stock_picking, context=None):
-        """
-        Trigger a close on a stock.stock_picking
-        """
-        # get stock pickings to process using name from message
-        stock_picking_ids = self.search(cr, uid, [('name', '=', stock_picking.name)])
-
-        if stock_picking_ids:
-            # create stock.partial.picking wizard object to perform the close
-            partial_obj = self.pool.get("stock.partial.picking")
-            partial_id = partial_obj.create(cr, uid, {}, context=dict(context, active_ids=stock_picking_ids))
-
-            if self.pool.get('stock.picking').browse(cr, uid, stock_picking_ids[0]).state == 'done':
-                return 'Stock picking %s was already closed' % stock_picking.name
-
-            # set quantity to process on lines
-            partial_obj.copy_all(cr, uid, [partial_id], context=dict(context, model='stock.partial.picking'))
-
-            # process partial and return
-            try:
-                partial_obj.do_partial(cr, uid, partial_id, context=dict(context, active_ids=stock_picking_ids))
-            except KeyError:
-                raise ValueError('Please set a batch number on all move lines')
-
-            return 'Stock picking %s closed' % stock_picking.name
-        else:
-            return 'Could not find stock picking %s' % stock_picking.name
-
     def msg_create_invoice(self, cr, uid, source, stock_picking, context=None):
         """
         Create an invoice for a picking. This is used in the RW to CP rule for pickings
