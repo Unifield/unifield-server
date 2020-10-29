@@ -605,6 +605,9 @@
             <field name="method">uf18_0_migrate_acl</field>
         </record>
 
+        <record id="us7940_create_parent_seg" model="patch.scripts">
+            <field name="method">us7940_create_parent_seg</field>
+        </record>
 
     </data>
 </openerp>

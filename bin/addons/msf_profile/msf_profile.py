@@ -52,6 +52,46 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    #UF19.0
+    def us7940_create_parent_seg(self, cr, uid, *a, **b):
+        if not cr.column_exists('replenishment_segment', 'order_validation_lt'):
+            return True
+
+        seg_obj = self.pool.get('replenishment.segment')
+
+        copy_fields = ['location_config_id', 'ir_requesting_location', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'order_coverage', 'previous_order_rdd', 'date_next_order_received_modified', 'hidden']
+        cr.execute("select id, description_seg, state, "+','.join(copy_fields)+"  from replenishment_segment where parent_id is NULL order by id")  # not_a_user_entry
+
+        for seg in cr.dictfetchall():
+            vals = {'name_parent_seg': self.pool.get('ir.sequence').get(cr, uid, 'replenishment.parent.segment')}
+            for x in copy_fields:
+                vals[x] = seg[x]
+            vals['state_parent'] = seg['state']
+            if vals['order_coverage']:
+                vals['order_coverage'] = vals['order_coverage'] * 30.44
+            vals['description_parent_seg'] = 'Parent %s' % seg['description_seg']
+
+            cr.execute('''
+                insert into replenishment_parent_segment (name_parent_seg, description_parent_seg, order_preparation_lt, time_unit_lt, state_parent, '''+','.join(copy_fields)+''')
+                values
+                (%(name_parent_seg)s, %(description_parent_seg)s, 0, 'd', %(state_parent)s, '''+','.join(['%%(%s)s' % x for x in copy_fields])+''')
+                returning id
+            ''', vals)  # not_a_user_entry
+            parent_seg_id = cr.fetchone()[0]
+            cr.execute('update replenishment_segment set parent_id=%s, safety_stock=safety_stock*30.44 where id=%s', (parent_seg_id, seg['id']))
+
+            seg_sdref = seg_obj.get_sd_ref(cr, uid, seg['id'])
+            cr.execute('''
+                insert into ir_model_data
+                    (noupdate, name, date_init, date_update, module, model, res_id, force_recreation, version, touched, last_modification)
+                    values
+                    ('f', %(sdref)s, now(), now(), 'sd', 'replenishment.parent.segment', %(parent_seg_id)s, 'f', 1, '[]', NOW())
+                ''', {'sdref': '%s_parent'%seg_sdref, 'parent_seg_id': parent_seg_id})
+
+        cr.execute('''update replenishment_order_calc_line line set segment_id=calc.segment_id from replenishment_order_calc calc where calc.id=line.order_calc_id''')
+        cr.execute('''update replenishment_order_calc calc set parent_segment_id=seg.parent_id, time_unit_lt='d' from replenishment_segment seg where calc.segment_id=seg.id''')
+        return True
+
 
     # UF18.0
     def uf18_0_migrate_acl(self, cr, uid, *a, **b):
