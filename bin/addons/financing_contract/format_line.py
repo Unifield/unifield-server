@@ -625,10 +625,13 @@ class financing_contract_format_line(osv.osv):
                 'parent_id': parent_id,
                 'line_type': browse_source_line.line_type,
                 'account_quadruplet_ids': [(6, 0, [])],
-                'reporting_account_ids': [(6, 0, [])],
+                'reporting_select_accounts_only': browse_source_line.reporting_select_accounts_only,
             }
             account_destination_ids = [account_destination.id for account_destination in browse_source_line.account_destination_ids]
             format_line_vals['account_destination_ids'] = [(6, 0, account_destination_ids)]
+            # copy the list of "Accounts Only"
+            gl_account_ids = [a.id for a in browse_source_line.reporting_account_ids]
+            format_line_vals['reporting_account_ids'] = [(6, 0, gl_account_ids)]
             parent_line_id = self.pool.get('financing.contract.format.line').create(cr, uid, format_line_vals, context=context)
             for child_line in browse_source_line.child_ids:
                 self.copy_format_line(cr, uid, child_line, destination_format_id, parent_line_id, context=context)
