@@ -1,6 +1,8 @@
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
+import logging
+
 assert _  # pyflakes check
 
 class report_project_expenses2(report_sxw.rml_parse):
@@ -17,7 +19,6 @@ class report_project_expenses2(report_sxw.rml_parse):
         self.lines = {}
         self.totalRptCurrency = 0
         self.totalBookAmt = 0
-        self.iter = []
         self.localcontext.update({
             'getLines':self.getLines,
             'getCostCenter':self.getCostCenter,
@@ -26,29 +27,12 @@ class report_project_expenses2(report_sxw.rml_parse):
             'getSub1':self.getSub1,
             'getSub2':self.getSub2,
             'getLines2':self.getLines2,
-            'getFormula':self.getFormula,
             'totalRptCurrency': self.totalRptCurrency,
             'totalBookAmt':self.totalBookAmt,
             'getTotalRptCurrency': self.getTotalRptCurrency,
             'getTotalBookAmt': self.getTotalBookAmt,
         })
 
-    def getFormula(self):
-        formul = ''
-        iters = self.iter[1:]
-        temp = self.iter[1:]
-        tour = 1
-        for i in temp:
-            tour += 1
-            nb = 0
-            for x in iters:
-                nb += x + 1
-            rang = nb + 1
-            formul += '+R[-'+str(rang)+']C'
-            iters = self.iter[tour:]
-
-        return self.totalRptCurrency
-        return formul
 
     def getTotalBookAmt(self):
         return self.totalBookAmt
@@ -100,64 +84,46 @@ class report_project_expenses2(report_sxw.rml_parse):
             return []
         contract_obj = self.pool.get('financing.contract.contract')
         format_line_obj = self.pool.get('financing.contract.format.line')
+        logger = logging.getLogger('contract.report')
+
         contract_domain = contract_obj.get_contract_domain(self.cr, self.uid, contract, reporting_type=self.reporting_type)
         analytic_line_obj = self.pool.get('account.analytic.line')
         analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain, context=None)
 
-        # list of analytic journal_ids which are in the engagement journals
+        # list of analytic journal_ids which are in the engagement journals: to be added in get_contract_domain ?
         exclude_journal_ids = self.pool.get('account.analytic.journal').search(self.cr, self.uid, [('type','=','engagement')])
-        exclude_line_ids = []
+
+        # gen a dict to store aji cond = reporting_line.code, reporting_line.name
+        line_code_name_by_cond = {}
+        reporting_lines_id = format_line_obj.search(self.cr, self.uid, [('format_id', '=', contract.format_id.id), ('line_type', '!=', 'view')])
+        for report_line in format_line_obj.browse(self.cr, self.uid, reporting_lines_id):
+            if report_line.is_quadruplet:
+                for quad in report_line.account_quadruplet_ids:
+                    line_code_name_by_cond[(quad.account_id.id, quad.account_destination_id.id, quad.cost_center_id.id, quad.funding_pool_id.id)] = (report_line.code, report_line.name)
+            elif not report_line.reporting_select_accounts_only:
+                for tiplet in report_line.account_destination_ids:
+                    line_code_name_by_cond[(tiplet.account_id.id, tiplet.destination_id.id)] = (report_line.code, report_line.name)
+            else:
+                for gl_only in report_line.reporting_account_ids:
+                    line_code_name_by_cond[gl_only.id] = (report_line.code, report_line.name)
+
+        # iterate over aji, to link each aji to its reporting_line
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
             if analytic_line.journal_id.id in exclude_journal_ids:
-                exclude_line_ids.append(analytic_line.id)
-        analytic_lines = [x for x in analytic_lines if x not in exclude_line_ids]
-
-        # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet
-        for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
-            ids_adl = self.pool.get('account.destination.link').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('destination_id','=',analytic_line.destination_id.id) ])
-            ids_fcfl = format_line_obj.search(self.cr, self.uid, [('account_destination_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
-            for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
-                ana_tuple = (analytic_line, fcfl.code, fcfl.name)
-                if lines.has_key(fcfl.code):
-                    if not ana_tuple in lines[fcfl.code]:
-                        lines[fcfl.code] += [ana_tuple]
-                else:
-                    lines[fcfl.code] = [ana_tuple]
-
-        # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet
-        for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
-            # US-460: Include also the funding pool in the criteria when searching for the quadruplet of the contract line
-            criteria_for_adl = [('account_id', '=', analytic_line.general_account_id.id),
-                                ('account_destination_id', '=', analytic_line.destination_id and analytic_line.destination_id.id or False),
-                                ('funding_pool_id', '=', analytic_line.account_id.id),
-                                ('cost_center_id', '=', analytic_line.cost_center_id and analytic_line.cost_center_id.id or False)]
-            ids_adl = self.pool.get('financing.contract.account.quadruplet').search(self.cr, self.uid, criteria_for_adl)
-
-            ids_fcfl = format_line_obj.search(self.cr, self.uid, [('account_quadruplet_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
-            for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
-                ana_tuple = (analytic_line, fcfl.code, fcfl.name)
-                if lines.has_key(fcfl.code):
-                    if not ana_tuple in lines[fcfl.code]:
-                        lines[fcfl.code] += [ana_tuple]
-                else:
-                    lines[fcfl.code] = [ana_tuple]
-
-        # apply the exact same logic as above for "accounts only" selection
-        for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines):
-            ids_fcfl = format_line_obj.search(self.cr, self.uid,
-                                              [('reporting_account_ids', 'in', [analytic_line.general_account_id.id]),
-                                               ('format_id', '=', contract.format_id.id)])
-            for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
-                ana_tuple = (analytic_line, fcfl.code, fcfl.name)
-                if lines.has_key(fcfl.code):
-                    if not ana_tuple in lines[fcfl.code]:
-                        lines[fcfl.code] += [ana_tuple]
-                else:
-                    lines[fcfl.code] = [ana_tuple]
+                continue
+            quad_key = (analytic_line.general_account_id.id, analytic_line.destination_id.id, analytic_line.cost_center_id.id, analytic_line.account_id.id)
+            if quad_key in line_code_name_by_cond:
+                lines.setdefault(line_code_name_by_cond[quad_key], []).append((analytic_line, line_code_name_by_cond[quad_key][0], line_code_name_by_cond[quad_key][1]))
+            elif quad_key[0:2] in line_code_name_by_cond:
+                tiplet_key = quad_key[0:2]
+                lines.setdefault(line_code_name_by_cond[tiplet_key], []).append((analytic_line, line_code_name_by_cond[tiplet_key][0], line_code_name_by_cond[tiplet_key][1]))
+            elif quad_key[0] in line_code_name_by_cond:
+                gl_key = quad_key[0]
+                lines.setdefault(line_code_name_by_cond[gl_key], []).append((analytic_line, line_code_name_by_cond[gl_key][0], line_code_name_by_cond[gl_key][1]))
+            else:
+                logger.warn('AJI id:%s, name: %s does not match any reporting lines on contract %s' % (analytic_line.id, analytic_line.entry_sequence, self.objects[0].code))
 
         self.lines = lines
-        for x in lines:
-            self.iter.append(len(lines[x]))
         return lines
 
 
