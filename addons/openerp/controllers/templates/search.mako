@@ -66,18 +66,21 @@
                 }
             </script>
         % else:
-		    <script type="text/javascript">
+            <script type="text/javascript">
                 function close_dialog() {
                     jQuery.m2m('close');
                 }
-		        function do_select(id) {
-                    jQuery.m2m('close',
-                        id ? [parseInt(id, 10)].concat(ListView('_terp_list').get_previously_selected())
-                           : ListView('_terp_list').get_previously_selected()
-
-                    );
-		        }
-		    </script>
+                function do_select(id) {
+                    var prev_selected = ListView('_terp_list').get_previously_selected();
+                    if (id) {
+                        var int_id = parseInt(id, 10);
+                        if (jQuery.inArray(int_id, prev_selected) == -1) {
+                            prev_selected.push(int_id);
+                        }
+                    }
+                    jQuery.m2m('close', prev_selected);
+                }
+            </script>
         % endif
     % endif
     <script type="text/javascript">

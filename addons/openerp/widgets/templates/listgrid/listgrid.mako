@@ -95,18 +95,16 @@ if (auto_field && auto_field.val()){
     % if selector:
         <td class="grid-cell selector">
         % if not data['id'] or data['id'] not in notselectable:
-            % if not m2m:
-                <%
-                    nosidedar = name != '_terp_list' and 'true' or 'false'
-                    selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s', %s);" % (name, data['id'], nosidedar)
-                    if selector == "radio":
-                        selector_click += " do_select();"
-                %>
-                <input type="${selector}" class="${selector} grid-record-selector"
-                    id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
-                    value="${data['id']}"
-                    onclick="${selector_click}"/>
-            % endif
+            <%
+                nosidedar = name != '_terp_list' and 'true' or 'false'
+                selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s', %s);" % (name, data['id'], nosidedar)
+                if selector == "radio":
+                    selector_click += " do_select();"
+            %>
+            <input type="${selector}" class="${selector} grid-record-selector"
+                id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
+                value="${data['id']}"
+                onclick="${selector_click}"/>
         % endif
         </td>
     % endif
@@ -340,10 +338,10 @@ if (auto_field && auto_field.val()){
                             <tr class="grid-header">
                                 % if selector:
                                     <th width="1" class="grid-cell selector">
-                                        % if selector == 'checkbox' and not m2m:
+                                        % if selector == 'checkbox':
                                             <input type="checkbox" class="checkbox grid-record-selector" id="${name}_check_all"  onclick="new ListView('${name}').checkAll(!this.checked)"/>
                                         % endif
-                                        % if selector != 'checkbox' and not m2m:
+                                        % if selector != 'checkbox':
                                             <span>&nbsp;</span>
                                         % endif
                                     </th>
