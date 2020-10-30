@@ -110874,13 +110874,6 @@ msgstr "Non fermées"
 msgid "Show closed only"
 msgstr "Fermées seulement"
 
-#. modules: purchase, sale, procurement_request
-#: view:sale.order:0
-#: view:purchase.order:0
-#: view:sale.order:0
-msgid "Show all lines that are not closed and not cancelled"
-msgstr "Toutes les lignes non fermées et non annulées"
-
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:134
 #, python-format
