@@ -38540,6 +38540,7 @@ msgstr "Analytic Lines (Free 1)"
 
 #. module: stock
 #: view:stock.picking:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:226
 msgid "Actual Shipped Date"
 msgstr "Date d'Expédition Réelle"
 
@@ -85729,8 +85730,9 @@ msgstr "ocp.export.wizard"
 msgid "substitute.item.mirror"
 msgstr "substitute.item.mirror"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, stock
 #: view:stock.picking:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:225
 msgid "Actual Pack Date"
 msgstr "Date Réelle de Colisage"
 
@@ -91730,7 +91732,6 @@ msgstr "Statuts Exercice Comptable"
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:229
 #: field:internal.request.import,imp_creation_date:0
 #: report:addons/stock/report/products_situation_report_xls.mako:221
-#: report:addons/stock/report/stock_delivery_report_xls.mako:225
 #: field:internal.request.import,imp_creation_date:0
 msgid "Creation Date"
 msgstr "Date de Création"
@@ -105776,11 +105777,6 @@ msgstr "Expédition"
 #: report:addons/stock/report/stock_delivery_report_xls.mako:222
 msgid "Total Currency"
 msgstr "Total dans la Devise"
-
-#. module: stock
-#: report:addons/stock/report/stock_delivery_report_xls.mako:226
-msgid "Shipped Date"
-msgstr "Date d'Expédition"
 
 #. module: purchase_override
 #: report:msf.purchase.order:0
