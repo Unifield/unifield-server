@@ -545,20 +545,21 @@
                         </group>
                             <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule" scroll="1" attrs="{'readonly': [('state', 'not in', ['draft', 'complete'])]}" o2m_selectable="2">
                                 <tree editable="top" editable_style="new" colors="red: not status or (display_paired_icon and not status_tooltip and status!='phasingout')">
-                                    <field name="product_id" filter_selector="1" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
+                                    <field name="line_state_parent" invisible="1" />
+                                    <field name="product_id" filter_selector="1" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
                                     <field name="product_description" displayon="noteditable" filter_selector="1" />
                                     <field name="uom_id" invisible="1" />
                                     <field name="in_main_list" filter_selector="1" />
-                                    <field name="status" filter_selector="1" tooltip="status_tooltip" attrs="{'readonly':[('state', '!=', 'draft')]}" />
+                                    <field name="status" filter_selector="1" tooltip="status_tooltip" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}" />
                                     <field name="status_tooltip" invisible="1" />
                                     <field name="display_paired_icon" invisible="1" />
                                     <button name="set_paired_product" string="Set Paired Product" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('display_paired_icon', '=', False)]}" type="object" icon="gtk-convert" />
                                     <field name="real_stock" />
                                     <field name="rr_amc" />
-                                    <field name="min_qty" invisible="context.get('rule')!='minmax'" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
-                                    <field name="max_qty" invisible="context.get('rule')!='minmax'" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
-                                    <field name="auto_qty" invisible="context.get('rule')!='auto'" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
-                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
+                                    <field name="min_qty" invisible="context.get('rule')!='minmax'" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
+                                    <field name="max_qty" invisible="context.get('rule')!='minmax'" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
+                                    <field name="auto_qty" invisible="context.get('rule')!='auto'" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
+                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
                                     <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'" nolabel="1"/>
                                     <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1, False)"  nolabel="1"/>
                                     <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1, False)" nolabel="1"/>

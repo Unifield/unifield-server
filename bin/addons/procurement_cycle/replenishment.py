@@ -2313,6 +2313,7 @@ class replenishment_segment_line(osv.osv):
 
     _defaults = {
         'status': 'active',
+        'line_state_parent': 'draft',
     }
 
     def _clean_data(self, cr, uid, vals, context=None):
