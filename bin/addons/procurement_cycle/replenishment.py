@@ -638,7 +638,10 @@ class replenishment_parent_segment(osv.osv):
 
             calc_id = False
             for seg in pseg.child_ids:
-                if seg.state == 'complete' and not seg.missing_order_calc:
+                if seg.state == 'complete':
+                    if seg.missing_order_calc:
+                        self.pool.get('replenishment.segment').log(cr, uid, seg.id, _('%s: data missing from %s. For locale instance please click on "Compute Data", for remote wait the next scheduled task or the next sync. ') % (seg.name_seg, seg.missing_order_calc))
+                        continue
                     if not calc_id:
                         calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
                             'parent_segment_id': pseg.id,
