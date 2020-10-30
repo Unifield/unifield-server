@@ -30,6 +30,8 @@ import tempfile
 import logging
 import posixpath
 import traceback
+import threading
+import pooler
 
 from osv import osv
 from osv import fields
@@ -311,8 +313,58 @@ class automated_import_job(osv.osv):
     def manual_process_import(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        wiz = self.read(cr, uid, ids[0], ['import_id'], context)
-        return self.process_import(cr, uid, wiz['import_id'][0], started_job_id=ids[0], context=None)
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['import_id', 'file_to_import', 'file_sum'], context=context)
+        if wiz.file_to_import:
+            if wiz.import_id.ftp_source_ok:
+                raise osv.except_osv(_('Error'), _('You cannot manually select a file to import if given source path is set on FTP server'))
+            md5 = hashlib.md5(wiz.file_to_import).hexdigest()
+            if wiz.file_sum != md5:
+                if self.search_exists(cr, uid, [('file_sum', '=', md5), ('id', '!=', ids[0])], context=context):
+                    self.write(cr, uid, [ids[0]], {'file_sum': md5}, context=context)
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': self._name,
+                        'res_id': ids[0],
+                        'view_type': 'form',
+                        'view_mode': 'form,tree',
+                        'target': 'new',
+                        'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
+                        'context': context,
+                    }
+        self.write(cr, uid, ids[0], {'start_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'state': 'in_progress'}, context=context)
+        # Background import
+        thread = threading.Thread(target=self.process_import_bg, args=(cr.dbname, uid, wiz.import_id.id, ids[0], None))
+        thread.start()
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'target': 'current',
+            'context': context,
+        }
+
+    def process_import_bg(self, dbname, uid, import_id, started_job_id, context):
+        try:
+            cr = pooler.get_db(dbname).cursor()
+            self.process_import(cr, uid, import_id, started_job_id=started_job_id, context=context)
+            cr.commit()
+        except Exception, e:
+            cr.rollback()
+            self.write(cr, uid, [started_job_id], {
+                'filename': False,
+                'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'nb_processed_records': 0,
+                'nb_rejected_records': 0,
+                'comment': tools.misc.get_traceback(e),
+                'state': 'error',
+            }, context=context)
+
+        finally:
+            cr.commit()
+            cr.close(True)
 
     def process_import(self, cr, uid, import_id, started_job_id=False, context=None):
         """
@@ -326,7 +378,6 @@ class automated_import_job(osv.osv):
         :return: True
         """
         import_obj = self.pool.get('automated.import')
-        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -436,28 +487,13 @@ class automated_import_job(osv.osv):
                         continue
                 else: # file to import given
                     no_file = True
-                    if job.import_id.ftp_source_ok:
-                        raise osv.except_osv(_('Error'), _('You cannot manually select a file to import if given source path is set on FTP server'))
-                    oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
-                    oldest_file.write(base64.decodestring(job.file_to_import))
-                    oldest_file.close()
                     md5 = hashlib.md5(job.file_to_import).hexdigest()
-
-                    if job.file_sum != md5:
-                        if self.search_exist(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
-                            self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
-                            return {
-                                'type': 'ir.actions.act_window',
-                                'res_model': self._name,
-                                'res_id': job_id,
-                                'view_type': 'form',
-                                'view_mode': 'form,tree',
-                                'target': 'new',
-                                'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
-                                'context': context,
-                            }
-
                     oldest_file = os.path.join(job.import_id.src_path, job.filename)
+
+                    oldest_file_desc = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
+                    oldest_file_desc.write(base64.decodestring(job.file_to_import))
+                    oldest_file_desc.close()
+
                     filename = job.filename
                     data64 = base64.encodestring(job.file_to_import)
 
@@ -559,20 +595,7 @@ class automated_import_job(osv.osv):
                 if orig_file_name:
                     self.end_processing_filename(orig_file_name)
 
-        if 'row' in context:
-            # causing LmF when running job manually
-            context.pop('row')
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': job_id,
-            'view_type': 'form',
-            'view_mode': 'form,tree',
-            'target': 'current',
-            'context': context,
-        }
-
+        return True
 
     def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False, ftp_connec=None, sftp=None):
         """

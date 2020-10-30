@@ -37,7 +37,6 @@
     'update_xml': ['security/ir.model.access.csv',
                    'specific_rules_view.xml',
                    'stock_view.xml',
-                   'wizard/stock_partial_move_view.xml',
                    'report/report_stock_inventory_view.xml',
                    'unconsistent_stock_report_view.xml',
                    'stock_sequence.xml',

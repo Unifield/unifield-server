@@ -9,8 +9,6 @@
 
         <report auto="False" id="sale.product_list_report" model="product.list" name="msf.product_list" rml="msf_printed_documents/report/product_list.rml" string="Product List / Sub-List" />
 
-        <report auto="False" id="sale.report_freight_manifest" model="shipment" name="msf.freight_manifest" rml="msf_printed_documents/report/freight_manifest.rml" string="Freight Manifest" />
-
         <!-- PRODUCT LABELS -->
         <report
             id="product_labels_batch"
