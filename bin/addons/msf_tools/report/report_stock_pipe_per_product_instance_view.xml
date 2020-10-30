@@ -47,7 +47,11 @@
                           <field name="product_id" invisible="1" />
                           <field name="uom_id" invisible="1" />
                           <field name="instance_id"/>
+                          <field name="product_creator"/>
+                          <field name="standard_ok"/>
                           <field name="uf_state"/>
+                          <field name="ud_state"/>
+                          <field name="inst_uf_state"/>
                           <field name="instance_stock"/>
                           <field name="pipe_qty"/>
                        </tree>
@@ -75,7 +79,7 @@
                                     Due to the volume of data, your report cannot be shown immediatly.<br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    When the report will be ready, you can access to it by the menu Tools / Export Stock &amp; Pipe per Product and per Instance.<br />
+                                    When the report will be ready, you can access to it by the menu Tools / Export Stock &amp; Pipe Report.<br />
                                 </p>
                             </div>
                         </html>

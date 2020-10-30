@@ -106,7 +106,6 @@ GET_EXPORT_REQUEST = '''SELECT
         l.product_amc as product_amc,
         l.product_consumption as product_consumption,
         mission_report_id,
-        l.product_active as product_active
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -512,7 +511,6 @@ class stock_mission_report(osv.osv):
         fixed_data = [
             (_('Reference'), 'default_code'),
             (_('Name'), 'pt_name'),
-            (_('Active'), 'product_active'),
             (_('UoM'), 'pu_name'),
             (_('Cost Price'), 'pt_standard_price'),
             (_('Func. Cur.'), 'rc_name')

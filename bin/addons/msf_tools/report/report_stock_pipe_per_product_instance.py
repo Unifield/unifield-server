@@ -161,9 +161,13 @@ class stock_pipe_per_product_instance_prod_lines(osv.osv):
         'product_id': fields.many2one('product.product', string='Product'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', store=True, string='UoM'),
         'instance_id': fields.many2one('msf.instance', 'Instance/Mission'),
-        'uf_state': fields.related('product_id', 'state', type='many2one', relation='product.status', store=True, string='UniField Status'),
+        'uf_state': fields.related('product_id', 'state', type='many2one', relation='product.status', store=True, string='HQ UniField Status'),
+        'ud_state': fields.related('product_id', 'state_ud', type='selection', selection=[('valid', 'Valid'), ('outdated', 'Outdated'), ('discontinued', 'Discontinued'), ('phase_out', 'Phase Out'), ('stopped', 'Stopped'), ('archived', 'Archived'), ('forbidden', 'Forbidden')], store=True, write_relate=False, string='HQ UniData Status'),
         'instance_stock': fields.float('Instance stock', related_uom='uom_id'),
         'pipe_qty': fields.float('Pipeline Qty', related_uom='uom_id'),
+        'product_creator': fields.char(size=64, string='Product Creator'),
+        'standard_ok': fields.selection(selection=[('standard', 'Standard'), ('non_standard', 'Non-standard'), ('non_standard_local', 'Non-standard Local')], size=32, string='Standardization Level'),
+        'inst_uf_state': fields.selection(selection=[('valid', 'Valid'), ('phase_out', 'Phase Out'), ('forbidden', 'Forbidden'), ('archived', 'Archived')], string='Instance UniField Status'),
     }
 
 
@@ -182,6 +186,7 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
             'time': time,
             'parseDateXls': self._parse_date_xls,
             'get_products': self.get_products,
+            'get_inst_product_state': self.get_inst_product_state,
             'get_prod_info': self.get_prod_info,
             'get_stock_mission_report_lines': self.get_stock_mission_report_lines,
         })
@@ -211,6 +216,10 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
 
         return self.cr.fetchall()
 
+    def get_inst_product_state(self, product_state):
+        sel = {'valid': _('Valid'), 'phase_out': _('Phase Out'), 'forbidden': _('Forbidden'), 'archived': _('Archived')}
+        return sel.get(product_state, '')
+
     def get_prod_info(self, prod_id):
         '''
         Get the Unifield Status, Standardization Level and Unidata Status of the product
@@ -220,12 +229,12 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
 
         return prod_info
 
-    def get_stock_mission_report_lines(self, report, product):
+    def get_stock_mission_report_lines(self, report, product, prod_info):
         '''
         Return browse record list of stock_mission_report_line with given product_id
         '''
         self.cr.execute("""
-            SELECT m.instance_id, m.name, l.product_id, l.product_state, l.internal_qty, l.in_pipe_qty 
+            SELECT m.instance_id, m.name, l.product_id, l.product_state, l.internal_qty, l.in_pipe_qty, l.product_state 
             FROM stock_mission_report_line l 
             LEFT JOIN stock_mission_report m ON l.mission_report_id = m.id 
             LEFT JOIN msf_instance i ON m.instance_id = i.id AND i.state != 'inactive' 
@@ -235,7 +244,16 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
         prod_infos = self.cr.fetchall()
         if report.product_id:  # Create lines to display only if one product has been selected
             for prod in prod_infos:
-                info = {'stock_pipe_per_product_instance_id': report.id, 'product_id': prod[2], 'instance_id': prod[0], 'instance_stock': prod[4], 'pipe_qty': prod[5]}
+                info = {
+                    'stock_pipe_per_product_instance_id': report.id,
+                    'product_id': prod[2],
+                    'instance_id': prod[0],
+                    'instance_stock': prod[4],
+                    'pipe_qty': prod[5],
+                    'product_creator': product[3],
+                    'standard_ok': prod_info.standard_ok,
+                    'inst_uf_state': prod[6],
+                }
                 self.pool.get('stock.pipe.per.product.instance.prod.lines').create(self.cr, self.uid, info, context=self.localcontext)
 
         return prod_infos
