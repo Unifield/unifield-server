@@ -20,7 +20,7 @@
                     <field name="perishable" invisible="1" />
                     <field name="prodlot_id" 
                            domain="[('product_id', '=', product_id)]"
-                           attrs="{'invisible': [('perishable', '=', False)], 'required': [('perishable', '=', True)]}" />
+                           attrs="{'invisible': [('perishable', '=', False)]}" />
                     <separator colspan="4" string="Period" />
                     <field name="from_date" />
                     <field name="to_date" />

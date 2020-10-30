@@ -100,7 +100,6 @@ class stock_card_wizard(osv.osv_memory):
         # 'Old' physical inventories
         oldinv_line_obj = self.pool.get('stock.inventory.line')
 
-
         if not context:
             context = {}
 
@@ -120,16 +119,15 @@ class stock_card_wizard(osv.osv_memory):
         context.update({'to_date': card.from_date})
 
         prodlot_id = card.prodlot_id and card.prodlot_id.id or False
-        product = product_obj.browse(cr, uid, card.product_id.id,
-                                     context=context)
+        product = product_obj.browse(cr, uid, card.product_id.id, context=context)
         if not card.from_date:
             initial_stock = 0.00
         else:
             initial_stock = product.qty_available
 
-        domain = [('product_id', '=', product.id),
-                  ('prodlot_id', '=', prodlot_id),
-                  ('state', '=', 'done')]
+        domain = [('product_id', '=', product.id), ('state', '=', 'done')]
+        if prodlot_id:
+            domain.append(('prodlot_id', '=', prodlot_id))
 
         # "Old" physical inventory
         inv_dom = [
