@@ -361,7 +361,7 @@ form: module.record_id""" % (xml_id,)
             if rec.get('view_ids'):
                 for x in rec.get('view_ids').split(','):
                     linked_views.append(self.id_get(cr,x))
-            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, res['name'], [res['model']], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views)
+            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, res['name'], [res['model']], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views, sequence=rec.get('sequence', 100))
         elif self.mode=='update' and eval(rec.get('menu','False'))==False:
             # Special check for report having attribute menu=False on update
             value = 'ir.actions.report.xml,'+str(id)

@@ -247,42 +247,6 @@
             
             <menuitem id="return_claim_sale" name="Claim" parent="base.menu_base_partner" sequence="2" />
             <menuitem action="return_claim_action_sale" id="return_claim_menu_sale" parent="return_claim_sale" sequence="1" />
-            
-            <record id="view_picking_in_form" model="ir.ui.view">
-                <field name="name">stock.picking.in.form</field>
-                <field name="model">stock.picking</field>
-                <field name="type">form</field>
-                <field name="priority">25</field>
-                <field name="inherit_id" ref="stock.view_picking_in_form" />
-                <field name="arch" type="xml">
-                    <data>
-                    
-                        <xpath expr="/form/notebook/page/group/group/button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
-                            <attribute name="invisible">True</attribute>
-                            <attribute name="states"></attribute>
-                        </xpath>
-                        
-                    </data>
-                </field>
-            </record>
-            
-            <record id="view_picking_out_form" model="ir.ui.view">
-                <field name="name">stock.picking.out.form</field>
-                <field name="model">stock.picking</field>
-                <field name="type">form</field>
-                <field name="priority">35</field>
-                <field name="inherit_id" ref="stock.view_picking_out_form" />
-                <field name="arch" type="xml">
-                    <data>
-                    
-                        <xpath expr="/form/notebook/page/group/button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
-                            <attribute name="invisible">True</attribute>
-                            <attribute name="states"></attribute>
-                        </xpath>
-                    
-                    </data>
-                </field>
-            </record>
 
         </data>
     </openerp>

@@ -41,7 +41,6 @@
         "report/report_stock_move_view.xml",
         "wizard/stock_analyze_view_view.xml",
         "security/ir.model.access.csv",
-        "wizard/stock_partial_move_view.xml",
         "wizard/change_dest_location_view.xml",
         "wizard/stock_card_view.xml",
     ],

@@ -36,7 +36,6 @@
         'kit_sequence.xml',
         'kit_report.xml',
         'wizard/substitute_view.xml',
-        'wizard/stock_partial_move_view.xml',
         'wizard/confirm_view.xml',
         'wizard/kit_selection_view.xml',
         'wizard/kit_selection_sale_view.xml',

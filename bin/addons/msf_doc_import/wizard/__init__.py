@@ -147,7 +147,6 @@ PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT = [
 PPL_COLUMNS_LINES_FOR_IMPORT = [x for (x,y) in PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT]
 
 import wizard_import_po
-import stock_partial_picking
 import wizard_import_po_line
 import wizard_import_invoice_line
 import wizard_import_fo_line
