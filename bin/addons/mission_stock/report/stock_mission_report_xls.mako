@@ -48,6 +48,7 @@
             <Row>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Reference')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Name')}</Data></Cell>
+                <Cell ss:StyleID="header"><Data ss:Type="String">${_('Active')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('UoM')}</Data></Cell>
          % if o.with_valuation:
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Cost Price')}</Data></Cell>

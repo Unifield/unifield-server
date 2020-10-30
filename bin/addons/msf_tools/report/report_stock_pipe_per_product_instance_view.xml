@@ -49,8 +49,8 @@
                           <field name="instance_id"/>
                           <field name="product_creator"/>
                           <field name="standard_ok"/>
-                          <field name="uf_state"/>
                           <field name="ud_state"/>
+                          <field name="uf_state"/>
                           <field name="inst_uf_state"/>
                           <field name="instance_stock"/>
                           <field name="pipe_qty"/>

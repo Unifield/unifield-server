@@ -71698,6 +71698,8 @@ msgstr "Navajo"
 #: field:sync_client.survey,active:0
 #: field:product.status,active:0
 #: view:account.tax:0
+#: code:addons/mission_stock/mission_stock.py:515
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:51
 #, python-format
 msgid "Active"
 msgstr "Actif"

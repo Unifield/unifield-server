@@ -44,11 +44,16 @@
 	
 	<para style="P1"><font color="white"> </font></para>
   
-  	<blockTable colWidths="98.0,25.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,45.0,45.0" style="reportLines">
+  	<blockTable colWidths="98.0,30.0,25.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,30.0,30.0" style="reportLines">
   		<tr>
   			<td>
   				<para style="linesHead">
   					Product
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Active
   				</para>
   			</td>
   			<td>
@@ -122,6 +127,11 @@
   			<td>
   				<para style="lines">
   					[[ '[%s] %s' % (o.product_id.default_code, o.product_id.name) ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.product_active and 'Yes' or 'No' ]]
   				</para>
   			</td>
   			<td>
