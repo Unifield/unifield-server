@@ -479,7 +479,6 @@
                        <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
                        <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
                        <group name="display_active_filter" invisible="1">
-                             <label />
                             <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
                             <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
                        </group>
