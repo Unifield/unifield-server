@@ -101,8 +101,8 @@ class report_project_expenses2(report_sxw.rml_parse):
                 for quad in report_line.account_quadruplet_ids:
                     line_code_name_by_cond[(quad.account_id.id, quad.account_destination_id.id, quad.cost_center_id.id, quad.funding_pool_id.id)] = (report_line.code, report_line.name)
             elif not report_line.reporting_select_accounts_only:
-                for tiplet in report_line.account_destination_ids:
-                    line_code_name_by_cond[(tiplet.account_id.id, tiplet.destination_id.id)] = (report_line.code, report_line.name)
+                for triplet in report_line.account_destination_ids:
+                    line_code_name_by_cond[(triplet.account_id.id, triplet.destination_id.id)] = (report_line.code, report_line.name)
             else:
                 for gl_only in report_line.reporting_account_ids:
                     line_code_name_by_cond[gl_only.id] = (report_line.code, report_line.name)
@@ -115,8 +115,8 @@ class report_project_expenses2(report_sxw.rml_parse):
             if quad_key in line_code_name_by_cond:
                 lines.setdefault(line_code_name_by_cond[quad_key], []).append((analytic_line, line_code_name_by_cond[quad_key][0], line_code_name_by_cond[quad_key][1]))
             elif quad_key[0:2] in line_code_name_by_cond:
-                tiplet_key = quad_key[0:2]
-                lines.setdefault(line_code_name_by_cond[tiplet_key], []).append((analytic_line, line_code_name_by_cond[tiplet_key][0], line_code_name_by_cond[tiplet_key][1]))
+                triplet_key = quad_key[0:2]
+                lines.setdefault(line_code_name_by_cond[triplet_key], []).append((analytic_line, line_code_name_by_cond[triplet_key][0], line_code_name_by_cond[triplet_key][1]))
             elif quad_key[0] in line_code_name_by_cond:
                 gl_key = quad_key[0]
                 lines.setdefault(line_code_name_by_cond[gl_key], []).append((analytic_line, line_code_name_by_cond[gl_key][0], line_code_name_by_cond[gl_key][1]))
