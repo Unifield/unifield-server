@@ -610,7 +610,9 @@ class financing_contract_format_line(osv.osv):
         # US-180: Check if it comes from the sync update
         if context.get('sync_update_execution') and vals.get('format_id', False):
             # US-180: and if the financing contract of the contract format does not exist, then just ignore this update
-            exist = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', vals['format_id'])])
+            exist = self.pool.get('financing.contract.contract').search_exists(cr, uid, [('format_id', '=', vals['format_id'])])
+            if not exist:
+                exist = self.pool.get('financing.contract.donor').search_exists(cr, uid, [('format_id', '=', vals['format_id'])])
             if not exist: # No contract found for this format line
                 return True
 
