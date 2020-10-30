@@ -105,7 +105,7 @@ GET_EXPORT_REQUEST = '''SELECT
         trim(to_char(l.opdd_qty, '999999999999.999')) as l_opdd_qty,
         l.product_amc as product_amc,
         l.product_consumption as product_consumption,
-        mission_report_id,
+        mission_report_id
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
