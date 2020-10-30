@@ -38,6 +38,7 @@ INTEGRITY_STATUS_SELECTION = [
     ('wrong_lot_type', _('Wrong Batch Number Type')),
     ('wrong_lot_type_need_internal', _('Need Expiry Date (Internal) not Batch Number (Standard)')),
     ('wrong_lot_type_need_standard', _('Need Batch Number (Standard) not Expiry Date (Internal)')),
+    ('lot_not_linked_to_prod', _('BN is linked to another product')),
     ('empty_picking', _('Empty Picking Ticket')),
     # return ppl
     ('return_qty_too_much', _('Too much quantity selected')),

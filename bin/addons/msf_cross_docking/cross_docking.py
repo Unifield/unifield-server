@@ -398,84 +398,10 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
         self.action_assign(cr, uid, ids, context)
         return False
 
-    def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        This hook refers to delivery_mechanism>delivery_mechanism.py>_do_incoming_shipment.
-        It updates the location_dest_id (to cross docking or to stock)
-        of selected stock moves when the linked 'incoming shipment' is validated
-        -> only related to 'in' type stock.picking
-        '''
-        values = super(stock_picking, self)._do_incoming_shipment_first_hook(cr, uid, ids, context=context, *args, **kwargs)
-        assert values is not None, 'missing values'
-        if context is None:
-            context = {}
-
-        # UF-1617: If the case comes from the sync_message, then just return the values, not the wizard stuff
-        if context.get('sync_message_execution', False):
-            return values
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # take ids of the wizard from the context.
-        # NB: the wizard_ids is created in delivery_mechanism>delivery_mecanism.py> in the method "_stock_picking_action_process_hook"
-        wiz_ids = context.get('wizard_ids')
-        res = {}
-        if not wiz_ids:
-            return res
-# ------ check the allocation setup ------------------------------------------------------------------------------
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-
-# ------ referring to locations 'cross docking' and 'stock' ------------------------------------------------------
-        obj_data = self.pool.get('ir.model.data')
-        if setup.allocation_setup != 'unallocated':
-            cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-        stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-        stock_location_service = self.pool.get('stock.location').get_service_location(cr, uid)
-        stock_location_non_stockable = self.pool.get('stock.location').search(cr, uid, [('non_stockable_ok', '=', True)])
-        if stock_location_non_stockable:
-            stock_location_non_stockable = stock_location_non_stockable[0]
-# ----------------------------------------------------------------------------------------------------------------
-        partial_picking_obj = self.pool.get('stock.partial.picking')
-        # We browse over the wizard (stock.partial.picking)
-        for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
-            """For incoming shipment """
-            # we check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
-            if var.dest_type == 'to_cross_docking':
-                if setup.allocation_setup == 'unallocated':
-                    raise osv.except_osv(_('Error'), _("""You cannot made moves from/to Cross-docking locations
-                    when the Allocated stocks configuration is set to \'Unallocated\'."""))
-                # below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is
-                # "default"and we do not want that info on INCOMING shipment
-                var.source_type = None
-                product_id = values['product_id']
-                product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
-                values.update({'location_dest_id': cross_docking_location})
-                values.update({'cd_from_bo': True})
-            elif var.dest_type == 'to_stock':
-                var.source_type = None
-                # below, "source_type" is only used for the outgoing shipment. We set it to "None" because
-                #by default it is "default"and we do not want that info on INCOMING shipment
-                product_id = values['product_id']
-                product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
-                if product_type == 'consu' and stock_location_non_stockable:
-                    values.update({'location_dest_id': stock_location_non_stockable})
-                elif product_type == 'service_recep' and stock_location_service:
-                    values.update({'location_dest_id': stock_location_service})
-                else:
-                    # treat moves towards STOCK if NOT SERVICE
-                    values.update({'location_dest_id': stock_location_input})
-                values.update({'cd_from_bo': False})
-
-            # Set the 'Direct to stock' boolean field
-            if var.dest_type != 'to_cross_docking':
-                values['direct_incoming'] = var.direct_incoming
-
-        return values
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
         hook to update defaults data of the current object, which is stock.picking.
-        The defaults data are taken from the _do_partial_hook which is on the stock_partial_picking
         osv_memory object used for the wizard of deliveries.
         For outgoing shipment
         '''

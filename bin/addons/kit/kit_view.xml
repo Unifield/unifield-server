@@ -358,7 +358,7 @@
             <field name="type">tree</field>
 			<field name="priority">16</field>
             <field name="arch" type="xml">
-            	<tree string="Kit Item" editable="top" hide_new_button="True" hide_delete_button="True">
+            	<tree string="Kit Item" noteditable="1" hide_new_button="True" hide_delete_button="True">
             		<field name="item_kit_name" />
             		<field name="item_kit_id" />
             		<field name="item_module" readonly="True" />
@@ -381,7 +381,7 @@
             <field name="type">tree</field>
 			<field name="priority">17</field>
             <field name="arch" type="xml">
-            	<tree string="Kit Item" editable="top" hide_new_button="True" hide_delete_button="True">
+            	<tree string="Kit Item" noteditable="1" hide_new_button="True" hide_delete_button="True">
             		<field name="item_kit_id" string="Kit/Product" />
             		<field name="item_kit_batch" />
             		<field name="item_module" readonly="True" />
