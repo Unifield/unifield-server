@@ -219,6 +219,8 @@ class financing_contract_format_line(osv.osv):
             funding_pool_ids = [x for x in funding_pool_ids if x not in fp_ids]
             funding_pool_domain = self._create_domain('account_id', funding_pool_ids)
             gen_domain['funding_pool_domain'] = funding_pool_domain
+        else:
+            gen_domain['funding_pool_domain'] = "('account_id', 'in', [])"
 
         gen_domain['funding_pool_ids'] = [x.id for x in funding_pool_ids]
         return gen_domain
