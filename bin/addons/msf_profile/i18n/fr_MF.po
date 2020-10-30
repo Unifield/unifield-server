@@ -24507,6 +24507,8 @@ msgstr "Produits Stoppés"
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:431
 #: field:check.products.supplier.updated.wizard,comment:0
 #: field:stock.production.lot,comment:0
+#: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:64
+#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:77
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -69882,9 +69884,9 @@ msgstr "The new UoM is not compatible with the product UoM."
 #: code:addons/msf_doc_import/composition_kit.py:111
 #, python-format
 msgid "You should have exactly 5 columns in this order:\n"
-"Module, Product Code*, Product Description, Quantity and Product UOM"
+"Module, Product Code*, Product Description, Product UOM, Comment, B.Num mandatory and Exp. Date mandatory"
 msgstr "Vous devriez avoir exactement 5 colonnes dans cet ordre:\n"
-"Module, Code Produit*, Description du Produit*, Quantité et UdM du produit"
+"Module, Code Produit*, Description du Produit*, Quantité, UdM du produit, Commentaire, Num. Lot obligatoire et Date Exp. obligatoire"
 
 #. module: sync_client
 #: field:sync.client.register_entity,max_size:0
@@ -77821,9 +77823,9 @@ msgstr "Étape"
 #: code:addons/msf_doc_import/composition_kit.py:206
 #, python-format
 msgid "You should have exactly 8 columns in this order:\n"
-"Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Batch Number, Expiry Date"
+"Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Comment, Asset, Batch Number, Expiry Date, B.Num mandatory and Exp. Date mandatory"
 msgstr "Vous devriez avoir exactement 8 colonnes dans cet ordre:\n"
-"Module, Code Produit*, Description du Produit*, Quantité et UdM du produit, Bien, Numéro de lot, Date d'expiration"
+"Module, Code Produit*, Description du Produit*, Quantité, UdM du produit, Commentaire, Bien, Numéro de lot, Date d'expiration, Num. Lot obligatoire, Date Exp. obligatoire"
 
 #. module: account_corrections
 #: view:reverse.manual.correction.wizard:0
@@ -107204,13 +107206,17 @@ msgstr "Min"
 msgid "Min Qty"
 msgstr "Min Qté"
 
-#. module: procurement_cycle
+#. module: procurement_cycle, msf_supply_doc_export
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:921
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:967
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:399
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:427
+#: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:83
+#: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:84
+#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:106
+#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:107
 msgid "N"
 msgstr "N"
 
@@ -108067,12 +108073,16 @@ msgstr "Attention: la configuration de la zone est inactive"
 msgid "Warnings Recap"
 msgstr "Avertissements"
 
-#. module: procurement_cycle
+#. module: procurement_cycle, msf_supply_doc_export
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:921
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:967
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:399
+#: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:83
+#: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:84
+#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:106
+#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:107
 msgid "Y"
 msgstr "O"
 
@@ -110320,3 +110330,20 @@ msgstr "Annuler la Mise à Jour"
 #: view:product.mass.update:0
 msgid "Delete Selected Products"
 msgstr "Supprimer les Produits Sélectionnés"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:65
+#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:81
+msgid "B.Num mandatory"
+msgstr "Num. Lot obligatoire"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:66
+#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:82
+msgid "Exp. Date mandatory"
+msgstr "Date Exp. obligatoire"
+
+#. module: kit
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:122
+msgid "Product Comments"
+msgstr "Commentaires du Produit"

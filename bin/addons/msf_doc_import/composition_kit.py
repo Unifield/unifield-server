@@ -61,7 +61,7 @@ class composition_kit(osv.osv):
             if any([item for item in obj.composition_item_ids if item.to_correct_ok]):
                 raise osv.except_osv(_('Warning !'), _('Please fix the line with errors (red lines)'))
         return res
-    
+
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines form file
@@ -107,9 +107,9 @@ class composition_kit(osv.osv):
             line_num += 1
             # Check length of the row
             col_count = len(row)
-            if col_count != 5:
+            if col_count != 8:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
-Module, Product Code*, Product Description, Quantity and Product UOM"""))
+Module, Product Code*, Product Description, Quantity, Product UOM, Comment, B.Num mandatory and Exp. Date mandatory"""))
 
             if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                 continue
@@ -134,11 +134,15 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'])
             to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list'], 'qty': qty})
 
+            # Cell 5: Comment
+            to_write.update({'comment': row.cells[5] and row.cells[5].data or ''})
+
             line_data = {'item_product_id': to_write['product_id'],
                          'item_uom_id': to_write['product_uom'],
                          'item_qty': to_write['qty'],
                          'item_module': module,
                          'item_kit_id': item_kit_id,
+                         'comment': to_write['comment'],
                          'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                          'text_error': '\n'.join(to_write['error_list'])}
 
@@ -202,9 +206,9 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             line_num += 1
             # Check length of the row
             col_count = len(row)
-            if col_count < 5 or col_count > 8:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
-Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Batch Number, Expiry Date"""))
+            if col_count < 5 or col_count > 11:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 11 columns in this order:
+Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Comment, Asset, Batch Number, Expiry Date, B.Num mandatory and Exp. Date mandatory"""))
 
 #            if not check_line.check_empty_line(row=row, col_count=col_count):
 #                continue
@@ -229,19 +233,22 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Ba
             qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'])
             to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list'], 'qty': qty})
 
-            # Cell 5: Asset
+            # Cell 5: Comment
+            to_write.update({'comment': row.cells[5] and row.cells[5].data or ''})
+
+            # Cell 6: Asset
             asset_value = {}
-            if col_count > 5 and row[5]:
-                asset_value = check_line.compute_asset_value(cr, uid, cell_nb=5, asset_obj=asset_obj, row=row, to_write=to_write, context=context)
+            if col_count > 6 and row[6]:
+                asset_value = check_line.compute_asset_value(cr, uid, cell_nb=6, asset_obj=asset_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
 
-            # Cell 6: Batch (only text)
-            cell_nb = 6
+            # Cell 7: Batch (only text)
+            cell_nb = 7
             batch = cell_data_obj.get_cell_data(cr, uid,  ids, row, cell_nb)
 
-            # Cell 7: Expiry Date
+            # Cell 8: Expiry Date
             expiry_date_value = {}
-            expiry_date_value = cell_data_obj.get_expired_date(cr, uid, ids, row, 7, to_write['error_list'], line_num, context)
+            expiry_date_value = cell_data_obj.get_expired_date(cr, uid, ids, row, 8, to_write['error_list'], line_num, context)
             to_write.update({'expiry_date': expiry_date_value})
 
             line_data = {'item_kit_id': item_kit_id,
@@ -249,6 +256,7 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Ba
                          'item_product_id': to_write['product_id'],
                          'item_qty': to_write['qty'],
                          'item_uom_id': to_write['product_uom'],
+                         'comment': to_write['comment'],
                          'item_asset_id': 'asset_id' in to_write and to_write['asset_id'] or False,
                          'item_lot': batch,
                          'item_exp': to_write['expiry_date'],
