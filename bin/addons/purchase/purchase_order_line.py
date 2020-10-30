@@ -1683,6 +1683,7 @@ class purchase_order_line(osv.osv):
                                 'this product, you should than modify ' \
                                 'the quantity ordered to match the supplier criteria.') % info_price.rounding
                     message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
+                    res.setdefault('warning', {})
                     res['warning'].update({'message': message})
 
         # Set the unit price with cost price if the product has no staged pricelist
