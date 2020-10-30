@@ -76469,7 +76469,7 @@ msgstr "Description is mandatory!"
 msgid "Indicative Total Value"
 msgstr "Valeur totale"
 
-#. modules: tender_flow, account_override, purchase_allocation_report, register_accounting, msf_accrual, stock_forecast, analytic, msf_supply_doc_export, stock, msf_order_date, sales_followup, consumption_calculation, purchase_override, specific_rules, kit, out_step, base, purchase, account, msf_outgoing, sale, procurement, sourcing, stock_override, procurement_cycle
+#. modules: tender_flow, account_override, purchase_allocation_report, register_accounting, msf_accrual, stock_forecast, analytic, msf_supply_doc_export, stock, msf_order_date, sales_followup, consumption_calculation, purchase_override, specific_rules, kit, out_step, base, purchase, account, msf_outgoing, sale, procurement, sourcing, stock_override, procurement_cycle, product
 #: selection:account.invoice,state:0
 #: selection:account.invoice.report,state:0
 #: selection:report.invoice.created,state:0
@@ -76546,6 +76546,7 @@ msgstr "Valeur totale"
 #: selection:replenishment.segment,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
+#: selection:product.mass.update,state:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -101974,11 +101975,6 @@ msgstr " Nouvelles Données "
 
 #. module: product
 #: view:product.mass.update:0
-msgid "Delete Update"
-msgstr "Supprimer la Mise à Jour"
-
-#. module: product
-#: view:product.mass.update:0
 msgid "Apply Update"
 msgstr "Appliquer la Mise à Jour"
 
@@ -110314,3 +110310,13 @@ msgstr "Le Type de Commande doit être le même dans tous les BdCs pour qu'ils s
 #, python-format
 msgid "The Address of the Destination Partner must be the same in all DPOs to be merged."
 msgstr "L'Adresse du Partenaire de Destination doit être le même dans tous les BdCs directs pour qu'ils soient fusionnés."
+
+#. module: product
+#: view:product.mass.update:0
+msgid "Cancel Update"
+msgstr "Annuler la Mise à Jour"
+
+#. module: product
+#: view:product.mass.update:0
+msgid "Delete Selected Products"
+msgstr "Supprimer les Produits Sélectionnés"

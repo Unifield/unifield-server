@@ -71,7 +71,7 @@
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
-                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('expected_prod_creator', '=', True)]">
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('expected_prod_creator', '=', True)]" m2m_selectable="2">
                                 <tree string="Products" hide_edit_button="1" colors="grey:active == False">
                                     <field name="default_code" />
                                     <field name="name" />
@@ -97,10 +97,11 @@
                             </field>
                         </page>
                     </notebook>
-                    <group colspan="4">
-                        <field name="state" colspan="2" />
-                        <button name="cancel_update" string="Delete Update" icon="gtk-cancel" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                        <button name="launch_update" string="Apply Update" icon="gtk-go-forward" colspan="1" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="state" />
+                    <group col="3" colspan="6">
+                        <button name="cancel_update" string="Cancel Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="delete_products" string="Delete Selected Products" icon="gtk-del" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" set_ids="product_ids"/>
+                        <button name="launch_update" string="Apply Update" icon="gtk-go-forward" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     </group>
                 </form>
             </field>
@@ -111,7 +112,7 @@
             <field name="model">product.mass.update</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1" colors="blue:state in ('draft');red:state in ('error')">
+                <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1" colors="blue:state in ('draft');red:state in ('error');grey:state in ('cancel')">
                     <field name="name"/>
                     <field name="product_ids"/>
                     <field name="date_done"/>
@@ -184,13 +185,17 @@
                         <field name="date_done"  attrs="{'invisible': [('state', '!=', 'done')]}" />
                         <field name="user_id"  attrs="{'invisible': [('state', '!=', 'done')]}" />
                     </group>
-                    <button name="change_bn_ed" string="Apply Update" icon="gtk-go-forward" colspan="4" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <group colspan="4" col="6">
+                        <button name="cancel_update" string="Cancel Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="delete_products" string="Delete Selected Products" icon="gtk-del" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" set_ids="product_ids"/>
+                        <button name="change_bn_ed" string="Apply Update" icon="gtk-go-forward" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    </group>
                     <notebook colspan="4">
                         <page string="Products" attrs="{'invisible': [('state', '=', 'done')]}">
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
-                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('expected_prod_creator', '=', 'bned')]" context="{'display_batch_attr': 1}">
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('expected_prod_creator', '=', 'bned')]" context="{'display_batch_attr': 1}" m2m_selectable="2">
                                 <tree string="Products" hide_edit_button="1" colors="grey:active == False">
                                     <field name="default_code" />
                                     <field name="name" />
