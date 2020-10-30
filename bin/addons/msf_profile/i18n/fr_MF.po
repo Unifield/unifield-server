@@ -5874,6 +5874,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:492
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:356
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:395
+#: report:addons/account/report/export_invoice.mako:125
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -108549,8 +108550,8 @@ msgstr "Fractionner Bon Client"
 #. modules: account_override, register_accounting
 #: view:account.invoice:0
 #: view:account.invoice:0
-msgid "Export Invoice"
-msgstr "Exporter la Facture"
+msgid "Export Invoice Line"
+msgstr "Exporter la Ligne de Facture"
 
 #. module: account
 #: report:addons/account/report/export_invoice.mako:9
@@ -108561,10 +108562,15 @@ msgstr "Export - Facture"
 #. modules: account_override, account, register_accounting
 #: view:account.invoice.import:0
 #: code:addons/account_override/invoice.py:1652
-#: view:account.invoice:0
 #, python-format
 msgid "Import Invoice"
 msgstr "Importer la Facture"
+
+#. modules: account_override, register_accounting
+#: view:account.invoice:0
+#: view:account.invoice:0
+msgid "Import Invoice Line"
+msgstr "Importer la Ligne de Facture"
 
 #. module: account
 #: code:addons/account/wizard/account_invoice_import.py:159

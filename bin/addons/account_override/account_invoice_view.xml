@@ -530,9 +530,9 @@
                                    attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
                             <newline/>
                             <group name="import" string=" Import Lines " colspan="4" col="4">
-                                <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                                <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
                                         attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                                <button name="export_invoice" string="Export Invoice Line" icon="gtk-execute" colspan="2" type="object"
                                         force_editable="1"/>
                                 <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                         attrs="{'invisible': [('state', '!=', 'draft')],
@@ -752,10 +752,10 @@
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
                         <group name="import" string=" Import Lines " colspan="4" col="4"
                                attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}">
-                            <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                            <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
                                     attrs="{'readonly': [('state', '!=', 'draft')],
                                             'invisible': [('type', '!=', 'out_invoice')]}"/>
-                            <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                            <button name="export_invoice" string="Export Invoice Line" icon="gtk-execute" colspan="2" type="object"
                                     attrs="{'invisible': [('type', '!=', 'out_invoice')]}"
                                     force_editable="1"/>
                             <newline/>
