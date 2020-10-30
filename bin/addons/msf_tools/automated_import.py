@@ -27,6 +27,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+from tools import config
 from ftplib import FTP
 
 
@@ -71,6 +72,12 @@ class automated_import(osv.osv):
                 )
 
         return True
+
+    def _get_isadmin(self, cr, uid, ids, *a, **b):
+        ret = {}
+        for _id in ids:
+            ret[_id] = uid == 1
+        return ret
 
     _columns = {
         'name': fields.char(
@@ -141,6 +148,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'is_admin': fields.function(_get_isadmin, method=True, type='boolean', string='Is Admin'),
     }
 
     _defaults = {
@@ -149,6 +157,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'active': lambda *a: False,
         'priority': lambda *a: 10,
         'ftp_protocol': lambda *a: 'ftp',
+        'is_admin': lambda obj, cr, uid, c: uid == 1,
     }
 
     _sql_constraints = [
@@ -274,6 +283,24 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             raise osv.except_osv(_('Error'), msg)
 
         return True
+
+    def local_autoconfig(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        main_path = os.path.join(config.get('root_path'), 'vi_auto_import')
+        write_me = {'ftp_source_ok': False, 'ftp_dest_ok': False, 'ftp_dest_fail_ok': False, 'ftp_report_ok': False, 'ftp_ok': False, 'active': True, 'interval_unit': 'months', 'interval': 12}
+        for directory in ['src_path', 'dest_path', 'dest_path_failure', 'report_path']:
+            target = os.path.join(main_path, directory)
+            write_me[directory] = target
+            if not os.path.exists(target):
+                os.makedirs(target)
+
+        for job in self.read(cr, uid, ids, ['name'], context=context):
+            self.log(cr, uid, job['id'], 'Auto configuration done on job %s' % job['name'])
+        self.write(cr, uid, ids, write_me, context=context)
+        return True
+
 
     def run_job_manually(self, cr, uid, ids, context=None, params=None):
         """

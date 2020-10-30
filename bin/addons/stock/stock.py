@@ -30,6 +30,7 @@ import netsvc
 import tools
 import decimal_precision as dp
 import logging
+import math
 from osv.orm import browse_record
 
 # Common method used on stock.location.instance and stock.location
@@ -169,6 +170,10 @@ class stock_location(osv.osv):
         res_products_by_location = sorted(dict1+dict2, key=itemgetter('location_id'))
         products_by_location = dict((k, [v['product_id'] for v in itr]) for k, itr in groupby(res_products_by_location, itemgetter('location_id')))
 
+        lang_obj = self.pool.get('res.lang')
+        lang_ids = lang_obj.search(cr, uid, [('code', '=', context.get('lang', 'en_US'))])
+        lang = lang_obj.browse(cr, uid, lang_ids[0])
+
         result = dict([(i, {}.fromkeys(field_names, 0.0)) for i in ids])
         result.update(dict([(i, {}.fromkeys(field_names, 0.0)) for i in list(set([aaa['location_id'] for aaa in res_products_by_location]))]))
 
@@ -180,25 +185,37 @@ class stock_location(osv.osv):
                 product_ids = [prod_id]
             c = (context or {}).copy()
             c['location'] = loc_id
-            for prod in product_product_obj.read(cr, uid, product_ids,
-                                                 ['qty_available',
-                                                  'virtual_available',
-                                                  'standard_price',], context=c):
+            for prod in product_product_obj.browse(cr, uid, product_ids,
+                                                   fields_to_fetch=['qty_available', 'virtual_available',
+                                                                    'standard_price', 'uom_id'], context=c):
+
+                if prod.uom_id:
+                    digits = int(abs(math.log10(prod.uom_id.rounding)))
+                else:
+                    digits = 2
+
                 for f in field_names:
-                    if f == 'stock_real':
+                    if f in ['stock_real', 'stock_real_uom_rounding']:
                         if loc_id not in result:
                             result[loc_id] = {}
-                        result[loc_id][f] += prod['qty_available']
-                    elif f == 'stock_virtual':
-                        result[loc_id][f] += prod['virtual_available']
+                        result[loc_id][f] += prod.qty_available
+                    elif f in ['stock_virtual', 'stock_virtual_uom_rounding']:
+                        result[loc_id][f] += prod.virtual_available
                     elif f == 'stock_real_value':
-                        amount = prod['qty_available'] * prod['standard_price']
+                        amount = prod.qty_available * prod.standard_price
                         amount = currency_obj.round(cr, uid, currency.rounding, amount)
                         result[loc_id][f] += amount
                     elif f == 'stock_virtual_value':
-                        amount = prod['virtual_available'] * prod['standard_price']
+                        amount = prod.virtual_available * prod.standard_price
                         amount = currency_obj.round(cr, uid, currency.rounding, amount)
                         result[loc_id][f] += amount
+
+                # Format the stock using the product's rounding
+                if 'stock_real_uom_rounding' in field_names:
+                    result[loc_id]['stock_real_uom_rounding'] = lang.format('%.' + str(digits) + 'f', result[loc_id]['stock_real_uom_rounding'] or 0, True)
+                if 'stock_virtual_uom_rounding' in field_names:
+                    result[loc_id]['stock_virtual_uom_rounding'] = lang.format('%.' + str(digits) + 'f', result[loc_id]['stock_virtual_uom_rounding'] or 0, True)
+
         return result
 
     def _get_coordo_db_id(self, cr, uid, ids, field_names, arg, context=None):
@@ -296,6 +313,8 @@ class stock_location(osv.osv):
 
         'stock_real': fields.function(_product_value, method=True, type='float', string='Real Stock', multi="stock"),
         'stock_virtual': fields.function(_product_value, method=True, type='float', string='Virtual Stock', multi="stock"),
+        'stock_real_uom_rounding': fields.function(_product_value, method=True, type='char', size=32, string='Real Stock', multi="stock"),
+        'stock_virtual_uom_rounding': fields.function(_product_value, method=True, type='char', size=32, string='Virtual Stock', multi="stock"),
 
         'location_id': fields.many2one('stock.location', 'Parent Location', select=True, ondelete='cascade'),
         'child_ids': fields.one2many('stock.location', 'location_id', 'Contains'),
@@ -774,12 +793,13 @@ class stock_picking(osv.osv):
 
     def _get_object_name(self, cr, uid, ids, field_name, args, context=None):
         ret = {}
-        for pick in self.read(cr, uid, ids, ['is_subpick', 'subtype'], context=context):
+        for pick in self.read(cr, uid, ids, ['is_subpick', 'subtype', 'flow_type'], context=context):
+            flow_type = dict(self.fields_get(cr, uid, context=context)['flow_type']['selection']).get(pick['flow_type'])
             if pick['subtype'] == 'picking':
                 if pick['is_subpick']:
-                    ret[pick['id']] = _('Picking Ticket')
+                    ret[pick['id']] = _('Picking Ticket - %s Flow') % (flow_type,)
                 else:
-                    ret[pick['id']] = _('Picking List')
+                    ret[pick['id']] = _('Picking List - %s Flow') % (flow_type,)
             else:
                 ret[pick['id']] = False
         return ret
@@ -884,29 +904,6 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         res = kwargs['res']
-        return res
-
-    def action_process(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None: context = {}
-        partial_id = self.pool.get("stock.partial.picking").create(
-            cr, uid, {}, context=dict(context, active_ids=ids))
-        res = {
-            'name':_("Products to Process"),
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': 'stock.partial.picking',
-            'res_id': partial_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': dict(context, active_ids=ids)
-        }
-        # hook on view dic
-        res = self._stock_picking_action_process_hook(cr, uid, ids, context=context, res=res,)
         return res
 
     def _erase_prodlot_hook(self, cr, uid, id, context=None, *args, **kwargs):

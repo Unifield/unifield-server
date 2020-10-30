@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -83,12 +83,13 @@ class report_batch_recall(osv.osv):
     _description = 'Batch Location'
     _auto = False
     _columns = {
-        'product_id':fields.many2one('product.product', 'Product', readonly=True),
+        'product_id': fields.many2one('product.product', 'Product', readonly=True),
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch Number', readonly=True),
         'expired_date': fields.date('Expired Date', readonly=True),
-        'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'product_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id', readonly=True),
         'location_type': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], 'Location Type', required=True),
+        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', readonly=1, write_relate=False, string='UoM'),
     }
 
     def init(self, cr):

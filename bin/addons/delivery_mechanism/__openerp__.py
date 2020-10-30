@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -41,7 +41,6 @@
     ],
     'update_xml': ['security/ir.model.access.csv',
                    'delivery_mechanism_view.xml',
-                   'wizard/stock_partial_move_view.xml',
                    'wizard/change_product_memory_move_view.xml',
                    'wizard/enter_reason_view.xml',
                    ],

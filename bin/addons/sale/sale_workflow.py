@@ -689,9 +689,26 @@ class sale_order_line(osv.osv):
         self.write(cr, uid, ids, vals, context=context)
         context.pop('no_check_line')
 
-        # generate sync message:
         return_info = {}
         for sol in self.browse(cr, uid, ids, context=context):
+            if sol.counterpart_po_line_id and sol.counterpart_po_line_id.state in ('draft', 'validated'):
+                pol_to_cancel = False
+                if sol.product_uom_qty == sol.counterpart_po_line_id.product_qty:
+                    pol_to_cancel = sol.counterpart_po_line_id.id
+                elif sol.product_uom_qty < sol.counterpart_po_line_id.product_qty:
+                    ctx_split = context.copy()
+                    ctx_split['return_new_line_id'] = True
+                    split_id = self.pool.get('split.purchase.order.line.wizard').create(cr, uid, {
+                        'purchase_line_id': sol.counterpart_po_line_id.id,
+                        'original_qty': sol.counterpart_po_line_id.product_qty,
+                        #'old_line_qty': pol_brw.product_qty - spl_brw.new_line_qty,
+                        'new_line_qty': sol.product_uom_qty,
+                    }, context=context)
+                    pol_to_cancel = self.pool.get('split.purchase.order.line.wizard').split_line(cr, uid, split_id, context=ctx_split)
+                if pol_to_cancel:
+                    netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order.line', pol_to_cancel, 'cancel', cr)
+
+            # generate sync message:
             if not (initial_fo_states[sol.id] == 'draft' and not sol.order_id.fo_created_by_po_sync): # draft push FO
                 self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol.id, return_info,
                                                                                       'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)

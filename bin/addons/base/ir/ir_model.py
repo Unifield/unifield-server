@@ -892,7 +892,7 @@ class ir_model_data(osv.osv):
             cr.execute('delete from ir_model_data where res_id=%s and model=%s', (res_id, model))
         return True
 
-    def ir_set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, xml_id=False, view_ids=False):
+    def ir_set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, xml_id=False, view_ids=False, sequence=False):
         if type(models[0])==type([]) or type(models[0])==type(()):
             model,res_id = models[0]
         else:
@@ -919,6 +919,8 @@ class ir_model_data(osv.osv):
             cr.execute('DELETE FROM actions_view_rel WHERE action_id = %s', (res[0],))
             for x in view_ids:
                 cr.execute('INSERT INTO actions_view_rel (action_id, view_id) VALUES (%s, %s)', (res[0], x))
+        if sequence:
+            cr.execute('UPDATE ir_values SET sequence=%s WHERE id=%s', (sequence, res[0]))
         return True
 
     def _process_end(self, cr, uid, modules):

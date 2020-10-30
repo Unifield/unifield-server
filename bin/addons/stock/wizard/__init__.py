@@ -22,8 +22,6 @@
 import stock_traceability
 import stock_move
 import stock_splitinto
-import stock_partial_picking
-import stock_partial_move
 import stock_replacement
 import stock_ups
 import stock_inventory_merge
@@ -32,7 +30,6 @@ import stock_inventory_line_split
 import stock_invoice_onshipping
 import stock_location_product
 import stock_change_standard_price
-import stock_return_picking
 import stock_change_product_qty
 import physical_inventory_select_products
 import physical_inventory_generate_counting_sheet
