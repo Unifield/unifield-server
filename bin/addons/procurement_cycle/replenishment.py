@@ -960,7 +960,7 @@ class replenishment_segment(osv.osv):
                 amc_ids_to_reset.append(x[0])
 
             if amc_ids_to_reset:
-                cr.execute("update replenishment_segment_line_amc set expired_before_rdd=0, expired_between_rdd_oc=0, expired_qty_before_eta=0 where id in %s", (tuple(amc_ids_to_reset),))
+                cr.execute("update replenishment_segment_line_amc set expired_before_rdd=0, expired_between_rdd_oc=0, expired_qty_before_eta=0, fmc_version='X' where id in %s", (tuple(amc_ids_to_reset),))
                 cr.execute("delete from replenishment_segment_line_amc_month_exp where line_amc_id in %s", (tuple(amc_ids_to_reset),))
             cr.execute('''
                 select segment_line_id, sum(reserved_stock), sum(real_stock - expired_before_rdd), sum(expired_before_rdd), sum(expired_between_rdd_oc), bool_or(open_loan), sum(total_expiry_nocons_qty), sum(real_stock), sum(expired_qty_before_eta), sum(sleeping_qty), bool_or(open_donation)
