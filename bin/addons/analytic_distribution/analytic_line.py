@@ -473,9 +473,10 @@ class analytic_line(osv.osv):
                     res.append(aline.id)
         elif account_type == "DEST":
             for aline in self.browse(cr, uid, ids, context=context):
+                # the following check is included into check_fp_acc_dest_compatibility:
+                # account_id in [x.id for x in aline.general_account_id.destination_ids]
                 if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, aline.cost_center_id and aline.cost_center_id.id or False,
                                                       context=context) and \
-                    account_id in [x.id for x in aline.general_account_id.destination_ids] and \
                     ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
                                                            account_id, context=context):
                     res.append(aline.id)
