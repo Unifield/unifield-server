@@ -3053,7 +3053,7 @@ class sale_order_line(osv.osv):
         if vals.get('stock_take_date'):
             self._check_stock_take_date(cr, uid, so_line_ids, context=context)
 
-        if order_id and not context.get('sync_update_execution'):
+        if order_id and not context.get('sync_message_execution'):
             # new line added on COO FO but validated, confirmed, sent after all other lines and reception done on project: new line added on project closed PO (KO)
             if self.pool.get('sale.order').search_exist(cr, uid, [('id', '=', order_id), ('client_order_ref', '!=', False), ('partner_type', 'in', ['internal', 'intermission', 'intersection']), ('procurement_request', '=', False)], context=context):
                 self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', so_line_ids, {},
