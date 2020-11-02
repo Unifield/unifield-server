@@ -1956,3 +1956,8 @@ def get_traceback(error):
     import sys, traceback
     tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
     return ustr(tb_s)
+
+def get_stack():
+    import traceback
+    return ustr("".join(traceback.format_list(traceback.extract_stack())))
+
