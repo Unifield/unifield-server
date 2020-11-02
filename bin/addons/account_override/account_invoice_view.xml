@@ -984,13 +984,13 @@
 
         <!-- Fix customer invoice display with a bypass on 'is_debit_note' set to True -->
         <record id="account.action_invoice_tree1" model="ir.actions.act_window">
-            <field name="name">Customer Invoices</field>
+            <field name="name">Customer Invoices</field>  <!-- Stock Transfer Vouchers -->
             <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', False)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'from_inv_form': True}</field>
+            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>
