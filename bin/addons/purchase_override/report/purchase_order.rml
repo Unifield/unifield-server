@@ -669,7 +669,7 @@
                 </td>
             </tr>
             <tr>
-                [[ (objects[0].show_default_msg and getPoCustomTxt()) or removeParentNode('tr') ]]
+                [[ (objects[0].show_default_msg and getPoCustomTxt() and len(getPoCustomTxt()) &lt; 1000) or removeParentNode('tr') ]]
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
@@ -681,11 +681,13 @@
                 </td>
             </tr>
             <tr>
+                [[ (not objects[0].show_default_msg or (objects[0].show_default_msg and getPoCustomTxt() and len(getPoCustomTxt()) &lt; 1000)) or removeParentNode('tr') ]]
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
             </tr>
             <tr>
+                [[ (not objects[0].show_default_msg or (objects[0].show_default_msg and getPoCustomTxt() and len(getPoCustomTxt()) &lt; 1000)) or removeParentNode('tr') ]]
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
