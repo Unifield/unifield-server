@@ -27,8 +27,8 @@ class account_target_costcenter(osv.osv):
     _trace = True
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Instance', required=True),
-        'cost_center_id': fields.many2one('account.analytic.account', 'Code', domain=[('category', '=', 'OC')], required=True),
+        'instance_id': fields.many2one('msf.instance', 'Instance', required=True, select=1),
+        'cost_center_id': fields.many2one('account.analytic.account', 'Code', domain=[('category', '=', 'OC')], required=True, select=1),
         'cost_center_name': fields.related('cost_center_id', 'name', string="Name", readonly=True, type="text"),
         'is_target': fields.boolean('Is target'),
         'is_top_cost_center': fields.boolean('Top cost centre for budget consolidation'),
