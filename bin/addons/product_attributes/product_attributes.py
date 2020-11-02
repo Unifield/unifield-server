@@ -2268,10 +2268,10 @@ class product_attributes(osv.osv):
         if not in_use_stock:  # Check for Stock Mission Report
             srml_domain = [
                 ('product_id', '=', product.id),
-                '|', '|', '|', '|', '|', '|', '|', '|',
+                '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
                 ('stock_qty', '>', 0), ('in_pipe_coor_qty', '>', 0), ('cross_qty', '>', 0), ('in_pipe_qty', '>', 0),
-                ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('central_qty', '>', 0), ('secondary_qty', '>', 0),
-                ('internal_qty', '>', 0),
+                ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('secondary_qty', '>', 0), ('internal_qty', '>', 0),
+                ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty' '>', 0)
             ]
             if self.pool.get('stock.mission.report.line').search(cr, uid, srml_domain, limit=1, context=context):
                 in_use_stock = True
@@ -2877,9 +2877,9 @@ class product_attributes(osv.osv):
             'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
             'secondary_qty', 'secondary_val',
             'cu_qty', 'cu_val',
-            'central_qty', 'central_val',
             'cross_qty', 'cross_val',
             'wh_qty', 'internal_qty'
+            'quarantine_qty', 'input_qty', 'opdd_qty'
         ]
         cr.execute('''
             update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''

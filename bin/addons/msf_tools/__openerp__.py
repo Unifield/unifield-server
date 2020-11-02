@@ -47,6 +47,7 @@
         'report/report_stopped_products_report.xml',
         'report/report_inconsistencies_view.xml',
         'report/report_inconsistencies_report.xml',
+        'report/report_stock_pipe_per_product_instance_view.xml',
         'automated_import_data.xml',
         'automated_export_data.xml',
     ],

@@ -606,6 +606,14 @@
         </record>
 
         <!-- UF19.0 -->
+        <record id="us_7742_hide_stock_pipe" model="patch.scripts">
+            <field name="method">us_7742_hide_stock_pipe</field>
+        </record>
+
+        <record id="us_7742_update_stock_mission" model="patch.scripts">
+            <field name="method">us_7742_update_stock_mission</field>
+        </record>
+
         <record id="us_2725_uf_write_date_on_products" model="patch.scripts">
             <field name="method">us_2725_uf_write_date_on_products</field>
         </record>

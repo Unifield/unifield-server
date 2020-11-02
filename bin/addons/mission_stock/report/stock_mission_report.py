@@ -80,18 +80,13 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         if create_missing_report and file_name != 'consolidate_mission_stock.xls':
                 # if the requeted attachment don't exists, create it
             msr_obj = pool.get('stock.mission.report')
-            with_valuation = split_stock = False
-            if field_name.startswith('ns_v_vals'):
-                with_valuation = True
-            if field_name.startswith('s_nv_vals'):
-                split_stock = True
+            with_valuation = False
             if field_name.startswith('s_v_vals'):
-                with_valuation = split_stock = True
+                with_valuation = True
 
             msr_obj._get_export(cr, uid, report_id, {},
                                 csv=file_format=='csv', xls=file_format=='xls',
                                 with_valuation=with_valuation,
-                                split_stock=split_stock,
                                 all_products=not display_only_in_stock,
                                 display_only_in_stock=display_only_in_stock,
                                 context=context)
