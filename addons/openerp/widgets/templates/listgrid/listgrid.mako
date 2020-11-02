@@ -101,7 +101,7 @@ if (auto_field && auto_field.val()){
                 if selector == "radio":
                     selector_click += " do_select();"
             %>
-            <input type="${selector}" class="${selector} grid-record-selector"
+            <input type="${selector}" class="${selector} grid-record-selector ignore_changes_when_leaving_page"
                 id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
                 value="${data['id']}"
                 onclick="${selector_click}"/>
@@ -339,7 +339,7 @@ if (auto_field && auto_field.val()){
                                 % if selector:
                                     <th width="1" class="grid-cell selector">
                                         % if selector == 'checkbox':
-                                            <input type="checkbox" class="checkbox grid-record-selector" id="${name}_check_all"  onclick="new ListView('${name}').checkAll(!this.checked)"/>
+                                            <input type="checkbox" class="checkbox grid-record-selector ignore_changes_when_leaving_page" id="${name}_check_all"  onclick="new ListView('${name}').checkAll(!this.checked)"/>
                                         % endif
                                         % if selector != 'checkbox':
                                             <span>&nbsp;</span>

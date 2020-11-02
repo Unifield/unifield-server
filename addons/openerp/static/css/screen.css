@@ -2447,11 +2447,14 @@ table #rr-chrono  {
 }
 #rr-chrono .elt {
 }
+#rr-chrono .oplt {
+  width: 16.66%;
+}
 #rr-chrono .oclt {
-  width: 25%;
+  width: 16.66%;
 }
 #rr-chrono .ovlt {
-  width: 25%;
+  width: 16.66%;
 }
 #rr-chrono .slt {
   width: 25%;
