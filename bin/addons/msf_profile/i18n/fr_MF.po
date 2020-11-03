@@ -110564,7 +110564,12 @@ msgstr "Rapport de Commande d'assemblage de kit"
 #. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.act_wizard_hard_post_all
 msgid "Hard Post All The Entries"
-msgstr "Comptabiliser toutes les écritures"
+msgstr "Comptabiliser Toutes Les Ecritures"
+
+#. module: register_accounting
+#: model:ir.actions.act_window,name:register_accounting.act_wizard_temp_post_all
+msgid "Temp Post All The Entries"
+msgstr "Comptabiliser Temporairement Toutes Les Ecritures"
 
 #. module: register_accounting
 #: view:wizard.hard.posting:0
@@ -110572,9 +110577,19 @@ msgid "Are you sure you want to hard-post <span style=\"font-weight: bold; color
 msgstr "Etes-vous sûr de vouloir comptabiliser <span style=\"font-weight: bold; color: red;\">TOUTES</span> les écritures ?"
 
 #. module: register_accounting
+#: view:wizard.temp.posting:0
+msgid "Are you sure you want to temp-post <span style=\"font-weight: bold; color: red;\">ALL</span> the entries?"
+msgstr "Etes-vous sûr de vouloir comptabiliser temporairement <span style=\"font-weight: bold; color: red;\">TOUTES</span> les écritures ?"
+
+#. module: register_accounting
 #: view:wizard.hard.posting:0
 msgid "Hard Post ALL"
 msgstr "Comptabiliser TOUT"
+
+#. module: register_accounting
+#: view:wizard.temp.posting:0
+msgid "Temp Post ALL"
+msgstr "Comptabiliser TOUT temporairement"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/hard_posting.py:69
