@@ -110568,8 +110568,8 @@ msgstr "Comptabiliser toutes les écritures"
 
 #. module: register_accounting
 #: view:wizard.hard.posting:0
-msgid "Are you sure you want to hard-post <span style=\"font-weight: bold;\">ALL</span> the entries?"
-msgstr "Etes-vous sûr de vouloir comptabiliser <span style=\"font-weight: bold;\">TOUTES</span> les écritures ?"
+msgid "Are you sure you want to hard-post <span style=\"font-weight: bold; color: red;\">ALL</span> the entries?"
+msgstr "Etes-vous sûr de vouloir comptabiliser <span style=\"font-weight: bold; color: red;\">TOUTES</span> les écritures ?"
 
 #. module: register_accounting
 #: view:wizard.hard.posting:0
