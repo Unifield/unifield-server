@@ -65,7 +65,7 @@
             <record id="ir_wizard_temp_post_all" model="ir.values">
                 <field name="key2">client_action_multi</field>
                 <field name="model">account.bank.statement.line</field>
-                <field name="name">Temp Post All The Entries</field>
+                <field name="name">act_wizard_temp_post_all</field>
                 <field eval="'ir.actions.act_window,%d'%ref('act_wizard_temp_post_all')" name="value"/>
                 <field name="key">action</field>
                 <field name="sequence" eval="120"/>

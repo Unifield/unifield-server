@@ -3108,7 +3108,8 @@ class ir_values(osv.osv):
         if context.get('type_posting') and key == 'action' and key2 == 'client_action_multi' and 'account.bank.statement.line' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if v[1] != 'act_wizard_temp_posting' and context['type_posting'] == 'hard' or v[1] != 'act_wizard_hard_posting' and context['type_posting'] == 'temp':
+                if v[1] not in ('act_wizard_temp_posting', 'act_wizard_temp_post_all') and context['type_posting'] == 'hard' or \
+                        v[1] not in ('act_wizard_hard_posting', 'act_wizard_hard_post_all') and context['type_posting'] == 'temp':
                     new_act.append(v)
             values = new_act
         return values
