@@ -412,6 +412,7 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        ad_obj = self.pool.get('analytic.distribution')
         aml_duplication = '__copy_data_seen' in context and 'account.move.line' in context['__copy_data_seen'] or False
         from_duplication = context.get('copy', False) or aml_duplication
         if context.get('from_je_import', False) or from_duplication:
@@ -432,7 +433,15 @@ class account_move_line(osv.osv):
                         vals.update({'destination_id': l.account_id.default_destination_id.id})
                 if l.employee_id.funding_pool_id:
                     vals.update({'analytic_id': l.employee_id.funding_pool_id.id})
-                    if vals.get('cost_center_id') not in [cc.id for cc in l.employee_id.funding_pool_id.cost_center_ids]:
+                    use_default_pf = False
+                    if not ad_obj.check_fp_cc_compatibility(cr, uid, l.employee_id.funding_pool_id.id, l.employee_id.cost_center_id.id,
+                                                            context=context):
+                        use_default_pf = True
+                    elif 'destination_id' in vals and not ad_obj.check_fp_acc_dest_compatibility(cr, uid, l.employee_id.funding_pool_id.id,
+                                                                                                 l.account_id.id, vals['destination_id'],
+                                                                                                 context=context):
+                        use_default_pf = True
+                    if use_default_pf:
                         # Fetch default funding pool: MSF Private Fund
                         try:
                             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
@@ -458,7 +467,7 @@ class account_move_line(osv.osv):
                         to_change = True
 
                     if to_change:
-                        distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {'name': 'check_employee_analytic_distribution'})
+                        distrib_id = ad_obj.create(cr, uid, {'name': 'check_employee_analytic_distribution'}, context=context)
                         vals.update({'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id})
                         # Create funding pool lines
                         self.pool.get('funding.pool.distribution.line').create(cr, uid, vals)

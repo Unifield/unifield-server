@@ -106,7 +106,7 @@ class hq_entries(osv.osv):
                 continue
             if line.analytic_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
-                if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
@@ -119,12 +119,13 @@ class hq_entries(osv.osv):
                     continue
             else: # CASE 4/
                 # C Check, except B
-                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.analytic_id.tuple_destination_account_ids if not x.disabled] and line.analytic_id.id != fp_id:
+                if not ad_obj.check_fp_acc_dest_compatibility(cr, uid, line.analytic_id.id, line.account_id.id,
+                                                              line.destination_id.id, context=context):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: Tuple Account/DEST (%s/%s) not found in FP (%s)') % (line.id or '', line.account_id.code or '', line.destination_id.code or '', line.analytic_id.code or ''))
                     continue
                 # D Check, except B check
-                if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
@@ -458,7 +459,7 @@ class hq_entries(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Change funding pool domain in order to include MSF Private fund
+        Adapts domain for AD fields
         """
         if context is None:
             context = {}
@@ -466,11 +467,9 @@ class hq_entries(osv.osv):
         arch = etree.fromstring(view['arch'])
         fields = arch.xpath('field[@name="analytic_id"]')
         if fields:
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            fields[0].set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+            fields[0].set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
+                                    "('fp_compatible_with_cc_ids', '=', cost_center_id), "
+                                    "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id))]")
         # Change Destination field
         dest_fields = arch.xpath('field[@name="destination_id"]')
         for field in dest_fields:
@@ -479,32 +478,8 @@ class hq_entries(osv.osv):
         return view
 
     def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):
-        """
-        Check given funding pool with destination
-        """
-        # Prepare some values
-        res = {}
-        # If all elements given, then search FP compatibility
-        if destination_id and funding_pool_id and account_id:
-            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
-            # Search MSF Private Fund element, because it's valid with all accounts
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                            'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            # Delete funding_pool_id if not valid with tuple "account_id/destination_id".
-            # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and funding_pool_id != fp_id:
-                res = {'value': {'analytic_id': False}}
-        # If no destination, do nothing
-        elif not destination_id:
-            res = {}
-        # Otherway: delete FP
-        else:
-            res = {'value': {'analytic_id': False}}
-        # If destination given, search if given
-        return res
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_destination(cr, uid, ids, destination_id=destination_id, funding_pool_id=funding_pool_id, account_id=account_id)
 
     def _check_cc(self, cr, uid, ids, context=None):
         """

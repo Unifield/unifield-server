@@ -618,5 +618,9 @@
             <field name="method">us_2725_uf_write_date_on_products</field>
         </record>
 
+        <record id="us_7243_migrate_contract_quad" model="patch.scripts">
+            <field name="method">us_7243_migrate_contract_quad</field>
+        </record>
+
     </data>
 </openerp>
