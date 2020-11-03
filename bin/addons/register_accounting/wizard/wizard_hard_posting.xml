@@ -37,7 +37,7 @@
                         <separator string="Hard Posting"/>
                         <html>
                             <p id="label_hard_post_all" style="text-align:center;">
-                                <translate>Are you sure you want to hard-post <span style="font-weight: bold; color: red;">ALL</span> the entries?</translate>
+                                <translate>Are you sure you want to hard post <span style="font-weight: bold; color: red;">ALL</span> the entries?</translate>
                             </p>
                         </html>
 

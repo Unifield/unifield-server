@@ -50,10 +50,10 @@ class wizard_hard_posting(osv.osv_memory):
                                                   context=context)
                     if not st_line_ids:
                         # UC = lines have been posted since the display of the hard-posting page
-                        raise osv.except_osv(_('Warning'), _('There are no more lines to hard-post for this register. '
+                        raise osv.except_osv(_('Warning'), _('There are no more lines to hard post for this register. '
                                                              'Please refresh the page.'))
                 else:
-                    raise osv.except_osv(_('Warning'), _('Impossible to retrieve automatically the lines to hard-post for this register. '
+                    raise osv.except_osv(_('Warning'), _('Impossible to retrieve automatically the lines to hard post for this register. '
                                                          'Please select them manually and click on "Hard Posting".'))
             # Prepare some values
             tochange = []
@@ -66,7 +66,7 @@ class wizard_hard_posting(osv.osv_memory):
             absl_obj.posting(cr, real_uid, tochange, 'hard', context=context)
             return open_register_view(self, cr, uid, st_line.get('statement_id')[0])
         elif all_lines:
-            raise osv.except_osv(_('Warning'), _('There are no lines to hard-post for this register.'))
+            raise osv.except_osv(_('Warning'), _('There are no lines to hard post for this register.'))
         else:
             raise osv.except_osv(_('Warning'), _('You have to select some lines before using this wizard.'))
 

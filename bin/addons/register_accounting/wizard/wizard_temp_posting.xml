@@ -38,7 +38,7 @@
                         <separator string="Temp Posting"/>
                         <html>
                             <p id="label_temp_post_all" style="text-align:center;">
-                                <translate>Are you sure you want to temp-post <span style="font-weight: bold; color: red;">ALL</span> the entries?</translate>
+                                <translate>Are you sure you want to temp post <span style="font-weight: bold; color: red;">ALL</span> the entries?</translate>
                             </p>
                         </html>
 
