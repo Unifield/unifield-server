@@ -70,7 +70,7 @@ class wizard_temp_posting(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('You have to select some lines before using this wizard.'))
 
     def temp_post_all(self, cr, uid, ids, context=None):
-        self.action_confirm_temp_posting(cr, uid, ids, context=context, all_lines=True)
+        return self.action_confirm_temp_posting(cr, uid, ids, context=context, all_lines=True)
 
 
 wizard_temp_posting()
