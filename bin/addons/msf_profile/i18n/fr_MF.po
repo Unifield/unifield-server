@@ -110337,6 +110337,27 @@ msgstr "Bon de Picking - Flux %s"
 msgid "Picking List - %s Flow"
 msgstr "Liste de Picking - Flux %s"
 
+#. module: purchase
+#: field:po.custom.text,po_text:0
+msgid "PO Custom Text"
+msgstr "Texte de BdC Perso"
+
+#. module: purchase
+#: model:ir.actions.server,name:purchase.ir_actions_server_open_po_custom_text
+msgid "Open PO Customised Text"
+msgstr "Ouvrir le Texte de BdC Personnalisé"
+
+#. module: purchase
+#: model:ir.ui.menu,name:purchase.ir_ui_menu_po_custom_text
+#: view:po.custom.text:0
+msgid "PO Customised Text"
+msgstr "Texte de BdC Personnalisé"
+
+#. module: purchase
+#: field:purchase.order,show_default_msg:0
+msgid "Show PO Default Message"
+msgstr "Montrer le Message de BdC par Défaut"
+
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocg_poc
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocg_poc
