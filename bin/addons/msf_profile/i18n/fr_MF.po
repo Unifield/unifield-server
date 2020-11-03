@@ -110589,7 +110589,7 @@ msgstr "Comptabiliser TOUT"
 #. module: register_accounting
 #: view:wizard.temp.posting:0
 msgid "Temp Post ALL"
-msgstr "Comptabiliser TOUT temporairement"
+msgstr "Comptabiliser TOUT Temporairement"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/hard_posting.py:69
@@ -110598,13 +110598,31 @@ msgid "There are no lines to hard-post for this register."
 msgstr "Il n'y a pas de lignes à comptabiliser pour ce registre."
 
 #. module: register_accounting
+#: code:addons/register_accounting/wizard/temp_posting.py:68
+#, python-format
+msgid "There are no lines to temp-post for this register."
+msgstr "Il n'y a pas de lignes à comptabiliser temporairement pour ce registre."
+
+#. module: register_accounting
 #: code:addons/register_accounting/wizard/hard_posting.py:53
 #, python-format
 msgid "There are no more lines to hard-post for this register. Please refresh the page."
 msgstr "Il n'y a plus de lignes à comptabiliser pour ce registre. Veuillez rafraîchir la page."
 
 #. module: register_accounting
+#: code:addons/register_accounting/wizard/temp_posting.py:52
+#, python-format
+msgid "There are no more lines to temp-post for this register. Please refresh the page."
+msgstr "Il n'y a plus de lignes à comptabiliser temporairement pour ce registre. Veuillez rafraîchir la page."
+
+#. module: register_accounting
 #: code:addons/register_accounting/wizard/hard_posting.py:56
 #, python-format
 msgid "Impossible to retrieve automatically the lines to hard-post for this register. Please select them manually and click on \"Hard Posting\"."
 msgstr "Impossible de récupérer automatiquement les lignes à comptabiliser pour ce registre. Veuillez les sélectionner manuellement et cliquer sur \"Comptabiliser\"."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/temp_posting.py:55
+#, python-format
+msgid "Impossible to retrieve automatically the lines to temp-post for this register. Please select them manually and click on \"Temp Posting\"."
+msgstr "Impossible de récupérer automatiquement les lignes à comptabiliser temporairement pour ce registre. Veuillez les sélectionner manuellement et cliquer sur \"Comptabilisation Temporaire"\"."

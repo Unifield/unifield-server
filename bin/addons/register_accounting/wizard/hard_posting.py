@@ -73,6 +73,7 @@ class wizard_hard_posting(osv.osv_memory):
     def hard_post_all(self, cr, uid, ids, context=None):
         self.action_confirm_hard_posting(cr, uid, ids, context=context, all_lines=True)
 
+
 wizard_hard_posting()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
