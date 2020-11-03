@@ -79,8 +79,8 @@
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['state', 'balance_end_real', 'closing_balance_frozen', 'closing_date', 'notes',  'name',
-                  'open_advance_amount', 'user_id', 'closing_date', 'unrecorded_expenses_amount']
+        fields = ['state', 'balance_end_real', 'closing_balance_frozen', 'closing_date', 'notes', 'name',
+                  'open_advance_amount', 'user_id', 'closing_date', 'unrecorded_expenses_amount', 'responsible_ids']
 
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'account.bank.statement'), ('name', 'in', fields)], context=context)
 
