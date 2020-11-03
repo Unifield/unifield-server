@@ -1406,6 +1406,8 @@ class shipment(osv.osv):
             invoice_id_by_fo = {}
             # For each stock moves, create an invoice line
             for pack in shipment.pack_family_memory_ids:
+                if pack.not_shipped:
+                    continue
                 for move in pack.move_lines:
                     if move.state == 'cancel':
                         continue
