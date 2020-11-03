@@ -58,6 +58,7 @@
                 <field name="view_mode">tree,form</field>
                 <field name="target">new</field>
                 <field name="view_id" ref="wizard_hard_post_all"/>
+                <field name="empty_ids">1</field>
             </record>
             <!-- Add the entry in the Actions section of the menu (with a sequence order) -->
             <record id="ir_wizard_hard_post_all" model="ir.values">
