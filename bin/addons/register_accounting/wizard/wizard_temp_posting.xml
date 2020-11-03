@@ -56,7 +56,7 @@
                 <field name="res_model">wizard.temp.posting</field>
                 <field name="src_model">account.bank.statement.line</field>
                 <field name="view_type">form</field>
-                <field name="view_mode">tree,form</field>
+                <field name="view_mode">form</field>
                 <field name="target">new</field>
                 <field name="view_id" ref="wizard_temp_post_all"/>
                 <field name="empty_ids">1</field>
