@@ -110319,6 +110319,20 @@ msgstr "Veuillez remplir le champ \"Date de Livraison Souhaitée (modifiée)\"."
 msgid "Delivery Requested Date (modified)"
 msgstr "Date de Livraison Souhaitée (modifiée)"
 
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Hide closed"
+msgstr "Non fermées"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Show closed only"
+msgstr "Fermées seulement"
+
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:134
 #, python-format
