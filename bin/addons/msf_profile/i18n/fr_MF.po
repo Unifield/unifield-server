@@ -110560,3 +110560,18 @@ msgstr "Zone Source par Défaut :"
 #, python-format
 msgid "Kitting Order Report"
 msgstr "Rapport de Commande d'assemblage de kit"
+
+#. module: register_accounting
+#: model:ir.actions.act_window,name:register_accounting.act_wizard_hard_post_all
+msgid "Hard Post All The Entries"
+msgstr "Comptabiliser toutes les écritures"
+
+#. module: register_accounting
+#: view:wizard.hard.posting:0
+msgid "Are you sure you want to hard-post <span style=\"font-weight: bold;\">ALL</span> the entries?"
+msgstr "Etes-vous sûr de vouloir comptabiliser <span style=\"font-weight: bold;\">TOUTES</span> les écritures ?"
+
+#. module: register_accounting
+#: view:wizard.hard.posting:0
+msgid "Hard Post ALL"
+msgstr "Comptabiliser TOUT"
