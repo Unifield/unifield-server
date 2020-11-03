@@ -3059,7 +3059,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
         cr.execute('''
             update replenishment_order_calc_line line
                 set
-                    agreed_order_qty = agreed_order_qty + mod(agreed_order_qty, prod.soq_quantity),
+                    agreed_order_qty = agreed_order_qty - mod(agreed_order_qty, prod.soq_quantity) + prod.soq_quantity,
                     rounded_qty = 't'
                 from product_product prod
                 where
