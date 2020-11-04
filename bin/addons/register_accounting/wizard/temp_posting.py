@@ -48,7 +48,8 @@ class wizard_temp_posting(osv.osv_memory):
                                                   [('statement_id', '=', reg_id), ('state', '=', 'draft')],
                                                   context=context)
                     if not st_line_ids:
-                        # UC = lines have been temp-posted since the display of the temp-posting page
+                        # UC: either lines have been temp posted since the display of the temp posting page,
+                        # or the action is performed from the Register Lines View although there are no more Draft lines
                         raise osv.except_osv(_('Warning'), _('There are no more lines to temp post for this register. '
                                                              'Please refresh the page.'))
                 else:

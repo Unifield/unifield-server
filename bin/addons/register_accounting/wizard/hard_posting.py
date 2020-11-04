@@ -49,7 +49,8 @@ class wizard_hard_posting(osv.osv_memory):
                                                   [('statement_id', '=', reg_id), ('state', 'in', ['draft', 'temp'])],
                                                   context=context)
                     if not st_line_ids:
-                        # UC = lines have been posted since the display of the hard-posting page
+                        # UC: either lines have been posted since the display of the hard posting page,
+                        # or the action is performed from the Register Lines View although there are no more Draft or Temp lines
                         raise osv.except_osv(_('Warning'), _('There are no more lines to hard post for this register. '
                                                              'Please refresh the page.'))
                 else:
