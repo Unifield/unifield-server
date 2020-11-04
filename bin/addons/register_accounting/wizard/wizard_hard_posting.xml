@@ -41,7 +41,7 @@
                             </p>
                         </html>
 
-                        <group colspan="4">
+                        <group colspan="6" col="4">
                             <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2"/>
                             <button name="hard_post_all" string="Hard Post ALL"
                                     type="object" icon="gtk-apply" colspan="2"/>
