@@ -68,7 +68,7 @@
                 <field name="name">act_wizard_temp_post_all</field>
                 <field eval="'ir.actions.act_window,%d'%ref('act_wizard_temp_post_all')" name="value"/>
                 <field name="key">action</field>
-                <field name="sequence" eval="120"/>
+                <field name="sequence" eval="110"/>
                 <field eval="True" name="object"/>
             </record>
 
