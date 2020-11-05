@@ -637,26 +637,34 @@ class replenishment_parent_segment(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Warning, to complete Parent Segment, field "Next order to be received by (modified)" must have date filled'))
 
             calc_id = False
+            seg_to_gen = []
+            missing = False
             for seg in pseg.child_ids:
                 if seg.state == 'complete':
                     if seg.missing_order_calc:
-                        self.pool.get('replenishment.segment').log(cr, uid, seg.id, _('%s: data missing from %s. For locale instance please click on "Compute Data", for remote wait the next scheduled task or the next sync. ') % (seg.name_seg, seg.missing_order_calc))
+                        missing = True
+                        self.pool.get('replenishment.segment').log(cr, uid, seg.id, _('%s: data missing from %s. For Main instance please click on "Compute Data". For other instances wait until the next scheduled task or the next sync. ') % (seg.name_seg, seg.missing_order_calc))
                         continue
-                    if not calc_id:
-                        calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
-                            'parent_segment_id': pseg.id,
-                            'description_seg': pseg.description_parent_seg,
-                            'location_config_id': pseg.location_config_id.id,
-                            'location_config_description': pseg.location_config_id.description,
-                            'total_lt': pseg.total_lt,
-                            'time_unit_lt': pseg.time_unit_lt,
-                            'local_location_ids': [(6, 0, [x.id for x in pseg.local_location_ids])],
-                            'remote_location_ids': [(6, 0, [x.id for x in pseg.remote_location_ids])],
-                            'instance_id': pseg.main_instance.id,
-                            'new_order_reception_date': pseg.date_next_order_received_modified or pseg.date_next_order_received,
-                        }, context=context)
-                    self.pool.get('replenishment.segment').generate_order_cacl_inv_data(cr, uid, [seg.id], calc_id=calc_id, context=context)
-                    self.pool.get('replenishment.order_calc').log(cr, uid, calc_id, _('Order Calc generated for %s') % (seg.name_seg, ))
+                    seg_to_gen.add(pseg.child_ids)
+
+            if missing:
+                return True
+            for seg in seg_to_gen:
+                if not calc_id:
+                    calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
+                        'parent_segment_id': pseg.id,
+                        'description_seg': pseg.description_parent_seg,
+                        'location_config_id': pseg.location_config_id.id,
+                        'location_config_description': pseg.location_config_id.description,
+                        'total_lt': pseg.total_lt,
+                        'time_unit_lt': pseg.time_unit_lt,
+                        'local_location_ids': [(6, 0, [x.id for x in pseg.local_location_ids])],
+                        'remote_location_ids': [(6, 0, [x.id for x in pseg.remote_location_ids])],
+                        'instance_id': pseg.main_instance.id,
+                        'new_order_reception_date': pseg.date_next_order_received_modified or pseg.date_next_order_received,
+                    }, context=context)
+                self.pool.get('replenishment.segment').generate_order_cacl_inv_data(cr, uid, [seg.id], calc_id=calc_id, context=context)
+                self.pool.get('replenishment.order_calc').log(cr, uid, calc_id, _('Order Calc generated for %s') % (seg.name_seg, ))
 
             return True
 
