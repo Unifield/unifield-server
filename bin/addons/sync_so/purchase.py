@@ -200,6 +200,10 @@ class purchase_order_line_sync(osv.osv):
                     pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, orig_pol_info.analytic_distribution_id.id, {}, context=context)
                 if orig_pol_info.linked_sol_id:
                     pol_values['origin'] = orig_pol_info.linked_sol_id.order_id.name
+                    # re-synch : line split on last partner, should trigger update to original partner even if the state on the original line is not changed
+                    if not orig_pol_info.linked_sol_id.order_id.procurement_request and orig_pol_info.linked_sol_id.order_id.partner_type not in ('esc', 'external'):
+                        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', orig_pol_info.linked_sol_id.id, {},
+                                                                                              'purchase.order.line.sol_update_original_pol', self.pool.get('sale.order.line')._logger, check_identifier=False, context=context)
 
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:
                 # in case of FO from missing/replacement claim
@@ -213,7 +217,7 @@ class purchase_order_line_sync(osv.osv):
                             self.pool.get('purchase.order.line').write(cr, uid, [claim_po_line.id], {'sync_linked_sol': pol_values['sync_linked_sol']}, context=context)
                             return 'Claim missing processed'
 
-                pol_values['origin'] = self.pool.get('purchase.order').browse(cr, uid, po_ids[0], context=context).origin
+                pol_values['origin'] = self.pool.get('purchase.order').browse(cr, uid, po_ids[0], fields_to_fectch=['origin'], context=context).origin
                 pol_values['from_synchro_return_goods'] = True
 
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)

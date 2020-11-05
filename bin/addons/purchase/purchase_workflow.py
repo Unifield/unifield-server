@@ -16,11 +16,13 @@ class purchase_order_line(osv.osv):
         sol_values = {}
 
         if pol.is_line_split:
+            sol_values['is_line_split'] = True
             split_po_ids = self.search(cr, uid, [('is_line_split', '=', False), ('line_number', '=', pol.line_number), ('order_id', '=', pol.order_id.id)], context=context)
             if split_po_ids:
                 split_po = self.browse(cr, uid, split_po_ids[0], fields_to_fetch=['linked_sol_id'], context=context)
                 if split_po.linked_sol_id:
                     sol_values['line_number'] = split_po.linked_sol_id.line_number
+                    sol_values['original_line_id'] = split_po.linked_sol_id.id
         return sol_values
 
 
