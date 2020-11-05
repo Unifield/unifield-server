@@ -270,6 +270,19 @@ class replenishment_location_config(osv.osv):
                 else:
                     review_id = review_ids[0]
 
+            seg_to_gen = []
+            missing_error = []
+            for segment in segments:
+                if segment.state == 'complete':
+                    if segment.missing_inv_review:
+                        missing_error.append(_('%s Data from instance(s) is missing, please wait for the next scheduled task or the next sync, or if relates to this instance, please use button "Compute Data". Instances missing data are:\n%s') % (segment.name_seg, segment.missing_inv_review))
+                    else:
+                        seg_to_gen.append(segment)
+
+            if missing_error:
+                self.write(cr, uid, config.id, {'last_review_error': "\n".join(missing_error)}, context=context)
+                return True
+
             if not review_id:
                 review_id = review_obj.create(cr, uid, {
                     'location_config_id': config.id,
@@ -284,13 +297,11 @@ class replenishment_location_config(osv.osv):
                     'scheduler_date': config.next_scheduler,
                 }, context=context)
 
-            cr.commit()
             error = []
-            for segment in segments:
+            for segment in seg_to_gen:
                 try:
                     segment_obj.generate_order_cacl_inv_data(cr, uid, [segment.id], review_id=review_id, context=context, review_date=config.next_scheduler, inv_unit=config.time_unit)
                     logger.info('Inventory Review for config %s, segment %s ok' % (config.name, segment.name_seg))
-                    cr.commit()
                 except osv.except_osv, o:
                     error.append('%s %s' % (segment.name_seg, misc.ustr(o.value)))
                     cr.rollback()
@@ -307,6 +318,7 @@ class replenishment_location_config(osv.osv):
                 else:
                     self.write(cr, uid, config.id, {'last_review_error': False}, context=context)
             else:
+                cr.rollback()
                 self.write(cr, uid, config.id, {'last_review_error': "\n".join(error)}, context=context)
         return True
 
@@ -1324,7 +1336,7 @@ class replenishment_segment(osv.osv):
                     else:
                         proposed_order_qty = max(0, line.max_qty - sum_line.get(line.id, {}).get('real_stock') + sum_line.get(line.id, {}).get('reserved_stock_qty') + sum_line.get(line.id, {}).get('expired_qty_before_eta', 0) - line.pipeline_before_rdd)
 
-                        qty_lacking = line.min_qty - sum_line.get(line.id, {}).get('real_stock') + sum_line.get(line.id, {}).get('reserved_stock_qty') - sum_line.get(line.id, {}).get('expired_qty_before_eta')
+                        qty_lacking = min(sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_qty_before_eta') - line.min_qty, 0)
                         if line.status != 'new' and sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_qty_before_eta') <= line.min_qty:
                             if sum_line.get(line.id, {}).get('expired_qty_before_eta'):
                                 wmsg = _('Alert: "inventory – batches expiring before ETA <= Min"')
