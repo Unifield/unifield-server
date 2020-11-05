@@ -657,7 +657,7 @@ class replenishment_parent_segment(osv.osv):
                         missing = True
                         self.pool.get('replenishment.segment').log(cr, uid, seg.id, _('%s: data missing from %s. For Main instance please click on "Compute Data". For other instances wait until the next scheduled task or the next sync. ') % (seg.name_seg, seg.missing_order_calc))
                         continue
-                    seg_to_gen.add(pseg.child_ids)
+                    seg_to_gen.append(seg)
 
             if missing:
                 return True
@@ -682,11 +682,13 @@ class replenishment_parent_segment(osv.osv):
 
     def set_as_cancel_and_cancel_order(self, cr, uid, ids, context=None):
         calc_obj = self.pool.get('replenishment.order_calc')
-        for seg in self.browse(cr, uid, ids, fields_to_fetch=['parent_id'], context=context):
-            calc_ids = calc_obj.search(cr, uid, [('parent_segment_id', '=', seg.parent_id.id), ('state', 'not in', ['cancel', 'closed'])], context=context)
-            if calc_ids:
-                calc_obj.write(cr, uid, calc_ids, {'state': 'cancel'}, context=context)
-        self.set_as_cancel(cr, uid, ids, context=context)
+        seg_obj = self.pool.get('replenishment.segment')
+        calc_ids = calc_obj.search(cr, uid, [('parent_segment_id', 'in', ids), ('state', 'not in', ['cancel', 'closed'])], context=context)
+        if calc_ids:
+            calc_obj.write(cr, uid, calc_ids, {'state': 'cancel'}, context=context)
+        seg_ids = self.pool.get('replenishment.segment').search(cr, uid, [('parent_id', 'in', ids), ('state', 'in', ['draft', 'complete'])], context=context)
+        if seg_ids:
+            seg_obj.set_as_cancel(cr, uid, seg_ids, context=context)
         return True
 
 
