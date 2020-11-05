@@ -705,7 +705,7 @@ class replenishment_parent_segment(osv.osv):
                     parent_hidden.hidden = 't' and
                     config.include_product = 't' and
                     this.state = 'complete' and
-                    this.id in %s
+                    parent_this.id in %s
             ''', (tuple(ids),))
         seg_ids = [x[0] for x in cr.fetchall()]
         cr.execute('''select id from replenishment_segment where parent_id in %s and state in ('draft', 'complete')''', (tuple(ids), ))
@@ -2565,7 +2565,7 @@ class replenishment_segment_line_amc(osv.osv):
             gen_inv_review = False
             full_data = False
 
-            if segment.state == 'complete' and segment.state_parent == 'complete':
+            if segment.state == 'complete' and (segment.state_parent == 'complete' or segment.hidden):
                 gen_inv_review = force_review
                 full_data = True
                 if segment.next_scheduler < datetime_now.strftime('%Y-%m-%d %H:%M:%S') and (not review_date or review_date < datetime_now.strftime('%Y-%m-%d %H:%M:%S')):
