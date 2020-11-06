@@ -1269,6 +1269,24 @@ class purchase_order(osv.osv):
             'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order'),
         }
 
+    def copy_web(self, cr, uid, id, defaults=None, context=None):
+        if defaults is None:
+            defaults = {}
+        is_direct = False
+        if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'direct')], context=context):
+            company_id = self.pool.get('res.users').get_current_company(cr, uid)[0][0]
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
+            defaults['order_type'] = 'regular'
+            defaults['dest_address_id'] = company_id
+            defaults['dest_partner_id'] = cp_address_id
+            defaults['customer_id'] = False
+            is_direct = True
+        new_id = super(purchase_order, self).copy_web(cr, uid, id, defaults, context=context)
+        if is_direct:
+            name = self.read(cr, uid, new_id, ['name'], context=context)['name']
+            self.log(cr, uid, new_id, _('PO %s created by duplication: Order Type changed from DPO to Regular') % name, action_xmlid='purchase.purchase_form_action')
+        return new_id
+
     def copy(self, cr, uid, p_id, default=None, context=None):
         '''
         Remove loan_id field on new purchase.order

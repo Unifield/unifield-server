@@ -111238,3 +111238,8 @@ msgstr "Mauvais format: attendu %d cellules, trouvé %s %s"
 msgid "tips: to import the \"Consolidated all status\" file, remove the \"Order Calc Status\" column\""
 msgstr "astuce: pour importe un Rapport \"tous les statuts\", supprimer las colonne \"Statut Calcul Commande\""
 
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1287
+#, python-format
+msgid "PO %s created by duplication: Order Type changed from DPO to Regular"
+msgstr "BdC %s créé par duplication: Type de Commande modifié de BC Direct à Normal"
