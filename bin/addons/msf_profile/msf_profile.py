@@ -73,7 +73,7 @@ class patch_scripts(osv.osv):
         return True
 
     def us7940_create_parent_seg(self, cr, uid, *a, **b):
-        if not cr.column_exists('replenishment_segment', 'order_validation_lt'):
+        if not cr.column_exists('replenishment_segment', 'order_validation_lt') or not cr.column_exists('replenishment_segment', 'hidden'):
             return True
 
         seg_obj = self.pool.get('replenishment.segment')
