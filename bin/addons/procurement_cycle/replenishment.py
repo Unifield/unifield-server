@@ -480,6 +480,7 @@ class replenishment_parent_segment(osv.osv):
             }
             ret[seg['id']].update(self.compute_next_order_received(cr, uid, ids, seg['time_unit_lt'], seg['order_preparation_lt'],
                                                                    seg['order_creation_lt'], seg['order_validation_lt'], seg['supplier_lt'], seg['handling_lt'], seg['order_coverage'], seg['previous_order_rdd'], seg['date_next_order_received_modified'], context=context).get('value', {}))
+            ret[seg['id']]['order_rdd'] = seg['date_next_order_received_modified'] or ret[seg['id']]['date_next_order_received']
         return ret
 
     def _get_lt(self, cr, uid, ids, field_name, arg, context=None):
@@ -537,6 +538,11 @@ class replenishment_parent_segment(osv.osv):
         'date_preparing': fields.function(_get_date, type='date', method=True, string='Date to start preparing the order', multi='get_date', help='This does not take account of any stockouts not related to order coverage. Calculation: "Next order RDD date" - Total Lead time.'),
         'date_next_order_validated':  fields.function(_get_date, type='date', method=True, string='Date next order to be validated by', multi='get_date', help='This does not take account of any stockouts not related to order coverage. Calculation: "Next order RDD date" - Total Lead time + Internal LT. This isupdated according to value in "Next order to be received by'),
         'date_next_order_received': fields.function(_get_date, type='date', method=True, string='Next order to be received by (calculated)', multi='get_date', help='Calculated according to last order RDDate + OC.'),
+        'order_rdd': fields.function(_get_date, type='date', method=True, string='Order RDD',  multi='get_date',
+                                     store={
+                                         'replenishment.parent.segment': (lambda self, cr, uid, ids, c=None: ids,
+                                                                          ['time_unit_lt', 'order_preparation_lt', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'date_next_order_received_modified', 'previous_order_rdd'], 10),
+                                     }),
         'date_next_order_received_modified': fields.date(string='Next order to be received by (modified)'),
         'child_ids': fields.one2many('replenishment.segment', 'parent_id', 'Segments', readonly=1),
         'hidden': fields.boolean('Hidden', help='Used to store not segemented products with stock/pipeline'),

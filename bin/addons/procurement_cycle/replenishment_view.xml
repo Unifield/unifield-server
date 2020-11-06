@@ -369,8 +369,9 @@
                     <field name="description_parent_seg" />
                     <field name="location_config_id" />
                     <field name="child_ids" />
-                    <field name="date_preparing" />
-                    <field name="date_next_order_validated" />
+                    <field name="date_preparing" string="Preparation date"/>
+                    <field name="date_next_order_validated" string="Order Validation date"/>
+                    <field name="order_rdd" />
                     <field name="state_parent" />
                 </tree>
             </field>
