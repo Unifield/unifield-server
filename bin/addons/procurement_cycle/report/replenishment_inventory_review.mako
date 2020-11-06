@@ -279,6 +279,17 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
   </Style>
+  <Style ss:ID="s1402d">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
   <Style ss:ID="irrel">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -921,11 +932,11 @@
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Min')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Max')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Automatic Supply order  qty')|x}</Data></Cell>
-    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Internal LT (days)')|x}</Data></Cell>
-    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('External LT (days)')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Internal LT')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('External LT')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Total lead time')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Order coverage')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
-    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('SS')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('SS (Qty)')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Buffer (Qty)')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Valid')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('RR-FMC (average for period)')|x}</Data></Cell>
@@ -1004,29 +1015,29 @@
         <Cell ss:StyleID="irrel" />
     % endif
 
-    <Cell ss:StyleID="s140">
+    <Cell ss:StyleID="${'s140' if objects[0].time_unit == 'd' else 's1402d'}">
         % if line.segment_ref_name and line.internal_lt:
             <Data ss:Type="Number">${line.internal_lt}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s140">
+    <Cell ss:StyleID="${'s140' if objects[0].time_unit == 'd' else 's1402d'}">
         % if line.segment_ref_name and line.external_lt:
             <Data ss:Type="Number">${line.external_lt}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s140">
+    <Cell ss:StyleID="${'s140' if objects[0].time_unit == 'd' else 's1402d'}">
         % if line.segment_ref_name and line.total_lt:
             <Data ss:Type="Number">${line.total_lt}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s140">
+    <Cell ss:StyleID="${'s140' if objects[0].time_unit == 'd' else 's1402d'}">
         % if line.segment_ref_name and line.order_coverage:
             <Data ss:Type="Number">${line.order_coverage}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s140">
-        % if line.safety_stock:
-            <Data ss:Type="Number">${line.safety_stock}</Data>
+        % if line.safety_stock_qty:
+            <Data ss:Type="Number">${line.safety_stock_qty}</Data>
         % endif
     </Cell>
 

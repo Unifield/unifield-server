@@ -269,6 +269,8 @@ SELECT res_id, touched
             'res.currency': ['rate_ids'],
             'product.list': [],
             'account.move.reconcile': ['line_id', 'line_partial_ids'],
+            'replenishment.segment': ['line_ids', 'child_ids'],
+            'replenishment.parent.segment': ['child_ids'],
             'shipment': ['picking_ids'],
         }
 
