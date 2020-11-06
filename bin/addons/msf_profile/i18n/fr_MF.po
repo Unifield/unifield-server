@@ -110704,3 +110704,9 @@ msgstr "Zone Source par Défaut :"
 #, python-format
 msgid "Kitting Order Report"
 msgstr "Rapport de Commande d'assemblage de kit"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1287
+#, python-format
+msgid "PO %s created by duplication: Order Type changed from DPO to Regular"
+msgstr "BdC %s créé par duplication: Type de Commande modifié de BC Direct à Normal"
