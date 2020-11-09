@@ -330,7 +330,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             m_index += 1
             else:  # No move found
                 # Look for received qty in the IN(s) linked to a non-stockable product
-                if line.product_id and line.product_id.type == 'consu':
+                if line.product_id and line.product_id.type in ['consu', 'service_recep']:
                     self.cr.execute("""
                         SELECT m.product_qty FROM stock_move m 
                         LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
