@@ -1714,11 +1714,11 @@ class purchase_order(osv.osv):
                 first_order_type = porder.order_type
             elif first_order_type and first_order_type != porder.order_type:
                 raise osv.except_osv(_('Error'), _('The Order Type must be the same in all POs to be merged.'))
-            if porder.order_type == 'direct':
+            if porder.order_type in ['regular', 'direct']:
                 if first_dest_partner is None:
                     first_dest_partner = porder.dest_address_id and porder.dest_address_id.id or False
                 elif first_dest_partner is not None and first_dest_partner != porder.dest_address_id.id:
-                    raise osv.except_osv(_('Error'), _('The Address of the Destination Partner must be the same in all DPOs to be merged.'))
+                    raise osv.except_osv(_('Error'), _('The Address of the Destination Partner must be the same in all POs/DPOs to be merged.'))
 
             old_po_name[porder.id] = porder.name
             if not order_infos:
@@ -1755,7 +1755,7 @@ class purchase_order(osv.osv):
                 continue
 
             # US-6144: Set the dest_partner_id and related_sourcing_id to the one of the template PO
-            if tmpl_data and order_data['order_type'] == 'direct':
+            if tmpl_data and order_data['order_type'] in ['regular', 'direct']:
                 order_data.update({
                     'dest_partner_id': tmpl_data.get('dest_partner_id', False),
                     'related_sourcing_id': tmpl_data.get('related_sourcing_id', False),
