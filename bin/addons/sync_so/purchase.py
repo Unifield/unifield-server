@@ -158,29 +158,27 @@ class purchase_order_line_sync(osv.osv):
             pol_values['set_as_resourced'] = True
             if sol_dict.get('resourced_original_remote_line') and not pol_id:
                 pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
-                # link our resourced PO line with corresponding resourced FO line:
-                if pol_values['resourced_original_line']:
-                    orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['linked_sol_id', 'analytic_distribution_id', 'origin'], context=context)
-                    if orig_po_line.linked_sol_id:
-                        resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
-                        ress_fo = orig_po_line.linked_sol_id.order_id.id
-                        if resourced_sol_id:
-                            pol_values['linked_sol_id'] = resourced_sol_id[0]
-                            self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
-                        pol_values['origin'] = orig_po_line.origin
-                    if orig_po_line.analytic_distribution_id and not pol_values.get('analytic_distribution_id'):
-                        # intersection / mission: copy original AD
-                        pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, orig_po_line.analytic_distribution_id.id, {}, context=context)
             elif sol_dict.get('original_line_id') and not sol_dict.get('is_line_split'):
                 orig_line_ids = self.search(cr, uid, [
                     ('order_id', '=', pol_values['order_id']),
                     ('sync_linked_sol', 'ilike', '%%%s' % sol_dict['original_line_id']['id'].split('/')[-1])
                 ], context=context)
                 if orig_line_ids:
-                    orig_line = self.browse(cr, uid, orig_line_ids[0], context=context)
-                    pol_values['link_so_id'] = orig_line.link_so_id.id
-                    self.pool.get('purchase.order.line').write(cr, uid, orig_line_ids, {'block_resourced_line_creation': True}, context=context)
+                    pol_values['resourced_original_line'] = orig_line_ids[0]
 
+                # link our resourced PO line with corresponding resourced FO line:
+            if pol_values.get('resourced_original_line'):
+                orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['linked_sol_id', 'analytic_distribution_id', 'origin'], context=context)
+                if orig_po_line.linked_sol_id:
+                    resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
+                    ress_fo = orig_po_line.linked_sol_id.order_id.id
+                    if resourced_sol_id:
+                        pol_values['linked_sol_id'] = resourced_sol_id[0]
+                        self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
+                    pol_values['origin'] = orig_po_line.origin
+                if orig_po_line.analytic_distribution_id and not pol_values.get('analytic_distribution_id'):
+                    # intersection / mission: copy original AD
+                    pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, orig_po_line.analytic_distribution_id.id, {}, context=context)
 
         # update PO line:
         kind = ""

@@ -355,6 +355,7 @@ class purchase_order_line(osv.osv):
                 # pol resourced, set orginal line on new line
                 sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False
                 sol_values['resourced_original_remote_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.sync_linked_pol or False
+                sol_values['original_line_id'] = sol_values['resourced_original_line']
             # if PO line has an analytic distribution, we copy it
             ad_id = pol.analytic_distribution_id or pol.order_id.analytic_distribution_id
             if ad_id and not sale_order.procurement_request:
