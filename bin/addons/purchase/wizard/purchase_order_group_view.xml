@@ -26,7 +26,7 @@
                         <html colspan="4">
                             <p>
                                 <translate>
-                                    All information of the PO template will be written in the new PO, <br />except the Delivery Requested date which will be the earliest date of all POs.<br />Any sourcing group will be lost.
+                                    All information of the PO template will be written in the new PO, <br />except the Delivery Requested date which will be the earliest date of all POs.<br />Any sourcing group will be taken from the template PO/DPO.
                                 </translate>
                             </p>
                         </html>

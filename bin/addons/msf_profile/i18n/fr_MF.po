@@ -49690,10 +49690,10 @@ msgstr "A vérifier"
 #. module: purchase_override
 #: view:purchase.order.group:0
 msgid "\n"
-"                                    All information of the PO template will be written in the new PO, <br/>except the Delivery Requested date which will be the earliest date of all POs.<br/>Any sourcing group will be lost.\n"
+"                                    All information of the PO template will be written in the new PO, <br/>except the Delivery Requested date which will be the earliest date of all POs.<br/>Any sourcing group will be taken from the template PO/DPO.\n"
 "                                "
 msgstr "\n"
-"                                    Toutes les informations du modèle de BC seront écrites dans le nouveau BC, <br/>sauf la date de livraison souhaitée qui sera la date la plus ancienne de tous les BCs.<br/>Tout groupe de sourcing sera perdu.\n"
+"                                    Toutes les informations du modèle de BC seront écrites dans le nouveau BC, <br/>sauf la date de livraison souhaitée qui sera la date la plus ancienne de tous les BCs.<br/>Tout groupe de sourcing sera pris du BdC/BdC direct modèle.\n"
 "                                "
 
 #. module: stock
@@ -110720,8 +110720,8 @@ msgstr "Le Type de Commande doit être le même dans tous les BdCs pour qu'ils s
 #. module: purchase
 #: code:addons/purchase/purchase_order.py:1663
 #, python-format
-msgid "The Address of the Destination Partner must be the same in all DPOs to be merged."
-msgstr "L'Adresse du Partenaire de Destination doit être le même dans tous les BdCs directs pour qu'ils soient fusionnés."
+msgid "The Address of the Destination Partner must be the same in all POs/DPOs to be merged."
+msgstr "L'Adresse du Partenaire de Destination doit être le même dans tous les BdCs/BdCs directs pour qu'ils soient fusionnés."
 
 #. module: product
 #: view:product.mass.update:0
