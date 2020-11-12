@@ -110521,7 +110521,7 @@ msgstr "Export du Stock et des Qtés en Cours par Produit et par Instance"
 
 #. module: msf_tools
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:80
-msgid "There is no products to report"
+msgid "There are no products to report"
 msgstr "Il n'y a aucun produit dans le rapport"
 
 #. module: msf_tools
