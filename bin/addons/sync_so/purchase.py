@@ -154,14 +154,20 @@ class purchase_order_line_sync(osv.osv):
         # the current line has been resourced in other instance, so we set it as "sourced_n" in current instance PO in order to
         # create the resourced line in current instance IR:
         ress_fo = False
+        original_sol_id = False
         if sol_dict.get('resourced_original_line'):
             pol_values['set_as_resourced'] = True
             if sol_dict.get('resourced_original_remote_line') and not pol_id:
                 pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
-            elif sol_dict.get('original_line_id') and not sol_dict.get('is_line_split'):
+            elif sol_dict.get('original_line_id') and not sol_dict.get('is_line_split') and not pol_id:
+                original_sol_id = sol_dict['original_line_id']['id'].split('/')[-1]
+            elif not pol_id:
+                original_sol_id = sol_dict['resourced_original_line'].split('/')[-1]
+
+            if original_sol_id:
                 orig_line_ids = self.search(cr, uid, [
                     ('order_id', '=', pol_values['order_id']),
-                    ('sync_linked_sol', 'ilike', '%%%s' % sol_dict['original_line_id']['id'].split('/')[-1])
+                    ('sync_linked_sol', 'ilike', '%%/%s' % original_sol_id)
                 ], context=context)
                 if orig_line_ids:
                     pol_values['resourced_original_line'] = orig_line_ids[0]
