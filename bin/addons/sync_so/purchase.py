@@ -161,8 +161,8 @@ class purchase_order_line_sync(osv.osv):
                 pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
             elif sol_dict.get('original_line_id') and not sol_dict.get('is_line_split') and not pol_id:
                 original_sol_id = sol_dict['original_line_id']['id'].split('/')[-1]
-            elif not pol_id:
-                original_sol_id = sol_dict['resourced_original_line'].split('/')[-1]
+            elif sol_dict['resourced_original_line'].get('id') and not pol_id:
+                original_sol_id = sol_dict['resourced_original_line']['id'].split('/')[-1]
 
             if original_sol_id:
                 orig_line_ids = self.search(cr, uid, [
