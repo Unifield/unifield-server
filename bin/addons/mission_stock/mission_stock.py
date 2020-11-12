@@ -872,6 +872,10 @@ class stock_mission_report(osv.osv):
                         self.update_lines(cr, uid, [report['id']])
 
                 logger.info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                if report['local_report']:
+                    # Update the update date on report
+                    self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+
                 self._get_export(cr, uid, report['id'], product_values,
                                  csv=csv, xls=xls,
                                  with_valuation=with_valuation,
@@ -887,8 +891,6 @@ class stock_mission_report(osv.osv):
                 self.write(cr, uid, [report['id']], {'export_state': 'done',
                                                      'export_error_msg': False}, context=context)
 
-                # Update the update date on report
-                self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                 logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             except Exception as e:
                 cr.rollback()
