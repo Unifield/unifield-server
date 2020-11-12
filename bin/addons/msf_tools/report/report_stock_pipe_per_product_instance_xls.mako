@@ -90,7 +90,7 @@
     <% products = get_products() %>
     % if not products:
         <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_content" ss:MergeAcross="1"><Data ss:Type="String">${_('There is no products to report')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content" ss:MergeAcross="1"><Data ss:Type="String">${_('There are no products to report')|x}</Data></Cell>
         </Row>
     % endif
 
