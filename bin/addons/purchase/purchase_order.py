@@ -2100,7 +2100,7 @@ class purchase_order(osv.osv):
 
         return True
 
-    def order_line_change(self, cr, uid, ids, order_line):
+    def order_line_change(self, cr, uid, ids, order_line, show_default_msg=None):
 
         assert (len(ids) == 1)
 
@@ -2110,8 +2110,13 @@ class purchase_order(osv.osv):
             values = {'no_line': False}
 
         # Also update the 'state' of the purchase order
-        states = self.read(cr, uid, ids, ['state'])
-        values["state"] = states[0]["state"]
+        info = self.read(cr, uid, ids, ['state', 'not_beyond_validated', 'show_default_msg'])
+        values['state'] = info[0]['state']
+        values['not_beyond_validated'] = info[0]['not_beyond_validated']
+
+        if show_default_msg is not None and not values['not_beyond_validated'] and show_default_msg != info[0]['show_default_msg']:
+            # show_default_msg will become read-only but the current value is not saved
+            cr.execute("update purchase_order set show_default_msg=%s where id = %s", (show_default_msg, info[0]['id']))
 
         # We need to fetch and return also the "display strings" for state
         # as it might be needed to update the read-only view...
