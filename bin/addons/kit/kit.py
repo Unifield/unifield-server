@@ -1478,8 +1478,7 @@ class stock_location(osv.osv):
                             WHERE m.location_dest_id in %s AND
                             m.location_id<>m.location_dest_id AND
                             m.product_id=%s AND
-                            m.state='done' AND
-                            (expired_date is null or expired_date >= CURRENT_DATE) """ + sql + """
+                            m.state='done' """ + sql + """
                             GROUP BY m.location_dest_id, loc.parent_left, m.prodlot_id, lot.life_date
 
                             UNION
@@ -1492,8 +1491,7 @@ class stock_location(osv.osv):
                             WHERE m.location_id in %s AND
                             m.location_dest_id<>m.location_id AND
                             m.product_id=%s AND
-                            m.state in ('done', 'assigned') AND
-                            (expired_date is null or expired_date >= CURRENT_DATE) """ + sql + """
+                            m.state in ('done', 'assigned') """ + sql + """
                             GROUP BY m.location_id, loc.parent_left, m.prodlot_id, lot.life_date) as subs
                     GROUP BY location, parent_left, prodlot_id, expired_date
                     ORDER BY expired_date asc, prodlot_id asc, parent_left
