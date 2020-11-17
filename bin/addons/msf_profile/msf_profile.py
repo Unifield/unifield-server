@@ -52,6 +52,11 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_7749_migrate_dpo_flow(self, cr, uid, *a, **b):
+        cr.execute('update purchase_order set po_version=1')
+        cr.execute("update purchase_order set po_version=2, invoice_method='picking' where order_type='direct' and state in ('draft', 'validated')")
+        return True
+
     # UF19.0
     def us_7243_migrate_contract_quad(self, cr, uid, *a, **b):
         quad_obj = self.pool.get('financing.contract.account.quadruplet')

@@ -1253,7 +1253,6 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             if key in invoices and invoices[key]['qty']:
                 si_ref = invoices[key]['inv_number'] or ''
                 si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
-                print invoices[key]['curr_id'], line[24]
                 if invoices[key]['curr_id'] != line[24]:
                     curr_date = currency_date.get_date(self, self.cr, invoices[key]['document_date'], invoices[key]['date'])
                     si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False,

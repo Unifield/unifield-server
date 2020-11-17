@@ -1089,8 +1089,6 @@ class stock_picking(osv.osv):
 
                 # Put the done moves in this new picking
                 done_values = {'picking_id': backorder_id}
-                if not context.get('for_dpo'):
-                    done_values['dpo_line_id'] = 0
                 move_obj.write(cr, uid, done_moves, done_values, context=context)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'create_bo': _('Done'),

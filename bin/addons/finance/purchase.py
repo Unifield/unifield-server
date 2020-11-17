@@ -73,7 +73,7 @@ class purchase_order(osv.osv):
         if po_id:
             po = self.browse(cr, uid, po_id, fields_to_fetch=['order_type', 'state', 'invoice_ids'], context=context)
             po_states = ['done']
-            if po.order_type == 'direct':  # DPO use case: CV and SI are both created at DPO confirmation
+            if po.order_type == 'direct' and po.po_version == 1:  # DPO v1 use case: CV and SI are both created at DPO confirmation
                 po_states = ['confirmed', 'confirmed_p', 'done']
             if po.state in po_states and all(x.state != 'draft' for x in po.invoice_ids):
                 self._finish_commitment(cr, uid, [po.id], context=context)

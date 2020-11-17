@@ -1427,7 +1427,7 @@ class stock_move(osv.osv):
                         vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
             # If the source location and teh destination location are the same, the state should be 'Closed'
-            if vals.get('location_id', False) == vals.get('location_dest_id', False):
+            if vals.get('location_id', False) == vals.get('location_dest_id', False) and vals.get('state') != 'cancel':
                 vals['state'] = 'done'
 
         # Change the reason type of the picking if it is not the same
@@ -1516,7 +1516,7 @@ class stock_move(osv.osv):
             if dest_dict['scrap_location'] and not dest_dict['virtual_location']:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
             # if the source location and the destination location are the same, the state is done
-            if 'location_id' in vals and vals['location_dest_id'] == vals['location_id']:
+            if 'location_id' in vals and vals['location_dest_id'] == vals['location_id'] and vals.get('state') != 'cancel':
                 vals['state'] = 'done'
 
         addr = vals.get('address_id')

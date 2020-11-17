@@ -98,7 +98,6 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         context['from_back_sync'] = True
         for pol in self.browse(cr, uid, ids, context=context):
             to_trigger = False
@@ -112,6 +111,7 @@ class purchase_order_line(osv.osv):
                     so_id = self.pool.get('sale.order').search(cr, uid, [
                         ('name', '=', pol.origin),
                         ('procurement_request', 'in', ['t', 'f']),
+                        ('state', 'not in', ['done', 'cancel']),
                     ], context=context)
                     so_id = so_id and so_id[0] or False
                 if not so_id:
@@ -121,6 +121,8 @@ class purchase_order_line(osv.osv):
                     to_trigger = True
                 create_line = True
             elif pol.linked_sol_id:
+                if pol.linked_sol_id.state in ('done', 'cancel'):
+                    continue
                 sale_order = pol.linked_sol_id.order_id
             else:
                 # case of PO line from scratch, nothing to update

@@ -691,7 +691,7 @@ class stock_move(osv.osv):
                     ( \
                         (move.product_id.track_production and move.location_id.usage == 'production') or \
                         (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
-                        (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                        (move.product_id.track_incoming and move.location_id.usage == 'supplier' and move.location_id.id != move.location_dest_id.id) or   # dpo sync from proj to coo
                         (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
                     )):
                 raise osv.except_osv(_('Error!'),  _('You must assign a batch number for this product.'))
@@ -1628,16 +1628,20 @@ class stock_move(osv.osv):
             if pick_type == 'in' and move.purchase_line_id:
                 # cancel the linked PO line partially or fully:
                 resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or context.get('do_resource', False)
-                pol_product_qty = self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['product_qty'])['product_qty'] # because value in move.purchase_line_id.product_qty has changed since
+                pol_info = self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['product_qty', 'in_qty_remaining']) # because value in move.purchase_line_id.product_qty has changed since
+                pol_product_qty = pol_info['product_qty']
                 partially_cancelled = False
                 if pol_product_qty - move.product_qty != 0:
                     new_line = self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
                     self.write(cr, uid, [move.id], {'purchase_line_id': new_line}, context=context)
                     partially_cancelled = True
+                    if move.purchase_line_id.order_id.order_type == 'direct' and abs(pol_info['in_qty_remaining']) < 0.001:
+                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
                 else:
                     signal = 'cancel_r' if resource else 'cancel'
                     wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
-
+                if move.purchase_line_id.order_id.order_type == 'direct':
+                    continue
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     # If the line will be sourced in another way, do not cancel the OUT move
