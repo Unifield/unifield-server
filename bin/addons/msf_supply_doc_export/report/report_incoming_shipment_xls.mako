@@ -30,7 +30,6 @@
           <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
-        <Protection />
     </Style>
     <Style ss:ID="sheader">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -42,7 +41,6 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
    <Interior ss:Color="#BFBFBF" ss:Pattern="Solid"/>
    <NumberFormat/>
-   <Protection/>
     </Style>
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -52,7 +50,6 @@
           <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
-        <Protection ss:Protected="0" />
     </Style>
   <Style ss:ID="short_date">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -63,7 +60,6 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <NumberFormat ss:Format="Short Date"/>
-   <Protection ss:Protected="0" />
   </Style>
   <Style ss:ID="s67">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -76,7 +72,6 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
    <Interior ss:Color="#FABF8F" ss:Pattern="Solid"/>
    <NumberFormat/>
-   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s64">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -89,12 +84,11 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
    <Interior ss:Color="#F79646" ss:Pattern="Solid"/>
    <NumberFormat/>
-   <Protection/>
   </Style>
 </Styles>
 ## ==================================== we loop over the incoming_shipment "objects" == incoming_shipment  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}" ss:Protected="1">
+<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
 ## definition of the columns' size
 <% nb_of_columns = 17 %>
 <Table x:FullColumns="1" x:FullRows="1">
