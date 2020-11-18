@@ -1354,9 +1354,10 @@ class stock_move(osv.osv):
         # line number correspondance to be checked with Magali
         val_type = vals.get('type', False)
         picking = False
+        sync_dpo_in = False
         if vals.get('picking_id', False):
             picking = pick_obj.read(cr, uid, vals['picking_id'],
-                                    ['move_sequence_id', 'type', 'reason_type_id'], context=context)
+                                    ['move_sequence_id', 'type', 'reason_type_id', 'sync_dpo_in'], context=context)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
                 sequence_id = picking['move_sequence_id'][0]
@@ -1366,6 +1367,7 @@ class stock_move(osv.osv):
 
             if not val_type:
                 val_type = picking['type']
+            sync_dpo_in = picking['sync_dpo_in']
 
         if vals.get('product_id', False):
             product = prod_obj.read(cr, uid, vals['product_id'],
@@ -1386,7 +1388,7 @@ class stock_move(osv.osv):
                         vals['location_id'] = id_nonstock
                     vals['location_dest_id'] = id_pack
                 else:
-                    if picking['type'] != 'out':
+                    if picking['type'] != 'out' and not sync_dpo_in:
                         vals['location_dest_id'] = id_nonstock
 
             if product['batch_management']:
