@@ -881,6 +881,7 @@ class stock_picking(osv.osv):
         'destinations_list': fields.function(_get_destinations_list, method=True, type='char', size=512, string='Destination Location', store=False),
         'customers': fields.char('Customers', size=1026),
         'customer_ref': fields.char('Customer Ref.', size=1026),
+        'sync_dpo_in': fields.boolean('Synced IN for DPO reception', internal=1, help='Used to flag a IN linked to a DPO'),
     }
 
     _defaults = {
@@ -890,6 +891,7 @@ class stock_picking(osv.osv):
         'type': 'in',
         'is_subpick': False,
         'invoice_state': 'none',
+        'sync_dpo_in': False,
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c)
     }
@@ -930,6 +932,7 @@ class stock_picking(osv.osv):
             'claim': False,
             'claim_name': '',
             'from_manage_expired': False,
+            'sync_dpo_in': False,
         }
         for reset_f in to_reset:
             if reset_f not in default:

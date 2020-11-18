@@ -1139,6 +1139,7 @@ class stock_picking(osv.osv):
             'customers': source,
             'shipment_ref': '%s.%s' % (source, data['name']),
             'invoice_state': '2binvoiced',
+            'sync_dpo_in': True,
         }
 
         currency_cache = {}

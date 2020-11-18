@@ -641,7 +641,7 @@ class stock_move(osv.osv):
             context = {}
         if ids:
             cr.execute("""select
-                count(pick.type = 'in' and t.type in ('service_recep', 'service') and not dest.service_location and not dest.cross_docking_location_ok or NULL),
+                count(pick.type = 'in' and t.type in ('service_recep', 'service') and not dest.service_location and not dest.cross_docking_location_ok and not pick.sync_dpo_in or NULL),
                 count(pick.type = 'internal' and not src.cross_docking_location_ok and t.type in ('service_recep', 'service') or NULL),
                 count(pick.type = 'internal' and not dest.service_location and t.type in ('service_recep', 'service') or NULL),
                 count(t.type in ('service_recep', 'service') and pick.type = 'out' and pick.subtype in ('standard', 'picking') and not src.cross_docking_location_ok and not pick.dpo_out or NULL),
