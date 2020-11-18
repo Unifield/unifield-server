@@ -202,6 +202,11 @@ Choose:
                     % else:
                          <script type="text/javascript">
                             jQuery('.save_close:eq(0) button').removeAttr('disabled');
+                            % if all_params and all_params.get('_terp_id') and all_params.get('_terp_model') == 'replenishment.parent.segment':
+                                if(jQuery('#_terp_ids').length) {
+                                    jQuery('#_terp_id').val('${all_params.get('_terp_id')}')
+                                }
+                            % endif
 
                             function close_me() {
                                 if (typeof close_error_window !== 'undefined') {
