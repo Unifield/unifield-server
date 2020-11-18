@@ -186,6 +186,14 @@ class financing_contract_account_quadruplet(osv.osv):
                     cc_ids = [0]
                 if not fp_ids:
                     fp_ids = [0]
+
+                cr.execute('''
+                    update financing_contract_account_quadruplet set disabled='t'
+                    where
+                        funding_pool_id in %s and
+                        cost_center_id in %s
+                ''', (tuple(fp_ids), tuple(cc_ids)))
+
                 cr.execute('''
                     INSERT INTO financing_contract_account_quadruplet
                         (account_destination_name, account_id, cost_center_id, disabled, account_destination_link_id, funding_pool_id, account_destination_id)
