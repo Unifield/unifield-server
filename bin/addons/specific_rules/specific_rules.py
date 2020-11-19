@@ -1248,7 +1248,7 @@ class product_product(osv.osv):
         if context.get('lang'):
             ctx['lang'] = context['lang']
         ctx['default_tree_sort'] = 'posz,name'
-
+        ctx['search_location'] = False
         name = _('Stock by Location')
         if ids:
             prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'], context=ctx)
