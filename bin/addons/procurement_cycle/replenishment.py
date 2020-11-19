@@ -2371,7 +2371,7 @@ class replenishment_segment_line(osv.osv):
                 where
                     parent_seg.hidden = 't' and
                     (product_id, parent_seg.location_config_id) in
-                    (select product_id, parent_seg2.location_config_id from replenishment_segment_line l2, replenishment_segment seg2, replenishment_parent_segment parent_seg2 where parent_seg2.id=seg2.parent_id and l2.id in %s and seg2.id = l2.segment_id and parent_seg.hidden = 'f')
+                    (select product_id, parent_seg2.location_config_id from replenishment_segment_line l2, replenishment_segment seg2, replenishment_parent_segment parent_seg2 where parent_seg2.id=seg2.parent_id and l2.id in %s and seg2.id = l2.segment_id and parent_seg2.hidden = 'f')
             )
             ''', (tuple(ids), ))
 
