@@ -1981,7 +1981,7 @@ class replenishment_segment(osv.osv):
 
     def change_parent_id(self, cr, uid, ids, parent_id, context=None):
         to_populate = [
-            'location_config_id', 'time_unit_lt', 'total_lt', 'internal_lt', 'external_lt', 'order_preparation_lt',
+            'location_config_id', 'time_unit_lt', 'total_lt', 'internal_lt', 'external_lt', 'order_preparation_lt', 'description_parent_seg',
             'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'previous_order_rdd', 'date_preparing',
             'date_next_order_validated', 'date_next_order_received', 'date_next_order_received_modified', 'order_coverage',
             'description', 'ir_requesting_location'
