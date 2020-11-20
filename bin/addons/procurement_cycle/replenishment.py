@@ -647,6 +647,30 @@ class replenishment_parent_segment(osv.osv):
             self.pool.get('replenishment.segment').reset_gen_date(cr, uid, seg_reset, set_draft=False, context=context)
         return True
 
+    def set_as_archived(self, cr, uid, ids, context=None):
+        self.check_inprogress_order_calc(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'state_parent': 'archived'}, context=context)
+        seg_to_archive = []
+        for parent in self.browse(cr, uid, ids, fields_to_fetch=['child_ids'], context=context):
+            for child in parent.child_ids:
+                if child.state not in ('archived', 'cancel'):
+                    seg_to_archive.append(child.id)
+        if seg_to_archive:
+            self.pool.get('replenishment.segment').set_as_archived(cr, uid, seg_to_archive, context=context)
+        return True
+
+    def set_as_cancel(self, cr, uid, ids, context=None):
+        self.check_inprogress_order_calc(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'state_parent': 'cancel'}, context=context)
+        seg_to_cancel = []
+        for parent in self.browse(cr, uid, ids, fields_to_fetch=['child_ids'], context=context):
+            for child in parent.child_ids:
+                if child.state != 'cancel':
+                    seg_to_cancel.append(child.id)
+        if seg_to_cancel:
+            self.pool.get('replenishment.segment').set_as_cancel(cr, uid, seg_to_cancel, context=context)
+        return True
+
     def generate_order_calc(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
