@@ -491,6 +491,7 @@
                     <field name="name_seg" />
                     <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <field name="parent_id" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="change_parent_id(parent_id)"/>
+                    <field name="description_parent_seg" readonly="1"  string="Parent Description"/>
                     <field name="location_config_id" readonly="1"/>
                     <field name="time_unit_lt" readonly="1" />
                     <notebook colspan="4">
