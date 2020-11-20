@@ -87,12 +87,16 @@ class financing_contract_account_quadruplet(osv.osv):
                  account_analytic_account cc,
                  funding_pool_associated_cost_centers fpacc,
                  funding_pool_associated_destinations fpad,
-                 account_destination_link lnk
+                 account_destination_link lnk,
+                 account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
            WHERE
                 fpacc.funding_pool_id = fp.id AND
                 fpacc.cost_center_id = cc.id AND
                 lnk.id = fpad.tuple_id AND
-                fp.id = fpad.funding_pool_id
+                fp.id = fpad.funding_pool_id AND
+                lnk.destination_id = dest.id AND
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
 
            UNION
 
@@ -105,7 +109,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 fp_account_rel,
                 account_target_costcenter target,
                 account_destination_link lnk,
-                account_account  gl_account
+                account_account  gl_account,
+                account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
             where
                 fp.allow_all_cc_with_fp = 't' and
                 cc.type != 'view' and
@@ -115,7 +121,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 fp.select_accounts_only = 't' and
                 fp_account_rel.fp_id = fp.id and
                 fp_account_rel.account_id= gl_account.id and
-                lnk.account_id = gl_account.id
+                lnk.account_id = gl_account.id and
+                lnk.destination_id = dest.id and
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
 
             UNION
 
@@ -128,7 +136,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 funding_pool_associated_cost_centers fpacc,
                 fp_account_rel,
                 account_destination_link lnk,
-                account_account  gl_account
+                account_account  gl_account,
+                account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
             where
                 fp.allow_all_cc_with_fp = 'f' and
                 fpacc.funding_pool_id = fp.id and
@@ -136,7 +146,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 fp.select_accounts_only = 't' and
                 fp_account_rel.fp_id = fp.id and
                 fp_account_rel.account_id= gl_account.id and
-                lnk.account_id = gl_account.id
+                lnk.account_id = gl_account.id and
+                lnk.destination_id = dest.id and
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
 
             UNION
 
@@ -148,7 +160,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 account_analytic_account cc,
                 funding_pool_associated_destinations fpad,
                 account_target_costcenter target,
-                account_destination_link lnk
+                account_destination_link lnk,
+                account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
             where
                 fp.allow_all_cc_with_fp = 't' and
                 cc.type != 'view' and
@@ -157,7 +171,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 target.instance_id = fp.instance_id and
                 fp.select_accounts_only = 'f' and
                 lnk.id = fpad.tuple_id and
-                fp.id = fpad.funding_pool_id
+                fp.id = fpad.funding_pool_id and
+                lnk.destination_id = dest.id and
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
             ) AS combinations
            )""")
         return res
