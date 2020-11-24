@@ -449,7 +449,7 @@ class audittrail_rule(osv.osv):
         "log_create": fields.boolean("Log Creates", help="Select this if you want to keep track of creation on any record of the object of this rule"),
         "log_action": fields.boolean("Log Action", help="Select this if you want to keep track of actions on the object of this rule"),
         "log_workflow": fields.boolean("Log Workflow", help="Select this if you want to keep track of workflow on any record of the object of this rule"),
-        "domain_filter": fields.char(size=128, string="Domain", help="Python expression !"),
+        "domain_filter": fields.char(size=256, string="Domain", help="Python expression !"),
         "state": fields.selection((("draft", "Draft"),
                                    ("subscribed", "Subscribed")),
                                   "State", required=True),
@@ -562,6 +562,10 @@ class audittrail_rule(osv.osv):
                 # TC only on IN
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_tree')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1])
 
             # search if the view does not already exists
             search_domain = [('name', '=', val['name']),
