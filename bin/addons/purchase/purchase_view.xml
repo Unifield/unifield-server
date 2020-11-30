@@ -180,6 +180,13 @@
                     <field name="show_default_msg" attrs="{'readonly': [('not_beyond_validated', '=', False)]}"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                     <newline/>
+                    <group colspan="4" col="8">
+                        <group colspan="4" col="4">
+                            <field name="file_openpyxl_imp" colspan="2" states="draft,validated" />
+                            <button name="test_openpyxl_imp" type="object" string="OpenPyxl Imp" icon="terp-check" colspan="2" states="draft,validated" />
+                        </group>
+                        <button name="test_openpyxl_exp" type="object" string="OpenPyxl Exp" icon="terp-check" colspan="4" />
+                    </group>
                     <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                         <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,validated"/>

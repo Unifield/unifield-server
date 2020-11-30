@@ -30,6 +30,8 @@ import logging
 import pooler
 import json
 import threading
+import openpyxl
+import base64
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from . import PURCHASE_ORDER_STATE_SELECTION
@@ -40,6 +42,8 @@ from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
 from msf_order_date import ZONE_SELECTION
 from sourcing.purchase_order import COMPATS
+from io import BytesIO
+from PIL import Image as PILImage
 
 
 class purchase_order(osv.osv):
@@ -901,6 +905,7 @@ class purchase_order(osv.osv):
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'show_default_msg': fields.boolean(string='Show PO Default Message'),
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
+        'file_openpyxl_imp': fields.binary(string='File Openpyxl', filters='*.xls*'),
     }
     _defaults = {
         'split_during_sll_mig': False,
@@ -1523,6 +1528,50 @@ class purchase_order(osv.osv):
             else:
                 self.infolog(cr, uid, 'Invoice on order (id:%d) already exists for PO %s' % (po_to_inv[o.id], o.name))
         return single and po_to_inv.values()[0] or po_to_inv
+
+    def test_openpyxl_imp(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        po = self.browse(cr, uid, ids, fields_to_fetch=['file_openpyxl_imp'], context=context)[0]
+        if not po.file_openpyxl_imp:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+
+        workbook = openpyxl.load_workbook(filename=BytesIO(base64.decodestring(po.file_openpyxl_imp)))
+        sheet = workbook.active
+
+        values = []
+        for cell in sheet.iter_rows(min_row=1, max_row=5, min_col=1, max_col=3):
+            values.append(cell[0].value or '')
+        self.write(cr, uid, po.id, {'notes': values[1]}, context=context)
+
+        return True
+
+    def test_openpyxl_exp(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        workbook = openpyxl.Workbook()
+        sheet = workbook.worksheets[0]
+
+        sheet["A1"] = "hello"
+        sheet["A2"] = "world!"
+
+        # Add image
+        # img = openpyxl.drawing.image.Image(PILImage.open('addons/purchase/images/test7.png'))
+        # img.anchor = 'A4'
+        # sheet.add_image(img)
+
+        # Add shape/form
+        shape = openpyxl.drawing.shape.Shape(coordinates=((1, 0), (2, 2)), text='Test form', ROUND_RECT='roundRect')
+        shape.anchor = 'B2'
+
+        workbook.save(filename='/tmp/hello_world.xlsx')
+
+        # response = HTTPResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        # workbook.save(response, filename="text.xlsx")
+        # return response
+        return True
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
