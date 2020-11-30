@@ -1692,7 +1692,7 @@ class shipment_additionalitems(osv.osv):
         'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
         'weight': fields.float(digits=(16, 2), string='Weight[kg]'),
         'value': fields.float('Value', help='Total Value of the additional item. The value is to be defined in the currency selected for the partner.'),  # The string is modified in the fields_view_get
-        'kc': fields.boolean('KC', help='Defines whether the additional item is to be kept cool.'),
+        'kc': fields.boolean('CC', help='Defines whether the additional item must respect the cold chain.'),
         'dg': fields.boolean('DG', help='Defines whether the additional item is a dangerous good.'),
         'cs': fields.boolean('CS', help='Defines whether the additional item is a controlled substance.'),
     }
@@ -2333,7 +2333,7 @@ class stock_picking(osv.osv):
         'is_dangerous_good': fields.function(_is_one_of_the_move_lines, method=True,
                                              type='char', size=8, string='Dangerous Good'),
         'is_keep_cool': fields.function(_is_one_of_the_move_lines, method=True,
-                                        type='char', size=8, string='Keep Cool'),
+                                        type='char', size=8, string='Cold Chain'),
         'is_narcotic': fields.function(_is_one_of_the_move_lines, method=True,
                                        type='char', size=8, string='CS'),
         'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',

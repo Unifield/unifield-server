@@ -1300,7 +1300,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             res[line.id] = {
                 'lot_check': product.batch_management,
                 'exp_check': product.perishable,
-                'kc_check': product.kc_txt,
+                'kc_check': product.is_kc and 'X',
                 'dg_check': product.dg_txt,
                 'np_check': product.cs_txt,
                 'move_price_unit': price_unit,
@@ -1412,7 +1412,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             method=True,
             type='char',
             size=8,
-            string='KC',
+            string='CC',
             readonly=True,
             store=False,
             multi='computed',

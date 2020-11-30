@@ -214,7 +214,7 @@ class stock_move(osv.osv):
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         '''
-        function for KC/SSL/DG/NP products
+        function for CC/SSL/DG/NP products
         '''
         # objects
         kit_obj = self.pool.get('composition.kit')
@@ -231,7 +231,7 @@ class stock_move(osv.osv):
 
         product_list_dict = self.pool.get('product.product').read(cr, uid,
                                                                   list(product_ids),
-                                                                  ['kc_txt',
+                                                                  ['is_kc',
                                                                    'ssl_txt',
                                                                    'dg_txt',
                                                                    'cs_txt',
@@ -246,8 +246,8 @@ class stock_move(osv.osv):
             stock_move_id = stock_move_dict['id']
             product_id = stock_move_dict['product_id'][0]
             product = product_dict[product_id]
-            # keep cool
-            result[stock_move_id]['kc_check'] = product['kc_txt']
+            # cold chain
+            result[stock_move_id]['kc_check'] = product['is_kc'] and 'X' or ''
             # ssl
             result[stock_move_id]['ssl_check'] = product['ssl_txt']
             # dangerous goods
@@ -276,7 +276,7 @@ class stock_move(osv.osv):
 
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
-        return 'KC' if cold chain or 'DG' if dangerous goods
+        return 'CC' if cold chain or 'DG' if dangerous goods
         '''
         result = {}
         for id in ids:
@@ -284,8 +284,8 @@ class stock_move(osv.osv):
 
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id:
-                if move.product_id.kc_txt:
-                    result[move.id] += move.product_id.is_kc and _('KC') or '%s ?'%_('KC')
+                if move.product_id.is_kc:
+                    result[move.id] += move.product_id.is_kc and _('CC') or ''
                 if move.product_id.dg_txt:
                     if result[move.id]:
                         result[move.id] += ' / '
@@ -390,10 +390,10 @@ class stock_move(osv.osv):
             result[move['id']] = default_values
             if move['product_id']:
                 product = product_obj.read(cr, uid, move['product_id'][0],
-                                           ['dg_txt', 'kc_txt', 'cs_txt'], context=context)
+                                           ['dg_txt', 'is_kc', 'cs_txt'], context=context)
             result[move['id']]['is_dangerous_good'] = move['product_id'] and product['dg_txt'] or ''
-            # keep cool - if heat_sensitive_item is True
-            result[move['id']]['is_keep_cool'] = move['product_id'] and product['kc_txt'] or ''
+            # cold chain
+            result[move['id']]['is_keep_cool'] = move['product_id'] and product['is_kc'] and 'X' or ''
             # narcotic
             result[move['id']]['is_narcotic'] = move['product_id'] and product['cs_txt'] or ''
         return result
@@ -548,10 +548,10 @@ class stock_move(osv.osv):
         'kol_lot_manual': fields.boolean(string='The batch is set manually'),
 
         # specific rule
-        'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
+        'kc_dg': fields.function(_kc_dg, method=True, string='CC/DG', type='char'),
         'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
         'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='char', size=8, readonly=True, multi="m"),
+        'kc_check': fields.function(_get_checks_all, method=True, string='CC', type='char', size=8, readonly=True, multi="m"),
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='char', size=8, readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='char', size=8, readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='CS', type='char', size=8, readonly=True, multi="m"),
@@ -589,7 +589,7 @@ class stock_move(osv.osv):
         'num_of_packs': fields.function(_get_num_of_pack, method=True, type='integer', string='#Packs'),  # old_multi get_vals
         'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
         'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
-        'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
+        'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Cold Chain', multi='get_danger',),
         'is_narcotic': fields.function(_get_danger, method=True, type='char', size=8, string='CS', multi='get_danger',),
         'sale_order_line_number': fields.function(_vals_get,
                                                   method=True, type='integer', string='Sale Order Line Number',
