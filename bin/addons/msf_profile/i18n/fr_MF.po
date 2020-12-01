@@ -1156,7 +1156,6 @@ msgstr "America/Sao_Paulo"
 #. modules: account, register_accounting, analytic_distribution
 #: report:addons/register_accounting/report/fully_report_xls.mako:575
 #: view:account.analytic.line:0
-#: code:addons/analytic_distribution/analytic_line.py:527
 msgid "CC"
 msgstr "CC"
 
@@ -16517,6 +16516,7 @@ msgstr "%s update%s"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:991
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -24716,6 +24716,7 @@ msgstr "Europe/Bucharest"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:991
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -66702,6 +66703,7 @@ msgstr "Sous-Liste"
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:435
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:223
 #: code:addons/specific_rules/specific_rules.py:53
+#: code:addons/stock/report/physical_inventory_counting_sheet.py:27
 #, python-format
 msgid "CC"
 msgstr "CF"

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
-
+from tools.translate import _
 
 class CountingSheetParser(report_sxw.rml_parse):
 
@@ -23,9 +23,8 @@ class CountingSheetParser(report_sxw.rml_parse):
             return value.format().replace(' ', 'T')
         return value
 
-    @staticmethod
-    def display_product_attributes(item):
-        attributes = {'is_kc': 'CC', 'is_dg': 'DG', 'is_cs': 'CS'}
+    def display_product_attributes(self, item):
+        attributes = {'is_kc': _('CC'), 'is_dg': _('DG'), 'is_cs': _('CS')}
         return ','.join([name for attribute, name in attributes.items() if getattr(item, attribute, False)])
 
     @staticmethod
