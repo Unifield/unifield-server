@@ -2017,6 +2017,8 @@ class purchase_order(osv.osv):
 
         partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
+        pol_obj = self.pool.get('purchase.order.line')
+        cur_obj = self.pool.get('res.currency')
         partner = partner_obj.read(cr, uid, part.id, ['partner_type'])
         if ids:
             # Check the restriction of product in lines
@@ -2027,6 +2029,11 @@ class purchase_order(osv.osv):
                         if test:
                             res.setdefault('value', {}).update({'partner_address_id': False})
                             return res
+                    if order.pricelist_id.currency_id.id != part.property_product_pricelist_purchase.currency_id.id:
+                        new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id,
+                                                    part.property_product_pricelist_purchase.currency_id.id, line.price_unit, round=True)
+                        pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
+
         if partner['partner_type'] in ('internal', 'esc'):
             res['value']['invoice_method'] = 'manual'
 
