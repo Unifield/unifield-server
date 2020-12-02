@@ -1128,6 +1128,7 @@ class stock_picking(osv.osv):
 
         #location_id = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0]
         location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')[1]
+        stock_location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
         pick_data = {
             'physical_reception_date': data['physical_reception_date'],
@@ -1152,8 +1153,10 @@ class stock_picking(osv.osv):
             move_data['dpo_line_id'] = False
             move_data['sync_dpo'] = False
             move_data['purchase_line_id'] = dpo_line_id
+            out_data = {}
+            pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id'], context=context)
             if not pick_data['purchase_id']:
-                po = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id'], context=context).order_id
+                po = pol.order_id
                 if po.order_type != 'direct':
                     raise Exception('PO %s is not a DPO !' % (po.name,))
                 if remote_po_name not in po.customer_ref:
@@ -1166,10 +1169,13 @@ class stock_picking(osv.osv):
                 pick_data['address_id'] = po.partner_address_id.id
                 pick_data['origin'] = po.name
             else:
-                if not purchase_line_obj.search_exists(cr, uid, [('id', '=', dpo_line_id), ('order_id', '=', pick_data['purchase_id'])], context=context):
+                if pol.order_id.id != pick_data['purchase_id']:
                     raise Exception('Line %s, purchase order not found' % (move_data['line_number'],))
             move_data['product_qty'] = move_data['quantity']
             del(move_data['quantity'])
+
+            if move_data['state'] != 'cancel' and pol.sale_order_line_id:
+                out_data.setdefault(pol.sale_order_line_id.order_id, []).append({'sol': pol.sale_order_line_id,  'product_qty': move_data['product_qty']})
 
             cur_sdref = move_line.get('price_currency_id', {}).get('id')
             if cur_sdref:
@@ -1191,6 +1197,21 @@ class stock_picking(osv.osv):
         if pick_data['state'] == 'cancel':
             self.action_cancel(cr, uid, [pick_id])
         else:
+            # create the OUT
+            for so in out_data:
+                out_pick_data = self.pool.get('sale.order')._get_picking_data(cr, uid, so, context=context, force_simple=True)
+                out_pick_data['move_lines'] = []
+                for move_out in out_data[so]:
+                    out_move_data = self.pool.get('sale.order')._get_move_data(cr, uid, so, move_out['sol'], False, context=context)
+                    out_move_data['location_id'] = stock_location_id
+                    out_move_data['location_dest_id'] = stock_location_id
+                    out_move_data['product_uom_qty'] = move_out['product_qty']
+                    out_move_data['product_uos_qty'] =  move_out['product_qty']
+                    out_pick_data['move_lines'].append((0, 0, out_move_data))
+                out_id = self.create(cr, uid, out_pick_data, context=context)
+                print out_pick_data, out_id
+                self.action_done(cr, uid, [out_id], context=context)
+
             for cancelled in move_lines_cancelled:
                 cancelled['picking_id'] = pick_id
                 move_id = move_obj.create(cr, uid, cancelled, context=context)

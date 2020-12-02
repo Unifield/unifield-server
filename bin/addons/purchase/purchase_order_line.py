@@ -585,6 +585,7 @@ class purchase_order_line(osv.osv):
         'closed_date': fields.date('Closed Date', readonly=True),
         'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
         'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
+        'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
     }
 
     _defaults = {
@@ -1267,6 +1268,7 @@ class purchase_order_line(osv.osv):
             'esc_confirmed': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'from_dpo_line_id': False,
         })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
@@ -1280,6 +1282,8 @@ class purchase_order_line(osv.osv):
         if not default:
             default = {}
 
+
+        default['from_dpo_line_id'] = False
         # do not copy canceled purchase.order.line:
         pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id', 'product_id'], context=context)
         if pol.state in ['cancel', 'cancel_r'] and not context.get('allow_cancelled_pol_copy', False):

@@ -1475,7 +1475,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-    def _get_picking_data(self, cr, uid, order, context=None, get_seq=True):
+    def _get_picking_data(self, cr, uid, order, context=None, get_seq=True, force_simple=False):
         """
         Define the values for the picking ticket associated to the
         FO/IR according to order values.
@@ -1531,7 +1531,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     })
                     seq_name =  'stock.picking.internal'
         else:
-            if setup.delivery_process == 'simple':
+            if force_simple or setup.delivery_process == 'simple':
                 picking_data['subtype'] = 'standard'
                 # use the name according to picking ticket sequence
                 seq_name = 'stock.picking.out'
@@ -2282,6 +2282,7 @@ class sale_order_line(osv.osv):
             'from_cancel_out': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'dpo_line_id': False,
         })
 
         if 'ir_name_from_sync' not in default:
@@ -2327,6 +2328,7 @@ class sale_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
             'stock_take_date': False,
+            'dpo_line_id': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
@@ -3053,7 +3055,7 @@ class sale_order_line(osv.osv):
         if vals.get('stock_take_date'):
             self._check_stock_take_date(cr, uid, so_line_ids, context=context)
 
-        if order_id and not context.get('sync_message_execution'):
+        if order_id and not context.get('sync_message_execution') and not vals.get('dpo_line_id'):
             # new line added on COO FO but validated, confirmed, sent after all other lines and reception done on project: new line added on project closed PO (KO)
             if self.pool.get('sale.order').search_exist(cr, uid, [('id', '=', order_id), ('client_order_ref', '!=', False), ('partner_type', 'in', ['internal', 'intermission', 'intersection']), ('procurement_request', '=', False)], context=context):
                 self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', so_line_ids, {},

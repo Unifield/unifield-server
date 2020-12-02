@@ -222,6 +222,12 @@ class sale_order_line(osv.osv):
                 ('type', '=', 'out'),
                 ('product_qty', '!=', 0.0),
             ], context=context)
+            if not has_open_moves and sol.dpo_line_id:
+                # FO sourced to DPO has no OUT
+                has_open_moves = self.pool.get('purchase.order.line').search_exist(cr, uid, [
+                    ('linked_sol_id', '=', sol.id),
+                    ('state', 'not in', ['cancel', 'cancel_r', 'done'])
+                ], context=context)
 
         return not has_open_moves
 
@@ -460,6 +466,8 @@ class sale_order_line(osv.osv):
                 continue
 
             if linked_dpo_line:
+                self.write(cr, uid, sol.id, {'dpo_line_id': linked_dpo_line[0]}, context=context)
+                """
                 picking_obj = self.pool.get('stock.picking')
                 # create or update PICK/OUT:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
@@ -501,6 +509,7 @@ class sale_order_line(osv.osv):
                     invoice_id, inv_type = picking_obj.action_invoice_create_header(cr, uid, picking, journal_id=False, invoices_group=False, type=False, use_draft=True, context=context)
                     if invoice_id:
                         picking_obj.action_invoice_create_line(cr, uid, picking, move, invoice_id, group=False, inv_type=inv_type, partner=sol.order_id.partner_id, context=context)
+                """
 
             else:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)

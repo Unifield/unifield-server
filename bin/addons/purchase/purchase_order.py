@@ -2333,6 +2333,8 @@ class purchase_order(osv.osv):
             'comment': pol.comment,
             'line_number': pol.line_number,
         }
+        if pol.from_dpo_line_id:
+            values['dpo_line_id'] = pol.from_dpo_line_id
 
         if incoming.reason_type_id:
             values.update({'reason_type_id': incoming.reason_type_id.id})

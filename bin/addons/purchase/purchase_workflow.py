@@ -205,6 +205,10 @@ class purchase_order_line(osv.osv):
                                                                                                          ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
                 if pol.created_by_sync:
                     sol_values['created_by_sync'] = True
+
+                if pol.order_id.order_type == 'direct':
+                    sol_values['dpo_line_id'] = pol.id
+
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
 
@@ -691,13 +695,25 @@ class purchase_order_line(osv.osv):
                 # PO nomen (PROJ) => FO (nomen COO)
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
 
+            sourced_on_dpo = pol.from_dpo_line_id
+
             if pol.order_type != 'direct' and not pol.from_synchro_return_goods:
                 # create incoming shipment (IN):
-                in_id = self.pool.get('stock.picking').search(cr, uid, [
-                    ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']),
-                    ('type', '=', 'in'),
-                ])
+
+                if sourced_on_dpo:
+                    in_domain = [
+                        ('purchase_id', '=', pol.order_id.id),
+                        ('state', '=', 'shipped'),
+                        ('type', '=', 'in'),
+                        ('dpo_incoming', '=', True)
+                    ]
+                else:
+                    in_domain = [
+                        ('purchase_id', '=', pol.order_id.id),
+                        ('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']),
+                        ('type', '=', 'in')
+                    ]
+                in_id = self.pool.get('stock.picking').search(cr, uid, in_domain)
                 created = False
                 if not in_id:
                     in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context)
@@ -705,7 +721,10 @@ class purchase_order_line(osv.osv):
                     created = True
                 incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)
                 if created:
-                    wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
+                    if sourced_on_dpo:
+                        wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_shipped', cr)
+                    else:
+                        wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
                 else:
                     self.pool.get('stock.move').in_action_confirm(cr, uid, incoming_move_id, context)
 
