@@ -2258,7 +2258,7 @@ class purchase_order(osv.osv):
             reason_type_id = get_reference('reason_type_in_kind_donation')
         return reason_type_id
 
-    def create_picking(self, cr, uid, order, context=None):
+    def create_picking(self, cr, uid, order, context=None, sourced_on_dpo=False):
         if context is None:
             context = {}
 
@@ -2276,6 +2276,8 @@ class purchase_order(osv.osv):
             'move_lines': [],
         }
 
+        if sourced_on_dpo:
+            values['dpo_incoming'] = True
         reason_type_id = self.get_reason_type_id(cr, uid, order, context)
         if reason_type_id:
             values.update({'reason_type_id': reason_type_id})

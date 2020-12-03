@@ -1006,7 +1006,8 @@ class stock_picking(osv.osv):
                                             (picking_dict['type'])),
                     'move_lines':[],
                     'state':'draft',
-                    'in_dpo': context.get('for_dpo', False),
+                    'in_dpo': context.get('for_dpo', False), # TODO used ?
+                    'dpo_incoming': wizard.picking_id.dpo_incoming,
                 }
 
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -1022,6 +1023,7 @@ class stock_picking(osv.osv):
                         ('purchase_id', '=', picking_dict['purchase_id'][0]),
                         ('in_dpo', '=', True),
                         ('state', '=', 'assigned'),
+
                     ], limit=1, context=context)
                 elif sync_in and picking_dict['purchase_id'] and shipment_ref:
                     backorder_ids = self.search(cr, uid, [

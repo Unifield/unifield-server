@@ -114,18 +114,11 @@ class stock_picking(osv.osv):
 
         res = {}
         for pick in self.browse(cr, uid, ids, context=context):
-            res[pick.id] = {'dpo_incoming': False,
-                            'dpo_out': False}
-            if pick.type == 'in':
-                for move in pick.move_lines:
-                    if move.sync_dpo or move.dpo_line_id:
-                        res[pick.id]['dpo_incoming'] = True
-                        break
-
+            res[pick.id] = False
             if pick.type == 'out' and pick.subtype in ('standard', 'picking'):
                 for move in pick.move_lines:
                     if move.sync_dpo or move.dpo_line_id:
-                        res[pick.id]['dpo_out'] = True
+                        res[pick.id] = True
                         break
         return res
 
@@ -248,10 +241,8 @@ class stock_picking(osv.osv):
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
-        'dpo_incoming': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Incoming', multi='dpo',
-                                        store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
-                                               'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
-        'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out', multi='dpo',
+        'dpo_incoming': fields.boolean(string='DPO Incoming'),
+        'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out',
                                    store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
                                           'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
         'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),

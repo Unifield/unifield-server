@@ -716,7 +716,7 @@ class purchase_order_line(osv.osv):
                 in_id = self.pool.get('stock.picking').search(cr, uid, in_domain)
                 created = False
                 if not in_id:
-                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context)
+                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context, sourced_on_dpo)
                     in_id = [in_id]
                     created = True
                 incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)
@@ -829,7 +829,6 @@ class purchase_order_line(osv.osv):
                 if pol.cancelled_by_sync:
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
-
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True

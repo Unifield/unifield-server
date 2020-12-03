@@ -4211,7 +4211,8 @@ class stock_picking(osv.osv):
                                 # all in lines processed for this po line
                                 wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
                         elif abs(stock_move.purchase_line_id.in_qty_remaining) < 0.001:
-                            wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+                            if move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('id', '!=',  stock_move.id), ('state', '=', 'done')], context=context):
+                                wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
 
             # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):
