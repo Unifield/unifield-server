@@ -1048,9 +1048,10 @@ class purchase_order(osv.osv):
                 vals.update({'invoice_method': 'manual'})
             elif vals.get('order_type') in ['direct']:
                 vals.update({'invoice_method': 'picking'})
-                if vals.get('partner_id'):
-                    if self.pool.get('res.partner').read(cr, uid, vals.get('partner_id'), ['partner_type'], context=context)['partner_type'] == 'esc':
-                        vals.update({'invoice_method': 'manual'})
+                if vals.get('partner_id') and self.pool.get('res.partner').read(cr, uid, vals.get('partner_id'), ['partner_type'], context=context)['partner_type'] == 'esc':
+                    vals.update({'invoice_method': 'manual'})
+                elif vals.get('dest_partner_id') and self.pool.get('res.partner').read(cr, uid, vals.get('dest_partner_id'), ['partner_type'], context=context)['partner_type'] == 'external':
+                    vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
 
@@ -1112,9 +1113,13 @@ class purchase_order(osv.osv):
                     vals.update({'invoice_method': partner_type == 'section' and 'picking' or 'manual'})
                 elif vals.get('order_type') == 'loan':
                     vals.update({'invoice_method': 'manual'})
-                elif vals.get('order_type') in ['direct', ] and partner_type != 'esc':
-                    vals.update({'invoice_method': 'picking'})
-                elif vals.get('order_type') in ['direct', ] and partner_type == 'esc':
+                elif vals.get('order_type') in ['direct'] and partner_type != 'esc':
+                    dest_partner_type = res_partner_obj.read(cr, uid, int(vals.get('dest_partner_id', order['partner_id'][0])), ['partner_type'], context=context)['partner_type']
+                    if dest_partner_type == 'external':
+                        vals.update({'invoice_method': 'order'})
+                    else:
+                        vals.update({'invoice_method': 'picking'})
+                elif vals.get('order_type') in ['direct'] and partner_type == 'esc':
                     vals.update({'invoice_method': 'manual'})
                 else:
                     vals.update({'invoice_method': 'picking'})

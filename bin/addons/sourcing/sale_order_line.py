@@ -1250,6 +1250,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 domain.append(('rfq_ok', '=', True))
             elif sourcing_line.po_cft == 'dpo':
                 domain.append(('order_type', '=', 'direct'))
+                domain.append(('dest_address_id', '=', sourcing_line.order_id.partner_id.id))
 
             # supplier's order creation mode:
             if sourcing_line.supplier.po_by_project in ('project', 'category_project') or (sourcing_line.po_cft == 'dpo' and sourcing_line.supplier.po_by_project == 'all'):
@@ -1365,6 +1366,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     'dest_partner_id': sourcing_line.order_id.partner_id.id,
                     'dest_address_id': sourcing_line.order_id.partner_shipping_id.id,
                 })
+                #if sourcing_line.order_id.partner_id.partner_type in ('esc', 'external'):
+                #    po_values['po_version'] = 2 # TODO NEEDED ?
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
 

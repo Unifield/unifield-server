@@ -206,7 +206,7 @@ class browse_record(object):
                 if name not in self._fields_to_fetch:
                     self.__logger.warn("fields_to_fetch has been defined in "
                                        "browse() for object %s, but field %s is not member "
-                                       "of it" % (self, name))
+                                       "of it %s" % (self, name, tools.misc.get_stack()))
                     self._fields_to_fetch.append(name)
                 fields_to_fetch = [x for x in fields_to_fetch if x[0] in
                                    self._fields_to_fetch]

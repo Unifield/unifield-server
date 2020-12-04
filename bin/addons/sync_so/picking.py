@@ -1209,7 +1209,6 @@ class stock_picking(osv.osv):
                     out_move_data['product_uos_qty'] =  move_out['product_qty']
                     out_pick_data['move_lines'].append((0, 0, out_move_data))
                 out_id = self.create(cr, uid, out_pick_data, context=context)
-                print out_pick_data, out_id
                 self.action_done(cr, uid, [out_id], context=context)
 
             for cancelled in move_lines_cancelled:

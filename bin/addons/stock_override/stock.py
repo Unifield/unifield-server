@@ -1187,7 +1187,7 @@ class stock_move(osv.osv):
                                              'stock.move': (lambda self, cr, uid, ids, c=None: ids, ['price_unit', 'purchase_order_line'], 10),
                                          },
                                          ),
-        'linked_incoming_move': fields.many2one('stock.move', 'Linked Incoming move', readonly=True, help="Link between INT and IN")
+        'linked_incoming_move': fields.many2one('stock.move', 'Linked Incoming move', readonly=True, help="Link between INT and IN"),
     }
 
     _defaults = {
@@ -1254,7 +1254,8 @@ class stock_move(osv.osv):
 
                 if not move.purchase_line_id.linked_sol_id:
                     vals['cancel_only'] = True
-
+                    if move.dpo_line_id:
+                        vals['from_dpo'] = True
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -2127,12 +2128,14 @@ class stock_move_cancel_wizard(osv.osv_memory):
         'is_move_from_cross_docking': fields.function(_check_from_cross_docking, method=True, type='boolean',
                                                       string='Is the move from the Cross docking Location ?',
                                                       store=False, readonly=True),
+        'from_dpo': fields.boolean(string='Sourced on remote to DPO ?'),
     }
 
     _defaults = {
         'move_id': lambda self, cr, uid, c: c.get('active_id'),
         'cancel_only': False,
         'is_move_from_cross_docking': False,
+        'from_dpo': False,
     }
 
     def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):

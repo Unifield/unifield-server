@@ -1295,6 +1295,9 @@ class stock_picking(osv.osv):
         model = 'enter.reason'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
+        pick = self.read(cr, uid, ids[0], ['from_wkf_sourcing', 'dpo_incoming', 'type'])
+        if pick['type'] == 'in' and pick['dpo_incoming'] and not pick['from_wkf_sourcing']:
+            context['in_from_dpo'] = True
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, picking_id=ids[0]))
 
