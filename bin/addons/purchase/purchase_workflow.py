@@ -351,6 +351,8 @@ class purchase_order_line(osv.osv):
                 'set_as_sourced_n': True,
             }
 
+            if pol.created_by_sync:
+                sol_values['sync_pushed_from_po'] = True
             if pol.resourced_original_line:
                 # pol resourced, set orginal line on new line
                 sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False

@@ -2129,6 +2129,7 @@ class sale_order_line(osv.osv):
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
         'from_cancel_out': fields.boolean('OUT cancel'),
         'created_by_sync': fields.boolean(string='Created by Synchronisation'),
+        'sync_pushed_from_po': fields.boolean('Line added on upper-level PO'),
         'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
         'ir_name_from_sync': fields.char(size=64, string='IR/FO name to put on PO line after sync', invisible=True),
         'counterpart_po_line_id': fields.many2one('purchase.order.line', 'PO line counterpart'),
@@ -2153,6 +2154,7 @@ class sale_order_line(osv.osv):
         'set_as_sourced_n': False,
         'stock_take_date': _get_stock_take_date,
         'created_by_sync': False,
+        'sync_pushed_from_po': False,
         'cancelled_by_sync': False,
         'ir_name_from_sync': '',
     }
@@ -2282,6 +2284,7 @@ class sale_order_line(osv.osv):
             'from_cancel_out': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'sync_pushed_from_po': False,
         })
 
         if 'ir_name_from_sync' not in default:
@@ -2327,6 +2330,7 @@ class sale_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
             'stock_take_date': False,
+            'sync_pushed_from_po': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False

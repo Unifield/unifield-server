@@ -267,6 +267,22 @@ class purchase_order_line_sync(osv.osv):
             #### Create the linked IR/FO line: except when set_as_validated_n=True (new line added in PO coo, this value already creates an IR/FO line when pol is created)
             if not pol_values.get('origin') and ress_fo:
                 parent_so_id = ress_fo
+            elif not pol_values.get('origin') and sol_dict.get('sync_pushed_from_po'):
+                # resync try to push to original IR
+                cr.execute('''
+                    select so.id
+                    from purchase_order_line pol, sale_order_line sol, sale_order so
+                    where
+                        pol.order_id=%s and
+                        pol.linked_sol_id = sol.id and
+                        sol.order_id = so.id and
+                        so.state not in ('draft', 'cancel', 'done') and
+                        so.procurement_request = 't'
+                    limit 1
+                ''', (pol_values['order_id'],))
+                result = cr.fetchone()
+                if result and result[0]:
+                    parent_so_id = result[0]
             if pol_values.get('origin'):
                 parent_so_id = self.pool.get('sale.order').search(cr, uid, [
                     ('name', '=', pol_values['origin']),
