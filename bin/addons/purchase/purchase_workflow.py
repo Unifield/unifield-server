@@ -371,7 +371,10 @@ class purchase_order_line(osv.osv):
             new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
             # update current PO line:
-            self.write(cr, uid, pol.id, {'link_so_id': fo_id, 'linked_sol_id': new_sol_id, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context)}, context=context)
+            pol_values = {'link_so_id': fo_id, 'linked_sol_id': new_sol_id, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context)}
+            if not pol.origin:
+                pol_values['origin'] = sale_order.name
+            self.write(cr, uid, pol.id, pol_values, context=context)
 
         context['from_back_sync'] = False
         return new_sol_id
