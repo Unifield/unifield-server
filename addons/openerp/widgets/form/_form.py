@@ -493,7 +493,7 @@ class Float(TinyInputWidget):
 #            self.default = 0.0
 
     def set_value(self, value):
-        if self.with_null and value is False:
+        if self.with_null and (value is False or value is None):
             self.default = ''
         else:
             self.default = value or 0.0
@@ -690,7 +690,7 @@ class Hidden(TinyInputWidget):
 class Button(TinyInputWidget):
 
     template = "/openerp/widgets/form/templates/button.mako"
-    params = ["btype", "id", "confirm", "icon", "target", "context", "default_focus"]
+    params = ["btype", "id", "confirm", "icon", "target", "context", "default_focus", "set_ids"]
 
     visible = True
     def __init__(self, **attrs):
@@ -702,6 +702,7 @@ class Button(TinyInputWidget):
         self.context = attrs.get("context", {})
         self.nolabel = True
         self.target = ''
+        self.set_ids = attrs.get('set_ids')
         if self.icon:
             self.icon = icons.get_icon(self.icon)
         self.default_focus = attrs.get('default_focus', 0)
@@ -969,7 +970,7 @@ class Form(TinyInputWidget):
             elif node.localName=='separator':
                 views.append(Separator(**attrs))
 
-            elif node.localName=='label':
+            elif node.localName=='label' and not attrs.get('html'):
                 text = attrs.get('string', '')
 
                 if not text:

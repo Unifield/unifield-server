@@ -95,18 +95,16 @@ if (auto_field && auto_field.val()){
     % if selector:
         <td class="grid-cell selector">
         % if not data['id'] or data['id'] not in notselectable:
-            % if not m2m:
-                <%
-                    nosidedar = name != '_terp_list' and 'true' or 'false'
-                    selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s', %s);" % (name, data['id'], nosidedar)
-                    if selector == "radio":
-                        selector_click += " do_select();"
-                %>
-                <input type="${selector}" class="${selector} grid-record-selector"
-                    id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
-                    value="${data['id']}"
-                    onclick="${selector_click}"/>
-            % endif
+            <%
+                nosidedar = name != '_terp_list' and 'true' or 'false'
+                selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s', %s);" % (name, data['id'], nosidedar)
+                if selector == "radio":
+                    selector_click += " do_select();"
+            %>
+            <input type="${selector}" class="${selector} grid-record-selector ignore_changes_when_leaving_page"
+                id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
+                value="${data['id']}"
+                onclick="${selector_click}"/>
         % endif
         </td>
     % endif
@@ -189,10 +187,10 @@ if (auto_field && auto_field.val()){
 </%def>
 
 <div class="box-a list-a">
-% if any([field != 'button' and field_attrs.get('filter_selector') for field, field_attrs in headers]):
+% if any([field != 'button' and field_attrs.get('filter_selector') for field, field_attrs in headers+hiddens]):
 <div class="o2m_filter_block">
     <table id="${name}_o2m_filter" class="o2m_header_filter"><tr>
-        % for (field, field_attrs) in headers:
+        % for (field, field_attrs) in headers+hiddens:
             % if field != 'button' and field_attrs.get('filter_selector'):
                <% has_filter = True %>
                 <td> ${field_attrs['string']|br}:
@@ -340,10 +338,10 @@ if (auto_field && auto_field.val()){
                             <tr class="grid-header">
                                 % if selector:
                                     <th width="1" class="grid-cell selector">
-                                        % if selector == 'checkbox' and not m2m:
-                                            <input type="checkbox" class="checkbox grid-record-selector" id="${name}_check_all"  onclick="new ListView('${name}').checkAll(!this.checked)"/>
+                                        % if selector == 'checkbox':
+                                            <input type="checkbox" class="checkbox grid-record-selector ignore_changes_when_leaving_page" id="${name}_check_all"  onclick="new ListView('${name}').checkAll(!this.checked)"/>
                                         % endif
-                                        % if selector != 'checkbox' and not m2m:
+                                        % if selector != 'checkbox':
                                             <span>&nbsp;</span>
                                         % endif
                                     </th>
@@ -361,7 +359,7 @@ if (auto_field && auto_field.val()){
                                             <th class="grid-cell"><div style="width: 0;"></div></th>
                                         % endif
                                     % elif field_attrs.get('displayon') != 'editable':
-                                    % if (field_attrs.get('function') and not field_attrs.get('store') and not field_attrs.get('allow_sort')) or field_attrs.get('not_sortable'):
+                                    % if (field_attrs.get('function') and not field_attrs.get('store') and not field_attrs.get('allow_sort')) and not field_attrs.get('sort_column') or field_attrs.get('not_sortable'):
                                         <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}">${field_attrs['string']|br}</th>
                                     % else:
                                         <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}" style="cursor: pointer;" onclick="new ListView('${name}').sort_by_order('${field}', this)"

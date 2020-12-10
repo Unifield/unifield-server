@@ -91,6 +91,8 @@ class Search(Form):
         proxy = rpc.RPCProxy(model)
         params.search_text = False
 
+        if model == 'financing.contract.account.quadruplet':
+            proxy.gen_quadruplet(ctx)
         # parent's search_view has no business being in m2o or m2m
         if '_terp_context' in params and 'search_view' in params['_terp_context']:
             params.get('_terp_context').pop('search_view', None)

@@ -42,6 +42,7 @@
         <select id='_${name+str(pager_id)}_limit'
                 action="filter"
                 relation="${name}"
+                class="ignore_changes_when_leaving_page"
                 onchange="jQuery('[id=${name_base}_terp_limit]').val(jQuery(this).val());
                           jQuery('[id=${name_base}_terp_offset]').val(0);
                       pager_action(this)" style="min-width: 25px;">

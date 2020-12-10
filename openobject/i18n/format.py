@@ -307,12 +307,15 @@ def format_decimal(value, digits=2, **kwargs):
     if kwargs.get('computation', False):
         # fixed min decimal value
         min_digits = 2
+        if kwargs['computation'] == -1:
+            min_digits = 0
         # remove trailing zeros
         decimals = decimals.rstrip('0')
         # if less than two digits, we add padding - possible improvement, add the padding size in the decimal precision object
         if len(decimals) < min_digits:
             decimals = decimals + '0'*(min_digits - len(decimals))
-
+        if not decimals:
+            return val
     result = val + unicode(numbers.get_decimal_symbol(locale) + decimals)
     return result
 
