@@ -1008,6 +1008,7 @@ class Form(TinyInputWidget):
                 views.append(Page(children=n, **attrs))
 
             elif node.localName=='group':
+                attrs.setdefault('context', self.context)
                 n = self.parse(prefix=prefix, root=node, fields=fields, values=values)
                 views.append(Group(children=n, **attrs))
 
