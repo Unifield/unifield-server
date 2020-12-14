@@ -630,5 +630,10 @@
             <field name="method">us_7808_ocg_rename_esc</field>
         </record>
 
+        <!-- UF20.0 -->
+        <record id="us_6796_hide_prod_status_inconsistencies" model="patch.scripts">
+            <field name="method">us_6796_hide_prod_status_inconsistencies</field>
+        </record>
+
     </data>
 </openerp>

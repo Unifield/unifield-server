@@ -27,12 +27,12 @@ class export_report_inconsistencies(osv.osv):
             string='State',
             readonly=True,
         ),
+        'instance_id': fields.many2one('msf.instance', string='Current Instance', readonly=True),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
     }
-
 
     def generate_report(self, cr, uid, ids, context=None):
         '''
@@ -53,7 +53,8 @@ class export_report_inconsistencies(osv.osv):
             # state of report is in progress :
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'state': 'in_progress'
+                'state': 'in_progress',
+                'instance_id': self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
             }, context=context)
 
             datas = {
@@ -175,7 +176,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         self.uf_status_cache = {}
         self.prod_creator_cache = {}
         self.inconsistent = {}
-
 
     def get_inconsistent_lines(self, prod_id=None):
         '''
@@ -300,7 +300,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     self.inconsistent[product_id]['smrl_list'] = []
 
                 # tweak results to display string instead of codes
-                smrl['uf_status_code'] = smrl['uf_status_code'] and uf_status_code_dict[smrl['uf_status_code']] or ''
+                smrl['uf_status_code'] = smrl['uf_status_code'] and self.get_uf_status(smrl['uf_status_code']) or ''
                 smrl['ud_status_code'] = smrl['ud_status_code'] and self.get_ud_status(smrl['ud_status_code']) or ''
                 smrl['internationnal_status_code_name'] = smrl['internationnal_status_code_name'] and intl_status_code_name[smrl['internationnal_status_code_name']] or ''
 
