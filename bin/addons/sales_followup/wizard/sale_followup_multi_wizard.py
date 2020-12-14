@@ -186,6 +186,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
                 # Parameter to define the maximum number of lines. For a custom number:
                 # "INSERT INTO ir_config_parameter (key, value) VALUES ('FOLLOWUP_MAX_LINE', 'chosen_number');"
                 # Or update the existing one
+                # Note: this param. is also used for the FO Follow-Up Finance.
                 config_line = self.pool.get('ir.config_parameter').get_param(cr, 1, 'FO_FOLLOWUP_MAX_LINE')
                 if config_line:
                     max_line = int(config_line)
