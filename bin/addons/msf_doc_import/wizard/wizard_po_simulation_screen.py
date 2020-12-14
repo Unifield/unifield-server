@@ -618,7 +618,7 @@ class wizard_import_po_simulation_screen(osv.osv):
             add_detail.append(ad)
 
         if existing_ad_set:
-            if valid_ad and data_ad_set != existing_ad_set:
+            if valid_ad and data_ad_set and data_ad_set != existing_ad_set:
                 errors.append(_('Already has a valid Analytical Distribution'))
             data_ad_set = set()
         elif not valid_ad:
