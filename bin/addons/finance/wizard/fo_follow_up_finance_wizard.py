@@ -95,7 +95,16 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         }, context=context)
         context['background_id'] = background_id
         context['background_time'] = 3
-        data = {'ids': ids, 'context': context}
+
+        data = {}
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        data['form'] = {'start_date': wiz.start_date or False,
+                        'end_date': wiz.end_date or False,
+                        'partner_ids': wiz.partner_ids or [],
+                        'order_id': wiz.order_id or False,
+                       }
+        data['context'] = context
+        # data = {'ids': ids, 'context': context}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'fo.follow.up.finance',
