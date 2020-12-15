@@ -26,10 +26,6 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 class fo_follow_up_finance(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context=None):
-        self.start_date = False
-        self.end_date = False
-        self.partner_ids = []
-        self.order_id = False
         super(fo_follow_up_finance, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'getLang': self._get_lang,
