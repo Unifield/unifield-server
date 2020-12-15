@@ -23,9 +23,13 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+import time
+
 
 class fo_follow_up_finance_wizard(osv.osv_memory):
     _name = 'fo.follow.up.finance.wizard'
+    _rec_name = 'report_date'
+    _order = 'report_date desc'
 
     _columns = {
         'start_date': fields.date(string='Start date'),
@@ -33,6 +37,13 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         'partner_ids': fields.many2many('res.partner', 'fo_follow_up_wizard_partner_rel', 'wizard_id', 'partner_id', 'Partners'),
         'order_id': fields.many2one('sale.order', string='Order Ref.'),
         'order_ids': fields.text(string='Orders', readonly=True),  # don't use many2many to avoid memory usage issue
+        'report_date': fields.datetime(string='Date of the export', readonly=True),
+        'company_id': fields.many2one('res.company', string='Company', readonly=True),
+    }
+
+    _defaults = {
+        'report_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'company_id': lambda self, cr, uid, ids, c={}: self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
     }
 
     def get_values(self, cr, uid, ids, context=None):
@@ -98,13 +109,7 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
 
         data = {}
         wiz = self.browse(cr, uid, ids[0], context=context)
-        data['form'] = {'start_date': wiz.start_date or False,
-                        'end_date': wiz.end_date or False,
-                        'partner_ids': wiz.partner_ids or [],
-                        'order_id': wiz.order_id or False,
-                       }
-        data['context'] = context
-        # data = {'ids': ids, 'context': context}
+        data = {'ids': ids, 'context': context}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'fo.follow.up.finance',
