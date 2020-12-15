@@ -32,6 +32,7 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         'end_date': fields.date(string='End date'),
         'partner_ids': fields.many2many('res.partner', 'fo_follow_up_wizard_partner_rel', 'wizard_id', 'partner_id', 'Partners'),
         'order_id': fields.many2one('sale.order', string='Order Ref.'),
+        'order_ids': fields.text(string='Orders', readonly=True),  # don't use many2many to avoid memory usage issue
     }
 
     def get_values(self, cr, uid, ids, context=None):
@@ -51,7 +52,7 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
             if wizard.end_date:
                 fo_domain.append(('date_order', '<=', wizard.end_date))
             if wizard.partner_ids:
-                fo_domain.append(('partner_id', 'in', [p.id for p in wizard.partner_id]))
+                fo_domain.append(('partner_id', 'in', [p.id for p in wizard.partner_ids]))
             if wizard.order_id:
                 fo_domain.append(('id', '=', wizard.order_id.id))
             fo_ids = fo_obj.search(cr, uid, fo_domain, context=context)
@@ -76,6 +77,7 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate: requested %d lines, '
                                                    'maximum allowed %d. Please apply further filters so that report can be generated.') %
                                      (nb_lines, max_line))
+            self.write(cr, uid, [wizard.id], {'order_ids': fo_ids}, context=context)
         return True
 
     def print_excel(self, cr, uid, ids, context=None):
