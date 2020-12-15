@@ -97,39 +97,17 @@ class account_destination_link(osv.osv):
                     duplet_ids_to_exclude = self.search(cr, uid, [('account_id', '=', account_quadruplet.account_id.id),('destination_id','=',account_quadruplet.account_destination_id.id)])
                     for item in duplet_ids_to_exclude:
                         exclude[item] = True
+                for account in line.reporting_account_ids:
+                    # exclude the acc/dest combinations when the account has been selected in lines with "accounts only"
+                    for acc_dest in self.search(cr, uid, [('account_id', '=', account.id)], order='NO_ORDER', context=context):
+                        exclude[acc_dest] = True
 
         for id in ids:
             ids_to_exclude[id] = id in exclude
         return ids_to_exclude
 
-    def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
-        if not args:
-            return []
-        if context is None:
-            context = {}
-        assert args[0][1] == '=' and args[0][2], 'Filter not implemented'
-        if not context.get('contract_id') and not context.get('donor_id'):
-            return []
-
-        if context.get('contract_id'):
-            ctr_obj = self.pool.get('financing.contract.contract')
-            id_toread = context['contract_id']
-        elif context.get('donor_id'):
-            ctr_obj = self.pool.get('financing.contract.donor')
-            id_toread = context['donor_id']
-
-        exclude = {}
-        for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            if not context.get('active_id', False) or line.id != context['active_id']:
-                for account_destination in line.account_destination_ids:
-                    exclude[account_destination.id] = True
-                for account_quadruplet in line.account_quadruplet_ids:
-                    exclude[account_quadruplet.account_destination_id.id] = True
-
-        return [('id', 'not in', exclude.keys())]
-
     _columns = {
-        'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used', fnct_search=_search_used_in_contract),
+        'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used'),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

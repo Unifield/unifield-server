@@ -271,23 +271,27 @@ class stock_picking_processor(osv.osv):
                     continue
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
-                if line_obj._name == 'stock.move.in.processor' and move.pack_info_id:
-                    line_data.update({
-                        'from_pack': move.pack_info_id.parcel_from,
-                        'to_pack': move.pack_info_id.parcel_to,
-                        'weight': move.pack_info_id.total_weight,
-                        'total_weight': move.pack_info_id.real_total_weight,
-                        'volume': move.pack_info_id.total_volume,
-                        'total_volume': move.pack_info_id.real_total_volume,
-                        'height': move.pack_info_id.total_height,
-                        'length': move.pack_info_id.total_length,
-                        'width': move.pack_info_id.total_width,
-                        'packing_list': move.pack_info_id.packing_list,
-                        'ppl_name': move.pack_info_id.ppl_name,
-                        'cost': move.price_unit,
-                        'currency': move.price_currency_id.id,
-                        'pack_info_id': move.pack_info_id.id,
-                    })
+                if line_obj._name == 'stock.move.in.processor':
+                    if wizard.fields_as_ro:
+                        line_data['cost_as_ro'] = True
+
+                    if move.pack_info_id:
+                        line_data.update({
+                            'from_pack': move.pack_info_id.parcel_from,
+                            'to_pack': move.pack_info_id.parcel_to,
+                            'weight': move.pack_info_id.total_weight,
+                            'total_weight': move.pack_info_id.real_total_weight,
+                            'volume': move.pack_info_id.total_volume,
+                            'total_volume': move.pack_info_id.real_total_volume,
+                            'height': move.pack_info_id.total_height,
+                            'length': move.pack_info_id.total_length,
+                            'width': move.pack_info_id.total_width,
+                            'packing_list': move.pack_info_id.packing_list,
+                            'ppl_name': move.pack_info_id.ppl_name,
+                            'cost': move.price_unit,
+                            'currency': move.price_currency_id.id,
+                            'pack_info_id': move.pack_info_id.id,
+                        })
                 line_obj.create(cr, uid, line_data, context=context)
 
         return True
@@ -418,6 +422,9 @@ class stock_move_processor(osv.osv):
         """
         lot_manda = line.product_id.batch_management
         perishable = line.product_id.perishable
+
+        if (lot_manda or perishable) and line.prodlot_id and line.prodlot_id.product_id.id != line.product_id.id:
+            res = 'lot_not_linked_to_prod'
         if lot_manda:
             # Batch mandatory
             if not line.prodlot_id:
@@ -813,12 +820,6 @@ class stock_move_processor(osv.osv):
         """
         return vals
 
-    def _update_change_product_wr_vals(self, vals):
-        """
-        Allow other modules to override the write values when change product on a line
-        """
-        return vals
-
     """
     Model methods
     """
@@ -950,8 +951,9 @@ class stock_move_processor(osv.osv):
         wr_vals = {
             'change_reason': change_reason,
             'product_id': product_id,
+            'prodlot_id': False,
+            'expiry_date': False,
         }
-        self._update_change_product_wr_vals(vals=wr_vals)  # w/o overriding, just return wr_vals
         self.write(cr, uid, ids, wr_vals, context=context)
 
         pick_wiz_id = self.read(cr, uid, ids[0], ['wizard_id'], context=context)['wizard_id']

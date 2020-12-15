@@ -195,6 +195,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             for cancel_in in cancel_in_moves:
                 bo_qty -= uom_obj._compute_qty(self.cr, self.uid, cancel_in[0], cancel_in[1], line.product_uom.id)
 
+            received_qty = 0.00  # for received non-stockable products
             if len(line.move_ids) > 0:
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
                     data = {
@@ -328,6 +329,17 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 fl_index = m_index
                             m_index += 1
             else:  # No move found
+                # Look for received qty in the IN(s) linked to a non-stockable product
+                if line.product_id and line.product_id.type in ['consu', 'service_recep']:
+                    self.cr.execute("""
+                        SELECT m.product_qty FROM stock_move m 
+                        LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                        LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
+                        WHERE m.state = 'done' AND m.type = 'in' AND sl.id = %s
+                    """, (line.id,))
+                    for move in self.cr.fetchall():
+                        received_qty += move[0]
+
                 if first_line:
                     data = {
                         'state': line.state,
@@ -340,10 +352,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'uom_id': line.product_uom.name,
                         'ordered_qty': line.product_uom_qty,
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
-                        'delivered_qty': 0.00,
-                        'delivered_uom': '-',
+                        'delivered_qty': received_qty,
+                        'delivered_uom': received_qty and line.product_uom.name or '-',
                         'delivery_order': '-',
-                        'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
+                        'backordered_qty': line.order_id.state != 'cancel' and line.product_uom_qty - received_qty or 0.00,
                         'cdd': cdd,
                     }
                     lines.append(data)

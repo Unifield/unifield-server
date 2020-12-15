@@ -29,6 +29,7 @@ class funding(report_sxw.rml_parse):
         self.localcontext.update({
             'locale': locale,
             'today': self.today,
+            'all_cc': lambda f: self.pool.get('account.analytic.account').get_cc_linked_to_fp(cr, uid, f, context=context),
         })
 
     def today(self):

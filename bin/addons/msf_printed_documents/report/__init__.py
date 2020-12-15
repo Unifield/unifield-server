@@ -23,7 +23,6 @@ import sale_order
 import report_reception
 import consumption_report
 import product_list
-import freight_manifest
 import report_product_labels
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

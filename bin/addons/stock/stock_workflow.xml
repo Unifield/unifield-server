@@ -11,6 +11,8 @@
             <field name="wkf_id" ref="wkf_picking"/>
             <field name="flow_start">True</field>
             <field name="name">draft</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state': 'draft'})</field>
         </record>
         <record id="act_confirmed" model="workflow.activity">
             <field name="wkf_id" ref="wkf_picking"/>

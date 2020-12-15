@@ -81,9 +81,41 @@ class sale_order_line(osv.osv):
         ],
     }
 
-    """
-    Other methods
-    """
+
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+            overwrite to speed up OST search on fields categ, priority, order state
+        '''
+
+        new_dom = []
+
+        fields_filter = {
+            'categ': {'db_field': 'categ'},
+            'priority': {'db_field': 'priority'},
+            'sale_order_state': {'db_field': 'state'},
+        }
+        has_filter = False
+
+        operator = ['=', '!=']
+        for x in domain:
+            if x[0]  in fields_filter:
+                if x[1] not in operator:
+                    raise osv.except_osv(_('Warning'), _('Operator %s not allowed on %s') % (x[1], x[0]))
+                fields_filter[x[0]].update({'operator': x[1], 'filter': x[2]})
+                has_filter = True
+            else:
+                new_dom.append(x)
+        ret = super(sale_order_line, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if has_filter:
+            ret.tables.append('"sale_order"')
+            ret.joins['"sale_order_line"'] = [('"sale_order"', 'order_id', 'id', 'LEFT JOIN')]
+            for field in fields_filter:
+                if fields_filter[field].get('operator'):
+                    ret.where_clause.append(' "sale_order"."' + fields_filter[field]['db_field'] + '" ' + fields_filter[field]['operator'] + ' %s ')
+                    ret.where_clause_params.append(fields_filter[field]['filter'])
+
+        return ret
+
     def _check_browse_param(self, param, method):
         """
         Returns an error message if the parameter is not a
@@ -366,82 +398,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return result
 
-    """
-    Methods to search values for fields.function
-    """
-    def _src_order_state(self, cr, uid, obj, name, args, context=None):
-        """
-        Returns all field order lines that match with the order state domain
-        given in args.
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param obj: Object on which the search is
-        :param field_name: Name of the field on which the search is
-        :param args: The domain
-        :param context: Context of the call
-
-        :return A list of tuples that allows the system to return the list
-                 of matching field order lines
-        :rtype list
-        """
-        if context is None:
-            context = {}
-
-        if not args:
-            return []
-
-        res = []
-        for arg in args:
-            if arg[0] == 'sale_order_state' and arg[1] == '=' and arg[2] == 'split_so' :
-                split_dom = [
-                    ('state', '=', 'done'),
-                    ('split_type_sale_order', '=', 'original_sale_order'),
-                    ('procurement_request', '=', False),
-                    ('active', 'in', ['t','f'])
-                ]
-                split_ids = self.pool.get('sale.order').search(cr, uid, split_dom, context=context)
-                res = [('order_id', 'in', split_ids)]
-            elif arg[0] == 'sale_order_state':
-                res = [('order_id.state', arg[1], arg[2])]
-
-        return res
-
-    def _src_line_values(self, cr, uid, obj, name, args, context=None):
-        """
-        Returns all field order lines that match with the order category or priority
-        domain given in args.
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param obj: Object on which the search is
-        :param field_name: Name of the field on which the search is
-        :param args: The domain
-        :param context: Context of the call
-
-        :return A list of tuples that allows the system to return the list
-                 of matching field order lines
-        :rtype list
-        """
-        if context is None:
-            context = {}
-
-        if not args:
-            return []
-
-        domain = [('active', 'in', ['t', 'f'])]
-        for arg in args:
-            if arg[0] == 'categ':
-                domain.append(('categ', arg[1], arg[2]))
-            elif arg[0] == 'priority':
-                domain.append(('priority', arg[1], arg[2]))
-
-        order_ids = self.pool.get('sale.order').search(cr, uid, domain, context=context)
-        if order_ids:
-            return [('order_id', 'in', order_ids)]
-
-        return []
-
     def _get_related_sourcing_ok(self, cr, uid, ids, field_name, args, context=None):
         """
         Return True or False to determine if the user could select a sourcing group on the OST for the line
@@ -491,7 +447,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'priority': fields.function(
             _get_line_values,
-            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_PRIORITY,
             type='selection',
@@ -502,7 +457,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'categ': fields.function(
             _get_line_values,
-            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_CATEGORY,
             type='selection',
@@ -513,7 +467,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'sale_order_state': fields.function(
             _get_line_values,
-            fnct_search=_src_order_state,
             method=True,
             selection=SALE_ORDER_STATE_SELECTION,
             type='selection',
@@ -1363,6 +1316,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 ('delivery_requested_date', '=', self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context)),
                 ('order_type', '=', 'loan'),
                 ('is_a_counterpart', '=', True),
+                ('unique_fo_id', '=', sourcing_line.order_id.id),
             ]
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
 
@@ -1454,7 +1408,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'details': sourcing_line.order_id.details,
                 'delivery_requested_date': self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context),
                 'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
-                'unique_fo_id': sourcing_line.order_id.id if (sourcing_line.supplier and sourcing_line.supplier.po_by_project == 'isolated') else False,
+                'unique_fo_id': sourcing_line.order_id.id,
                 'is_a_counterpart': True,
                 'loan_duration': sourcing_line.order_id.loan_duration,
             }
@@ -1599,7 +1553,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if sourcing_line.state in ['validated', 'validated_p']:
                 if sourcing_line.type == 'make_to_stock':
                     self.check_location_integrity(cr, uid, [sourcing_line.id], context=context)
-
+                    so_line_data = {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}
                     if sourcing_line.order_id.order_type == 'loan' and not sourcing_line.order_id.is_a_counterpart:
                         # In case of loan, create the PO for later goods return:
                         po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
@@ -1617,15 +1571,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             'product_qty': sourcing_line.product_uom_qty,
                             'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
                             'partner_id': sourcing_line.order_partner_id.id,
-                            'origin': sourcing_line.order_id.name,
-                            'sale_order_line_id': sourcing_line.id,
-                            'link_so_id': sourcing_line.order_id.id,
-                            'linked_sol_id': sourcing_line.id,
                         }
-                        self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
-
+                        cp_po_line_id = self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
+                        so_line_data['counterpart_po_line_id'] = cp_po_line_id
                     # sourcing line: set delivery confirmed date to today:
-                    self.write(cr, uid, [sourcing_line.id], {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
+                    self.write(cr, uid, [sourcing_line.id], so_line_data, context=context)
 
                     # update SO line with good state:
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
@@ -1658,7 +1608,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                     _('AD missing on line %s, FO %s') % (sourcing_line.line_number, sourcing_line.order_id.name),
                                 )
 
-                            anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {}, context=context)
+                            anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {'partner_type': po.partner_id.partner_type}, context=context)
 
                         # set unit price
                         price = 0.0

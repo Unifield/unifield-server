@@ -86,7 +86,7 @@
             id="export_report_inconsistencies_menu"
             action="export_report_inconsistencies_action"
             parent="object_query.menu_preferences"
-            sequence="51" />
+            sequence="53" />
 
     </data>
 </openerp>

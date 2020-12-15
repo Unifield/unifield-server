@@ -186,7 +186,6 @@ class internal_picking_processor(osv.osv):
     def return_hook_do_partial(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
-        This hook belongs to the do_partial method from stock_override>wizard>stock_partial_picking.py>stock_partial_picking
 
         - allow to modify returned value from button method
         '''

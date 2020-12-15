@@ -539,7 +539,11 @@ class account_bank_statement(osv.osv):
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
         if reg and reg.journal_id.type in ['bank', 'cash', 'cheque']:
-            context.update({'journal_type': reg.journal_id.type})
+            context.update({
+                'journal_type': reg.journal_id.type,
+                'from_regline_view': True,
+                'register_id': reg.id,
+            })
         return {
             'name': reg and reg.name or 'Register Lines',
             'type': 'ir.actions.act_window',
@@ -3105,13 +3109,28 @@ class ir_values(osv.osv):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        if context.get('type_posting') and key == 'action' and key2 == 'client_action_multi' and 'account.bank.statement.line' in [x[0] for x in models]:
+        if key == 'action' and key2 == 'client_action_multi' and 'account.bank.statement.line' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if v[1] != 'act_wizard_temp_posting' and context['type_posting'] == 'hard' or v[1] != 'act_wizard_hard_posting' and context['type_posting'] == 'temp':
+                display = True
+                if context.get('type_posting', '') == 'hard':
+                    # hide Temp Posting options from the Hard Posting page
+                    if v[1] in ('act_wizard_temp_posting', 'act_wizard_temp_post_all'):
+                        display = False
+                elif context.get('type_posting', '') == 'temp':
+                    # hide Hard Posting options from the Temp Posting page
+                    if v[1] in ('act_wizard_hard_posting', 'act_wizard_hard_post_all'):
+                        display = False
+                elif not context.get('type_posting') and not context.get('from_regline_view'):
+                    # hide the Hard Post ALL / Temp Post ALL options everywhere else,
+                    # except in the Register Lines view accessible from the menu on the right of the registers
+                    if v[1] in ('act_wizard_hard_post_all', 'act_wizard_temp_post_all'):
+                        display = False
+                if display:
                     new_act.append(v)
             values = new_act
         return values
+
 
 ir_values()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

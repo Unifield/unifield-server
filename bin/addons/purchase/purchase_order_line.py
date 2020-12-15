@@ -740,8 +740,7 @@ class purchase_order_line(osv.osv):
                 pol_obj.write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
             else:
                 ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
-                line_ids_to_write = [line.id for line in ad_lines if not
-                                     line.partner_type]
+                line_ids_to_write = [line.id for line in ad_lines if line.partner_type != pol.order_id.partner_id.partner_type]
                 ccdl_obj.write(cr, uid, line_ids_to_write, {
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
@@ -1684,6 +1683,7 @@ class purchase_order_line(osv.osv):
                                 'this product, you should than modify ' \
                                 'the quantity ordered to match the supplier criteria.') % info_price.rounding
                     message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
+                    res.setdefault('warning', {})
                     res['warning'].update({'message': message})
 
         # Set the unit price with cost price if the product has no staged pricelist

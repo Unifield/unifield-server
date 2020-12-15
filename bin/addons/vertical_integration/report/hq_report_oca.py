@@ -236,6 +236,10 @@ class hq_report_oca(report_sxw.report_sxw):
             account = move_line.account_id
             currency = move_line.currency_id
             # For the first report:
+            round_debit_booking = round(move_line.debit_currency or 0.0, 2)
+            round_credit_booking = round(move_line.credit_currency or 0.0, 2)
+            round_debit_fctal = round(move_line.debit or 0.0, 2)
+            round_credit_fctal = round(move_line.credit or 0.0, 2)
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
                               move_line.move_id and move_line.move_id.name or "",
@@ -250,17 +254,17 @@ class hq_report_oca(report_sxw.report_sxw):
                               "",
                               "",
                               move_line.partner_txt,
-                              round(move_line.debit_currency, 2),
-                              round(move_line.credit_currency, 2),
+                              round_debit_booking,
+                              round_credit_booking,
                               currency and currency.name or "",
-                              round(move_line.debit, 2),
-                              round(move_line.credit, 2),
+                              round_debit_fctal,
+                              round_credit_fctal,
                               move_line.functional_currency_id and move_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
 
             # For the second report:
             # exclude In-kind Donations, OD-Extra Accounting entries, and lines with zero amount from the "formatted data" file
-            zero_move_line = not move_line.debit_currency and not move_line.credit_currency and not move_line.debit and not move_line.credit
+            zero_move_line = not round_debit_booking and not round_credit_booking and not round_debit_fctal and not round_credit_fctal
             if move_line.journal_id.type not in ['inkind', 'extra'] and not zero_move_line:
                 if not account.shrink_entries_for_hq:
                     # data for the "Employee Id" column
@@ -269,12 +273,12 @@ class hq_report_oca(report_sxw.report_sxw):
                         employee_id = move_line.employee_id.identification_id or ''
                     # data for the columns: Exchange rate, Booking Debit, Booking Credit, Booking Currency
                     exchange_rate = 0
-                    booking_amounts = [round(move_line.debit_currency, 2), round(move_line.credit_currency, 2)]
+                    booking_amounts = [round_debit_booking, round_credit_booking]
                     booking_curr = formatted_data[16:17]
                     if move_line.journal_id.type in no_rate_journal_types:
                         # use 1 as exchange rate and display the functional values in the "booking" columns
                         exchange_rate = 1
-                        booking_amounts = [round(move_line.debit, 2), round(move_line.credit, 2)]
+                        booking_amounts = [round_debit_fctal, round_credit_fctal]
                         booking_curr = formatted_data[19:20]
                     # automatic corrections
                     elif move_line.journal_id.type == 'correction' and (move_line.corrected_line_id or move_line.reversal_line_id):
@@ -357,6 +361,8 @@ class hq_report_oca(report_sxw.report_sxw):
             aji_period_id = analytic_line and analytic_line.period_id or False
 
             # For the first report:
+            round_aal_booking = round(analytic_line.amount_currency or 0.0, 2)
+            round_aal_fctal = round(analytic_line.amount or 0.0, 2)
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
                               analytic_line.entry_sequence or analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
@@ -371,16 +377,16 @@ class hq_report_oca(report_sxw.report_sxw):
                               cost_center_code,
                               analytic_line.account_id and analytic_line.account_id.code or "",
                               analytic_line.partner_txt or "",
-                              analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
-                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00",
+                              analytic_line.amount_currency > 0 and "0.00" or -round_aal_booking,
+                              analytic_line.amount_currency > 0 and round_aal_booking or "0.00",
                               currency and currency.name or "",
-                              analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
-                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00",
+                              analytic_line.amount > 0 and "0.00" or -round_aal_fctal,
+                              analytic_line.amount > 0 and round_aal_fctal or "0.00",
                               analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
 
             # exclude In-kind Donations, OD-Extra Accounting entries, and lines with zero amount from the "formatted data" file
-            zero_analytic_line = not analytic_line.amount and not analytic_line.amount_currency
+            zero_analytic_line = not round_aal_fctal and not round_aal_booking
             if analytic_line.journal_id.type not in ['inkind', 'extra'] and not zero_analytic_line:
                 # format CC as: P + the 4 digits from the right
                 cost_center = formatted_data[11] and "P%s" % formatted_data[11][-4:] or ""
@@ -391,14 +397,14 @@ class hq_report_oca(report_sxw.report_sxw):
 
                 # data for the columns: Exchange rate, Booking Debit, Booking Credit, Booking Currency
                 exchange_rate = 0
-                booking_amounts = [analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
-                                   analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00"]
+                booking_amounts = [analytic_line.amount_currency > 0 and "0.00" or -round_aal_booking,
+                                   analytic_line.amount_currency > 0 and round_aal_booking or "0.00"]
                 booking_curr = formatted_data[16:17]
                 if analytic_line.journal_id.type in no_rate_analytic_journal_types:
                     # use 1 as exchange rate and display the functional values in the "booking" columns
                     exchange_rate = 1
-                    booking_amounts = [analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
-                                       analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00"]
+                    booking_amounts = [analytic_line.amount > 0 and "0.00" or -round_aal_fctal,
+                                       analytic_line.amount > 0 and round_aal_fctal or "0.00"]
                     booking_curr = formatted_data[19:20]
                 # automatic corrections
                 elif analytic_line.journal_id.type == 'correction' and (analytic_line.last_corrected_id or analytic_line.reversal_origin):
@@ -487,7 +493,15 @@ class hq_report_oca(report_sxw.report_sxw):
         period_number = period and period.number and '%02d' % period.number or ''
         prefix = '%sY%sP%s_' % (mission_code, year, period_number)
 
-        zip_buffer = StringIO.StringIO()
+        if data.get('output_file'):
+            # report generated by auto export
+            zip_buffer = data['output_file']
+            in_memory = False
+            out = ''
+        else:
+            # manual export
+            zip_buffer = StringIO.StringIO()
+            in_memory = True
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
         # for Raw data file: use double quotes for all entries
@@ -505,9 +519,14 @@ class hq_report_oca(report_sxw.report_sxw):
         out_zipfile.write(first_fileobj.name, prefix + "Raw data UF export.csv", zipfile.ZIP_DEFLATED)
         out_zipfile.write(second_fileobj.name, prefix + "formatted data D365 import.csv", zipfile.ZIP_DEFLATED)
         out_zipfile.close()
-        out = zip_buffer.getvalue()
+        if in_memory:
+            out = zip_buffer.getvalue()
         os.unlink(first_fileobj.name)
         os.unlink(second_fileobj.name)
+
+        # if manual export set period state as exported (no more auto export)
+        if in_memory:
+            cr.execute("UPDATE account_period_state SET auto_export_vi = 't' WHERE instance_id in %s AND period_id = %s", (tuple(data['form']['instance_ids']), data['form']['period_id']))
 
         # Mark lines as exported
         if move_line_ids:

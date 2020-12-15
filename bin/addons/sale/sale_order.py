@@ -926,6 +926,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             else:
                 vals['order_policy'] = 'picking'
 
+
         if vals.get('order_policy', False):
             if vals['order_policy'] == 'prepaid':
                 vals.update({'invoice_quantity': 'order'})
@@ -936,7 +937,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if vals.get('stock_take_date'):
             self._check_stock_take_date(cr, uid, sale_id, context=context)
-
         return sale_id
 
     def button_dummy(self, cr, uid, ids, context=None):
@@ -2131,6 +2131,7 @@ class sale_order_line(osv.osv):
         'created_by_sync': fields.boolean(string='Created by Synchronisation'),
         'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
         'ir_name_from_sync': fields.char(size=64, string='IR name to put on PO line after sync', invisible=True),
+        'counterpart_po_line_id': fields.many2one('purchase.order.line', 'PO line counterpart'),
         'pol_external_ref': fields.function(_get_pol_external_ref, method=True, type='char', size=256, string="Linked PO line's External Ref.", store=False),
     }
     _order = 'sequence, id desc'
@@ -2288,6 +2289,9 @@ class sale_order_line(osv.osv):
         if 'in_name_goods_return' not in default:
             default['in_name_goods_return'] = False
 
+        if 'counterpart_po_line_id' not in default:
+            default['counterpart_po_line_id'] = False
+
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
 
@@ -2327,7 +2331,7 @@ class sale_order_line(osv.osv):
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
 
-        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync', 'in_name_goods_return']:
+        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'from_cancel_out']:
             if x not in default:
                 default[x] = False
 
@@ -2673,6 +2677,7 @@ class sale_order_line(osv.osv):
         if qty_diff >= line.product_uom_qty:
             if signal == 'done':
                 self.write(cr, uid, [line.id], {'from_cancel_out': True}, context=context)
+
             wf_service.trg_validate(uid, 'sale.order.line', line.id, signal, cr)
         else:
             # Update the line and the procurement
@@ -3047,6 +3052,12 @@ class sale_order_line(osv.osv):
 
         if vals.get('stock_take_date'):
             self._check_stock_take_date(cr, uid, so_line_ids, context=context)
+
+        if order_id and not context.get('sync_message_execution'):
+            # new line added on COO FO but validated, confirmed, sent after all other lines and reception done on project: new line added on project closed PO (KO)
+            if self.pool.get('sale.order').search_exist(cr, uid, [('id', '=', order_id), ('client_order_ref', '!=', False), ('partner_type', 'in', ['internal', 'intermission', 'intersection']), ('procurement_request', '=', False)], context=context):
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', so_line_ids, {},
+                                                                                      'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context, force_domain=True)
 
         return so_line_ids
 

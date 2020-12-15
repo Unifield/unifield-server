@@ -44,10 +44,12 @@ class automated_export_function(osv.osv):
             string='Method to call',
             required=True,
         ),
+        'disable_cron': fields.boolean('No cron'),
     }
 
     _defaults = {
         'method_to_call': lambda *a: 'export_data_from_csv',
+        'disable_cron': False,
     }
 
     _order = 'name'

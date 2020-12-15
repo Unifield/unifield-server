@@ -220,7 +220,7 @@ class stock_incoming_processor(osv.osv):
         ),
         'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='char', string='Process to ship'),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
-        'fields_as_ro': fields.boolean('Set Cost/Split .. as RO', internal=True),
+        'fields_as_ro': fields.boolean('Hide split/change prod', internal=True),
         'sequence_issue': fields.boolean('Issue with To ship'),
     }
 
@@ -706,53 +706,6 @@ class stock_incoming_processor(osv.osv):
         return (rounding_issues, sequence_ok)
 
 
-    def create_pack_family_lines(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # Create the different pack families according to values in stock moves
-        for wizard in self.browse(cr, uid, ids, context=context):
-
-            families_data = {}
-            for sm_in_proc in wizard.move_ids:
-                if sm_in_proc.quantity:
-                    key = 'pl%sf%st%s' % (sm_in_proc.packing_list,sm_in_proc.from_pack, sm_in_proc.to_pack)
-                    families_data.setdefault(key, {
-                        'wizard_id': wizard.id,
-                        'move_ids': [],
-                        'from_pack': sm_in_proc.from_pack,
-                        'to_pack': sm_in_proc.to_pack,
-                        'packing_list': sm_in_proc.packing_list,
-                    })
-                    families_data[key]['move_ids'].append(sm_in_proc.id)
-
-            for family_data in families_data.values():
-                move_ids = family_data.get('move_ids', [])
-                if 'move_ids' in family_data:
-                    del family_data['move_ids']
-
-                #pack_count = 0
-                #if family_data.get('from_pack') and family_data.get('to_pack'):
-                #    pack_count = family_data.get('to_pack') - family_data.get('from_pack') + 1
-
-                for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
-                    family_data.update({
-                        'weight': move.weight,
-                        'height': move.height,
-                        'length': move.length,
-                        'width': move.width,
-                        'volume': move.volume,
-                    })
-                    break
-
-                fam_id = self.pool.get('in.family.processor').create(cr, uid, family_data, context=context)
-                if move_ids:
-                    self.pool.get('stock.move.in.processor').write(cr, uid, move_ids, {'pack_id': fam_id}, context=context)
-        return False # TODO
-
-
     def process_to_ship(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -820,32 +773,6 @@ class stock_incoming_processor(osv.osv):
 
         self.pool.get('stock.picking').do_incoming_shipment(cr, uid, ids, context=context, with_ppl=True)
         return {'type': 'ir.actions.act_window_close'}
-
-
-    def do_process_to_ship(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int,long)):
-            ids = [ids]
-
-        # delete previous fam if has:
-        pack_fam_to_del = self.pool.get('in.family.processor').search(cr, uid, [('wizard_id', 'in', ids)], context=context)
-        self.pool.get('in.family.processor').unlink(cr, uid, pack_fam_to_del, context=context)
-        # then create new:
-        self.create_pack_family_lines(cr, uid, ids, context=context)
-
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'incoming_shipment_processor_step2_form_view')[1]
-        return {
-            'name': _('PPL Information - step 2'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'stock.incoming.processor',
-            'res_id': ids[0],
-            'view_id': [view_id],
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': context,
-        }
 
 
     def do_in_back(self, cr, uid, ids, context=None):
@@ -1279,6 +1206,7 @@ class stock_move_in_processor(osv.osv):
         'sequence_issue': fields.selection(PACK_INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
         'split_move_ok': fields.boolean(string='Is split move ?'),
         'filter_pack': fields.function(_get_pack_info, method=True, type='char', string='Pack', fnct_search=_search_pack_info),
+        'cost_as_ro': fields.boolean('Set Cost Price as RO', internal=1),
     }
 
 
