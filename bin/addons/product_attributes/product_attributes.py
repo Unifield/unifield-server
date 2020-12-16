@@ -2878,7 +2878,7 @@ class product_attributes(osv.osv):
             'secondary_qty', 'secondary_val',
             'cu_qty', 'cu_val',
             'cross_qty', 'cross_val',
-            'wh_qty', 'internal_qty'
+            'wh_qty', 'internal_qty',
             'quarantine_qty', 'input_qty', 'opdd_qty'
         ]
         cr.execute('''
