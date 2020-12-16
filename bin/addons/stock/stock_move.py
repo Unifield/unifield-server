@@ -36,24 +36,6 @@ class stock_move(osv.osv):
         return res
 
 
-    def action_partial_move(self, cr, uid, ids, context=None):
-        if context is None: context = {}
-        partial_id = self.pool.get("stock.partial.move").create(
-            cr, uid, {}, context=context)
-        return {
-            'name':_("Products to Process"),
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': 'stock.partial.move',
-            'res_id': partial_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': context
-        }
-
     def name_get(self, cr, uid, ids, context=None):
         res = []
         for line in self.browse(cr, uid, ids, context=context):
@@ -635,6 +617,7 @@ class stock_move(osv.osv):
         'volume_set': fields.boolean('Volume set at PLL stage', readonly=1),
         'weight_set': fields.boolean('Weight set at PLL stage', readonly=1),
         'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
+        'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
@@ -768,6 +751,7 @@ class stock_move(osv.osv):
         'reason_type_id': lambda obj, cr, uid, context = {}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
         'not_chained': lambda *a: False,
         'integrity_error': 'empty',
+        'included_in_mission_stock': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -942,7 +926,7 @@ class stock_move(osv.osv):
             default['pt_created'] = False
         if 'integrity_error' not in default:
             default['integrity_error'] = 'empty'
-
+        default['included_in_mission_stock'] = False
 
         new_id = super(stock_move, self).copy(cr, uid, id, default, context=context)
         if 'product_id' in default:  # Check constraints on lines
@@ -969,6 +953,7 @@ class stock_move(osv.osv):
 
         defaults['procurements'] = []
         defaults['original_from_process_stock_move'] = False
+        defaults['included_in_mission_stock'] = False
 
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in defaults and not context.get('keepLineNumber', False):
@@ -1421,7 +1406,7 @@ class stock_move(osv.osv):
 
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
                           'product_qty', 'product_uos_qty', 'location_dest_id',
-                          'prodlot_id', 'asset_id', 'composition_list_id', 'line_number', 'in_out_updated']
+                          'prodlot_id', 'asset_id', 'composition_list_id', 'line_number', 'in_out_updated', 'sale_line_id']
 
         qty_data = {}
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
@@ -1698,6 +1683,7 @@ class stock_move(osv.osv):
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
 
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
+                self.decrement_sys_init(cr, uid, move.product_qty, pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 sol_ids_to_check[move.sale_line_id.id] = True
@@ -1728,10 +1714,6 @@ class stock_move(osv.osv):
                 self.write(cr, uid, [move.move_dest_id.id], state)
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
-            # cancel linked internal move if has, to keep the virtual stock consistent:
-            internal_move = self.search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
-            if internal_move:
-                self.action_cancel(cr, uid, internal_move, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
 
@@ -1759,6 +1741,30 @@ class stock_move(osv.osv):
                 ptc.action_done(context=context)
 
 
+        return True
+
+    def decrement_sys_init(self, cr, uid, qty, pol_id, context=None):
+        if not pol_id:
+            return False
+
+        if qty == 'all':
+            query = 'LEAST(product_qty, %s)'
+            qty = 0
+        else:
+            query = 'GREATEST(0, product_qty - %s)'
+        cr.execute('''
+            update stock_move as m set product_qty = ''' +query+ '''
+            from stock_picking p where
+                m.purchase_line_id=%s and
+                p.id = m.picking_id and
+                p.type = 'internal' and
+                p.subtype = 'sysint' and
+                m.state != 'cancel'
+            returning m.id, m.product_qty
+        ''', (qty, pol_id)) # not_a_user_entry
+        for x in cr.fetchall():
+            if not x[1]:
+                self.action_cancel(cr, uid, x[0], context=context)
         return True
 
     def _get_accounting_data_for_valuation(self, cr, uid, move, context=None):
@@ -1853,14 +1859,9 @@ class stock_move(osv.osv):
         """ Makes the move done and if all moves are done, it will finish the picking.
         @return:
         """
-        partial_datas=''
         picking_ids = []
         move_ids = []
-        partial_obj=self.pool.get('stock.partial.picking')
         wf_service = netsvc.LocalService("workflow")
-        partial_id=partial_obj.search(cr,uid,[], order='NO_ORDER')
-        if partial_id:
-            partial_datas = partial_obj.read(cr, uid, partial_id, context=context)[0]
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1895,9 +1896,6 @@ class stock_move(osv.osv):
                     if move.move_dest_id.auto_validate:
                         self.action_done(cr, uid, [move.move_dest_id.id], context=context)
 
-            prodlot_id = partial_datas and partial_datas.get('move%s_prodlot_id' % (move.id), False)
-            if prodlot_id:
-                vals.update({'prodlot_id': prodlot_id})
             if vals:
                 self.write(cr, uid, [move.id], vals)
             if move.state not in ('confirmed', 'done', 'assigned'):

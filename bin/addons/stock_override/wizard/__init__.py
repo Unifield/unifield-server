@@ -23,8 +23,6 @@ import change_dest_location
 import stock_analyze_view
 import stock_card_wizard
 import stock_invoice_onshipping
-import stock_partial_move
-import stock_partial_picking
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

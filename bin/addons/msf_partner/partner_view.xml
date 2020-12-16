@@ -127,7 +127,7 @@
 
         <act_window
             domain="[('rfq_ok', '=', False)]"
-            context="{'search_default_partner_id': [active_id]}"
+            context="{'search_default_partner_id': [active_id], 'po_from_partners': True}"
             id="act_res_partner_2_purchase_order"
             name="Purchase Orders"
             res_model="purchase.order"

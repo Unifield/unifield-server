@@ -52,7 +52,6 @@
         'outgoing_sequence.xml',
         'security/ir.model.access.csv',
         'msf_outgoing_view.xml',
-        'wizard/stock_partial_move_view.xml',
         'wizard/split_memory_move_view.xml',
         'wizard/picking_processor_view.xml',
         'wizard/incoming_shipment_processor_view.xml',

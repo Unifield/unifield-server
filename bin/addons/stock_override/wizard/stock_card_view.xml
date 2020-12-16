@@ -12,15 +12,14 @@
                     <separator colspan="4" string="Location" />
                     <field name="location_id" domain="[('usage', '!=', 'view')]" 
                            attrs="{'readonly': [('all_inout', '=', True)], 'required': [('all_inout', '=', False)]}" />
-                    <field name="all_inout" />
+                    <field name="all_inout" on_change="onchange_all_inout(all_inout)" />
                     <separator colspan="4" string="Product" />
-                    <field name="product_id" 
-                           on_change="onchange_product_id(product_id)" />
+                    <field name="product_id" on_change="onchange_product_id(product_id)" />
                     <newline />
                     <field name="perishable" invisible="1" />
-                    <field name="prodlot_id" 
+                    <field name="prodlot_id"
                            domain="[('product_id', '=', product_id)]"
-                           attrs="{'invisible': [('perishable', '=', False)], 'required': [('perishable', '=', True)]}" />
+                           attrs="{'invisible': [('perishable', '=', False)]}" />
                     <separator colspan="4" string="Period" />
                     <field name="from_date" />
                     <field name="to_date" />

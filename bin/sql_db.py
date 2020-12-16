@@ -32,6 +32,7 @@ import psycopg2.extensions
 import warnings
 import pooler
 from tools import cache
+from tools import misc
 import time
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
@@ -178,7 +179,7 @@ class Cursor(object):
                             if 'account_analytic_account_parent_id_fkey' in ie[0]:
                                 cache.clean_caches_for_db(self.dbname)
                             raise
-                self.__logger.exception("Unknown Constraint Error: %s", self._obj.query or query)
+                self.__logger.exception("Unknown Constraint Error: %s %s", self._obj.query or query, misc.get_stack())
 
             #US-88: if error occurred for account analytic then just clear the cache
             if 'account_analytic_account_parent_id_fkey' in ie[0]:

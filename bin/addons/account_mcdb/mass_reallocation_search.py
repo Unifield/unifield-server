@@ -37,8 +37,9 @@ class mass_reallocation_search(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         # Only process first id
-        account = self.pool.get('account.analytic.account').browse(cr, uid, ids, context=context)[0]
+        account = analytic_acc_obj.browse(cr, uid, ids, context=context)[0]
         if account.category != 'FUNDING':
             raise osv.except_osv(_('Error'), _('This action only works for Funding Pool accounts!'))
         # Take all elements to create a domain
@@ -53,21 +54,17 @@ class mass_reallocation_search(osv.osv_memory):
         except ValueError:
             fp_id = 0
         if account.id != fp_id:
-            if account.tuple_destination_account_ids:
+            if account.tuple_destination_account_ids or account.fp_account_ids:
+                # note: this includes restrictions on Cost Centers
                 search.append(('is_fp_compat_with', '=', account.id))
             else:
                 # trick to avoid problem with FP that have NO destination link. So we need to search a "False" Destination.
                 search.append(('destination_id', '=', 0))
-            if account.cost_center_ids:
-                search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
-            else:
-                # trick to avoid problem with FP that have NO CC.
-                search.append(('cost_center_id', '=', 0))
         for criterium in [('account_id', '!=', account.id), ('journal_id.type', '!=', 'engagement'), ('is_reallocated', '=', False), ('is_reversal', '=', False)]:
             search.append(criterium)
         search.append(('contract_open','=', True))
         search.append(('move_state', '!=', 'draft'))
-        
+
         # Update context for Mass reallocation
         context['analytic_account_from'] = ids[0]
         # and for column

@@ -53,7 +53,6 @@
         'product_asset_view.xml',
         'security/ir.model.access.csv',
         'asset_sequence.xml',
-        'wizard/stock_partial_move_view.xml',
         'product_asset_report.xml',
     ],
     'installable': True,

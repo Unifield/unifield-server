@@ -269,6 +269,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                                      _('The Cost Center %s is not compatible with the Destination %s.') %
                                      (wiz_line.cost_center_id.code or '', wiz_line.destination_id.code or ''))
 
+            if not ad_obj.check_fp_cc_compatibility(cr, uid, wiz_line.analytic_id.id, wiz_line.cost_center_id.id, context=context):
+                raise osv.except_osv(_('Error'),
+                                     _('The Cost Center %s is not compatible with the Funding Pool %s.') %
+                                     (wiz_line.cost_center_id.code or '', wiz_line.analytic_id.code or ''))
+
             if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:
                 # new distribution line
                 #if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):

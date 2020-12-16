@@ -208,6 +208,7 @@ class kit_mass_import(osv.osv):
                   #7: Product Description (not used for import)
                   #8: Product Qty (mandatory)
                   #9: Product UoM (if not set, take the Product Default UoM)
+                  #10: Product Comments
                 """
                 for line, val in values.iteritems():
                     vval = val[3]
@@ -226,6 +227,7 @@ class kit_mass_import(osv.osv):
                         'item': val[5],
                         'qty': val[7],
                         'uom': val[8],
+                        'comment': val[9],
                     })
                 self.import_kits(cr, uid, wiz, tkc_values, context=context)
             else:
@@ -377,6 +379,7 @@ class kit_mass_import(osv.osv):
                         'item': 'ADAPCABL1S-',
                         'qty': 20.0,
                         'uom': 'PCE',
+                        'comment': 'Test',
                     },
                     {
                         'line': 2,
@@ -384,6 +387,7 @@ class kit_mass_import(osv.osv):
                         'item': 'ADAPCABL2S-',
                         'qty': 10.0,
                         'uom': False,
+                        'comment': '',
                     }
                 ],
             }
@@ -531,6 +535,7 @@ class kit_mass_import(osv.osv):
                     'item_product_id': item_product_id,
                     'item_qty': item.get('qty', 0.00),
                     'item_uom_id': item_uom_id,
+                    'comment': item.get('comment', ''),
                 })
             else:
                 if update_kit_id:

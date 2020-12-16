@@ -820,7 +820,9 @@ class wizard_cash_return(osv.osv_memory):
         # check if any line with an analytic-a-holic account missing the distribution_id value
         for st_line in wizard.advance_line_ids:
             if st_line.account_id.is_analytic_addicted and st_line.analytic_distribution_state != 'valid':
-                raise osv.except_osv(_('Warning'), _('All advance lines with account that depends on analytic distribution must have an allocation.'))
+                raise osv.except_osv(_('Warning'),
+                                     _('All advance lines with an account depending on an analytic distribution '
+                                       'must have a valid allocation.'))
 
         # Do computation of total_amount of advance return lines
         self.compute_total_amount(cr, uid, ids, context=context)

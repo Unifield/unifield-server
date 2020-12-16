@@ -119,6 +119,17 @@ class account_analytic_journal(osv.osv):
                 raise osv.except_osv(_('Warning'),
                                      _('An analytic journal with the code %s already exists in the current instance.') % vals['code'].upper())
 
+    def _adapt_od_type(self, cr, uid, vals, context):
+        """
+        For corr. journals created before US-6692: at the first synchro ONLY, related to Master Data, if an analytic
+        journal other than OD has the type "Correction Auto", change it to "Correction Manual".
+        """
+        if context and vals and context.get('sync_update_execution') and \
+                not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid)):
+            if vals.get('type', '') == 'correction' and vals.get('code', '') != 'OD':
+                vals.update({'type': 'correction_manual'})
+        return True
+
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -127,6 +138,7 @@ class account_analytic_journal(osv.osv):
         if 'instance_id' not in vals:
             # Prop. instance by default at creation time is the current one: add it in vals to make it appear in the Track Changes
             vals['instance_id'] = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.id
+        self._adapt_od_type(cr, uid, vals, context)
         return super(account_analytic_journal, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -140,6 +152,7 @@ class account_analytic_journal(osv.osv):
             if not journal_id.is_current_instance and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit an Analytic Journal that doesn't belong to the current instance."))
             self._check_code_duplication(cr, uid, vals, current_id=journal_id.id, context=context)
+        self._adapt_od_type(cr, uid, vals, context)
         return super(account_analytic_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_analytic_journal()

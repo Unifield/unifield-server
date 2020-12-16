@@ -52,6 +52,149 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF19.0
+    def us_7808_ocg_rename_esc(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocg':
+            cr.execute("update res_partner set name='MSF LOGISTIQUE' where id in (select res_id from ir_model_data where name='1e206c21-b2ba-11e4-a614-005056290182/res_partner/6')")
+            self._logger.warn('%d ESC partner renamed' % (cr.rowcount,))
+
+            if _get_instance_level(self, cr, uid) == 'hq':
+                cr.execute("update ir_model_data set touched='[''name'']', last_modification=now() where name='1e206c21-b2ba-11e4-a614-005056290182/res_partner/6'")
+                self._logger.warn('%d ESC sync update triggered' % (cr.rowcount,))
+        return True
+
+
+    def us_7243_migrate_contract_quad(self, cr, uid, *a, **b):
+        quad_obj = self.pool.get('financing.contract.account.quadruplet')
+        if not cr.table_exists('financing_contract_actual_account_quadruplets_old'):
+            cr.execute("create table financing_contract_actual_account_quadruplets_old as (select * from financing_contract_actual_account_quadruplets)")
+        already_migrated = {}
+        cr.execute('truncate financing_contract_actual_account_quadruplets')
+        cr.execute('select actual_line_id, account_quadruplet_id from financing_contract_actual_account_quadruplets_old')
+        nb_mig = 0
+        for x in cr.fetchall():
+            if x[1] not in already_migrated:
+                new_id = quad_obj.migrate_old_quad(cr, uid, [x[1]])
+                already_migrated[x[1]] = new_id and new_id[0]
+            if already_migrated.get(x[1]):
+                nb_mig += 1
+                cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id, account_quadruplet_id) values (%s, %s)', (x[0], already_migrated[x[1]]))
+
+        self._logger.warn('%d quad migrated' % (nb_mig,))
+        return True
+
+    def us7940_create_parent_seg(self, cr, uid, *a, **b):
+        if not cr.column_exists('replenishment_segment', 'order_validation_lt') or not cr.column_exists('replenishment_segment', 'hidden'):
+            return True
+
+        seg_obj = self.pool.get('replenishment.segment')
+
+        copy_fields = ['location_config_id', 'ir_requesting_location', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'order_coverage', 'previous_order_rdd', 'date_next_order_received_modified', 'hidden']
+        cr.execute("select id, description_seg, state, "+','.join(copy_fields)+"  from replenishment_segment where parent_id is NULL order by id")  # not_a_user_entry
+
+        for seg in cr.dictfetchall():
+            vals = {'name_parent_seg': self.pool.get('ir.sequence').get(cr, uid, 'replenishment.parent.segment')}
+            for x in copy_fields:
+                vals[x] = seg[x]
+            vals['state_parent'] = seg['state']
+            if vals['order_coverage']:
+                vals['order_coverage'] = vals['order_coverage'] * 30.44
+            vals['description_parent_seg'] = 'Parent %s' % seg['description_seg']
+
+            cr.execute('''
+                insert into replenishment_parent_segment (name_parent_seg, description_parent_seg, order_preparation_lt, time_unit_lt, state_parent, '''+','.join(copy_fields)+''')
+                values
+                (%(name_parent_seg)s, %(description_parent_seg)s, 0, 'd', %(state_parent)s, '''+','.join(['%%(%s)s' % x for x in copy_fields])+''')
+                returning id
+            ''', vals)  # not_a_user_entry
+            parent_seg_id = cr.fetchone()[0]
+            cr.execute('update replenishment_segment set parent_id=%s, safety_stock=safety_stock*30.44 where id=%s', (parent_seg_id, seg['id']))
+
+            seg_sdref = seg_obj.get_sd_ref(cr, uid, seg['id'])
+            cr.execute('''
+                insert into ir_model_data
+                    (noupdate, name, date_init, date_update, module, model, res_id, force_recreation, version, touched, last_modification)
+                    values
+                    ('f', %(sdref)s, now(), now(), 'sd', 'replenishment.parent.segment', %(parent_seg_id)s, 'f', 1, '[]', NOW())
+                ''', {'sdref': '%s_parent'%seg_sdref, 'parent_seg_id': parent_seg_id})
+
+        cr.execute('''update replenishment_order_calc_line line set segment_id=calc.segment_id from replenishment_order_calc calc where calc.id=line.order_calc_id''')
+        cr.execute('''update replenishment_order_calc calc set parent_segment_id=seg.parent_id, time_unit_lt='d' from replenishment_segment seg where calc.segment_id=seg.id''')
+        return True
+
+    def us_2725_uf_write_date_on_products(self, cr, uid, *a, **b):
+        '''
+        Set the uf_write_date of products which don't have one to the date of creation
+        '''
+
+        cr.execute('''
+            UPDATE product_product SET uf_write_date = uf_create_date WHERE uf_write_date is NULL
+        ''')
+        self._logger.warn('The uf_write_date has been modified on %s products' % (cr.rowcount,))
+
+        return True
+
+    def us_7742_update_stock_mission(self, cr, uid, *a, **b):
+        cr.execute('''update stock_move m set included_in_mission_stock='t' from mission_move_rel rel where m.id = rel.move_id''')
+
+        location_obj = self.pool.get('stock.location')
+        quarantine_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', True)])
+        input_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('input_ok', '=', True)])
+        output_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('output_ok', '=', True)])
+        report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)])
+        if not report_ids:
+            return True
+        report_id = report_ids[0]
+
+        stock_query = '''
+          SELECT al.product_id, al.qty FROM (
+            SELECT
+                m.product_id,
+                SUM(
+                    CASE
+                        WHEN COALESCE(m.product_qty, 0.0)=0 THEN 0
+                        WHEN m.location_dest_id in %(loc)s and m.location_id in %(loc)s THEN 0
+                        WHEN m.location_dest_id in %(loc)s AND pt.uom_id = m.product_uom THEN m.product_qty
+                        WHEN m.location_dest_id in %(loc)s AND pt.uom_id != m.product_uom THEN m.product_qty / u.factor * pu.factor
+                        WHEN pt.uom_id = m.product_uom THEN -m.product_qty
+                        ELSE -m.product_qty / u.factor * pu.factor
+                    END
+                ) AS qty
+            FROM stock_move m
+                LEFT JOIN product_product pp ON m.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                LEFT JOIN product_uom u ON m.product_uom = u.id
+            WHERE
+                m.state = 'done' AND
+                m.included_in_mission_stock = 't' AND
+                ( m.location_dest_id in %(loc)s or m.location_id in %(loc)s) AND
+                m.location_dest_id != m.location_id
+            GROUP BY
+                m.product_id
+            ) al WHERE qty!=0'''
+
+        for col, loc in [('quarantine_qty', quarantine_loc), ('input_qty', input_loc), ('opdd_qty', output_loc)]:
+            nb_update = 0
+            cr.execute(stock_query, {'loc': tuple(loc)})
+            for x in cr.fetchall():
+                cr.execute('update stock_mission_report_line line set '+col+'=%s  where product_id = %s and line.mission_report_id=%s RETURNING id', (x[1], x[0], report_id)) # not_a_user_entry
+                line_id = cr.fetchone()
+                if line_id:
+                    nb_update += 1
+                    cr.execute("update ir_model_data set last_modification=NOW(), touched='[''product_id'']' where model='stock.mission.report.line' and module='sd' and res_id=%s", (line_id[0],))
+            self._logger.warn('Mission stock line %s, updated: %d' % (col, nb_update))
+        return True
+
+
+    def us_7742_hide_stock_pipe(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        stock_pipe_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, stock_pipe_report_menu_id, {'active': instance.level == 'section'}, context={})
+        return True
 
     # UF18.0
     def uf18_0_migrate_acl(self, cr, uid, *a, **b):
@@ -1466,18 +1609,12 @@ class patch_scripts(osv.osv):
 
     def us_4541_stock_mission_recompute_cu_qty(self, cr, uid, *a, **b):
         """
-        rest cu_qty and central_qty
+        rest cu_qty
         """
         trigger_up = self.pool.get('sync.trigger.something.up')
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if not instance_id:
             return True
-
-        central_loc = self.pool.get('stock.location').search(cr, uid, [('central_location_ok', '=', 't')])
-        if not central_loc:
-            cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
-            if cr.rowcount:
-                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_central', 'args': instance_id.code})
 
         cu_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')])
         if not cu_loc:
@@ -2496,8 +2633,8 @@ class patch_scripts(osv.osv):
         # reset stock mission report line
         cr.execute('truncate mission_move_rel')
         fields_to_reset = ['in_pipe_coor_val', 'in_pipe_coor_qty', 'in_pipe_val', 'in_pipe_qty',
-                           'secondary_val', 'cu_qty', 'wh_qty', 'cu_val', 'stock_val', 'central_qty',
-                           'cross_qty', 'cross_val', 'secondary_qty', 'central_val', 'internal_qty', 'stock_qty'
+                           'secondary_val', 'cu_qty', 'wh_qty', 'cu_val', 'stock_val',
+                           'cross_qty', 'cross_val', 'secondary_qty', 'internal_qty', 'stock_qty'
                            ]
         if self.pool.get('sync.client.entity'):
             cr.execute("""update ir_model_data set touched='[''wh_qty'']', last_modification=NOW()
@@ -3545,7 +3682,6 @@ class patch_scripts(osv.osv):
                                        l.mission_report_id IN %s
                                        AND (l.internal_qty != 0.00
                                        OR l.stock_qty != 0.00
-                                       OR l.central_qty != 0.00
                                        OR l.cross_qty != 0.00
                                        OR l.secondary_qty != 0.00
                                        OR l.cu_qty != 0.00
@@ -4524,12 +4660,7 @@ class sync_tigger_something_up(osv.osv):
             context = {}
         if context.get('sync_update_execution'):
             _logger = logging.getLogger('tigger')
-            if vals.get('name') == 'clean_mission_stock_central':
-                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
-                if remote_id:
-                    cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
-                    _logger.warn('Reset %d mission stock Unall. Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
-            elif vals.get('name') == 'clean_mission_stock_cu':
+            if vals.get('name') == 'clean_mission_stock_cu':
                 remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
                 if remote_id:
                     cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))

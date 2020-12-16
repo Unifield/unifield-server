@@ -14798,11 +14798,6 @@ msgstr "Por hacer"
 msgid "You need to specify an event type."
 msgstr "Debe especificar un tipo de evento."
 
-#. module: mission_stock
-#: field:stock.mission.report.line,central_val:0
-msgid "Unallocated Stock Val."
-msgstr "Valor stock no asignado "
-
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/stock_partial_move.py:67
 #, python-format
@@ -20835,7 +20830,6 @@ msgstr "Marque la casilla si también desea visualizar las cuentas con saldo 0"
 #: view:account.state.open:0
 #: view:account.payment.make.payment:0
 #: view:wizard.confirm.closing.period:0
-#: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
 #: view:wizard.accrual.validation:0
 #: view:wizard.budget.import.confirm:0
@@ -54168,7 +54162,6 @@ msgstr "Catálogo de proveedor"
 #. modules: msf_budget, sales_followup, account, product_attributes, res_currency_tables, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report
 #: view:account.state.open:0
 #: view:wizard.confirm.closing.period:0
-#: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
 #: view:wizard.accrual.validation:0
 #: view:wizard.actual.export:0
@@ -64513,11 +64506,6 @@ msgstr "subflow.delivery_done - (procurement.order)"
 msgid "Company must be same for its related account and period."
 msgstr "La empresa debe ser la misma en las cuentas y periodos asociados."
 
-#. module: mission_stock
-#: field:stock.mission.report.line,central_qty:0
-msgid "Unallocated Stock Qty."
-msgstr "Cantidad stock no asignado "
-
 #. module: account
 #: code:addons/account/account_move_line.py:1167
 #: code:addons/account/account_move_line.py:1262
@@ -74310,11 +74298,6 @@ msgstr "Buscar en diario contable"
 #: selection:hr.job,state:0
 msgid "Old"
 msgstr "Antiguo"
-
-#. module: mission_stock
-#: field:mission.stock.wizard,split_stock:0
-msgid "Split the Warehouse stock qty. to Stock and Unallocated Stock."
-msgstr "Dividir la cantidad de stock en almacén entre Stock y stock no asignado."
 
 #. module: base
 #: field:ir.translation,value:0

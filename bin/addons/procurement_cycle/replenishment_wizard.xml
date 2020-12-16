@@ -50,6 +50,39 @@
                 </form>
             </field>
         </record>
+
+        <record model="ir.ui.view" id="replenishment_consolidated_oc_import_form">
+            <field name="name">replenishment.consolidated_oc.import.form</field>
+            <field name="model">replenishment.consolidated_oc.import</field>
+            <field name="type">form</field>
+            <field name="priority">25</field>
+            <field name="arch" type="xml">
+                <form string="Import consolidated OC">
+                        <field name="file_to_import" colspan="4" attrs="{'invisible': [('state', 'in', ['done', 'partial'])]}" />
+                        <field name="state"  />
+                        <group colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}">
+                            <separator string="Import Summary" colspan="4" />
+                            <field name="error" colspan="4" widget="full_text" nolabel="1" />
+                        </group>
+                        <group colspan="4">
+                            <button name="import_oc_lines" icon="gtk-ok" string="Import" type="object" attrs="{'invisible': [('state', 'in', ['done', 'partial'])]}" />
+                            <button special="cancel" string="Close" icon="gtk-cancel" />
+                        </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="action_replenishment_consolidated_oc_import_"
+            name="Import Consolidated OC lines"
+            res_model="replenishment.consolidated_oc.import"
+            src_model="replenishment.order_calc"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            multi="True"
+            key2="client_action_multi"
+            />
+
     </data>
 </openerp>
 

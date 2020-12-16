@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            auto="False"
+            id="kitting_order_report"
+            model="kit.creation"
+            name="kitting.order.report"
+            target_filename="Kitting Order"
+            rml="addons/kit/report/kitting_order_report.rml"
+            string="Kitting Order Report" />
+
+    </data>
+</openerp>

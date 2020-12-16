@@ -55,6 +55,7 @@
         'report/purchase_report_view.xml',
         'board_purchase_view.xml',
         'purchase_line_workflow.xml',
+        'purchase_custom_text.xml',
     ],
     'test': [
     ],

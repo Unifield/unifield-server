@@ -1213,10 +1213,7 @@ class product_attributes(osv.osv):
         # Compute the constraint if a partner is passed in vals
         if vals.get('partner_id'):
             partner_obj = self.pool.get('res.partner')
-            partner_type = partner_obj.browse(cr,
-                                              uid,
-                                              vals.get('partner_id'),
-                                              context=context).partner_type
+            partner_type = partner_obj.browse(cr, uid, vals.get('partner_id'), context=context).partner_type
             if partner_type == 'external':
                 constraints.append('external')
             elif partner_type == 'esc':
@@ -1256,7 +1253,6 @@ class product_attributes(osv.osv):
         for product in self.browse(cr, uid, ids, context=context):
             msg = ''
             st_cond = True
-
 
             if product.state.code == 'forbidden':
                 if sale_obj and partner_type == 'internal':
@@ -1442,6 +1438,7 @@ class product_attributes(osv.osv):
                     _('Error'),
                     _('Batch and Expiry attributes do not conform')
                 )
+        self.clean_bn_ed(cr, uid, vals, context)
 
         intstat_code = False
         if vals.get('international_status'):
@@ -1504,7 +1501,10 @@ class product_attributes(osv.osv):
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
 
-        vals['uf_create_date'] = vals.get('uf_create_date') or datetime.now()
+        vals.update({
+            'uf_create_date': vals.get('uf_create_date') or datetime.now(),
+            'uf_write_date': vals.get('uf_write_date') or datetime.now(),
+        })
 
         self.convert_price(cr, uid, vals, context)
 
@@ -1562,6 +1562,10 @@ class product_attributes(osv.osv):
             selection += [('False', 'Non Standard (deprecated)'), ('True', 'Standard (deprecated)')]
             fg['standard_ok']['selection'] = selection
         return fg
+
+    def clean_bn_ed(self, cr, uid, vals, context):
+        if vals and vals.get('batch_management'):
+            vals['perishable'] = True
 
     def clean_standard(self, cr, uid, vals, context):
         if vals and 'standard_ok' in vals:
@@ -1636,6 +1640,7 @@ class product_attributes(osv.osv):
             ids = [ids]
 
         self.clean_standard(cr, uid, vals, context)
+        self.clean_bn_ed(cr, uid, vals, context)
 
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
@@ -2263,10 +2268,10 @@ class product_attributes(osv.osv):
         if not in_use_stock:  # Check for Stock Mission Report
             srml_domain = [
                 ('product_id', '=', product.id),
-                '|', '|', '|', '|', '|', '|', '|', '|',
+                '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
                 ('stock_qty', '>', 0), ('in_pipe_coor_qty', '>', 0), ('cross_qty', '>', 0), ('in_pipe_qty', '>', 0),
-                ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('central_qty', '>', 0), ('secondary_qty', '>', 0),
-                ('internal_qty', '>', 0),
+                ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('secondary_qty', '>', 0), ('internal_qty', '>', 0),
+                ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty', '>', 0)
             ]
             if self.pool.get('stock.mission.report.line').search(cr, uid, srml_domain, limit=1, context=context):
                 in_use_stock = True
@@ -2872,9 +2877,9 @@ class product_attributes(osv.osv):
             'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
             'secondary_qty', 'secondary_val',
             'cu_qty', 'cu_val',
-            'central_qty', 'central_val',
             'cross_qty', 'cross_val',
             'wh_qty', 'internal_qty'
+            'quarantine_qty', 'input_qty', 'opdd_qty'
         ]
         cr.execute('''
             update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''
@@ -2886,6 +2891,15 @@ class product_attributes(osv.osv):
         cr.execute("delete from mission_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
 
         return True
+
+    def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
+        '''
+        batch management is modified -> modification of Expiry Date Mandatory (perishable)
+        '''
+        if batch_management:
+            return {'value': {'perishable': True}}
+        return {}
+
 
 
     _constraints = [
