@@ -1008,6 +1008,12 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                         values_line_errors.append( _('Line %s of the PO: %s') % (line_number, err1))
                         continue
 
+                    if not is_delete_line and line_number and not ext_ref and len(SIMU_LINES[line_number]['line_ids']) > 1:
+                        err1 = _('multiple match lines, the line can not be processed')
+                        values_line_errors.append(_('Line %s of the PO: %s') % (line_number, err1))
+                        continue
+
+
                     to_delete = False
                     to_update = False
                     to_split = False
@@ -1029,6 +1035,10 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                     else:
                         if line_number and ext_ref:
                             if ext_ref not in SIMU_LINES['ext_ref'] and SIMU_LINES[line_number].get(False):
+                                if len(SIMU_LINES[line_number].get(False)) > 1:
+                                    err1 = _('multiple match lines, the line can not be processed')
+                                    values_line_errors.append(_('Line %s of the PO: %s') % (line_number, err1))
+                                    continue
                                 # UC 1
                                 to_update = self.best_matching_lines(cr, uid, [lx for lx in SIMU_LINES[line_number].get(False) if lx not in found_wiz_lines], values[x][2], values[x][4], context)
 
