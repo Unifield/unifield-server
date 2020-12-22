@@ -768,8 +768,9 @@ MochiKit.Base.update(ListView.prototype, {
     },
 
     edit: function(edit_inline, default_get_ctx) {
-    	if (edit_inline==0)
-    		return error_display(_('To edit Record, please first save it.'));
+        if (edit_inline==0) {
+            return error_display(_('To edit Record, please first save it.'));
+        }
 
         this.reload(edit_inline, null, default_get_ctx);
     },
@@ -781,12 +782,23 @@ MochiKit.Base.update(ListView.prototype, {
         }
 
         var parent_field = this.name.split('/');
-        var data = getFormData(2, false);
+        var data = getFormData(3, false);
         var args = getFormParams('_terp_concurrency_info');
+
 
         for (var k in data) {
             if (k.indexOf(this.name + '/') == 0 || this.name == '_terp_list') {
-                args[k] = data[k];
+                if (k == this.name + '/id')  {
+                    value_id = jQuery.parseJSON(data[k])['value']
+                    if (id == -1) {
+                        id = ''
+                    }
+                    if (value_id != id) {
+                        return;
+                    }
+                } else {
+                    args[k] = data[k];
+                }
             }
         }
 

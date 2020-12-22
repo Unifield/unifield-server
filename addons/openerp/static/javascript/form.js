@@ -515,7 +515,7 @@ function getFormData(extended, include_readonly, parentNode) {
     var frm = {};
 
     var is_editable = jQuery('#_terp_editable').val() == 'True' || jQuery(parentNode).attr('id') == 'search_form';
-    
+
     var $fields = jQuery(parentNode).find('img[kind=picture]');
     if (is_editable) {
         if (include_readonly) {
@@ -544,9 +544,9 @@ function getFormData(extended, include_readonly, parentNode) {
             return;
         }
 
-	if (/_reference$/.test(this.id)) {
-	    return;
-	}
+        if (/_reference$/.test(this.id)) {
+            return;
+        }
         // work around to skip o2m values (list mode)
         var value;
         if (name.indexOf('/__id') > 0) {
@@ -592,7 +592,7 @@ function getFormData(extended, include_readonly, parentNode) {
 
                 name = name + 'id';
 
-                if (!openobject.dom.get(name)) {
+                if (!openobject.dom.get(name) && extended != 3) {
                     return;
                 }
 
@@ -627,7 +627,7 @@ function getFormData(extended, include_readonly, parentNode) {
             }
             // stringify the attr object
             frm[name] = serializeJSON(attrs);
-	    
+
         }
         else {
             frm[name] = this.value;
