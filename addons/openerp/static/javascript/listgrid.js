@@ -790,7 +790,7 @@ MochiKit.Base.update(ListView.prototype, {
             if (k.indexOf(this.name + '/') == 0 || this.name == '_terp_list') {
                 if (k == this.name + '/id')  {
                     value_id = jQuery.parseJSON(data[k])['value']
-                    if (id == -1) {
+                    if (id == -1 || !id) {
                         id = ''
                     }
                     if (value_id != id) {
