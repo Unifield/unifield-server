@@ -38,7 +38,7 @@ import subprocess
 import os
 import shutil
 import ConfigParser
-
+import codecs
 
 def get_7z():
     if os.name == 'nt':
@@ -657,8 +657,13 @@ class hr_payroll_employee_import(osv.osv_memory):
                 staff_reader = csv.DictReader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             # read the ini file
             if zipobj.namelist() and ini_file in zipobj.namelist():
+                ini_desc = zipobj.open(ini_file)
+                is_bom = ini_desc.read(3)
+                if is_bom != codecs.BOM_UTF8:
+                    ini_desc.close()
+                    ini_desc = zipobj.open(ini_file)
                 config_parser = ConfigParser.SafeConfigParser()
-                config_parser.readfp(zipobj.open(ini_file))
+                config_parser.readfp(ini_desc)
         else:
             tmpdir = self._extract_7z(cr, uid, filename)
             job_file_name = os.path.join(tmpdir, job_file)
@@ -682,6 +687,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             ini_file_name = os.path.join(tmpdir, ini_file)
             if os.path.isfile(ini_file_name):
                 ini_file_desc = open(ini_file_name, 'rb')
+                is_bom = ini_file_desc.read(3)
+                if is_bom != codecs.BOM_UTF8:
+                    ini_file_desc.seek(0)
                 desc_to_close.append(ini_file_desc)
                 config_parser = ConfigParser.SafeConfigParser()
                 config_parser.readfp(ini_file_desc)
