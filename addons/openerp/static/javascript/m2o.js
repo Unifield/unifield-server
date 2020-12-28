@@ -99,8 +99,12 @@ ManyToOne.prototype.gotFocus = function(evt) {
     this.hasFocus = true;
 };
 
-ManyToOne.prototype.lostFocus = function() {
+ManyToOne.prototype.lostFocus = function(evt) {
     this.hasFocus = false;
+    if (!evt.relatedTarget){
+        return;
+    }
+
     if(this.selectedResult || this.lastKey == 9) {
         this.lastKey = null;
         this.clearResults();
@@ -123,12 +127,7 @@ ManyToOne.prototype.select = function() {
         return;
     }
     if(!jQuery(this.field).hasClass('readonlyfield')) {
-        // test added:
-        // on form view: to open only 1 popup when a text is entered and the magnifying glass clicked (the popup is opened by lostFocus).
-        // on search view: lostFocus doesn't open a popup and the m2o can have a value not associated to an id
-        if (!this.text.value  || this.field.value || jQuery(this.field).hasClass('m2o_search')) {
-            this.get_matched();
-        }
+        this.get_matched();
     }
 };
 
@@ -347,7 +346,7 @@ ManyToOne.prototype.on_keydown = function(evt) {
     //Tab
     //if((evt.which == 9) && this.text.value && !this.field.value) {
     // check with m2o_search added to disable the popup in search view on tab
-    if((evt.which == 9) && this.text.value && !this.field.value && !jQuery(this.field).hasClass('m2o_search')) {
+    if((evt.which == 9 || evt.which == 13) && this.text.value && !this.field.value && !jQuery(this.field).hasClass('m2o_search')) {
         this.get_matched();
     }
 
