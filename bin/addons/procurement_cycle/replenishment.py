@@ -16,6 +16,7 @@ import decimal_precision as dp
 import math
 import re
 import hashlib
+from . import normalize_td
 
 life_cycle_status = [('active', _('Active')), ('new', _('New')), ('replaced', _('Replaced')), ('replacing', _('Replacing')), ('phasingout', _('Phasing Out')), ('activereplacing', _('Active-Replacing'))]
 class replenishment_location_config(osv.osv):
@@ -447,19 +448,6 @@ class replenishment_location_config(osv.osv):
 
 replenishment_location_config()
 
-def normalize_td(time_unit, value):
-    """
-        timedelta does not support float for months
-    """
-
-    unit = {'d': 'days', 'm': 'months', 'w': 'weeks'}.get(time_unit, 'd')
-    value = value or 0
-    if unit == 'months':
-        if value%1 != 0:
-            return {'months': int(value), 'days': 30.44 * (value%1)}
-        else:
-            value = int(value)
-    return {unit: value}
 
 class replenishment_parent_segment(osv.osv):
     _name = 'replenishment.parent.segment'
