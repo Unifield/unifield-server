@@ -2271,7 +2271,7 @@ class product_attributes(osv.osv):
                 '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
                 ('stock_qty', '>', 0), ('in_pipe_coor_qty', '>', 0), ('cross_qty', '>', 0), ('in_pipe_qty', '>', 0),
                 ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('secondary_qty', '>', 0), ('internal_qty', '>', 0),
-                ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty' '>', 0)
+                ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty', '>', 0)
             ]
             if self.pool.get('stock.mission.report.line').search(cr, uid, srml_domain, limit=1, context=context):
                 in_use_stock = True

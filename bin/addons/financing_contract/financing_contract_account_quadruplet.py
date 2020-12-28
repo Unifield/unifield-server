@@ -87,12 +87,16 @@ class financing_contract_account_quadruplet(osv.osv):
                  account_analytic_account cc,
                  funding_pool_associated_cost_centers fpacc,
                  funding_pool_associated_destinations fpad,
-                 account_destination_link lnk
+                 account_destination_link lnk,
+                 account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
            WHERE
                 fpacc.funding_pool_id = fp.id AND
                 fpacc.cost_center_id = cc.id AND
                 lnk.id = fpad.tuple_id AND
-                fp.id = fpad.funding_pool_id
+                fp.id = fpad.funding_pool_id AND
+                lnk.destination_id = dest.id AND
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
 
            UNION
 
@@ -105,7 +109,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 fp_account_rel,
                 account_target_costcenter target,
                 account_destination_link lnk,
-                account_account  gl_account
+                account_account  gl_account,
+                account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
             where
                 fp.allow_all_cc_with_fp = 't' and
                 cc.type != 'view' and
@@ -115,7 +121,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 fp.select_accounts_only = 't' and
                 fp_account_rel.fp_id = fp.id and
                 fp_account_rel.account_id= gl_account.id and
-                lnk.account_id = gl_account.id
+                lnk.account_id = gl_account.id and
+                lnk.destination_id = dest.id and
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
 
             UNION
 
@@ -128,7 +136,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 funding_pool_associated_cost_centers fpacc,
                 fp_account_rel,
                 account_destination_link lnk,
-                account_account  gl_account
+                account_account  gl_account,
+                account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
             where
                 fp.allow_all_cc_with_fp = 'f' and
                 fpacc.funding_pool_id = fp.id and
@@ -136,7 +146,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 fp.select_accounts_only = 't' and
                 fp_account_rel.fp_id = fp.id and
                 fp_account_rel.account_id= gl_account.id and
-                lnk.account_id = gl_account.id
+                lnk.account_id = gl_account.id and
+                lnk.destination_id = dest.id and
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
 
             UNION
 
@@ -148,7 +160,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 account_analytic_account cc,
                 funding_pool_associated_destinations fpad,
                 account_target_costcenter target,
-                account_destination_link lnk
+                account_destination_link lnk,
+                account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
             where
                 fp.allow_all_cc_with_fp = 't' and
                 cc.type != 'view' and
@@ -157,7 +171,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 target.instance_id = fp.instance_id and
                 fp.select_accounts_only = 'f' and
                 lnk.id = fpad.tuple_id and
-                fp.id = fpad.funding_pool_id
+                fp.id = fpad.funding_pool_id and
+                lnk.destination_id = dest.id and
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
             ) AS combinations
            )""")
         return res
@@ -186,6 +202,14 @@ class financing_contract_account_quadruplet(osv.osv):
                     cc_ids = [0]
                 if not fp_ids:
                     fp_ids = [0]
+
+                cr.execute('''
+                    update financing_contract_account_quadruplet set disabled='t'
+                    where
+                        funding_pool_id in %s and
+                        cost_center_id in %s
+                ''', (tuple(fp_ids), tuple(cc_ids)))
+
                 cr.execute('''
                     INSERT INTO financing_contract_account_quadruplet
                         (account_destination_name, account_id, cost_center_id, disabled, account_destination_link_id, funding_pool_id, account_destination_id)
@@ -278,6 +302,30 @@ class financing_contract_account_quadruplet(osv.osv):
         fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
         return [('cost_center_id', 'in', cc_ids), ('funding_pool_id', 'in', fp_ids)]
 
+    def _get_valid(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        if not ids:
+            return []
+
+        for _id in ids:
+            res[_id] = False
+
+        cr.execute('''select
+            quad.id, view.disabled
+            from
+                financing_contract_account_quadruplet quad, financing_contract_account_quadruplet_view view
+            where
+                quad.account_id = view.account_id and
+                quad.account_destination_id = view.account_destination_id and
+                quad.cost_center_id = view.cost_center_id and
+                quad.funding_pool_id = view.funding_pool_id and
+                quad.id in %s
+        ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            res[x[0]] = not x[1]
+
+        return res
+
     _columns = {
         'account_destination_id': fields.many2one('account.analytic.account', 'Destination', relate=True, readonly=True, select=1),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre', relate=True, readonly=True, select=1),
@@ -288,6 +336,7 @@ class financing_contract_account_quadruplet(osv.osv):
         'account_id': fields.many2one('account.account', 'Account ID', relate=True, readonly=True, select=1),
         'account_destination_link_id': fields.many2one('account.destination.link', 'Link id', readonly=True, select=1),
         'disabled': fields.boolean('Disabled'),
+        'valid': fields.function(_get_valid,  method=True, type='boolean', string='Is quad valid ?'),
     }
 
     _sql_constraints = {

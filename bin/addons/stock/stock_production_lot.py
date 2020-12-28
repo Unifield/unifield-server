@@ -400,7 +400,7 @@ class stock_production_lot(osv.osv):
                     cr, uid, context['product_id'])
                 duration = getattr(product, dtype)
                 # set date to False when no expiry time specified on the product
-                date = duration and (datetime.datetime.today() + relativedelta(months=duration))
+                date = duration and (datetime.today() + relativedelta(months=duration))
             return date and date.strftime('%Y-%m-%d') or False
         return calc_date
 
