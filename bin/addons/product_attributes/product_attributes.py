@@ -2887,8 +2887,7 @@ class product_attributes(osv.osv):
                 mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
                 product_id in %(product_ids)s
         ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (nsl_prod_id, local_id)}) # not_a_user_entry
-        cr.execute("delete from mission_line_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
-        cr.execute("delete from mission_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
+        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (nsl_prod_id, ))
 
         return True
 
