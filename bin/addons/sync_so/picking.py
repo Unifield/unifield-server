@@ -1193,6 +1193,9 @@ class stock_picking(osv.osv):
                 pick_data['move_lines'].append((0, 0, move_data))
             move_data['state'] = 'assigned'
 
+        if not pick_data['purchase_id']:
+            return "Ignored because old DPO flow no po found"
+
         pick_id = self.create(cr, uid, pick_data, context=context)
         if pick_data['state'] == 'cancel':
             self.action_cancel(cr, uid, [pick_id])
