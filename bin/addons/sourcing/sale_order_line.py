@@ -1590,11 +1590,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         if not po_to_use: # then create new PO:
                             po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new PO:
-                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
+                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id', 'name'],  context=context)
                             self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                             self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                         else:
-                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id'], context=context)
+                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id'], context=context)
 
                         target_currency_id = po.pricelist_id.currency_id.id
                         # No AD on sourcing line if it comes from IR:
