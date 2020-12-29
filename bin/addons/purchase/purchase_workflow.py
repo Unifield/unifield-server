@@ -206,7 +206,7 @@ class purchase_order_line(osv.osv):
                 if pol.created_by_sync:
                     sol_values['created_by_sync'] = True
 
-                if pol.order_id.order_type == 'direct':
+                if pol.order_id.order_type == 'direct' and pol.order_id.po_version > 1:
                     sol_values['dpo_line_id'] = pol.id
 
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
