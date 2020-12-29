@@ -1145,6 +1145,7 @@ class stock_picking(osv.osv):
 
         currency_cache = {}
         move_lines_cancelled = []
+        out_data = {}
         for move_line in data.get('move_lines'):
             move_data = self.format_data(cr, uid, move_line, source, context=context)
             dpo_line_id = move_data['dpo_line_id']
@@ -1153,7 +1154,6 @@ class stock_picking(osv.osv):
             move_data['dpo_line_id'] = False
             move_data['sync_dpo'] = False
             move_data['purchase_line_id'] = dpo_line_id
-            out_data = {}
             pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id'], context=context)
             if not pick_data['purchase_id']:
                 po = pol.order_id
