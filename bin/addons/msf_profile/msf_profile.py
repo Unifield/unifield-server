@@ -54,7 +54,7 @@ class patch_scripts(osv.osv):
 
     def us_7749_migrate_dpo_flow(self, cr, uid, *a, **b):
         # ignore old DPO IN: do not generate sync msg for old IN
-        cr.execute("update sock_picking set dpo_incoming='f' where dpo_incoming='t'")
+        cr.execute("update stock_picking set dpo_incoming='f' where dpo_incoming='t'")
         cr.execute('update purchase_order set po_version=1')
         cr.execute("update purchase_order set po_version=2, invoice_method='picking' where order_type='direct' and state in ('draft', 'validated')")
         return True
