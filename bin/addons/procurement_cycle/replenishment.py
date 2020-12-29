@@ -253,11 +253,10 @@ class replenishment_location_config(osv.osv):
                 continue
 
             if config.include_product:
-                if not segment_obj.search_exist(cr, uid, [('location_config_id', '=', config.id), ('hidden', '=', True)], context=context):
-                    self.generate_hidden_segment(cr, uid, config.id, context)
-                    segment_ids = segment_obj.search(cr, uid, seg_dom, context=context)
+                self.generate_hidden_segment(cr, uid, config.id, context)
+                segment_ids = segment_obj.search(cr, uid, seg_dom, context=context)
 
-            segments = segment_obj.browse(cr, uid, segment_ids, fields_to_fetch=['name_seg'], context=context)
+            segments = segment_obj.browse(cr, uid, segment_ids, fields_to_fetch=['name_seg', 'state', 'missing_inv_review'], context=context)
 
             review_id = False
             review_ids = review_obj.search(cr, uid, [('location_config_id', '=', config.id)], context=context)
@@ -353,6 +352,11 @@ class replenishment_location_config(osv.osv):
                 }, context=context)
             else:
                 hidden_seg = hidden_seg_ids[0]
+
+            cr.execute("select product_id, id from replenishment_segment_line where segment_id = %s", (hidden_seg, ))
+            existing_prod = dict((x[0], x[1]) for x in cr.fetchall())
+            found_prod = set()
+
             # get prod in stock on main level
             cr.execute('''
                 select msl.product_id from
@@ -365,14 +369,16 @@ class replenishment_location_config(osv.osv):
                             seg_line.product_id
                         from replenishment_segment_line seg_line, replenishment_segment seg, replenishment_parent_segment parent_seg
                         where
-                            parent_seg.id = seg.parent_id and seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and parent_seg.location_config_id = %s
+                            parent_seg.id = seg.parent_id and seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and parent_seg.location_config_id = %s and parent_seg.hidden='f'
 
                     )
                 group by msl.product_id
             ''', (tuple(amc_location_ids), loc_config.id))
 
             for prod in cr.fetchall():
-                self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
+                found_prod.add(prod[0])
+                if prod[0] not in existing_prod:
+                    self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
 
             if loc_config.is_current_instance:
                 # get prod in stock on lower level
@@ -390,14 +396,18 @@ class replenishment_location_config(osv.osv):
                                 seg_line.product_id
                             from replenishment_segment_line seg_line, replenishment_segment seg, replenishment_parent_segment parent_seg
                             where
-                                parent_seg.id = seg.parent_id and seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and parent_seg.location_config_id = %s
+                                parent_seg.id = seg.parent_id and seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and parent_seg.location_config_id = %s and parent_seg.hidden='f'
 
                         )
                     group by msl.product_id
                 ''', (loc_config.id, loc_config.id))
 
                 for prod in cr.fetchall():
-                    self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
+                    if prod[0] in found_prod:
+                        continue
+                    found_prod.add(prod[0])
+                    if prod[0] not in existing_prod:
+                        self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
 
                 # move in pipe at coo / only project
                 cr.execute('''
@@ -413,14 +423,18 @@ class replenishment_location_config(osv.osv):
                                 seg_line.product_id
                             from replenishment_segment_line seg_line, replenishment_segment seg, replenishment_parent_segment parent_seg
                             where
-                                parent_seg.id = seg.parent_id and seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and parent_seg.location_config_id = %s
+                                parent_seg.id = seg.parent_id and seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and parent_seg.location_config_id = %s and parent_seg.hidden='f'
 
                         )
                     group by move.product_id
                 ''', (tuple(amc_location_ids), loc_config.id))
 
                 for prod in cr.fetchall():
-                    self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
+                    if prod[0] in found_prod:
+                        continue
+                    found_prod.add(prod[0])
+                    if prod[0] not in existing_prod:
+                        self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
 
                 # PO lines
                 cr.execute('''
@@ -434,14 +448,22 @@ class replenishment_location_config(osv.osv):
                                 seg_line.product_id
                             from replenishment_segment_line seg_line, replenishment_segment seg, replenishment_parent_segment parent_seg
                             where
-                                parent_seg.id = seg.parent_id and seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and parent_seg.location_config_id = %s
+                                parent_seg.id = seg.parent_id and seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and parent_seg.location_config_id = %s and parent_seg.hidden='f'
 
                         )
                     group by pol.product_id
                 ''', (tuple(amc_location_ids), loc_config.id))
 
-                for prod in cr.fetchall():
+            for prod in cr.fetchall():
+                if prod[0] in found_prod:
+                    continue
+                found_prod.add(prod[0])
+                if prod[0] not in existing_prod:
                     self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
+
+            no_more_pipes = [existing_prod[x] for x in existing_prod if x not in found_prod]
+            if no_more_pipes:
+                self.pool.get('replenishment.segment.line').unlink(cr, uid, no_more_pipes, context=context)
 
         return True
 
@@ -645,6 +667,30 @@ class replenishment_parent_segment(osv.osv):
                 seg_reset.append(child.id)
         if seg_reset:
             self.pool.get('replenishment.segment').reset_gen_date(cr, uid, seg_reset, set_draft=False, context=context)
+        return True
+
+    def set_as_archived(self, cr, uid, ids, context=None):
+        self.check_inprogress_order_calc(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'state_parent': 'archived'}, context=context)
+        seg_to_archive = []
+        for parent in self.browse(cr, uid, ids, fields_to_fetch=['child_ids'], context=context):
+            for child in parent.child_ids:
+                if child.state not in ('archived', 'cancel'):
+                    seg_to_archive.append(child.id)
+        if seg_to_archive:
+            self.pool.get('replenishment.segment').set_as_archived(cr, uid, seg_to_archive, context=context)
+        return True
+
+    def set_as_cancel(self, cr, uid, ids, context=None):
+        self.check_inprogress_order_calc(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'state_parent': 'cancel'}, context=context)
+        seg_to_cancel = []
+        for parent in self.browse(cr, uid, ids, fields_to_fetch=['child_ids'], context=context):
+            for child in parent.child_ids:
+                if child.state != 'cancel':
+                    seg_to_cancel.append(child.id)
+        if seg_to_cancel:
+            self.pool.get('replenishment.segment').set_as_cancel(cr, uid, seg_to_cancel, context=context)
         return True
 
     def generate_order_calc(self, cr, uid, ids, context=None):
@@ -1935,7 +1981,7 @@ class replenishment_segment(osv.osv):
 
     def change_parent_id(self, cr, uid, ids, parent_id, context=None):
         to_populate = [
-            'location_config_id', 'time_unit_lt', 'total_lt', 'internal_lt', 'external_lt', 'order_preparation_lt',
+            'location_config_id', 'time_unit_lt', 'total_lt', 'internal_lt', 'external_lt', 'order_preparation_lt', 'description_parent_seg',
             'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'previous_order_rdd', 'date_preparing',
             'date_next_order_validated', 'date_next_order_received', 'date_next_order_received_modified', 'order_coverage',
             'description', 'ir_requesting_location'
@@ -2325,7 +2371,7 @@ class replenishment_segment_line(osv.osv):
                 where
                     parent_seg.hidden = 't' and
                     (product_id, parent_seg.location_config_id) in
-                    (select product_id, parent_seg2.location_config_id from replenishment_segment_line l2, replenishment_segment seg2, replenishment_parent_segment parent_seg2 where parent_seg2.id=seg2.parent_id and l2.id in %s and seg2.id = l2.segment_id and parent_seg.hidden = 'f')
+                    (select product_id, parent_seg2.location_config_id from replenishment_segment_line l2, replenishment_segment seg2, replenishment_parent_segment parent_seg2 where parent_seg2.id=seg2.parent_id and l2.id in %s and seg2.id = l2.segment_id and parent_seg2.hidden = 'f')
             )
             ''', (tuple(ids), ))
 

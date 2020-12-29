@@ -58,6 +58,18 @@ class patch_scripts(osv.osv):
         return True
 
     # UF19.0
+    def us_7808_ocg_rename_esc(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocg':
+            cr.execute("update res_partner set name='MSF LOGISTIQUE' where id in (select res_id from ir_model_data where name='1e206c21-b2ba-11e4-a614-005056290182/res_partner/6')")
+            self._logger.warn('%d ESC partner renamed' % (cr.rowcount,))
+
+            if _get_instance_level(self, cr, uid) == 'hq':
+                cr.execute("update ir_model_data set touched='[''name'']', last_modification=now() where name='1e206c21-b2ba-11e4-a614-005056290182/res_partner/6'")
+                self._logger.warn('%d ESC sync update triggered' % (cr.rowcount,))
+        return True
+
+
     def us_7243_migrate_contract_quad(self, cr, uid, *a, **b):
         quad_obj = self.pool.get('financing.contract.account.quadruplet')
         if not cr.table_exists('financing_contract_actual_account_quadruplets_old'):

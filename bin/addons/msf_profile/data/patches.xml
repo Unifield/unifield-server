@@ -626,6 +626,10 @@
             <field name="method">us_7243_migrate_contract_quad</field>
         </record>
 
+        <record id="us_7808_ocg_rename_esc" model="patch.scripts">
+            <field name="method">us_7808_ocg_rename_esc</field>
+        </record>
+
         <record id="us_7749_migrate_dpo_flow" model="patch.scripts">
             <field name="method">us_7749_migrate_dpo_flow</field>
         </record>
