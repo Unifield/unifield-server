@@ -61717,6 +61717,7 @@ msgstr "Tél. :"
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:882
 #: report:addons/stock/report/stock_delivery_report_xls.mako:212
 #: code:addons/stock_override/report/report_stock_move.py:826
+#: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
 msgid "Order Type"
 msgstr "Type de Commande"
 
@@ -96573,6 +96574,7 @@ msgstr "product.likely.expire.report.item"
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:293
 #: field:shipment.add.pack.processor,partner_id:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:901
+#: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
 #, python-format
 msgid "Customer"
 msgstr "Client"
@@ -105179,10 +105181,14 @@ msgid "Lines with 10 digits total amounts"
 msgstr "Lignes avec un montant total de plus de 10 chiffres"
 
 #. module: msf_supply_doc_export
-#: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:104
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.supplier_performance_report_xls
 msgid "Supplier Performance Report"
 msgstr "Rapport de Performance des Fournisseurs"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:104
+msgid "Supplier Perf."
+msgstr "Perf. Fournisseurs"
 
 #. module: msf_supply_doc_export
 #: model:ir.actions.act_window,name:msf_supply_doc_export.action_supplier_performance_wizard
