@@ -93,14 +93,17 @@ class wizard_split_invoice(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('The creation of a new invoice failed.'))
 
         inv_lines = wizard.invoice_id and wizard.invoice_id.invoice_line or []
+        inv_lines_in_wiz = [wiz_line.invoice_line_id.id for wiz_line in wizard.invoice_line_ids]
         for inv_line in inv_lines:
-            inv_lines_in_wiz = [wiz_line.invoice_line_id.id for wiz_line in wizard.invoice_line_ids]
             if inv_line.id not in inv_lines_in_wiz:
                 # UC1: the line has been deleted in the wizard: add it the new invoice, and then remove it from the original one
                 invl_obj.copy(cr, uid, inv_line.id, {'invoice_id': new_inv_id}, context=context)
                 invl_obj.unlink(cr, uid, [inv_line.id], context=context)
             else:
-                wiz_line_ids = wiz_line_obj.search(cr, uid, [('invoice_line_id', '=', inv_line.id)], limit=1, context=context)
+                wiz_line_ids = wiz_line_obj.search(cr, uid,
+                                                   [('invoice_line_id', '=', inv_line.id),
+                                                    ('wizard_id', '=', wizard.id)],  # in case the wiz. is used several times on the same line
+                                                   limit=1, context=context)
                 if wiz_line_ids:
                     wiz_line_id = wiz_line_ids[0]
                     wiz_line_qty = wiz_line_obj.browse(cr, uid, wiz_line_id, fields_to_fetch=['quantity'], context=context).quantity or 0.0
