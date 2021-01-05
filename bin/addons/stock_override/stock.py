@@ -217,6 +217,7 @@ class stock_picking(osv.osv):
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
         'dpo_incoming': fields.boolean(string='DPO Incoming'),
         'dpo_out': fields.boolean('DPO Out'),
+        'new_dpo_out': fields.boolean('DPO Out (new flow)'),
         'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),
         'do_not_sync': fields.function(
             _get_do_not_sync,
@@ -248,6 +249,7 @@ class stock_picking(osv.osv):
         'fake_type': 'in',
         'shipment_ref': False,
         'dpo_out': False,
+        'new_dpo_out': False,
         'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
         'from_pick_cancel_id': False,
     }

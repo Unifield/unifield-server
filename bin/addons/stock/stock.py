@@ -935,6 +935,7 @@ class stock_picking(osv.osv):
             'sync_dpo_in': False,
             'dpo_incoming': False,
             'dpo_out': False,
+            'new_dpo_out': False,
         }
         for reset_f in to_reset:
             if reset_f not in default:
