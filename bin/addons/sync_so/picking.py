@@ -1212,7 +1212,10 @@ class stock_picking(osv.osv):
                     out_move_data['product_uom_qty'] = move_out['product_qty']
                     out_move_data['product_uos_qty'] =  move_out['product_qty']
                     out_pick_data['move_lines'].append((0, 0, out_move_data))
-                out_id = self.create(cr, uid, out_pick_data, context=context)
+                # do not touch locations on non stockable
+                non_stock_ctx = context.copy()
+                non_stock_ctx['non_stock_noupdate'] = True
+                out_id = self.create(cr, uid, out_pick_data, context=non_stock_ctx)
                 self.action_done(cr, uid, [out_id], context=context)
                 self.set_delivered(cr, uid, [out_id], context=context)
 
