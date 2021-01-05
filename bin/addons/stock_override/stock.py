@@ -105,32 +105,6 @@ class stock_picking(osv.osv):
 
         return res
 
-    def _get_dpo_incoming(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Return True if the picking is an incoming and if one the stock move are linked to dpo_line
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = {}
-        for pick in self.browse(cr, uid, ids, context=context):
-            res[pick.id] = False
-            if pick.type == 'out' and pick.subtype in ('standard', 'picking'):
-                for move in pick.move_lines:
-                    if move.sync_dpo or move.dpo_line_id:
-                        res[pick.id] = True
-                        break
-        return res
-
-    def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
-        result = set()
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for obj in self.read(cr, uid, ids, ['picking_id'], context=context):
-            if obj['picking_id']:
-                result.add(obj['picking_id'][0])
-        return list(result)
-
     def _get_do_not_sync(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -242,9 +216,7 @@ class stock_picking(osv.osv):
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
         'dpo_incoming': fields.boolean(string='DPO Incoming'),
-        'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out',
-                                   store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
-                                          'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
+        'dpo_out': fields.boolean('DPO Out'),
         'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),
         'do_not_sync': fields.function(
             _get_do_not_sync,
@@ -274,7 +246,8 @@ class stock_picking(osv.osv):
         'from_wkf_sourcing': lambda *a: False,
         'update_version_from_in_stock_picking': 0,
         'fake_type': 'in',
-        'shipment_ref':False,
+        'shipment_ref': False,
+        'dpo_out': False,
         'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
         'from_pick_cancel_id': False,
     }
