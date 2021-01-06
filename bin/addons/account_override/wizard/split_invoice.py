@@ -96,7 +96,7 @@ class wizard_split_invoice(osv.osv_memory):
         inv_lines_in_wiz = [wiz_line.invoice_line_id.id for wiz_line in wizard.invoice_line_ids]
         for inv_line in inv_lines:
             if inv_line.id not in inv_lines_in_wiz:
-                # UC1: the line has been deleted in the wizard: add it the new invoice, and then remove it from the original one
+                # UC1: the line has been deleted in the wizard: add it in the new invoice, and then remove it from the original one
                 invl_obj.copy(cr, uid, inv_line.id, {'invoice_id': new_inv_id}, context=context)
                 invl_obj.unlink(cr, uid, [inv_line.id], context=context)
             else:
