@@ -294,6 +294,62 @@
             <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             % endif
         </Row>
+
+        <Row></Row>
+
+        <%
+            header_list = [
+                _('FO number'),
+                _('Customer name'),
+                _('Customer ref'),
+                _('PO number'),
+                _('Supplier name'),
+                _('Supplier invoice number'),
+                _('SI line number'),
+                _('SI line description'),
+                _('SI line unit price'),
+                _('SI line quantity'),
+                _('SI line expense account code'),
+                _('SI line sub total'),
+                _('SI currency'),
+                _('SI line sub total functional currency'),
+                _('SI status'),
+                _('Reverse corresponding AJI? (SI)'),
+                _('FO status'),
+                _('FO line status'),
+                _('FO line number'),
+                _('Product code'),
+                _('Product description'),
+                _('Qty ordered'),
+                _('UoM ordered'),
+                _('Qty delivered'),
+                _('Transport file'),
+                _('STV/IVO number'),
+                _('STV/IVO line number'),
+                _('STV/IVO line description'),
+                _('STV/IVO line unit price'),
+                _('STV/IVO line quantity'),
+                _('STV/IVO line expense account code'),
+                _('STV/IVO line sub total'),
+                _('STV/IVO currency'),
+                _('STV/IVO line sub total functional currency'),
+                _('STV/IVO status'),
+                _('Reverse corresponding AJI? (STV/IVO)'),
+            ]
+        %>
+
+        <Row>
+        % for h in header_list:
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${h|x}</Data></Cell>
+        % endfor
+        </Row>
+
+        % for line in getReportLines(o):
+            <Row ss:Height="11.25">
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_name']|x}</Data></Cell>
+            </Row>
+        % endfor
+
     </Table>
 % endfor
 

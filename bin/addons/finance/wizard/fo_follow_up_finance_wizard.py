@@ -56,7 +56,6 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for wizard in self.browse(cr, uid, ids, context=context):
-            # TODO: change this to SQL
             fo_domain = []
             if wizard.start_date:
                 fo_domain.append(('date_order', '>=', wizard.start_date))
