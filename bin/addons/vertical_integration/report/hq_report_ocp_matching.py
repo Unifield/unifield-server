@@ -137,7 +137,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         period_obj = pool.get('account.period')
         if context.get('ocb_matching'):
             # OCB VI
-            excluded_journal_types = ['cur_adj', 'hq', 'inkind', 'migration', 'extra']
+            excluded_journal_types = ['cur_adj', 'hq', 'inkind', 'migration', 'extra', 'system']
         else:
             # OCP VI
             excluded_journal_types = ['hq', 'migration']
