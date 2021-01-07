@@ -157,8 +157,24 @@
             </field>
         </record>
 
+        <!-- OCB matching export BASED ON OCP MATCHING EXPORT -->
         <record id="action_hq_ocb_matching_export" model="ir.actions.act_window">
             <field name="name">OCB matching export</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocp.matching.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocp_matching_export_wizard"/>
+            <field name="context">{'ocb_matching': True}</field>
+            <field name="target">new</field>
+        </record>
+        <menuitem parent="account.menu_finance_generic_reporting"
+                  action="action_hq_ocb_matching_export"
+                  id="menu_action_hq_ocb_matching_export" sequence="40"/>
+
+        <!-- OCB matching export Access Interface -->
+        <record id="action_hq_ocb_matching_export_old" model="ir.actions.act_window">
+            <field name="name">OCB matching export Access Interface</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">ocb.matching.export.wizard</field>
             <field name="view_type">form</field>
@@ -166,10 +182,9 @@
             <field name="view_id" ref="ocb_matching_export_wizard"/>
             <field name="target">new</field>
         </record>
-
         <menuitem parent="account.menu_finance_generic_reporting"
-            action="action_hq_ocb_matching_export"
-            id="menu_action_hq_ocb_matching_export" sequence="40"/>
+                  action="action_hq_ocb_matching_export_old"
+                  id="menu_action_hq_ocb_matching_export_old" sequence="42"/>
 
 
     <!-- OCBA export -->
