@@ -41,9 +41,11 @@ class fo_follow_up_finance(report_sxw.rml_parse):
         """
         lines = []
         if report.order_ids:
+            # first: retrieve raw data
             sql_req = """
                 select
-                    so.name AS fo_name, po.name as po_name, in_iv.number as in_number,
+                    so.name AS fo_number, par.name as customer_name, so.client_order_ref as customer_reference,
+                    po.name as po_number, in_iv.number as in_number,
                     out_iv.number as out_number, out_iv.id as out_iv_id,
                     in_picking.name as IN,
                     coalesce(out_picking.name, out_iv.name) as OUT,
@@ -63,6 +65,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join stock_picking out_picking on out_picking.id = out_iv.picking_id
                     left join account_move out_am on out_am.id = out_iv.move_id
                     left join account_move_line out_aml on out_aml.invoice_line_id = out_ivl.id and out_aml.move_id = out_am.id
+                    left join res_partner par on par.id = so.partner_id
                 where
                     in_iv.refunded_invoice_id is NULL and
                     out_iv.refunded_invoice_id is NULL and
@@ -72,6 +75,9 @@ class fo_follow_up_finance(report_sxw.rml_parse):
             """
             self.cr.execute(sql_req, (tuple(report.order_ids),))
             lines = self.cr.dictfetchall()
+            # second: process data if needed
+            for l in lines:
+                l['customer_reference'] = l['customer_reference'] and l['customer_reference'].split('.')[-1] or ''
         return lines
 
 
