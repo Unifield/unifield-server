@@ -350,6 +350,7 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['customer_name']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['customer_reference']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['po_number']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['supplier_name']|x}</Data></Cell>
             </Row>
         % endfor
 
