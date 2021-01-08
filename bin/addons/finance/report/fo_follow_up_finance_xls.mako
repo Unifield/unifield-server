@@ -351,6 +351,20 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['customer_reference']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['po_number']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['supplier_name']|x}</Data></Cell>
+                % if line['si']:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_number']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_line_number']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_line_description']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_unit_price']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_quantity']|x}</Data></Cell>
+                % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                % endif
+
             </Row>
         % endfor
 

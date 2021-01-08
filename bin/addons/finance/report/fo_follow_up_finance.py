@@ -45,8 +45,10 @@ class fo_follow_up_finance(report_sxw.rml_parse):
             sql_req = """
                 select
                     so.name AS fo_number, cust.name as customer_name, so.client_order_ref as customer_reference,
-                    coalesce(po.name, '') as po_number, coalesce(sup.name, '') as supplier_name, 
-                    in_iv.number as in_number,
+                    coalesce(po.name, '') as po_number, coalesce(sup.name, '') as supplier_name, in_iv.id as si,
+                    coalesce(in_iv.number, '') as si_number, coalesce(cast(in_ivl.line_number as varchar), '') as si_line_number, 
+                    coalesce(in_ivl.name, '') as si_line_description, coalesce(in_ivl.price_unit, 0) as si_line_unit_price,
+                    coalesce(in_ivl.quantity, 0) as si_line_quantity,
                     out_iv.number as out_number, out_iv.id as out_iv_id,
                     in_picking.name as IN,
                     coalesce(out_picking.name, out_iv.name) as OUT,
