@@ -56,11 +56,11 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     coalesce(in_ivl.price_subtotal, 0) as si_line_subtotal, coalesce(in_iv_curr.name, '') as si_currency,
                     in_iv_curr.id as si_currency_id, in_iv.document_date as si_doc_date, in_iv.date_invoice as si_posting_date,
                     coalesce(in_iv.state, '') as si_state,
+                    CASE WHEN (in_aml.corrected or in_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_si,
                     out_iv.number as out_number, out_iv.id as out_iv_id,
                     in_picking.name as IN,
                     coalesce(out_picking.name, out_iv.name) as OUT,
-                    out_aml.corrected or out_aml.last_cor_was_only_analytic as out_aji_corr,
-                    in_aml.corrected or in_aml.last_cor_was_only_analytic as in_aji_corr
+                    out_aml.corrected or out_aml.last_cor_was_only_analytic as out_aji_corr
                     from sale_order_line sol
                     inner join sale_order so on so.id = sol.order_id
                     left join purchase_order_line pol on pol.linked_sol_id = sol.id

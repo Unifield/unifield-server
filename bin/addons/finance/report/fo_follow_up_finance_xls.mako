@@ -362,6 +362,7 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_currency']|x}</Data></Cell>
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_subtotal_fctal']|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_state']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['reverse_aji_si']|x}</Data></Cell>
                 % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
@@ -373,6 +374,7 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
 
             </Row>
