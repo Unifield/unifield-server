@@ -57,6 +57,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     in_iv_curr.id as si_currency_id, in_iv.document_date as si_doc_date, in_iv.date_invoice as si_posting_date,
                     coalesce(in_iv.state, '') as si_state,
                     CASE WHEN (in_aml.corrected or in_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_si,
+                    so.state as fo_status, sol.state as fo_line_status, sol.line_number as fo_line_number,
                     out_iv.number as out_number, out_iv.id as out_iv_id,
                     in_picking.name as IN,
                     coalesce(out_picking.name, out_iv.name) as OUT,
@@ -105,6 +106,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                                                                        fctal_curr_id, l['si_line_subtotal'],
                                                                        round=True, context={'currency_date': curr_date})
                 l['si_state'] = l['si_state'] and self.getSelValue('account.invoice', 'state', l['si_state']) or ''
+                l['fo_status'] = l['fo_status'] and self.getSelValue('sale.order', 'state', l['fo_status']) or ''
+                l['fo_line_status'] = l['fo_line_status'] and self.getSelValue('sale.order.line', 'state', l['fo_line_status']) or ''
         return lines
 
 

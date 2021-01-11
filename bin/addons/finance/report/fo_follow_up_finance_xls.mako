@@ -376,6 +376,9 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_status']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_line_status']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_line_number']|x}</Data></Cell>
 
             </Row>
         % endfor
