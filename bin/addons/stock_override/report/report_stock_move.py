@@ -405,17 +405,6 @@ product will be shown.""",
         loc_usage = ['supplier', 'customer', 'internal', 'inventory', 'procurement', 'production']
         for report in self.browse(cr, uid, ids, context=context):
             domain = [
-                '|',
-                ('type', '=', 'in'),
-                ('type', '=', 'out'),
-                '|', '&',
-                ('picking_id.subtype', '=', 'standard'),
-                ('picking_id.state', 'in', ['done', 'delivered']),
-                '&', '&', '&',
-                ('picking_id.subtype', '=', 'packing'),
-                ('picking_id.shipment_id', '!=', 'f'),
-                ('picking_id.shipment_id.parent_id', '!=', 'f'),
-                ('picking_id.shipment_id.state', 'in', ['done', 'delivered']),
                 ('location_id.usage', 'in', loc_usage),
                 ('location_dest_id.usage', 'in', loc_usage),
                 ('state', '=', 'done'),
