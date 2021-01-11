@@ -60,9 +60,12 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     so.state as fo_status, sol.state as fo_line_status, sol.line_number as fo_line_number,
                     coalesce(prod.default_code, '') as product_code, coalesce(prod_t.name, '') as product_description,
                     sol.product_uom_qty as qty_ordered, prod_u.name as uom_ordered,
+                    --coalesce(out_stm.product_qty, 0.0) as qty_delivered,
+                    'TODO' as qty_delivered,  -- set the col. type as Number once Done
+                    CASE WHEN coalesce(out_picking.name, out_iv.name) IS NOT NULL 
+                        THEN coalesce(out_picking.name, out_iv.name) ELSE '' END AS transport_file,
                     out_iv.number as out_number, out_iv.id as out_iv_id,
                     in_picking.name as IN,
-                    coalesce(out_picking.name, out_iv.name) as OUT,
                     out_aml.corrected or out_aml.last_cor_was_only_analytic as out_aji_corr
                     from sale_order_line sol
                     inner join sale_order so on so.id = sol.order_id
@@ -87,12 +90,14 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join product_product prod on prod.id = sol.product_id
                     left join product_template prod_t on prod_t.id = prod.product_tmpl_id
                     left join product_uom prod_u on prod_u.id = sol.product_uom
+                    left join stock_move out_stm on out_stm.picking_id = out_picking.id 
                 where
                     in_iv.refunded_invoice_id is NULL and
                     out_iv.refunded_invoice_id is NULL and
                     coalesce(out_iv.from_supply, 't')='t' and
                     coalesce(in_iv.from_supply, 't')='t' and
-                    so.id in %s;
+                    so.id in %s
+                order by fo_number DESC, fo_line_number;
             """
             self.cr.execute(sql_req, (tuple(report.order_ids),))
             lines = self.cr.dictfetchall()
@@ -113,6 +118,9 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                 l['si_state'] = l['si_state'] and self.getSelValue('account.invoice', 'state', l['si_state']) or ''
                 l['fo_status'] = l['fo_status'] and self.getSelValue('sale.order', 'state', l['fo_status']) or ''
                 l['fo_line_status'] = l['fo_line_status'] and self.getSelValue('sale.order.line', 'state', l['fo_line_status']) or ''
+                if l['transport_file'] and ':' in l['transport_file']:
+                    # e.g. extract "SHIP/00004-01" from "se_HQ1C1.21/se_HQ1/HT101/PO00011 : SHIP/00004-01"
+                    l['transport_file'] = l['transport_file'].split(':')[-1].strip()
         return lines
 
 

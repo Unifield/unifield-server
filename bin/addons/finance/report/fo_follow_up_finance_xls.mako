@@ -383,7 +383,8 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['product_description']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['qty_ordered']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['uom_ordered']|x}</Data></Cell>
-
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['qty_delivered']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
             </Row>
         % endfor
 
