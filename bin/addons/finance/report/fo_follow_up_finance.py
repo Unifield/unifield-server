@@ -58,6 +58,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     coalesce(in_iv.state, '') as si_state,
                     CASE WHEN (in_aml.corrected or in_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_si,
                     so.state as fo_status, sol.state as fo_line_status, sol.line_number as fo_line_number,
+                    coalesce(prod.default_code, '') as product_code, coalesce(prod_t.name, '') as product_description,
+                    sol.product_uom_qty as qty_ordered, prod_u.name as uom_ordered,
                     out_iv.number as out_number, out_iv.id as out_iv_id,
                     in_picking.name as IN,
                     coalesce(out_picking.name, out_iv.name) as OUT,
@@ -82,6 +84,9 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join account_account out_ivl_acc on out_ivl_acc.id = out_ivl.account_id
                     left join res_currency in_iv_curr on in_iv_curr.id = in_iv.currency_id
                     left join res_currency out_iv_curr on out_iv_curr.id = out_iv.currency_id
+                    left join product_product prod on prod.id = sol.product_id
+                    left join product_template prod_t on prod_t.id = prod.product_tmpl_id
+                    left join product_uom prod_u on prod_u.id = sol.product_uom
                 where
                     in_iv.refunded_invoice_id is NULL and
                     out_iv.refunded_invoice_id is NULL and

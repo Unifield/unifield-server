@@ -379,6 +379,10 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_status']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_line_status']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_line_number']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['product_code']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['product_description']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['qty_ordered']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['uom_ordered']|x}</Data></Cell>
 
             </Row>
         % endfor
