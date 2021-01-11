@@ -21,6 +21,8 @@
 
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from base import currency_date
+from datetime import datetime
 
 
 class fo_follow_up_finance(report_sxw.rml_parse):
@@ -40,6 +42,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
         Returns all report lines as a list of dict
         """
         lines = []
+        user_obj = self.pool.get('res.users')
+        curr_obj = self.pool.get('res.currency')
         if report.order_ids:
             # first: retrieve raw data
             sql_req = """
@@ -48,7 +52,10 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     coalesce(po.name, '') as po_number, coalesce(sup.name, '') as supplier_name, in_iv.id as si,
                     coalesce(in_iv.number, '') as si_number, coalesce(cast(in_ivl.line_number as varchar), '') as si_line_number, 
                     coalesce(in_ivl.name, '') as si_line_description, coalesce(in_ivl.price_unit, 0) as si_line_unit_price,
-                    coalesce(in_ivl.quantity, 0) as si_line_quantity,
+                    coalesce(in_ivl.quantity, 0) as si_line_quantity, coalesce(in_ivl_acc.code, '') as si_line_account_code,
+                    coalesce(in_ivl.price_subtotal, 0) as si_line_subtotal, coalesce(in_iv_curr.name, '') as si_currency,
+                    in_iv_curr.id as si_currency_id, in_iv.document_date as si_doc_date, in_iv.date_invoice as si_posting_date,
+                    coalesce(in_iv.state, '') as si_state,
                     out_iv.number as out_number, out_iv.id as out_iv_id,
                     in_picking.name as IN,
                     coalesce(out_picking.name, out_iv.name) as OUT,
@@ -70,6 +77,10 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join account_move_line out_aml on out_aml.invoice_line_id = out_ivl.id and out_aml.move_id = out_am.id
                     left join res_partner cust on cust.id = so.partner_id
                     left join res_partner sup on sup.id = po.partner_id
+                    left join account_account in_ivl_acc on in_ivl_acc.id = in_ivl.account_id
+                    left join account_account out_ivl_acc on out_ivl_acc.id = out_ivl.account_id
+                    left join res_currency in_iv_curr on in_iv_curr.id = in_iv.currency_id
+                    left join res_currency out_iv_curr on out_iv_curr.id = out_iv.currency_id
                 where
                     in_iv.refunded_invoice_id is NULL and
                     out_iv.refunded_invoice_id is NULL and
@@ -82,6 +93,18 @@ class fo_follow_up_finance(report_sxw.rml_parse):
             # second: process data if needed
             for l in lines:
                 l['customer_reference'] = l['customer_reference'] and l['customer_reference'].split('.')[-1] or ''
+                l['si_line_subtotal_fctal'] = 0.0
+                if l['si_currency_id'] and l['si_line_subtotal']:
+                    fctal_curr_id = user_obj.browse(self.cr, self.uid, self.uid).company_id.currency_id.id
+                    if l['si_currency_id'] == fctal_curr_id:
+                        l['si_line_subtotal_fctal'] = l['si_line_subtotal']
+                    else:
+                        today = datetime.today().strftime('%Y-%m-%d')
+                        curr_date = currency_date.get_date(self, self.cr, l['si_doc_date'] or today, l['si_posting_date'] or today)
+                        l['si_line_subtotal_fctal'] = curr_obj.compute(self.cr, self.uid, l['si_currency_id'],
+                                                                       fctal_curr_id, l['si_line_subtotal'],
+                                                                       round=True, context={'currency_date': curr_date})
+                l['si_state'] = l['si_state'] and self.getSelValue('account.invoice', 'state', l['si_state']) or ''
         return lines
 
 

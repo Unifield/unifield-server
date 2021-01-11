@@ -357,7 +357,17 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_line_description']|x}</Data></Cell>
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_unit_price']|x}</Data></Cell>
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_quantity']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_line_account_code']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_subtotal']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_currency']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_subtotal_fctal']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_state']|x}</Data></Cell>
                 % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
