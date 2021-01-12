@@ -1337,11 +1337,13 @@ class stock_move(osv.osv):
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
-
-    def action_assign(self, cr, uid, ids, lefo=False, *args):
+    def action_assign(self, cr, uid, ids, lefo=False, context=None, *args):
         """ Changes state to confirmed or waiting.
         @return: List of values
         """
+        if context is None:
+            context = {}
+
         todo = []
         for move in self.browse(cr, uid, ids, fields_to_fetch=['state', 'already_confirmed']):
             if not move.already_confirmed:
