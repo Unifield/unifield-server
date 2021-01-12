@@ -39,6 +39,7 @@
 
     <!-- Line header -->
     <Style ss:ID="line_header">
+        <Alignment ss:Vertical="Center" ss:Horizontal="Center" ss:WrapText="1"/>
         <Borders>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -185,50 +186,79 @@
 <ss:Worksheet ss:Name="${_('FO Follow Up')|x}">
 % for o in objects:
     <Table x:FullColumns="1" x:FullRows="1">
-        ## Order ref
-        <Column ss:AutoFitWidth="1" ss:Width="130.0" />
+
+        ## FO number
+        <Column ss:AutoFitWidth="1" ss:Width="170.0" />
+        ## Customer name
+        <Column ss:AutoFitWidth="1" ss:Width="170.0" />
         ## Customer ref
         <Column ss:AutoFitWidth="1" ss:Width="170.0" />
-        ## PO ref
+        ## PO number
+        <Column ss:AutoFitWidth="1" ss:Width="170.0" />
+        ## Supplier name
+        <Column ss:AutoFitWidth="1" ss:Width="170.0" />
+        ## Supplier invoice number
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
-        ## Supplier
-        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
-        ## Doc. Status
+        ## SI line number
+        <Column ss:AutoFitWidth="1" ss:Width="40.00"  />
+        ## SI line description
+        <Column ss:AutoFitWidth="1" ss:Width="300.00"  />
+        ## SI line unit price
+        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
+        ## SI line quantity
+        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
+        ## SI line expense account code
+        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
+        ## SI line sub total
+        <Column ss:AutoFitWidth="1" ss:Width="98.25"  />
+        ## SI currency
+        <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
+        ## SI line sub total functional currency
+        <Column ss:AutoFitWidth="1" ss:Width="98.25"  />
+        ## SI status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
-        ## Line Status
+        ## Reverse corresponding AJI? (SI)
+        <Column ss:AutoFitWidth="1" ss:Width="65.00"  />
+        ## FO status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
-        ## Received
-        <Column ss:AutoFitWidth="1" ss:Width="54.75" />
-        ## Requested Delivery Date
-        <Column ss:AutoFitWidth="1" ss:Width="54.75" />
-        ## order line
-        <Column ss:AutoFitWidth="1" ss:Width="19.00" />
-        ## product code
+        ## FO line status
+        <Column ss:AutoFitWidth="1" ss:Width="60.75" />
+        ## FO line number
+        <Column ss:AutoFitWidth="1" ss:Width="40.00"  />
+        ## Product code
         <Column ss:AutoFitWidth="1" ss:Width="107.25" />
-        ## product description
+        ## Product description
         <Column ss:AutoFitWidth="1" ss:Width="239.25"  />
-        ## Qty Ordered
+        ## Qty ordered
         <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
-        ## UoM Ordered
+        ## UoM ordered
         <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
-        ## Qty Delivered
+        ## Qty delivered
         <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
-        ## UoM Delivered
-        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
-        ## Packing
-        <Column ss:AutoFitWidth="1" ss:Width="60.25" />
-        ## Qty to deliver
-        <Column ss:AutoFitWidth="1" ss:Width="50.5" />
-        ## Transport
-        <Column ss:AutoFitWidth="1" ss:Width="55.00" />
         ## Transport file
-        <Column ss:AutoFitWidth="1" ss:Width="55.75" />
-        ## CDD
-        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
-        ## ETA
-        <Column ss:AutoFitWidth="1" ss:Width="50" />
-        ## RTS Date
-        <Column ss:AutoFitWidth="1" ss:Width="50" />
+        <Column ss:AutoFitWidth="1" ss:Width="130.0" />
+        ## STV/IVO number
+        <Column ss:AutoFitWidth="1" ss:Width="150.0" />
+        ## STV/IVO line number
+        <Column ss:AutoFitWidth="1" ss:Width="40.00"  />
+        ## STV/IVO line description
+        <Column ss:AutoFitWidth="1" ss:Width="300.00"  />
+        ## STV/IVO line unit price
+        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
+        ## STV/IVO line quantity
+        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
+        ## STV/IVO line expense account code
+        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
+        ## STV/IVO line sub total
+        <Column ss:AutoFitWidth="1" ss:Width="98.25"  />
+        ## STV/IVO currency
+        <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
+        ## STV/IVO line sub total functional currency
+        <Column ss:AutoFitWidth="1" ss:Width="98.25"  />
+        ## STV/IVO status
+        <Column ss:AutoFitWidth="1" ss:Width="60.75" />
+        ## Reverse corresponding AJI? (STV/IVO)
+        <Column ss:AutoFitWidth="1" ss:Width="65.00"  />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('FIELD ORDER FOLLOW-UP FINANCE')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>

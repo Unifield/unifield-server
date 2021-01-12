@@ -140,7 +140,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     coalesce(out_iv.from_supply, 't')='t' and
                     coalesce(in_iv.from_supply, 't')='t' and
                     so.id in %s
-                order by fo_number DESC, fo_line_number, si_number DESC, si_line_number, out_inv_number DESC, out_inv_line_number;
+                order by fo_number DESC, fo_line_number, si_number, si_line_number, out_inv_number, out_inv_line_number;
             """
             self.cr.execute(sql_req, (tuple(report.order_ids),))
             lines = self.cr.dictfetchall()
