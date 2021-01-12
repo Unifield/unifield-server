@@ -64,9 +64,16 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     'TODO' as qty_delivered,  -- set the col. type as Number once Done
                     CASE WHEN coalesce(out_picking.name, out_iv.name) IS NOT NULL 
                         THEN coalesce(out_picking.name, out_iv.name) ELSE '' END AS transport_file,
-                    out_iv.number as out_number, out_iv.id as out_iv_id,
-                    in_picking.name as IN,
-                    out_aml.corrected or out_aml.last_cor_was_only_analytic as out_aji_corr
+                    out_iv.id as out_inv, coalesce(out_iv.number, '') as out_inv_number,
+                    coalesce(cast(out_ivl.line_number as varchar), '') as out_inv_line_number,
+                    coalesce(out_ivl.name, '') as out_inv_description, coalesce(out_ivl.price_unit, 0) as out_inv_unit_price,
+                    coalesce(out_ivl.quantity, 0) as out_inv_quantity, coalesce(out_ivl_acc.code, '') as out_inv_account_code,
+                    coalesce(out_ivl.price_subtotal, 0) as out_inv_line_subtotal, coalesce(out_iv_curr.name, '') as out_inv_currency,
+                    out_iv_curr.id as out_inv_currency_id, out_iv.document_date as out_inv_doc_date,
+                    out_iv.date_invoice as out_inv_posting_date,
+                    coalesce(out_iv.state, '') as out_inv_state,
+                    CASE WHEN (out_aml.corrected or out_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_out_inv,
+                    in_picking.name as IN
                     from sale_order_line sol
                     inner join sale_order so on so.id = sol.order_id
                     left join purchase_order_line pol on pol.linked_sol_id = sol.id
@@ -97,20 +104,20 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     coalesce(out_iv.from_supply, 't')='t' and
                     coalesce(in_iv.from_supply, 't')='t' and
                     so.id in %s
-                order by fo_number DESC, fo_line_number;
+                order by fo_number DESC, fo_line_number, si_number DESC, si_line_number, out_inv_number DESC, out_inv_line_number;
             """
             self.cr.execute(sql_req, (tuple(report.order_ids),))
             lines = self.cr.dictfetchall()
             # second: process data if needed
+            fctal_curr_id = user_obj.browse(self.cr, self.uid, self.uid).company_id.currency_id.id
+            today = datetime.today().strftime('%Y-%m-%d')
             for l in lines:
                 l['customer_reference'] = l['customer_reference'] and l['customer_reference'].split('.')[-1] or ''
                 l['si_line_subtotal_fctal'] = 0.0
                 if l['si_currency_id'] and l['si_line_subtotal']:
-                    fctal_curr_id = user_obj.browse(self.cr, self.uid, self.uid).company_id.currency_id.id
                     if l['si_currency_id'] == fctal_curr_id:
                         l['si_line_subtotal_fctal'] = l['si_line_subtotal']
                     else:
-                        today = datetime.today().strftime('%Y-%m-%d')
                         curr_date = currency_date.get_date(self, self.cr, l['si_doc_date'] or today, l['si_posting_date'] or today)
                         l['si_line_subtotal_fctal'] = curr_obj.compute(self.cr, self.uid, l['si_currency_id'],
                                                                        fctal_curr_id, l['si_line_subtotal'],
@@ -121,6 +128,17 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                 if l['transport_file'] and ':' in l['transport_file']:
                     # e.g. extract "SHIP/00004-01" from "se_HQ1C1.21/se_HQ1/HT101/PO00011 : SHIP/00004-01"
                     l['transport_file'] = l['transport_file'].split(':')[-1].strip()
+                # TODO: refactor
+                l['out_inv_line_subtotal_fctal'] = 0.0
+                if l['out_inv_currency_id'] and l['out_inv_line_subtotal']:
+                    if l['out_inv_currency_id'] == fctal_curr_id:
+                        l['out_inv_line_subtotal_fctal'] = l['out_inv_line_subtotal']
+                    else:
+                        curr_date = currency_date.get_date(self, self.cr, l['out_inv_doc_date'] or today, l['out_inv_posting_date'] or today)
+                        l['out_inv_line_subtotal_fctal'] = curr_obj.compute(self.cr, self.uid, l['out_inv_currency_id'],
+                                                                            fctal_curr_id, l['out_inv_line_subtotal'],
+                                                                            round=True, context={'currency_date': curr_date})
+                l['out_inv_state'] = l['out_inv_state'] and self.getSelValue('account.invoice', 'state', l['out_inv_state']) or ''
         return lines
 
 

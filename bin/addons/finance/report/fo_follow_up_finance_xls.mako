@@ -385,6 +385,31 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['uom_ordered']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['qty_delivered']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
+                % if line['out_inv']:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_number']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_line_number']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_description']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['out_inv_unit_price']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['out_inv_quantity']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_account_code']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['out_inv_line_subtotal']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_currency']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['out_inv_line_subtotal_fctal']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_state']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['reverse_aji_out_inv']|x}</Data></Cell>
+                % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
             </Row>
         % endfor
 
