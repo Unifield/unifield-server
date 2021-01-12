@@ -71,22 +71,7 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
                     _('Error'),
                     _('No data found with these parameters'),
                 )
-            # TODO: refactoring
-            cr.execute("""SELECT COUNT(id) FROM sale_order_line WHERE order_id IN %s""", (tuple(fo_ids),))
-            nb_lines = 0
-            for x in cr.fetchall():
-                nb_lines = x[0]
-            # maximum number of lines
-            # Note: the parameter "FOLLOWUP_MAX_LINE" is also used for the FO Follow-up per client.
-            config_line = self.pool.get('ir.config_parameter').get_param(cr, 1, 'FO_FOLLOWUP_MAX_LINE')
-            if config_line:
-                max_line = int(config_line)
-            else:
-                max_line = 5000
-            if nb_lines > max_line:
-                raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate: requested %d lines, '
-                                                   'maximum allowed %d. Please apply further filters so that report can be generated.') %
-                                     (nb_lines, max_line))
+            self.pool.get('sale.followup.multi.wizard')._check_max_line_number(cr, fo_ids)
             self.write(cr, uid, [wizard.id], {'order_ids': fo_ids}, context=context)
         return True
 
