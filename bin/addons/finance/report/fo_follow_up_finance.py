@@ -139,6 +139,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     out_iv.refunded_invoice_id is NULL and
                     coalesce(out_iv.from_supply, 't')='t' and
                     coalesce(in_iv.from_supply, 't')='t' and
+                    sol.state not in ('cancel', 'cancel_r') and
                     so.id in %s
                 order by fo_number DESC, fo_line_number, si_number, si_line_number, out_inv_number, out_inv_line_number;
             """
