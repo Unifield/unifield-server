@@ -2132,7 +2132,9 @@ class ir_values(osv.osv):
 
     def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         """
-        Hides the Report "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        Hides the reports:
+        - "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        - "FO Follow-up Finance" in the menu of other invoices than IVO/STV
         """
         if context is None:
             context = {}
@@ -2140,8 +2142,14 @@ class ir_values(osv.osv):
         model_names = [x[0] for x in models]
         if key == 'action' and key2 == 'client_print_multi' and 'account.invoice' in model_names:
             new_act = []
+            context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+                context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+            context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+                not context.get('is_debit_note', False)
             for v in values:
                 if not context.get('is_intermission') and len(v) > 2 and v[2].get('report_name', '') == 'invoice.excel.export':
+                    continue
+                elif not context_ivo and not context_stv and len(v) > 1 and v[1] == 'fo_follow_up_finance':
                     continue
                 else:
                     new_act.append(v)

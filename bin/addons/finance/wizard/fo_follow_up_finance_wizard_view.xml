@@ -36,7 +36,7 @@
         </record>
         <record model="ir.values" id="action_fo_follow_up_finance_wizard_values">
             <field name="object" eval="1" />
-            <field name="name">FO Follow-up Finance</field>
+            <field name="name">fo_follow_up_finance</field>
             <field name="key2">client_print_multi</field>
             <field name="value" eval="'ir.actions.act_window,' +str(ref('action_fo_follow_up_finance_wizard_menu'))" />
             <field name="key">action</field>
