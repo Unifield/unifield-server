@@ -328,6 +328,7 @@
         <Row></Row>
 
         <%
+            is_intermission = context and context.get('is_intermission')
             header_list = [
                 _('FO number'),
                 _('Customer name'),
@@ -354,17 +355,17 @@
                 _('UoM ordered'),
                 _('Qty delivered'),
                 _('Transport file'),
-                _('STV/IVO number'),
-                _('STV/IVO line number'),
-                _('STV/IVO line description'),
-                _('STV/IVO line unit price'),
-                _('STV/IVO line quantity'),
-                _('STV/IVO line expense account code'),
-                _('STV/IVO line sub total'),
-                _('STV/IVO currency'),
-                _('STV/IVO line sub total functional currency'),
-                _('STV/IVO status'),
-                _('Reverse corresponding AJI? (STV/IVO)'),
+                is_intermission and _('IVO number') or _('STV number'),
+                is_intermission and _('IVO line number') or _('STV line number'),
+                is_intermission and _('IVO line description') or _('STV line description'),
+                is_intermission and _('IVO line unit price') or _('STV line unit price'),
+                is_intermission and _('IVO line quantity') or _('STV line quantity'),
+                is_intermission and _('IVO line expense account code') or _('STV line expense account code'),
+                is_intermission and _('IVO line sub total') or _('STV line sub total'),
+                is_intermission and _('IVO currency') or _('STV currency'),
+                is_intermission and _('IVO line sub total functional currency') or _('STV line sub total functional currency'),
+                is_intermission and _('IVO status') or _('STV status'),
+                is_intermission and _('Reverse corresponding AJI? (IVO)') or _('Reverse corresponding AJI? (STV)'),
             ]
         %>
 
