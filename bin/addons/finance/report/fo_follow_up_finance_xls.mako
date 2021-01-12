@@ -270,20 +270,20 @@
         <Row>
             <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Instance information')|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="4"><Data ss:Type="String">${_('Request parameters')|x}</Data></Cell>
+            <Cell ss:StyleID="file_header" ss:MergeAcross="3"><Data ss:Type="String">${_('Request parameters')|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String">${_('Name:')|x}</Data></Cell>
             <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${o.company_id.instance_id.instance or '-'|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Partners:')|x}</Data></Cell>
+            <Cell ss:StyleID="ssCell"><Data ss:Type="String">${_('Partners:')|x}</Data></Cell>
             <Cell ss:StyleID="ssCellBlue" ss:MergeAcross="2"><Data ss:Type="String">${', '.join([p.name for p in o.partner_ids]) or '-'|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String">${_('Address:')|x}</Data></Cell>
             <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${o.company_id.partner_id.name or '-'|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date start:')|x}</Data></Cell>
+            <Cell ss:StyleID="ssCell"><Data ss:Type="String">${_('Date start:')|x}</Data></Cell>
             % if isDate(o.start_date):
                 % if getLang() == 'fr_MF':
                 <Cell ss:StyleID="short_date_fr" ss:MergeAcross="2"><Data ss:Type="DateTime">${o.start_date|n}T00:00:00.000</Data></Cell>
@@ -298,7 +298,7 @@
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${o.company_id.partner_id.address[0].street or ''|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date end:')|x}</Data></Cell>
+            <Cell ss:StyleID="ssCell"><Data ss:Type="String">${_('Date end:')|x}</Data></Cell>
             % if isDate(o.end_date):
                 % if getLang() == 'fr_MF':
                 <Cell ss:StyleID="short_date_fr" ss:MergeAcross="2"><Data ss:Type="DateTime">${o.end_date|n}T00:00:00.000</Data></Cell>
@@ -313,7 +313,7 @@
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${o.company_id.partner_id.address[0].zip|x} ${o.company_id.partner_id.address[0].city|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date of the request:')|x}</Data></Cell>
+            <Cell ss:StyleID="ssCell"><Data ss:Type="String">${_('Date of the request:')|x}</Data></Cell>
             % if o.report_date and isDateTime(o.report_date):
                 % if getLang() == 'fr_MF':
                 <Cell ss:StyleID="short_date_fr" ss:MergeAcross="2"><Data ss:Type="DateTime">${o.report_date[0:10]|n}T${o.report_date[11:19]|n}.000</Data></Cell>
