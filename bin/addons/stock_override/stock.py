@@ -612,7 +612,7 @@ class stock_picking(osv.osv):
         return True
 
 
-    def check_availability_manually(self, cr, uid, ids, context=None, initial_location=False):
+    def check_availability_manually(self, cr, uid, ids, context=None, initial_location=False, lefo=False):
         '''
         US-2677 : Cancel assigned moves' availability and re-check it
         '''
@@ -658,7 +658,7 @@ class stock_picking(osv.osv):
             for pick_id in ids:
                 # trigger transition from Assigned to Confirmed if needed
                 netsvc.LocalService("workflow").trg_write(uid, 'stock.picking', pick_id, cr)
-        return self.action_assign(cr, uid, ids, context=context)
+        return self.action_assign(cr, uid, ids, lefo=lefo, context=context)
 
 
     def export_pick(self, cr, uid, ids, context=None):
