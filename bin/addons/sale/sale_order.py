@@ -3048,22 +3048,29 @@ class sale_order_line(osv.osv):
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
-        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
+        so_line_id = super(sale_order_line, self).create(cr, uid, vals, context=context)
         if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
             if vals.get('order_id', False):
                 name = so_obj.browse(cr, uid, vals.get('order_id'), context=context).name
-                super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
+                super(sale_order_line, self).write(cr, uid, so_line_id, {'sync_order_line_db_id': name + "_" + str(so_line_id), } , context=context)
 
         if vals.get('stock_take_date'):
-            self._check_stock_take_date(cr, uid, so_line_ids, context=context)
+            self._check_stock_take_date(cr, uid, so_line_id, context=context)
+
+        if vals.get('is_line_split') and vals.get('original_line_id') and vals.get('product_uom_qty'):
+            origin_sol = self.browse(cr, uid, vals.get('original_line_id'), context=context)
+            if origin_sol.state == 'confirmed':
+                move_ids = self.pool.get('stock.move').search(cr, uid, [('type', '=', 'out'), ('state', 'in', ['confirmed', 'assigned']), ('sale_line_id', '=', vals['original_line_id']), ('product_qty', '=', vals['product_uom_qty'])], limit=1, context=context)
+                if move_ids:
+                    self.pool.get('stock.move').write(cr, uid, move_ids, {'sale_line_id': so_line_id}, context=context)
 
         if order_id and not context.get('sync_message_execution'):
             # new line added on COO FO but validated, confirmed, sent after all other lines and reception done on project: new line added on project closed PO (KO)
             if self.pool.get('sale.order').search_exist(cr, uid, [('id', '=', order_id), ('client_order_ref', '!=', False), ('partner_type', 'in', ['internal', 'intermission', 'intersection']), ('procurement_request', '=', False)], context=context):
-                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', so_line_ids, {},
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', so_line_id, {},
                                                                                       'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context, force_domain=True)
 
-        return so_line_ids
+        return so_line_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """

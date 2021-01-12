@@ -82,7 +82,7 @@ class purchase_order_line_sync(osv.osv):
     def update_linked_in(self, cr, uid, pol_line, orig_qty, new_qty, context=None):
         # po line already confirmed, but qty changed => update IN / SYS-INt
         domain = [('purchase_line_id', '=', pol_line), ('type', '=', 'in'), ('state', '=', 'assigned'), ('product_qty', '=', orig_qty)]
-        linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+        linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context, limit=1)
         if linked_in_move:
             self.pool.get('stock.move').write(cr, uid, linked_in_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
             # update SYS-INT if has:
@@ -243,6 +243,7 @@ class purchase_order_line_sync(osv.osv):
                     for in_move in self.pool.get('stock.move').browse(cr, uid, linked_in_moves, context=context):
                         if in_move.state in ('assigned', 'confirmed') and pol_values['product_qty'] == in_move.product_qty:
                             self.pool.get('stock.move').write(cr, uid, [in_move.id], {'purchase_line_id': new_pol}, context=context)
+                            break
 
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:  # update the stock moves PO line id
                 in_name = sol_dict['in_name_goods_return'].split('.')[-1]
