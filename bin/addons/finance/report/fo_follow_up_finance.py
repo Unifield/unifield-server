@@ -104,11 +104,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                         p1.type = 'out' and 
                         (p1.subtype='standard' or p1.subtype='packing' and m1.pick_shipment_id is not null and m1.not_shipped='f') and
                         m1.sale_line_id = sol.id
-                        group by sale_line_id) as qty_delivered,
-                      
-                    -- TODO:
-                    -- Take into account the new field "merged_invoice_line_id" in case of merged SI lines
-                    
+                        group by sale_line_id) as qty_delivered,          
                     CASE WHEN coalesce(out_picking.name, out_iv.name) IS NOT NULL 
                         THEN coalesce(out_picking.name, out_iv.name) ELSE '' END AS transport_file,
                     out_iv.id as out_inv, coalesce(out_iv.number, '') as out_inv_number,
@@ -124,7 +120,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     inner join sale_order so on so.id = sol.order_id
                     left join purchase_order_line pol on pol.linked_sol_id = sol.id
                     left join purchase_order po on po.id = pol.order_id
-                    left join account_invoice_line in_ivl on in_ivl.order_line_id = pol.id
+                    left join account_invoice_line in_ivl on in_ivl.order_line_id = pol.id or pol.merged_invoice_line_id = in_ivl.id
                     left join account_invoice in_iv on in_iv.id = in_ivl.invoice_id
                     left join account_move in_am on in_am.id = in_iv.move_id
                     left join account_move_line in_aml on in_aml.invoice_line_id = in_ivl.id and in_aml.move_id=in_am.id
