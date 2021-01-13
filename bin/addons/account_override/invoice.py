@@ -1412,7 +1412,6 @@ class account_invoice(osv.osv):
                 'partner_id': inv_br.partner_id.id,
                 'price_unit': 0.,
                 'quantity': 1.,
-                'order_line_ids': [],
             }
 
             by_account_vals = {}  # key: account_id
@@ -1421,13 +1420,14 @@ class account_invoice(osv.osv):
                 if l.account_id.id in by_account_vals:
                     vals = by_account_vals[l.account_id.id]
                     if l.order_line_id:
-                        vals['order_line_ids'].append(l.order_line_id.id)
+                        vals.setdefault('order_line_ids', []).append(l.order_line_id.id)
                 else:
                     # new account to merge
                     vals = vals_template.copy()
                     vals.update({
                         '_index_': index,
                         'account_id': l.account_id.id,
+                        'order_line_ids': [],
                     })
                     if l.order_line_id:
                         vals['order_line_ids'].append(l.order_line_id.id)
