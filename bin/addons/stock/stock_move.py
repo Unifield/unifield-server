@@ -1337,7 +1337,7 @@ class stock_move(osv.osv):
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
-    def action_assign(self, cr, uid, ids, lefo=False, context=None, *args):
+    def action_assign(self, cr, uid, ids, lefo=False, context=None):
         """ Changes state to confirmed or waiting.
         @return: List of values
         """

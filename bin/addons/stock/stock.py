@@ -991,7 +991,7 @@ class stock_picking(osv.osv):
         # TODO: Check locations to see if in the same location ?
         return True
 
-    def action_assign(self, cr, uid, ids, lefo=False, context=None, *args):
+    def action_assign(self, cr, uid, ids, lefo=False, context=None):
         """ Changes state of picking to available if all moves are confirmed.
         @return: True
         """
