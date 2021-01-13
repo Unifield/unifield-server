@@ -1428,7 +1428,6 @@ class account_invoice(osv.osv):
                     vals.update({
                         '_index_': index,
                         'account_id': l.account_id.id,
-                        'order_line_ids': [],
                     })
                     if l.order_line_id:
                         vals['order_line_ids'].append(l.order_line_id.id)
