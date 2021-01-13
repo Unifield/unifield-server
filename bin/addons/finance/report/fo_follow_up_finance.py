@@ -96,10 +96,17 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     so.state as fo_status, sol.state as fo_line_status, sol.line_number as fo_line_number,
                     coalesce(prod.default_code, '') as product_code, coalesce(prod_t.name, '') as product_description,
                     sol.product_uom_qty as qty_ordered, prod_u.name as uom_ordered,
-                    
+                    (select sum(product_qty) from
+                        stock_move m1, stock_picking p1
+                        where
+                        p1.id = m1.picking_id and
+                        m1.state = 'done' and
+                        p1.type = 'out' and 
+                        (p1.subtype='standard' or p1.subtype='packing' and m1.pick_shipment_id is not null and m1.not_shipped='f') and
+                        m1.sale_line_id = sol.id
+                        group by sale_line_id) as qty_delivered,
+                      
                     -- TODO:
-                    -- Fix qty_delivered
-                    coalesce(out_stm.product_qty, 0.0) as qty_delivered,
                     -- Remove this unused value?
                     in_picking.name as IN,
                     -- Take into account the new field "merged_invoice_line_id" in case of merged SI lines
@@ -138,7 +145,6 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join product_product prod on prod.id = sol.product_id
                     left join product_template prod_t on prod_t.id = prod.product_tmpl_id
                     left join product_uom prod_u on prod_u.id = sol.product_uom
-                    left join stock_move out_stm on out_stm.picking_id = out_picking.id 
                 where
                     in_iv.refunded_invoice_id is NULL and
                     out_iv.refunded_invoice_id is NULL and
