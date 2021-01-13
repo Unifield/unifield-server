@@ -104,7 +104,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                         p1.type = 'out' and 
                         (p1.subtype='standard' or p1.subtype='packing' and m1.pick_shipment_id is not null and m1.not_shipped='f') and
                         m1.sale_line_id = sol.id
-                        group by sale_line_id) as qty_delivered,          
+                        group by m1.sale_line_id) as qty_delivered,       
                     CASE WHEN coalesce(out_picking.name, out_iv.name) IS NOT NULL 
                         THEN coalesce(out_picking.name, out_iv.name) ELSE '' END AS transport_file,
                     out_iv.id as out_inv, coalesce(out_iv.number, '') as out_inv_number,
