@@ -567,6 +567,7 @@ class purchase_order_line(osv.osv):
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
         'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
+        'merged_invoice_line_id': fields.many2one('account.invoice.line', string='Merged Invoice Line', readonly=True, required=False),
     }
 
     _defaults = {

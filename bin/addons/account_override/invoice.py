@@ -1419,13 +1419,18 @@ class account_invoice(osv.osv):
                 # get current merge vals for account or create new
                 if l.account_id.id in by_account_vals:
                     vals = by_account_vals[l.account_id.id]
+                    if l.order_line_id:
+                        vals.setdefault('order_line_ids', []).append(l.order_line_id.id)
                 else:
                     # new account to merge
                     vals = vals_template.copy()
                     vals.update({
                         '_index_': index,
                         'account_id': l.account_id.id,
+                        'order_line_ids': [],
                     })
+                    if l.order_line_id:
+                        vals['order_line_ids'].append(l.order_line_id.id)
                     index += 1
 
                 '''
@@ -1505,6 +1510,8 @@ class account_invoice(osv.osv):
                 # post encode tax m2m
                 vals['invoice_line_tax_id'] = vals['invoice_line_tax_id'] \
                     and [(6, 0, vals['invoice_line_tax_id'])] or False
+
+                vals['order_line_ids'] = vals['order_line_ids'] and [(6, 0, vals['order_line_ids'])] or False
 
                 # create merge line
                 vals.update({'merged_line': True})

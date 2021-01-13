@@ -96,9 +96,14 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     so.state as fo_status, sol.state as fo_line_status, sol.line_number as fo_line_number,
                     coalesce(prod.default_code, '') as product_code, coalesce(prod_t.name, '') as product_description,
                     sol.product_uom_qty as qty_ordered, prod_u.name as uom_ordered,
-                    --coalesce(out_stm.product_qty, 0.0) as qty_delivered,
-                    'TODO' as qty_delivered,  -- set the col. type as Number once Done
-                    in_picking.name as IN,  -- TODO: remove this unused value?
+                    
+                    -- TODO:
+                    -- Fix qty_delivered
+                    coalesce(out_stm.product_qty, 0.0) as qty_delivered,
+                    -- Remove this unused value?
+                    in_picking.name as IN,
+                    -- Take into account the new field "merged_invoice_line_id" in case of merged SI lines
+                    
                     CASE WHEN coalesce(out_picking.name, out_iv.name) IS NOT NULL 
                         THEN coalesce(out_picking.name, out_iv.name) ELSE '' END AS transport_file,
                     out_iv.id as out_inv, coalesce(out_iv.number, '') as out_inv_number,
