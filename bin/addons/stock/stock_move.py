@@ -2169,7 +2169,7 @@ class stock_move(osv.osv):
             if new_todo:
                 todo = new_todo
             # we rechech availability
-            self.action_assign(cr, uid, todo, context)
+            self.action_assign(cr, uid, todo, context=context)
         return ret
 
     def button_stock(self, cr, uid, ids, context=None):
@@ -2210,7 +2210,7 @@ class stock_move(osv.osv):
             if new_todo:
                 todo = new_todo
             # we rechech availability
-            self.action_assign(cr, uid, todo)
+            self.action_assign(cr, uid, todo, context=context)
         return True
 
 # KIT CREATION

@@ -1200,7 +1200,7 @@ class stock_picking(osv.osv):
                 to_process = []
                 for ed in sorted(processed_out_moves_by_exp.keys()):
                     to_process += processed_out_moves_by_exp[ed]
-                move_obj.action_assign(cr, uid, to_process)
+                move_obj.action_assign(cr, uid, to_process, context=context)
 
             # create track changes:
             for tc_data in track_changes_to_create:

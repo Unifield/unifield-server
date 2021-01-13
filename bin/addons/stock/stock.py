@@ -1003,7 +1003,7 @@ class stock_picking(osv.osv):
         for pick in self.read(cr, uid, ids, ['name']):
             move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick['id']),
                                                  ('state', 'in', ('waiting', 'confirmed'))], order='prodlot_id, product_qty desc')
-            move_obj.action_assign(cr, uid, move_ids, lefo=lefo)
+            move_obj.action_assign(cr, uid, move_ids, lefo=lefo, context=context)
             self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s (%s)' % (
                 pick['id'], pick['name'],
             ))

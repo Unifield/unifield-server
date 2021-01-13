@@ -954,7 +954,7 @@ class stock_picking(osv.osv):
                                                     [('id', 'in', pick['move_lines']),
                                                      ('state', '=', 'confirmed')])
                 if not_assigned_move:
-                    move_obj.action_assign(cr, uid, not_assigned_move)
+                    move_obj.action_assign(cr, uid, not_assigned_move, context=context)
         return True
 
 
@@ -975,7 +975,7 @@ class stock_picking(osv.osv):
                 if not_assigned_move:
                     move_obj.write(cr, uid, not_assigned_move, {'state':
                                                                 'confirmed'})
-                    move_obj.action_assign(cr, uid, not_assigned_move)
+                    move_obj.action_assign(cr, uid, not_assigned_move, context=context)
 
         return True
 
@@ -1793,7 +1793,7 @@ class stock_move(osv.osv):
             ids = [ids]
 
         self.action_confirm(cr, uid, ids, context)
-        self.action_assign(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context=context)
         return True
 
     def _chain_compute(self, cr, uid, moves, context=None):
