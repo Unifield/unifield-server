@@ -107,8 +107,6 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                         group by sale_line_id) as qty_delivered,
                       
                     -- TODO:
-                    -- Remove this unused value?
-                    in_picking.name as IN,
                     -- Take into account the new field "merged_invoice_line_id" in case of merged SI lines
                     
                     CASE WHEN coalesce(out_picking.name, out_iv.name) IS NOT NULL 
@@ -130,7 +128,6 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join account_invoice in_iv on in_iv.id = in_ivl.invoice_id
                     left join account_move in_am on in_am.id = in_iv.move_id
                     left join account_move_line in_aml on in_aml.invoice_line_id = in_ivl.id and in_aml.move_id=in_am.id
-                    left join stock_picking in_picking on in_picking.id = in_iv.picking_id 
                     left join account_invoice_line out_ivl on out_ivl.sale_order_line_id = sol.id
                     left join account_invoice out_iv on out_iv.id = out_ivl.invoice_id
                     left join stock_picking out_picking on out_picking.id = out_iv.picking_id
