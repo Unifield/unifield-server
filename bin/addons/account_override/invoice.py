@@ -1936,6 +1936,7 @@ class account_invoice_line(osv.osv):
                 'order_line_id': False,
                 'sale_order_line_id': False,
                 'sale_order_lines': False,
+                'order_line_ids': [],
             })
         return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 

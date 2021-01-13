@@ -1271,7 +1271,8 @@ class purchase_order_line(osv.osv):
             self.pool.get('product.product')._get_restriction_error(cr, uid, [pol.product_id.id],
                                                                     {'partner_id': pol.order_id.partner_id.id}, context=context)
 
-        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
+        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [],
+                        'merged_invoice_line_id': False, })
 
         for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import']:
             if field not in default:
