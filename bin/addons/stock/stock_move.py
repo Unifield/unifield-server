@@ -2209,8 +2209,8 @@ class stock_move(osv.osv):
             new_todo = self.cancel_assign(cr, uid, todo, context=context)
             if new_todo:
                 todo = new_todo
-            # we rechech availability
-            self.action_assign(cr, uid, todo, context=context)
+            # we research availability
+            self.action_assign(cr, uid, todo)
         return True
 
 # KIT CREATION

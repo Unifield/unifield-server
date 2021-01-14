@@ -161,7 +161,7 @@ class change_dest_location(osv.osv_memory):
                     nb += 1
 
             if move_changed:
-                move_obj.action_assign(cr, uid, move_changed, context=context)
+                move_obj.action_assign(cr, uid, move_changed)
             if nb:
                 if wizard.type == 'internal':
                     warn_msg.append(_('The destination location has been changed on %d stock moves.') % (nb,))
