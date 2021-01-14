@@ -120,7 +120,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     inner join sale_order so on so.id = sol.order_id
                     left join purchase_order_line pol on pol.linked_sol_id = sol.id
                     left join purchase_order po on po.id = pol.order_id
-                    left join account_invoice_line in_ivl on in_ivl.order_line_id = pol.id or pol.merged_invoice_line_id = in_ivl.id
+                    left join inv_line_po_line_rel invl_pol_rel on invl_pol_rel.po_line_id = pol.id
+                    left join account_invoice_line in_ivl on in_ivl.order_line_id = pol.id or invl_pol_rel.inv_line_id = in_ivl.id
                     left join account_invoice in_iv on in_iv.id = in_ivl.invoice_id
                     left join account_move in_am on in_am.id = in_iv.move_id
                     left join account_move_line in_aml on in_aml.invoice_line_id = in_ivl.id and in_aml.move_id=in_am.id
