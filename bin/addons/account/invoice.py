@@ -1341,6 +1341,9 @@ class account_invoice(osv.osv):
             if 'invoice_line_tax_id' in line:
                 line['invoice_line_tax_id'] = [(6,0, line.get('invoice_line_tax_id', [])) ]
 
+            if 'purchase_order_line_ids' in line:
+                line['purchase_order_line_ids'] = [(6, 0, line.get('purchase_order_line_ids', []))]
+
             if 'analytic_distribution_id' in line:
                 if line.get('analytic_distribution_id', False) and line.get('analytic_distribution_id')[0]:
                     distrib_id = line.get('analytic_distribution_id')[0]
