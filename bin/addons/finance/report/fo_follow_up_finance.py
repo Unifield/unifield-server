@@ -120,8 +120,17 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     inner join sale_order so on so.id = sol.order_id
                     left join purchase_order_line pol on pol.linked_sol_id = sol.id
                     left join purchase_order po on po.id = pol.order_id
-                    left join inv_line_po_line_rel invl_pol_rel on invl_pol_rel.po_line_id = pol.id
-                    left join account_invoice_line in_ivl on in_ivl.order_line_id = pol.id or invl_pol_rel.inv_line_id = in_ivl.id
+                    -- avoid duplicates due to merge lines and/or refunds
+                    left join (
+                        select in_ivl_tmp.*, coalesce(in_ivl_tmp.order_line_id, invl_pol_rel.po_line_id) as pol_id
+                            from account_invoice_line in_ivl_tmp
+                            inner join account_invoice in_iv_tmp on in_iv_tmp.id = in_ivl_tmp.invoice_id
+                            left join inv_line_po_line_rel invl_pol_rel on invl_pol_rel.inv_line_id = in_ivl_tmp.id
+                        where
+                            (invl_pol_rel.inv_line_id is NULL or invl_pol_rel.inv_line_id = in_ivl_tmp.id and in_ivl_tmp.order_line_id is null)
+                            and in_iv_tmp.refunded_invoice_id is NULL
+                            and coalesce(in_iv_tmp.from_supply, 't')='t'
+                    ) as in_ivl ON in_ivl.pol_id = pol.id
                     left join account_invoice in_iv on in_iv.id = in_ivl.invoice_id
                     left join account_move in_am on in_am.id = in_iv.move_id
                     left join account_move_line in_aml on in_aml.invoice_line_id = in_ivl.id and in_aml.move_id=in_am.id
@@ -140,10 +149,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join product_template prod_t on prod_t.id = prod.product_tmpl_id
                     left join product_uom prod_u on prod_u.id = sol.product_uom
                 where
-                    in_iv.refunded_invoice_id is NULL and
                     out_iv.refunded_invoice_id is NULL and
                     coalesce(out_iv.from_supply, 't')='t' and
-                    coalesce(in_iv.from_supply, 't')='t' and
                     sol.state not in ('cancel', 'cancel_r') and
                     so.id in %s
                 order by fo_number DESC, fo_line_number, si_number, si_line_number, out_inv_number, out_inv_line_number;
