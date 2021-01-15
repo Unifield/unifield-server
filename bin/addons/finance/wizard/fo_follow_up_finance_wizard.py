@@ -50,26 +50,35 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         """
         Retrieves the data according to the values in the wizard
         """
+        inv_obj = self.pool.get('account.invoice')
         fo_obj = self.pool.get('sale.order')
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for wizard in self.browse(cr, uid, ids, context=context):
-            fo_domain = []
-            if wizard.start_date:
-                fo_domain.append(('date_order', '>=', wizard.start_date))
-            if wizard.end_date:
-                fo_domain.append(('date_order', '<=', wizard.end_date))
-            if wizard.partner_ids:
-                fo_domain.append(('partner_id', 'in', [p.id for p in wizard.partner_ids]))
-            if wizard.order_id:
-                fo_domain.append(('id', '=', wizard.order_id.id))
-            fo_ids = fo_obj.search(cr, uid, fo_domain, context=context)
+            fo_ids = []
+            if context.get('selected_inv_ids'):
+                set_fo_ids = set()
+                for inv in inv_obj.browse(cr, uid, context['selected_inv_ids'], fields_to_fetch=['order_ids'], context=context):
+                    for fo in inv.order_ids:
+                        set_fo_ids.add(fo.id)
+                fo_ids = list(set_fo_ids)
+            else:
+                fo_domain = []
+                if wizard.start_date:
+                    fo_domain.append(('date_order', '>=', wizard.start_date))
+                if wizard.end_date:
+                    fo_domain.append(('date_order', '<=', wizard.end_date))
+                if wizard.partner_ids:
+                    fo_domain.append(('partner_id', 'in', [p.id for p in wizard.partner_ids]))
+                if wizard.order_id:
+                    fo_domain.append(('id', '=', wizard.order_id.id))
+                fo_ids = fo_obj.search(cr, uid, fo_domain, context=context)
             if not fo_ids:
                 raise osv.except_osv(
                     _('Error'),
-                    _('No data found with these parameters'),
+                    _('No field orders found.'),
                 )
             self.pool.get('sale.followup.multi.wizard')._check_max_line_number(cr, fo_ids)
             self.write(cr, uid, [wizard.id], {'order_ids': fo_ids}, context=context)
@@ -91,8 +100,6 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 3
 
-        data = {}
-        wiz = self.browse(cr, uid, ids[0], context=context)
         data = {'ids': ids, 'context': context}
         return {
             'type': 'ir.actions.report.xml',

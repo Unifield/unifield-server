@@ -45,6 +45,22 @@
             <field name="sequence" eval="98"/>
         </record>
 
+        <!-- Invoice lines follow-up -->
+        <record id="action_invoice_lines_follow_up" model="ir.actions.server">
+            <field name="name">Invoice lines follow-up</field>
+            <field name="model_id" ref="model_account_invoice"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_invoice_lines_follow_up(context=context)</field>
+        </record>
+        <record id="ir_invoice_lines_follow_up" model="ir.values">
+            <field name="key2">client_print_multi</field>
+            <field name="model">account.invoice</field>
+            <field name="name">invoice_lines_follow_up</field>
+            <field eval="'ir.actions.server,%d'%action_invoice_lines_follow_up" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="99"/>
+        </record>
+
         <!-- FO Follow-Up finance / Report -->
         <report id="fo_follow_up_finance"
             string="FO Follow-up Finance"

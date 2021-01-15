@@ -1669,6 +1669,23 @@ class account_invoice(osv.osv):
             'res_id': [wiz_id],
         }
 
+    def get_invoice_lines_follow_up(self, cr, uid, ids, context=None):
+        """
+        Prints the FO Follow-Up Finance report related to the IVO or STV selected
+        """
+        if context is None:
+            context = {}
+        follow_up_wizard = self.pool.get('fo.follow.up.finance.wizard')
+        inv_ids = context.get('active_ids')
+        if not inv_ids:
+            raise osv.except_osv(_('Error'),
+                                 _('Please select at least one record!'))
+        if isinstance(inv_ids, (int, long)):
+            inv_ids = [inv_ids]
+        context.update({'selected_inv_ids': inv_ids})
+        wiz_id = follow_up_wizard.create(cr, uid, {}, context=context)
+        return follow_up_wizard.print_excel(cr, uid, [wiz_id], context=context)
+
 
 account_invoice()
 
