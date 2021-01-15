@@ -1682,7 +1682,10 @@ class account_invoice(osv.osv):
                                  _('Please select at least one record!'))
         if isinstance(inv_ids, (int, long)):
             inv_ids = [inv_ids]
-        context.update({'selected_inv_ids': inv_ids})
+        context.update({
+            'selected_inv_ids': inv_ids,
+            'is_intermission': self.browse(cr, uid, inv_ids[0], fields_to_fetch=['is_intermission']).is_intermission,
+        })
         wiz_id = follow_up_wizard.create(cr, uid, {}, context=context)
         return follow_up_wizard.print_excel(cr, uid, [wiz_id], context=context)
 
