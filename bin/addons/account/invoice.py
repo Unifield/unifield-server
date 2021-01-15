@@ -2138,6 +2138,7 @@ class ir_values(osv.osv):
         Hides the reports:
         - "Invoice Excel Export" in the menu of other invoices than IVO/IVI
         - "FO Follow-up Finance" in the menu of other invoices than IVO/STV
+        - "STV/IVO lines follow-up" in the menu of other invoices than IVO/STV (+ renames it depending on the inv. type)
         """
         if context is None:
             context = {}
@@ -2150,9 +2151,16 @@ class ir_values(osv.osv):
             context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
                 not context.get('is_debit_note', False)
             for v in values:
+                # renaming
+                if len(v) > 2 and v[1] == 'invoice_lines_follow_up' and v[2].get('name'):
+                    if context_ivo:
+                        v[2]['name'] = _('IVO lines follow-up')
+                    elif context_stv:
+                        v[2]['name'] = _('STV lines follow-up')
+                # display
                 if not context.get('is_intermission') and len(v) > 2 and v[2].get('report_name', '') == 'invoice.excel.export':
                     continue
-                elif not context_ivo and not context_stv and len(v) > 1 and v[1] == 'fo_follow_up_finance':
+                elif not context_ivo and not context_stv and len(v) > 1 and v[1] in ('fo_follow_up_finance', 'invoice_lines_follow_up'):
                     continue
                 else:
                     new_act.append(v)
