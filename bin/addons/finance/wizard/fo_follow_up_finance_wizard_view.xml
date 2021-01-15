@@ -66,6 +66,7 @@
             string="FO Follow-up Finance"
             model="account.invoice"
             name="fo.follow.up.finance"
+            target_filename="Follow Up_%(year)s%(month)s%(day)s"
             file="finance/report/fo_follow_up_finance_xls.mako"
             report_type="webkit"
             header="False"
