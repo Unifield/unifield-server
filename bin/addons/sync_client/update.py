@@ -217,7 +217,7 @@ class update_to_send(osv.osv,fv_formatter):
                 offset = min_offset + 200 < max_offset and min_offset +200 or max_offset
                 datas = self.export_data(cr, uid, ids_to_compute[min_offset:offset],
                                          export_fields, context=context)['datas']
-                sdrefs = self.get_sd_ref(cr, uid, ids_to_compute,
+                sdrefs = self.get_sd_ref(cr, uid, ids_to_compute[min_offset:offset],
                                          field=['name','version','force_recreation','id'], context=context)
                 ustr_export_fields = tools.ustr(export_fields)
                 for (id, row) in zip(ids_to_compute[min_offset:offset], datas):
