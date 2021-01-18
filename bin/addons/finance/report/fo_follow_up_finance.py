@@ -118,7 +118,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     CASE WHEN (out_aml.corrected or out_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_out_inv,
                     
                     -- TODO: fix is_delivered
-                    CASE WHEN COALESCE(out_picking.state, ship.state) = 'is_delivered' THEN TRUE ELSE FALSE END AS is_delivered
+                    CASE WHEN COALESCE(out_picking.state, ship.state) = 'delivered' THEN TRUE ELSE FALSE END AS is_delivered
                     
                     from sale_order_line sol
                     inner join sale_order so on so.id = sol.order_id
