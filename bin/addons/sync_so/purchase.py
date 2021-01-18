@@ -81,8 +81,11 @@ class purchase_order_line_sync(osv.osv):
 
     def update_linked_in(self, cr, uid, pol_line, orig_qty, new_qty, context=None):
         # po line already confirmed, but qty changed => update IN / SYS-INt
-        domain = [('purchase_line_id', '=', pol_line), ('type', '=', 'in'), ('state', '=', 'assigned'), ('product_qty', '=', orig_qty)]
-        linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context, limit=1)
+        domain = [('purchase_line_id', '=', pol_line), ('type', '=', 'in'), ('state', '=', 'assigned')]
+        linked_in_move = self.pool.get('stock.move').search(cr, uid, domain + [('product_qty', '=', orig_qty)], context=context, limit=1)
+        if not linked_in_move:
+            linked_in_move = self.pool.get('stock.move').search(cr, uid, domain + [('product_qty', '>=', new_qty)], context=context, limit=1)
+
         if linked_in_move:
             self.pool.get('stock.move').write(cr, uid, linked_in_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
             # update SYS-INT if has:
@@ -238,12 +241,15 @@ class purchase_order_line_sync(osv.osv):
 
             # if original pol has already been confirmed (and so has linked IN moves), then we re-attach moves to the right new split pol:
             if sol_dict['is_line_split']:
-                linked_in_moves = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', orig_pol[0]), ('type', '=', 'in')], context=context)
-                if len(linked_in_moves) > 1:
-                    for in_move in self.pool.get('stock.move').browse(cr, uid, linked_in_moves, context=context):
-                        if in_move.state in ('assigned', 'confirmed') and pol_values['product_qty'] == in_move.product_qty:
-                            self.pool.get('stock.move').write(cr, uid, [in_move.id], {'purchase_line_id': new_pol}, context=context)
-                            break
+                in_dom = [('purchase_line_id', '=', orig_pol[0]), ('type', '=', 'in'), ('state', '=', 'assigned')]
+                linked_in_moves = self.pool.get('stock.move').search(cr, uid, in_dom + [('product_qty', '=', pol_values['product_qty'])], limit=1, context=context)
+                if not linked_in_moves:
+                    linked_in_moves = self.pool.get('stock.move').search(cr, uid, in_dom + [('product_qty', '>', pol_values['product_qty'])], limit=1, context=context)
+                    if linked_in_moves:
+                        new_move = self.pool.get('stock.move').split(cr, uid, linked_in_moves[0], pol_values['product_uom_qty'], False, context=context)
+                        self.pool.get('stock.move').write(cr, uid, new_move, {'purchase_line_id': new_pol}, context=context)
+                else:
+                    self.pool.get('stock.move').write(cr, uid, linked_in_moves, {'purchase_line_id': new_pol}, context=context)
 
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:  # update the stock moves PO line id
                 in_name = sol_dict['in_name_goods_return'].split('.')[-1]
@@ -285,12 +291,14 @@ class purchase_order_line_sync(osv.osv):
                 if result and result[0]:
                     parent_so_id = result[0]
             if pol_values.get('origin'):
-                parent_so_id = self.pool.get('sale.order').search(cr, uid, [
+                parent_so_ids = self.pool.get('sale.order').search(cr, uid, [
                     ('name', '=', pol_values['origin']),
                     ('procurement_request', 'in', ['t', 'f']),
                 ], context=context)
+                if parent_so_ids:
+                    parent_so_id = parent_so_ids[0]
             if parent_so_id:
-                self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
+                self.update_fo_lines(cr, uid, [new_pol], so_id=parent_so_id, context=context)
 
         else: # regular update
             pol_updated = pol_id[0]

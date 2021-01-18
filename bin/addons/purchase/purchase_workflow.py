@@ -92,7 +92,7 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False, for_claim=False):
+    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False, for_claim=False, so_id=False):
         '''
         update corresponding FO lines in the same instance
         '''
@@ -109,7 +109,8 @@ class purchase_order_line(osv.osv):
             create_line = False
             if not pol.linked_sol_id:
                 # try to get the linked sale.order:
-                so_id = pol.link_so_id.id
+                if not so_id:
+                    so_id = pol.link_so_id.id
                 if not so_id:
                     so_id = self.pool.get('sale.order').search(cr, uid, [
                         ('name', '=', pol.origin),
@@ -205,7 +206,11 @@ class purchase_order_line(osv.osv):
                                                                                                          ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
                 if pol.created_by_sync:
                     sol_values['created_by_sync'] = True
+                    sol_values['sync_pushed_from_po'] = True
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
+                pol_to_write = {'linked_sol_id': new_sol, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context), 'link_so_id': sale_order.id}
+                if not pol.origin:
+                    pol_to_write['origin'] = sale_order.name
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
 
                 if to_trigger:
@@ -217,23 +222,16 @@ class purchase_order_line(osv.osv):
                 # the right OUT move (moves are already splits at this level):
                 if sol_values['is_line_split']:
                     netsvc.LocalService('workflow').trg_validate(uid, 'sale.order.line', new_sol, 'sourced', cr)
-                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
-                        ('sale_line_id', '=', sol_values['original_line_id']),
-                        ('type', '=', 'out'),
-                        ('state', 'in', ['assigned', 'confirmed'])],
-                        context=context)
-                    if linked_out_moves:
-                        # try first confirmed OUT, if not found link assigned OUT
-                        out_to_update = False
-                        for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
-                            if out_move.product_qty == sol_values['product_uom_qty']:
-                                if out_move.state == 'confirmed':
-                                    out_to_update = out_move.id
-                                    break
-                                elif out_move.state == 'assigned':
-                                    out_to_update = out_move.id
-                        if out_to_update:
-                            self.pool.get('stock.move').write(cr, uid, [out_to_update], {'sale_line_id': new_sol}, context=context)
+                    out_picks = self.pool.get('stock.picking').search(cr, uid, [('sale_id', '=', so_id), ('type', '=', 'out'), '|', ('subtype', '=', 'standard'), '&', ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)
+                    move_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', out_picks), ('state', '=', 'confirmed'), ('sale_line_id', '=', sol_values['original_line_id']), ('product_qty', '=', sol_values['product_uom_qty'])], limit=1, context=context)
+                    if move_ids:
+                        # last remaining OUT line
+                        self.pool.get('stock.move').write(cr, uid, move_ids, {'sale_line_id': new_sol}, context=context)
+                    else:
+                        move_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', out_picks), ('state', '=', 'confirmed'), ('sale_line_id', '=', sol_values['original_line_id']), ('product_qty', '>', sol_values['product_uom_qty'])], order='product_uom_qty desc', limit=1, context=context)
+                        if move_ids:
+                            new_move = self.pool.get('stock.move').split(cr, uid, move_ids[0], sol_values['product_uom_qty'], False, context=context)
+                            self.pool.get('stock.move').write(cr, uid, new_move, {'sale_line_id': new_sol}, context=context)
 
             else:  # update FO line
                 if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and not pol.linked_sol_id.order_id.analytic_distribution_id and ad_id and not sale_order.procurement_request:
@@ -351,8 +349,6 @@ class purchase_order_line(osv.osv):
                 'set_as_sourced_n': True,
             }
 
-            if pol.created_by_sync:
-                sol_values['sync_pushed_from_po'] = True
             if pol.resourced_original_line:
                 # pol resourced, set orginal line on new line
                 sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False
@@ -372,8 +368,6 @@ class purchase_order_line(osv.osv):
 
             # update current PO line:
             pol_values = {'link_so_id': fo_id, 'linked_sol_id': new_sol_id, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context)}
-            if not pol.origin:
-                pol_values['origin'] = sale_order.name
             self.write(cr, uid, pol.id, pol_values, context=context)
 
         context['from_back_sync'] = False
