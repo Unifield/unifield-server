@@ -167,11 +167,16 @@ SELECT res_id, touched
         if not result_iterable: ids = [ids]
         if not ids: return {} if result_iterable else False
 
+        if hasattr(field, '__iter__'):
+            fields_to_fetch = field[:]
+        else:
+            fields_to_fetch = [field]
+
         model_data_obj = self.pool.get('ir.model.data')
         sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
         try:
             result = RejectingDict((data.res_id, get_fields(data))
-                                   for data in model_data_obj.browse(cr, uid, sdref_ids))
+                                   for data in model_data_obj.browse(cr, uid, sdref_ids, fields_to_fetch=fields_to_fetch))
         except DuplicateKey, e:
             raise Exception("Duplicate definition of 'sd' xml_id: %d@ir.model.data" % e.key)
         missing_ids = filter(lambda id:id and not id in result, ids)
