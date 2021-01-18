@@ -117,8 +117,11 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     coalesce(out_iv.state, '') as out_inv_state,
                     CASE WHEN (out_aml.corrected or out_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_out_inv,
                     
-                    -- TODO: fix is_delivered
+                    -- TODO:
+                    -- => fix is_delivered
                     CASE WHEN COALESCE(out_picking.state, ship.state) = 'delivered' THEN TRUE ELSE FALSE END AS is_delivered
+                    -- => fix DPO when using the wizard: IVO/STV are retrieved but not SI
+                    -- => fix DPO when selecting IVO/STV: no FO is found (the link currently used is: invoice.order_ids)
                     
                     from sale_order_line sol
                     inner join sale_order so on so.id = sol.order_id
