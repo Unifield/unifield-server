@@ -115,7 +115,11 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     out_iv_curr.id as out_inv_currency_id, out_iv.document_date as out_inv_doc_date,
                     out_iv.date_invoice as out_inv_posting_date,
                     coalesce(out_iv.state, '') as out_inv_state,
-                    CASE WHEN (out_aml.corrected or out_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_out_inv
+                    CASE WHEN (out_aml.corrected or out_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_out_inv,
+                    
+                    -- TODO: fix is_delivered
+                    CASE WHEN COALESCE(out_picking.state, ship.state) = 'is_delivered' THEN TRUE ELSE FALSE END AS is_delivered
+                    
                     from sale_order_line sol
                     inner join sale_order so on so.id = sol.order_id
                     left join purchase_order_line pol on pol.linked_sol_id = sol.id
@@ -147,7 +151,9 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join res_currency out_iv_curr on out_iv_curr.id = out_iv.currency_id
                     left join product_product prod on prod.id = sol.product_id
                     left join product_template prod_t on prod_t.id = prod.product_tmpl_id
-                    left join product_uom prod_u on prod_u.id = sol.product_uom
+                    left join product_uom prod_u on prod_u.id = sol.product_uom     
+                    left join stock_picking out_picking2 on out_picking2.sale_id = so.id
+                    left join shipment ship on ship.id = out_picking2.shipment_id
                 where
                     out_iv.refunded_invoice_id is NULL and
                     coalesce(out_iv.from_supply, 't')='t' and

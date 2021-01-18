@@ -415,7 +415,11 @@
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['qty_ordered']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['uom_ordered']|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['qty_delivered']|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
+                 % if line['is_delivered']:
+                    <Cell ss:StyleID="line_left_green"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
+                % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
+                % endif
                 % if line['out_inv']:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_number']|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_line_number']|x}</Data></Cell>
