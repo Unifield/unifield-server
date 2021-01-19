@@ -83,6 +83,7 @@ class kit_creation(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         kit_obj = self.pool.get('composition.kit')
         fields_tool_obj = self.pool.get('fields.tools')
+        move_obj = self.pool.get('stock.move')
 
         for kit in self.browse(cr, uid, ids, context=context):
             # cancel related kits in production
@@ -91,8 +92,24 @@ class kit_creation(osv.osv):
                 kit_obj.action_cancel(cr, uid, kit_ids, context=dict(context, flag_force_cancel_composition_kit=True))
             # cancel the picking - stock moves are canceled at the same time
             if kit.internal_picking_id_kit_creation:
-                picking_id = kit.internal_picking_id_kit_creation.id
-                wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_cancel', cr)
+                picking_id = kit.internal_picking_id_kit_creation
+                revert_move = []
+                to_cancel = []
+
+                for move in picking_id.move_lines:
+                    if move.state == 'done':
+                        copy_data = {'location_dest_id': move.location_id.id, 'location_id': move.location_dest_id.id, 'to_consume_id_stock_move': False, 'kit_creation_id_stock_move': False}
+                        revert_move.append(move_obj.copy(cr, uid, move.id, copy_data, context=context))
+                    else:
+                        to_cancel.append(move.id)
+                if not revert_move:
+                    wf_service.trg_validate(uid, 'stock.picking', picking_id.id, 'button_cancel', cr)
+                else:
+                    move_obj.write(cr, uid, revert_move, {'state': 'done'}, context=context)
+                    if to_cancel:
+                        move_obj.action_cancel(cr, uid, to_cancel, context=context)
+                    wf_service.trg_validate(uid, 'stock.picking', picking_id.id, 'button_confirm', cr)
+
 
         # cancel the kit creation
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
