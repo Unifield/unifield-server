@@ -149,10 +149,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Destination Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
-        ## Creation Date
+        ## Actual Pack Date
+        <Column ss:AutoFitWidth="1" ss:Width="130.0" />
+        ## Actual Shipped Date
         <Column ss:AutoFitWidth="1" ss:Width="120.0" />
-        ## Shipped Date
-        <Column ss:AutoFitWidth="1" ss:Width="110.0" />
 
         ## WORKSHEET HEADER
         <Row>
@@ -232,8 +232,8 @@
             _('Total Currency'),
             _('Source Location'),
             _('Destination Location'),
-            _('Creation Date'),
-            _('Shipped Date'),
+            _('Actual Pack Date'),
+            _('Actual Shipped Date'),
         ]
         %>
         <Row>

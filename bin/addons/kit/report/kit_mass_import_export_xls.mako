@@ -106,6 +106,8 @@
     <Column ss:AutoFitWidth="1" ss:Width="75.0" />
     ## Product UoM
     <Column ss:AutoFitWidth="1" ss:Width="50.75" />
+    ## Product Comments
+    <Column ss:AutoFitWidth="1" ss:Width="200.75" />
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Kit Code')}</Data></Cell>
@@ -117,6 +119,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Qty')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product UoM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Comments')}</Data></Cell>
     </Row>
 </Table>
 </ss:Worksheet>

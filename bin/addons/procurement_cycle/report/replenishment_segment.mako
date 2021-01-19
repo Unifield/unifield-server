@@ -439,10 +439,22 @@
         % endif
         </Cell>
     % elif objects[0].rule == 'minmax':
-        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.min_qty}</Data></Cell>
-        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.max_qty}</Data></Cell>
+        <Cell ss:StyleID="s97u">
+        % if prod.min_qty is not False:
+            <Data ss:Type="Number">${prod.min_qty}</Data>
+        % endif
+        </Cell>
+        <Cell ss:StyleID="s97u">
+        % if prod.max_qty is not False:
+            <Data ss:Type="Number">${prod.max_qty}</Data>
+        % endif
+        </Cell>
     % else:
-        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.auto_qty}</Data></Cell>
+        <Cell ss:StyleID="s97u">
+        % if prod.auto_qty is not False:
+            <Data ss:Type="Number">${prod.auto_qty}</Data>
+        % endif
+        </Cell>
     % endif
 
     % if objects[0].rule == 'cycle':

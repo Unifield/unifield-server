@@ -432,14 +432,6 @@ class stock_picking(osv.osv):
         # return updated move or False
         return out_move_id
 
-    def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook to update values for stock move if first encountered
-        '''
-        values = kwargs.get('values')
-        assert values is not None, 'missing values'
-        return values
-
     def _get_db_data_dict(self, cr, uid):
         """
         Get some data from data.xml file (like stock locations, Unifield setup...)
@@ -752,6 +744,8 @@ class stock_picking(osv.osv):
         if sync_in or context.get('do_not_process_incoming'):
             in_out_updated = False
 
+        process_avg_sysint = not sync_in and not context.get('do_not_process_incoming')
+
         backorder_id = False
 
         internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
@@ -815,9 +809,7 @@ class stock_picking(osv.osv):
                     if not values.get('product_qty', 0.00):
                         continue
                     # Check if we must re-compute the price of the product
-                    compute_average = not sync_in and picking_dict['type'] == 'in' and line.product_id.cost_method
-                    if not sync_in and values.get('location_dest_id', False):
-                        compute_average = picking_dict['type'] == 'in' and line.product_id.cost_method == 'average'
+                    compute_average = process_avg_sysint and picking_dict['type'] == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
                         average_values, sptc_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
@@ -986,11 +978,8 @@ class stock_picking(osv.osv):
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
                     backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line and line.product_id.id))
-                    if not sync_in:
-                        # decrement qty of linked INTernal move:
-                        internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
-                        if internal_move:
-                            move_obj.write(cr, uid, internal_move, {'product_qty': diff_qty, 'product_uos_qty': diff_qty}, context=context)
+                    if process_avg_sysint:
+                        move_obj.decrement_sys_init(cr, uid, count, pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
                 elif not wizard.register_a_claim or not wizard.claim_replacement_picking_expected:
                     for sptc_values in move_sptc_values:
                         # track change that will be created:
@@ -999,11 +988,10 @@ class stock_picking(osv.osv):
                             'transaction_name': _('Reception %s') % move.picking_id.name,
                             'sptc_values': sptc_values.copy(),
                         })
-                    if not sync_in:
-                        # cancel linked INTernal move (INT):
-                        internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
-                        if internal_move:
-                            move_obj.action_cancel(cr, uid, internal_move, context=context)
+                    if process_avg_sysint:
+                        # update SYS-INT:
+                        # min(move.product_qty, count) used if more qty is received
+                        move_obj.decrement_sys_init(cr, uid, min(move.product_qty, count), pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
 
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
@@ -1248,7 +1236,7 @@ class stock_picking(osv.osv):
 
 
                         # ppl creation
-                        ppl_id = self.do_validate_picking(cr, uid, [new_pick], context=context).get('res_id')
+                        ppl_id = self.do_validate_picking(cr, uid, [new_pick], context=context, ignore_quick=True).get('res_id')
                         self.check_ppl_integrity(cr, uid, [ppl_id], context=context)
                         stock_issues_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', ppl_id), ('integrity_error', '!=', 'empty')], context=context)
                         if stock_issues_ids:

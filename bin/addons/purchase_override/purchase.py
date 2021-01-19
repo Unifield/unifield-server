@@ -490,7 +490,7 @@ class res_partner_address(osv.osv):
             else:
                 addr_ids = partner_obj.address_multiple_get(cr, uid, partner_id, [addr_type])[addr_type]
 
-            res.append(('id', 'in', list(i for i in addr_ids if i)))
+            res.append(('id', 'in', addr_ids and list(i for i in addr_ids) or ()))
 
         return res
 

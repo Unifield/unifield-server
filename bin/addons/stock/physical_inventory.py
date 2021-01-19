@@ -771,15 +771,24 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 expiry_date = False
             elif expiry_date:
                 expiry_date_type = row.cells[6].type
+                year = False
                 try:
                     if expiry_date_type == 'datetime':
                         expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                        year = row.cells[6].data.year
                     elif expiry_date_type == 'str':
-                        expiry_date = parse(expiry_date).strftime(DEFAULT_SERVER_DATE_FORMAT)
+                        expiry_date_dt = parse(expiry_date)
+                        year = expiry_date_dt.year
+                        expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
                     else:
                         raise ValueError()
                 except ValueError:
-                    add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+                    if not year or year >= 1900:
+                        add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+
+                if year and year < 1900:
+                    add_error(_('Expiry date: year must be after 1899'), row_index, 6)
+
             if not expiry_date and product_info['perishable'] and quantity is not None:
                 add_error(_('Expiry date is required'), row_index, 6)
 

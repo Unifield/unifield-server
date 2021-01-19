@@ -1169,10 +1169,11 @@ Nothing has been imported because of %s. See below:
 
         context['active_id'] = simu_id.picking_id.id
         context['active_ids'] = [simu_id.picking_id.id]
-        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date}, context=context)
+        fields_as_ro = simu_id.picking_id.partner_id.partner_type == 'esc' and simu_id.picking_id.state == 'updated' or simu_id.picking_id.partner_id.partner_type in ('internal', 'intermission', 'section')  and simu_id.picking_id.state == 'shipped'
+        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
-        mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
+        mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, fields_as_ro=fields_as_ro, context=context)
 
         # delete extra lines
         del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
@@ -1805,9 +1806,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         return batch_id
 
-    def put_in_memory_move(self, cr, uid, ids, partial_id, context=None):
+    def put_in_memory_move(self, cr, uid, ids, partial_id, fields_as_ro=False, context=None):
         '''
-        Create a stock.move.memory.in for each lines
+        Create a stock.move.in.processor for each lines
         '''
         move_obj = self.pool.get('stock.move.in.processor')
 
@@ -1852,7 +1853,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'ordered_quantity': move.product_qty,
                     'quantity': line.imp_product_qty,
                     'wizard_id': partial_id,
-                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False
+                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False,
+                    'cost_as_ro': fields_as_ro,
                     }
 
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))

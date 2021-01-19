@@ -26,5 +26,51 @@
                         view_type="form"
                         target="new"
                         id="act_wizard_temp_posting" />
+
+            <!-- Temp Post All The Entries - Wizard -->
+            <record model="ir.ui.view" id="wizard_temp_post_all">
+                <field name='name'>wizard.temp.post.all</field>
+                <field name='model'>wizard.temp.posting</field>
+                <field name='type'>form</field>
+                <field name="priority" eval="20"/>
+                <field name='arch' type='xml'>
+                    <form>
+                        <separator string="Temp Posting"/>
+                        <html>
+                            <p id="label_temp_post_all" style="text-align:center;">
+                                <translate>Are you sure you want to temp post <span style="font-weight: bold; color: red;">ALL</span> the entries?</translate>
+                            </p>
+                        </html>
+
+                        <group colspan="6" col="4">
+                            <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2"/>
+                            <button name="temp_post_all" string="Temp Post ALL"
+                                    type="object" icon="gtk-apply" colspan="2"/>
+                        </group>
+                    </form>
+                </field>
+            </record>
+            <!-- Temp Post All The Entries - Entry Menu -->
+            <record id="act_wizard_temp_post_all" model="ir.actions.act_window">
+                <field name="name">Temp Post All The Entries</field>
+                <field name="res_model">wizard.temp.posting</field>
+                <field name="src_model">account.bank.statement.line</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">form</field>
+                <field name="target">new</field>
+                <field name="view_id" ref="wizard_temp_post_all"/>
+                <field name="empty_ids">1</field>
+            </record>
+            <!-- Add the entry in the Actions section of the menu (with a sequence order) -->
+            <record id="ir_wizard_temp_post_all" model="ir.values">
+                <field name="key2">client_action_multi</field>
+                <field name="model">account.bank.statement.line</field>
+                <field name="name">act_wizard_temp_post_all</field>
+                <field eval="'ir.actions.act_window,%d'%ref('act_wizard_temp_post_all')" name="value"/>
+                <field name="key">action</field>
+                <field name="sequence" eval="110"/>
+                <field eval="True" name="object"/>
+            </record>
+
       </data>
 </openerp>

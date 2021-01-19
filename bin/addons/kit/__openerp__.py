@@ -36,7 +36,6 @@
         'kit_sequence.xml',
         'kit_report.xml',
         'wizard/substitute_view.xml',
-        'wizard/stock_partial_move_view.xml',
         'wizard/confirm_view.xml',
         'wizard/kit_selection_view.xml',
         'wizard/kit_selection_sale_view.xml',
@@ -46,7 +45,8 @@
         'security/ir.model.access.csv',
         'wizard/split_move_view.xml',
         'wizard/kit_mass_import_view.xml',
-        'report/kit_mass_import_export_view.xml'
+        'report/kit_mass_import_export_view.xml',
+        'report/kitting_order_report.xml'
     ],
     "demo_xml": [],
     'test': [

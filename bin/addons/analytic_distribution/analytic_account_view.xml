@@ -83,19 +83,42 @@
                             <field name="date" select="2"/>
                         </page>
                         <page string="Cost centers" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
-                            <button name="button_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="1"/>
+                            <field name="allow_all_cc_with_fp" colspan="4"
+                                   on_change="on_change_allow_all_cc_with_fp(allow_all_cc_with_fp, cost_center_ids)"/>
+                            <button name="button_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="4"/>
                             <separator/>
-                            <field name="cost_center_ids" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
+                            <field name="cost_center_ids" nolabel="1" colspan="4"
+                                   domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"
+                                   on_change="on_change_cc_with_fp(cost_center_ids)">
                                 <tree string="Cost Centers" >
                                     <field name="code"/>
                                     <field name="name"/>
                                 </tree>
                             </field>
                         </page>
-                        <page string="Destinations" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
-                            <button name="button_dest_clear" type="object" string="Remove all" icon="gtk-clear" colspan="1"/>
+                        <page string="Accounts/Destinations" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
+                            <field name="select_accounts_only"/>
+                            <button name="button_dest_clear" type="object" string="Remove all accounts/destinations"
+                                    icon="gtk-clear" colspan="4"
+                                    attrs="{'invisible': [('select_accounts_only', '=', True)]}"
+                            />
+                            <button name="button_fp_account_clear" type="object" string="Remove all accounts"
+                                    icon="gtk-clear" colspan="4"
+                                    attrs="{'invisible': [('select_accounts_only', '=', False)]}"
+                            />
                             <separator/>
-                            <field name="tuple_destination_account_ids" nolabel="1" context="{'dest_in_use':tuple_destination_account_ids}"/>
+                            <field name="tuple_destination_account_ids" nolabel="1" colspan="4"
+                                   context="{'dest_in_use': tuple_destination_account_ids}"
+                                   attrs="{'invisible': [('select_accounts_only', '=', True)]}"
+                            />
+                            <field name="fp_account_ids" colspan="4" nolabel="1"
+                                   context="{'from_fp': True, 'accounts_selected': fp_account_ids}"
+                                   attrs="{'invisible': [('select_accounts_only', '=', False)]}">
+                                <tree string="G/L Accounts">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
                         </page>
                         <page string="Expense accounts" attrs="{'invisible': [('category', '!=', 'DEST')]}">
                             <field name="destination_ids" nolabel="1" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]" context="{'destination_id': record_id}">
@@ -112,7 +135,7 @@
                             <field name="allow_all_cc" colspan="4" on_change="on_change_allow_all_cc(allow_all_cc, dest_cc_ids)"/>
                             <button name="button_dest_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="4"/>
                             <separator/>
-                            <field name="dest_cc_ids" nolabel="1" colspan="4" on_change="on_change_dest_cc_ids(dest_cc_ids)">
+                            <field name="dest_cc_ids" nolabel="1" colspan="4" on_change="on_change_cc_ids(dest_cc_ids)">
                                 <tree string="Cost Centers">
                                     <field name="code"/>
                                     <field name="name"/>

@@ -394,13 +394,18 @@ class stock_picking(osv.osv):
             partial_datas[in_id] = {}
             context['InShipOut'] = "IN"  # asking the IN object to be logged
             already_set_moves = []
+            line_processed = 0
+            line_found = False
             for line in pack_data:
+                line_processed += 1
                 line_data = pack_data[line]
 
                 #US-1294: Keep this list of pair (move_line: shipped_qty) as amount already shipped
                 already_shipped_moves = []
+                split_processed = 0
                 # get the corresponding picking line ids
                 for data in line_data['data']:
+                    split_processed += 1
                     if data.get('from_pack') and data.get('to_pack'):
                         pack_key = '%s-%s-%s' % (data.get('from_pack'), data.get('to_pack'), data.get('ppl_name'))
                         if pack_key not in pack_info_created:
@@ -473,18 +478,20 @@ class stock_picking(osv.osv):
                                     ('sync_linked_sol', 'ilike', '%%/%s' % sol_id),
                                 ], context=context)
                                 if pol_id:
-                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id)], context=context)
+                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id), ('state', 'not in', ['done', 'cancel'])], context=context)
                         if not move_ids:
                             #US-1294: absolutely no moves -> probably they are closed, just show the error message then ignore
-                            closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
-                            if closed_in_id:
-                                search_move = [('picking_id', '=', closed_in_id), ('line_number', '=', data.get('line_number'))]
-                                move_ids = move_obj.search(cr, uid, search_move, context=context)
+                            closed_pick_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', ['done', 'cancel'])], context=context)
+                            if closed_pick_ids:
+                                move_ids = move_obj.search(cr, uid, [('picking_id', 'in', closed_pick_ids), ('line_number', '=', data.get('line_number'))], context=context)
                             if not move_ids:
                                 message = "Line number " + str(ln) + " is not found in the original IN or PO"
                                 self._logger.info(message)
                                 raise Exception(message)
                             else:
+                                # do not set the whole msg as NR if there are other lines to process
+                                if len(pack_data) > line_processed or len(line_data['data']) > split_processed or line_found:
+                                    continue
                                 message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
                                     in_name, po_name,
                                 )
@@ -559,6 +566,7 @@ class stock_picking(osv.osv):
                             # comment is ovewritten in previous write
                             if data.get('comment'):
                                 move_proc.write(cr, uid, move_proc_id, {'comment': data['comment']}, context=context)
+                    line_found = True
                     #US-1294: Add this move and quantity as already shipped, since it's added to the wizard for processing
                     self._add_to_shipped_moves(already_shipped_moves, move_id, data['quantity'])
 
@@ -958,34 +966,6 @@ class stock_picking(osv.osv):
             for item in list_asset:
                 so_po_common.create_message_with_object_and_partner(cr, uid, 1002, item, partner, context)
         return res
-
-    def msg_close(self, cr, uid, source, stock_picking, context=None):
-        """
-        Trigger a close on a stock.stock_picking
-        """
-        # get stock pickings to process using name from message
-        stock_picking_ids = self.search(cr, uid, [('name', '=', stock_picking.name)])
-
-        if stock_picking_ids:
-            # create stock.partial.picking wizard object to perform the close
-            partial_obj = self.pool.get("stock.partial.picking")
-            partial_id = partial_obj.create(cr, uid, {}, context=dict(context, active_ids=stock_picking_ids))
-
-            if self.pool.get('stock.picking').browse(cr, uid, stock_picking_ids[0]).state == 'done':
-                return 'Stock picking %s was already closed' % stock_picking.name
-
-            # set quantity to process on lines
-            partial_obj.copy_all(cr, uid, [partial_id], context=dict(context, model='stock.partial.picking'))
-
-            # process partial and return
-            try:
-                partial_obj.do_partial(cr, uid, partial_id, context=dict(context, active_ids=stock_picking_ids))
-            except KeyError:
-                raise ValueError('Please set a batch number on all move lines')
-
-            return 'Stock picking %s closed' % stock_picking.name
-        else:
-            return 'Could not find stock picking %s' % stock_picking.name
 
     def msg_create_invoice(self, cr, uid, source, stock_picking, context=None):
         """

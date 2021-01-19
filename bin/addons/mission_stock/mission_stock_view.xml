@@ -6,6 +6,7 @@
         <field name="name">mission.stock.wizard.view</field>
         <field name="model">mission.stock.wizard</field>
         <field name="type">form</field>
+        <field name="priority">1</field>
         <field name="arch" type="xml">
             <form string="Mission stock report">
                 <field name="export_ok" invisible="1" />
@@ -19,24 +20,18 @@
                 <field name="processed_start_date" attrs="{'invisible': [('processed_state', '!=', 'in_progress')]}"/>
                 <separator colspan="4" string="Stock valuation" />
                 <field name="with_valuation" />
-                <separator colspan="4" string="Split Stock" />
-                <field name="split_stock" />
                 <separator colspan="4" string="Product in stock" />
                 <field name="display_only_in_stock" />
                 <group colspan="4" attrs="{'invisible': [('export_error_msg', '=', False)]}">
                     <separator colspan="4" string="Errors"/>
                     <field name="export_error_msg" colspan="4" />
                 </group>
-                <field name="instance_level" invisible="1" />
                 <separator colspan="4" string="Actions" />
                 <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" attrs="{'invisible': ['|', ('local_report', '!=', True), ('full_view', '=', True)]}"/>
                 <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
                 <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
                 <button name="open_xls_file" string="Open XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
                 <button name="open_csv_file" string="Open CSV file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
-                <group colspan="2" attrs="{'invisible': [('instance_level', '!=', 'coordo')]}">
-                    <button name="open_consolidated_xls" string="Open Consolidated XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
-                </group>
             </form>
         </field>
     </record>
@@ -134,9 +129,10 @@
         <field name="model">stock.mission.report.line</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Stock mission report" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
-                                    <field name="default_code" />
-                                    <field name="name" />
+            <tree string="Mission Stock Report" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                <field name="default_code" />
+                <field name="name" />
+                <field name="product_active" />
                 <field name="uom_id" />
                 <field name="cost_price" invisible="not context.get('with_valuation')" />
                 <field name="currency_id" invisible="not context.get('with_valuation')" />
@@ -144,14 +140,15 @@
                 <field name="internal_val" invisible="not context.get('with_valuation')" />
                 <!-- field name="in_pipe_coor_qty" />
                 <field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" / -->
-                <field name="stock_qty" invisible="not context.get('split_stock')" />
-                <field name="central_qty" invisible="not context.get('split_stock')" />
-                <field name="wh_qty" invisible="context.get('split_stock')" />
+                <field name="stock_qty" />
                 <field name="cross_qty" />
                 <!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="secondary_qty" />
                 <!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="cu_qty" />
+                <field name="quarantine_qty" />
+                <field name="input_qty" />
+                <field name="opdd_qty" />
                 <!-- <field name="cu_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="product_amc" invisible="context.get('hide_amc_fmc')"/>
                 <field name="product_consumption" invisible="context.get('hide_amc_fmc')" />
@@ -160,6 +157,42 @@
                 <field name="type" invisible="1" />
             </tree>
         </field>
+    </record>
+
+    <record id="consolidated_mission_stock_wizard_view" model="ir.ui.view">
+        <field name="name">consolidated.mission.stock.wizard.view</field>
+        <field name="model">mission.stock.wizard</field>
+        <field name="type">form</field>
+        <field name="priority">3</field>
+        <field name="arch" type="xml">
+            <form string="Consolidated Mission Stock Report">
+                <field name="export_ok" invisible="1" />
+                <field name="local_report" invisible="1" />
+                <field name="full_view" invisible="1" />
+                <separator colspan="4" string="Mission stock" />
+                <field name="last_update" />
+                <label colspan="4" />
+                <field name="processed_state" string="Updating..." attrs="{'invisible': [('local_report', '!=', True)]}"/>
+                <field name="processed_start_date" attrs="{'invisible': [('processed_state', '!=', 'in_progress')]}"/>
+                <group colspan="4" attrs="{'invisible': [('export_error_msg', '=', False)]}">
+                    <separator colspan="4" string="Errors"/>
+                    <field name="export_error_msg" colspan="4" />
+                </group>
+                <separator colspan="4" string="Actions" />
+                <button name="update" string="Update (in background)" type="object" colspan="2" icon="gtk-remove" attrs="{'invisible': ['|', ('local_report', '!=', True), ('full_view', '=', True)]}"/>
+                <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
+                <button name="open_consolidated_xls" string="Open Consolidated XLS file" type="object" icon="gtk-print" colspan="4" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
+            </form>
+        </field>
+    </record>
+
+    <record id="consolidated_mission_stock_wizard_action" model="ir.actions.act_window">
+        <field name="name">Consolidated Mission Stock Report</field>
+        <field name="res_model">mission.stock.wizard</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="consolidated_mission_stock_wizard_view" />
     </record>
 
 </data>

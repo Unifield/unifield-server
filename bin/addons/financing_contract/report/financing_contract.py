@@ -19,7 +19,6 @@
 #
 ##############################################################################
 
-import time
 import locale
 
 from report import report_sxw
@@ -33,18 +32,18 @@ class contract(report_sxw.rml_parse):
             'get_totals': self.get_totals,
         })
         return
-        
+
 
     def get_totals(self, reporting_lines):
         result = [0, 0]
         # Parse each budget line
-        
+
         for line in reporting_lines:
             if line.line_type != 'view':
                 result[0] += line.allocated_budget
                 result[1] += line.project_budget
         return result
-    
+
     def process(self, reporting_lines):
         def add_account_list_block_item(account_str, data_list, data_list_index):
             if len(data_list[data_list_index]) + len(account_str) > account_list_block_size:
@@ -66,21 +65,35 @@ class contract(report_sxw.rml_parse):
             account_list = ['']
             account_list_index = 0
 
+            account_invalid_list = ['']
+            account_invalid_index = 0
             if line.account_quadruplet_ids:
                 # Case of quadruplet
                 for quad in line.account_quadruplet_ids:
-                    account_list_index = add_account_list_block_item(
-                        " ".join([str(quad.account_destination_name),
-                            str(quad.funding_pool_id.code),
-                            str(quad.cost_center_id.code)]),
-                        account_list, account_list_index)
+                    if quad.valid:
+                        account_list_index = add_account_list_block_item(
+                            " ".join([str(quad.account_destination_name),
+                                      str(quad.funding_pool_id.code),
+                                      str(quad.cost_center_id.code)]),
+                            account_list, account_list_index)
+                    else:
+                        account_invalid_index = add_account_list_block_item(
+                            " ".join([str(quad.account_destination_name),
+                                      str(quad.funding_pool_id.code),
+                                      str(quad.cost_center_id.code)]),
+                            account_invalid_list, account_invalid_index)
+
+            elif line.reporting_account_ids:
+                # G/L Accounts Only selected
+                for account in line.reporting_account_ids:
+                    account_list_index = add_account_list_block_item(str(account.code), account_list, account_list_index)
             else:
                 # Case where we have some destination_ids
                 for account_destination in line.account_destination_ids:
                     account_list_index = add_account_list_block_item(
                         str(account_destination.account_id.code) \
-                            + " " + str(account_destination.destination_id.code),
-                    account_list, account_list_index)
+                        + " " + str(account_destination.destination_id.code),
+                        account_list, account_list_index)
 
             values = {
                 'code': line.code,
@@ -88,12 +101,13 @@ class contract(report_sxw.rml_parse):
                 'allocated_budget': line.allocated_budget,
                 'project_budget': line.project_budget,
                 'line_type': register_states[line.line_type],
-                'account_list': account_list
+                'account_list': account_list,
+                'account_invalid_list': account_invalid_list
             }
             result.append(values)
 
         return result
-        
+
 
 report_sxw.report_sxw('report.financing.contract', 'financing.contract.contract', 'addons/financing_contract/report/financing_contract.rml', parser=contract)
 

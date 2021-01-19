@@ -38,7 +38,7 @@ import subprocess
 import os
 import shutil
 import ConfigParser
-
+import codecs
 
 def get_7z():
     if os.name == 'nt':
@@ -387,6 +387,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             email = employee_data.get('email', False)
             id_staff = employee_data.get('id_staff', False)
             id_unique = employee_data.get('id_unique', False)
+            uuid_key = employee_data.get('uuid_key', False)
             nation = employee_data.get('nation', False)
             nom = employee_data.get('nom', False)
             num_soc = employee_data.get('num_soc', False)
@@ -402,6 +403,14 @@ class hr_payroll_employee_import(osv.osv_memory):
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('The given file is probably corrupted!\n%s') % (e))
         # Process data
+        uuid_field = self.pool.get('hr.employee')._columns.get('homere_uuid_key')
+        if uuid_key and uuid_field:
+            uuid_key = ustr(uuid_key)
+            uuid_field_size = uuid_field.size
+            if len(uuid_key) > uuid_field_size:
+                message = _('Line %s. The UUID_key has more than %d characters.') % (line_number, uuid_field_size)
+                self.store_error(errors, wizard_id, message)
+                return False, created, updated
         # Due to UF-1742, if no id_unique, we fill it with "empty"
         uniq_id = id_unique or False
         if not id_unique:
@@ -435,6 +444,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'homere_codeterrain': codeterrain,
                 'homere_id_staff': id_staff,
                 'homere_id_unique': uniq_id,
+                'homere_uuid_key': uuid_key,
                 'photo': False,
                 'identification_id': code_staff or False,
                 'notes': commentaire and ustr(commentaire) or '',
@@ -647,8 +657,13 @@ class hr_payroll_employee_import(osv.osv_memory):
                 staff_reader = csv.DictReader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             # read the ini file
             if zipobj.namelist() and ini_file in zipobj.namelist():
+                ini_desc = zipobj.open(ini_file)
+                is_bom = ini_desc.read(3)
+                if is_bom != codecs.BOM_UTF8:
+                    ini_desc.close()
+                    ini_desc = zipobj.open(ini_file)
                 config_parser = ConfigParser.SafeConfigParser()
-                config_parser.readfp(zipobj.open(ini_file))
+                config_parser.readfp(ini_desc)
         else:
             tmpdir = self._extract_7z(cr, uid, filename)
             job_file_name = os.path.join(tmpdir, job_file)
@@ -672,6 +687,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             ini_file_name = os.path.join(tmpdir, ini_file)
             if os.path.isfile(ini_file_name):
                 ini_file_desc = open(ini_file_name, 'rb')
+                is_bom = ini_file_desc.read(3)
+                if is_bom != codecs.BOM_UTF8:
+                    ini_file_desc.seek(0)
                 desc_to_close.append(ini_file_desc)
                 config_parser = ConfigParser.SafeConfigParser()
                 config_parser.readfp(ini_file_desc)

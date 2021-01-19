@@ -130,10 +130,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="72.25" />
         ## Move Ref.
         <Column ss:AutoFitWidth="1" ss:Width="105.75" />
-        % if r.display_bn_ed:
         ## Line State
         <Column ss:AutoFitWidth="1" ss:Width="73.25" />
-        % endif
         ## Partner
         <Column ss:AutoFitWidth="1" ss:Width="135.75" />
         ## Partner Type
@@ -171,9 +169,7 @@
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Order Type')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Movement Date')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Move Ref.')|x}</Data></Cell>
-            % if r.display_bn_ed:
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Line State')|x}</Data></Cell>
-            % endif
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Partner')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Partner Type')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Instance')|x}</Data></Cell>
@@ -206,9 +202,7 @@
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String"></Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.picking_id.name or ''|x}</Data></Cell>
-                % if r.display_bn_ed:
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
-                % endif
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id and o.partner_id.name or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id and getSel(o.partner_id, 'partner_type') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getUserCompany()['instance_id'].name|x}</Data></Cell>

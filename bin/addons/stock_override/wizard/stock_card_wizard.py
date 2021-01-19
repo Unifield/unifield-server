@@ -67,6 +67,18 @@ class stock_card_wizard(osv.osv_memory):
         })
         return res
 
+    def onchange_all_inout(self, cr, uid, ids, all_inout, context=None):
+        '''
+        Empty the 'location_id' field if the 'all_inout' field is selected.
+        '''
+        if not context:
+            context = {}
+
+        if all_inout:
+            return {'value': {'location_id': False}}
+
+        return {}
+
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
         '''
         Set the 'perishable' field if the selected product is perishable.
@@ -100,7 +112,6 @@ class stock_card_wizard(osv.osv_memory):
         # 'Old' physical inventories
         oldinv_line_obj = self.pool.get('stock.inventory.line')
 
-
         if not context:
             context = {}
 
@@ -120,16 +131,15 @@ class stock_card_wizard(osv.osv_memory):
         context.update({'to_date': card.from_date})
 
         prodlot_id = card.prodlot_id and card.prodlot_id.id or False
-        product = product_obj.browse(cr, uid, card.product_id.id,
-                                     context=context)
+        product = product_obj.browse(cr, uid, card.product_id.id, context=context)
         if not card.from_date:
             initial_stock = 0.00
         else:
             initial_stock = product.qty_available
 
-        domain = [('product_id', '=', product.id),
-                  ('prodlot_id', '=', prodlot_id),
-                  ('state', '=', 'done')]
+        domain = [('product_id', '=', product.id), ('state', '=', 'done')]
+        if prodlot_id:
+            domain.append(('prodlot_id', '=', prodlot_id))
 
         # "Old" physical inventory
         inv_dom = [

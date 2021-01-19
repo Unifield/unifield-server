@@ -76,8 +76,6 @@
 					<field name="customer" invisible="1" />
 					<field name="estimated_delivery_date" />
 					<button name="confirmLine" string="Source Line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
-                    <!-- does not work. openerp bug ? -->
-                    <button name="unconfirmLine" string="Unconfirm Line" icon="gtk-cancel" type="object" attrs="{'invisible': ['|', '|', ('sale_order_in_progress', '=', True), ('sale_order_state', '!=', 'Validated'), ('display_confirm_button', '=', True)]}" />
 
 				</tree>
 			</field>

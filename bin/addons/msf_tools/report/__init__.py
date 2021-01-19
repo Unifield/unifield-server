@@ -21,3 +21,4 @@
 
 import report_stopped_products
 import report_inconsistencies
+import report_stock_pipe_per_product_instance
