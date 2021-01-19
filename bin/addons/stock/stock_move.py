@@ -1428,13 +1428,6 @@ class stock_move(osv.osv):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
             picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
 
-            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
-                move_data['line_number'],
-                move_data['id'],
-                picking_id,
-                move_data['picking_id'] and move_data['picking_id'][1] or '',
-            ))
-
             for f in fields_to_read:
                 if f in ('product_qty', 'product_uos_qty'):
                     continue
@@ -1445,7 +1438,9 @@ class stock_move(osv.osv):
 
             move_ids = self.search(cr, uid, search_domain, context=context)
             if move_ids:
-                move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty'], context=context)
+                move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty', 'state'], context=context)
+                if move.state != 'assigned':
+                    raise osv.except_osv(_('Warning'), _('You can not cancel availability on an non-available line'))
                 res.append(move['id'])
                 if move_data['id'] not in qty_data:
                     qty_data[move['id']] = {
@@ -1485,9 +1480,14 @@ class stock_move(osv.osv):
                 #self.write(cr, uid, [move_data['id']], {'state': 'draft'}, context=context)
                 self.unlink(cr, uid, move_data['id'], context=context, force=True)
 
-        return res
+            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
+                move_data['line_number'],
+                move_data['id'],
+                picking_id,
+                move_data['picking_id'] and move_data['picking_id'][1] or '',
+            ))
 
-        return True
+        return res
 
     #
     # Duplicate stock.move
