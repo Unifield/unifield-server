@@ -1153,6 +1153,7 @@ class composition_item(osv.osv):
                 'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
                 'comment': fields.char(size=256, string='Comment'),
                 'kit_state': fields.related('item_kit_id', 'state', type='char', size=64, string='Kit State', readonly=True),
+                'to_consume_id': fields.many2one('kit.creation.to.consume', 'KO Components to Consume'),
                 }
 
     _defaults = {'hidden_batch_management_mandatory': False,
