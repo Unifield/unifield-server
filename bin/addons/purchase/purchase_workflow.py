@@ -207,6 +207,10 @@ class purchase_order_line(osv.osv):
                 if pol.created_by_sync:
                     sol_values['created_by_sync'] = True
                     sol_values['sync_pushed_from_po'] = True
+                if pol.resourced_original_line:
+                    sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False
+                    sol_values['resourced_original_remote_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.sync_linked_pol or False
+
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 pol_to_write = {'linked_sol_id': new_sol, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context), 'link_so_id': sale_order.id}
                 if not pol.origin:
@@ -217,6 +221,7 @@ class purchase_order_line(osv.osv):
                     # IR is cancel but a new line is added, trigger a new wkf
                     # UC: IR > PO > FO (full claim retrun + replacement on IN)
                     cr.execute("update sale_order set state='draft' where id=%s", (so_id,))
+
 
                 # if OUT move already exists for this sale.order.line, then the split going to be created must be linked to
                 # the right OUT move (moves are already splits at this level):
