@@ -95,8 +95,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     CASE WHEN (in_aml.corrected or in_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_si,
                     so.state as fo_status, sol.state as fo_line_status, sol.line_number as fo_line_number,
                     coalesce(prod.default_code, '') as product_code, coalesce(prod_t.name, '') as product_description,
-                    sol.product_uom_qty as qty_ordered, prod_u.name as uom_ordered,
-                    (select sum(product_qty) from
+                    coalesce(sol.product_uom_qty, 0) as qty_ordered, prod_u.name as uom_ordered,
+                    coalesce((select sum(product_qty) from
                         stock_move m1, stock_picking p1
                         where
                         p1.id = m1.picking_id and
@@ -104,7 +104,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                         p1.type = 'out' and 
                         (p1.subtype='standard' or p1.subtype='packing' and m1.pick_shipment_id is not null and m1.not_shipped='f') and
                         m1.sale_line_id = sol.id
-                        group by m1.sale_line_id) as qty_delivered,       
+                        group by m1.sale_line_id), 0) as qty_delivered,  
                     CASE WHEN coalesce(out_picking.name, out_iv.name) IS NOT NULL 
                         THEN coalesce(out_picking.name, out_iv.name) ELSE '' END AS transport_file,
                     out_iv.id as out_inv, coalesce(out_iv.number, '') as out_inv_number,
