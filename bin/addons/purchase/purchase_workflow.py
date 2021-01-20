@@ -107,7 +107,7 @@ class purchase_order_line(osv.osv):
             # linked FO line already exists ?
             # => if yes update it, else create new
             create_line = False
-            if not pol.linked_sol_id:
+            if so_id or not pol.linked_sol_id:
                 # try to get the linked sale.order:
                 if not so_id:
                     so_id = pol.link_so_id.id
@@ -215,7 +215,7 @@ class purchase_order_line(osv.osv):
                 pol_to_write = {'linked_sol_id': new_sol, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context), 'link_so_id': sale_order.id}
                 if not pol.origin:
                     pol_to_write['origin'] = sale_order.name
-                self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
+                self.write(cr, uid, [pol.id], pol_to_write, context=context)
 
                 if to_trigger:
                     # IR is cancel but a new line is added, trigger a new wkf
