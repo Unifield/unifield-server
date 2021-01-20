@@ -59,6 +59,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
         """
         Formats the raw data retrieved by the SQL request in _get_report_lines
         """
+        picking_obj = self.pool.get('stock.picking')
+        shipment_obj = self.pool.get('shipment')
         for l in lines:
             # e.g. extract 21/se_HQ1/HT101/PO00011 from se_HQ1C1.21/se_HQ1/HT101/PO00011
             l['customer_reference'] = l['customer_reference'] and l['customer_reference'].split('.')[-1] or ''
@@ -73,6 +75,13 @@ class fo_follow_up_finance(report_sxw.rml_parse):
             l['out_inv_line_subtotal_fctal'] = self._get_line_fctal_amount(l['out_inv_line_subtotal'], l['out_inv_currency_id'],
                                                                            l['out_inv_doc_date'], l['out_inv_posting_date'])
             l['out_inv_state'] = l['out_inv_state'] and self.getSelValue('account.invoice', 'state', l['out_inv_state']) or ''
+            # TODO: store the values already processed (perf)
+            l['is_delivered'] = False
+            if l['pick_id'] and picking_obj.browse(self.cr, self.uid, l['pick_id'], fields_to_fetch=['state']).state == 'delivered':
+                l['is_delivered'] = True
+            elif l.get('transport_file', '').startswith('SHIP') and \
+                shipment_obj.search_exist(self.cr, self.uid, [('name', '=', l['transport_file']), ('state', '=', 'delivered')]):
+                l['is_delivered'] = True
         return lines
 
     def _get_report_lines(self, report):
@@ -107,6 +116,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                         group by m1.sale_line_id), 0) as qty_delivered,  
                     CASE WHEN coalesce(out_picking.name, out_iv.name) IS NOT NULL 
                         THEN coalesce(out_picking.name, out_iv.name) ELSE '' END AS transport_file,
+                    coalesce(out_picking.id, 0) as pick_id,
                     out_iv.id as out_inv, coalesce(out_iv.number, '') as out_inv_number,
                     coalesce(cast(out_ivl.line_number as varchar), '') as out_inv_line_number,
                     coalesce(out_ivl.name, '') as out_inv_description, coalesce(out_ivl.price_unit, 0) as out_inv_unit_price,
@@ -115,13 +125,10 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     out_iv_curr.id as out_inv_currency_id, out_iv.document_date as out_inv_doc_date,
                     out_iv.date_invoice as out_inv_posting_date,
                     coalesce(out_iv.state, '') as out_inv_state,
-                    CASE WHEN (out_aml.corrected or out_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_out_inv,
+                    CASE WHEN (out_aml.corrected or out_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_out_inv
                     
-                    -- TODO:
-                    -- => fix is_delivered
-                    CASE WHEN COALESCE(out_picking.state, ship.state) = 'delivered' THEN TRUE ELSE FALSE END AS is_delivered
-                    -- => fix DPO when using the wizard: IVO/STV are retrieved but not SI
-                    
+                    -- TODO: fix DPO: IVO/STV are retrieved but not SI => due to the missing From Supply tag
+
                     from sale_order_line sol
                     inner join sale_order so on so.id = sol.order_id
                     left join purchase_order_line pol on pol.linked_sol_id = sol.id
@@ -153,9 +160,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join res_currency out_iv_curr on out_iv_curr.id = out_iv.currency_id
                     left join product_product prod on prod.id = sol.product_id
                     left join product_template prod_t on prod_t.id = prod.product_tmpl_id
-                    left join product_uom prod_u on prod_u.id = sol.product_uom     
-                    left join stock_picking out_picking2 on out_picking2.sale_id = so.id
-                    left join shipment ship on ship.id = out_picking2.shipment_id
+                    left join product_uom prod_u on prod_u.id = sol.product_uom  
                 where
                     out_iv.refunded_invoice_id is NULL and
                     coalesce(out_iv.from_supply, 't')='t' and
