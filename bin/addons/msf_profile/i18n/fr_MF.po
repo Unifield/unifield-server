@@ -111243,3 +111243,9 @@ msgstr "astuce: pour importe un Rapport \"tous les statuts\", supprimer las colo
 #, python-format
 msgid "PO %s created by duplication: Order Type changed from DPO to Regular"
 msgstr "BdC %s créé par duplication: Type de Commande modifié de BC Direct à Normal"
+
+#. module: stock
+#: code:addons/stock/stock_move.py:1412
+#, python-format
+msgid "You can not cancel availability on a non-available line"
+msgstr "Vous ne pouvez pas annuler la disponibilité d'une ligne non disponible"

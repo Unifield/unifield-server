@@ -1401,15 +1401,16 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
-        self.write(cr, uid, ids, {'qty_to_process': 0,'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
         res = []
-
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
-                          'product_qty', 'product_uos_qty', 'location_dest_id',
+                          'product_qty', 'product_uos_qty', 'location_dest_id', 'state',
                           'prodlot_id', 'asset_id', 'composition_list_id', 'line_number', 'in_out_updated', 'sale_line_id']
 
         qty_data = {}
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
+            if move_data['state'] != 'assigned':
+                raise osv.except_osv(_('Warning'), _('You can not cancel availability on a non-available line'))
+            self.write(cr, uid, ids, {'qty_to_process': 0, 'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
             picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
 
@@ -1424,8 +1425,6 @@ class stock_move(osv.osv):
             move_ids = self.search(cr, uid, search_domain, context=context)
             if move_ids:
                 move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty', 'state'], context=context)
-                if move.state != 'assigned':
-                    raise osv.except_osv(_('Warning'), _('You can not cancel availability on an non-available line'))
                 res.append(move['id'])
                 if move_data['id'] not in qty_data:
                     qty_data[move['id']] = {
