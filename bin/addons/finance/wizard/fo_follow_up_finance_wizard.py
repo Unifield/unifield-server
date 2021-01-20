@@ -59,11 +59,15 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         for wizard in self.browse(cr, uid, ids, context=context):
             fo_ids = []
             if context.get('selected_inv_ids'):
-                set_fo_ids = set()
-                for inv in inv_obj.browse(cr, uid, context['selected_inv_ids'], fields_to_fetch=['order_ids'], context=context):
-                    for fo in inv.order_ids:
-                        set_fo_ids.add(fo.id)
-                fo_ids = list(set_fo_ids)
+                sql_req = """
+                    SELECT DISTINCT(fo.id)
+                    FROM sale_order fo
+                    INNER JOIN sale_order_line fol ON fol.order_id = fo.id
+                    INNER JOIN account_invoice_line inv_l ON inv_l.sale_order_line_id = fol.id
+                    WHERE inv_l.invoice_id IN %s;
+                """
+                cr.execute(sql_req, (tuple(context['selected_inv_ids']),))
+                fo_ids = [x[0] for x in cr.fetchall()]
             else:
                 fo_domain = []
                 if wizard.start_date:
