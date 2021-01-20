@@ -231,7 +231,7 @@ msgstr "Numéro de Référence"
 msgid "Card lines"
 msgstr "Card lines"
 
-#. modules: msf_supply_doc_export, sales_followup
+#. modules: msf_supply_doc_export, sales_followup, finance
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:897
 #: report:po.follow.up_rml:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:289
@@ -239,6 +239,7 @@ msgstr "Card lines"
 #: report:ir.follow.up.location.report_pdf:0
 #: report:sales.follow.up.multi.report_pdf:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:886
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:354
 msgid "Qty ordered"
 msgstr "Qté commandée"
 
@@ -2181,13 +2182,14 @@ msgstr "BdC suivi"
 msgid "PURCHASE ORDER Track Changes report"
 msgstr "BON DE COMMANDE RAPPORT DE SUIVI DES CHANGEMENTS"
 
-#. modules: sales_followup, purchase_followup
+#. modules: sales_followup, purchase_followup, finance
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:195
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:246
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:187
 #: report:ir.follow.up.location.report_pdf:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:247
 #: report:sales.follow.up.multi.report_pdf:0
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:301
 msgid "Date end:"
 msgstr "Date de fin:"
 
@@ -13045,11 +13047,12 @@ msgstr "Certificat de donation"
 msgid "Select the lines to be split; the wizard will create a new invoice and adjust the original one."
 msgstr "Sélectionner les lignes à fractionner, l'assistant créera une nouvelle facture et ajustera l'originale"
 
-#. module: sales_followup
+#. modules: sales_followup, finance
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:289
 #: report:sales.follow.up.multi.report_pdf:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:291
 #: report:ir.follow.up.location.report_pdf:0
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:356
 msgid "Qty delivered"
 msgstr "Qté livrée"
 
@@ -20330,11 +20333,12 @@ msgstr "US/Indiana-Starke"
 msgid "You receive heat sensitive products, please refer to the appropriate procedure."
 msgstr "Vous recevez des produits sensibles à la chaleur, merci de vous référer à la procédure appropriée."
 
-#. modules: purchase, sourcing, sale, product_attributes
+#. modules: purchase, sourcing, sale, product_attributes, finance
 #: field:purchase.order.line,name:0
 #: field:sale.order.line,name:0
 #: field:sale.order.line,product_name:0
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:77
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:353
 msgid "Product description"
 msgstr "Description produit"
 
@@ -26544,7 +26548,7 @@ msgstr "Purchase orders which are in cancelled state."
 msgid "Applicable Code (if type=code)"
 msgstr "Code Applicable (si type=code)"
 
-#. modules: sales_followup, sale, purchase_followup, stock, msf_supply_doc_export
+#. modules: sales_followup, sale, purchase_followup, stock, msf_supply_doc_export, finance
 #: view:po.follow.up:0
 #: view:po.track.changes.wizard:0
 #: view:sale.loan.stock.moves:0
@@ -26556,6 +26560,7 @@ msgstr "Code Applicable (si type=code)"
 #: view:products.situation.report:0
 #: view:supplier.performance.wizard:0
 #: view:stock.delivery.wizard:0
+#: view:fo.follow.up.finance.wizard:0
 msgid "Excel report"
 msgstr "Rapport Excel"
 
@@ -29420,6 +29425,7 @@ msgstr "Ceci est la vue arborecente de la nomenclature "
 #. modules: finance, stock_override
 #: report:cash.request.export:0
 #: report:destruction.location:0
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:276
 msgid "Name:"
 msgstr "Nom :"
 
@@ -32367,6 +32373,7 @@ msgstr "MSF Financing Module"
 #: field:tender,company_id:0
 #: field:ir.followup.location.wizard,company_id:0
 #: field:stock.reception.wizard,company_id:0
+#: field:fo.follow.up.finance.wizard,company_id:0
 msgid "Company"
 msgstr "Société"
 
@@ -34350,7 +34357,7 @@ msgstr "Imprimer Donation"
 msgid "Shipment Date:"
 msgstr "Shipment Date:"
 
-#. modules: sales_followup, sync_client, sale, mission_stock, msf_doc_import, purchase_followup, account_override, stock
+#. modules: sales_followup, sync_client, sale, mission_stock, msf_doc_import, purchase_followup, account_override, stock, finance
 #: field:msr_in_progress,start_date:0
 #: field:abstract.wizard.import,start_date:0
 #: field:wizard.import.batch,start_date:0
@@ -34363,6 +34370,7 @@ msgstr "Shipment Date:"
 #: field:ir.track.changes.wizard,start_date:0
 #: field:integrity.finance.wizard,date_from:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:178
+#: field:fo.follow.up.finance.wizard,start_date:0
 msgid "Start date"
 msgstr "Date de début"
 
@@ -36563,6 +36571,7 @@ msgstr "Export au système HQ"
 #: field:product.template,seller_ids:0
 #: model:ir.ui.menu,name:useability_dashboard_and_menu.menu_partner
 #: model:ir.actions.act_window,name:msf_partner.partner_normal_action
+#: field:fo.follow.up.finance.wizard,partner_ids:0
 msgid "Partners"
 msgstr "Partenaires"
 
@@ -39189,13 +39198,14 @@ msgstr "OCP"
 msgid "Start configuration of internal partner..."
 msgstr "Start configuration of internal partner..."
 
-#. modules: sales_followup, purchase_followup
+#. modules: sales_followup, purchase_followup, finance
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:213
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:257
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:205
 #: report:ir.follow.up.location.report_pdf:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:258
 #: report:sales.follow.up.multi.report_pdf:0
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:316
 msgid "Date of the request:"
 msgstr "Date de la requête:"
 
@@ -43568,7 +43578,7 @@ msgstr "Réinitialiser l'exécution"
 msgid "Reordering Mode"
 msgstr "Mode de Réapprovisionnement"
 
-#. modules: msf_doc_import, sale, sales_followups, account_override, stock, stock_schedule,sales_followup,purchase_followup
+#. modules: msf_doc_import, sale, account_override, stock, stock_schedule, sales_followup, purchase_followup, finance
 #: field:abstract.wizard.import,end_date:0
 #: field:wizard.import.batch,end_date:0
 #: field:sale.donation.stock.moves,end_date:0
@@ -43583,6 +43593,7 @@ msgstr "Mode de Réapprovisionnement"
 #: field:po.track.changes.wizard,end_date:0
 #: field:sale.loan.stock.moves,end_date:0
 #: field:ir.track.changes.wizard,end_date:0
+#: field:fo.follow.up.finance.wizard,end_date:0
 msgid "End date"
 msgstr "Date de fin"
 
@@ -47409,13 +47420,14 @@ msgstr "Support"
 msgid "TVA :"
 msgstr "TVA :"
 
-#. modules: sourcing, sale, product_attributes, procurement_cycle
+#. modules: sourcing, sale, product_attributes, procurement_cycle, finance
 #: field:sale.report,product_code:0
 #: field:sale.order.line,product_code:0
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:69
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:408
 #: report:addons/procurement_cycle/report/replenishment_product_list.mako:124
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:368
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:352
 msgid "Product code"
 msgstr "Code Produit"
 
@@ -47975,9 +47987,10 @@ msgstr "consommation mensuelle prévue"
 msgid "SÃO TOMÉ AND PRÍNCIPE DOBRA"
 msgstr "SÃO TOMÉ AND PRÍNCIPE DOBRA"
 
-#. module: sales_followup
+#. modules: sales_followup, finance
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:294
 #: report:sales.follow.up.multi.report_pdf:0
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:357
 msgid "Transport file"
 msgstr "Fichier Transport"
 
@@ -48008,7 +48021,7 @@ msgstr "Intermission Partners"
 msgid "Original Qty for Partial process - only for sync and partial processed line"
 msgstr "Original Qty for Partial process - only for sync and partial processed line"
 
-#. modules: sales_followup, purchase_followup, sale, stock, msf_supply_doc_export
+#. modules: sales_followup, purchase_followup, sale, stock, msf_supply_doc_export, finance
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:178
 #: view:po.track.changes.wizard:0
 #: view:sale.donation.stock.moves:0
@@ -48023,6 +48036,8 @@ msgstr "Original Qty for Partial process - only for sync and partial processed l
 #: view:stock.expired.damaged.report:0
 #: view:supplier.performance.wizard:0
 #: view:stock.delivery.wizard:0
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:273
+#: view:fo.follow.up.finance.wizard:0
 msgid "Request parameters"
 msgstr "Paramètres de la requête"
 
@@ -52969,11 +52984,12 @@ msgstr "Quantité Sélectionnée est égale à la quantité disponible (%0.1f %s
 msgid "In months. Define the time while the stock is not negative but should be replenished. Time used to compute the quantity of products to order according to the monthly consumption."
 msgstr "En mois. Défini le temps durant lequel le stock n'est pas négatif, mais doit être réapprovisionné. Temps utilisé pour calculer la quantité de produits à commander en fonction de la consommation mensuelle."
 
-#. module: sales_followup
+#. modules: sales_followup, finance
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:235
 #: report:ir.follow.up.location.report_pdf:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:236
 #: report:sales.follow.up.multi.report_pdf:0
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:286
 msgid "Date start:"
 msgstr "Date de début:"
 
@@ -56555,9 +56571,10 @@ msgstr "Source Type"
 msgid "Item"
 msgstr "Art."
 
-#. module: sales_followup
+#. modules: sales_followup, finance
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:284
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:124
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:186
 msgid "FO Follow Up"
 msgstr "Suivi CdT"
 
@@ -67358,13 +67375,14 @@ msgstr "Lancer la procédure manuellement"
 msgid "Create and manage the companies that will be managed by OpenERP from here. Shops or subsidiaries can be created and maintained from here."
 msgstr "Créer et gérer les sociétés qui seront gérées par OpenERP à partir d'ici. Les magasins ou sous-divisions pourront être créés ou maintenus à partir d'ici."
 
-#. modules: sales_followup, purchase_followup
+#. modules: sales_followup, purchase_followup, finance
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:192
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:232
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:184
 #: report:ir.follow.up.location.report_pdf:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:233
 #: report:sales.follow.up.multi.report_pdf:0
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:283
 msgid "Address:"
 msgstr "Adresse:"
 
@@ -68700,11 +68718,12 @@ msgstr "Sous-total Fonctionnel "
 msgid "Register line state"
 msgstr "Register line state"
 
-#. module: sales_followup, sale
+#. modules: sales_followup, sale, finance
 #: field:ir.followup.location.wizard,order_id:0
 #: field:ir.track.changes.wizard,order_id:0
 #: field:sale.followup.multi.wizard,order_id:0
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:133
+#: field:fo.follow.up.finance.wizard,order_id:0
 msgid "Order Ref."
 msgstr "Réf Commande"
 
@@ -70933,10 +70952,11 @@ msgstr "Nomenclatures Enfant"
 msgid "user.access.results.users.line"
 msgstr "user.access.results.users.line"
 
-#. modules: purchase, product, sales_followup
+#. modules: purchase, product, sales_followup, finance
 #: field:product.product,partner_ref:0
 #: view:purchase.order.line:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:278
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:335
 msgid "Customer ref"
 msgstr "Réf. Client"
 
@@ -76753,12 +76773,18 @@ msgstr "Sortie - livré"
 msgid "Display PO"
 msgstr "Affichage BC"
 
-#. modules: purchase_msf, purchase_override, msf_supply_doc_export
+#. modules: purchase_msf, purchase_override, msf_supply_doc_export, finance
 #: field:purchase.order.line,supplier_name:0
 #: field:purchase.order.merged.line,supplier_name:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:195
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:337
 msgid "Supplier name"
 msgstr "Nom Fournisseur"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:334
+msgid "Customer name"
+msgstr "Nom Client"
 
 #. module: account_period_closing_level
 #: selection:account.period.create,fiscalyear:0
@@ -78696,10 +78722,11 @@ msgstr "Spanish (AR) / Español (AR)"
 msgid "Mauritania"
 msgstr "Mauritanie"
 
-#. modules: sales_followup, base
+#. modules: sales_followup, base, finance
 #: model:ir.ui.menu,name:base.menu_base_partner
 #: field:ir.followup.location.wizard,order_ids:0
 #: field:sale.followup.multi.wizard,order_ids:0
+#: field:fo.follow.up.finance.wizard,order_ids:0
 msgid "Orders"
 msgstr "Commandes"
 
@@ -86318,11 +86345,12 @@ msgstr "Quantité Min."
 msgid "Template file"
 msgstr "Fichier modèle"
 
-#. modules: sales_followup, purchase_followup
+#. modules: sales_followup, purchase_followup, finance
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:220
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:221
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:176
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:168
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:271
 msgid "Instance information"
 msgstr "Informations sur l'instance"
 
@@ -89650,9 +89678,10 @@ msgstr "Informations Particulières"
 msgid "Asia/Kashgar"
 msgstr "Asia/Kashgar"
 
-#. modules: sales_followup, msf_outgoing, specific_rules
+#. modules: sales_followup, msf_outgoing, specific_rules, finance
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:290
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:288
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:355
 msgid "UoM ordered"
 msgstr "UdM commandée"
 
@@ -98130,10 +98159,11 @@ msgstr "Quand la valorisation en temps réel est activée pour un produit, le sy
 msgid "Note type"
 msgstr "Type de note"
 
-#. modules: purchase, analytic_distribution, msf_doc_import
+#. modules: purchase, analytic_distribution, msf_doc_import, finance
 #: field:account.commitment.line,purchase_order_line_ids:0
 #: view:purchase.order.line:0
 #: field:wizard.import.po,line_ids:0
+#: field:account.invoice.line,purchase_order_line_ids:0
 msgid "Purchase Order Lines"
 msgstr "Lignes Bon de Commande"
 
@@ -108664,13 +108694,15 @@ msgstr "Statut du bon"
 msgid "Ship #"
 msgstr "Numéro d'Expé."
 
-#. module: account
+#. modules: account, finance
 #: report:addons/account/report/invoice_excel_export.mako:81
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:333
 msgid "FO number"
 msgstr "Numéro de la CdT"
 
-#. module: account
+#. modules: account, finance
 #: report:addons/account/report/invoice_excel_export.mako:82
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:336
 msgid "PO number"
 msgstr "Numéro du BC"
 
@@ -111243,3 +111275,235 @@ msgstr "astuce: pour importe un Rapport \"tous les statuts\", supprimer las colo
 #, python-format
 msgid "PO %s created by duplication: Order Type changed from DPO to Regular"
 msgstr "BdC %s créé par duplication: Type de Commande modifié de BC Direct à Normal"
+
+#. module: account
+#: code:addons/account/invoice.py:2157
+#, python-format
+msgid "IVO lines follow-up"
+msgstr "Suivi Lignes Bons Interm. OUT"
+
+#. module: account
+#: code:addons/account/invoice.py:2159
+#, python-format
+msgid "STV lines follow-up"
+msgstr "Suivi Lignes Bons Clients"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:1682
+#, python-format
+msgid "Please select at least one record!"
+msgstr "Veuillez sélectionner au moins un enregistrement !"
+
+#. module: finance
+#: code:addons/finance/wizard/fo_follow_up_finance_wizard.py:81
+#, python-format
+msgid "No field orders found."
+msgstr "Pas de commandes de terrain trouvées."
+
+#. modules: register_accounting, finance
+#: help:account.invoice.line,purchase_order_line_ids:0
+#: help:wizard.account.invoice.line,purchase_order_line_ids:0
+msgid "Used in case of merged invoice lines"
+msgstr "Utilisé en cas de lignes de facture fusionnées"
+
+#. module: finance
+#: view:fo.follow.up.finance.wizard:0
+#: model:ir.actions.act_window,name:finance.action_fo_follow_up_finance_wizard_menu
+#: model:ir.actions.report.xml,name:finance.fo_follow_up_finance
+msgid "FO Follow-up Finance"
+msgstr "Suivi Commande Terrain Finance"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:264
+msgid "FIELD ORDER FOLLOW-UP FINANCE"
+msgstr "SUIVI COMMANDE TERRAIN FINANCE"
+
+#. module: finance
+#: field:fo.follow.up.finance.wizard,report_date:0
+msgid "Date of the export"
+msgstr "Date de l'export"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:349
+msgid "FO status"
+msgstr "Statut CdT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:350
+msgid "FO line status"
+msgstr "Statut ligne CdT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:367
+msgid "STV status"
+msgstr "Statut Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:367
+msgid "IVO status"
+msgstr "Statut Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:347
+msgid "SI status"
+msgstr "Statut Fact. Fourniss."
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:368
+msgid "Reverse corresponding AJI? (STV)"
+msgstr "Ligne Analytique Correspondante Contrepassée ? (Bon Client)"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:368
+msgid "Reverse corresponding AJI? (IVO)"
+msgstr "Ligne Analytique Correspondante Contrepassée ? (Bon Interm. OUT)"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:348
+msgid "Reverse corresponding AJI? (SI)"
+msgstr "Ligne Analytique Correspondante Contrepassée ? (Fact. Fourniss.)"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:364
+msgid "STV line sub total"
+msgstr "Sous-total ligne Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:364
+msgid "IVO line sub total"
+msgstr "Sous-total ligne Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:344
+msgid "SI line sub total"
+msgstr "Sous-total ligne Fact. Fourniss."
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:366
+msgid "STV line sub total functional currency"
+msgstr "Sous-total ligne Bon Client en devise fonctionnelle"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:366
+msgid "IVO line sub total functional currency"
+msgstr "Sous-total ligne Bon Interm. OUT en devise fonctionnelle"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:346
+msgid "SI line sub total functional currency"
+msgstr "Sous-total ligne Fact. Fourniss. en devise fonctionnelle"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:358
+msgid "STV number"
+msgstr "Num. Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:358
+msgid "IVO number"
+msgstr "Num. Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:338
+msgid "Supplier invoice number"
+msgstr "Num. Facture Fournisseur"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:351
+msgid "FO line number"
+msgstr "Num. ligne CdT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:359
+msgid "STV line number"
+msgstr "Num. ligne Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:359
+msgid "IVO line number"
+msgstr "Num. ligne Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:339
+msgid "SI line number"
+msgstr "Num. ligne Fact. Fourniss."
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:360
+msgid "STV line description"
+msgstr "Description ligne Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:360
+msgid "IVO line description"
+msgstr "Description ligne Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:340
+msgid "SI line description"
+msgstr "Description ligne Fact. Fournisseur"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:362
+msgid "STV line quantity"
+msgstr "Quantité ligne Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:362
+msgid "IVO line quantity"
+msgstr "Quantité ligne Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:342
+msgid "SI line quantity"
+msgstr "Quantité ligne Fact. Fourniss."
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:361
+msgid "STV line unit price"
+msgstr "Prix Unitaire ligne Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:361
+msgid "IVO line unit price"
+msgstr "Prix Unitaire ligne Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:341
+msgid "SI line unit price"
+msgstr "Prix Unitaire ligne Fact. Fourniss."
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:363
+msgid "STV line expense account code"
+msgstr "Code Compte de Charge ligne Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:363
+msgid "IVO line expense account code"
+msgstr "Code Compte de Charge ligne Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:343
+msgid "SI line expense account code"
+msgstr "Code Compte de Charge ligne Fact. Fourniss."
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:365
+msgid "STV currency"
+msgstr "Devise Bon Client"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:365
+msgid "IVO currency"
+msgstr "Devise Bon Interm. OUT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:345
+msgid "SI currency"
+msgstr "Devise Fact. Fourniss."
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:279
+msgid "Partners:"
+msgstr "Partenaires :"

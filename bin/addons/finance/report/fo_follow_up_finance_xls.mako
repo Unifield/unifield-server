@@ -200,7 +200,7 @@
         ## Supplier invoice number
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
         ## SI line number
-        <Column ss:AutoFitWidth="1" ss:Width="40.00"  />
+        <Column ss:AutoFitWidth="1" ss:Width="45.00"  />
         ## SI line description
         <Column ss:AutoFitWidth="1" ss:Width="300.00"  />
         ## SI line unit price
@@ -218,7 +218,7 @@
         ## SI status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Reverse corresponding AJI? (SI)
-        <Column ss:AutoFitWidth="1" ss:Width="65.00"  />
+        <Column ss:AutoFitWidth="1" ss:Width="70.00"  />
         ## FO status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## FO line status
@@ -258,7 +258,7 @@
         ## STV/IVO status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Reverse corresponding AJI? (STV/IVO)
-        <Column ss:AutoFitWidth="1" ss:Width="65.00"  />
+        <Column ss:AutoFitWidth="1" ss:Width="70.00"  />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('FIELD ORDER FOLLOW-UP FINANCE')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
