@@ -298,6 +298,7 @@ class purchase_order_line_sync(osv.osv):
                 if parent_so_ids:
                     parent_so_id = parent_so_ids[0]
             if parent_so_id:
+                #self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
                 self.update_fo_lines(cr, uid, [new_pol], so_id=parent_so_id, context=context)
 
         else: # regular update
@@ -313,12 +314,7 @@ class purchase_order_line_sync(osv.osv):
                 # if the state is less than confirmed we update the PO line
                 if debug:
                     logger.info("Write pol id: %s, values: %s" % (pol_to_update, pol_values))
-                check_in = False
-                if po_line.state == 'confirmed' and 'product_qty' in pol_values and pol_values['product_qty'] != po_line.product_qty:
-                    check_in = True
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
-                if check_in:
-                    self.update_linked_in(cr, uid, pol_to_update, orig_qty=po_line.product_qty, new_qty=pol_values['product_qty'], context=context)
 
         if debug:
             logger.info("%s pol_id: %s, sol state: %s" % (kind, pol_updated, sol_dict['state']))

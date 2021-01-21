@@ -248,15 +248,7 @@ class purchase_order_line(osv.osv):
                 if pol.linked_sol_id.original_line_id:
                     sol_values.pop('original_line_id')
                 if pol.linked_sol_id.state == 'confirmed' and 'product_uom_qty' in sol_values and sol_values['product_uom_qty'] != pol.linked_sol_id.product_uom_qty:
-                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
-                        ('sale_line_id', '=', pol.linked_sol_id.id),
-                        ('type', '=', 'out'),
-                        ('state', 'in', ['assigned', 'confirmed']),
-                        ('product_qty', '=',  pol.linked_sol_id.product_uom_qty)
-                    ], context=context)
-                    if linked_out_moves:
-                        self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'product_qty': sol_values['product_uom_qty'], 'product_uos_qty': sol_values['product_uom_qty']}, context=context)
-                    elif for_claim:
+                    if for_claim:
                         # if claim created but IR already confirmed, if qty can't be decreased on OUT because OUT was split, cancel the qty related to the claim
                         linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
                             ('sale_line_id', '=', pol.linked_sol_id.id),
