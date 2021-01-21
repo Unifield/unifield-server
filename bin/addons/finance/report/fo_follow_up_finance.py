@@ -168,7 +168,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join product_uom prod_u on prod_u.id = sol.product_uom  
                 where
                     out_iv.refunded_invoice_id is NULL and
-                    -- from_supply is used to exclude invoices generated via refund before refunded_invoice_id was used
+                    -- from_supply is used to exclude IVO/STV generated via refund before refunded_invoice_id was used
                     coalesce(out_iv.from_supply, 't')='t' and
                     sol.state not in ('cancel', 'cancel_r') and
                     so.id in %s

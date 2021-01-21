@@ -1494,8 +1494,8 @@ class purchase_order(osv.osv):
                     'payment_term': o.partner_id.property_payment_term and o.partner_id.property_payment_term.id or False,
                     'company_id': o.company_id.id,
                     'main_purchase_id': o.id,
-                    'from_supply': True,
                     'purchase_ids': [(4, o.id)],
+                    'from_supply': True,
                 }
 
                 if o.analytic_distribution_id:
