@@ -61,6 +61,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
         """
         picking_obj = self.pool.get('stock.picking')
         shipment_obj = self.pool.get('shipment')
+        processed = {}  # store the transport files processed (perf)
         for l in lines:
             # e.g. extract 21/se_HQ1/HT101/PO00011 from se_HQ1C1.21/se_HQ1/HT101/PO00011
             l['customer_reference'] = l['customer_reference'] and l['customer_reference'].split('.')[-1] or ''
@@ -69,19 +70,23 @@ class fo_follow_up_finance(report_sxw.rml_parse):
             l['si_state'] = l['si_state'] and self.getSelValue('account.invoice', 'state', l['si_state']) or ''
             l['fo_status'] = l['fo_status'] and self.getSelValue('sale.order', 'state', l['fo_status']) or ''
             l['fo_line_status'] = l['fo_line_status'] and self.getSelValue('sale.order.line', 'state', l['fo_line_status']) or ''
-            if l['transport_file'] and ':' in l['transport_file']:
-                # e.g. extract "SHIP/00004-01" from "se_HQ1C1.21/se_HQ1/HT101/PO00011 : SHIP/00004-01"
-                l['transport_file'] = l['transport_file'].split(':')[-1].strip()
+            l['is_delivered'] = False
+            if l['transport_file']:
+                if ':' in l['transport_file']:
+                    # e.g. extract "SHIP/00004-01" from "se_HQ1C1.21/se_HQ1/HT101/PO00011 : SHIP/00004-01"
+                    l['transport_file'] = l['transport_file'].split(':')[-1].strip()
+                if l['transport_file'] in processed:
+                    l['is_delivered'] = processed[l['transport_file']]
+                else:
+                    if l['pick_id'] and picking_obj.browse(self.cr, self.uid, l['pick_id'], fields_to_fetch=['state']).state == 'delivered':
+                        l['is_delivered'] = True
+                    elif l.get('transport_file', '').startswith('SHIP') and \
+                            shipment_obj.search_exist(self.cr, self.uid, [('name', '=', l['transport_file']), ('state', '=', 'delivered')]):
+                        l['is_delivered'] = True
+                    processed[l['transport_file']] = l['is_delivered']
             l['out_inv_line_subtotal_fctal'] = self._get_line_fctal_amount(l['out_inv_line_subtotal'], l['out_inv_currency_id'],
                                                                            l['out_inv_doc_date'], l['out_inv_posting_date'])
             l['out_inv_state'] = l['out_inv_state'] and self.getSelValue('account.invoice', 'state', l['out_inv_state']) or ''
-            # TODO: store the values already processed (perf)
-            l['is_delivered'] = False
-            if l['pick_id'] and picking_obj.browse(self.cr, self.uid, l['pick_id'], fields_to_fetch=['state']).state == 'delivered':
-                l['is_delivered'] = True
-            elif l.get('transport_file', '').startswith('SHIP') and \
-                shipment_obj.search_exist(self.cr, self.uid, [('name', '=', l['transport_file']), ('state', '=', 'delivered')]):
-                l['is_delivered'] = True
         return lines
 
     def _get_report_lines(self, report):
