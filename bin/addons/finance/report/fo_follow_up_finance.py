@@ -37,9 +37,10 @@ class fo_follow_up_finance(report_sxw.rml_parse):
     def _get_lang(self):
         return self.localcontext.get('lang', 'en_MF')
 
-    def _get_line_fctal_amount(self, line_subtotal, booking_curr_id, doc_date, posting_date):
+    def _get_line_fctal_amount(self, line_subtotal, booking_curr_id, doc_date, posting_date, key_state):
         """
-        Returns the line subtotal in functional currency based on the data in parameter
+        Returns the line subtotal in functional currency based on the data in parameter.
+        The state in param. must be the "key" such as "draft" and not the value such as "Draft" or "Brouillon".
         """
         line_subtotal_fctal = 0.0
         user_obj = self.pool.get('res.users')
@@ -50,7 +51,11 @@ class fo_follow_up_finance(report_sxw.rml_parse):
             if booking_curr_id == fctal_curr_id:
                 line_subtotal_fctal = line_subtotal
             else:
-                curr_date = currency_date.get_date(self, self.cr, doc_date or today, posting_date or today)
+                if key_state and key_state == 'draft':
+                    # for draft invoices use today's date
+                    curr_date = today
+                else:
+                    curr_date = currency_date.get_date(self, self.cr, doc_date or today, posting_date or today)
                 line_subtotal_fctal = curr_obj.compute(self.cr, self.uid, booking_curr_id, fctal_curr_id, line_subtotal,
                                                        round=True, context={'currency_date': curr_date})
         return line_subtotal_fctal
@@ -65,9 +70,10 @@ class fo_follow_up_finance(report_sxw.rml_parse):
         for l in lines:
             # e.g. extract 21/se_HQ1/HT101/PO00011 from se_HQ1C1.21/se_HQ1/HT101/PO00011
             l['customer_reference'] = l['customer_reference'] and l['customer_reference'].split('.')[-1] or ''
+            key_si_state = l['si_state']
             l['si_line_subtotal_fctal'] = self._get_line_fctal_amount(l['si_line_subtotal'], l['si_currency_id'],
-                                                                      l['si_doc_date'], l['si_posting_date'])
-            l['si_state'] = l['si_state'] and self.getSelValue('account.invoice', 'state', l['si_state']) or ''
+                                                                      l['si_doc_date'], l['si_posting_date'], key_si_state)
+            l['si_state'] = key_si_state and self.getSelValue('account.invoice', 'state', key_si_state) or ''
             l['fo_status'] = l['fo_status'] and self.getSelValue('sale.order', 'state', l['fo_status']) or ''
             l['fo_line_status'] = l['fo_line_status'] and self.getSelValue('sale.order.line', 'state', l['fo_line_status']) or ''
             l['is_delivered'] = False
@@ -84,9 +90,10 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                             shipment_obj.search_exist(self.cr, self.uid, [('name', '=', l['transport_file']), ('state', '=', 'delivered')]):
                         l['is_delivered'] = True
                     processed[l['transport_file']] = l['is_delivered']
+            key_out_inv_state = l['out_inv_state']
             l['out_inv_line_subtotal_fctal'] = self._get_line_fctal_amount(l['out_inv_line_subtotal'], l['out_inv_currency_id'],
-                                                                           l['out_inv_doc_date'], l['out_inv_posting_date'])
-            l['out_inv_state'] = l['out_inv_state'] and self.getSelValue('account.invoice', 'state', l['out_inv_state']) or ''
+                                                                           l['out_inv_doc_date'], l['out_inv_posting_date'], key_out_inv_state)
+            l['out_inv_state'] = key_out_inv_state and self.getSelValue('account.invoice', 'state', key_out_inv_state) or ''
         return lines
 
     def _get_report_lines(self, report):
