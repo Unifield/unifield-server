@@ -176,8 +176,6 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                 order by fo_number DESC, fo_line_number, si_number, si_line_number, out_inv_number, out_inv_line_number;
             """
             self.cr.execute(sql_req, (tuple(report.order_ids),))
-            if bg_id:
-                bg_obj.update_percent(self.cr, self.uid, bg_id, 0.25)
             lines = self.cr.dictfetchall()
             if bg_id:
                 bg_obj.update_percent(self.cr, self.uid, bg_id, 0.50)
