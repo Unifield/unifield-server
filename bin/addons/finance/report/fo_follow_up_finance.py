@@ -133,9 +133,6 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     out_iv.date_invoice as out_inv_posting_date,
                     coalesce(out_iv.state, '') as out_inv_state,
                     CASE WHEN (out_aml.corrected or out_aml.last_cor_was_only_analytic) = TRUE THEN 'X' ELSE '' END AS reverse_aji_out_inv
-                    
-                    -- TODO: fix DPO: IVO/STV are retrieved but not SI => due to the missing From Supply tag
-
                     from sale_order_line sol
                     inner join sale_order so on so.id = sol.order_id
                     left join purchase_order_line pol on pol.linked_sol_id = sol.id
@@ -149,7 +146,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                         where
                             (invl_pol_rel.inv_line_id is NULL or invl_pol_rel.inv_line_id = in_ivl_tmp.id and in_ivl_tmp.order_line_id is null)
                             and in_iv_tmp.refunded_invoice_id is NULL
-                            and coalesce(in_iv_tmp.from_supply, 't')='t'
+                            -- main_purchase_id is used to retrieve invoices generated via DPO before they had the tag from_supply
+                            and (coalesce(in_iv_tmp.from_supply, 't')='t' or in_iv_tmp.main_purchase_id is not null)
                     ) as in_ivl ON in_ivl.pol_id = pol.id
                     left join account_invoice in_iv on in_iv.id = in_ivl.invoice_id
                     left join account_move in_am on in_am.id = in_iv.move_id
@@ -170,6 +168,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     left join product_uom prod_u on prod_u.id = sol.product_uom  
                 where
                     out_iv.refunded_invoice_id is NULL and
+                    -- from_supply is used to exclude invoices generated via refund before refunded_invoice_id was used
                     coalesce(out_iv.from_supply, 't')='t' and
                     sol.state not in ('cancel', 'cancel_r') and
                     so.id in %s
