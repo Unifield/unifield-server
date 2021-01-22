@@ -143,6 +143,8 @@ class PhysicalInventory(osv.osv):
         'discrepancy_lines_percent_absvalue': fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
         'bad_stock_msg': fields.text('Bad Stock', readonly=1),
         'has_bad_stock': fields.boolean('Has bad Stock', readonly=1),
+        'prefill_bn': fields.boolean('Prefilled Batch Numbers in Counting Sheet', readonly=1),
+        'prefill_ed': fields.boolean('Prefilled Expiry Dates in Counting Sheet', readonly=1),
     }
 
     _defaults = {
@@ -300,23 +302,15 @@ class PhysicalInventory(osv.osv):
         physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': [(6, 0, [])], 'file_to_import2': False}, context=context)
 
         # Get the location and counting lines
-        inventory = physical_inventory_obj.read(cr, uid, [inventory_id], [ "location_id",
-                                                                           "discrepancy_line_ids",
-                                                                           "counting_line_ids" ], context=context)[0]
+        inventory = physical_inventory_obj.read(cr, uid, [inventory_id], ["location_id", "discrepancy_line_ids", "counting_line_ids",
+                                                                          "prefill_bn", "prefill_ed"], context=context)[0]
 
         location_id = inventory["location_id"][0]
         counting_line_ids = inventory["counting_line_ids"]
 
-        counting_lines = counting_obj.read(cr, uid,
-                                           counting_line_ids,
-                                           [ "line_no",
-                                             "product_id",
-                                             "product_uom_id",
-                                             "standard_price",
-                                             "currency_id",
-                                             "batch_number",
-                                             "expiry_date",
-                                             "quantity"], context=context)
+        counting_lines = counting_obj.read(cr, uid, counting_line_ids, ["line_no", "product_id", "product_uom_id",
+                                                                        "standard_price", "currency_id", "batch_number",
+                                                                        "expiry_date", "quantity"], context=context)
 
         # Extract the list of (unique) product ids
         product_ids = [ line["product_id"][0] for line in counting_lines ]
