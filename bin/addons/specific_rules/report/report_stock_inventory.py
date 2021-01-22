@@ -358,7 +358,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
             self.cr.execute("""select distinct(product_id) from stock_move 
                 where""" + w_prod + """ state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s""",
-                            (values['location_ids'], values['location_ids'], from_date, to_date, w_prod))
+                            (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
                 full_prod_list.append(x[0])
 
