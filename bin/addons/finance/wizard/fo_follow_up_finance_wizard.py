@@ -70,6 +70,14 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
                 fo_ids = [x[0] for x in cr.fetchall()]
             else:
                 fo_domain = []
+                context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+                    context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+                context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+                    not context.get('is_debit_note', False)
+                if context_ivo:
+                    fo_domain.append(('partner_type', '=', 'intermission'))
+                elif context_stv:
+                    fo_domain.append(('partner_type', '=', 'section'))
                 if wizard.start_date:
                     fo_domain.append(('date_order', '>=', wizard.start_date))
                 if wizard.end_date:
