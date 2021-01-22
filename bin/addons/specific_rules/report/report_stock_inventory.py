@@ -345,17 +345,20 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             cond.append('date<%(stock_level_date)s')
             values['stock_level_date'] = '%s 23:59:59' % report.stock_level_date
 
-        if (not report.product_id or not report.product_list_id or not report.prodlot_id or not report.expiry_date) \
-                and report.display_0:
+        if (not report.product_list_id or not report.prodlot_id or not report.expiry_date) and report.display_0:
             with_zero = True
             to_date = datetime.now()
             if report.stock_level_date:
                 to_date = datetime.strptime(values['stock_level_date'], '%Y-%m-%d %H:%M:%S')
             from_date = (to_date + relativedelta(months=-int(report.in_last_x_months))).strftime('%Y-%m-%d 00:00:00')
 
+            w_prod = ""
+            if report.product_id:
+                w_prod = " product_id = %s AND" % report.product_id.id
+
             self.cr.execute("""select distinct(product_id) from stock_move 
-                where state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s""",
-                            (values['location_ids'], values['location_ids'], from_date, to_date))
+                where""" + w_prod + """ state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s""",
+                            (values['location_ids'], values['location_ids'], from_date, to_date, w_prod))
             for x in self.cr.fetchall():
                 full_prod_list.append(x[0])
 
