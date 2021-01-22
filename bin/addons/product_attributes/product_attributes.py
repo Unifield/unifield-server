@@ -2271,7 +2271,7 @@ class product_attributes(osv.osv):
                 '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
                 ('stock_qty', '>', 0), ('in_pipe_coor_qty', '>', 0), ('cross_qty', '>', 0), ('in_pipe_qty', '>', 0),
                 ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('secondary_qty', '>', 0), ('internal_qty', '>', 0),
-                ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty' '>', 0)
+                ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty', '>', 0)
             ]
             if self.pool.get('stock.mission.report.line').search(cr, uid, srml_domain, limit=1, context=context):
                 in_use_stock = True
@@ -2878,7 +2878,7 @@ class product_attributes(osv.osv):
             'secondary_qty', 'secondary_val',
             'cu_qty', 'cu_val',
             'cross_qty', 'cross_val',
-            'wh_qty', 'internal_qty'
+            'wh_qty', 'internal_qty',
             'quarantine_qty', 'input_qty', 'opdd_qty'
         ]
         cr.execute('''
@@ -2887,8 +2887,7 @@ class product_attributes(osv.osv):
                 mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
                 product_id in %(product_ids)s
         ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (nsl_prod_id, local_id)}) # not_a_user_entry
-        cr.execute("delete from mission_line_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
-        cr.execute("delete from mission_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
+        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (nsl_prod_id, ))
 
         return True
 
