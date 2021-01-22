@@ -149,8 +149,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         # Do the actual write
         # TODO : Test if Draft state here
-        write("physical.inventory", inventory_id, {'counting_line_ids': todo, 'prefill_bn': prefill_bn,
-                                                   'prefill_ed': prefill_ed, 'state': 'counting'})
+        write("physical.inventory", inventory_id, {'counting_line_ids': todo,
+                                                   'state': 'counting'})
 
         return {'type': 'ir.actions.act_window_close'}
 
