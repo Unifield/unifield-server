@@ -2134,6 +2134,7 @@ class sale_order_line(osv.osv):
         'ir_name_from_sync': fields.char(size=64, string='IR/FO name to put on PO line after sync', invisible=True),
         'counterpart_po_line_id': fields.many2one('purchase.order.line', 'PO line counterpart'),
         'pol_external_ref': fields.function(_get_pol_external_ref, method=True, type='char', size=256, string="Linked PO line's External Ref.", store=False),
+        'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2287,13 +2288,10 @@ class sale_order_line(osv.osv):
             'sync_pushed_from_po': False,
         })
 
-        if 'ir_name_from_sync' not in default:
-            default['ir_name_from_sync'] = False
-        if 'in_name_goods_return' not in default:
-            default['in_name_goods_return'] = False
-
-        if 'counterpart_po_line_id' not in default:
-            default['counterpart_po_line_id'] = False
+        reset_if_not_set = ['ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'instance_sync_order_ref']
+        for to_reset in reset_if_not_set:
+            if to_reset not in default:
+                default[to_reset] = False
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
@@ -2335,7 +2333,12 @@ class sale_order_line(osv.osv):
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
 
-        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'from_cancel_out']:
+        for x in [
+            'modification_comment', 'original_product', 'original_qty', 'original_price',
+            'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync',
+            'in_name_goods_return', 'counterpart_po_line_id', 'from_cancel_out',
+            'instance_sync_order_ref', 'sync_sourced_origin'
+        ]:
             if x not in default:
                 default[x] = False
 
@@ -3048,7 +3051,11 @@ class sale_order_line(osv.osv):
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
+        if vals.get('instance_sync_order_ref'):
+            vals['sync_sourced_origin'] = self.pool.get('sync.order.label').read(cr, uid, vals['instance_sync_order_ref'], ['name'])['name']
+
         so_line_id = super(sale_order_line, self).create(cr, uid, vals, context=context)
+
         if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
             if vals.get('order_id', False):
                 name = so_obj.browse(cr, uid, vals.get('order_id'), context=context).name
@@ -3075,6 +3082,9 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # UTP-392: fixed from the previous code: check if the sale order line contains the product, and not only from vals!
         product_id = vals.get('product_id')
         if context.get('sale_id', False):
@@ -3094,12 +3104,26 @@ class sale_order_line(osv.osv):
         if not 'soq_updated' in vals:
             vals['soq_updated'] = False
 
+        if vals.get('instance_sync_order_ref'):
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('sync_sourced_origin', '=', False)], context=context):
+                vals['sync_sourced_origin'] = self.pool.get('sync.order.label').read(cr, uid, vals['instance_sync_order_ref'], ['name'])['name']
+
         res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
         if vals.get('stock_take_date'):
             self._check_stock_take_date(cr, uid, ids, context=context)
 
         return res
+
+    def on_change_instance_sync_order_ref(self, cr, uid, ids, instance_sync_order_ref, context=None):
+        if instance_sync_order_ref:
+            return {'warning':
+                    {
+                        'title': _('Warning'),
+                        'message': _("Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document."),
+                    }
+                    }
+        return {}
 
 sale_order_line()
 

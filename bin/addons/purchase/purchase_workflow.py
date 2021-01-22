@@ -344,6 +344,7 @@ class purchase_order_line(osv.osv):
                 'date_planned': pol.date_planned or (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d'),
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'set_as_sourced_n': True,
+                'created_by_sync': True,
             }
 
             if pol.resourced_original_line:
