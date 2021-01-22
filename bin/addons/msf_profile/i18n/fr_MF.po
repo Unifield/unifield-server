@@ -1252,6 +1252,7 @@ msgstr "msf.budget.line"
 #: code:addons/stock/stock.py:2360
 #: code:addons/procurement_cycle/replenishment.py:218
 #: code:addons/procurement_cycle/replenishment.py:226
+#: code:addons/procurement_cycle/replenishment.py:229
 #, python-format
 msgid "Info"
 msgstr "Info"
@@ -5881,6 +5882,9 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:395
 #: report:addons/account/report/export_invoice.mako:125
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:87
+#: field:replenishment.parent.segment,description_parent_seg:0
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:487
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:533
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8561,6 +8565,9 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:account.model,state:0
 #: view:account.model:0
 #: selection:stock.pipe.per.product.instance,state:0
+#: selection:replenishment.consolidated_oc.import,state:0
+#: view:replenishment.parent.segment:0
+#: selection:replenishment.parent.segment,state_parent:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -20671,9 +20678,10 @@ msgstr "Is child of CoA"
 msgid "Etc/GMT-11"
 msgstr "Etc/GMT-11"
 
-#. modules: sales_followup, msf_tools
+#. modules: sales_followup, msf_tools, procurement_cycle
 #: selection:ir.followup.location.wizard,state:0
 #: selection:job.in_progress,state:0
+#: selection:replenishment.consolidated_oc.import,state:0
 msgid "Done"
 msgstr "Clôturé"
 
@@ -20920,7 +20928,7 @@ msgstr "Note de débit"
 msgid "Sync order line DB Id of the splitted line"
 msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 
-#. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, account_override, product_attributes, mission_stock, return_claim, analytic_override, finance, account_mcdb, supplier_catalogue, procurement_request, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, stock_override, object_query, stock, msf_profile
+#. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, account_override, product_attributes, mission_stock, return_claim, analytic_override, finance, account_mcdb, supplier_catalogue, procurement_request, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, stock_override, object_query, stock, msf_profile, procurement_cycle
 #: field:sync.trigger.something,name:0
 #: field:account.account,name:0
 #: field:account.account.template,name:0
@@ -21080,6 +21088,8 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: code:addons/mission_stock/mission_stock.py:52
 #: report:addons/msf_outgoing/report/freight_manifest_xls.mako:405
 #: report:kitting.order.report:0
+#: field:replenishment.inventory.review.line.exp,name:0
+#: field:replenishment.segment.line.amc.month_exp,name:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -22876,6 +22886,7 @@ msgstr "Dest. Address"
 #: view:stock.picking.processing.info:0
 #: view:change.dest.location:0
 #: view:replenishment.segment.line:0
+#: view:replenishment.consolidated_oc.import:0
 msgid "Close"
 msgstr "Fermé"
 
@@ -27913,8 +27924,9 @@ msgstr "Cela détermine les attributs pour le colisage comme le type, quantité 
 msgid "Spanish (HN) / Español (HN)"
 msgstr "Spanish (HN) / Español (HN)"
 
-#. module: threshold_value
+#. module: threshold_value, procurement_cycle
 #: field:threshold.value,safety_month:0
+#: field:replenishment.segment,safety_stock_month:0
 msgid "Safety Stock in months"
 msgstr "Stock de Sécurité en mois"
 
@@ -35040,7 +35052,7 @@ msgstr "Bons de Picking"
 msgid "2-Specific"
 msgstr "2-Spécifique"
 
-#. modules: msf_budget, account, msf_instance, sync_client, analytic_distribution, stock
+#. modules: msf_budget, account, msf_instance, sync_client, analytic_distribution, stock, procurement_cycle
 #: field:account.account,parent_id:0
 #: view:account.analytic.account:0
 #: view:account.analytic.account:0
@@ -35051,6 +35063,7 @@ msgstr "2-Spécifique"
 #: field:msf.instance.cloud,parent_id:0
 #: field:physical.inventory.import.line.wizard,parent_id:0
 #: field:sync.client.entity_manager,parent:0
+#: field:replenishment.segment,parent_id:0
 msgid "Parent"
 msgstr "Parent"
 
@@ -37046,6 +37059,7 @@ msgstr "Sur Plusieurs Documents"
 #: field:replenishment.inventory.review.line.pas,date:0
 #: report:addons/msf_outgoing/report/freight_manifest_xls.mako:407
 #: report:kitting.order.report:0
+#: field:replenishment.segment.line.min_max_auto_supply.history,date:0
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -41845,9 +41859,10 @@ msgstr "Livraison Entrante"
 msgid "Move Name"
 msgstr "Nom de la transaction"
 
-#. module: msf_audittrail
+#. module: msf_audittrail, procurement_cycle
 #: field:audittrail.log.line,old_value:0
 #: field:audittrail.log.line,old_value_text:0
+#: field:replenishment.segment.line.min_max_auto_supply.history,old_value:0
 msgid "Old Value"
 msgstr "Ancienne Valeur"
 
@@ -49431,6 +49446,7 @@ msgstr "Code/Date"
 #: selection:replenishment.inventory.review.line,rule:0
 #: selection:replenishment.order_calc,rule:0
 #: selection:replenishment.segment,rule:0
+#: selection:replenishment.order_calc.line,rule:0
 msgid "Automatic Supply"
 msgstr "Approvisionnement Automatique "
 
@@ -49674,10 +49690,10 @@ msgstr "A vérifier"
 #. module: purchase_override
 #: view:purchase.order.group:0
 msgid "\n"
-"                                    All information of the PO template will be written in the new PO, <br/>except the Delivery Requested date which will be the earliest date of all POs.<br/>Any sourcing group will be lost.\n"
+"                                    All information of the PO template will be written in the new PO, <br/>except the Delivery Requested date which will be the earliest date of all POs.<br/>Any sourcing group will be taken from the template PO/DPO.\n"
 "                                "
 msgstr "\n"
-"                                    Toutes les informations du modèle de BC seront écrites dans le nouveau BC, <br/>sauf la date de livraison souhaitée qui sera la date la plus ancienne de tous les BCs.<br/>Tout groupe de sourcing sera perdu.\n"
+"                                    Toutes les informations du modèle de BC seront écrites dans le nouveau BC, <br/>sauf la date de livraison souhaitée qui sera la date la plus ancienne de tous les BCs.<br/>Tout groupe de sourcing sera pris du BdC/BdC direct modèle.\n"
 "                                "
 
 #. module: stock
@@ -49735,8 +49751,9 @@ msgstr "Field Order Line %s of %s has already been processed to the Picking Tick
 msgid "Exclude Destination selection"
 msgstr "Exclure la sélection Destination"
 
-#. module: register_accounting
+#. module: register_accounting, procurement_cycle
 #: selection:account.invoice,imported_state:0
+#: selection:replenishment.consolidated_oc.import,state:0
 msgid "Partially Imported"
 msgstr "Partiellement importé "
 
@@ -54070,6 +54087,7 @@ msgstr "Problème de connection au serveur FTP"
 #. module: stock, procurement_cycle
 #: selection:stock.move,state:0
 #: field:replenishment.segment,hidden:0
+#: field:replenishment.parent.segment,hidden:0
 msgid "Hidden"
 msgstr "Hidden"
 
@@ -57050,9 +57068,10 @@ msgstr "Ce champ représente le mouvement de stock correspondant à cet article 
 msgid "Additional Reference"
 msgstr "Référence Complémentaire"
 
-#. module: msf_audittrail
+#. module: msf_audittrail, procurement_cycle
 #: field:audittrail.log.line,new_value:0
 #: field:audittrail.log.line,new_value_text:0
+#: field:replenishment.segment.line.min_max_auto_supply.history,new_value:0
 msgid "New Value"
 msgstr "Nouvelle Valeur"
 
@@ -58359,6 +58378,7 @@ msgstr "Rebuts"
 #: view:products.situation.report:0
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Parameters"
 msgstr "Paramètres"
 
@@ -59252,7 +59272,7 @@ msgstr "\n"
 "        Hide delete buttons according to the state.\n"
 "    "
 
-#. modules: object_query, base, msf_homere_interface, msf_field_access_rights
+#. modules: object_query, base, msf_homere_interface, msf_field_access_rights, procurement_cycle
 #: field:msf_field_access_rights.field_access_rule_line,field:0
 #: field:ir.property,fields_id:0
 #: selection:ir.translation,type:0
@@ -59260,6 +59280,7 @@ msgstr "\n"
 #: field:hr.payroll.import.period,field:0
 #: field:hr.payroll.msf,field:0
 #: field:object.query.result.fields,field_id:0
+#: field:replenishment.segment.line.min_max_auto_supply.history,field:0
 msgid "Field"
 msgstr "Champ"
 
@@ -60226,8 +60247,9 @@ msgstr "Crédit sortant"
 msgid "Inter-section Partners"
 msgstr "Inter-section Partners"
 
-#. module: msf_order_date
+#. module: msf_order_date, procurement_cycle
 #: field:res.company,preparation_lead_time:0
+#: field:replenishment.parent.segment,order_preparation_lt:0
 msgid "Preparation Lead Time"
 msgstr "Préparation Délai"
 
@@ -61122,6 +61144,7 @@ msgstr "Albanie"
 #: field:replenishment.segment,name_seg:0
 #: report:addons/procurement_cycle/report/product_stock_out.mako:426
 #: field:product.stock_out,name:0
+#: field:replenishment.parent.segment,name_parent_seg:0
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -66314,6 +66337,8 @@ msgstr "Nothing to reallocate"
 #: selection:account.subscription,period_type:0
 #: selection:replenishment.inventory.review,time_unit:0
 #: selection:replenishment.location.config,time_unit:0
+#: selection:replenishment.order_calc,time_unit_lt:0
+#: selection:replenishment.parent.segment,time_unit_lt:0
 msgid "days"
 msgstr "jours"
 
@@ -69103,6 +69128,7 @@ msgstr "Aucune livraison"
 #: selection:replenishment.inventory.review.line,rule:0
 #: selection:replenishment.order_calc,rule:0
 #: selection:replenishment.segment,rule:0
+#: selection:replenishment.order_calc.line,rule:0
 msgid "Order Cycle"
 msgstr "Cycle de Commande"
 
@@ -73082,6 +73108,8 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account/wizard/account_invoice_import.py:0
 #: selection:account.invoice.import,state:0
 #: field:wizard.common.import.line,display_error:0
+#: field:replenishment.consolidated_oc.import,error:0
+#: selection:replenishment.consolidated_oc.import,state:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -73684,8 +73712,10 @@ msgstr "Facture"
 msgid "Our ref:"
 msgstr "Notre réf:"
 
-#. module: kit
+#. module: kit, procurement_cycle
 #: selection:kit.mass.import,state:0
+#: view:replenishment.parent.segment:0
+#: selection:replenishment.parent.segment,state_parent:0
 msgid "Complete"
 msgstr "Complete"
 
@@ -75878,9 +75908,12 @@ msgstr "Stock existant (zone interne)"
 msgid "KC"
 msgstr "GF"
 
-#. modules: product, partner_modification
+#. modules: product, partner_modification, procurement_cycle
 #: field:res.partner,supplier_lt:0
 #: field:product.template,seller_delay:0
+#: view:replenishment.parent.segment:0
+#: field:replenishment.parent.segment,supplier_lt:0
+#: view:replenishment.segment:0
 msgid "Supplier Lead Time"
 msgstr "Délai Fournisseur"
 
@@ -76646,6 +76679,8 @@ msgstr "Valeur totale"
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
 #: selection:product.mass.update,state:0
+#: view:replenishment.parent.segment:0
+#: selection:replenishment.parent.segment,state_parent:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -79896,7 +79931,7 @@ msgstr "Demande de Devis"
 msgid "You cannot validate this document in the given period: %s because it's not open. Change the date of the document or open the period."
 msgstr "You cannot validate this document in the given period: %s because it's not open. Change the date of the document or open the period."
 
-#. modules: delivery_mechanism, sales_followup, specific_rules
+#. modules: delivery_mechanism, sales_followup, specific_rules, procurement_cycle
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1378
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1446
 #: code:addons/sales_followup/sale_followup.py:399
@@ -79907,6 +79942,7 @@ msgstr "You cannot validate this document in the given period: %s because it's n
 #: code:addons/sales_followup/sale_followup.py:489
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:981
 #, python-format
 msgid "N/A"
 msgstr "N/A"
@@ -80533,6 +80569,7 @@ msgstr "Wizard lines for internal picking processor"
 #: view:wizard.import.mapping:0
 #: view:account.invoice.import:0
 #: view:product.stock_out:0
+#: view:replenishment.consolidated_oc.import:0
 msgid "Import"
 msgstr "Importer"
 
@@ -81218,6 +81255,8 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:account.model,state:0
 #: field:stock.pipe.per.product.instance,state:0
 #: report:kitting.order.report:0
+#: field:replenishment.consolidated_oc.import,state:0
+#: field:replenishment.parent.segment,state_parent:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -81796,6 +81835,7 @@ msgstr "\n"
 #: field:wizard.import.stock.warehouse.orderpoint.line,rule_id:0
 #: field:wizard.import.threshold.value.line,rule_id:0
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:376
+#: field:replenishment.order_calc.line,rule:0
 msgid "Rule"
 msgstr "Règle"
 
@@ -82152,6 +82192,8 @@ msgstr "SFTP connection succeeded"
 #: field:product.ask.activate.wizard,product_id:0
 #: field:stock.pipe.per.product.instance,product_id:0
 #: field:stock.pipe.per.product.instance.prod.lines,product_id:0
+#: view:replenishment.segment.line.amc.past_fmc:0
+#: view:replenishment.segment.line.min_max_auto_supply.history:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -83318,6 +83360,7 @@ msgstr "monthly.budget.wizard"
 #: view:composition.kit:0
 #: selection:composition.kit,state:0
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Completed"
 msgstr "Terminé"
 
@@ -86576,6 +86619,7 @@ msgstr "Date - Début de Contrat"
 #: field:replenishment.order_calc,file_to_import:0
 #: field:replenishment.segment,file_to_import:0
 #: field:product.stock_out,file_to_import:0
+#: field:replenishment.consolidated_oc.import,file_to_import:0
 msgid "File to import"
 msgstr "Fichier à importer"
 
@@ -93395,6 +93439,7 @@ msgstr "Solde de Caisse à l'ouverture"
 #: field:account.journal.fake,is_current_instance:0
 #: field:products.situation.report,instance_id:0
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Current Instance"
 msgstr "Instance actuelle"
 
@@ -95945,6 +95990,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:account.invoice.import:0
 #: view:product.merged.wizard:0
 #: view:product.stock_out:0
+#: view:replenishment.parent.segment:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -97439,6 +97485,8 @@ msgstr "Disponible expédié"
 #: code:addons/msf_tools/report/report_stock_pipe_per_product_instance.py:220
 #: selection:stock.pipe.per.product.instance.prod.lines,inst_uf_state:0
 #: selection:stock.pipe.per.product.instance.prod.lines,ud_state:0
+#: view:replenishment.parent.segment:0
+#: selection:replenishment.parent.segment,state_parent:0
 msgid "Archived"
 msgstr "Archivé"
 
@@ -97946,8 +97994,11 @@ msgstr "Objet de prélèvement correspondant n'est pas une Livraison Entrante. L
 msgid "The article and its specifications are obsolete , it may imply a medical risk if misused."
 msgstr "The article and its specifications are obsolete , it may imply a medical risk if misused."
 
-#. module: partner_modification
+#. module: partner_modification, procurement_cycle
 #: field:res.partner,procurement_lt:0
+#: view:replenishment.parent.segment:0
+#: field:replenishment.parent.segment,internal_lt:0
+#: view:replenishment.segment:0
 msgid "Internal Lead Time"
 msgstr "Délai interne"
 
@@ -100877,9 +100928,11 @@ msgstr "FILTRES"
 msgid "Reserved Products Excel Export"
 msgstr "Export Excel des Produits Réservés"
 
-#. module: stock
+#. module: stock, procurement_cycle
 #: report:addons/stock/report/reserved_products_report_xls.mako:160
 #: view:stock.reserved.products:0
+#: view:replenishment.inventory.review:0
+#: view:replenishment.order_calc:0
 msgid "Reserved Qty"
 msgstr "Qté Réservée"
 
@@ -103176,6 +103229,8 @@ msgstr "depuis aujourd'hui"
 #: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
 #: selection:replenishment.inventory.review,time_unit:0
 #: selection:replenishment.location.config,time_unit:0
+#: selection:replenishment.order_calc,time_unit_lt:0
+#: selection:replenishment.parent.segment,time_unit_lt:0
 msgid "months"
 msgstr "mois"
 
@@ -103194,6 +103249,8 @@ msgstr "souhaitée"
 #: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
 #: selection:replenishment.inventory.review,time_unit:0
 #: selection:replenishment.location.config,time_unit:0
+#: selection:replenishment.order_calc,time_unit_lt:0
+#: selection:replenishment.parent.segment,time_unit_lt:0
 msgid "weeks"
 msgstr "semaines"
 
@@ -106673,11 +106730,13 @@ msgstr "Un produit dans une zone ne peut appartenir qu'à un seul segment."
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "AMC Locations"
 msgstr "Zones CMM"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,amc_location_txt:0
+#: field:replenishment.parent.segment,amc_location_txt:0
 msgid "AMC locations"
 msgstr "Zones CMM"
 
@@ -106709,6 +106768,7 @@ msgstr "Alerte: \"inventaire - lots expirants avant TAE <= Min\""
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Archive"
 msgstr "Archiver"
 
@@ -106745,11 +106805,13 @@ msgstr "Qté Tampon"
 
 #. module: procurement_cycle
 #: help:replenishment.segment,date_next_order_received:0
+#: help:replenishment.parent.segment,date_next_order_received:0
 msgid "Calculated according to last order RDDate + OC."
 msgstr "Calculé en fonction du DLS de la dernière commande + CC"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Cancel Segment and Order Calc."
 msgstr "Annuler Segment et Calculs"
 
@@ -106772,6 +106834,7 @@ msgstr "Complet"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Compute Data"
 msgstr "Calcul des données"
 
@@ -106797,6 +106860,7 @@ msgstr "Date à laquelle la prochaine commande doit être générée"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,date_next_order_validated:0
+#: field:replenishment.parent.segment,date_next_order_validated:0
 msgid "Date next order to be validated by"
 msgstr "Date de validation de la prochaine commande"
 
@@ -106817,6 +106881,7 @@ msgstr "Date de début de préparation de la prochaine commande"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,date_preparing:0
+#: field:replenishment.parent.segment,date_preparing:0
 msgid "Date to start preparing the order"
 msgstr "Date de début de préparation de la commande"
 
@@ -107040,6 +107105,7 @@ msgstr "Générer la Revue d'Inventaire"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Generate Order Calc"
 msgstr "Générer Calcul de Commande"
 
@@ -107061,6 +107127,7 @@ msgstr "DI Généréé"
 
 #. module: procurement_cycle
 #: help:replenishment.segment,previous_order_rdd:0
+#: help:replenishment.parent.segment,previous_order_rdd:0
 msgid "Generated according to latest IR's RDD (from most recent Order calc which is now closed)."
 msgstr "Généré en fonction de la DLS du dernier DI (depuis le plus récent Calcul de commande fermé)."
 
@@ -107077,12 +107144,15 @@ msgstr "Délai de Manutention (jours)"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,has_inprogress_cal:0
+#: field:replenishment.parent.segment,has_inprogress_cal:0
 msgid "Has in-progess Order Calc."
 msgstr "A des Calculs en cours"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,ir_requesting_location:0
 #: field:replenishment.segment,ir_requesting_location_rdo:0
+#: field:replenishment.parent.segment,ir_requesting_location:0
+#: field:replenishment.parent.segment,ir_requesting_location_rdo:0
 msgid "IR Requesting Location"
 msgstr "Zone Requérente de la DI"
 
@@ -107106,6 +107176,7 @@ msgstr "Dans liste prod."
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,internal_lt:0
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:935
 msgid "Internal LT"
 msgstr "Délai Interne"
 
@@ -107300,6 +107371,7 @@ msgstr "Instance Locale"
 #: view:replenishment.segment:0
 #: field:replenishment.segment,location_config_id:0
 #: model:ir.ui.menu,name:procurement_cycle.replenishment_location_config_menu
+#: field:replenishment.parent.segment,location_config_id:0
 msgid "Location Config"
 msgstr "Config. Zone"
 
@@ -107330,6 +107402,7 @@ msgstr "Instance Principale"
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:832
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:920
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:933
 msgid "Max"
 msgstr "Max"
 
@@ -107382,11 +107455,13 @@ msgstr "Prochaine commande à générer / émise par date"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,date_next_order_received:0
+#: field:replenishment.parent.segment,date_next_order_received:0
 msgid "Next order to be received by (calculated)"
 msgstr "Prochaine commande à recevoir (calculé)"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,date_next_order_received_modified:0
+#: field:replenishment.parent.segment,date_next_order_received_modified:0
 msgid "Next order to be received by (modified)"
 msgstr "Prochaine commande à recevoir (modifié)"
 
@@ -107443,7 +107518,7 @@ msgstr "Date génération du Calcul de Commande"
 
 #. module: procurement_cycle
 #: model:ir.actions.act_window,name:procurement_cycle.action_from_location_config_to_order_calc
-#: model:ir.actions.act_window,name:procurement_cycle.action_from_segment_to_order_calc
+#: model:ir.actions.act_window,name:procurement_cycle.action_from_parent_segment_to_order_calc
 msgid "Order Calc."
 msgstr "Calcul de Commande"
 
@@ -107463,6 +107538,8 @@ msgstr "Lignes de Calculs"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,order_coverage:0
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:549
+#: field:replenishment.parent.segment,order_coverage:0
 msgid "Order Coverage"
 msgstr "Couverture de la Commande"
 
@@ -107542,6 +107619,7 @@ msgstr "Veuillez corriger les PCM suivants:\n"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,previous_order_rdd:0
+#: field:replenishment.parent.segment,previous_order_rdd:0
 msgid "Previous order RDD Date"
 msgstr "DLS de la commande précédente"
 
@@ -107919,6 +107997,7 @@ msgstr "SS"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,safety_stock:0
+#: field:replenishment.segment,safety_stock:0
 msgid "Safety Stock"
 msgstr "Stock de Sécurité"
 
@@ -107949,6 +108028,8 @@ msgstr "Périodicité programmée des revues"
 #: view:replenishment.segment:0
 #: field:replenishment.segment.date.generation,segment_id:0
 #: field:replenishment.segment.line,segment_id:0
+#: field:replenishment.order_calc.line,segment_id:0
+#: view:replenishment.parent.segment:0
 msgid "Segment"
 msgstr "Segment"
 
@@ -107964,6 +108045,7 @@ msgstr "Ligne de Segment"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_product_list.mako:126
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:535
 msgid "Segment Ref"
 msgstr "Ref. Segment"
 
@@ -107994,6 +108076,7 @@ msgstr "Segmenté"
 
 #. module: procurement_cycle
 #: model:ir.actions.act_window,name:procurement_cycle.action_from_location_config_to_segment
+#: field:replenishment.parent.segment,child_ids:0
 msgid "Segments"
 msgstr "Segments"
 
@@ -108001,6 +108084,7 @@ msgstr "Segments"
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
 #: view:product.stock_out:0
+#: view:replenishment.parent.segment:0
 msgid "Set As Draft"
 msgstr "Mettre en Brouillon"
 
@@ -108042,6 +108126,7 @@ msgstr "Début de péparation de la prochaine commande"
 
 #. module: procurement_cycle
 #: view:replenishment.inventory.review:0
+#: view:replenishment.order_calc:0
 msgid "Stock By Location"
 msgstr "Stock Par Zone"
 
@@ -108093,16 +108178,19 @@ msgstr "Date théorique programmée"
 
 #. module: procurement_cycle
 #: help:replenishment.segment,date_next_order_validated:0
+#: help:replenishment.parent.segment,date_next_order_validated:0
 msgid "This does not take account of any stockouts not related to order coverage. Calculation: \"Next order RDD date\" - Total Lead time + Internal LT. This isupdated according to value in \"Next order to be received by"
 msgstr "Ne tient pas compte des ruptures de stock non liées à la couverture des commandes. Calcul: \"DLS de la prochaine commande\" - Délai Total + Délai Interne. Mis à jour en fonction de la valeur de \"Prochaine commande à recevoir\""
 
 #. module: procurement_cycle
 #: help:replenishment.segment,date_preparing:0
+#: help:replenishment.parent.segment,date_preparing:0
 msgid "This does not take account of any stockouts not related to order coverage. Calculation: \"Next order RDD date\" - Total Lead time."
 msgstr "Ne tient pas compte des ruptures de stock non liées à la couverture des commandes. Calcul: \"DLS de la prochaine commande\" - Délai Total."
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "This will cancel the Segment and the in-progess Order Calc. Do you confirm ?"
 msgstr "Vous allez Annuler le Segment et les Calculs en cours. Veuillez confirmer."
 
@@ -108210,11 +108298,13 @@ msgstr "RR-PCM Valides"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Warning: Inventory Review Configuration is inactive"
 msgstr "Attention: la revue d'inventaire est inactive"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Warning: location config is inactive"
 msgstr "Attention: la configuration de la zone est inactive"
 
@@ -108370,6 +108460,7 @@ msgstr "l'Origine du fichier importé ne correspond pas à l'Origine de la ligne
 #. module: procurement_cycle
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Current Instance Locations"
 msgstr "Zones Instance Actuelle"
 
@@ -108415,12 +108506,14 @@ msgstr "Description Config. Zone"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Location Config Description"
 msgstr "Description Config. Zone"
 
 #. module: procurement_cycle
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Location Information"
 msgstr "Information Zone"
 
@@ -108437,6 +108530,7 @@ msgstr "Calculs de Commande"
 #. module: procurement_cycle
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Other Instance Locations"
 msgstr "Zones des autres instances"
 
@@ -108459,6 +108553,7 @@ msgstr "Cycle-RR"
 #. module: procurement_cycle
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
+#: view:replenishment.parent.segment:0
 msgid "Replenishment Rule"
 msgstr "Règle de Réappro."
 
@@ -108487,6 +108582,7 @@ msgstr "Référence Segment de Réappro."
 
 #. module: procurement_cycle
 #: model:ir.actions.act_window,name:procurement_cycle.action_from_location_config_to_segment
+#: model:ir.actions.act_window,name:procurement_cycle.action_from_parent_segment_to_segment
 #: view:replenishment.segment:0
 msgid "Replenishment Segments"
 msgstr "Segments de Réappro."
@@ -110237,6 +110333,7 @@ msgstr "Délai"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,external_lt:0
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:936
 msgid "External LT"
 msgstr "Délai Externe"
 
@@ -110248,11 +110345,13 @@ msgstr "Supprimé?"
 
 #. module: procurement_cycle
 #: view:replenishment.inventory.review:0
+#: view:replenishment.order_calc:0
 msgid "Pipeline (PO)"
 msgstr "Pipeline (BC)"
 
 #. module: procurement_cycle
 #: view:replenishment.inventory.review:0
+#: view:replenishment.order_calc:0
 msgid "Pipeline (Stock Moves)"
 msgstr "Pipeline (Mouvements)"
 
@@ -110422,7 +110521,7 @@ msgstr "Export du Stock et des Qtés en Cours par Produit et par Instance"
 
 #. module: msf_tools
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:80
-msgid "There is no products to report"
+msgid "There are no products to report"
 msgstr "Il n'y a aucun produit dans le rapport"
 
 #. module: msf_tools
@@ -110621,8 +110720,8 @@ msgstr "Le Type de Commande doit être le même dans tous les BdCs pour qu'ils s
 #. module: purchase
 #: code:addons/purchase/purchase_order.py:1663
 #, python-format
-msgid "The Address of the Destination Partner must be the same in all DPOs to be merged."
-msgstr "L'Adresse du Partenaire de Destination doit être le même dans tous les BdCs directs pour qu'ils soient fusionnés."
+msgid "The Address of the Destination Partner must be the same in all POs/DPOs to be merged."
+msgstr "L'Adresse du Partenaire de Destination doit être le même dans tous les BdCs/BdCs directs pour qu'ils soient fusionnés."
 
 #. module: product
 #: view:product.mass.update:0
@@ -110704,3 +110803,443 @@ msgstr "Zone Source par Défaut :"
 #, python-format
 msgid "Kitting Order Report"
 msgstr "Rapport de Commande d'assemblage de kit"
+
+#. module: register_accounting
+#: model:ir.actions.act_window,name:register_accounting.act_wizard_hard_post_all
+msgid "Hard Post All The Entries"
+msgstr "Comptabiliser Toutes Les Ecritures"
+
+#. module: register_accounting
+#: model:ir.actions.act_window,name:register_accounting.act_wizard_temp_post_all
+msgid "Temp Post All The Entries"
+msgstr "Comptabiliser Temporairement Toutes Les Ecritures"
+
+#. module: register_accounting
+#: view:wizard.hard.posting:0
+msgid "Are you sure you want to hard post <span style=\"font-weight: bold; color: red;\">ALL</span> the entries?"
+msgstr "Etes-vous sûr de vouloir comptabiliser <span style=\"font-weight: bold; color: red;\">TOUTES</span> les écritures ?"
+
+#. module: register_accounting
+#: view:wizard.temp.posting:0
+msgid "Are you sure you want to temp post <span style=\"font-weight: bold; color: red;\">ALL</span> the entries?"
+msgstr "Etes-vous sûr de vouloir comptabiliser temporairement <span style=\"font-weight: bold; color: red;\">TOUTES</span> les écritures ?"
+
+#. module: register_accounting
+#: view:wizard.hard.posting:0
+msgid "Hard Post ALL"
+msgstr "Comptabiliser TOUT"
+
+#. module: register_accounting
+#: view:wizard.temp.posting:0
+msgid "Temp Post ALL"
+msgstr "Comptabiliser TOUT Temporairement"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/hard_posting.py:69
+#, python-format
+msgid "There are no lines to hard post for this register."
+msgstr "Il n'y a pas de lignes à comptabiliser pour ce registre."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/temp_posting.py:68
+#, python-format
+msgid "There are no lines to temp post for this register."
+msgstr "Il n'y a pas de lignes à comptabiliser temporairement pour ce registre."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/hard_posting.py:53
+#, python-format
+msgid "There are no more lines to hard post for this register. Please refresh the page."
+msgstr "Il n'y a plus de lignes à comptabiliser pour ce registre. Veuillez rafraîchir la page."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/temp_posting.py:52
+#, python-format
+msgid "There are no more lines to temp post for this register. Please refresh the page."
+msgstr "Il n'y a plus de lignes à comptabiliser temporairement pour ce registre. Veuillez rafraîchir la page."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/hard_posting.py:56
+#, python-format
+msgid "Impossible to retrieve automatically the lines to hard post for this register. Please select them manually and click on \"Hard Posting\"."
+msgstr "Impossible de récupérer automatiquement les lignes à comptabiliser pour ce registre. Veuillez les sélectionner manuellement et cliquer sur \"Comptabiliser\"."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/temp_posting.py:55
+#, python-format
+msgid "Impossible to retrieve automatically the lines to temp post for this register. Please select them manually and click on \"Temp Posting\"."
+msgstr "Impossible de récupérer automatiquement les lignes à comptabiliser temporairement pour ce registre. Veuillez les sélectionner manuellement et cliquer sur \"Comptabilisation Temporaire"\"."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment_wizard.py:102
+#, python-format
+msgid "  - %s : %d products"
+msgstr " - %s : %d produits"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment_wizard.py:100
+#, python-format
+msgid "%d lines updated in %d OC, %d error%s"
+msgstr "%d lignes mises à jour dans %d OC, %d error%s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:278
+#, python-format
+msgid "%s Data from instance(s) is missing, please wait for the next scheduled task or the next sync, or if relates to this instance, please use button \"Compute Data\". Instances missing data are:\n"
+"%s"
+msgstr "%s Données des instances manquantes, veuillez attendre la prochaine tâche planifiée ou la prochaine sync, ou pour l'instance principale cliquer sur le bouton \"Calcul des données\". Instances manquantes:\n"
+"%s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:664
+#, python-format
+msgid "%s: data missing from %s. For Main instance please click on \"Compute Data\". For other instances wait until the next scheduled task or the next sync. "
+msgstr "%s : données des instances manquantes pour %s. Pour l'instance principal cliquez sur \"Calcul des données\". Pour les autres instances, euillez attendre la prochaîne tâche planifiée ou la prochaine sync."
+
+#. module: procurement_cycle
+#: field:replenishment.order_calc.line,rounded_qty:0
+msgid "Agreed Qty Rounded"
+msgstr "Qté Convenue arrondie"
+
+#. module: procurement_cycle
+#: selection:replenishment.segment.line.min_max_auto_supply.history,field:0
+msgid "AutoSupply"
+msgstr "AutoSupply"
+
+#. module: procurement_cycle
+#: field:replenishment.inventory.review.line,buffer_ss_qty:0
+#: field:replenishment.order_calc.line,buffer_ss_qty:0
+msgid "Buffer / SS Qty"
+msgstr "Tampon / SS Qté"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:544
+msgid "Buffer/Safety Stock"
+msgstr "Tampon / Stock Sécurité"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:449
+msgid "Consolidated"
+msgstr "Consolidé"
+
+#. module: procurement_cycle
+#: model:ir.actions.report.xml,name:procurement_cycle.report_replenishment_order_calc_consolidated_xls
+msgid "Export Consolidated OC all status"
+msgstr "Export Consolidé des CC tous les statuts"
+
+#. module: procurement_cycle
+#: model:ir.actions.report.xml,name:procurement_cycle.report_replenishment_order_calc_draft_consolidated_xls
+#: model:ir.actions.server,name:procurement_cycle.action_replenishment_order_calc_draft_consolidated
+msgid "Export Draft Consolidated OC lines"
+msgstr "Export Consolidé CC Brouillon"
+
+#. module: procurement_cycle
+#: view:replenishment.parent.segment:0
+#: field:replenishment.parent.segment,external_lt:0
+#: view:replenishment.segment:0
+msgid "External Lead Time"
+msgstr "Délai Externe"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,fmc_version:0
+#: field:replenishment.segment.line.amc,fmc_version:0
+msgid "FMC timestamp"
+msgstr "FMC timestamp"
+
+#. module: procurement_cycle
+#: view:replenishment.segment:0
+msgid "Group by Parent"
+msgstr "Grouper par Parent"
+
+#. module: procurement_cycle
+#: view:replenishment.segment.line.amc.past_fmc:0
+msgid "HMC"
+msgstr "HCM"
+
+#. module: procurement_cycle
+#: view:replenishment.parent.segment:0
+#: field:replenishment.parent.segment,handling_lt:0
+#: view:replenishment.segment:0
+msgid "Handling Lead Time"
+msgstr "Délai de Manutention"
+
+#. module: procurement_cycle
+#: model:ir.actions.act_window,name:procurement_cycle.action_replenishment_consolidated_oc_import_
+msgid "Import Consolidated OC lines"
+msgstr "Import CC Consolidés"
+
+#. module: procurement_cycle
+#: view:replenishment.consolidated_oc.import:0
+msgid "Import Summary"
+msgstr "Résumé de l'import"
+
+#. module: procurement_cycle
+#: view:replenishment.consolidated_oc.import:0
+msgid "Import consolidated OC"
+msgstr "Import CC Consolidés"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment_wizard.py:58
+#, python-format
+msgid "Line %d: OC Ref not found."
+msgstr "Ligne %s: CC Ref non trouvé."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment_wizard.py:66
+#, python-format
+msgid "Line %d: no draft %s found."
+msgstr "Ligne %d: %s brouillon non trouvé."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment_wizard.py:79
+#, python-format
+msgid "Line %d: product %s %s : Agreed Order Qty  must be a number, found %s"
+msgstr "Ligne %d: pruidt %s %s : Qté Convenue doit être un nombre, trouvé %s "
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment_wizard.py:75
+#, python-format
+msgid "Line %d: product %s not found in %s"
+msgstr "Ligne %d: produit %s non trouvé dans %s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1682
+#: code:addons/procurement_cycle/replenishment.py:1696
+#, python-format
+msgid "Line %d: product code %s you can't replace a product by itself !"
+msgstr "Ligne %d: code produit %s: vous ne pouvez pas remplacer un produit par lui même !"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:542
+#: field:replenishment.inventory.review.line,min_max:0
+msgid "Min / Max"
+msgstr "Min / Max"
+
+#. module: procurement_cycle
+#: model:ir.actions.server,name:procurement_cycle.action_from_segment_to_history
+msgid "MinMax, Auto Supply, FMC History"
+msgstr "Hitorique: MinMan, Appro Auto, HCM"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1506
+#, python-format
+msgid "Missing Exp."
+msgstr "Exp. Manquants"
+
+# module: procurement_cycle
+#: field:replenishment.segment,missing_inv_review:0
+msgid "Missing Inv.R data"
+msgstr "Données Revue Inv manquantes"
+
+#. module: procurement_cycle
+#: field:replenishment.segment,missing_order_calc:0
+msgid "Missing OC data"
+msgstr "Données CC manquantes"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1504
+#, python-format
+msgid "Missing data on expiring products"
+msgstr "Données manquantes sur les produits expirés"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:537
+msgid "Order Calc Ref"
+msgstr "Réf Calcul Commande"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:540
+msgid "Order Calc Status"
+msgstr "Statut Calcul Commande"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:685
+#, python-format
+msgid "Order Calc generated for %s"
+msgstr "Calcul de Commande généré pour %s"
+
+#. module: procurement_cycle
+#: sql_constraint:replenishment.parent.segment:0
+msgid "Order Coverage must be positive or 0"
+msgstr "Couverture de la Commande doit être positif ou 0"
+
+#. module: procurement_cycle
+#: view:replenishment.parent.segment:0
+#: field:replenishment.parent.segment,order_creation_lt:0
+#: view:replenishment.segment:0
+msgid "Order Creation Lead Time"
+msgstr "Délai de Création de Commande"
+
+#. module: procurement_cycle
+#: view:replenishment.parent.segment:0
+#: view:replenishment.segment:0
+msgid "Order Preparation Lead Time"
+msgstr "Délai de Préparation de la Commande"
+
+#. module: procurement_cycle
+#: field:replenishment.parent.segment,order_rdd:0
+msgid "Order RDD"
+msgstr "DLS commande"
+
+#. module: procurement_cycle
+#: view:replenishment.parent.segment:0
+#: field:replenishment.parent.segment,order_validation_lt:0
+#: view:replenishment.segment:0
+msgid "Order Validation Lead Time"
+msgstr "Délai de Validation de Commande"
+
+#. module: procurement_cycle
+#: view:replenishment.parent.segment:0
+msgid "Order Validation date"
+msgstr "Date Validation Commande"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:474
+msgid "Parent Replenishment Segment"
+msgstr "Segment de Réappro. Parent"
+
+#. module: procurement_cycle
+#: model:ir.actions.act_window,name:procurement_cycle.action_from_location_config_to_parent_segment
+msgid "Parent Replenishment Segments"
+msgstr "Segments de Réappro. Parent"
+
+#. module: procurement_cycle
+#: field:replenishment.order_calc,parent_segment_id:0
+msgid "Parent Segment"
+msgstr "Segment Parent"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:493
+msgid "Parent Segment Description"
+msgstr "Description du Segment Parent"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:636
+#, python-format
+msgid "Please set the following Segments as Draft:\n"
+"%s"
+msgstr "Veuillez passer ces Segements à l'état Brouillon:\n"
+"%s"
+
+#. module: procurement_cycle
+#: view:replenishment.parent.segment:0
+msgid "Preparation date"
+msgstr "Date de Préparation"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:511
+msgid "RR OC Consolidation report Generation Date"
+msgstr "Date de génération du rapport CC"
+
+#. module: procurement_cycle
+#: model:ir.model,name:procurement_cycle.model_replenishment_parent_segment
+#: model:ir.ui.menu,name:procurement_cycle.replenishment_parent_segment_menu
+#: view:replenishment.parent.segment:0
+msgid "Replenishment Parent Segment"
+msgstr "Segment de Réappro Parent"
+
+#. module: procurement_cycle
+#: view:replenishment.parent.segment:0
+msgid "Replenishment Parent Segments"
+msgstr "Segments de Réappro Parent"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line.min_max_auto_supply.history,line_id:0
+msgid "Replenishment Segment Line"
+msgstr "Lignes de Segment"
+
+#. module: procurement_cycle
+#: view:replenishment.order_calc:0
+msgid "Round Agreed Qty to SoQ"
+msgstr "Arrondir Qté Convenue à la QcS"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:939
+msgid "SS (Qty)"
+msgstr "SS (Qté)"
+
+#. module: procurement_cycle
+#: field:replenishment.inventory.review.line,safety_stock_qty:0
+msgid "Safety Stock (Qty)"
+msgstr "Stock de Sécurité (Qté)"
+
+#. module: procurement_cycle
+#: sql_constraint:replenishment.segment:0
+msgid "Safety Stock must be positive or 0"
+msgstr "Stock de Sécurité doit être positif ou 0"
+
+#. module: procurement_cycle
+#: view:replenishment.segment.line.min_max_auto_supply.history:0
+msgid "Segment History"
+msgstr "Historique du Segment"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,line_state_parent:0
+msgid "Segment Status"
+msgstr "Statut du Segment"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:3107
+#, python-format
+msgid "Selected OC must be in Draft state"
+msgstr "Les CC sélectionnés doivent être dans l'état Brouillon"
+
+#. module: procurement_cycle
+#: field:replenishment.segment,fake_state:0
+msgid "State internal"
+msgstr "State internal"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:547
+msgid "Time Unit"
+msgstr "Unité de Temps"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:548
+#: field:replenishment.order_calc,total_lt:0
+#: view:replenishment.parent.segment:0
+#: field:replenishment.parent.segment,total_lt:0
+#: view:replenishment.segment:0
+msgid "Total Lead Time"
+msgstr "Délai Total"
+
+#. module: procurement_cycle
+#: field:replenishment.order_calc,time_unit_lt:0
+#: field:replenishment.parent.segment,time_unit_lt:0
+msgid "Unit of Time"
+msgstr "Unité de Temps"
+
+#. module: procurement_cycle
+#: help:replenishment.parent.segment,hidden:0
+msgid "Used to store not segemented products with stock/pipeline"
+msgstr "Used to store not segemented products with stock/pipeline"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:619
+#, python-format
+msgid "Warning, to complete Parent Segment %s, field \"Next order to be received by (modified)\" must have date filled"
+msgstr "Attention pour compléter le Segment Parent %s, le champ \"Prochaine commande à recevoir (calculé)\" doit être rempli."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:655
+#, python-format
+msgid "Warning, to complete Parent Segment, field \"Next order to be received by (modified)\" must have date filled"
+msgstr "Attention pour compléter le Segment Parent, le champ \"Prochaine commande à recevoir (calculé)\" doit être rempli."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment_wizard.py:52
+#, python-format
+msgid "Wrong format: expected %d cells, found %s %s"
+msgstr "Mauvais format: attendu %d cellules, trouvé %s %s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment_wizard.py:51
+#, python-format
+msgid "tips: to import the \"Consolidated all status\" file, remove the \"Order Calc Status\" column\""
+msgstr "astuce: pour importe un Rapport \"tous les statuts\", supprimer las colonne \"Statut Calcul Commande\""
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1287
+#, python-format
+msgid "PO %s created by duplication: Order Type changed from DPO to Regular"
+msgstr "BdC %s créé par duplication: Type de Commande modifié de BC Direct à Normal"

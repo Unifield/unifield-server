@@ -1269,6 +1269,24 @@ class purchase_order(osv.osv):
             'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order'),
         }
 
+    def copy_web(self, cr, uid, id, defaults=None, context=None):
+        if defaults is None:
+            defaults = {}
+        is_direct = False
+        if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'direct')], context=context):
+            company_id = self.pool.get('res.users').get_current_company(cr, uid)[0][0]
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
+            defaults['order_type'] = 'regular'
+            defaults['dest_address_id'] = company_id
+            defaults['dest_partner_id'] = cp_address_id
+            defaults['customer_id'] = False
+            is_direct = True
+        new_id = super(purchase_order, self).copy_web(cr, uid, id, defaults, context=context)
+        if is_direct:
+            name = self.read(cr, uid, new_id, ['name'], context=context)['name']
+            self.log(cr, uid, new_id, _('PO %s created by duplication: Order Type changed from DPO to Regular') % name, action_xmlid='purchase.purchase_form_action')
+        return new_id
+
     def copy(self, cr, uid, p_id, default=None, context=None):
         '''
         Remove loan_id field on new purchase.order
@@ -1696,11 +1714,11 @@ class purchase_order(osv.osv):
                 first_order_type = porder.order_type
             elif first_order_type and first_order_type != porder.order_type:
                 raise osv.except_osv(_('Error'), _('The Order Type must be the same in all POs to be merged.'))
-            if porder.order_type == 'direct':
+            if porder.order_type in ['regular', 'direct']:
                 if first_dest_partner is None:
                     first_dest_partner = porder.dest_address_id and porder.dest_address_id.id or False
                 elif first_dest_partner is not None and first_dest_partner != porder.dest_address_id.id:
-                    raise osv.except_osv(_('Error'), _('The Address of the Destination Partner must be the same in all DPOs to be merged.'))
+                    raise osv.except_osv(_('Error'), _('The Address of the Destination Partner must be the same in all POs/DPOs to be merged.'))
 
             old_po_name[porder.id] = porder.name
             if not order_infos:
@@ -1737,7 +1755,7 @@ class purchase_order(osv.osv):
                 continue
 
             # US-6144: Set the dest_partner_id and related_sourcing_id to the one of the template PO
-            if tmpl_data and order_data['order_type'] == 'direct':
+            if tmpl_data and order_data['order_type'] in ['regular', 'direct']:
                 order_data.update({
                     'dest_partner_id': tmpl_data.get('dest_partner_id', False),
                     'related_sourcing_id': tmpl_data.get('related_sourcing_id', False),
@@ -2082,7 +2100,7 @@ class purchase_order(osv.osv):
 
         return True
 
-    def order_line_change(self, cr, uid, ids, order_line):
+    def order_line_change(self, cr, uid, ids, order_line, show_default_msg=None):
 
         assert (len(ids) == 1)
 
@@ -2092,8 +2110,13 @@ class purchase_order(osv.osv):
             values = {'no_line': False}
 
         # Also update the 'state' of the purchase order
-        states = self.read(cr, uid, ids, ['state'])
-        values["state"] = states[0]["state"]
+        info = self.read(cr, uid, ids, ['state', 'not_beyond_validated', 'show_default_msg'])
+        values['state'] = info[0]['state']
+        values['not_beyond_validated'] = info[0]['not_beyond_validated']
+
+        if show_default_msg is not None and not values['not_beyond_validated'] and show_default_msg != info[0]['show_default_msg']:
+            # show_default_msg will become read-only but the current value is not saved
+            cr.execute("update purchase_order set show_default_msg=%s where id = %s", (show_default_msg, info[0]['id']))
 
         # We need to fetch and return also the "display strings" for state
         # as it might be needed to update the read-only view...

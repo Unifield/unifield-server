@@ -240,7 +240,10 @@ class account_cash_statement(osv.osv):
         domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
         if context is None:
             context = {}
-        context['type_posting'] = 'temp'
+        context.update({
+            'type_posting': 'temp',
+            'register_id': ids[0],
+        })
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False
@@ -269,7 +272,10 @@ class account_cash_statement(osv.osv):
         domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
         if context is None:
             context = {}
-        context['type_posting'] = 'hard'
+        context.update({
+            'type_posting': 'hard',
+            'register_id': ids[0],
+        })
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False

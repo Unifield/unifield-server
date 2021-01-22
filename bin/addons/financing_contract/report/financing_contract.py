@@ -65,14 +65,24 @@ class contract(report_sxw.rml_parse):
             account_list = ['']
             account_list_index = 0
 
+            account_invalid_list = ['']
+            account_invalid_index = 0
             if line.account_quadruplet_ids:
                 # Case of quadruplet
                 for quad in line.account_quadruplet_ids:
-                    account_list_index = add_account_list_block_item(
-                        " ".join([str(quad.account_destination_name),
-                                  str(quad.funding_pool_id.code),
-                                  str(quad.cost_center_id.code)]),
-                        account_list, account_list_index)
+                    if quad.valid:
+                        account_list_index = add_account_list_block_item(
+                            " ".join([str(quad.account_destination_name),
+                                      str(quad.funding_pool_id.code),
+                                      str(quad.cost_center_id.code)]),
+                            account_list, account_list_index)
+                    else:
+                        account_invalid_index = add_account_list_block_item(
+                            " ".join([str(quad.account_destination_name),
+                                      str(quad.funding_pool_id.code),
+                                      str(quad.cost_center_id.code)]),
+                            account_invalid_list, account_invalid_index)
+
             elif line.reporting_account_ids:
                 # G/L Accounts Only selected
                 for account in line.reporting_account_ids:
@@ -91,7 +101,8 @@ class contract(report_sxw.rml_parse):
                 'allocated_budget': line.allocated_budget,
                 'project_budget': line.project_budget,
                 'line_type': register_states[line.line_type],
-                'account_list': account_list
+                'account_list': account_list,
+                'account_invalid_list': account_invalid_list
             }
             result.append(values)
 

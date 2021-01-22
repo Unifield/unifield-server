@@ -481,10 +481,9 @@ class stock_picking(osv.osv):
                                     move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id), ('state', 'not in', ['done', 'cancel'])], context=context)
                         if not move_ids:
                             #US-1294: absolutely no moves -> probably they are closed, just show the error message then ignore
-                            closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
-                            if closed_in_id:
-                                search_move = [('picking_id', '=', closed_in_id), ('line_number', '=', data.get('line_number'))]
-                                move_ids = move_obj.search(cr, uid, search_move, context=context)
+                            closed_pick_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', ['done', 'cancel'])], context=context)
+                            if closed_pick_ids:
+                                move_ids = move_obj.search(cr, uid, [('picking_id', 'in', closed_pick_ids), ('line_number', '=', data.get('line_number'))], context=context)
                             if not move_ids:
                                 message = "Line number " + str(ln) + " is not found in the original IN or PO"
                                 self._logger.info(message)
