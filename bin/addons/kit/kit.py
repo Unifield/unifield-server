@@ -1415,7 +1415,7 @@ class stock_location(osv.osv):
         # we check for the available qty (in:done, out: assigned, done)
         return {'total': self.pool.get('product.product').read(cr, uid, product_id, ['qty_allocable'], context=stock_context).get('qty_allocable', 0)}
 
-    def _product_reserve_lot(self, cr, uid, ids, product_id, needed_qty, uom_id, context=None, lock=False, prod_lot=False):
+    def _product_reserve_lot(self, cr, uid, ids, product_id, needed_qty, uom_id, context=None, lock=False, prod_lot=False, lefo=False):
         """
         refactoring of original reserver method, taking production lot into account
 
@@ -1468,6 +1468,8 @@ class stock_location(osv.osv):
         sql = ""
         if prod_lot:
             sql = " AND prodlot_id = %s" % prod_lot
+        # Change BN/ED selection in Kitting Orders if Last Expired First Out is used
+        flefo = lefo and "DESC" or "ASC"
 
         cr.execute("""
                     SELECT subs.location, subs.parent_left, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
@@ -1497,7 +1499,7 @@ class stock_location(osv.osv):
                             (expired_date is null or expired_date >= CURRENT_DATE) """ + sql + """
                             GROUP BY m.location_id, loc.parent_left, m.prodlot_id, lot.life_date) as subs
                     GROUP BY location, parent_left, prodlot_id, expired_date
-                    ORDER BY expired_date asc, prodlot_id asc, parent_left
+                    ORDER BY expired_date """ + flefo + """, prodlot_id asc, parent_left
                    """,
                    (tuple(location_ids), product_id, tuple(location_ids), product_id))  # not_a_user_entry
 
