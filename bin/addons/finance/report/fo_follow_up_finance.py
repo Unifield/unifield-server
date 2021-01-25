@@ -45,7 +45,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
         line_subtotal_fctal = 0.0
         user_obj = self.pool.get('res.users')
         curr_obj = self.pool.get('res.currency')
-        fctal_curr_id = user_obj.browse(self.cr, self.uid, self.uid).company_id.currency_id.id
+        fctal_curr_id = user_obj.browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id']).company_id.currency_id.id
         today = datetime.today().strftime('%Y-%m-%d')
         if booking_curr_id and line_subtotal:
             if booking_curr_id == fctal_curr_id:
@@ -107,7 +107,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
             # first: retrieve raw data
             sql_req = """
                 select
-                    so.name AS fo_number, cust.name as customer_name, so.client_order_ref as customer_reference,
+                    so.name AS fo_number, cust.name as customer_name, coalesce(so.client_order_ref, '') as customer_reference,
                     coalesce(po.name, '') as po_number, coalesce(sup.name, '') as supplier_name, in_iv.id as si,
                     coalesce(in_iv.number, '') as si_number, coalesce(cast(in_ivl.line_number as varchar), '') as si_line_number, 
                     coalesce(in_ivl.name, '') as si_line_description, coalesce(in_ivl.price_unit, 0) as si_line_unit_price,
@@ -133,8 +133,8 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     coalesce(out_picking.id, 0) as pick_id,
                     out_iv.id as out_inv, coalesce(out_iv.number, '') as out_inv_number,
                     coalesce(cast(out_ivl.line_number as varchar), '') as out_inv_line_number,
-                    coalesce(out_ivl.name, '') as out_inv_description, coalesce(out_ivl.price_unit, 0) as out_inv_unit_price,
-                    coalesce(out_ivl.quantity, 0) as out_inv_quantity, coalesce(out_ivl_acc.code, '') as out_inv_account_code,
+                    coalesce(out_ivl.name, '') as out_inv_line_description, coalesce(out_ivl.price_unit, 0) as out_inv_line_unit_price,
+                    coalesce(out_ivl.quantity, 0) as out_inv_line_quantity, coalesce(out_ivl_acc.code, '') as out_inv_line_account_code,
                     coalesce(out_ivl.price_subtotal, 0) as out_inv_line_subtotal, coalesce(out_iv_curr.name, '') as out_inv_currency,
                     out_iv_curr.id as out_inv_currency_id, out_iv.document_date as out_inv_doc_date,
                     out_iv.date_invoice as out_inv_posting_date,
@@ -158,7 +158,7 @@ class fo_follow_up_finance(report_sxw.rml_parse):
                     ) as in_ivl ON in_ivl.pol_id = pol.id
                     left join account_invoice in_iv on in_iv.id = in_ivl.invoice_id
                     left join account_move in_am on in_am.id = in_iv.move_id
-                    left join account_move_line in_aml on in_aml.invoice_line_id = in_ivl.id and in_aml.move_id=in_am.id
+                    left join account_move_line in_aml on in_aml.invoice_line_id = in_ivl.id and in_aml.move_id = in_am.id
                     left join account_invoice_line out_ivl on out_ivl.sale_order_line_id = sol.id
                     left join account_invoice out_iv on out_iv.id = out_ivl.invoice_id
                     left join stock_picking out_picking on out_picking.id = out_iv.picking_id

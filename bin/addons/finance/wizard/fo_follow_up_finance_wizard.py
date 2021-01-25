@@ -50,7 +50,6 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         """
         Retrieves the data according to the values in the wizard
         """
-        inv_obj = self.pool.get('account.invoice')
         fo_obj = self.pool.get('sale.order')
         if context is None:
             context = {}
@@ -111,7 +110,6 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         }, context=context)
         context['background_id'] = background_id
         context['background_time'] = 3
-
         data = {'ids': ids, 'context': context}
         return {
             'type': 'ir.actions.report.xml',
