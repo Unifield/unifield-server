@@ -34,7 +34,7 @@ from tools import config
 from base import currency_date
 import time
 import sys
-
+import codecs
 
 UF_SIDE_ROUNDING_LINE = {
     'account_code': '67000',
@@ -541,7 +541,12 @@ class hr_payroll_import(osv.osv_memory):
                 try:
                     import ConfigParser
                     Config = ConfigParser.SafeConfigParser()
-                    Config.readfp(zipobj.open('envoi.ini', 'r', xyargv))
+                    ini_desc = zipobj.open('envoi.ini', 'r', xyargv)
+                    is_bom = ini_desc.read(3)
+                    if is_bom != codecs.BOM_UTF8:
+                        ini_desc.close()
+                        ini_desc = zipobj.open('envoi.ini', 'r', xyargv)
+                    Config.readfp(ini_desc)
                     field = Config.get('DEFAUT', 'PAYS')
                 except Exception:
                     raise osv.except_osv(_('Error'), _('Could not read envoi.ini file in given ZIP file.'))
