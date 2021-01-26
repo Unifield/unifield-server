@@ -459,6 +459,7 @@ class account_invoice(osv.osv):
                     ctx.update({'type': vals['type']})
                 if '_terp_view_name' in ctx:
                     del ctx['_terp_view_name']
+                ctx.update({'from_inv_form': True})  # if we click on the res.log we are sent to the invoice form
                 message = _("Invoice '%s' is waiting for validation.") % name
                 self.log(cr, uid, inv_id, message, context=ctx)
             return res
