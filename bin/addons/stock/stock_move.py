@@ -1424,7 +1424,7 @@ class stock_move(osv.osv):
 
             move_ids = self.search(cr, uid, search_domain, context=context)
             if move_ids:
-                move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty', 'state'], context=context)
+                move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty'], context=context)
                 res.append(move['id'])
                 if move_data['id'] not in qty_data:
                     qty_data[move['id']] = {
