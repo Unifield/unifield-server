@@ -1209,7 +1209,7 @@ class stock_picking(osv.osv):
                     out_move_data = self.pool.get('sale.order')._get_move_data(cr, uid, so, move_out['sol'], False, context=context)
                     out_move_data['location_id'] = stock_location_id
                     out_move_data['location_dest_id'] = stock_location_id
-                    out_move_data['product_uom_qty'] = move_out['product_qty']
+                    out_move_data['product_qty'] = move_out['product_qty']
                     out_move_data['product_uos_qty'] =  move_out['product_qty']
                     out_pick_data['move_lines'].append((0, 0, out_move_data))
                 # do not touch locations on non stockable
