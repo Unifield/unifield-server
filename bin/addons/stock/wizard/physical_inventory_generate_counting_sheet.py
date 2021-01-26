@@ -75,7 +75,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                             "expiry_date": False
                         }
                         inventory_counting_lines_to_create.append(values)
-                else:
+                elif not only_with_stock_level or (only_with_stock_level and self.not_zero_stock_on_location(cr, uid, location_id, prod.id, False, context=context)):
                     values = {
                         "line_no": len(inventory_counting_lines_to_create) + 1,
                         "inventory_id": inventory_id,
