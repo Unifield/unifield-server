@@ -1409,8 +1409,8 @@ class stock_move(osv.osv):
         qty_data = {}
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
             if move_data['state'] != 'assigned':
-                raise osv.except_osv(_('Warning'), _('You can not cancel availability on a non-available line'))
-            self.write(cr, uid, ids, {'qty_to_process': 0, 'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
+                continue
+            self.write(cr, uid, move_data['id'], {'qty_to_process': 0, 'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
             picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
 
