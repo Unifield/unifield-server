@@ -106,11 +106,12 @@
                     				<field name="original_from_process_stock_move" invisible="True" />
                     			</tree>
                     		</field>
-                    		<group col="4" colspan="4">
+                    		<group col="5" colspan="4">
 	                    		<button name="cancel_all_lines" type="object" string="Cancel All Lines" icon="gtk-cancel" invisible="True" />
 	                    		<button name="cancel_availability_all_lines" type="object" string="Cancel Availability" icon="gtk-undo" attrs="{'readonly': [('state', '!=', 'in_production')]}" invisible="True" />
 	                    		<button name="force_assign2" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'readonly': [('state', '!=', 'in_production')]}" invisible="True" />
 	                    		<button name="consolidate_lines" type="object" string="Reset 'Not Available' Lines" icon="gtk-clear" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
+	                    		<button name="remove_availability" type="object" string="Remove Availability" icon="gtk-jump-to" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
 	                    		<button name="check_availability_fefo" type="object" string="Check Availability FEFO" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
 	                    		<button name="check_availability_lefo" type="object" string="Check Availability LEFO" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
 	                    		<button name="validate_assign_all_lines" type="object" string="Validate all 'Available' Lines" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'in_production')]}" />

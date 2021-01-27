@@ -111253,3 +111253,8 @@ msgstr "Vérifier Disponibilité DEPS"
 #: view:kit.creation:0
 msgid "Check Availability FEFO"
 msgstr "Vérifier Disponibilité PEPS"
+
+#. module: kit
+#: view:kit.creation:0
+msgid "Remove Availability"
+msgstr "Enlever la Disponibilité"

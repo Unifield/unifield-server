@@ -527,6 +527,21 @@ class kit_creation(osv.osv):
                     original_flag = False
         return True
 
+    def remove_availability(self, cr, uid, ids, context=None):
+        '''
+        Cancel availability of assigned Consumed Components
+        '''
+        if context is None:
+            context = {}
+
+        move_obj = self.pool.get('stock.move')
+
+        for kit in self.browse(cr, uid, ids, context=context):
+            move_ids = move_obj.search(cr, uid, [('kit_creation_id_stock_move', '=', kit.id)], context=context)
+            move_obj.cancel_assign(cr, uid, move_ids, context=context)
+
+        return True
+
     def check_availability_fefo(self, cr, uid, ids, context=None):
         '''
         Use check_availability with the First Expiry First Out
