@@ -217,6 +217,8 @@ class purchase_order_line_sync(osv.osv):
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:
             pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') and not sol_dict.get('is_line_split') else False
+            if sol_dict['state'] in ['cancel', 'cancel_r']:
+                pol_values['cancelled_by_sync'] = True
             new_pol = self.create(cr, uid, pol_values, context=context)
             if debug:
                 logger.info("create pol id: %s, values: %s" % (new_pol, pol_values))
