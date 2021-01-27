@@ -435,7 +435,7 @@ class stock_picking(osv.osv):
                         self._logger.info(message)
                         continue
 
-                    search_move = [('id', 'not in', already_set_moves), ('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
+                    search_move = [('id', 'not in', already_set_moves), ('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('state', '!=', 'cancel')]
 
                     original_qty_partial = data.get('original_qty_partial')
                     orig_qty = data.get('quantity')
@@ -460,13 +460,13 @@ class stock_picking(osv.osv):
 
                     if not move_ids and original_qty_partial != -1:
                         #US-1294: Reduce the search condition
-                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial)]
+                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial), ('state', '!=', 'cancel')]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
 
                     #US-1294: But still no move line with exact qty as the amount shipped
                     if not move_ids:
                         #US-1294: Now search all moves of the given IN and line number
-                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
+                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('state', '!=', 'cancel')]
                         move_ids = move_obj.search(cr, uid, search_move, order='product_qty ASC', context=context)
                         if not move_ids:
                             # SLL edit, if move cannot be found, then use sync_linked_sol to find it:
