@@ -1629,7 +1629,7 @@ class stock_move(osv.osv):
                     # remaining qty cancelled in draft pick, sotck.move will be in Cancel state, create a assinged stock.move to display the qty already processed
                     ctx_copy = context.copy()
                     ctx_copy['keepLineNumber'] = True
-                    self.copy(cr, uid, move.id, {'product_uos_qty': 0, 'product_qty': 0, 'state': 'assigned', 'qty_processed': move.qty_processed, 'qty_to_process': move.qty_processed} , context=context)
+                    self.copy(cr, uid, move.id, {'product_uos_qty': 0, 'product_qty': 0, 'state': 'assigned', 'qty_processed': move.qty_processed, 'qty_to_process': move.qty_processed} , context=ctx_copy)
 
                 pick_obj._create_sync_message_for_field_order(cr, uid, move.picking_id, context=context)
 
