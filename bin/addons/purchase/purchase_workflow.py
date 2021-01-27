@@ -794,6 +794,7 @@ class purchase_order_line(osv.osv):
         self.update_fo_lines(cr, uid, ids, context=context)
 
         pol_to_invoice = {}
+        fol_sourced_on_dpo = set()
         for pol in self.browse(cr, uid, ids, context=context):
             # no PICK/OUT needed in this cases; close SO line:
             internal_ir = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False  # PO line from Internal IR
@@ -803,11 +804,17 @@ class purchase_order_line(osv.osv):
             if internal_ir or dpo or ir_non_stockable:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
-            if pol.order_id.po_version > 1 and pol.order_id.invoice_method == 'order':
-                pol_to_invoice[pol.id] = True
+            if pol.order_id.po_version > 1:
+                if pol.order_id.invoice_method == 'order':
+                    pol_to_invoice[pol.id] = True
+                if pol.linked_sol_id:
+                    fol_sourced_on_dpo.add(pol.linked_sol_id.id)
             # cancel remaining SYS-INT
             self.pool.get('stock.move').decrement_sys_init(cr, uid, 'all', pol_id=pol.id, context=context)
         self.write(cr, uid, ids, {'state': 'done', 'closed_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
+        if fol_sourced_on_dpo:
+            for sol_id_to_check in fol_sourced_on_dpo:
+                wf_service.trg_write(uid, 'sale.order.line', sol_id_to_check, cr)
 
         if pol_to_invoice:
             self.generate_invoice(cr, uid, pol_to_invoice.keys(), context=context)
