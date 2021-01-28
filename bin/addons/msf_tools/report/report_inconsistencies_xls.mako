@@ -86,17 +86,7 @@
         </Row>
         % for prod in get_products_with_inconsistencies():
                 # HQ data:
-                % if r.instance_id.level == 'coordo':
-                <Row ss:AutoFitHeight="1">
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${_('HQ')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(prod['prod_default_code'])|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(prod['prod_name_template'])|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(prod['prod_international_status'] or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(prod['prod_state'] or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(prod['prod_state_ud']  or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(_('Active') if prod['prod_active'] else _('Inactive'))|x}</Data></Cell>
-                </Row>
-                % else:
+                % if r.instance_id.level == 'section':
                 <Row ss:AutoFitHeight="1">
                   <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('HQ')|x}</Data></Cell>
                   <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_default_code'])|x}</Data></Cell>
