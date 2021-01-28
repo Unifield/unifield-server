@@ -640,12 +640,12 @@ function change_filter() {
 }
 
 function search_filter(src, id) {
-	jQuery('div#no-record-warning').hide();
+    jQuery('div#no-record-warning').hide();
     var all_domains = parse_filters(src, id);
-    
-	if (group_by == 'False') {
-		group_by = [];
-	}
+
+    if (group_by == 'False') {
+        group_by = [];
+    }
     unique_id = new Date().getTime();
     if(jQuery('#filter_table').is(':visible') || jQuery('#_terp_filter_domain').val() != '[]') {
         return display_Customfilters(all_domains, group_by);
@@ -726,7 +726,7 @@ function final_search_domain(custom_domain, all_domains, group_by_ctx) {
                 $errors.removeClass('fielderror')
                     .nextAll('span.fielderror').remove();
             }
-        	if (obj['all_error']) {
+            if (obj['all_error']) {
                 jQuery.each(obj['all_error'], function (_, error) {
                     var $field = jQuery(idSelector(error['error_field']));
                     var $field_container = $field.closest('table.search_table')
@@ -740,8 +740,8 @@ function final_search_domain(custom_domain, all_domains, group_by_ctx) {
                     $field_container.append(
                         jQuery('<span class="fielderror">').text(error['error']));
                 });
-        	}
-        
+            }
+
             if (obj.domain) { // For direct search
                  var in_req = eval_domain_context_request({
                     source: '_terp_list',

@@ -356,6 +356,7 @@ class Search(Form):
 
                 else:
                     if not 'm2o_' in value:
+                        search_data_value = value
                         if value.startswith('='):
                             operator = '='
                             value = value[1:]
@@ -364,8 +365,9 @@ class Search(Form):
                         if '__' in value:
                             value, operator = value.split('__')
                             value = int(value)
+                            search_data_value = value
                         domain.append((field, operator, value))
-                        search_data[field] = value
+                        search_data[field] = search_data_value
                     else:
                         search_data[field] = value.split('m2o_')[1]
             if all_error:
