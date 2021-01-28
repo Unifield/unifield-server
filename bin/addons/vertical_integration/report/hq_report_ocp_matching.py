@@ -32,6 +32,11 @@ import hq_report_ocb_matching
 
 from report import report_sxw
 
+
+##### WARNING #####
+### IN CASE CHANGES ARE MADE TO THIS FILE, keep in mind that it is used for OCB matching export as well. ###
+
+
 class finance_archive(finance_export.finance_archive):
     """
     Extends existing class with new methods for OCP Matching Export.
@@ -130,7 +135,12 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         instance_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
-        excluded_journal_types = ['hq', 'migration']
+        if context.get('ocb_matching'):
+            # OCB VI
+            excluded_journal_types = ['cur_adj', 'hq', 'inkind', 'migration', 'extra', 'system']
+        else:
+            # OCP VI
+            excluded_journal_types = ['hq', 'migration']
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -143,7 +153,6 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
             raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
         # Prepare SQL requests and PROCESS requests for finance_archive object (CF. account_tools/finance_export.py)
         sqlrequests = {
-            # Do not take lines that come from a HQ or MIGRATION journal
             # This request returns:
             # - entries where posting date are within the selected period or before
             # - that have either been reconciled OR unreconciled within the period or after

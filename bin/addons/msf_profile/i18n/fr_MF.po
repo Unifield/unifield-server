@@ -67293,6 +67293,12 @@ msgstr "File %s not found.\n"
 msgid "OCB matching export"
 msgstr "OCB matching export"
 
+#. module: vertical_integration
+#: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export_old
+#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export_old
+msgid "OCB matching export Access Interface"
+msgstr "Interface d'accès de OCB matching export"
+
 #. module: stock
 #: model:ir.ui.menu,name:stock.menu_stock_configuration
 msgid "Warehouse Configuration"
