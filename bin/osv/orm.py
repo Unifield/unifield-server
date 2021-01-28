@@ -2668,18 +2668,11 @@ class orm_memory(orm_template):
             return [ k for k, v in self._in_memory_sorted_items(cr, user, order, context=context) ]
 
         res = []
-        counter = 0
         #Find the value of dict
         f = False
         if result:
             for id, data in self._in_memory_sorted_items(cr, user, order, context=context):
                 data['id'] = id
-                # If no offset, give the first entries between 0 and the limit
-                if not offset and limit and (counter > int(limit)):
-                    break
-                # If offset, give only entries between offset and the offset+limit
-                elif offset and limit and (counter > int(limit + offset)):
-                    break
 
                 f = True
                 for arg in result:
@@ -2693,22 +2686,17 @@ class orm_memory(orm_template):
                     f = f and val
 
                 if f:
-                    # Increment the counter only if the data matches with the domain
-                    counter = counter + 1
-                    if counter > offset:
-                        res.append(id)
+                    res.append(id)
 
         if count:
             return len(res)
 
+        if offset and limit:
+            return res[offset:limit+offset]
         if offset:
-            off = 0
-            while off < offset:
-                res.pop(0)
-                off += 1
-
-        if limit and len(res) > limit:
-            return res[:limit]
+            return res[offset:]
+        if limit:
+            return res[0:limit]
 
         return res or []
 
