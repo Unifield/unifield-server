@@ -545,7 +545,7 @@ class picking_tools(osv.osv):
 
         # objects
         pick_obj = self.pool.get('stock.picking')
-        pick_obj.action_assign(cr, uid, ids, context)
+        pick_obj.action_assign(cr, uid, ids, context=context)
         return True
 
     def force_assign(self, cr, uid, ids, context=None):
