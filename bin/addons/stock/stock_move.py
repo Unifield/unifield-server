@@ -1403,24 +1403,18 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
-        self.write(cr, uid, ids, {'qty_to_process': 0,'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
         res = []
-
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
-                          'product_qty', 'product_uos_qty', 'location_dest_id',
+                          'product_qty', 'product_uos_qty', 'location_dest_id', 'state',
                           'prodlot_id', 'asset_id', 'composition_list_id', 'line_number', 'in_out_updated', 'sale_line_id']
 
         qty_data = {}
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
+            if move_data['state'] != 'assigned':
+                continue
+            self.write(cr, uid, move_data['id'], {'qty_to_process': 0, 'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
             picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
-
-            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
-                move_data['line_number'],
-                move_data['id'],
-                picking_id,
-                move_data['picking_id'] and move_data['picking_id'][1] or '',
-            ))
 
             for f in fields_to_read:
                 if f in ('product_qty', 'product_uos_qty'):
@@ -1472,9 +1466,14 @@ class stock_move(osv.osv):
                 #self.write(cr, uid, [move_data['id']], {'state': 'draft'}, context=context)
                 self.unlink(cr, uid, move_data['id'], context=context, force=True)
 
-        return res
+            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
+                move_data['line_number'],
+                move_data['id'],
+                picking_id,
+                move_data['picking_id'] and move_data['picking_id'][1] or '',
+            ))
 
-        return True
+        return res
 
     #
     # Duplicate stock.move
