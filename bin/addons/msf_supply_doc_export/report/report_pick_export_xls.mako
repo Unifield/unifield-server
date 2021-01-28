@@ -82,7 +82,7 @@
     <Column ss:AutoFitWidth="1" ss:Width="60" />
     ## Expiry Date
     <Column ss:AutoFitWidth="1" ss:Width="60" />
-    ## KC
+    ## CC
     <Column ss:AutoFitWidth="1" ss:Width="40" />
     ## DG
     <Column ss:AutoFitWidth="1" ss:Width="40" />
@@ -157,7 +157,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty to Process')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('KC')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('CC')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('DG')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('CS')}</Data></Cell>
     </Row>

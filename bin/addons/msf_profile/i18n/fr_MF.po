@@ -1156,7 +1156,6 @@ msgstr "America/Sao_Paulo"
 #. modules: account, register_accounting, analytic_distribution
 #: report:addons/register_accounting/report/fully_report_xls.mako:575
 #: view:account.analytic.line:0
-#: code:addons/analytic_distribution/analytic_line.py:527
 msgid "CC"
 msgstr "CC"
 
@@ -7590,8 +7589,8 @@ msgstr "Réapprovisionnement Télécharger - Augmenter les Niveaux de stock"
 #: model:ir.actions.act_window,name:product_attributes.product_cold_chain_action
 #: model:ir.ui.menu,name:product_attributes.menu_cold_chain_product
 #: view:product.cold_chain:0
-msgid "Cold chain"
-msgstr "Chaîne du froid"
+msgid "Thermosensitivity"
+msgstr "Thermosensibilité"
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:924
@@ -16517,6 +16516,7 @@ msgstr "%s update%s"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:991
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -17281,11 +17281,6 @@ msgstr "L'objet de base de données de cette pièce jointe sera jointe à"
 #: report:empty.picking.ticket:0
 msgid "Qty Packed"
 msgstr "Qté Colisée"
-
-#. module: product_attributes
-#: model:ir.model,name:product_attributes.model_product_cold_chain
-msgid "product.cold_chain"
-msgstr "product.cold_chain"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:295
@@ -19237,11 +19232,6 @@ msgstr "Solde initial :"
 #: report:addons/account/report/account_liquidity_balance.mako:168
 msgid "Starting balance"
 msgstr "Solde initial"
-
-#. module: product_attributes
-#: field:product.product,kc_txt:0
-msgid "Keep Cool icon"
-msgstr "Keep Cool icon"
 
 #. modules: sourcing, msf_instance
 #: code:addons/msf_instance/msf_instance.py:565
@@ -24726,6 +24716,7 @@ msgstr "Europe/Bucharest"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:991
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
+#: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -25388,8 +25379,8 @@ msgstr "America/Cambridge_Bay"
 #: field:stock.forecast,keep_cool:0
 #: report:stock.forecast.report:0
 #: model:product.heat_sensitive,name:product_attributes.heat_2
-msgid "Keep Cool"
-msgstr "Garder Frais"
+msgid "Cold Chain"
+msgstr "Chaîne du Froid"
 
 #. modules: msf_doc_import, product, board, msf_supply_doc_export, msf_outgoing
 #: field:board.board.line,height:0
@@ -39150,8 +39141,8 @@ msgstr "Montant Total à Payer à ce Fournisseur."
 
 #. module: stock
 #: selection:physical.inventory.select.products,second_filter:0
-msgid "KC/CS/DG"
-msgstr "GF/CS/MD"
+msgid "CC/CS/DG"
+msgstr "CF/CS/MD"
 
 #. module: account
 #: view:account.analytic.chart:0
@@ -45000,8 +44991,8 @@ msgstr "Le montant à facturer par anticipation"
 
 #. module: product_attributes
 #: field:product.product,is_kc:0
-msgid "Is Keep Cool ?"
-msgstr "Est à maintenir au frais?"
+msgid "Is Cold Chain ?"
+msgstr "Respect Chaîne du Froid ?"
 
 #. modules: sales_followup, stock_override, msf_supply_doc_export, sale
 #: view:po.follow.up:0
@@ -53894,8 +53885,8 @@ msgstr "Text Error"
 #: field:purchase.order.line,kc_dg:0
 #: field:sale.order.line,kc_dg:0
 #: field:stock.move,kc_dg:0
-msgid "KC/DG"
-msgstr "GF/MD"
+msgid "CC/DG"
+msgstr "CF/MD"
 
 #. modules: msf_outgoing, return_claim
 #: help:claim.event,replacement_picking_expected_claim_event:0
@@ -66712,9 +66703,10 @@ msgstr "Sous-Liste"
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:435
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:223
 #: code:addons/specific_rules/specific_rules.py:53
+#: code:addons/stock/report/physical_inventory_counting_sheet.py:27
 #, python-format
-msgid "KC"
-msgstr "GF"
+msgid "CC"
+msgstr "CF"
 
 #. module: sales_followup
 #: report:ir.follow.up.location.report_pdf:0
@@ -70757,10 +70749,15 @@ msgstr "ED management"
 msgid "Work Days"
 msgstr "Jours Ouvrés"
 
-#. module: product_attributes, purchase, purchase_override
+#. module: product_attributes
 #: field:product.product,cold_chain:0
+msgid "Thermosensitivity"
+msgstr "Thermosensibilité"
+
+#. modules: purchase, purchase_override, product_attributes
 #: field:purchase.order.line,cold_chain:0
 #: field:purchase.order.merged.line,cold_chain:0
+#: field:product.cold_chain,cold_chain:0
 msgid "Cold Chain"
 msgstr "Chaîne du Froid"
 
@@ -75905,8 +75902,8 @@ msgstr "Stock existant (zone interne)"
 #: field:stock.inventory.line,kc_check:0
 #: field:stock.move,kc_check:0
 #: field:stock.production.lot,kc_check:0
-msgid "KC"
-msgstr "GF"
+msgid "CC"
+msgstr "CF"
 
 #. modules: product, partner_modification, procurement_cycle
 #: field:res.partner,supplier_lt:0
@@ -80838,8 +80835,8 @@ msgstr "Lettrage Partenaire"
 #: help:return.ppl.processor,contains_kc:0
 #: help:stock.incoming.processor,contains_kc:0
 #: help:stock.picking.processor,contains_kc:0
-msgid "Is at least one line contains a keep cool product."
-msgstr "Is at least one line contains a keep cool product."
+msgid "Is at least one line contains a cold chain product."
+msgstr "A-t-on au moins un produit chaîne du froid."
 
 #. module: procurement_request
 #: model:ir.module.module,description:procurement_request.module_meta_information
@@ -82575,8 +82572,8 @@ msgstr "Currency tables"
 
 #. module: msf_outgoing
 #: report:labels:0
-msgid "KC / "
-msgstr "GF / "
+msgid "CC / "
+msgstr "CF / "
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:572
@@ -84067,8 +84064,8 @@ msgstr "Comptes"
 #: field:return.ppl.processor,contains_kc:0
 #: field:stock.incoming.processor,contains_kc:0
 #: field:stock.picking.processor,contains_kc:0
-msgid "Contains Keep Cool goods"
-msgstr "Contains Keep Cool goods"
+msgid "Contains Cold Chain goods"
+msgstr "Contient de produits Chaîne du Froid"
 
 #. module: product_attributes
 #: model:ir.actions.act_window,name:product_attributes.product_heat_sensitive_action

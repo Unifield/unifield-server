@@ -443,7 +443,7 @@
     <Cell ss:StyleID="s136"><Data ss:Type="String">${_('Total Qty.')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Exp. Date')|x}</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('KC')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('CC')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('DG')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('CS')|x}</Data></Cell>
    </Row>
@@ -460,7 +460,7 @@
        % else:
        <Cell ss:StyleID="s134"><Data ss:Type="String"></Data></Cell>
        % endif
-       <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.kc_txt or '')|x}</Data></Cell>
+       <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.is_kc and 'X' or '')|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.dg_txt or '')|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.cs_txt or '')|x}</Data></Cell>
   </Row>

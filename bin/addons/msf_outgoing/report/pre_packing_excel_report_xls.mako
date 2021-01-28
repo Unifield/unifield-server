@@ -165,7 +165,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Expiry Date #
         <Column ss:AutoFitWidth="1" ss:Width="85.0" />
-        ## KC
+        ## CC
         <Column ss:AutoFitWidth="1" ss:Width="20.0" />
         ## DG
         <Column ss:AutoFitWidth="1" ss:Width="20.0" />
@@ -257,7 +257,7 @@
                 _('Total Qty to pack'),
                 _('Batch #'),
                 _('Expiry Date #'),
-                _('KC'),
+                _('CC'),
                 _('DG'),
                 _('CS'),
                 _('Qty Packed'),
@@ -290,7 +290,7 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.kc_txt or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.is_kc and 'X' or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.dg_txt or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.cs_txt or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number"></Data></Cell>

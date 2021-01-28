@@ -1304,7 +1304,7 @@ class PhysicalInventoryCounting(osv.osv):
         'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
         'is_bn': fields.related('product_id', 'batch_management', string='BN', type='boolean', readonly=True),
         'is_ed': fields.related('product_id', 'perishable', string='ED', type='boolean', readonly=True),
-        'is_kc': fields.related('product_id', 'is_kc', string='KC', type='boolean', readonly=True),
+        'is_kc': fields.related('product_id', 'is_kc', string='CC', type='boolean', readonly=True),
         'is_dg': fields.related('product_id', 'is_dg', string='DG', type='boolean', readonly=True),
         'is_cs': fields.related('product_id', 'is_cs', string='CS', type='boolean', readonly=True),
 

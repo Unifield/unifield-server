@@ -630,5 +630,8 @@
             <field name="method">us_7808_ocg_rename_esc</field>
         </record>
 
+        <record id="us_7848_cold_chain" model="patch.scripts">
+            <field name="method">us_7848_cold_chain</field>
+        </record>
     </data>
 </openerp>
