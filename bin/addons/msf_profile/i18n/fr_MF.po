@@ -71406,10 +71406,12 @@ msgstr "Diviser le mouvement"
 msgid "No catalogue found !"
 msgstr "Catalogue pas trouvé !"
 
-#. module: purchase, purchase_override, msf_doc_import
+#. modules: purchase, purchase_override, msf_doc_import, sale
 #: field:purchase.order.merged.line,instance_sync_order_ref:0
 #: field:purchase.order.line,instance_sync_order_ref:0
 #: field:wizard.import.po.simulation.screen.line,imp_sync_order_ref:0
+#: field:sale.order.line,instance_sync_order_ref:0
+#: view:sync.order.label:0
 msgid "Order in sync. instance"
 msgstr "Commande en instance sync."
 
