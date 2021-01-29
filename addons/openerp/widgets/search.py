@@ -367,9 +367,13 @@ class Search(TinyInputWidget):
                 if v.groupcontext and v.groupcontext not in self.groupby:
                     self.groupby.append(v.groupcontext)
                 if v.global_domain and v.expand_grp_id:
-                    for g_dom in v.global_domain:
-                        if g_dom not in self.listof_domain:
-                            self.listof_ored_domain.setdefault(v.expand_grp_id, []).append([g_dom])
+                    to_add = True
+                    for index, existing_dom in enumerate(self.listof_domain):
+                        if existing_dom == v.global_domain[0] and self.listof_domain[index:index+len(v.global_domain)] == v.global_domain:
+                            to_add = False
+                            break
+                    if to_add:
+                        self.listof_ored_domain.setdefault(v.expand_grp_id, []).append([i for i in v.global_domain])
                 else:
                     self.listof_domain.extend(i for i in v.global_domain if not i in self.listof_domain)
                 filters_run.append(v)
