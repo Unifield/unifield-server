@@ -236,14 +236,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
             smrl_results = self.cr.fetchall()  # this object is 3.3 MB in RAM
             # with 340 000 lines of result
 
-            # get all uf_status codes
-            uf_status_obj = self.pool.get('product.status')
-            uf_status_code_ids = uf_status_obj.search(self.cr, self.uid, [], context=self.localcontext)
-            uf_status_code_read_result = uf_status_obj.read(self.cr, self.uid,
-                                                            uf_status_code_ids, ['code', 'name'], context=self.localcontext)
-            uf_status_code_dict = dict((x['code'], x['name']) for x in
-                                       uf_status_code_read_result)
-
             # build a dict of state_ud
             state_ud_dict = dict(prod_obj._columns['state_ud'].selection)
 
@@ -343,7 +335,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
             return self.uf_status_cache[code]
 
         status_obj = self.pool.get('product.status')
-        code_ids = status_obj.search(self.cr, self.uid, [('code', '=', code)], context=self.localcontext)
+        code_ids = status_obj.search(self.cr, self.uid, [('code', '=', code), ('active', 'in', ['t', 'f'])], context=self.localcontext)
         res = ""
         if code_ids:
             res = status_obj.read(self.cr, self.uid, code_ids, ['name'])[0]['name']

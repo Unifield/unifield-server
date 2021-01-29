@@ -53,7 +53,6 @@
   </Style>
 </Styles>
 
-% for r in objects:
 <ss:Worksheet ss:Name="${_('Products')|x}">
 
   <Table x:FullColumns="1" x:FullRows="1">
@@ -135,6 +134,5 @@
  <ProtectScenarios>False</ProtectScenarios>
 </WorksheetOptions>
 </ss:Worksheet>
-% endfor
 
 </Workbook>
