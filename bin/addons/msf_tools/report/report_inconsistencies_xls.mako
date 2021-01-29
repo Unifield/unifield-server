@@ -85,40 +85,26 @@
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Active/Inactive')|x}</Data></Cell>
         </Row>
         % for prod in get_products_with_inconsistencies():
-                # HQ data:
-                % if r.instance_id.level == 'section':
+                # Instance data:
                 <Row ss:AutoFitHeight="1">
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('HQ')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_default_code'])|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_name_template'])|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_international_status'] or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_state'] or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_state_ud']  or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(_('Active') if prod['prod_active'] else _('Inactive'))|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${prod['instance_name']|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${prod['prod_default_code']|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${prod['prod_name_template']|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${prod['prod_international_status'] or ''|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${prod['prod_state'] or ''|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${prod['prod_state_ud']  or ''|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Active') if prod['prod_active'] else _('Inactive')|x}</Data></Cell>
                 </Row>
-                % endif
             % for smrl in prod['smrl_list']:
-                % if r.instance_id.level == 'coordo' and r.instance_id.name == smrl['instance_name']:
-                    <Row ss:AutoFitHeight="1">
-                      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${smrl['instance_name']|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${smrl['smrl_default_code']|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${smrl['smrl_name_template']|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${smrl['internationnal_status_code_name'] or ''|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${smrl['uf_status_code']|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${smrl['ud_status_code'] or ''|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Active') if smrl['active'] else _('Inactive')|x}</Data></Cell>
-                    </Row>
-                % else:
-                    <Row ss:AutoFitHeight="1">
-                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['instance_name']|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['smrl_default_code']|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['smrl_name_template']|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['internationnal_status_code_name'] or ''|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['uf_status_code']|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['ud_status_code'] or ''|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${_('Active') if smrl['active'] else _('Inactive')|x}</Data></Cell>
-                    </Row>
-                % endif
+                <Row ss:AutoFitHeight="1">
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['instance_name']|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['smrl_default_code']|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['smrl_name_template']|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['internationnal_status_code_name'] or ''|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['uf_status_code']|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['ud_status_code'] or ''|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${_('Active') if smrl['active'] else _('Inactive')|x}</Data></Cell>
+                </Row>
             % endfor
         % endfor
     % endif
