@@ -576,12 +576,55 @@ class replenishment_parent_segment(osv.osv):
         return super(replenishment_parent_segment, self).create(cr, uid, vals, context)
 
     def on_change_lt(self, cr, uid, ids, time_unit, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified, context=None):
-        ret = {}
-        ret['internal_lt'] = (order_preparation_lt or 0) + (order_creation_lt or 0) + (order_validation_lt or 0)
-        ret['external_lt'] = (supplier_lt or 0) + (handling_lt or 0)
-        ret['total_lt'] = ret['internal_lt'] + ret['external_lt']
-        ret.update(self.compute_next_order_received(cr, uid, ids, time_unit, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified, context).get('value', {}))
-        return {'value': ret}
+        allowed = {
+            'm': [0, 0.25, 0.5, 0.75],
+            'w': [0, 0.5],
+            'd': [0],
+        }
+
+        error_message = {
+            'm': _('The decimal part of lead time/order coverage values  must be 0, 0.25, 0.5 or 0.75. Values have been rounded.'),
+            'w': _('The decimal part of lead time/order coverage values must be 0 or 0.5. Values have been rounded.'),
+            'd': _('Only integers are allowed for lead time/order coverage values. Values have been rounded.'),
+        }
+
+        rounding = {
+            'm': 4.,
+            'w': 2.,
+            'd': 1,
+
+        }
+
+        input_data = {
+            'order_preparation_lt': order_preparation_lt,
+            'order_creation_lt': order_creation_lt,
+            'order_validation_lt': order_validation_lt,
+            'supplier_lt': supplier_lt,
+            'handling_lt': handling_lt,
+            'order_coverage': order_coverage,
+        }
+
+        output_values = {}
+        message = False
+        for field in input_data:
+            if input_data[field] and time_unit and input_data[field] % 1 not in allowed.get(time_unit):
+                if round(input_data[field] % 1, 2) not in allowed.get(time_unit):
+                    message = error_message.get(time_unit)
+                output_values[field] = round(input_data[field]*rounding[time_unit])/rounding[time_unit]
+                input_data[field] = output_values[field]
+
+        output_values['internal_lt'] = (input_data['order_preparation_lt'] or 0) + (input_data['order_creation_lt'] or 0) + (input_data['order_validation_lt'] or 0)
+        output_values['external_lt'] = (input_data['supplier_lt'] or 0) + (input_data['handling_lt'] or 0)
+        output_values['total_lt'] = output_values['internal_lt'] + output_values['external_lt']
+        output_values.update(self.compute_next_order_received(cr, uid, ids, time_unit, input_data['order_preparation_lt'], input_data['order_creation_lt'], input_data['order_validation_lt'], input_data['supplier_lt'], input_data['handling_lt'], input_data['order_coverage'], previous_order_rdd, date_next_order_received_modified, context).get('value', {}))
+
+        ret = {'value': output_values}
+        if message:
+            ret['warning'] = {
+                'title': _('Warning'),
+                'message': message,
+            }
+        return ret
 
     def compute_next_order_received(self, cr, uid, ids, time_unit, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified, context=None):
         ret = {}
@@ -2290,7 +2333,7 @@ class replenishment_segment_line(osv.osv):
         'rr_fmc_to_11': fields.date('To 11'),
         'rr_fmc_12': fields.float_null('RR FMC 12', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_12': fields.date('From 12'),
-        'rr_fmc_to_12': fields.date('To 12', digits=(16, 2)),
+        'rr_fmc_to_12': fields.date('To 12'),
         'replacing_product_id': fields.many2one('product.product', 'Replacing product', select=1),
         'replaced_product_id': fields.many2one('product.product', 'Replaced product', select=1),
         'warning': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
