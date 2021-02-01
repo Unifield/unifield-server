@@ -1169,7 +1169,7 @@ Nothing has been imported because of %s. See below:
 
         context['active_id'] = simu_id.picking_id.id
         context['active_ids'] = [simu_id.picking_id.id]
-        fields_as_ro = simu_id.picking_id.partner_id.partner_type == 'esc' and simu_id.picking_id.state == 'updated' or simu_id.picking_id.partner_id.partner_type in ('internal', 'intermission', 'section')  and simu_id.picking_id.state == 'shipped'
+        fields_as_ro = simu_id.picking_id.partner_id.partner_type == 'esc' and simu_id.picking_id.state == 'updated'
         partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
@@ -1300,7 +1300,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             res[line.id] = {
                 'lot_check': product.batch_management,
                 'exp_check': product.perishable,
-                'kc_check': product.kc_txt,
+                'kc_check': product.is_kc and 'X',
                 'dg_check': product.dg_txt,
                 'np_check': product.cs_txt,
                 'move_price_unit': price_unit,
@@ -1412,7 +1412,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             method=True,
             type='char',
             size=8,
-            string='KC',
+            string='CC',
             readonly=True,
             store=False,
             multi='computed',

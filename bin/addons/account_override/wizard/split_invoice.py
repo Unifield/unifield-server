@@ -63,6 +63,7 @@ class wizard_split_invoice(osv.osv_memory):
         invoice_origin_id = wizard.invoice_id.id
         inv_obj = self.pool.get('account.invoice')
         invl_obj = self.pool.get('account.invoice.line')
+        wiz_line_obj = self.pool.get('wizard.split.invoice.lines')
 
         # Test lines
         if not wizard.invoice_line_ids:
@@ -91,18 +92,26 @@ class wizard_split_invoice(osv.osv_memory):
         if not new_inv_id:
             raise osv.except_osv(_('Error'), _('The creation of a new invoice failed.'))
 
-        # Delete new lines
-        for wiz_line in wizard.invoice_line_ids:
-            if wiz_line.invoice_line_id:
-                # create values for the new invoice line
-                invl_obj.copy(cr, uid, wiz_line.invoice_line_id.id, {'quantity': wiz_line.quantity,'invoice_id': new_inv_id}, context=context)
-                # then update old line if exists
-                qty = wiz_line.invoice_line_id.quantity - wiz_line.quantity
-                # If quantity superior to 0, then write old line, if 0 then delete line
-                if qty > 0:
-                    invl_obj.write(cr, uid, [wiz_line.invoice_line_id.id], {'quantity': qty}, context=context)
-                elif qty == 0:
-                    invl_obj.unlink(cr, uid, [wiz_line.invoice_line_id.id], context=context)
+        inv_lines = wizard.invoice_id and wizard.invoice_id.invoice_line or []
+        inv_lines_in_wiz = [wiz_line.invoice_line_id.id for wiz_line in wizard.invoice_line_ids]
+        for inv_line in inv_lines:
+            if inv_line.id not in inv_lines_in_wiz:
+                # UC1: the line has been deleted in the wizard: add it in the new invoice, and then remove it from the original one
+                invl_obj.copy(cr, uid, inv_line.id, {'invoice_id': new_inv_id}, context=context)
+                invl_obj.unlink(cr, uid, [inv_line.id], context=context)
+            else:
+                wiz_line_ids = wiz_line_obj.search(cr, uid,
+                                                   [('invoice_line_id', '=', inv_line.id),
+                                                    ('wizard_id', '=', wizard.id)],  # in case the wiz. is used several times on the same line
+                                                   limit=1, context=context)
+                if wiz_line_ids:
+                    wiz_line_id = wiz_line_ids[0]
+                    wiz_line_qty = wiz_line_obj.browse(cr, uid, wiz_line_id, fields_to_fetch=['quantity'], context=context).quantity or 0.0
+                    diff_qty = (inv_line.quantity or 0.0) - wiz_line_qty
+                    if abs(diff_qty) > 10**-3:  # UC2: line unchanged in the wizard: nothing to do, i.e. keep it in the original invoice
+                        # UC3: quantity has been modified: write the new qty in the original inv., and create a line for the diff in the new one
+                        invl_obj.write(cr, uid, [inv_line.id], {'quantity': wiz_line_qty}, context=context)
+                        invl_obj.copy(cr, uid, inv_line.id, {'invoice_id': new_inv_id, 'quantity': diff_qty}, context=context)
 
         # Calculate total for invoices
         invoice_ids.append(wizard.invoice_id.id)
@@ -110,6 +119,7 @@ class wizard_split_invoice(osv.osv_memory):
             inv_obj.write(cr, uid, [invoice.id] + [invoice_origin_id], {'check_total': invoice.amount_total}, context=context)
 
         return { 'type' : 'ir.actions.act_window_close', 'active_id' : new_inv_id, 'invoice_ids': invoice_ids}
+
 
 wizard_split_invoice()
 

@@ -527,7 +527,34 @@ class kit_creation(osv.osv):
                     original_flag = False
         return True
 
-    def check_availability(self, cr, uid, ids, context=None):
+    def remove_availability(self, cr, uid, ids, context=None):
+        '''
+        Cancel availability of assigned Consumed Components
+        '''
+        if context is None:
+            context = {}
+
+        move_obj = self.pool.get('stock.move')
+
+        for kit in self.browse(cr, uid, ids, context=context):
+            move_ids = move_obj.search(cr, uid, [('kit_creation_id_stock_move', '=', kit.id)], context=context)
+            move_obj.cancel_assign(cr, uid, move_ids, context=context)
+
+        return True
+
+    def check_availability_fefo(self, cr, uid, ids, context=None):
+        '''
+        Use check_availability with the First Expiry First Out
+        '''
+        return self.check_availability(cr, uid, ids, lefo=False, context=context)
+
+    def check_availability_lefo(self, cr, uid, ids, context=None):
+        '''
+        Use check_availability with the Last Expiry First Out
+        '''
+        return self.check_availability(cr, uid, ids, lefo=True, context=context)
+
+    def check_availability(self, cr, uid, ids, lefo=False, context=None):
         '''
         auto selection of location and lots for stock moves
 
@@ -579,7 +606,7 @@ class kit_creation(osv.osv):
                     create_move_ids.append(move_obj.create(cr, uid, values, context=context))
             ctx = context.copy()
             ctx['compute_child'] = obj.consider_child_locations_kit_creation
-            self.pool.get('stock.picking').check_availability_manually(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx, initial_location=default_location_id)
+            self.pool.get('stock.picking').check_availability_manually(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx, initial_location=default_location_id, lefo=lefo)
 
         return True
 

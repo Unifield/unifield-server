@@ -43,7 +43,7 @@
                                     <field name="uom_id"/>
                                     <field name="batch_management" string="BN mandatory"/>
                                     <field name="perishable" string="ED mandatory"/>
-                                    <field name="is_kc" string="KC"/>
+                                    <field name="is_kc" string="CC"/>
                                     <field name="is_dg" string="DG"/>
                                     <field name="is_cs" string="CS"/>
                                 </tree>
@@ -71,7 +71,7 @@
                                     <field name="quantity" on_change="on_change_quantity(quantity, product_uom_id)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
-                                    <field name="is_kc" string="KC"/>
+                                    <field name="is_kc" string="CC"/>
                                     <field name="is_dg" string="DG"/>
                                     <field name="is_cs" string="CS"/>
                                 </tree>
@@ -84,7 +84,7 @@
                                     <field name="quantity" on_change="on_change_quantity(quantity, product_uom_id)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
-                                    <field name="is_kc" string="KC"/>
+                                    <field name="is_kc" string="CC"/>
                                     <field name="is_dg" string="DG"/>
                                     <field name="is_cs" string="CS"/>
                                 </form>

@@ -39,7 +39,7 @@ class stock_picking_processor(osv.osv):
 
     def _get_moves_product_info(self, cr, uid, ids, field_name, args, context=None):
         """
-        Returns True of False for each line if the line contains a dangerous or keep cool product
+        Returns True of False for each line if the line contains a dangerous or cold chain product
         """
         # Objects
         line_obj = self.pool.get(self._columns['move_ids']._obj)
@@ -58,7 +58,7 @@ class stock_picking_processor(osv.osv):
                 'contains_dg': False,
                 'forbidden_product': False
             }
-            # KC
+            # CC
             kc_lines = line_obj.search(cr, uid, [
                 ('wizard_id', '=', wizard_id),
                 ('kc_check', '!=', ''),
@@ -131,11 +131,11 @@ class stock_picking_processor(osv.osv):
         'contains_kc': fields.function(
             _get_moves_product_info,
             method=True,
-            string='Contains Keep Cool goods',
+            string='Contains Cold Chain goods',
             type='boolean',
             store=False,
             readonly=True,
-            help="Is at least one line contains a keep cool product.",
+            help="Is at least one line contains a cool chain product.",
             multi='kc_dg',
         ),
     }
@@ -380,7 +380,7 @@ class stock_move_processor(osv.osv):
                                                  'perishable',
                                                  'type',
                                                  'subtype',
-                                                 'kc_txt',
+                                                 'is_kc',
                                                  'ssl_txt',
                                                  'dg_txt',
                                                  'cs_txt',],
@@ -398,7 +398,7 @@ class stock_move_processor(osv.osv):
                     'kit_check': product['type'] == 'product' and
                     product['subtype'] == 'kit' and not
                     product['perishable'],
-                    'kc_check': product['kc_txt'],
+                    'kc_check': product['is_kc'] and 'X',
                     'ssl_check': product['ssl_txt'],
                     'dg_check': product['dg_txt'],
                     'np_check': product['cs_txt'],
@@ -704,7 +704,7 @@ class stock_move_processor(osv.osv):
         'kc_check': fields.function(
             _get_product_info,
             method=True,
-            string='KC',
+            string='CC',
             type='char',
             size=8,
             store={
@@ -712,7 +712,7 @@ class stock_move_processor(osv.osv):
             },
             readonly=True,
             multi='product_info',
-            help="Ticked if the product is a Heat Sensitive Item",
+            help="Ticked if the product is a Cold Chain Item",
         ),
         'ssl_check': fields.function(
             _get_product_info,

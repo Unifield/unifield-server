@@ -349,7 +349,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
             ))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids)
-        self.action_assign(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context=context)
         return False
 
     @check_cp_rw
@@ -395,7 +395,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
             ))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids)
-        self.action_assign(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context=context)
         return False
 
 
