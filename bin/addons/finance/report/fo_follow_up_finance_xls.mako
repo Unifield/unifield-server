@@ -158,7 +158,7 @@
      </Style>
      <Style ss:ID="line_center_with_bg">
         <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
-         <Borders>
+        <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -543,6 +543,13 @@
         <Footer x:Data="Page &amp;P of &amp;N"/>
     </PageSetup>
     <Selected/>
+    <FreezePanes/>
+    <FrozenNoSplit/>
+    <SplitHorizontal>10</SplitHorizontal>
+    <TopRowBottomPane>10</TopRowBottomPane>
+    <SplitVertical>1</SplitVertical>
+    <LeftColumnRightPane>1</LeftColumnRightPane>
+    <ActivePane>0</ActivePane>
     <Panes>
         <Pane>
             <Number>3</Number>
