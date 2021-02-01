@@ -381,7 +381,7 @@ class update(osv.osv):
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm updates...'))
 
         has_updates = self.search_exists(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id), ('sequence', '=', False)], context=context)
-        sequence = None
+        sequence = False
         nb_updates = 0
         if has_updates:
             sequence = self._get_next_sequence(cr, uid, context=context)
