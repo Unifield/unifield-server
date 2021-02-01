@@ -97,6 +97,7 @@ class sale_order_line(osv.osv):
         has_filter = False
 
         operator = ['=', '!=']
+
         for x in domain:
             if x[0]  in fields_filter:
                 if x[1] not in operator:
@@ -104,6 +105,9 @@ class sale_order_line(osv.osv):
                 fields_filter[x[0]].update({'operator': x[1], 'filter': x[2]})
                 has_filter = True
             else:
+                # US-7407: OST custom filter: change done (db value) vs Closed (user value)
+                if x[0] == 'state' and x[2] and isinstance(x[2], basestring) and x[2].lower() == 'closed':
+                    x = ('state', x[1], 'done')
                 new_dom.append(x)
         ret = super(sale_order_line, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
         if has_filter:
