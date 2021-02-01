@@ -172,6 +172,8 @@ SELECT res_id, touched
         else:
             fields_to_fetch = [field]
 
+        fields_to_fetch.append('res_id')
+
         model_data_obj = self.pool.get('ir.model.data')
         sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
         try:
