@@ -26,11 +26,37 @@ class account_target_costcenter(osv.osv):
     _rec_name = 'cost_center_id'
     _trace = True
 
+    def _get_cc_code(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns a dict with key = target Cost Center id, and value = related Cost Center code.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for target_cc in self.browse(cr, uid, ids, fields_to_fetch=['cost_center_id'], context=context):
+            res[target_cc.id] = target_cc.cost_center_id.code or ''
+        return res
+
+    def _get_cc_to_check(self, cr, uid, analytic_acc_ids, context=None):
+        """
+        Returns the list of target CC for which the CC code should be updated.
+        """
+        if context is None:
+            context = {}
+        if isinstance(analytic_acc_ids, (int, long)):
+            analytic_acc_ids = [analytic_acc_ids]
+        return self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', 'in', analytic_acc_ids)],
+                                                                 order='NO_ORDER', context=context)
+
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True, select=1),
         'cost_center_id': fields.many2one('account.analytic.account', 'Code', domain=[('category', '=', 'OC')], required=True, select=1),
-        'cost_center_code': fields.related('cost_center_id', 'code', string="Code", type='char', size=24, store=True,
-                                           readonly=True, write_relate=False),
+        'cost_center_code': fields.function(_get_cc_code, method=True, string="Code", type='char', size=24, readonly=True,
+                                             store={
+                                                 'account.analytic.account': (_get_cc_to_check, ['code'], 10),
+                                             }),
         'cost_center_name': fields.related('cost_center_id', 'name', string="Name", readonly=True, type="text"),
         'is_target': fields.boolean('Is target'),
         'is_top_cost_center': fields.boolean('Top cost centre for budget consolidation'),
