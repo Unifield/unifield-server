@@ -2129,8 +2129,9 @@ class sale_order_line(osv.osv):
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
         'from_cancel_out': fields.boolean('OUT cancel'),
         'created_by_sync': fields.boolean(string='Created by Synchronisation'),
+        'sync_pushed_from_po': fields.boolean('Line added on upper-level PO'),
         'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
-        'ir_name_from_sync': fields.char(size=64, string='IR name to put on PO line after sync', invisible=True),
+        'ir_name_from_sync': fields.char(size=64, string='IR/FO name to put on PO line after sync', invisible=True),
         'counterpart_po_line_id': fields.many2one('purchase.order.line', 'PO line counterpart'),
         'pol_external_ref': fields.function(_get_pol_external_ref, method=True, type='char', size=256, string="Linked PO line's External Ref.", store=False),
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
@@ -2154,6 +2155,7 @@ class sale_order_line(osv.osv):
         'set_as_sourced_n': False,
         'stock_take_date': _get_stock_take_date,
         'created_by_sync': False,
+        'sync_pushed_from_po': False,
         'cancelled_by_sync': False,
         'ir_name_from_sync': '',
     }
@@ -2283,6 +2285,7 @@ class sale_order_line(osv.osv):
             'from_cancel_out': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'sync_pushed_from_po': False,
         })
 
         reset_if_not_set = ['ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'instance_sync_order_ref']
@@ -2325,6 +2328,7 @@ class sale_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
             'stock_take_date': False,
+            'sync_pushed_from_po': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
@@ -3050,22 +3054,23 @@ class sale_order_line(osv.osv):
         if vals.get('instance_sync_order_ref'):
             vals['sync_sourced_origin'] = self.pool.get('sync.order.label').read(cr, uid, vals['instance_sync_order_ref'], ['name'])['name']
 
-        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
+        so_line_id = super(sale_order_line, self).create(cr, uid, vals, context=context)
+
         if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
             if vals.get('order_id', False):
                 name = so_obj.browse(cr, uid, vals.get('order_id'), context=context).name
-                super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
+                super(sale_order_line, self).write(cr, uid, so_line_id, {'sync_order_line_db_id': name + "_" + str(so_line_id), } , context=context)
 
         if vals.get('stock_take_date'):
-            self._check_stock_take_date(cr, uid, so_line_ids, context=context)
+            self._check_stock_take_date(cr, uid, so_line_id, context=context)
 
         if order_id and not context.get('sync_message_execution'):
             # new line added on COO FO but validated, confirmed, sent after all other lines and reception done on project: new line added on project closed PO (KO)
             if self.pool.get('sale.order').search_exist(cr, uid, [('id', '=', order_id), ('client_order_ref', '!=', False), ('partner_type', 'in', ['internal', 'intermission', 'intersection']), ('procurement_request', '=', False)], context=context):
-                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', so_line_ids, {},
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', so_line_id, {},
                                                                                       'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context, force_domain=True)
 
-        return so_line_ids
+        return so_line_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """

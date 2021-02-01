@@ -160,7 +160,7 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
             res[pol.id] = {
                 'customer_ref': pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False,
-                'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.name or '',
+                'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.name or '',
             }
 
         return res
@@ -566,7 +566,7 @@ class purchase_order_line(osv.osv):
         'validation_date': fields.date('Validation Date', readonly=True),
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
-        'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
+        'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR/FO name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
     }
 
     _defaults = {

@@ -1624,6 +1624,14 @@ class stock_move(osv.osv):
 
             if pick_subtype == 'picking' and pick_state == 'draft':
                 pick_to_check.add(move.picking_id.id)
+                if move.qty_processed and not move.product_qty and move.state == 'assigned':
+                    continue
+                if move.qty_processed and move.state not in ('done', 'cancel'):
+                    # remaining qty cancelled in draft pick, sotck.move will be in Cancel state, create a assinged stock.move to display the qty already processed
+                    ctx_copy = context.copy()
+                    ctx_copy['keepLineNumber'] = True
+                    self.copy(cr, uid, move.id, {'product_uos_qty': 0, 'product_qty': 0, 'state': 'assigned', 'qty_processed': move.qty_processed, 'qty_to_process': move.qty_processed} , context=ctx_copy)
+
                 pick_obj._create_sync_message_for_field_order(cr, uid, move.picking_id, context=context)
 
             if pick_type == 'in' and move.purchase_line_id:
@@ -1716,7 +1724,7 @@ class stock_move(osv.osv):
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
 
-        self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
+        self.write(cr, uid, list(set(ids) - set(move_to_done)), {'state': 'cancel', 'move_dest_id': False})
 
         if not context.get('call_unlink',False):
             picking_to_write = []
