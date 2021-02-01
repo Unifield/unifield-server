@@ -111507,3 +111507,28 @@ msgstr "Devise Fact. Fourniss."
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:279
 msgid "Partners:"
 msgstr "Partenaires :"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:407
+msgid "ORDER INFORMATION"
+msgstr "INFORMATION COMMANDE"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:408
+msgid "DETAILS SUPPLIER INVOICES"
+msgstr "DÉTAILS FACTURES FOURNISSEUR"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:409
+msgid "DETAILS FIELD ORDERS"
+msgstr "DÉTAILS COMMANDES DE TERRAIN"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:410
+msgid "DETAILS STOCK TRANSFER VOUCHERS"
+msgstr "DÉTAILS BONS CLIENT"
+
+#. module: finance
+#: report:addons/finance/report/fo_follow_up_finance_xls.mako:410
+msgid "DETAILS INTERMISSION VOUCHERS OUT"
+msgstr "DÉTAILS BONS INTERMISSION OUT"

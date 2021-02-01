@@ -37,7 +37,33 @@
         <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
     </Style>
 
-    <!-- Line header -->
+    <!-- Line big header without background color -->
+    <Style ss:ID="line_big_header">
+        <Alignment ss:Vertical="Center" ss:Horizontal="Center" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#FF0000" ss:Bold="1"/>
+        <Interior/>
+    </Style>
+
+    <!-- Line big header with background color -->
+    <Style ss:ID="line_big_header_with_bg">
+        <Alignment ss:Vertical="Center" ss:Horizontal="Center" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#FF0000" ss:Bold="1"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+    </Style>
+
+    <!-- Line header without background color -->
     <Style ss:ID="line_header">
         <Alignment ss:Vertical="Center" ss:Horizontal="Center" ss:WrapText="1"/>
         <Borders>
@@ -48,6 +74,19 @@
         </Borders>
         <Font x:Family="Swiss" ss:Size="7" ss:Bold="1"/>
         <Interior/>
+    </Style>
+
+    <!-- Line header with background color -->
+    <Style ss:ID="line_header_with_bg">
+        <Alignment ss:Vertical="Center" ss:Horizontal="Center" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font x:Family="Swiss" ss:Size="7" ss:Bold="1"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
     </Style>
 
     <!-- Lines -->
@@ -61,7 +100,18 @@
         </Borders>
         <Font ss:Size="8" ss:Color="#0000FF"/>
     </Style>
-    <Style ss:ID="line_left_green">
+    <Style ss:ID="line_left_with_bg">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#0000FF"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="line_left_green_with_bg">
         <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -70,6 +120,7 @@
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
         <Font ss:Size="8" ss:Color="#1A721A"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
     </Style>
     <Style ss:ID="line_right">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
@@ -82,6 +133,18 @@
         <Font ss:Size="8" ss:Color="#0000FF"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
+    <Style ss:ID="line_right_with_bg">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#0000FF"/>
+        <NumberFormat ss:Format="#,##0.00"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+     </Style>
      <Style ss:ID="line_center">
         <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
          <Borders>
@@ -92,8 +155,20 @@
         </Borders>
         <Font ss:Size="8" ss:Color="#0000FF"/>
         <NumberFormat ss:Format="#,##0.00"/>
-    </Style>
-    <Style ss:ID="line_left_date">
+     </Style>
+     <Style ss:ID="line_center_with_bg">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+         <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#0000FF"/>
+        <NumberFormat ss:Format="#,##0.00"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+     </Style>
+     <Style ss:ID="line_left_date">
         <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Borders>
@@ -327,51 +402,62 @@
 
         <Row></Row>
 
+        <% is_intermission = context and context.get('is_intermission') %>
+        <Row>
+            <Cell ss:StyleID="line_big_header" ss:MergeAcross="2"><Data ss:Type="String">${_('ORDER INFORMATION')|x}</Data></Cell>
+            <Cell ss:StyleID="line_big_header_with_bg" ss:MergeAcross="12"><Data ss:Type="String">${_('DETAILS SUPPLIER INVOICES')|x}</Data></Cell>
+            <Cell ss:StyleID="line_big_header" ss:MergeAcross="7"><Data ss:Type="String">${_('DETAILS FIELD ORDERS')|x}</Data></Cell>
+            <Cell ss:StyleID="line_big_header_with_bg" ss:MergeAcross="11"><Data ss:Type="String">${is_intermission and _('DETAILS INTERMISSION VOUCHERS OUT') or _('DETAILS STOCK TRANSFER VOUCHERS')|x}</Data></Cell>
+        </Row>
+
         <%
-            is_intermission = context and context.get('is_intermission')
             header_list = [
-                _('FO number'),
-                _('Customer name'),
-                _('Customer ref'),
-                _('PO number'),
-                _('Supplier name'),
-                _('Supplier invoice number'),
-                _('SI line number'),
-                _('SI line description'),
-                _('SI line unit price'),
-                _('SI line quantity'),
-                _('SI line expense account code'),
-                _('SI line sub total'),
-                _('SI currency'),
-                _('SI line sub total functional currency'),
-                _('SI status'),
-                _('Reverse corresponding AJI? (SI)'),
-                _('FO status'),
-                _('FO line status'),
-                _('FO line number'),
-                _('Product code'),
-                _('Product description'),
-                _('Qty ordered'),
-                _('UoM ordered'),
-                _('Qty delivered'),
-                _('Transport file'),
-                is_intermission and _('IVO number') or _('STV number'),
-                is_intermission and _('IVO line number') or _('STV line number'),
-                is_intermission and _('IVO line description') or _('STV line description'),
-                is_intermission and _('IVO line unit price') or _('STV line unit price'),
-                is_intermission and _('IVO line quantity') or _('STV line quantity'),
-                is_intermission and _('IVO line expense account code') or _('STV line expense account code'),
-                is_intermission and _('IVO line sub total') or _('STV line sub total'),
-                is_intermission and _('IVO currency') or _('STV currency'),
-                is_intermission and _('IVO line sub total functional currency') or _('STV line sub total functional currency'),
-                is_intermission and _('IVO status') or _('STV status'),
-                is_intermission and _('Reverse corresponding AJI? (IVO)') or _('Reverse corresponding AJI? (STV)'),
+                ('no_bg', _('FO number')),
+                ('no_bg', _('Customer name')),
+                ('no_bg', _('Customer ref')),
+                ('bg', _('PO number')),
+                ('bg', _('Supplier name')),
+                ('bg', _('Supplier invoice number')),
+                ('bg', _('SI line number')),
+                ('bg', _('SI line description')),
+                ('bg', _('SI line unit price')),
+                ('bg', _('SI line quantity')),
+                ('bg', _('SI line expense account code')),
+                ('bg', _('SI line sub total')),
+                ('bg', _('SI currency')),
+                ('bg', _('SI line sub total functional currency')),
+                ('bg', _('SI status')),
+                ('bg', _('Reverse corresponding AJI? (SI)')),
+                ('no_bg', _('FO status')),
+                ('no_bg', _('FO line status')),
+                ('no_bg', _('FO line number')),
+                ('no_bg', _('Product code')),
+                ('no_bg', _('Product description')),
+                ('no_bg', _('Qty ordered')),
+                ('no_bg', _('UoM ordered')),
+                ('no_bg', _('Qty delivered')),
+                ('bg', _('Transport file')),
+                ('bg', is_intermission and _('IVO number') or _('STV number')),
+                ('bg', is_intermission and _('IVO line number') or _('STV line number')),
+                ('bg', is_intermission and _('IVO line description') or _('STV line description')),
+                ('bg', is_intermission and _('IVO line unit price') or _('STV line unit price')),
+                ('bg', is_intermission and _('IVO line quantity') or _('STV line quantity')),
+                ('bg', is_intermission and _('IVO line expense account code') or _('STV line expense account code')),
+                ('bg', is_intermission and _('IVO line sub total') or _('STV line sub total')),
+                ('bg', is_intermission and _('IVO currency') or _('STV currency')),
+                ('bg', is_intermission and _('IVO line sub total functional currency') or _('STV line sub total functional currency')),
+                ('bg', is_intermission and _('IVO status') or _('STV status')),
+                ('bg', is_intermission and _('Reverse corresponding AJI? (IVO)') or _('Reverse corresponding AJI? (STV)')),
             ]
         %>
-
         <Row>
         % for h in header_list:
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${h|x}</Data></Cell>
+            % if h[0] == 'bg':
+                <Cell ss:StyleID="line_header_with_bg">
+            % else:
+                <Cell ss:StyleID="line_header">
+            % endif
+            <Data ss:Type="String">${h[1]|x}</Data></Cell>
         % endfor
         </Row>
 
@@ -380,32 +466,32 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_number']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['customer_name']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['customer_reference']|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['po_number']|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['supplier_name']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['po_number']|x}</Data></Cell>
+                <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['supplier_name']|x}</Data></Cell>
                 % if line['si']:
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_number']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_line_number']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_line_description']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_unit_price']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_quantity']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_line_account_code']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_subtotal']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_currency']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['si_line_subtotal_fctal']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['si_state']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['reverse_aji_si']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['si_number']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['si_line_number']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['si_line_description']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_with_bg"><Data ss:Type="Number">${line['si_line_unit_price']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_with_bg"><Data ss:Type="Number">${line['si_line_quantity']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['si_line_account_code']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_with_bg"><Data ss:Type="Number">${line['si_line_subtotal']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['si_currency']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_with_bg"><Data ss:Type="Number">${line['si_line_subtotal_fctal']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['si_state']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_center_with_bg"><Data ss:Type="String">${line['reverse_aji_si']|x}</Data></Cell>
                 % else:
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_center_with_bg"><Data ss:Type="String"></Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_status']|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['fo_line_status']|x}</Data></Cell>
@@ -416,34 +502,34 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['uom_ordered']|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['qty_delivered']|x}</Data></Cell>
                  % if line['is_delivered']:
-                    <Cell ss:StyleID="line_left_green"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_green_with_bg"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
                 % else:
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['transport_file']|x}</Data></Cell>
                 % endif
                 % if line['out_inv']:
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_number']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_line_number']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_line_description']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['out_inv_line_unit_price']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['out_inv_line_quantity']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_line_account_code']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['out_inv_line_subtotal']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_currency']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['out_inv_line_subtotal_fctal']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['out_inv_state']|x}</Data></Cell>
-                    <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['reverse_aji_out_inv']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['out_inv_number']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['out_inv_line_number']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['out_inv_line_description']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_with_bg"><Data ss:Type="Number">${line['out_inv_line_unit_price']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_with_bg"><Data ss:Type="Number">${line['out_inv_line_quantity']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['out_inv_line_account_code']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_with_bg"><Data ss:Type="Number">${line['out_inv_line_subtotal']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['out_inv_currency']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_with_bg"><Data ss:Type="Number">${line['out_inv_line_subtotal_fctal']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String">${line['out_inv_state']|x}</Data></Cell>
+                    <Cell ss:StyleID="line_center_with_bg"><Data ss:Type="String">${line['reverse_aji_out_inv']|x}</Data></Cell>
                 % else:
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                    <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_left_with_bg"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_center_with_bg"><Data ss:Type="String"></Data></Cell>
                 % endif
             </Row>
         % endfor
