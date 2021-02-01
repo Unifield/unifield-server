@@ -2290,16 +2290,8 @@ class stock_move(osv.osv):
 
                 self.write(cr, uid, [move.id], {'state': 'done'}, context=context)
 
-            # we assign automatically the lot to the kit only for products perishable at least (perishable and batch management)
-            if move.product_id.perishable:
-                # openERP bug -> fields.function integer returns a string
-                self.automatic_assignment(cr, uid, [move.id], context=context)
-                #if move.hidden_creation_qty_stock_move in [1, '1']:
-                # if only one kit, automatic assignement
-                #    self.automatic_assignment(cr, uid, [move.id], context=context)
-                #else:
-                # multiple kit, we open the assignation wizard
-                #    return self.assign_to_kit(cr, uid, ids, context=context)
+            # we assign automatically
+            self.automatic_assignment(cr, uid, [move.id], context=context)
 
         # refresh the vue so the completed flag is updated and Confirm Kitting button possibly appears
         data_obj = self.pool.get('ir.model.data')
