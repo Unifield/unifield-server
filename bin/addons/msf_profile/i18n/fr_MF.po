@@ -5884,6 +5884,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:replenishment.parent.segment,description_parent_seg:0
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:487
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:533
+#: field:account.model.line,name:0
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -20924,7 +20925,6 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: field:account.account.template,name:0
 #: report:account.analytic.account.inverted.balance:0
 #: field:account.chart.template,name:0
-#: field:account.model.line,name:0
 #: field:account.subscription,name:0
 #: report:addons/account/report/account_liquidity_balance.mako:162
 #: view:account.mcdb:0
