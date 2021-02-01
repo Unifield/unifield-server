@@ -559,5 +559,7 @@
     <ProtectObjects>False</ProtectObjects>
     <ProtectScenarios>False</ProtectScenarios>
 </WorksheetOptions>
+<AutoFilter x:Range="R10C1:R10C36" xmlns="urn:schemas-microsoft-com:office:excel">
+</AutoFilter>
 </ss:Worksheet>
 </Workbook>
