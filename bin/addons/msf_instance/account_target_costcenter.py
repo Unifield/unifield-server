@@ -56,6 +56,7 @@ class account_target_costcenter(osv.osv):
         'cost_center_code': fields.function(_get_cost_center_code, method=True, string="Code", type='char', size=24, readonly=True,
                                             store={
                                                 'account.analytic.account': (_get_target_cc_to_update, ['code'], 10),
+                                                'account.target.costcenter': (lambda self, cr, uid, ids, c=None: ids, ['cost_center_id'], 20),
                                             }),
         'cost_center_name': fields.related('cost_center_id', 'name', string="Name", readonly=True, type="text"),
         'is_target': fields.boolean('Is target'),
