@@ -1535,6 +1535,7 @@ class purchase_order(osv.osv):
                     'company_id': o.company_id.id,
                     'main_purchase_id': o.id,
                     'purchase_ids': [(4, o.id)],
+                    'from_supply': True,
                 }
 
                 if o.analytic_distribution_id:
