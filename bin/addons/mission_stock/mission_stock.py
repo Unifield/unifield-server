@@ -940,6 +940,36 @@ class stock_mission_report(osv.osv):
             coordo_id = self.pool.get('msf.instance').browse(cr, uid, coordo[0], context=context).instance
 
         for report_id in report_ids:
+            cr.execute('''
+                update stock_mission_report_line line
+                    set
+                        product_state=state.code,
+                        product_active=prod.active,
+                        international_status_code=international_status.code,
+                        state_ud=prod.state_ud
+                    from
+                        product_product prod, product_template tmp, product_international_status international_status, product_status state
+                    where
+                        tmp.id = prod.product_tmpl_id and
+                        prod.id = line.product_id and
+                        state.id = tmp.state and
+                        international_status.id = prod.international_status and
+                        (line.product_state != state.code or line.product_active != prod.active or line.international_status_code!=international_status.code or line.state_ud!=prod.state_ud) and
+                        line.mission_report_id = %s
+                        returning line.id
+                ''', (report_id,))
+            line_to_touch = [x[0] for x in cr.fetchall()]
+            if line_to_touch:
+                cr.execute('''update ir_model_data set
+                        last_modification=NOW(),
+                        touched='[''product_state'', ''product_active'', ''international_status_code'', ''state_ud'']'
+                    where
+                        model='stock.mission.report.line' and
+                        module='sd' and
+                        res_id in %s
+                    ''', (tuple(line_to_touch), ))
+
+
             # In-Pipe moves
             cr.execute('''
               SELECT product_id, sum(product_qty), uom_id, p_name

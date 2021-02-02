@@ -1629,7 +1629,6 @@ class product_attributes(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
         int_stat_obj = self.pool.get('product.international.status')
 
@@ -1706,18 +1705,6 @@ class product_attributes(osv.osv):
         check_reactivate = False
         prod_state = ''
         if 'state_ud' in vals:
-            # just update SMRL that belongs to our instance:
-            local_smrl_ids = smrl_obj.search(cr, uid, [
-                ('product_id', 'in', ids),
-                ('full_view', '=', False),
-                ('mission_report_id.local_report', '=', True),
-                ('state_ud', '!=', vals['state_ud'] or ''),
-            ], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=no_sync_context)
-
             if not context.get('sync_update_execution'):
                 if self.mapping_ud.get(vals['state_ud']):
                     prod_state =  self.mapping_ud[vals['state_ud']]
@@ -1728,20 +1715,7 @@ class product_attributes(osv.osv):
                 elif 'oc_subscription' not in vals:
                     check_reactivate = True
 
-
-        if intstat_code:
-            # just update SMRL that belongs to our instance:
-            local_smrl_ids = smrl_obj.search(cr, uid, [
-                ('international_status_code', '!=', intstat_code),
-                ('product_id', 'in', ids),
-                ('full_view', '=', False),
-                ('mission_report_id.local_report', '=', True)
-            ], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=no_sync_context)
-        else:
+        if not intstat_code:
             unidata_product = self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context)
 
 
@@ -1825,30 +1799,12 @@ class product_attributes(osv.osv):
                 ids = list(set(ids) - ud_unable_to_inactive)
                 ud_unable_to_inactive = list(ud_unable_to_inactive)
 
-        if 'state' in vals:
-            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
-
         if ids and 'active' in vals:
             # to manage sync update generation on active field
             fields_to_update = ['active_change_date=%(now)s']
             if context.get('sync_update_execution'):
                 fields_to_update += ['active_sync_change_date=%(now)s']
             cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
-
-            local_smrl_ids = smrl_obj.search(cr, uid, [
-                ('product_id', 'in', ids),
-                ('full_view', '=', False),
-                ('mission_report_id.local_report', '=', True),
-                ('product_active', '!=', vals['active'])
-            ], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_active': vals['active']}, context=no_sync_context)
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
@@ -1876,12 +1832,6 @@ class product_attributes(osv.osv):
             vals['active'] = True
             vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
             super(product_attributes, self).write(cr, uid, ud_unable_to_inactive, vals, context=context)
-
-            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', 'phase_out'), ('product_id', 'in', ud_unable_to_inactive), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': 'phase_out'}, context=no_sync_context)
 
         if product_uom_categ:
             uom_categ = 'uom_id' in vals and vals['uom_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_id'], context=context).category_id.id or False
