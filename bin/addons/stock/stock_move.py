@@ -214,7 +214,7 @@ class stock_move(osv.osv):
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         '''
-        function for KC/SSL/DG/NP products
+        function for CC/SSL/DG/NP products
         '''
         # objects
         kit_obj = self.pool.get('composition.kit')
@@ -231,7 +231,7 @@ class stock_move(osv.osv):
 
         product_list_dict = self.pool.get('product.product').read(cr, uid,
                                                                   list(product_ids),
-                                                                  ['kc_txt',
+                                                                  ['is_kc',
                                                                    'ssl_txt',
                                                                    'dg_txt',
                                                                    'cs_txt',
@@ -246,8 +246,8 @@ class stock_move(osv.osv):
             stock_move_id = stock_move_dict['id']
             product_id = stock_move_dict['product_id'][0]
             product = product_dict[product_id]
-            # keep cool
-            result[stock_move_id]['kc_check'] = product['kc_txt']
+            # cold chain
+            result[stock_move_id]['kc_check'] = product['is_kc'] and 'X' or ''
             # ssl
             result[stock_move_id]['ssl_check'] = product['ssl_txt']
             # dangerous goods
@@ -276,7 +276,7 @@ class stock_move(osv.osv):
 
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
-        return 'KC' if cold chain or 'DG' if dangerous goods
+        return 'CC' if cold chain or 'DG' if dangerous goods
         '''
         result = {}
         for id in ids:
@@ -284,8 +284,8 @@ class stock_move(osv.osv):
 
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id:
-                if move.product_id.kc_txt:
-                    result[move.id] += move.product_id.is_kc and _('KC') or '%s ?'%_('KC')
+                if move.product_id.is_kc:
+                    result[move.id] += move.product_id.is_kc and _('CC') or ''
                 if move.product_id.dg_txt:
                     if result[move.id]:
                         result[move.id] += ' / '
@@ -390,10 +390,10 @@ class stock_move(osv.osv):
             result[move['id']] = default_values
             if move['product_id']:
                 product = product_obj.read(cr, uid, move['product_id'][0],
-                                           ['dg_txt', 'kc_txt', 'cs_txt'], context=context)
+                                           ['dg_txt', 'is_kc', 'cs_txt'], context=context)
             result[move['id']]['is_dangerous_good'] = move['product_id'] and product['dg_txt'] or ''
-            # keep cool - if heat_sensitive_item is True
-            result[move['id']]['is_keep_cool'] = move['product_id'] and product['kc_txt'] or ''
+            # cold chain
+            result[move['id']]['is_keep_cool'] = move['product_id'] and product['is_kc'] and 'X' or ''
             # narcotic
             result[move['id']]['is_narcotic'] = move['product_id'] and product['cs_txt'] or ''
         return result
@@ -548,10 +548,10 @@ class stock_move(osv.osv):
         'kol_lot_manual': fields.boolean(string='The batch is set manually'),
 
         # specific rule
-        'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
+        'kc_dg': fields.function(_kc_dg, method=True, string='CC/DG', type='char'),
         'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
         'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='char', size=8, readonly=True, multi="m"),
+        'kc_check': fields.function(_get_checks_all, method=True, string='CC', type='char', size=8, readonly=True, multi="m"),
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='char', size=8, readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='char', size=8, readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='CS', type='char', size=8, readonly=True, multi="m"),
@@ -589,7 +589,7 @@ class stock_move(osv.osv):
         'num_of_packs': fields.function(_get_num_of_pack, method=True, type='integer', string='#Packs'),  # old_multi get_vals
         'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
         'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
-        'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
+        'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Cold Chain', multi='get_danger',),
         'is_narcotic': fields.function(_get_danger, method=True, type='char', size=8, string='CS', multi='get_danger',),
         'sale_order_line_number': fields.function(_vals_get,
                                                   method=True, type='integer', string='Sale Order Line Number',
@@ -1337,18 +1337,20 @@ class stock_move(osv.osv):
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
-
-    def action_assign(self, cr, uid, ids, *args):
+    def action_assign(self, cr, uid, ids, lefo=False, context=None):
         """ Changes state to confirmed or waiting.
         @return: List of values
         """
+        if context is None:
+            context = {}
+
         todo = []
         for move in self.browse(cr, uid, ids, fields_to_fetch=['state', 'already_confirmed']):
             if not move.already_confirmed:
                 self.action_confirm(cr, uid, [move.id])
             if move.state in ('confirmed', 'waiting'):
                 todo.append(move.id)
-        res = self.check_assign(cr, uid, todo)
+        res = self.check_assign(cr, uid, todo, lefo=lefo)
         return res
 
     def force_assign_manual(self, cr, uid, ids, context=None):
@@ -1401,24 +1403,18 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
-        self.write(cr, uid, ids, {'qty_to_process': 0,'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
         res = []
-
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
-                          'product_qty', 'product_uos_qty', 'location_dest_id',
+                          'product_qty', 'product_uos_qty', 'location_dest_id', 'state',
                           'prodlot_id', 'asset_id', 'composition_list_id', 'line_number', 'in_out_updated', 'sale_line_id']
 
         qty_data = {}
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
+            if move_data['state'] != 'assigned':
+                continue
+            self.write(cr, uid, move_data['id'], {'qty_to_process': 0, 'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
             picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
-
-            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
-                move_data['line_number'],
-                move_data['id'],
-                picking_id,
-                move_data['picking_id'] and move_data['picking_id'][1] or '',
-            ))
 
             for f in fields_to_read:
                 if f in ('product_qty', 'product_uos_qty'):
@@ -1470,14 +1466,19 @@ class stock_move(osv.osv):
                 #self.write(cr, uid, [move_data['id']], {'state': 'draft'}, context=context)
                 self.unlink(cr, uid, move_data['id'], context=context, force=True)
 
-        return res
+            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
+                move_data['line_number'],
+                move_data['id'],
+                picking_id,
+                move_data['picking_id'] and move_data['picking_id'][1] or '',
+            ))
 
-        return True
+        return res
 
     #
     # Duplicate stock.move
     #
-    def check_assign(self, cr, uid, ids, context=None):
+    def check_assign(self, cr, uid, ids, lefo=False, context=None):
         """ Checks the product type and accordingly writes the state.
         @return: No. of moves done
         """
@@ -1504,7 +1505,7 @@ class stock_move(osv.osv):
                 prod_lot = False
                 if bn_needed and move.prodlot_id:
                     prod_lot = move.prodlot_id.id
-                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True, prod_lot=prod_lot)
+                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True, prod_lot=prod_lot, lefo=lefo)
                 if res:
                     if move.location_id.id == move.location_dest_id.id:
                         state = 'done'
@@ -1623,6 +1624,14 @@ class stock_move(osv.osv):
 
             if pick_subtype == 'picking' and pick_state == 'draft':
                 pick_to_check.add(move.picking_id.id)
+                if move.qty_processed and not move.product_qty and move.state == 'assigned':
+                    continue
+                if move.qty_processed and move.state not in ('done', 'cancel'):
+                    # remaining qty cancelled in draft pick, sotck.move will be in Cancel state, create a assinged stock.move to display the qty already processed
+                    ctx_copy = context.copy()
+                    ctx_copy['keepLineNumber'] = True
+                    self.copy(cr, uid, move.id, {'product_uos_qty': 0, 'product_qty': 0, 'state': 'assigned', 'qty_processed': move.qty_processed, 'qty_to_process': move.qty_processed} , context=ctx_copy)
+
                 pick_obj._create_sync_message_for_field_order(cr, uid, move.picking_id, context=context)
 
             if pick_type == 'in' and move.purchase_line_id:
@@ -1715,7 +1724,7 @@ class stock_move(osv.osv):
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
 
-        self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
+        self.write(cr, uid, list(set(ids) - set(move_to_done)), {'state': 'cancel', 'move_dest_id': False})
 
         if not context.get('call_unlink',False):
             picking_to_write = []
@@ -2167,7 +2176,7 @@ class stock_move(osv.osv):
             if new_todo:
                 todo = new_todo
             # we rechech availability
-            self.action_assign(cr, uid, todo, context)
+            self.action_assign(cr, uid, todo, context=context)
         return ret
 
     def button_stock(self, cr, uid, ids, context=None):
@@ -2207,7 +2216,7 @@ class stock_move(osv.osv):
             new_todo = self.cancel_assign(cr, uid, todo, context=context)
             if new_todo:
                 todo = new_todo
-            # we rechech availability
+            # we research availability
             self.action_assign(cr, uid, todo)
         return True
 
@@ -2289,16 +2298,8 @@ class stock_move(osv.osv):
 
                 self.write(cr, uid, [move.id], {'state': 'done'}, context=context)
 
-            # we assign automatically the lot to the kit only for products perishable at least (perishable and batch management)
-            if move.product_id.perishable:
-                # openERP bug -> fields.function integer returns a string
-                self.automatic_assignment(cr, uid, [move.id], context=context)
-                #if move.hidden_creation_qty_stock_move in [1, '1']:
-                # if only one kit, automatic assignement
-                #    self.automatic_assignment(cr, uid, [move.id], context=context)
-                #else:
-                # multiple kit, we open the assignation wizard
-                #    return self.assign_to_kit(cr, uid, ids, context=context)
+            # we assign automatically
+            self.automatic_assignment(cr, uid, [move.id], context=context)
 
         # refresh the vue so the completed flag is updated and Confirm Kitting button possibly appears
         data_obj = self.pool.get('ir.model.data')

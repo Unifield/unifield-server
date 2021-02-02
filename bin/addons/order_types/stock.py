@@ -213,7 +213,7 @@ class stock_picking(osv.osv):
         fields_as_ro = False
         for pick in self.browse(cr, uid, ids, context=context):
             if pick.type == 'in':
-                fields_as_ro = pick.partner_id.partner_type == 'esc' and pick.state == 'updated' or pick.partner_id.partner_type in ('internal', 'intermission', 'section')  and pick.state == 'shipped'
+                fields_as_ro = pick.partner_id.partner_type == 'esc' and pick.state == 'updated'
 
             if pick.type in ['in', 'out']:
                 if not context.get('yesorno', False):
