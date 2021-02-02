@@ -39,7 +39,7 @@ class account_target_costcenter(osv.osv):
             res[target_cc.id] = target_cc.cost_center_id.code or ''
         return res
 
-    def _get_cc_to_check(self, cr, uid, analytic_acc_ids, context=None):
+    def _get_target_cc_to_check(self, cr, uid, analytic_acc_ids, context=None):
         """
         Returns the list of target CC for which the CC code should be updated.
         """
@@ -54,9 +54,9 @@ class account_target_costcenter(osv.osv):
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True, select=1),
         'cost_center_id': fields.many2one('account.analytic.account', 'Code', domain=[('category', '=', 'OC')], required=True, select=1),
         'cost_center_code': fields.function(_get_cc_code, method=True, string="Code", type='char', size=24, readonly=True,
-                                             store={
-                                                 'account.analytic.account': (_get_cc_to_check, ['code'], 10),
-                                             }),
+                                            store={
+                                                'account.analytic.account': (_get_target_cc_to_check, ['code'], 10),
+                                            }),
         'cost_center_name': fields.related('cost_center_id', 'name', string="Name", readonly=True, type="text"),
         'is_target': fields.boolean('Is target'),
         'is_top_cost_center': fields.boolean('Top cost centre for budget consolidation'),
