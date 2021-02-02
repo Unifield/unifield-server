@@ -38,7 +38,7 @@ class sale_order_line(osv.osv):
 
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
-        return 'KC' if cold chain or 'DG' if dangerous goods
+        return 'CC' if cold chain or 'DG' if dangerous goods
         '''
         result = {}
         for id in ids:
@@ -46,8 +46,8 @@ class sale_order_line(osv.osv):
 
         for sol in self.browse(cr, uid, ids, context=context):
             if sol.product_id:
-                if sol.product_id.kc_txt:
-                    result[sol.id] += sol.product_id.is_kc and _('KC') or '%s ?' % _('KC')
+                if sol.product_id.is_kc:
+                    result[sol.id] += sol.product_id.is_kc and _('CC') or ''
                 if sol.product_id.dg_txt:
                     if result[sol.id]:
                         result[sol.id] += ' / '
@@ -55,7 +55,7 @@ class sale_order_line(osv.osv):
 
         return result
 
-    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
+    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='CC/DG', type='char'),}
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
                           uom=False, qty_uos=0, uos=False, name='', partner_id=False,
@@ -129,7 +129,7 @@ class purchase_order_line(osv.osv):
 
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
-        return 'KC' if cold chain or 'DG' if dangerous goods
+        return 'CC' if cold chain or 'DG' if dangerous goods
         '''
         result = {}
         for id in ids:
@@ -137,8 +137,8 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.product_id:
-                if pol.product_id.kc_txt:
-                    result[pol.id] += pol.product_id.is_kc and _('KC') or '%s ?' % _('KC')
+                if pol.product_id.is_kc:
+                    result[pol.id] += pol.product_id.is_kc and _('CC') or ''
                 if pol.product_id.dg_txt:
                     if result[pol.id]:
                         result[pol.id] += ' / '
@@ -146,7 +146,7 @@ class purchase_order_line(osv.osv):
 
         return result
 
-    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
+    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='CC/DG', type='char'),}
 
 
 purchase_order_line()
@@ -780,8 +780,8 @@ class stock_inventory_line(osv.osv):
             elif product_obj.perishable:
                 result.setdefault('value', {})['hidden_perishable_mandatory'] = True
                 result.setdefault('value', {})['exp_check'] = True
-            # keep cool
-            result.setdefault('value', {})['kc_check'] = product_obj.kc_txt
+            # cold chain
+            result.setdefault('value', {})['kc_check'] = product_obj.is_kc and 'X' or ''
             # ssl
             result.setdefault('value', {})['ssl_check'] = product_obj.ssl_txt
             # dangerous goods
@@ -861,7 +861,7 @@ class stock_inventory_line(osv.osv):
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         '''
-        function for KC/SSL/DG/NP products
+        function for CC/SSL/DG/NP products
         '''
         result = {}
         for id in ids:
@@ -870,8 +870,8 @@ class stock_inventory_line(osv.osv):
                 result[id].update({f: False,})
 
         for obj in self.browse(cr, uid, ids, context=context):
-            # keep cool
-            result[obj.id]['kc_check'] = obj.product_id.kc_txt
+            # cold chain
+            result[obj.id]['kc_check'] = obj.product_id.is_kc and 'X' or ''
             # ssl
             result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
@@ -992,7 +992,7 @@ class stock_inventory_line(osv.osv):
         'kc_check': fields.function(
             _get_checks_all,
             method=True,
-            string='KC',
+            string='CC',
             type='char',
             size=8,
             readonly=True,

@@ -929,7 +929,7 @@ msgstr "Expiry Date #"
 #: code:addons/msf_doc_import/wizard/__init__.py:134
 #, python-format
 msgid "ppl_import_update_kc"
-msgstr "KC"
+msgstr "CC"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:134
