@@ -52,6 +52,18 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF20.0
+    def us_7866_fill_in_target_cc_code(self, cr, uid, *a, **b):
+        """
+        Fills in the new "cost_center_code" field of the Account Target Cost Centers.
+        """
+        cr.execute("""
+                   UPDATE account_target_costcenter t_cc
+                   SET cost_center_code = (SELECT code FROM account_analytic_account a_acc WHERE a_acc.id = t_cc.cost_center_id);
+                   """)
+        self._logger.warn('Cost Center Code updated in %s Target CC.' % (cr.rowcount,))
+        return True
+
     def us_7848_cold_chain(self, cr, uid, *a, **b):
         for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'return_ppl_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
             cr.execute("update %s set kc_check = '' where kc_check != ''" % (table, )) # not_a_user_entry
