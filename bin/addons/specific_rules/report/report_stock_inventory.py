@@ -334,16 +334,18 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         if report.prodlot_id:
             cond.append('prodlot_id=%(prodlot_id)s')
             values['prodlot_id'] = report.prodlot_id.id
+            with_zero = True
 
         if report.expiry_date:
             cond.append('expired_date=%(expiry_date)s')
             values['expiry_date'] = report.expiry_date
+            with_zero = True
 
         if report.stock_level_date:
             cond.append('date<%(stock_level_date)s')
             values['stock_level_date'] = '%s 23:59:59' % report.stock_level_date
 
-        if not report.product_list_id and report.display_0:
+        if (not report.product_list_id or not report.prodlot_id or not report.expiry_date) and report.display_0:
             with_zero = True
             to_date = datetime.now()
             if report.stock_level_date:
