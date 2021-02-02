@@ -323,8 +323,8 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
         if report.product_id:
             cond.append('product_id in %(product_ids)s')
+            full_prod_list = [report.product_id.id]
             values['product_ids'] = (report.product_id.id,)
-            with_zero = True
         elif report.product_list_id:
             cond.append('product_id in %(product_ids)s')
             full_prod_list = self.pool.get('product.product').search(self.cr, self.uid, [('list_ids', '=', report.product_list_id.id)], context=self.localcontext)
@@ -334,18 +334,16 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         if report.prodlot_id:
             cond.append('prodlot_id=%(prodlot_id)s')
             values['prodlot_id'] = report.prodlot_id.id
-            with_zero = True
 
         if report.expiry_date:
             cond.append('expired_date=%(expiry_date)s')
             values['expiry_date'] = report.expiry_date
-            with_zero = True
 
         if report.stock_level_date:
             cond.append('date<%(stock_level_date)s')
             values['stock_level_date'] = '%s 23:59:59' % report.stock_level_date
 
-        if (not report.product_list_id or not report.prodlot_id or not report.expiry_date) and report.display_0:
+        if not report.product_list_id and report.display_0:
             with_zero = True
             to_date = datetime.now()
             if report.stock_level_date:
@@ -445,7 +443,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                 'product_name': product_data[product_id].name,
                 'uom': product_data[product_id].uom_id.name,
                 'sum_value':  cost_price * rounded_qty,
-                'with_product_list': with_zero,
+                'with_zero': with_zero,
                 'lines': {},
             }
             total_value += final_result[product_code]['sum_value']
