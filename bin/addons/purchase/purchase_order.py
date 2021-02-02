@@ -142,7 +142,7 @@ class purchase_order(osv.osv):
                 # if all PO lines have been invoiced and the SI aren't in Draft anymore: invoiced rate must be 100%
                 # (event if some SI amounts have been lowered)
                 po_states = ['done']
-                if purchase.order_type == 'direct':  # DPO use case: CV and SI are both created at DPO confirmation
+                if purchase.order_type == 'direct' and purchase.po_version == 1:  # DPO v1 use case: CV and SI are both created at DPO confirmation
                     po_states = ['confirmed', 'confirmed_p', 'done']
                 if purchase.state in po_states and all(x.state != 'draft' for x in purchase.invoice_ids):
                     res[purchase.id] = 100.0
@@ -181,11 +181,11 @@ class purchase_order(osv.osv):
         res = {}
 
         for order in self.browse(cr, uid, ids, context=context):
-            # Direct PO is 100.00% received when a user confirm the reception at customer side
-            if order.order_type == 'direct' and order.state == 'done':
+            # Direct PO v1 is 100.00% received when a user confirm the reception at customer side
+            if order.po_version == 1 and order.order_type == 'direct' and order.state == 'done':
                 res[order.id] = 100.00
                 continue
-            elif order.order_type == 'direct' and order.state != 'done':
+            elif order.po_version == 1 and order.order_type == 'direct' and order.state != 'done':
                 res[order.id] = 0.00
                 continue
             res[order.id] = 0.00
@@ -901,8 +901,10 @@ class purchase_order(osv.osv):
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'show_default_msg': fields.boolean(string='Show PO Default Message'),
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
+        'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
     }
     _defaults = {
+        'po_version': 2,
         'split_during_sll_mig': False,
         'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
@@ -1045,10 +1047,11 @@ class purchase_order(osv.osv):
             elif vals.get('order_type') == 'loan':
                 vals.update({'invoice_method': 'manual'})
             elif vals.get('order_type') in ['direct']:
-                vals.update({'invoice_method': 'order'})
-                if vals.get('partner_id'):
-                    if self.pool.get('res.partner').read(cr, uid, vals.get('partner_id'), ['partner_type'], context=context)['partner_type'] == 'esc':
-                        vals.update({'invoice_method': 'manual'})
+                vals.update({'invoice_method': 'picking'})
+                if vals.get('partner_id') and self.pool.get('res.partner').read(cr, uid, vals.get('partner_id'), ['partner_type'], context=context)['partner_type'] == 'esc':
+                    vals.update({'invoice_method': 'manual'})
+                elif vals.get('dest_partner_id') and self.pool.get('res.partner').read(cr, uid, vals.get('dest_partner_id'), ['partner_type'], context=context)['partner_type'] == 'external':
+                    vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
 
@@ -1150,9 +1153,13 @@ class purchase_order(osv.osv):
                     vals.update({'invoice_method': partner_type == 'section' and 'picking' or 'manual'})
                 elif vals.get('order_type') == 'loan':
                     vals.update({'invoice_method': 'manual'})
-                elif vals.get('order_type') in ['direct', ] and partner_type != 'esc':
-                    vals.update({'invoice_method': 'order'})
-                elif vals.get('order_type') in ['direct', ] and partner_type == 'esc':
+                elif vals.get('order_type') in ['direct'] and partner_type != 'esc':
+                    dest_partner_type = res_partner_obj.read(cr, uid, int(vals.get('dest_partner_id', order['partner_id'][0])), ['partner_type'], context=context)['partner_type']
+                    if dest_partner_type == 'external':
+                        vals.update({'invoice_method': 'order'})
+                    else:
+                        vals.update({'invoice_method': 'picking'})
+                elif vals.get('order_type') in ['direct'] and partner_type == 'esc':
                     vals.update({'invoice_method': 'manual'})
                 else:
                     vals.update({'invoice_method': 'picking'})
@@ -2297,7 +2304,7 @@ class purchase_order(osv.osv):
             reason_type_id = get_reference('reason_type_in_kind_donation')
         return reason_type_id
 
-    def create_picking(self, cr, uid, order, context=None):
+    def create_picking(self, cr, uid, order, context=None, sourced_on_dpo=False):
         if context is None:
             context = {}
 
@@ -2315,6 +2322,8 @@ class purchase_order(osv.osv):
             'move_lines': [],
         }
 
+        if sourced_on_dpo:
+            values['dpo_incoming'] = True
         reason_type_id = self.get_reason_type_id(cr, uid, order, context)
         if reason_type_id:
             values.update({'reason_type_id': reason_type_id})
@@ -2372,6 +2381,8 @@ class purchase_order(osv.osv):
             'comment': pol.comment,
             'line_number': pol.line_number,
         }
+        if pol.from_dpo_line_id:
+            values['dpo_line_id'] = pol.from_dpo_line_id
 
         if incoming.reason_type_id:
             values.update({'reason_type_id': incoming.reason_type_id.id})

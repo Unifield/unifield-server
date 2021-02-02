@@ -223,6 +223,12 @@ class sale_order_line(osv.osv):
                 ('type', '=', 'out'),
                 ('product_qty', '!=', 0.0),
             ], context=context)
+            if not has_open_moves and sol.dpo_line_id:
+                # FO sourced to DPO has no OUT
+                has_open_moves = self.pool.get('purchase.order.line').search_exist(cr, uid, [
+                    ('linked_sol_id', '=', sol.id),
+                    ('state', 'not in', ['cancel', 'cancel_r', 'done'])
+                ], context=context)
 
         return not has_open_moves
 
@@ -461,47 +467,53 @@ class sale_order_line(osv.osv):
                 continue
 
             if linked_dpo_line:
-                picking_obj = self.pool.get('stock.picking')
-                # create or update PICK/OUT:
-                picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
+                po_line_record = self.pool.get('purchase.order.line').browse(cr, uid, linked_dpo_line[0], fields_to_fetch=['order_id'], context=context)
+                if po_line_record.order_id.po_version > 1:
+                    self.write(cr, uid, sol.id, {'dpo_line_id': linked_dpo_line[0]}, context=context)
+                else:
+                    """ deprecated (manage DPO created and validated_d before UF20.0) """
+                    picking_obj = self.pool.get('stock.picking')
+                    # create or update PICK/OUT:
+                    picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
 
-                # search for an existing PICK to use:
-                pick_to_use = self.get_existing_pick_for_dpo(cr, uid, sol.id, picking_data, context=context)
+                    # search for an existing PICK to use:
+                    pick_to_use = self.get_existing_pick_for_dpo(cr, uid, sol.id, picking_data, context=context)
 
-                # update sequence name:
-                seq_name = picking_data['seq_name']
-                del(picking_data['seq_name'])
+                    # update sequence name:
+                    seq_name = picking_data['seq_name']
+                    del(picking_data['seq_name'])
 
-                if not pick_to_use:
-                    picking_data['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_name)
-                    pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
-                    pick_name = picking_data['name']
-                    self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
-                        pick_to_use,
-                        pick_name,
-                        sol.order_id.procurement_request and _('Internal request') or _('Field order'),
-                        sol.order_id.id,
-                        sol.order_id.name,
-                    ))
+                    if not pick_to_use:
+                        picking_data['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_name)
+                        picking_data['dpo_out'] = True
+                        pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
+                        pick_name = picking_data['name']
+                        self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
+                            pick_to_use,
+                            pick_name,
+                            sol.order_id.procurement_request and _('Internal request') or _('Field order'),
+                            sol.order_id.id,
+                            sol.order_id.name,
+                        ))
 
-                # Get move data and create the move
-                move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sol.order_id, sol, pick_to_use, context=context)
-                move_data['dpo_line_id'] = linked_dpo_line[0]
-                move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
-                self.pool.get('stock.move').action_done(cr, uid, [move_id], context=context)
-                stock_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-                self.pool.get('stock.move').write(cr, uid, [move_id], {'location_id': stock_loc, 'location_dest_id': stock_loc}, context=context)
-                # set PICK to done
-                picking_obj.action_done(cr, uid, [pick_to_use], context=context)
+                    # Get move data and create the move
+                    move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sol.order_id, sol, pick_to_use, context=context)
+                    move_data['dpo_line_id'] = linked_dpo_line[0]
+                    move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
+                    self.pool.get('stock.move').action_done(cr, uid, [move_id], context=context)
+                    stock_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+                    self.pool.get('stock.move').write(cr, uid, [move_id], {'location_id': stock_loc, 'location_dest_id': stock_loc}, context=context)
+                    # set PICK to done
+                    picking_obj.action_done(cr, uid, [pick_to_use], context=context)
 
-                # Create STV / IVO
-                # Change Currency ??
-                if sol.order_partner_id.partner_type in ('section', 'intermission'):
-                    picking = picking_obj.browse(cr, uid, pick_to_use, context=context)
-                    move = self.pool.get('stock.move').browse(cr, uid, move_id, context=context)
-                    invoice_id, inv_type = picking_obj.action_invoice_create_header(cr, uid, picking, journal_id=False, invoices_group=False, type=False, use_draft=True, context=context)
-                    if invoice_id:
-                        picking_obj.action_invoice_create_line(cr, uid, picking, move, invoice_id, group=False, inv_type=inv_type, partner=sol.order_id.partner_id, context=context)
+                    # Create STV / IVO
+                    # Change Currency ??
+                    if sol.order_partner_id.partner_type in ('section', 'intermission'):
+                        picking = picking_obj.browse(cr, uid, pick_to_use, context=context)
+                        move = self.pool.get('stock.move').browse(cr, uid, move_id, context=context)
+                        invoice_id, inv_type = picking_obj.action_invoice_create_header(cr, uid, picking, journal_id=False, invoices_group=False, type=False, use_draft=True, context=context)
+                        if invoice_id:
+                            picking_obj.action_invoice_create_line(cr, uid, picking, move, invoice_id, group=False, inv_type=inv_type, partner=sol.order_id.partner_id, context=context)
 
             else:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)

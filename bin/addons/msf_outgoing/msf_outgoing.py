@@ -4206,9 +4206,13 @@ class stock_picking(osv.osv):
             if picking.type == 'in' and picking.purchase_id:
                 for stock_move in picking.move_lines:
                     if stock_move.purchase_line_id:
-                        if not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context):
-                            # all in lines processed for this po line
-                            wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+                        if picking.purchase_id.order_type != 'direct':
+                            if not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context):
+                                # all in lines processed for this po line
+                                wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+                        elif abs(stock_move.purchase_line_id.in_qty_remaining) < 0.001:
+                            if move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('id', '!=',  stock_move.id), ('state', '=', 'done')], context=context):
+                                wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
 
             # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):

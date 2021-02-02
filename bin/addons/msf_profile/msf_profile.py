@@ -52,6 +52,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF20.0
     def us_7848_cold_chain(self, cr, uid, *a, **b):
         for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'return_ppl_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
             cr.execute("update %s set kc_check = '' where kc_check != ''" % (table, )) # not_a_user_entry
@@ -64,6 +65,12 @@ class patch_scripts(osv.osv):
             """ % (table, )) # not_a_user_entry
         return True
 
+    def us_7749_migrate_dpo_flow(self, cr, uid, *a, **b):
+        # ignore old DPO IN: do not generate sync msg for old IN
+        cr.execute("update stock_picking set dpo_incoming='f' where dpo_incoming='t'")
+        cr.execute('update purchase_order set po_version=1')
+        cr.execute("update purchase_order set po_version=2, invoice_method='picking' where order_type='direct' and state in ('draft', 'validated')")
+        return True
 
     # UF19.0
     def us_7808_ocg_rename_esc(self, cr, uid, *a, **b):

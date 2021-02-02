@@ -464,8 +464,9 @@ class message_received(osv.osv):
                 arg = self.get_arg(message.arguments)
                 try:
                     fn = getattr(self.pool.get(model), method)
-                    context.update({'identifier': message.identifier})
-                    res = fn(cr, uid, message.source, *arg, context=context)
+                    new_ctx = context.copy()
+                    new_ctx.update({'identifier': message.identifier})
+                    res = fn(cr, uid, message.source, *arg, context=new_ctx)
                 except BaseException, e:
                     error = e # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)

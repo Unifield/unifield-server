@@ -100,7 +100,6 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         context['from_back_sync'] = True
         for pol in self.browse(cr, uid, ids, context=context):
             to_trigger = False
@@ -115,6 +114,7 @@ class purchase_order_line(osv.osv):
                     so_id = self.pool.get('sale.order').search(cr, uid, [
                         ('name', '=', pol.origin),
                         ('procurement_request', 'in', ['t', 'f']),
+                        ('state', 'not in', ['done', 'cancel']),
                     ], context=context)
                     so_id = so_id and so_id[0] or False
                 if not so_id:
@@ -124,6 +124,8 @@ class purchase_order_line(osv.osv):
                     to_trigger = True
                 create_line = True
             elif pol.linked_sol_id:
+                if pol.linked_sol_id.state in ('done', 'cancel'):
+                    continue
                 sale_order = pol.linked_sol_id.order_id
             else:
                 # case of PO line from scratch, nothing to update
@@ -207,6 +209,10 @@ class purchase_order_line(osv.osv):
                 if pol.created_by_sync:
                     sol_values['created_by_sync'] = True
                     sol_values['sync_pushed_from_po'] = True
+
+                if pol.order_id.order_type == 'direct' and pol.order_id.po_version > 1:
+                    sol_values['dpo_line_id'] = pol.id
+
                 if pol.resourced_original_line:
                     sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False
                     sol_values['resourced_original_remote_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.sync_linked_pol or False
@@ -689,21 +695,36 @@ class purchase_order_line(osv.osv):
                 # PO nomen (PROJ) => FO (nomen COO)
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
 
+            sourced_on_dpo = pol.from_dpo_line_id
+
             if pol.order_type != 'direct' and not pol.from_synchro_return_goods:
                 # create incoming shipment (IN):
-                in_id = self.pool.get('stock.picking').search(cr, uid, [
-                    ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']),
-                    ('type', '=', 'in'),
-                ])
+
+                if sourced_on_dpo:
+                    in_domain = [
+                        ('purchase_id', '=', pol.order_id.id),
+                        ('state', '=', 'shipped'),
+                        ('type', '=', 'in'),
+                        ('dpo_incoming', '=', True)
+                    ]
+                else:
+                    in_domain = [
+                        ('purchase_id', '=', pol.order_id.id),
+                        ('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']),
+                        ('type', '=', 'in')
+                    ]
+                in_id = self.pool.get('stock.picking').search(cr, uid, in_domain)
                 created = False
                 if not in_id:
-                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context)
+                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context, sourced_on_dpo)
                     in_id = [in_id]
                     created = True
                 incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)
                 if created:
-                    wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
+                    if sourced_on_dpo:
+                        wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_shipped', cr)
+                    else:
+                        wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
                 else:
                     self.pool.get('stock.move').in_action_confirm(cr, uid, incoming_move_id, context)
 
@@ -747,7 +768,7 @@ class purchase_order_line(osv.osv):
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
-            if pol.order_id.invoice_method == 'order':
+            if pol.order_id.po_version == 1 and pol.order_id.invoice_method == 'order':
                 pol_to_invoice[pol.id] = True
 
 
@@ -772,19 +793,31 @@ class purchase_order_line(osv.osv):
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
 
+        pol_to_invoice = {}
+        fol_sourced_on_dpo = set()
         for pol in self.browse(cr, uid, ids, context=context):
             # no PICK/OUT needed in this cases; close SO line:
             internal_ir = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False  # PO line from Internal IR
-            dpo = pol.order_id.order_type == 'direct' or False  # direct PO
+            dpo = pol.order_id.order_type == 'direct' and pol.order_id.po_version == 1 or False  # direct PO
             ir_non_stockable = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.product_id.type in ('consu', 'service', 'service_recep') or False
 
             if internal_ir or dpo or ir_non_stockable:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
+            if pol.order_id.po_version > 1:
+                if pol.order_id.invoice_method == 'order':
+                    pol_to_invoice[pol.id] = True
+                if pol.linked_sol_id:
+                    fol_sourced_on_dpo.add(pol.linked_sol_id.id)
             # cancel remaining SYS-INT
             self.pool.get('stock.move').decrement_sys_init(cr, uid, 'all', pol_id=pol.id, context=context)
         self.write(cr, uid, ids, {'state': 'done', 'closed_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
+        if fol_sourced_on_dpo:
+            for sol_id_to_check in fol_sourced_on_dpo:
+                wf_service.trg_write(uid, 'sale.order.line', sol_id_to_check, cr)
 
+        if pol_to_invoice:
+            self.generate_invoice(cr, uid, pol_to_invoice.keys(), context=context)
         return True
 
 
@@ -808,7 +841,6 @@ class purchase_order_line(osv.osv):
                 if pol.cancelled_by_sync:
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
-
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True

@@ -899,7 +899,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 
         def fsplit(x):
             if x=='.id': return [x]
-            return x.replace(':id','/id').replace('.id','/.id').split('/')
+            return x.replace(':id','/id').split('/')
 
         fields_to_export = map(fsplit, fields_to_export)
         datas = []
