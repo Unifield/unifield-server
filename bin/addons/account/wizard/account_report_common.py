@@ -53,7 +53,9 @@ class account_common_report(osv.osv_memory):
         'target_move': fields.selection([('posted', 'All Posted Entries'),
                                          ('all', 'All Entries'),
                                          ], 'Target Moves', required=True),
-        'is_report_cross_fy': fields.function(_get_is_report_cross_fy, type='boolean', method=True, string='Is report cross FY')
+        'is_report_cross_fy': fields.function(_get_is_report_cross_fy, type='boolean', method=True, string='Is report cross FY'),
+        'rev_journal_ids': fields.boolean('Exclude journal selection'),
+        'rev_account_ids': fields.boolean('Exclude account selection'),
     }
 
     def _get_account(self, cr, uid, context=None):
