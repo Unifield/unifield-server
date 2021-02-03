@@ -107,6 +107,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.title = _('Trial Balance')
 
         self.account_ids = self._get_data_form(data, 'account_ids') or []
+        # reverse the selection in case "Exclude account selection" has been ticked
+        if self.account_ids and self._get_data_form(data, 'rev_account_ids', default=False):
+            self.account_ids = self.pool.get('account.account').search(self.cr, self.uid,
+                                                                       [('type', '!=', 'view'), ('id', 'not in', self.account_ids)])
 
         # US-533 reconciled filter:
         # decision matrix
