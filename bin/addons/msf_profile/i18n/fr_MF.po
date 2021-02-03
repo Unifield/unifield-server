@@ -87498,6 +87498,12 @@ msgstr "wizard.invoice.line"
 msgid "The UoM is not compatible with the product."
 msgstr "The UoM is not compatible with the product."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:196
+#, python-format
+msgid "The source location is not compatible with the patner"
+msgstr "La zone source n'est pas compatible avec le partenaire"
+
 #. module: account
 #: help:account.tax,name:0
 msgid "This name will be displayed on reports"
