@@ -1727,6 +1727,7 @@ class product_attributes(osv.osv):
 
             if not vals['oc_subscription']:
                 vals['active'] = False
+                # to fix in US-7883: oc_subscription=False must preval on vals['state_ud'], so vals['state'] must be set to 'archived' or 'phase_out' ?
                 prod_state = 'archived'
             elif prod_state != 'archived':
                 if not prod_state and 'state' not in vals:
@@ -1735,7 +1736,6 @@ class product_attributes(osv.osv):
 
                 vals['active'] = True
 
-        # update local stock mission report lines :
         if not prod_state and 'state' in vals:
             if vals['state']:
                 state_id = vals['state']
@@ -1788,6 +1788,8 @@ class product_attributes(osv.osv):
 
             if prod_state == 'archived' and unidata_product:
                 # received archived: set as phase out, when the "active" update is processed it will set archived state if inactivation is allowed
+                #if vals.get('active') or self.search(cr, uid, [('id', 'in', ids), ('active', '=', True)]):
+                # this must be done only if the product is not already inactive (US-7883)
                 vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
 
         ud_unable_to_inactive = []
