@@ -108,10 +108,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         self.account_ids = self._get_data_form(data, 'account_ids') or []
         # reverse the selection in case "Exclude account selection" has been ticked
+        # note: in case all accounts are selected and excluded, the report behaves as if no account had been selected
         if self.account_ids and self._get_data_form(data, 'rev_account_ids', default=False):
-            self.account_ids = self.pool.get('account.account').search(self.cr, self.uid,
-                                                                       [('type', '!=', 'view'), ('id', 'not in', self.account_ids)])
-
+            rev_account_sql = """
+                SELECT id
+                FROM account_account
+                WHERE type != 'view' AND id NOT IN %s;
+            """
+            self.cr.execute(rev_account_sql, (tuple(self.account_ids),))
+            self.account_ids = [x[0] for x in self.cr.fetchall()]
         # US-533 reconciled filter:
         # decision matrix
         # http://jira.unifield.org/browse/US-533?focusedCommentId=50246&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-50246
