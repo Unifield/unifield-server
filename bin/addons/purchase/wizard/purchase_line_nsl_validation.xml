@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="purchase_order_line_nsl_validation_form_view" model="ir.ui.view">
+            <field name="name">NSL product to ESC</field>
+            <field name="model">purchase.order.line.nsl.validation.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Warning! This PO contains NSL product(s), please check with your OC and / or your ESC to ensure this is expected as these products are not usually supplied by ESCs">
+                    <html colspan="4">
+                        <br />
+                    </html>
+                    <separator colspan="4" string="NSL Product(s):" />
+                    <field name="message" widget="html_text" nolabel="1" colspan="4" />
+                    <html colspan="4">
+                        <br /><br />
+                    </html>
+                    <button name="validate" string="ok, validate" type="object" icon="terp-camera_test" colspan="2" />
+                    <button special="cancel" string="cancel action" icon="gtk-close" colspan="2" />
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

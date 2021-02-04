@@ -19,11 +19,29 @@
 #
 ##############################################################################
 
-import purchase_order_group
-import purchase_installer
-import purchase_line_invoice
-import purchase_line_cancel
-import purchase_line_manually_confirmed
-import purchase_line_nsl_validation
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+from osv import osv, fields
+import netsvc
 
+class purchase_order_line_nsl_validation_wizard(osv.osv_memory):
+    _name = 'purchase.order.line.nsl.validation.wizard'
+
+    _columns = {
+        'pol_ids': fields.many2many('purchase.order.line', 'nsl_wiz_pol_rel', 'wiz_id', 'pol_id', string='PO lines'),
+        'message': fields.text('Message'),
+    }
+
+    def validate(self, cr, uid, ids, context=None):
+        '''
+        Cancel the PO line 
+        @param resource: do we have to resource the cancelled line ?
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz = self.browse(cr , uid, ids[0], context=context)
+        netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order.line', [x.id for x in wiz.pol_ids], 'validated', cr)
+        return {'type': 'ir.actions.act_window_close'}
+
+purchase_order_line_nsl_validation_wizard()
