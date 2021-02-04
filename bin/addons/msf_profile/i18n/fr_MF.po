@@ -5506,7 +5506,13 @@ msgstr "Le nom de la règle de la piste d'audit doit être unique !"
 #: code:addons/account/report/account_general_ledger.py:546
 #, python-format
 msgid "Selected Accounts"
-msgstr "Selected Accounts"
+msgstr "Comptes Sélectionnés"
+
+#. module: account
+#: code:addons/account/report/account_general_ledger.py:561
+#, python-format
+msgid "Excluded Accounts"
+msgstr "Comptes Exclus"
 
 #. module: msf_profile
 #: view:user.access.results:0

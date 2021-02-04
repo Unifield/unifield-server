@@ -108,7 +108,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         self.account_ids = self._get_data_form(data, 'account_ids') or []
         # reverse the selection in case "Exclude account selection" has been ticked
-        # note: in case all accounts are selected and excluded, the report behaves as if no account had been selected
+        self.exclude_all_acc = False  # note: in case all accounts are selected and excluded, the report behaves as if no acc. had been selected
         if self.account_ids and self._get_data_form(data, 'rev_account_ids', default=False):
             rev_account_sql = """
                 SELECT id
@@ -117,6 +117,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             """
             self.cr.execute(rev_account_sql, (tuple(self.account_ids),))
             self.account_ids = [x[0] for x in self.cr.fetchall()]
+            if not self.account_ids:
+                self.exclude_all_acc = True
         # US-533 reconciled filter:
         # decision matrix
         # http://jira.unifield.org/browse/US-533?focusedCommentId=50246&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-50246
@@ -552,10 +554,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         info_data.append((_('Accounts'), display_account, ))
 
         account_ids = list(set(self._get_data_form(data, 'account_ids')))
-        if account_ids:
+        if account_ids and not self.exclude_all_acc:
             # US-1197/2: display filtered accounts
             account_obj = self.pool.get('account.account')
-            info_data.append((_('Selected Accounts'), ', '.join(
+            if self._get_data_form(data, 'rev_account_ids', default=False):
+                account_label = _('Excluded Accounts')
+            else:
+                account_label = _('Selected Accounts')
+            info_data.append((account_label, ', '.join(
                 [ a.code for a in account_obj.browse(
                   self.cr, self.uid, account_ids) \
                   if a.type != 'view' ], )))
