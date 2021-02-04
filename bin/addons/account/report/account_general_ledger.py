@@ -513,10 +513,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _get_journals_str(self, data):
         data_tools_obj = self.pool.get('data.tools')
+        prefix = self._get_data_form(data, 'rev_journal_ids', default=False) and _("Excluded Journals: ") or ""
         if 'all_journals' in data['form']:
-            return _('All Journals')
-        journal_list = list(set(self._get_journal(data, instance_ids=self.selected_instance_ids)))
-        return data_tools_obj.truncate_list(journal_list)
+            ret = _('All Journals')
+        else:
+            journal_list = list(set(self._get_journal(data, instance_ids=self.selected_instance_ids)))
+            ret = data_tools_obj.truncate_list(journal_list, limit=300-len(prefix))
+        return "%s%s" % (prefix, ret)
 
     # internal filter functions
     def _get_data_form(self, data, key, default=False):

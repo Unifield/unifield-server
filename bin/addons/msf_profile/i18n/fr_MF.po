@@ -5514,6 +5514,12 @@ msgstr "Comptes Sélectionnés"
 msgid "Excluded Accounts"
 msgstr "Comptes Exclus"
 
+#. module: account
+#: code:addons/account/report/account_general_ledger.py:516
+#, python-format
+msgid "Excluded Journals: "
+msgstr "Journaux Exclus : "
+
 #. module: msf_profile
 #: view:user.access.results:0
 msgid "Import Access Rights Results"
