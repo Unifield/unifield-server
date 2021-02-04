@@ -1990,7 +1990,7 @@ class product_attributes(osv.osv):
             # Check if the product is in field order lines or in internal request lines
             context.update({'procurement_request': True})
             has_fo_line = fo_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                       ('state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                       ('state', 'not in', ['draft', 'done', 'cancel', 'cancel_r'])], context=context)
 
             # Check if the product is in stock picking
             # All stock moves in a stock.picking not draft/cancel/done/delivered or all stock moves in a shipment not delivered/done/cancel
