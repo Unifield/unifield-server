@@ -50916,7 +50916,7 @@ msgstr "Vous oblige à indiquer un Lot de Production pour tous les mouvements co
 msgid "Specific Locations"
 msgstr "Specific Locations"
 
-#. modules: purchase, account, msf_outgoing, finance, register_accounting, analytic_distribution, msf_doc_import
+#. modules: purchase, account, msf_outgoing, finance, register_accounting, analytic_distribution, msf_doc_import, account_override
 #: view:account.invoice:0
 #: view:account.move:0
 #: view:report.invoice.created:0
@@ -86809,7 +86809,8 @@ msgstr "Réclamation - Partenaire"
 msgid "Destination Name"
 msgstr "Nom de destination"
 
-#. module: account
+#. modules: account, account_override
+#: view:account.invoice:0
 #: view:account.invoice:0
 msgid "Payment Date"
 msgstr "Date de Paiement"
