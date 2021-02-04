@@ -49,6 +49,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             used_context['all_fiscalyear'] = True
             used_context['report_cross_fy'] = True
             data['form']['initial_balance'] = False  # IB not applicable
+        used_context['rev_journal_ids'] = self._get_data_form(data, 'rev_journal_ids', default=False)
         self.query = obj_move._query_get(self.cr, self.uid, obj='l',
                                          context=used_context)
 
