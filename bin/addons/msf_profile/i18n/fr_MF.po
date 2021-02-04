@@ -34792,6 +34792,7 @@ msgstr "Michigan"
 #: report:addons/stock/report/products_situation_report_xls.mako:216
 #: field:products.situation.report,p_code:0
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:86
+#: field:account.target.costcenter,cost_center_code:0
 #, python-format
 msgid "Code"
 msgstr "Code"

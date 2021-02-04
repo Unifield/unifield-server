@@ -638,5 +638,9 @@
         <record id="us_7749_migrate_dpo_flow" model="patch.scripts">
             <field name="method">us_7749_migrate_dpo_flow</field>
         </record>
+
+        <record id="us_7866_fill_in_target_cc_code" model="patch.scripts">
+            <field name="method">us_7866_fill_in_target_cc_code</field>
+        </record>
     </data>
 </openerp>
