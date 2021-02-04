@@ -23,7 +23,6 @@ from osv import osv, fields
 from tools.translate import _
 
 from datetime import date
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
@@ -32,6 +31,7 @@ IN_NEXT_X_WEEKS = tuple([("%s" % i, _("%s weeks") % str(i)) for i in range(1, 13
 
 class manage_expired_stock(osv.osv):
     _name = 'manage.expired.stock'
+    _rec_name = 'location_id'
 
     _columns = {
         'location_id': fields.many2one(
@@ -54,7 +54,7 @@ class manage_expired_stock(osv.osv):
         ),
         'in_next_x_weeks': fields.selection(
             IN_NEXT_X_WEEKS,
-            'In the next',
+            'Expiring in the next',
         ),
     }
 
@@ -140,6 +140,8 @@ class manage_expired_stock(osv.osv):
         if not ids:
             return True
 
+        pick_obj = self.pool.get('stock.picking')
+
         int_values = {
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
             'type': 'internal',
@@ -150,6 +152,10 @@ class manage_expired_stock(osv.osv):
             'move_lines': self.get_exp_data(cr, uid, ids, context=context, expiring=False),
         }
         new_int_id = self.pool.get('stock.picking').create(cr, uid, int_values, context=context)
+
+        # Set the new INT to Available
+        pick_obj.draft_force_assign(cr, uid, [new_int_id], context=context)
+        pick_obj.force_assign(cr, uid, [new_int_id])
 
         return {
             'type': 'ir.actions.act_window',
@@ -175,11 +181,69 @@ class view_expired_expiring_stock(osv.osv):
         'v_mng_exp_lines_ids': fields.one2many('view.expired.expiring.stock.lines', 'v_mng_exp_id', 'View Expired/Expiring products', readonly=True),
     }
 
-    def create_int_expired_expiring_stock(self, cr, uid, ids, context=None):
-        return {'type': 'ir.actions.act_window_close'}
-
     def del_sel_prod(self, cr, uid, ids, context=None):
-        return {'type': 'ir.actions.act_window_close'}
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning!'), _('Please select at least one line'))
+
+        self.pool.get('view.expired.expiring.stock.lines').unlink(cr, uid, context['button_selected_ids'], context=context)
+        return True
+
+    def create_int_expired_expiring_stock(self, cr, uid, ids, context=None):
+        '''
+        Creates an Internal Picking to send all expired products to destruction or quarantine
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        wizard = self.browse(cr, uid, ids[0], context=context)
+
+        moves_lines = []
+        context['location_id'] = wizard.mng_exp_id.location_id.id
+        for line in wizard.v_mng_exp_lines_ids:
+            moves_lines.append((0, 0, {
+                'name': line.name,
+                'product_id': line.product_id.id,
+                'product_qty': line.product_qty,
+                'product_uom': line.product_uom.id,
+                'location_id': line.location_id.id,
+                'location_dest_id': line.location_dest_id.id,
+                'reason_type_id': line.reason_type_id.id,
+                'prodlot_id': line.prodlot_id.id,
+                'expired_date': line.expired_date,
+            }))
+
+        if not moves_lines:
+            raise osv.except_osv(_('Warning !'), _('You must have at least one line to create the Internal Move'))
+
+        int_values = {
+            'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
+            'type': 'internal',
+            'subtype': 'standard',
+            'invoice_state': 'none',
+            'reason_type_id': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1],
+            'from_manage_expired': True,
+            'move_lines': moves_lines,
+        }
+        new_int_id = self.pool.get('stock.picking').create(cr, uid, int_values, context=context)
+
+        # Set the new INT to Available
+        pick_obj.draft_force_assign(cr, uid, [new_int_id], context=context)
+        pick_obj.force_assign(cr, uid, [new_int_id])
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_type': 'form',
+            'view_mode': 'form, tree',
+            'target': 'crush',
+            'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_form')[1]],
+            'res_id': new_int_id,
+            'context': context,
+        }
 
     def cancel(self, cr, uid, ids, context=None):
         return {'type': 'ir.actions.act_window_close'}
