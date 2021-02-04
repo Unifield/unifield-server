@@ -66270,7 +66270,7 @@ msgstr "Fonctionnalités"
 
 #. modules: sale, purchase_override, account_hq_entries, msf_tools
 #: model:ir.ui.menu,name:account_hq_entries.menu_hq
-#: report:addons/msf_tools/report/report_inconsistencies_xls.mako:90
+#: code:addons/msf_tools/report/report_inconsistencies.py:294
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0

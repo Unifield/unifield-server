@@ -33,7 +33,6 @@ class export_report_inconsistencies(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-
     def generate_report(self, cr, uid, ids, context=None):
         '''
         Generate a report
@@ -44,17 +43,18 @@ class export_report_inconsistencies(osv.osv):
 
         res = {}
         for report in self.browse(cr, uid, ids, context=context):
-            # get ids of all non-local products :
-            status_local_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-            product_ids = prod_obj.search(cr, uid, [('international_status', '!=', status_local_id)], context=context)
+            instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id
+            if instance.level == 'coordo':
+                product_ids = prod_obj.search(cr, uid, [], context=context)
+            else:
+                # get ids of all non-local products :
+                status_local_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+                product_ids = prod_obj.search(cr, uid, [('international_status', '!=', status_local_id)], context=context)
             if not product_ids:
                 continue
 
             # state of report is in progress :
-            self.write(cr, uid, [report.id], {
-                'name': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'state': 'in_progress'
-            }, context=context)
+            self.write(cr, uid, [report.id], {'name': time.strftime('%Y-%m-%d %H:%M:%S'), 'state': 'in_progress'}, context=context)
 
             datas = {
                 'ids': [report.id],
@@ -176,7 +176,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         self.prod_creator_cache = {}
         self.inconsistent = {}
 
-
     def get_inconsistent_lines(self, prod_id=None):
         '''
         Return stock mission report lines that are inconsistent with HQ
@@ -197,6 +196,8 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         if not self.inconsistent:
             prod_obj = self.pool.get('product.product')
             self.inconsistent = {}
+            instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'],
+                                                         context=self.localcontext).company_id.instance_id
 
             request = '''
                 SELECT
@@ -222,25 +223,18 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     INNER JOIN msf_instance AS instance ON smr.instance_id = instance.id
                     JOIN (VALUES ('section',1), ('coordo',2), ('project',3)) AS il(id, ordering) ON instance.level = il.id
                 WHERE
-                    smrl.full_view='f' AND
                     instance.state='active' AND
+                    smrl.full_view='f' AND
+                    smr.instance_id != %s AND
                     (coalesce(ps.code, '') != coalesce(smrl.product_state, '') OR
                     pp.state_ud != smrl.state_ud OR pp.active != smrl.product_active)
 
                 ORDER BY
                     pp.default_code, il.ordering, smr.name
-            '''
+            ''' % (instance.id,)
             self.cr.execute(request)
             smrl_results = self.cr.fetchall()  # this object is 3.3 MB in RAM
             # with 340 000 lines of result
-
-            # get all uf_status codes
-            uf_status_obj = self.pool.get('product.status')
-            uf_status_code_ids = uf_status_obj.search(self.cr, self.uid, [], context=self.localcontext)
-            uf_status_code_read_result = uf_status_obj.read(self.cr, self.uid,
-                                                            uf_status_code_ids, ['code', 'name'], context=self.localcontext)
-            uf_status_code_dict = dict((x['code'], x['name']) for x in
-                                       uf_status_code_read_result)
 
             # build a dict of state_ud
             state_ud_dict = dict(prod_obj._columns['state_ud'].selection)
@@ -289,6 +283,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     prod_int_status = smrl['product_international_status']
                     prod_int_status = prod_int_status in status_code_dict and status_code_dict[prod_int_status] or ''
                     product = {
+                        'instance_name': instance.level == 'section' and _('HQ') or instance.name,
                         'prod_default_code': prod_default_code,
                         'prod_name_template': prod_name_template,
                         'prod_international_status': prod_int_status,
@@ -300,7 +295,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     self.inconsistent[product_id]['smrl_list'] = []
 
                 # tweak results to display string instead of codes
-                smrl['uf_status_code'] = smrl['uf_status_code'] and uf_status_code_dict[smrl['uf_status_code']] or ''
+                smrl['uf_status_code'] = smrl['uf_status_code'] and self.get_uf_status(smrl['uf_status_code']) or ''
                 smrl['ud_status_code'] = smrl['ud_status_code'] and self.get_ud_status(smrl['ud_status_code']) or ''
                 smrl['internationnal_status_code_name'] = smrl['internationnal_status_code_name'] and intl_status_code_name[smrl['internationnal_status_code_name']] or ''
 
@@ -328,7 +323,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         ordered_ids = [x['id'] for x in prod_result]
 
         # order self.inconsistent according with this ids
-        final_result = [self.inconsistent[x] for x in ordered_ids] 
+        final_result = [self.inconsistent[x] for x in ordered_ids]
         return final_result
 
 
@@ -340,7 +335,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
             return self.uf_status_cache[code]
 
         status_obj = self.pool.get('product.status')
-        code_ids = status_obj.search(self.cr, self.uid, [('code', '=', code)], context=self.localcontext)
+        code_ids = status_obj.search(self.cr, self.uid, [('code', '=', code), ('active', 'in', ['t', 'f'])], context=self.localcontext)
         res = ""
         if code_ids:
             res = status_obj.read(self.cr, self.uid, code_ids, ['name'])[0]['name']

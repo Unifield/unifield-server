@@ -83,6 +83,14 @@ class patch_scripts(osv.osv):
         cr.execute("update purchase_order set po_version=2, invoice_method='picking' where order_type='direct' and state in ('draft', 'validated')")
         return True
 
+    def us_6796_hide_prod_status_inconsistencies(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': instance.level != 'project'}, context={})
+        return True
+
     # UF19.0
     def us_7808_ocg_rename_esc(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
