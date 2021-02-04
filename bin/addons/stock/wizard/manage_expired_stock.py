@@ -206,4 +206,4 @@ class view_expired_expiring_stock_lines(osv.osv):
     }
 
 
-view_expired_expiring_stock()
+view_expired_expiring_stock_lines()

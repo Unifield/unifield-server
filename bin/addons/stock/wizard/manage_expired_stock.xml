@@ -15,7 +15,7 @@
                     <field name="in_next_x_weeks" colspan="2" attrs="{'invisible': [('bned_date_sel', '!=', 'soon_exp_prod')]}" />
                     <separator colspan="4" string="Actions" />
                     <group col="2" colspan="4">
-                        <button name="open_view_expired_expiring_stock" string="View Expired/Expiring products" icon="gtk-go-forward" type="object" attrs="{'invisible': [('bned_date_sel', '!=', 'soon_exp_prod')], 'required': [('bned_date_sel', '!=', 'soon_exp_prod')]}" />
+                        <button name="open_view_expired_expiring_stock" string="View Expired/Expiring products" icon="gtk-go-forward" type="object" attrs="{'invisible': [('bned_date_sel', '!=', 'soon_exp_prod')]}" />
                         <button name="create_int_expired_stock" string="Create Internal Move with expired stock" icon="terp-document-new" type="object" />
                     </group>
                 </form>
@@ -43,15 +43,14 @@
                 <form string="Select Expired/Expiring products">
                     <field name="v_mng_exp_lines_ids" colspan="4" nolabel="1" mode="tree,form" o2m_selectable="2">
                         <tree string="Expired/Expiring Products" noteditable="1">
-                            <field name="product_id" string="Product Code" />
-                            <field name="name" />
+                            <field name="product_id" />
                             <field name="prodlot_id" />
                             <field name="expired_date" />
                             <field name="product_qty" />
                             <field name="product_uom" invisible="1" />
                         </tree>
                     </field>
-                    <group colspan="4" col="3" >
+                    <group colspan="4" col="3">
                         <button name="del_sel_prod" string="Delete Selected Products" icon="gtk-del" type="object" />
                         <button name="create_int_expired_expiring_stock" string="Add all displayed Products to an Internal Move" icon="terp-document-new" type="object" />
                         <button name="cancel" string="Cancel" icon="gtk-cancel" type="object" />
