@@ -77,8 +77,8 @@ class manage_expired_stock(osv.osv):
 
         today = date.today()
         if expiring:
-            expiring_date = (today + relativedelta(weeks=-int(wizard.in_next_x_weeks))).strftime('%Y-%m-%d 00:00:00')
-            lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', today), ('life_date', '>=', expiring_date)])
+            expiring_date = (today + relativedelta(weeks=int(wizard.in_next_x_weeks))).strftime('%Y-%m-%d')
+            lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', expiring_date)])
         else:
             lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', today)])
 
