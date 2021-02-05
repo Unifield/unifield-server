@@ -746,7 +746,9 @@ class product_attributes(osv.osv):
                     cold_chain = %(cold_id)s and
                     is_kc != %(is_kc)s
             ''', {'cold_id': cold['id'], 'is_kc': is_kc})
-            logging.getLogger('cold chain').info('Cold chain id:%s, update %s products' % (cold['id'], cr.rowcount))
+            nb_updated = cr.rowcount
+            if nb_updated:
+                logging.getLogger('cold chain').info('Cold chain id:%s, update %s products' % (cold['id'], nb_updated))
             return []
 
     _columns = {

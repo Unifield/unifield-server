@@ -5492,6 +5492,7 @@ msgstr "Total Chèques en Attente en Devise Fonc."
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:37
 #: field:supplier.performance.wizard,po_type_donation_st:0
 #: code:addons/stock_override/report/report_stock_move.py:29
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "Standard donation"
 msgstr "Donation normale"
@@ -24223,6 +24224,7 @@ msgstr "Is resourced ?"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:38
 #: field:supplier.performance.wizard,po_type_loan:0
 #: code:addons/stock_override/report/report_stock_move.py:27
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "Loan"
 msgstr "Prêt"
@@ -29955,7 +29957,7 @@ msgstr "America/Argentina/San_Juan"
 msgid "Operator '%s' not suported"
 msgstr "Operator '%s' not suported"
 
-#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account
+#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account, purchase
 #: view:account.line.csv.export:0
 #: field:account.line.csv.export,message:0
 #: field:import.commitment.wizard,last_error:0
@@ -30006,6 +30008,7 @@ msgstr "Operator '%s' not suported"
 #: field:wizard.import.po.simulation.screen.line,info_msg:0
 #: field:wizard.import.ppl.to.create.ship,message:0
 #: field:wizard.import.product.line,message:0
+#: field:purchase.order.line.nsl.validation.wizard,message:0
 msgid "Message"
 msgstr "Message"
 
@@ -30084,6 +30087,7 @@ msgstr "Close it"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:35
 #: field:supplier.performance.wizard,po_type_regular:0
 #: code:addons/stock_override/report/report_stock_move.py:27
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "Regular"
 msgstr "Normal"
@@ -52313,6 +52317,7 @@ msgstr "A line must a have a quantity larger than 0.00"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:40
 #: field:supplier.performance.wizard,po_type_purchase_list:0
 #: code:addons/stock_override/report/report_stock_move.py:32
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "Purchase List"
 msgstr "Liste d'Achats"
@@ -56178,6 +56183,7 @@ msgstr "Display destinations?"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:39
 #: field:supplier.performance.wizard,po_type_in_kind:0
 #: code:addons/stock_override/report/report_stock_move.py:27
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "In Kind Donation"
 msgstr "Donation en Nature"
@@ -111680,3 +111686,23 @@ msgstr "La partie décimale du délai/courverture doit être 0, 0.25, 0.5 ou 0.7
 #, python-format
 msgid "The decimal part of lead time/order coverage values must be 0 or 0.5. Values have been rounded."
 msgstr "La partie décimale du délai/courverture doit être 0 ou 0.5. Les valeurs ont été arrondies."
+
+#. module: purchase
+#: view:purchase.order.line.nsl.validation.wizard:0
+msgid "NSL Product(s):"
+msgstr "Produit(s) NSL"
+
+#. module: purchase
+#: view:purchase.order.line.nsl.validation.wizard:0
+msgid "Warning! This PO contains NSL product(s), please check with your OC and / or your ESC to ensure this is expected as these products are not usually supplied by ESCs"
+msgstr "Attention ! Le BC contient des produits NSL, veuillez valider avec votre OC ou votre ESC qu'il s'agit de la procédure adaptée dans la mesure où ces produits ne sont normalement pas fournis par un ESC "
+
+#. module: purchase
+#: view:purchase.order.line.nsl.validation.wizard:0
+msgid "cancel action"
+msgstr "annuler l'action"
+
+#. module: purchase
+#: view:purchase.order.line.nsl.validation.wizard:0
+msgid "ok, validate"
+msgstr "ok, valider"
