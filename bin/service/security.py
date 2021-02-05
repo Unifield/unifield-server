@@ -27,7 +27,7 @@ import re
 from passlib.hash import bcrypt
 from tools.translate import _
 from osv import osv
-PASSWORD_MIN_LENGHT = 6
+PASSWORD_MIN_LENGHT = 8
 
 # When rejecting a password, hide the traceback
 class ExceptionNoTb(Exception):
@@ -96,12 +96,16 @@ def login(db_name, login, password):
         pool = pooler.get_pool(db_name)
         lower_login = tools.ustr(login).lower()
         # check if the user have to change his password
-        cr.execute("""SELECT force_password_change
+        cr.execute("""SELECT force_password_change, coalesce(last_password_change, NOW()) + interval '6 months' < NOW()
         FROM res_users
         WHERE login=%s AND active and (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""", (lower_login,))
-        force_password = [x[0] for x in cr.fetchall()]
-        if any(force_password):
+        force_password, expired_password = cr.fetchone()
+        if force_password:
             raise Exception("ForcePasswordChange: The admin requests your password change ...")
+        if ( tools.config['is_prod_instance'] or tools.misc.use_prod_sync(cr) ) and expired_password:
+            # TODO: set last_password_change on synced user: default value
+            raise Exception("ForcePasswordChange: your password has expired and must be changed.")
+
     finally:
         cr.close()
 
@@ -131,9 +135,9 @@ def check_password_validity(self, cr, uid, old_password, new_password, confirm_p
     :raise osv.except_osv: if the password is not ok
     '''
     # check it contains at least one digit
-    if not re.search(r'\d', new_password):
+    if not re.search(r'\d', new_password) or not re.search(r'[A-Z]', new_password) or not re.search(r'[^a-zA-Z0-9]', new_password):
         message = _('The new password is not strong enough. '\
-                    'Password must contain at least one digit.')
+                    'Password must contain at least one digit, one capital letter and one special character')
         raise osv.except_osv(_('Operation Canceled'), message)
 
     # check new_password lenght
