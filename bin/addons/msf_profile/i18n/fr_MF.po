@@ -5512,7 +5512,19 @@ msgstr "Le nom de la règle de la piste d'audit doit être unique !"
 #: code:addons/account/report/account_general_ledger.py:546
 #, python-format
 msgid "Selected Accounts"
-msgstr "Selected Accounts"
+msgstr "Comptes Sélectionnés"
+
+#. module: account
+#: code:addons/account/report/account_general_ledger.py:561
+#, python-format
+msgid "Excluded Accounts"
+msgstr "Comptes Exclus"
+
+#. module: account
+#: code:addons/account/report/account_general_ledger.py:516
+#, python-format
+msgid "Excluded Journals: "
+msgstr "Journaux Exclus : "
 
 #. module: msf_profile
 #: view:user.access.results:0
@@ -45386,9 +45398,25 @@ msgstr "Exclure la sélection de partenaires"
 msgid "Exclude employee selection"
 msgstr "Exclure la sélection d'employés"
 
-#. module: account_mcdb
+#. modules: account_mcdb, account, finance
 #: field:account.mcdb,rev_transfer_journal_ids:0
 #: field:account.mcdb,rev_journal_ids:0
+#: field:account.aged.trial.balance,rev_journal_ids:0
+#: field:account.balance.report,rev_journal_ids:0
+#: field:account.bs.report,rev_journal_ids:0
+#: field:account.central.journal,rev_journal_ids:0
+#: field:account.common.account.report,rev_journal_ids:0
+#: field:account.common.journal.report,rev_journal_ids:0
+#: field:account.common.partner.report,rev_journal_ids:0
+#: field:account.common.report,rev_journal_ids:0
+#: field:account.general.journal,rev_journal_ids:0
+#: field:account.partner.balance,rev_journal_ids:0
+#: field:account.partner.ledger,rev_journal_ids:0
+#: field:account.pl.report,rev_journal_ids:0
+#: field:account.print.journal,rev_journal_ids:0
+#: field:account.report.general.ledger,rev_journal_ids:0
+#: field:account.vat.declaration,rev_journal_ids:0
+#: field:wizard.account.partner.balance.tree,rev_journal_ids:0
 msgid "Exclude journal selection"
 msgstr "Exclure la sélection de journaux"
 
@@ -50330,8 +50358,24 @@ msgstr "De cette vue, ayez une analyse des différents comptes financiers. Le do
 msgid "/"
 msgstr "/"
 
-#. module: account_mcdb
+#. modules: account_mcdb, account, finance
 #: field:account.mcdb,rev_account_ids:0
+#: field:account.aged.trial.balance,rev_account_ids:0
+#: field:account.balance.report,rev_account_ids:0
+#: field:account.bs.report,rev_account_ids:0
+#: field:account.central.journal,rev_account_ids:0
+#: field:account.common.account.report,rev_account_ids:0
+#: field:account.common.journal.report,rev_account_ids:0
+#: field:account.common.partner.report,rev_account_ids:0
+#: field:account.common.report,rev_account_ids:0
+#: field:account.general.journal,rev_account_ids:0
+#: field:account.partner.balance,rev_account_ids:0
+#: field:account.partner.ledger,rev_account_ids:0
+#: field:account.pl.report,rev_account_ids:0
+#: field:account.print.journal,rev_account_ids:0
+#: field:account.report.general.ledger,rev_account_ids:0
+#: field:account.vat.declaration,rev_account_ids:0
+#: field:wizard.account.partner.balance.tree,rev_account_ids:0
 msgid "Exclude account selection"
 msgstr "Exclure la sélection Compte"
 

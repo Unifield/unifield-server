@@ -131,7 +131,11 @@ class account_move_line(osv.osv):
             query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s)) %s %s" % (fiscalyear_clause, where_move_state, where_move_lines_by_date)
 
         if context.get('journal_ids', False):
-            query += ' AND '+obj+'.journal_id IN (%s)' % ','.join(map(str, context['journal_ids']))
+            if context.get('rev_journal_ids', False):
+                journal_operator = 'NOT IN'
+            else:
+                journal_operator = 'IN'
+            query += ' AND '+obj+'.journal_id %s (%s)' % (journal_operator, ','.join(map(str, context['journal_ids'])))
 
         if context.get('chart_account_id', False):
             child_ids = account_obj._get_children_and_consol(cr, uid, [context['chart_account_id']], context=context)
