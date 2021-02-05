@@ -1921,7 +1921,7 @@ class product_attributes(osv.osv):
             has_product_list = [x[0] for x in cr.fetchall()]
             if context.get('sync_update_execution') and has_product_list:
                 # update to deactivate product is executed before the update to remove prod from list
-                # so we have to check if a update is in the pipe
+                # so we have to check if an update is in the pipe
                 cr.execute('''select d.name from ir_model_data d
                         left join sync_client_update_received up on up.run='f' and up.is_deleted='t' and up.sdref=d.name
                          where d.model='product.list.line' and d.module='sd' and
@@ -1933,7 +1933,7 @@ class product_attributes(osv.osv):
 
             # Check if the product is in some purchase order lines or request for quotation lines
             has_po_line = po_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                       ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                       ('state', 'not in', ['draft', 'done', 'cancel', 'cancel_r'])], context=context)
 
             # Check if the product is in some tender lines
             has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
@@ -1942,12 +1942,13 @@ class product_attributes(osv.osv):
             # Check if the product is in field order lines or in internal request lines
             context.update({'procurement_request': True})
             has_fo_line = fo_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                       ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                       ('state', 'not in', ['draft', 'done', 'cancel', 'cancel_r'])], context=context)
 
             # Check if the product is in stock picking
             # All stock moves in a stock.picking not draft/cancel/done/delivered or all stock moves in a shipment not delivered/done/cancel
             has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
                                                       ('picking_id', '!=', False),
+                                                      ('state', 'not in', ['done', 'cancel']),
                                                       '|', ('picking_id.state', 'not in', ['draft', 'done', 'delivered', 'cancel']),
                                                       '&', ('picking_id.shipment_id', '!=', False),
                                                       ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
