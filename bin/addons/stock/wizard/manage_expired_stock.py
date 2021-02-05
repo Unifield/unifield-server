@@ -199,6 +199,7 @@ class view_expired_expiring_stock(osv.osv):
             context = {}
         if not ids:
             return True
+        pick_obj = self.pool.get('stock.picking')
         wizard = self.browse(cr, uid, ids[0], context=context)
 
         moves_lines = []
