@@ -564,7 +564,7 @@
    % endif
    </Row>
 
-    % for cycle in [1, 2, 3, 4]:
+    % for cycle in [1, 2, 3, 4, 5]:
    <Row ss:AutoFitHeight="0" ss:Height="14.25" ss:StyleID="s18">
     <Cell ss:StyleID="s34"/>
     <Cell ss:StyleID="s39"><Data ss:Type="String">${_('Order Cycle')|x} ${cycle}</Data></Cell>
