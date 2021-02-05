@@ -75933,7 +75933,13 @@ msgstr "Filtrés par"
 #: code:addons/stock_override/stock.py:391
 #, python-format
 msgid "The source location of lines has been changed to the same as header value"
-msgstr "La zone source des lignes a été changé avec la valeur présente en en-tête"
+msgstr "La zone source des lignes a été changée avec la valeur présente en en-tête"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:391
+#, python-format
+msgid "The source location of lines has been changed according to the new partner"
+msgstr "La zone source des lignes a été changée en fonction du nouveau partenaire"
 
 #. modules: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:571
@@ -87565,6 +87571,12 @@ msgstr "wizard.invoice.line"
 #, python-format
 msgid "The UoM is not compatible with the product."
 msgstr "The UoM is not compatible with the product."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:196
+#, python-format
+msgid "The source location is not compatible with the patner"
+msgstr "La zone source n'est pas compatible avec le partenaire"
 
 #. module: account
 #: help:account.tax,name:0
