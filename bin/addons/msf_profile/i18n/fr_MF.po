@@ -66878,8 +66878,9 @@ msgstr "Code du Contrat de Financement"
 msgid "Total Absolute value"
 msgstr "Valeur absolue totale"
 
-#. module: msf_budget
+#. modules: msf_budget, financing_contract
 #: code:addons/msf_budget/report/report_local_expenses.py:72
+#: report:addons/financing_contract/report/financing_interactive_xls.mako:408
 #, python-format
 msgid "Output currency:"
 msgstr "Devise d'impression:"

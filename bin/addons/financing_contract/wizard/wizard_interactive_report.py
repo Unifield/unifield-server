@@ -93,9 +93,11 @@ class wizard_interactive_report(osv.osv_memory):
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
 
         # Update the context
-        context.update({'reporting_currency': context['out_currency'],
+        context.update({'reporting_currency': context.get('out_currency'),
+                        'contract_currency_id': contract.reporting_currency.id,
                         'reporting_type': contract.reporting_type,
-                        'currency_table_id': contract.currency_table_id.id})
+                        'currency_table_id': contract.currency_table_id.id,
+                        'contract_fx_date': contract.eligibility_from_date})
 
         header_data = self._get_contract_header(cr, uid, contract, context=context)
         footer_data = self._get_contract_footer(cr, uid, contract, context=context)

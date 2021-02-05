@@ -405,6 +405,14 @@
 </Row>
 <Row>
 <Cell ss:StyleID="s21">
+<Data ss:Type="String">${_('Output currency:')}</Data>
+</Cell>
+<Cell ss:StyleID="s21">
+<Data ss:Type="String">${ getOutputCurrency(o) |x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('Eligible from:')}</Data>
 </Cell>
 % if isDate(o.eligibility_from_date):
