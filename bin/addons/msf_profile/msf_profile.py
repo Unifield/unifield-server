@@ -59,6 +59,19 @@ class patch_scripts(osv.osv):
             # don't run on new instances
             cr.execute("update res_users set last_password_change =  NOW() - interval '7 months'")
             self._logger.warn('Force password expiration on %d users.' % (cr.rowcount,))
+            cr.execute("update res_users set never_expire='t' where login in ('unidata', 'unidata2')")
+            self._logger.warn('Set never expire on %d unidata users.' % (cr.rowcount,))
+            if self.pool.get('sync.server.entity'):
+                cr.execute("""
+                    update res_users u set never_expire='t' from
+                        res_groups_users_rel grp_rel, ir_model_data d
+                    where
+                        grp_rel.uid = u.id and
+                        d.res_id = grp_rel.gid and
+                        d.name = 'instance_sync_user' and
+                        d.module = 'sync_server'
+                """)
+                self._logger.warn('Sync server: set never expire on %d sync users.' % (cr.rowcount,))
         return True
 
     def us_7866_fill_in_target_cc_code(self, cr, uid, *a, **b):

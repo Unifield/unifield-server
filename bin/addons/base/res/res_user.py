@@ -497,7 +497,16 @@ class users(osv.osv):
         'last_use_shortcut': fields.datetime('Last use of shortcut', help="Last date when a shortcut was used", readonly=True),
         'nb_shortcut_used': fields.integer('Number of shortcut used', help="Number of time a shortcut has been used by this user", readonly=True),
         'last_password_change': fields.datetime('Last Password Change', readonly=1),
+        'never_expire': fields.boolean('Password never expires', help="If unticked, the password must be changed every 6 months"),
     }
+
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
+        fg = super(users, self).fields_get(cr, uid, fields, context=context, with_uom_rounding=with_uom_rounding)
+        if fg.get('never_expire') and not tools.config.get('is_prod_instance') and not tools.misc.use_prod_sync(cr):
+            fg['never_expire']['string'] = '%s (%s)' % (fg['never_expire']['string'], _('not applicable on this sandbox'))
+            fg['never_expire']['help'] = _('On this sandbox passwords never expire')
+
+        return fg
 
     def on_change_company_id(self, cr, uid, ids, company_id):
         return {
@@ -609,6 +618,7 @@ class users(osv.osv):
         'is_synchronizable': False,
         'synchronize': False,
         'last_password_change': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'never_expire': lambda self, cr, *a: cr.dbname == 'SYNC_SERVER',
     }
 
     @tools.cache()

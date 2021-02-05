@@ -107,13 +107,13 @@ def login(db_name, login, password):
 
         lower_login = tools.ustr(login).lower()
         # check if the user have to change his password
-        cr.execute("""SELECT force_password_change, coalesce(last_password_change, NOW()) + interval '6 months' < NOW()
+        cr.execute("""SELECT force_password_change, not coalesce(never_expire, 'f') AND coalesce(last_password_change, NOW()) + interval '6 months' < NOW()
         FROM res_users
         WHERE login=%s AND active and (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""", (lower_login,))
         force_password, expired_password = cr.fetchone()
         if force_password:
             raise Exception("ForcePasswordChange: The admin requests your password change ...")
-        if ( tools.config.get('is_prod_instance') or tools.misc.use_prod_sync(cr) ) and expired_password:
+        if expired_password and ( tools.config.get('is_prod_instance') or tools.misc.use_prod_sync(cr) ) and expired_password:
             raise Exception("PasswordExpired: your password has expired and must be changed.")
 
     finally:

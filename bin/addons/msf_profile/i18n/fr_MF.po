@@ -111584,4 +111584,33 @@ msgstr "Les nouveaux mots de passe ne sont pas identiques."
 msgid "The new password must be different from the actual one."
 msgstr "Le nouveau mot de passe doit être différent de l'ancien."
 
+#. module: base
+#: field:res.config.users,never_expire:0
+#: field:res.users,never_expire:0
+msgid "Password never expires"
+msgstr "Le mot de passe n'expire jamais"
+
+#. module: base
+#: code:addons/base/res/res_user.py:507
+#, python-format
+msgid "On this sandbox passwords never expire"
+msgstr "Sur cette instance les mots de passe n'expirent jamais"
+
+#. module: base
+#: help:res.config.users,never_expire:0
+#: help:res.users,never_expire:0
+msgid "If unticked, the password must be changed every 6 months"
+msgstr "Si coché, la mot de passe doit être modifié tous les 6 mois"
+
+#. module: base
+#: code:addons/base/res/res_user.py:506
+#, python-format
+msgid "not applicable on this sandbox"
+msgstr "ne s'applique pas à cette instance de tests"
+
+#. module: base
+#: field:res.config.users,last_password_change:0
+#: field:res.users,last_password_change:0
+msgid "Last Password Change"
+msgstr "Dernier changement de mot de passe"
 
