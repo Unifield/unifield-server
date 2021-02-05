@@ -111559,3 +111559,29 @@ msgstr "DÉTAILS BONS CLIENT"
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:410
 msgid "DETAILS INTERMISSION VOUCHERS OUT"
 msgstr "DÉTAILS BONS INTERMISSION OUT"
+
+#. module: base
+#: code:service/security.py:144
+#, python-format
+msgid "The new password is not strong enough. It must be at least %s characters long and contain at least one digit, one capital letter and one special character"
+msgstr "Le nouveau mot de passe n'est pas assez fort. Il doit avoir au moins %s caractères et contenir au moins un chiffre, une lettre majuscule et un caractère spécial"
+
+#. module: base
+#: code:service/security.py:144
+#, python-format
+msgid "The new password cannot be equal to the login."
+msgstr "Le mot de passe doit être différent de l'indentifiant."
+
+#. module: base
+#: code:service/security.py:144
+#, python-format
+msgid "The new password does not match the confirm password."
+msgstr "Les nouveaux mots de passe ne sont pas identiques."
+
+#. module: base
+#: code:service/security.py:144
+#, python-format
+msgid "The new password must be different from the actual one."
+msgstr "Le nouveau mot de passe doit être différent de l'ancien."
+
+

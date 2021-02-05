@@ -53,6 +53,14 @@ class patch_scripts(osv.osv):
     }
 
     # UF20.0
+    def us_7019_force_password_expiration(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj:
+            # don't run on new instances
+            cr.execute("update res_users set last_password_change =  NOW() - interval '7 months'")
+            self._logger.warn('Force password expiration on %d users.' % (cr.rowcount,))
+        return True
+
     def us_7866_fill_in_target_cc_code(self, cr, uid, *a, **b):
         """
         Fills in the new "cost_center_code" field of the Account Target Cost Centers.

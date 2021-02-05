@@ -642,5 +642,9 @@
         <record id="us_7866_fill_in_target_cc_code" model="patch.scripts">
             <field name="method">us_7866_fill_in_target_cc_code</field>
         </record>
+
+        <record id="us_7019_force_password_expiration" model="patch.scripts">
+            <field name="method">us_7019_force_password_expiration</field>
+        </record>
     </data>
 </openerp>

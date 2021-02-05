@@ -114,6 +114,7 @@
                     <field name="login" select="1"/>
                     <field name="new_password" password="True"/>
                     <field name="force_password_change"/>
+                    <field name="last_password_change" />
                     <field name="log_xmlrpc" attrs="{'invisible': [('instance_level', '!=', 'hq')]}"/>
                     <field name="synchronize"
                            attrs="{'invisible': [('is_erp_manager', '=', True)], 'readonly': ['|', ('instance_level', '!=', 'hq'), ('is_synchronizable', '=', False)]}"/>
@@ -172,6 +173,7 @@
                     <field name="login"/>
                     <field name="context_lang"/>
                     <field name="date"/>
+                    <field name="last_password_change" />
                     <field name="synchronize"/>
                 </tree>
             </field>
