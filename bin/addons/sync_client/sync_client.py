@@ -747,12 +747,11 @@ class Entity(osv.osv):
 
         entity = self.get_entity(cr, uid, context)
         session_id = entity.session_id
-        update_ids = updates.search(cr, uid, [('session_id', '=', session_id)], context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.confirm_update(entity.identifier, self._hardware_id, session_id, {'md5': get_md5(session_id)})
         if not res[0]:
             raise Exception, res[1]
-        updates.sync_finished(cr, uid, update_ids, context=context)
+        updates.sync_finished(cr, uid, session_id, context=context)
         self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         #state update validate => init
         return res[1]
