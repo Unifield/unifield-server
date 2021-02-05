@@ -8306,6 +8306,7 @@ msgstr "Générer les écarts"
 #: report:addons/account/report/invoice_excel_export.mako:68
 #: report:addons/account/report/export_invoice.mako:122
 #: report:kitting.order.report:0
+#: field:view.expired.expiring.stock.lines,product_qty:0
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -23927,6 +23928,7 @@ msgstr "Zone Interne"
 #: report:addons/stock_override/report/stock_card_report_xls.mako:136
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:148
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:177
+#: field:view.expired.expiring.stock.lines,prodlot_id:0
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -57201,6 +57203,7 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:149
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:178
 #: report:kitting.order.report:0
+#: field:view.expired.expiring.stock.lines,expired_date:0
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -58406,6 +58409,7 @@ msgstr "Rebuts"
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
 #: view:replenishment.parent.segment:0
+#: view:manage.expired.stock:0
 msgid "Parameters"
 msgstr "Paramètres"
 
@@ -82249,6 +82253,7 @@ msgstr "SFTP connection succeeded"
 #: field:stock.pipe.per.product.instance.prod.lines,product_id:0
 #: view:replenishment.segment.line.amc.past_fmc:0
 #: view:replenishment.segment.line.min_max_auto_supply.history:0
+#: field:view.expired.expiring.stock.lines,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -93384,7 +93389,7 @@ msgstr "UdM du produit utilisé pour obtenir ce prix unitaire."
 msgid "Africa/Asmera"
 msgstr "Africa/Asmera"
 
-#. module: consumption_calculation
+#. modules: consumption_calculation, stock
 #: report:expiry.report:0
 #: report:addons/consumption_calculation/report/expiry_report.mako:207
 msgid "week"
@@ -96051,6 +96056,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:product.merged.wizard:0
 #: view:product.stock_out:0
 #: view:replenishment.parent.segment:0
+#: view:view.expired.expiring.stock:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -110801,8 +110807,9 @@ msgstr "L'Adresse du Partenaire de Destination doit être le même dans tous les
 msgid "Cancel Update"
 msgstr "Annuler la Mise à Jour"
 
-#. module: product
+#. module: product, stokc
 #: view:product.mass.update:0
+#: view:view.expired.expiring.stock:0
 msgid "Delete Selected Products"
 msgstr "Supprimer les Produits Sélectionnés"
 
@@ -111706,3 +111713,118 @@ msgstr "annuler l'action"
 #: view:purchase.order.line.nsl.validation.wizard:0
 msgid "ok, validate"
 msgstr "ok, valider"
+
+#. module: stock
+#: field:manage.expired.stock,bned_date_sel:0
+msgid "Batch/Expiry Date Selection"
+msgstr "Selection de Lot/Date d'Expiration"
+
+#. module: stock
+#: selection:manage.expired.stock,bned_date_sel:0
+msgid "Select expired products"
+msgstr "Selectionner les produits expirés"
+
+#. module: stock
+#: selection:manage.expired.stock,bned_date_sel:0
+msgid "Select expired products and soon to be expired"
+msgstr "Selectionner les produits expirés et ceux qui vont bientôt expirer"
+
+#. module: stock
+#: field:manage.expired.stock,in_next_x_weeks:0
+msgid "Expiring in the next"
+msgstr "Expirant dans les prochaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "1 week"
+msgstr "1 semaine"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "2 weeks"
+msgstr "2 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "3 weeks"
+msgstr "3 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "4 weeks"
+msgstr "4 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "5 weeks"
+msgstr "5 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "6 weeks"
+msgstr "6 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "7 weeks"
+msgstr "7 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "8 weeks"
+msgstr "8 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "9 weeks"
+msgstr "9 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "10 weeks"
+msgstr "10 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "11 weeks"
+msgstr "11 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "12 weeks"
+msgstr "12 semaines"
+
+
+#. module: stock
+#: model:ir.model,name:stock.model_view_expired_expiring_stock
+#: field:view.expired.expiring.stock.lines,v_mng_exp_id:0
+msgid "View Expired/Expiring Products"
+msgstr "Voir les Produits Expirés/Expirants"
+
+#. module: stock
+#: view:manage.expired.stock:0
+#: field:view.expired.expiring.stock,v_mng_exp_lines_ids:0
+msgid "View Expired/Expiring products"
+msgstr "Voir les produits Expirés/Expirants"
+
+#. module: stock
+#: view:view.expired.expiring.stock:0
+msgid "Select Expired/Expiring products"
+msgstr "Selectionner les Produits Expirés/Expirants"
+
+#. module: stock
+#: model:ir.model,name:stock.model_view_expired_expiring_stock_lines
+#: view:view.expired.expiring.stock:0
+msgid "Expired/Expiring Products"
+msgstr "Produits Expirés/Expirants"
+
+#. module: stock
+#: view:view.expired.expiring.stock:0
+msgid "Add all displayed Products to an Internal Move"
+msgstr "Ajouter les Produits affichés à un Mouvement Interne"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:220
+#, python-format
+msgid "You must have at least one line to create the Internal Move"
+msgstr "Vous devez avoir au moins une ligne pour pouvoir créer le Mouvement Interne"
