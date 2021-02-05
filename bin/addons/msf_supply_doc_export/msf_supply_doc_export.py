@@ -1160,6 +1160,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
 
     def get_lines(self, wizard):
         supl_info_obj = self.pool.get('product.supplierinfo')
+        po_obj = self.pool.get('purchase.order')
         catl_obj = self.pool.get('supplier.catalogue.line')
         curr_obj = self.pool.get('res.currency')
         lines = []
@@ -1197,12 +1198,38 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 invoices[key]['qty'] += inv['qty']
 
 
+        po_type = dict(po_obj.fields_get(self.cr, self.uid, ['order_type'], context=self.localcontext)['order_type']['selection'])
         self.cr.execute('''
             SELECT
-                pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0),
-                pl.validation_date, pl.confirmation_date, pl.confirmed_delivery_date, pl.comment, p.name,
-                p.delivery_requested_date, pp.default_code, COALESCE(tr.value, pt.name), rp.name, rp.supplier_lt, c.id,
-                c.name, m.id, m.price_unit, m.product_qty, sp.name, sp.physical_reception_date, c2.id, rp.id, sp.id
+                pl.id, -- 0
+                pl.product_id, -- 1
+                pl.line_number, -- 2
+                pl.product_qty, -- 3
+                pl.price_unit, -- 4
+                pl.state, -- 5
+                pl.create_date::timestamp(0), -- 6
+                pl.validation_date, -- 7
+                pl.confirmation_date, -- 8
+                pl.confirmed_delivery_date, -- 9
+                pl.comment, -- 10
+                p.name, -- 11
+                p.delivery_requested_date, -- 12
+                pp.default_code, -- 13
+                COALESCE(tr.value, pt.name), -- 14
+                rp.name, -- 15
+                rp.supplier_lt, -- 16
+                c.id, -- 17
+                c.name, -- 18
+                m.id, -- 19
+                m.price_unit, -- 20
+                m.product_qty, -- 21
+                sp.name, -- 22
+                sp.physical_reception_date, -- 23
+                c2.id, -- 24
+                rp.id, -- 25
+                sp.id, -- 26
+                p.order_type, -- 27
+                fo_partner.name -- 28
             FROM purchase_order_line pl
                 LEFT JOIN purchase_order p ON p.id = pl.order_id
                 LEFT JOIN product_product pp ON pp.id = pl.product_id
@@ -1214,7 +1241,10 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 LEFT JOIN stock_move m ON m.purchase_line_id = pl.id AND m.type = 'in'
                 LEFT JOIN stock_picking sp ON sp.id = m.picking_id
                 LEFT JOIN res_currency c2 ON c2.id = m.price_currency_id
-            WHERE pl.id IN %s 
+                LEFT JOIN sale_order_line sol ON sol.id = pl.linked_sol_id
+                LEFT JOIN sale_order so ON so.id = sol.order_id
+                LEFT JOIN res_partner fo_partner ON fo_partner.id = so.partner_id
+            WHERE pl.id IN %s
             ORDER BY p.id DESC, pl.line_number ASC, sp.id ASC
         ''', (self.localcontext.get('lang', 'en_MF'), tuple(wizard.pol_ids)))
 
@@ -1253,7 +1283,6 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             if key in invoices and invoices[key]['qty']:
                 si_ref = invoices[key]['inv_number'] or ''
                 si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
-                print invoices[key]['curr_id'], line[24]
                 if invoices[key]['curr_id'] != line[24]:
                     curr_date = currency_date.get_date(self, self.cr, invoices[key]['document_date'], invoices[key]['date'])
                     si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False,
@@ -1323,6 +1352,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 'days_vali_receipt': act_sup_lt,
                 'partner_lt': line[16],
                 'discrep_lt_act_theo': discrep_lt_act_theo,
+                'order_type': po_type.get(line[27], ''),
+                'customer': line[27] == 'direct' and line[28] or '',
             })
 
             self._order_iterator += 1

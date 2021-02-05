@@ -180,8 +180,12 @@ class product_cold_chain(osv.osv):
     _columns = {
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True, translate=1),
+        'cold_chain': fields.boolean('Cold Chain'),
     }
 
+    _defaults = {
+        'cold_chain': False,
+    }
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -507,30 +511,15 @@ class product_attributes(osv.osv):
 
     def _compute_is_kc(self, cr, uid, product, context=None):
         """
-        Return True if the product is considered as a Keep Cool product
+        Return True if the product is considered as a Cold Chain product
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls this method
         :param product: browse_record of a product.product
         :param context: Context of the call
         :return: True or False
         """
-        return product.heat_sensitive_item.code == 'yes'
+        return product.cold_chain and product.cold_chain.cold_chain or False
 
-    def _compute_kc_txt(self, cr, uid, product, context=None):
-        """
-        Return the character to display on views or reports ('X' or '?' or '') for Keep Cool
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: 'X' or '?' or ''
-        """
-        if product.heat_sensitive_item.code == 'no_know':
-            return '?'
-        elif product.heat_sensitive_item.code == 'no':
-            return ''
-        else:
-            return 'X'
 
     def _compute_is_dg(self, cr, uid, product, context=None):
         """
@@ -611,7 +600,7 @@ class product_attributes(osv.osv):
     def _compute_kc_dg_cs_ssl_values(self, cr, uid, ids, field_names, args, context=None):
         """
         Compute the character to display ('X' or '?' or '') according to product values
-        for Keep Cool, Dangerous Goods, Controlled Substance and Short Shelf Life.
+        for Cold Chain, Dangerous Goods, Controlled Substance and Short Shelf Life.
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls this method
         :param ids: List of ID of product.product to compute values
@@ -745,6 +734,21 @@ class product_attributes(osv.osv):
             res[_id] = True
         return res
 
+    def _get_cold_chain_products(self, cr, uid, ids, context=None):
+        # do not return product ids to write to not trigger mass update
+
+        for cold in self.pool.get('product.cold_chain').read(cr, uid, ids, ['cold_chain'], context=context):
+            is_kc = cold['cold_chain']
+            cr.execute('''
+                update product_product  set
+                    is_kc=%(is_kc)s
+                where
+                    cold_chain = %(cold_id)s and
+                    is_kc != %(is_kc)s
+            ''', {'cold_id': cold['id'], 'is_kc': is_kc})
+            logging.getLogger('cold chain').info('Cold chain id:%s, update %s products' % (cold['id'], cr.rowcount))
+            return []
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -825,24 +829,12 @@ class product_attributes(osv.osv):
             _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
-            string='Is Keep Cool ?',
+            string='Is Cold Chain ?',
             multi='kc',
             readonly=True,
             store={
-                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
-            }
-        ),
-        'kc_txt': fields.function(
-            _compute_kc_dg_cs_ssl_values,
-            _fnct_migrate=do_not_migrate,
-            method=True,
-            type='char',
-            size=8,
-            string='Keep Cool icon',
-            multi='kc',
-            readonly=True,
-            store={
-                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['cold_chain'], 10),
+                'product.cold_chain': (_get_cold_chain_products, ['cold_chain'], 20),
             }
         ),
         'heat_sensitive_item': fields.many2one(
@@ -850,7 +842,7 @@ class product_attributes(osv.osv):
             string='Temperature sensitive item',
             required=True,
         ),
-        'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
+        'cold_chain': fields.many2one('product.cold_chain', 'Thermosensitivity'),
         'show_cold_chain': fields.boolean('Show cold chain'),
         # Inverse of m2m options_ids
         'options_ids_inv': fields.many2many('product.product', 'product_options_rel', 'product_option_id', 'product_id', 'Options Inv.'),
@@ -1382,10 +1374,16 @@ class product_attributes(osv.osv):
         """
         heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
         heat3_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no_know')[1]
+
+        sensitive = heat and heat not in [heat2_id, heat3_id]
+
+        values = {
+            'show_cold_chain': sensitive
+        }
+        if not sensitive:
+            values['cold_chain'] = False
         return {
-            'value': {
-                'show_cold_chain': heat and heat not in [heat2_id, heat3_id]
-            }
+            'value': values
         }
 
     def _check_gmdn_code(self, cr, uid, ids, context=None):
@@ -2878,7 +2876,7 @@ class product_attributes(osv.osv):
             'secondary_qty', 'secondary_val',
             'cu_qty', 'cu_val',
             'cross_qty', 'cross_val',
-            'wh_qty', 'internal_qty'
+            'wh_qty', 'internal_qty',
             'quarantine_qty', 'input_qty', 'opdd_qty'
         ]
         cr.execute('''
@@ -2887,8 +2885,7 @@ class product_attributes(osv.osv):
                 mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
                 product_id in %(product_ids)s
         ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (nsl_prod_id, local_id)}) # not_a_user_entry
-        cr.execute("delete from mission_line_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
-        cr.execute("delete from mission_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
+        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (nsl_prod_id, ))
 
         return True
 

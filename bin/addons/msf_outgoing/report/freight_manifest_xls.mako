@@ -190,7 +190,7 @@
     <Column ss:AutoFitWidth="1" ss:Width="55" />
     # Description
     <Column ss:AutoFitWidth="1" ss:Width="70" />
-    # KC
+    # CC
     <Column ss:AutoFitWidth="1" ss:Width="30" />
     # DG
     <Column ss:AutoFitWidth="1" ss:Width="30" />
@@ -295,7 +295,7 @@
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Kgs')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('m³')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Value')}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('KC')}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('CC')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('DG')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('CS')}</Data></Cell>
     </Row>
@@ -336,7 +336,7 @@
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Kgs')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('m³')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Value')|x}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('KC')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('CC')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('DG')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('CS')|x}</Data></Cell>
     </Row>

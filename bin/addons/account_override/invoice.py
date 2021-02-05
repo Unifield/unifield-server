@@ -1419,13 +1419,18 @@ class account_invoice(osv.osv):
                 # get current merge vals for account or create new
                 if l.account_id.id in by_account_vals:
                     vals = by_account_vals[l.account_id.id]
+                    if l.order_line_id:
+                        vals.setdefault('purchase_order_line_ids', []).append(l.order_line_id.id)
                 else:
                     # new account to merge
                     vals = vals_template.copy()
                     vals.update({
                         '_index_': index,
                         'account_id': l.account_id.id,
+                        'purchase_order_line_ids': [],
                     })
+                    if l.order_line_id:
+                        vals['purchase_order_line_ids'].append(l.order_line_id.id)
                     index += 1
 
                 '''
@@ -1505,6 +1510,8 @@ class account_invoice(osv.osv):
                 # post encode tax m2m
                 vals['invoice_line_tax_id'] = vals['invoice_line_tax_id'] \
                     and [(6, 0, vals['invoice_line_tax_id'])] or False
+
+                vals['purchase_order_line_ids'] = vals['purchase_order_line_ids'] and [(6, 0, vals['purchase_order_line_ids'])] or False
 
                 # create merge line
                 vals.update({'merged_line': True})
@@ -1661,6 +1668,26 @@ class account_invoice(osv.osv):
             'view_type': 'form',
             'res_id': [wiz_id],
         }
+
+    def get_invoice_lines_follow_up(self, cr, uid, ids, context=None):
+        """
+        Prints the FO Follow-Up Finance report related to the IVO or STV selected
+        """
+        if context is None:
+            context = {}
+        follow_up_wizard = self.pool.get('fo.follow.up.finance.wizard')
+        inv_ids = context.get('active_ids')
+        if not inv_ids:
+            raise osv.except_osv(_('Error'),
+                                 _('Please select at least one record!'))
+        if isinstance(inv_ids, (int, long)):
+            inv_ids = [inv_ids]
+        context.update({
+            'selected_inv_ids': inv_ids,
+            'is_intermission': self.browse(cr, uid, inv_ids[0], fields_to_fetch=['is_intermission']).is_intermission,
+        })
+        wiz_id = follow_up_wizard.create(cr, uid, {}, context=context)
+        return follow_up_wizard.print_excel(cr, uid, [wiz_id], context=context)
 
 
 account_invoice()
@@ -1916,6 +1943,8 @@ class account_invoice_line(osv.osv):
         and without link to PO/FO lines when the duplication is manual
         Reset the merged_line tag.
         """
+        if context is None:
+            context = {}
         if default is None:
             default = {}
         default.update({'move_lines': False,
@@ -1924,11 +1953,12 @@ class account_invoice_line(osv.osv):
                         })
         # Manual duplication should generate a "manual document not created through the supply workflow"
         # so we don't keep the link to PO/FO at line level
-        if context.get('from_button', False):
+        if context.get('from_button') and not context.get('from_split'):
             default.update({
                 'order_line_id': False,
                 'sale_order_line_id': False,
                 'sale_order_lines': False,
+                'purchase_order_line_ids': [],
             })
         return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 

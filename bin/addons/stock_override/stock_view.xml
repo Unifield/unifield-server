@@ -1109,8 +1109,14 @@
                             <h4 style="text-align: center; margin: 10px"><translate>Would you re-source the need sourced by this stock move ?</translate></h4>
                         </html>
                     </group>
+                    <group colspan="4" col="1" attrs="{'invisible': ['|', ('cancel_only', '=', False), ('from_dpo', '=', False)]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px"><translate>In this context C&amp;R is not possible so order must be recreated if still needed.</translate></h4>
+                        </html>
+                    </group>
                     <newline />
                     <field name="cancel_only" invisible="1" />
+                    <field name="from_dpo" invisible="1" />
                     <field name="is_move_from_cross_docking" invisible="1" />
                     <separator string="Actions" colspan="4" />
                     <button name="ask_cancel" string="Cancel" type="object" icon="gtk-execute" colspan="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', False)]}" />

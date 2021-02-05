@@ -105,39 +105,6 @@ class stock_picking(osv.osv):
 
         return res
 
-    def _get_dpo_incoming(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Return True if the picking is an incoming and if one the stock move are linked to dpo_line
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = {}
-        for pick in self.browse(cr, uid, ids, context=context):
-            res[pick.id] = {'dpo_incoming': False,
-                            'dpo_out': False}
-            if pick.type == 'in':
-                for move in pick.move_lines:
-                    if move.sync_dpo or move.dpo_line_id:
-                        res[pick.id]['dpo_incoming'] = True
-                        break
-
-            if pick.type == 'out' and pick.subtype in ('standard', 'picking'):
-                for move in pick.move_lines:
-                    if move.sync_dpo or move.dpo_line_id:
-                        res[pick.id]['dpo_out'] = True
-                        break
-        return res
-
-    def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
-        result = set()
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for obj in self.read(cr, uid, ids, ['picking_id'], context=context):
-            if obj['picking_id']:
-                result.add(obj['picking_id'][0])
-        return list(result)
-
     def _get_do_not_sync(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -248,12 +215,9 @@ class stock_picking(osv.osv):
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
-        'dpo_incoming': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Incoming', multi='dpo',
-                                        store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
-                                               'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
-        'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out', multi='dpo',
-                                   store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
-                                          'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
+        'dpo_incoming': fields.boolean(string='DPO Incoming'),
+        'dpo_out': fields.boolean('DPO Out'),
+        'new_dpo_out': fields.boolean('DPO Out (new flow)'),
         'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),
         'do_not_sync': fields.function(
             _get_do_not_sync,
@@ -283,7 +247,9 @@ class stock_picking(osv.osv):
         'from_wkf_sourcing': lambda *a: False,
         'update_version_from_in_stock_picking': 0,
         'fake_type': 'in',
-        'shipment_ref':False,
+        'shipment_ref': False,
+        'dpo_out': False,
+        'new_dpo_out': False,
         'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
         'from_pick_cancel_id': False,
     }
@@ -612,7 +578,7 @@ class stock_picking(osv.osv):
         return True
 
 
-    def check_availability_manually(self, cr, uid, ids, context=None, initial_location=False):
+    def check_availability_manually(self, cr, uid, ids, context=None, initial_location=False, lefo=False):
         '''
         US-2677 : Cancel assigned moves' availability and re-check it
         '''
@@ -658,7 +624,7 @@ class stock_picking(osv.osv):
             for pick_id in ids:
                 # trigger transition from Assigned to Confirmed if needed
                 netsvc.LocalService("workflow").trg_write(uid, 'stock.picking', pick_id, cr)
-        return self.action_assign(cr, uid, ids, context=context)
+        return self.action_assign(cr, uid, ids, lefo=lefo, context=context)
 
 
     def export_pick(self, cr, uid, ids, context=None):
@@ -1196,7 +1162,7 @@ class stock_move(osv.osv):
                                              'stock.move': (lambda self, cr, uid, ids, c=None: ids, ['price_unit', 'purchase_order_line'], 10),
                                          },
                                          ),
-        'linked_incoming_move': fields.many2one('stock.move', 'Linked Incoming move', readonly=True, help="Link between INT and IN")
+        'linked_incoming_move': fields.many2one('stock.move', 'Linked Incoming move', readonly=True, help="Link between INT and IN"),
     }
 
     _defaults = {
@@ -1263,7 +1229,8 @@ class stock_move(osv.osv):
 
                 if not move.purchase_line_id.linked_sol_id:
                     vals['cancel_only'] = True
-
+                    if move.dpo_line_id:
+                        vals['from_dpo'] = True
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -1354,9 +1321,10 @@ class stock_move(osv.osv):
         # line number correspondance to be checked with Magali
         val_type = vals.get('type', False)
         picking = False
+        sync_dpo_in = False
         if vals.get('picking_id', False):
             picking = pick_obj.read(cr, uid, vals['picking_id'],
-                                    ['move_sequence_id', 'type', 'reason_type_id'], context=context)
+                                    ['move_sequence_id', 'type', 'reason_type_id', 'sync_dpo_in'], context=context)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
                 sequence_id = picking['move_sequence_id'][0]
@@ -1366,6 +1334,7 @@ class stock_move(osv.osv):
 
             if not val_type:
                 val_type = picking['type']
+            sync_dpo_in = picking['sync_dpo_in']
 
         if vals.get('product_id', False):
             product = prod_obj.read(cr, uid, vals['product_id'],
@@ -1386,7 +1355,7 @@ class stock_move(osv.osv):
                         vals['location_id'] = id_nonstock
                     vals['location_dest_id'] = id_pack
                 else:
-                    if picking['type'] != 'out':
+                    if picking['type'] != 'out' and not sync_dpo_in:
                         vals['location_dest_id'] = id_nonstock
 
             if product['batch_management']:
@@ -1427,7 +1396,7 @@ class stock_move(osv.osv):
                         vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
             # If the source location and teh destination location are the same, the state should be 'Closed'
-            if vals.get('location_id', False) == vals.get('location_dest_id', False):
+            if vals.get('location_id', False) == vals.get('location_dest_id', False) and vals.get('state') != 'cancel':
                 vals['state'] = 'done'
 
         # Change the reason type of the picking if it is not the same
@@ -1516,7 +1485,7 @@ class stock_move(osv.osv):
             if dest_dict['scrap_location'] and not dest_dict['virtual_location']:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
             # if the source location and the destination location are the same, the state is done
-            if 'location_id' in vals and vals['location_dest_id'] == vals['location_id']:
+            if 'location_id' in vals and vals['location_dest_id'] == vals['location_id'] and vals.get('state') != 'cancel':
                 vals['state'] = 'done'
 
         addr = vals.get('address_id')
@@ -1793,7 +1762,7 @@ class stock_move(osv.osv):
             ids = [ids]
 
         self.action_confirm(cr, uid, ids, context)
-        self.action_assign(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context=context)
         return True
 
     def _chain_compute(self, cr, uid, moves, context=None):
@@ -2134,12 +2103,14 @@ class stock_move_cancel_wizard(osv.osv_memory):
         'is_move_from_cross_docking': fields.function(_check_from_cross_docking, method=True, type='boolean',
                                                       string='Is the move from the Cross docking Location ?',
                                                       store=False, readonly=True),
+        'from_dpo': fields.boolean(string='Sourced on remote to DPO ?'),
     }
 
     _defaults = {
         'move_id': lambda self, cr, uid, c: c.get('active_id'),
         'cancel_only': False,
         'is_move_from_cross_docking': False,
+        'from_dpo': False,
     }
 
     def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):

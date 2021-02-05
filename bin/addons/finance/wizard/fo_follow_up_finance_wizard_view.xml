@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- FO Follow-Up finance / Wizard -->
+        <record id="fo_follow_up_finance_wizard_form_view" model="ir.ui.view">
+            <field name="name">fo.follow.up.finance.wizard.form.view</field>
+            <field name="model">fo.follow.up.finance.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="FO Follow-up Finance">
+                    <separator colspan="4" string="Request parameters" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="partner_ids" domain="[('customer', '=', True),
+                                                       ('partner_type', '=', context.get('is_intermission') and 'intermission' or 'section')]">
+                        <tree>
+                            <field name="name"/>
+                            <field name="ref"/>
+                            <field name="partner_type"/>
+                        </tree>
+                    </field>
+                    <field name="order_id" domain="[('partner_type', '=', context.get('is_intermission') and 'intermission' or 'section')]"/>
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <!-- FO Follow-Up finance / Entry Menu -->
+        <record id="action_fo_follow_up_finance_wizard_menu" model="ir.actions.act_window">
+            <field name="name">FO Follow-up Finance</field>
+            <field name="res_model">fo.follow.up.finance.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+             <field name="empty_ids">1</field>
+        </record>
+        <record model="ir.values" id="action_fo_follow_up_finance_wizard_values">
+            <field name="object" eval="1" />
+            <field name="name">fo_follow_up_finance</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_fo_follow_up_finance_wizard_menu'))" />
+            <field name="key">action</field>
+            <field name="model">account.invoice</field>
+            <field name="sequence" eval="98"/>
+        </record>
+
+        <!-- Invoice lines follow-up -->
+        <record id="action_invoice_lines_follow_up" model="ir.actions.server">
+            <field name="name">Invoice lines follow-up</field>
+            <field name="model_id" ref="model_account_invoice"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_invoice_lines_follow_up(context=context)</field>
+        </record>
+        <record id="ir_invoice_lines_follow_up" model="ir.values">
+            <field name="key2">client_print_multi</field>
+            <field name="model">account.invoice</field>
+            <field name="name">invoice_lines_follow_up</field>
+            <field eval="'ir.actions.server,%d'%action_invoice_lines_follow_up" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="99"/>
+        </record>
+
+        <!-- FO Follow-Up finance / Report -->
+        <report id="fo_follow_up_finance"
+            string="FO Follow-up Finance"
+            model="account.invoice"
+            name="fo.follow.up.finance"
+            target_filename="Follow Up_%(year)s%(month)s%(day)s"
+            file="finance/report/fo_follow_up_finance_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"/>
+
+    </data>
+</openerp>
