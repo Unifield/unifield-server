@@ -17,7 +17,7 @@ class report_project_expenses2(report_sxw.rml_parse):
         self.len1 = 0
         self.len2 = 0
         self.lines = {}
-        self.totalRptCurrency = 0
+        self.totalRptCurrency = {}
         self.totalBookAmt = 0
         self.localcontext.update({
             'getLines':self.getLines,
@@ -27,7 +27,6 @@ class report_project_expenses2(report_sxw.rml_parse):
             'getSub1':self.getSub1,
             'getSub2':self.getSub2,
             'getLines2':self.getLines2,
-            'totalRptCurrency': self.totalRptCurrency,
             'totalBookAmt':self.totalBookAmt,
             'getTotalRptCurrency': self.getTotalRptCurrency,
             'getTotalBookAmt': self.getTotalBookAmt,
@@ -37,8 +36,8 @@ class report_project_expenses2(report_sxw.rml_parse):
     def getTotalBookAmt(self):
         return self.totalBookAmt
 
-    def getTotalRptCurrency(self):
-        return self.totalRptCurrency
+    def getTotalRptCurrency(self, contract):
+        return self.totalRptCurrency.get(contract.id, 0.0)
 
     def getLines2(self,):
         return self.lines
@@ -65,7 +64,9 @@ class report_project_expenses2(report_sxw.rml_parse):
         self.len1 += 1
         self.len2 += 1
         self.totalBookAmt += analytic_line.amount_currency
-        self.totalRptCurrency += amount
+        if not contract.id in self.totalRptCurrency:
+            self.totalRptCurrency[contract.id] = 0.0
+        self.totalRptCurrency[contract.id] += amount
         return amount
 
     def getAccountName(self,analytic_line):

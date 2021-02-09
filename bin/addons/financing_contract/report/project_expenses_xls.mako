@@ -609,7 +609,7 @@
   </Cell>
   <Cell  ss:StyleID="s49"></Cell>
   <Cell ss:StyleID="s49">
-    <Data ss:Type="Number">${getTotalRptCurrency()}</Data>
+    <Data ss:Type="Number">${getTotalRptCurrency(o)}</Data>
   </Cell>
   <Cell  ss:StyleID="s49"></Cell>
 </Row>
