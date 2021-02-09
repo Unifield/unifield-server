@@ -311,8 +311,8 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         with_zero = False
         values = {'state': 'done'}
         cond = ['state=%(state)s']
+        having = ['having round(sum(product_qty), 6) != 0']
 
-        having = "having round(sum(product_qty), 6) != 0"
         full_prod_list = []
         batch_list = []
 
@@ -361,18 +361,17 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                 where""" + w_prod + """ state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s""",
                             (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
-                full_prod_list.append(x[0])
-                if x[1]:
+                if x[0] and x[0] not in full_prod_list:
+                    full_prod_list.append(x[0])
+                if x[1] and x[1] not in batch_list:
                     batch_list.append(x[1])
 
         if report.product_id and report.display_0:
             if batch_list:
-                if len(batch_list) == 1:
-                    having += " or prodlot_id = %s" % (tuple(batch_list),)
-                else:
-                    having += " or prodlot_id in %s" % (tuple(batch_list),)
+                having.append('or prodlot_id in %(batch_list)s')
+                values['batch_list'] = tuple(batch_list)
             else:
-                having += " or prodlot_id is NULL"
+                having.append('or prodlot_id is NULL')
         elif with_zero:
             having = ""
 
@@ -381,7 +380,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             where
                 """ + ' and '.join(cond) + """ 
             group by product_id, expired_date, uom_id, prodlot_id, location_id
-            """ + having, values)
+            """ + ' '.join(having), values)
 
         all_product_ids = {}
         all_bn_ids = {}
