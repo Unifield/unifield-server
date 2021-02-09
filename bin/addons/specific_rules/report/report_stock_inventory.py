@@ -314,6 +314,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
         having = "having round(sum(product_qty), 6) != 0"
         full_prod_list = []
+        batch_list = []
 
         cond.append('location_id in %(location_ids)s')
         if report.location_id:
@@ -345,46 +346,42 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             cond.append('date<%(stock_level_date)s')
             values['stock_level_date'] = '%s 23:59:59' % report.stock_level_date
 
-        if report.display_0:
+        if (not report.product_list_id or not report.prodlot_id or not report.expiry_date) and report.display_0:
             to_date = datetime.now()
             if report.stock_level_date:
                 to_date = datetime.strptime(values['stock_level_date'], '%Y-%m-%d %H:%M:%S')
             from_date = (to_date + relativedelta(months=-int(report.in_last_x_months))).strftime('%Y-%m-%d 00:00:00')
-            if not report.product_list_id or not report.prodlot_id or not report.expiry_date:
-                with_zero = True
+            with_zero = True
 
-                w_prod = ""
-                if report.product_id:
-                    w_prod = " product_id = %s AND" % report.product_id.id
+            w_prod = ""
+            if report.product_id:
+                w_prod = " product_id = %s AND" % report.product_id.id
 
-                self.cr.execute("""select distinct(product_id, prodlot_id) from stock_move 
-                    where""" + w_prod + """ state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s""",
-                                (values['location_ids'], values['location_ids'], from_date, to_date))
-                for x in self.cr.fetchall():
-                    full_prod_list.append(x[0])
+            self.cr.execute("""select distinct product_id, prodlot_id from stock_move 
+                where""" + w_prod + """ state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s""",
+                            (values['location_ids'], values['location_ids'], from_date, to_date))
+            for x in self.cr.fetchall():
+                full_prod_list.append(x[0])
+                if x[1]:
+                    batch_list.append(x[1])
 
-        if with_zero:
+        if report.product_id and report.display_0:
+            if batch_list:
+                if len(batch_list) == 1:
+                    having += " or prodlot_id = %s" % tuple(batch_list)
+                else:
+                    having += " or prodlot_id in %s" % tuple(batch_list)
+            else:
+                having += " or prodlot_id is NULL"
+        elif with_zero:
             having = ""
 
-        if report.display_0:
-            cond_0 = cond
-            cond_0.append('date>=%(from_date)s')
-            cond_0.append('date<=%(to_date)s')
-            values_0 = values
-            values_0['from_date'], values_0['to_date'] = from_date, to_date
-            self.cr.execute("""select sum(product_qty), product_id, expired_date, prodlot_id, location_id
-                from report_stock_inventory
-                where
-                    """+' and '.join(cond_0) + """
-                group by product_id, expired_date, uom_id, prodlot_id, location_id
-                """ + having, values_0)
-        else:
-            self.cr.execute("""select sum(product_qty), product_id, expired_date, prodlot_id, location_id
-                from report_stock_inventory
-                where
-                    """+' and '.join(cond)+"""
-                group by product_id, expired_date, uom_id, prodlot_id, location_id
-                """ + having, values)
+        self.cr.execute("""select sum(product_qty), product_id, expired_date, prodlot_id, location_id
+            from report_stock_inventory
+            where
+                """ + ' and '.join(cond) + """ 
+            group by product_id, expired_date, uom_id, prodlot_id, location_id
+            """ + having, values)
 
         all_product_ids = {}
         all_bn_ids = {}
