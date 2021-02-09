@@ -225,11 +225,6 @@ class financing_contract_contract(osv.osv):
     def add_general_domain(self, cr, uid, domain, browse_format_id, reporting_type, context=None):
         format_line_obj = self.pool.get('financing.contract.format.line')
         general_domain = format_line_obj._get_general_domain(cr, uid, browse_format_id, reporting_type, context=context)
-        # UTP-1063: Don't use MSF Private Funds anymore
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except Exception:
-            fp_id = 0
 
         #US-385: Move the funding pool and cost center outside the loop, put them at header of the domain
         temp_domain = []
@@ -238,9 +233,9 @@ class financing_contract_contract(osv.osv):
         if general_domain.get('funding_pool_domain', False):
             temp_domain = ['&', '&'] + [cc_domain] + [eval(general_domain['funding_pool_domain'])] + date_domain
 
-        res = [('account_id', '!=', fp_id)]
+        res = []
         if domain:
-            res = ['&'] + res + domain
+            res = res + domain
 
         if temp_domain:
             res = ['&'] + temp_domain + res

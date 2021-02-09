@@ -41,7 +41,7 @@
                                 <field colspan="4" name="funding_pool_ids" nolabel="1"
                                        attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
                                     <tree string="Funding pools" editable="top">
-                                        <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('code', '!=', 'PF')]"/>
+                                        <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
                                         <field name="funded"/>
                                         <field name="total_project" readonly="1"/>
                                     </tree>
