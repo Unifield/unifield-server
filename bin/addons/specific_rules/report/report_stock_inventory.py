@@ -363,7 +363,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                             (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
                 full_prod_list.append(x[0])
-                if x[1]:
+                if report.product_id and x[1]:
                     batch_list.append(x[1])
 
         if report.product_id and report.display_0:
