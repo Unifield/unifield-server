@@ -368,9 +368,9 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         if report.product_id and report.display_0:
             if batch_list:
                 if len(batch_list) == 1:
-                    having += " or prodlot_id = %s" % tuple(batch_list)
+                    having += " or prodlot_id = %s" % (tuple(batch_list),)
                 else:
-                    having += " or prodlot_id in %s" % tuple(batch_list)
+                    having += " or prodlot_id in %s" % (tuple(batch_list),)
             else:
                 having += " or prodlot_id is NULL"
         elif with_zero:
