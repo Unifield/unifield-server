@@ -67,7 +67,10 @@ class report_interactive(report_sxw.rml_parse):
 
         self.context.update({'mako': True})
         if 'out_currency' in self.datas:
-            self.context.update({'out_currency': self.datas['out_currency']})
+            out_currency = self.datas['out_currency']
+        else:
+            out_currency = contract.reporting_currency.id
+        self.context.update({'out_currency': out_currency})
 
         csv_data = pool.get('wizard.interactive.report')._get_interactive_data(self.cr, self.uid, contract.id, context=self.context)
 

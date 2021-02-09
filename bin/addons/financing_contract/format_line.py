@@ -345,12 +345,12 @@ class financing_contract_format_line(osv.osv):
 
         # convert the amounts from the reporting currency of the contract to the output currency selected in the wizard
         res_in_curr = {}
-        if context.get('contract_fx_date') and context.get('contract_currency_id') and context.get('out_currency') and \
-                context['contract_currency_id'] != context['out_currency']:
+        if context.get('contract_fx_date') and context.get('reporting_currency_id') and context.get('out_currency') and \
+                context['reporting_currency_id'] != context['out_currency']:
             date_context = context.copy()
             date_context.update({'currency_date': context['contract_fx_date']})  # use the rate at "Eligibility from" date
             for r_id in res:
-                res_in_curr[r_id] = curr_obj.compute(cr, uid, context['contract_currency_id'], context['out_currency'],
+                res_in_curr[r_id] = curr_obj.compute(cr, uid, context['reporting_currency_id'], context['out_currency'],
                                                      res[r_id] or 0.0, round=False, context=date_context)
             res = res_in_curr
         return res
@@ -405,7 +405,8 @@ class financing_contract_format_line(osv.osv):
                     if analytic_domain:
                         analytic_domain = self.pool.get('financing.contract.contract').add_general_domain(cr, uid, analytic_domain, line.format_id, report_type, context)
                     # selection of analytic lines
-                    if 'reporting_currency' in context:  # TODO Why do we only get analytic lines if reporting_currency in context
+                    if 'out_currency' in context:  # used for the computation in output currency
+                        # note: only analytic lines are retrieved in this report
                         analytic_line_obj = self.pool.get('account.analytic.line')
                         analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
                         # list of analytic journal_ids which are in the engagement journals
@@ -426,7 +427,7 @@ class financing_contract_format_line(osv.osv):
                             real_sum += self.pool.get('res.currency').compute(cr,
                                                                               uid,
                                                                               analytic_line.currency_id.id,
-                                                                              context['reporting_currency'],
+                                                                              context['out_currency'],
                                                                               analytic_line.amount_currency or 0.0,
                                                                               round=False,
                                                                               context=date_context)
