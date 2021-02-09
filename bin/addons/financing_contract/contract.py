@@ -539,19 +539,21 @@ class financing_contract_contract(osv.osv):
         Check if contract gives some FP. If not raise an error.
         Otherwise launch the report.
         """
-        # Some verifications
-        if not context:
+        if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for contract in self.browse(cr, uid, ids, context=context):
+        contract_ids = context.get('active_ids', [])
+        if not contract_ids:
+            raise osv.except_osv(_('Error'), _('No contract selected.'))
+        if isinstance(contract_ids, (int, long)):
+            contract_ids = [contract_ids]
+        for contract in self.browse(cr, uid, contract_ids, fields_to_fetch=['format_id', 'name'], context=context):
             if not contract.format_id.funding_pool_ids:
                 raise osv.except_osv(_('Error'), _('No FP selected in the financing contract: %s') % (contract.name or ''))
         # We launch the report
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'financing.allocated.expenses.2',
-            'datas': {'ids': ids},
+            'datas': {'ids': contract_ids},
             'context': context,
         }
 

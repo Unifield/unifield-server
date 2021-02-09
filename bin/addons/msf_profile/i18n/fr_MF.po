@@ -67982,6 +67982,12 @@ msgstr "FRANC SUISSE"
 msgid "No File Selected."
 msgstr "Aucun fichier sélectionné."
 
+#. module: financing_contract
+#: code:addons/financing_contract/contract.py:546
+#, python-format
+msgid "No contract selected."
+msgstr "Aucun contrat sélectionné."
+
 #. module: kit
 #: view:kit.mass.import:0
 msgid "Import log messages"
