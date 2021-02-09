@@ -353,17 +353,17 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             from_date = (to_date + relativedelta(months=-int(report.in_last_x_months))).strftime('%Y-%m-%d 00:00:00')
             with_zero = True
 
-            w_prod = ""
+            plus_bn, w_prod = "", ""
             if report.product_id:
+                plus_bn = ", prodlot_id"
                 w_prod = " product_id = %s AND" % report.product_id.id
 
-            self.cr.execute("""select distinct product_id, prodlot_id from stock_move 
+            self.cr.execute("""select distinct product_id""" + plus_bn + """ from stock_move 
                 where""" + w_prod + """ state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s""",
                             (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
-                if x[0] and x[0] not in full_prod_list:
-                    full_prod_list.append(x[0])
-                if x[1] and x[1] not in batch_list:
+                full_prod_list.append(x[0])
+                if x[1]:
                     batch_list.append(x[1])
 
         if report.product_id and report.display_0:
@@ -373,7 +373,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             else:
                 having.append('or prodlot_id is NULL')
         elif with_zero:
-            having = ""
+            having = []
 
         self.cr.execute("""select sum(product_qty), product_id, expired_date, prodlot_id, location_id
             from report_stock_inventory
