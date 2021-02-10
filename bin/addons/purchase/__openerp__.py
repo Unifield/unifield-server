@@ -56,6 +56,7 @@
         'board_purchase_view.xml',
         'purchase_line_workflow.xml',
         'purchase_custom_text.xml',
+        'wizard/purchase_line_nsl_validation.xml',
     ],
     'test': [
     ],

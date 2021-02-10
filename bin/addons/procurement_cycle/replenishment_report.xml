@@ -2,6 +2,16 @@
 <openerp>
     <data>
       <report
+            id="report_replenishment_parent_segment_chronogram_xls"
+            string="Chronogram"
+            model="replenishment.parent.segment"
+            name="report_replenishment_parent_segment_chronogram_xls"
+            file="procurement_cycle/report/chronogram.mako"
+            report_type="webkit"
+            menu="True"
+            />
+
+      <report
             id="report_replenishment_segment_xls"
             string="Segment"
             model="replenishment.segment"

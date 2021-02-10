@@ -12,6 +12,53 @@ class purchase_order_line(osv.osv):
     _name = "purchase.order.line"
     _inherit = "purchase.order.line"
 
+    def validated(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cr.execute("""select
+                pol.line_number, prod.default_code
+            from
+                purchase_order_line pol,
+                purchase_order po,
+                product_product prod,
+                res_partner part
+            where
+                pol.order_id = po.id and
+                prod.id = pol.product_id and
+                part.id = po.partner_id and
+                part.partner_type = 'esc' and
+                prod.standard_ok = 'non_standard_local' and
+                pol.state = 'draft' and
+                pol.id in %s
+            """, (tuple(ids), )
+        )
+        nsl = []
+        for pol_data in cr.fetchall():
+            nsl.append(_('L%s : %s') % (pol_data[0], pol_data[1]))
+
+        if nsl:
+            # checks before validating the line:
+            self.check_origin_for_validation(cr, uid, ids, context=context)
+            self.check_analytic_distribution(cr, uid, ids, context=context)
+            self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
+            self.check_unit_price(cr, uid, ids, context=context)
+            self.check_po_tax(cr, uid, ids, context=context)
+            wiz_id = self.pool.get('purchase.order.line.nsl.validation.wizard').create(cr, uid, {'pol_ids': [(6, 0, ids)], 'message': ', '.join(nsl)}, context=context)
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order.line.nsl.validation.wizard',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                'height': '400px',
+                'width': '520px',
+            }
+
+        return netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order.line', ids, 'validated', cr)
+
+
     def get_split_info(self, cr, uid, pol, context=None):
         sol_values = {}
 
@@ -551,7 +598,10 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
-        to_complete_ids = self.search(cr, uid, [('id', '=', ids), ('from_fo', '=', True), ('origin', '=', False), ('sync_linked_sol', '=', False)])
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        to_complete_ids = self.search(cr, uid, [('id', 'in', ids), ('from_fo', '=', True), ('origin', '=', False), ('sync_linked_sol', '=', False)])
         if to_complete_ids:
             error = []
             for line in self.read(cr, uid, to_complete_ids, ['line_number', 'default_code'], context=context):
@@ -888,12 +938,9 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wf_service = netsvc.LocalService("workflow")
-        for po in self.browse(cr, uid, ids, context=context):
-            for pol_id in [pol.id for pol in po.order_line]:
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'validated', cr)
+        po = self.browse(cr, uid, ids[0], context=context)
+        return self.pool.get('purchase.order.line').validated(cr, uid, [pol.id for pol in po.order_line], context=context)
 
-        return True
 
 
     def confirm_lines(self, cr, uid, ids, context=None):

@@ -717,7 +717,7 @@ msgstr "Compte  - souscription"
 msgid "Batch Number %s for %s with Expiry Date %s has been created."
 msgstr "Le numéro de lot %s pour %s avec date d'expiration %s a été créé."
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -729,6 +729,7 @@ msgstr "Le numéro de lot %s pour %s avec date d'expiration %s a été créé."
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:82
 msgid "October"
 msgstr "Octobre"
 
@@ -1253,6 +1254,7 @@ msgstr "msf.budget.line"
 #: code:addons/procurement_cycle/replenishment.py:218
 #: code:addons/procurement_cycle/replenishment.py:226
 #: code:addons/procurement_cycle/replenishment.py:229
+#: code:addons/procurement_cycle/replenishment.py:230
 #, python-format
 msgid "Info"
 msgstr "Info"
@@ -1715,6 +1717,9 @@ msgstr "Europe/Sarajevo"
 #: selection:replenishment.inventory.review.line,rule:0
 #: selection:replenishment.order_calc,rule:0
 #: selection:replenishment.segment,rule:0
+#: field:replenishment.order_calc.line,min_max:0
+#: selection:replenishment.order_calc.line,rule:0
+#: selection:replenishment.segment.line.min_max_auto_supply.history,field:0
 msgid "Min/Max"
 msgstr "Min/Max"
 
@@ -5487,6 +5492,7 @@ msgstr "Total Chèques en Attente en Devise Fonc."
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:37
 #: field:supplier.performance.wizard,po_type_donation_st:0
 #: code:addons/stock_override/report/report_stock_move.py:29
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "Standard donation"
 msgstr "Donation normale"
@@ -5506,7 +5512,19 @@ msgstr "Le nom de la règle de la piste d'audit doit être unique !"
 #: code:addons/account/report/account_general_ledger.py:546
 #, python-format
 msgid "Selected Accounts"
-msgstr "Selected Accounts"
+msgstr "Comptes Sélectionnés"
+
+#. module: account
+#: code:addons/account/report/account_general_ledger.py:561
+#, python-format
+msgid "Excluded Accounts"
+msgstr "Comptes Exclus"
+
+#. module: account
+#: code:addons/account/report/account_general_ledger.py:516
+#, python-format
+msgid "Excluded Journals: "
+msgstr "Journaux Exclus : "
 
 #. module: msf_profile
 #: view:user.access.results:0
@@ -7563,7 +7581,7 @@ msgstr "po.automation.config"
 msgid "All entries must be hard posted before closing this Register!"
 msgstr "Toutes les écritures doivent être comptabilisées définitivement avant de fermer ce Registre ! "
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -7575,6 +7593,7 @@ msgstr "Toutes les écritures doivent être comptabilisées définitivement avan
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:82
 msgid "July"
 msgstr "Juillet"
 
@@ -7761,7 +7780,7 @@ msgstr "Feuille 1"
 msgid "Is intl engagement"
 msgstr "Is intl engagement"
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -7773,6 +7792,7 @@ msgstr "Is intl engagement"
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:81
 msgid "January"
 msgstr "Janvier"
 
@@ -8298,6 +8318,7 @@ msgstr "Générer les écarts"
 #: report:addons/account/report/invoice_excel_export.mako:68
 #: report:addons/account/report/export_invoice.mako:122
 #: report:kitting.order.report:0
+#: field:view.expired.expiring.stock.lines,product_qty:0
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -10590,7 +10611,7 @@ msgid "\n"
 msgstr "\n"
 "    "
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -10602,6 +10623,7 @@ msgstr "\n"
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:81
 msgid "June"
 msgstr "Juin"
 
@@ -23918,6 +23940,7 @@ msgstr "Zone Interne"
 #: report:addons/stock_override/report/stock_card_report_xls.mako:136
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:148
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:177
+#: field:view.expired.expiring.stock.lines,prodlot_id:0
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -24215,6 +24238,7 @@ msgstr "Is resourced ?"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:38
 #: field:supplier.performance.wizard,po_type_loan:0
 #: code:addons/stock_override/report/report_stock_move.py:27
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "Loan"
 msgstr "Prêt"
@@ -29136,7 +29160,7 @@ msgstr "Field %s: type %s not supported"
 msgid "Update(s) sent: %d import update(s) + %d delete update(s) on %d update(s)"
 msgstr "Update(s) sent: %d import update(s) + %d delete update(s) on %d update(s)"
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -29148,6 +29172,7 @@ msgstr "Update(s) sent: %d import update(s) + %d delete update(s) on %d update(s
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:81
 msgid "February"
 msgstr "Février"
 
@@ -29946,7 +29971,7 @@ msgstr "America/Argentina/San_Juan"
 msgid "Operator '%s' not suported"
 msgstr "Operator '%s' not suported"
 
-#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account
+#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account, purchase
 #: view:account.line.csv.export:0
 #: field:account.line.csv.export,message:0
 #: field:import.commitment.wizard,last_error:0
@@ -29997,6 +30022,7 @@ msgstr "Operator '%s' not suported"
 #: field:wizard.import.po.simulation.screen.line,info_msg:0
 #: field:wizard.import.ppl.to.create.ship,message:0
 #: field:wizard.import.product.line,message:0
+#: field:purchase.order.line.nsl.validation.wizard,message:0
 msgid "Message"
 msgstr "Message"
 
@@ -30075,6 +30101,7 @@ msgstr "Close it"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:35
 #: field:supplier.performance.wizard,po_type_regular:0
 #: code:addons/stock_override/report/report_stock_move.py:27
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "Regular"
 msgstr "Normal"
@@ -30573,8 +30600,9 @@ msgstr "Montant Fixé"
 msgid "Financing Contract List"
 msgstr "Contrat de Financement - Liste"
 
-#. module: msf_partner
+#. module: msf_partner, procurement_cycle
 #: view:res.partner:0
+#: report:addons/procurement_cycle/report/chronogram.mako:1322
 msgid "Supplier LT"
 msgstr "Délai Fournisseur "
 
@@ -45370,9 +45398,25 @@ msgstr "Exclure la sélection de partenaires"
 msgid "Exclude employee selection"
 msgstr "Exclure la sélection d'employés"
 
-#. module: account_mcdb
+#. modules: account_mcdb, account, finance
 #: field:account.mcdb,rev_transfer_journal_ids:0
 #: field:account.mcdb,rev_journal_ids:0
+#: field:account.aged.trial.balance,rev_journal_ids:0
+#: field:account.balance.report,rev_journal_ids:0
+#: field:account.bs.report,rev_journal_ids:0
+#: field:account.central.journal,rev_journal_ids:0
+#: field:account.common.account.report,rev_journal_ids:0
+#: field:account.common.journal.report,rev_journal_ids:0
+#: field:account.common.partner.report,rev_journal_ids:0
+#: field:account.common.report,rev_journal_ids:0
+#: field:account.general.journal,rev_journal_ids:0
+#: field:account.partner.balance,rev_journal_ids:0
+#: field:account.partner.ledger,rev_journal_ids:0
+#: field:account.pl.report,rev_journal_ids:0
+#: field:account.print.journal,rev_journal_ids:0
+#: field:account.report.general.ledger,rev_journal_ids:0
+#: field:account.vat.declaration,rev_journal_ids:0
+#: field:wizard.account.partner.balance.tree,rev_journal_ids:0
 msgid "Exclude journal selection"
 msgstr "Exclure la sélection de journaux"
 
@@ -46409,7 +46453,7 @@ msgstr "Mexico/General"
 msgid "UoS Quantity"
 msgstr "Quantité en Unité de Vente"
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -46421,6 +46465,7 @@ msgstr "Quantité en Unité de Vente"
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:82
 msgid "August"
 msgstr "Août"
 
@@ -48475,7 +48520,7 @@ msgstr "Réinitialiser les valeurs de recherche"
 msgid "Tracking Moves Analysis"
 msgstr "Analyse du Suivi des Mouvements"
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -48487,6 +48532,7 @@ msgstr "Analyse du Suivi des Mouvements"
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:82
 msgid "September"
 msgstr "Septembre"
 
@@ -50312,8 +50358,24 @@ msgstr "De cette vue, ayez une analyse des différents comptes financiers. Le do
 msgid "/"
 msgstr "/"
 
-#. module: account_mcdb
+#. modules: account_mcdb, account, finance
 #: field:account.mcdb,rev_account_ids:0
+#: field:account.aged.trial.balance,rev_account_ids:0
+#: field:account.balance.report,rev_account_ids:0
+#: field:account.bs.report,rev_account_ids:0
+#: field:account.central.journal,rev_account_ids:0
+#: field:account.common.account.report,rev_account_ids:0
+#: field:account.common.journal.report,rev_account_ids:0
+#: field:account.common.partner.report,rev_account_ids:0
+#: field:account.common.report,rev_account_ids:0
+#: field:account.general.journal,rev_account_ids:0
+#: field:account.partner.balance,rev_account_ids:0
+#: field:account.partner.ledger,rev_account_ids:0
+#: field:account.pl.report,rev_account_ids:0
+#: field:account.print.journal,rev_account_ids:0
+#: field:account.report.general.ledger,rev_account_ids:0
+#: field:account.vat.declaration,rev_account_ids:0
+#: field:wizard.account.partner.balance.tree,rev_account_ids:0
 msgid "Exclude account selection"
 msgstr "Exclure la sélection Compte"
 
@@ -52301,6 +52363,7 @@ msgstr "A line must a have a quantity larger than 0.00"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:40
 #: field:supplier.performance.wizard,po_type_purchase_list:0
 #: code:addons/stock_override/report/report_stock_move.py:32
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "Purchase List"
 msgstr "Liste d'Achats"
@@ -56166,6 +56229,7 @@ msgstr "Display destinations?"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:39
 #: field:supplier.performance.wizard,po_type_in_kind:0
 #: code:addons/stock_override/report/report_stock_move.py:27
+#: selection:purchase.order.line,po_order_type:0
 #, python-format
 msgid "In Kind Donation"
 msgstr "Donation en Nature"
@@ -57183,6 +57247,7 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:149
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:178
 #: report:kitting.order.report:0
+#: field:view.expired.expiring.stock.lines,expired_date:0
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -58388,6 +58453,7 @@ msgstr "Rebuts"
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
 #: view:replenishment.parent.segment:0
+#: view:manage.expired.stock:0
 msgid "Parameters"
 msgstr "Paramètres"
 
@@ -58569,7 +58635,7 @@ msgstr "Raccourci"
 msgid "If you chose lines coming from Field Orders, External/ESC suppliers will be available for Internal/Inter-section/Intermission customers and Internal/External/Inter-section/Intermission/ESC suppliers will be available for External customers"
 msgstr "Si vous aviez choisi des lignes venant de Commandes de Terrain, des fournisseurs Externe/ESC seront disponibles pour des clients Interne/Inter-section/Intermission et des fournisseurs Interne/Externe/Inter-section/Intermission/ESC seront disponibles pour des clients Externe"
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -58581,6 +58647,7 @@ msgstr "Si vous aviez choisi des lignes venant de Commandes de Terrain, des four
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:82
 msgid "December"
 msgstr "Décembre"
 
@@ -71053,7 +71120,7 @@ msgstr "Contient des Événements"
 msgid "Base Language 'en_US' can not be deleted !"
 msgstr "Langue de base 'en_US' ne peut pas être supprimée !"
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -71065,6 +71132,7 @@ msgstr "Langue de base 'en_US' ne peut pas être supprimée !"
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:81
 msgid "April"
 msgstr "Avril"
 
@@ -75872,7 +75940,13 @@ msgstr "Filtrés par"
 #: code:addons/stock_override/stock.py:391
 #, python-format
 msgid "The source location of lines has been changed to the same as header value"
-msgstr "La zone source des lignes a été changé avec la valeur présente en en-tête"
+msgstr "La zone source des lignes a été changée avec la valeur présente en en-tête"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:391
+#, python-format
+msgid "The source location of lines has been changed according to the new partner"
+msgstr "La zone source des lignes a été changée en fonction du nouveau partenaire"
 
 #. modules: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:571
@@ -77079,7 +77153,7 @@ msgstr "TVA :"
 msgid "O. l."
 msgstr "O. l."
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -77091,6 +77165,7 @@ msgstr "O. l."
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:81
 msgid "March"
 msgstr "Mars"
 
@@ -82235,6 +82310,7 @@ msgstr "SFTP connection succeeded"
 #: field:stock.pipe.per.product.instance.prod.lines,product_id:0
 #: view:replenishment.segment.line.amc.past_fmc:0
 #: view:replenishment.segment.line.min_max_auto_supply.history:0
+#: field:view.expired.expiring.stock.lines,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -85629,9 +85705,10 @@ msgstr "Annuler"
 msgid "You cannot select 'Top prop Instances' because 'Instances' is already selected."
 msgstr "Vous ne pouvez pas selectionner 'Instance prop. parente' car 'Instances' est déjà selectionné."
 
-#. module: sales_followup
+#. module: sales_followup, procurement_cycle
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:284
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:283
+#: report:addons/procurement_cycle/report/chronogram.mako:2149
 msgid "RDD"
 msgstr "DLS"
 
@@ -86155,7 +86232,7 @@ msgstr "Anglais (UK)"
 msgid "Customer reference :"
 msgstr "Référence client :"
 
-#. modules: purchase, account, sale, stock_schedule, board, stock
+#. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
 #: selection:account.invoice.report,month:0
 #: selection:analytic.entries.report,month:0
@@ -86167,6 +86244,7 @@ msgstr "Référence client :"
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/procurement_cycle/report/chronogram.py:82
 msgid "November"
 msgstr "Novembre"
 
@@ -87500,6 +87578,12 @@ msgstr "wizard.invoice.line"
 #, python-format
 msgid "The UoM is not compatible with the product."
 msgstr "The UoM is not compatible with the product."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:196
+#, python-format
+msgid "The source location is not compatible with the patner"
+msgstr "La zone source n'est pas compatible avec le partenaire"
 
 #. module: account
 #: help:account.tax,name:0
@@ -93368,7 +93452,7 @@ msgstr "UdM du produit utilisé pour obtenir ce prix unitaire."
 msgid "Africa/Asmera"
 msgstr "Africa/Asmera"
 
-#. module: consumption_calculation
+#. modules: consumption_calculation, stock
 #: report:expiry.report:0
 #: report:addons/consumption_calculation/report/expiry_report.mako:207
 msgid "week"
@@ -96035,6 +96119,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:product.merged.wizard:0
 #: view:product.stock_out:0
 #: view:replenishment.parent.segment:0
+#: view:view.expired.expiring.stock:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -106867,6 +106952,8 @@ msgstr "Annuler Segment et Calculs"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
+#: model:ir.actions.report.xml,name:procurement_cycle.report_replenishment_parent_segment_chronogram_xls
+#: report:addons/procurement_cycle/report/chronogram.mako:502
 msgid "Chronogram"
 msgstr "Chronogramme"
 
@@ -107468,6 +107555,8 @@ msgstr "Qté Max"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:831
 #: code:addons/procurement_cycle/replenishment.py:445
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:919
+#: code:addons/procurement_cycle/replenishment.py:812
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:932
 #, python-format
 msgid "Min"
 msgstr "Min"
@@ -107490,6 +107579,7 @@ msgstr "Min Qté"
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:84
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:106
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:107
+#: report:addons/procurement_cycle/report/replenishment_segment.mako:429
 msgid "N"
 msgstr "N"
 
@@ -110780,8 +110870,9 @@ msgstr "L'Adresse du Partenaire de Destination doit être le même dans tous les
 msgid "Cancel Update"
 msgstr "Annuler la Mise à Jour"
 
-#. module: product
+#. module: product, stokc
 #: view:product.mass.update:0
+#: view:view.expired.expiring.stock:0
 msgid "Delete Selected Products"
 msgstr "Supprimer les Produits Sélectionnés"
 
@@ -110920,7 +111011,7 @@ msgstr "Impossible de récupérer automatiquement les lignes à comptabiliser po
 #: code:addons/register_accounting/wizard/temp_posting.py:55
 #, python-format
 msgid "Impossible to retrieve automatically the lines to temp post for this register. Please select them manually and click on \"Temp Posting\"."
-msgstr "Impossible de récupérer automatiquement les lignes à comptabiliser temporairement pour ce registre. Veuillez les sélectionner manuellement et cliquer sur \"Comptabilisation Temporaire"\"."
+msgstr "Impossible de récupérer automatiquement les lignes à comptabiliser temporairement pour ce registre. Veuillez les sélectionner manuellement et cliquer sur \"Comptabilisation Temporaire\"."
 
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment_wizard.py:102
@@ -111567,3 +111658,236 @@ msgstr "DÉTAILS BONS CLIENT"
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:410
 msgid "DETAILS INTERMISSION VOUCHERS OUT"
 msgstr "DÉTAILS BONS INTERMISSION OUT"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:502
+msgid "CHRONOGRAM"
+msgstr "CHRONOGRAMME"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:1594
+msgid "Cover time"
+msgstr "Temps de couverture"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:1859
+msgid "Deadlines"
+msgstr "Dates limites"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:1461
+msgid "Handling LT"
+msgstr "Délai de Manutention"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:2041
+msgid "IR created"
+msgstr "DI créée"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:588
+#, python-format
+msgid "Only integers are allowed for lead time/order coverage values. Values have been rounded."
+msgstr "Seuls des entiers sont acceptés pour le délai/courverture. Les valeurs ont été arrondies."
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:2001
+msgid "Order Calculation created"
+msgstr "Calcul de Commande créé"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:935
+msgid "Order Preparation"
+msgstr "Préparation de Commande"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:2005
+msgid "Order calculation validated"
+msgstr "Calcul de Commande validé"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:1044
+msgid "Order creation"
+msgstr "Création de la commande"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:1183
+msgid "Order validation"
+msgstr "Validation de la commande"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:2113
+msgid "PO received by Supplier"
+msgstr "BC reçu par le fournisseur"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:2077
+msgid "PO validated"
+msgstr "BC Validé"
+
+#. module: procurement_cycle
+#: view:replenishment.segment:0
+msgid "Parent Description"
+msgstr "Description du Parent"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:1997
+msgid "Segment Updated"
+msgstr "Segment mis à jour"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:1993
+msgid "Start (inv or FMC discussions)"
+msgstr "Début (discussions inv ou PCM)"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/chronogram.mako:1993
+msgid "Order Cycle"
+msgstr "Cycle de Commande"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:586
+#, python-format
+msgid "The decimal part of lead time/order coverage values  must be 0, 0.25, 0.5 or 0.75. Values have been rounded."
+msgstr "La partie décimale du délai/courverture doit être 0, 0.25, 0.5 ou 0.75. Les valeurs ont été arrondies."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:587
+#, python-format
+msgid "The decimal part of lead time/order coverage values must be 0 or 0.5. Values have been rounded."
+msgstr "La partie décimale du délai/courverture doit être 0 ou 0.5. Les valeurs ont été arrondies."
+
+#. module: purchase
+#: view:purchase.order.line.nsl.validation.wizard:0
+msgid "NSL Product(s):"
+msgstr "Produit(s) NSL"
+
+#. module: purchase
+#: view:purchase.order.line.nsl.validation.wizard:0
+msgid "Warning! This PO contains NSL product(s), please check with your OC and / or your ESC to ensure this is expected as these products are not usually supplied by ESCs"
+msgstr "Attention ! Le BC contient des produits NSL, veuillez valider avec votre OC ou votre ESC qu'il s'agit de la procédure adaptée dans la mesure où ces produits ne sont normalement pas fournis par un ESC "
+
+#. module: purchase
+#: view:purchase.order.line.nsl.validation.wizard:0
+msgid "cancel action"
+msgstr "annuler l'action"
+
+#. module: purchase
+#: view:purchase.order.line.nsl.validation.wizard:0
+msgid "ok, validate"
+msgstr "ok, valider"
+
+#. module: stock
+#: field:manage.expired.stock,bned_date_sel:0
+msgid "Batch/Expiry Date Selection"
+msgstr "Selection de Lot/Date d'Expiration"
+
+#. module: stock
+#: selection:manage.expired.stock,bned_date_sel:0
+msgid "Select expired products"
+msgstr "Selectionner les produits expirés"
+
+#. module: stock
+#: selection:manage.expired.stock,bned_date_sel:0
+msgid "Select expired products and soon to be expired"
+msgstr "Selectionner les produits expirés et ceux qui vont bientôt expirer"
+
+#. module: stock
+#: field:manage.expired.stock,in_next_x_weeks:0
+msgid "Expiring in the next"
+msgstr "Expirant dans les prochaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "1 week"
+msgstr "1 semaine"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "2 weeks"
+msgstr "2 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "3 weeks"
+msgstr "3 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "4 weeks"
+msgstr "4 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "5 weeks"
+msgstr "5 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "6 weeks"
+msgstr "6 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "7 weeks"
+msgstr "7 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "8 weeks"
+msgstr "8 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "9 weeks"
+msgstr "9 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "10 weeks"
+msgstr "10 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "11 weeks"
+msgstr "11 semaines"
+
+#. module: stock
+#: selection:manage.expired.stock,in_next_x_weeks:0
+msgid "12 weeks"
+msgstr "12 semaines"
+
+
+#. module: stock
+#: model:ir.model,name:stock.model_view_expired_expiring_stock
+#: field:view.expired.expiring.stock.lines,v_mng_exp_id:0
+msgid "View Expired/Expiring Products"
+msgstr "Voir les Produits Expirés/Expirants"
+
+#. module: stock
+#: view:manage.expired.stock:0
+#: field:view.expired.expiring.stock,v_mng_exp_lines_ids:0
+msgid "View Expired/Expiring products"
+msgstr "Voir les produits Expirés/Expirants"
+
+#. module: stock
+#: view:view.expired.expiring.stock:0
+msgid "Select Expired/Expiring products"
+msgstr "Selectionner les Produits Expirés/Expirants"
+
+#. module: stock
+#: model:ir.model,name:stock.model_view_expired_expiring_stock_lines
+#: view:view.expired.expiring.stock:0
+msgid "Expired/Expiring Products"
+msgstr "Produits Expirés/Expirants"
+
+#. module: stock
+#: view:view.expired.expiring.stock:0
+msgid "Add all displayed Products to an Internal Move"
+msgstr "Ajouter les Produits affichés à un Mouvement Interne"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:220
+#, python-format
+msgid "You must have at least one line to create the Internal Move"
+msgstr "Vous devez avoir au moins une ligne pour pouvoir créer le Mouvement Interne"

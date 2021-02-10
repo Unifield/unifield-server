@@ -462,6 +462,7 @@ class stock_picking(osv.osv):
         v = {}
         d = {}
 
+        move_obj = self.pool.get('stock.move')
         partner = False
 
         if not partner_id:
@@ -485,13 +486,25 @@ class stock_picking(osv.osv):
 
         if partner_id and ids:
             picking = self.browse(cr, uid, ids[0], context=context)
-            if not picking.origin and partner.partner_type in ('internal', 'intermission', 'section'):
+            if not picking.from_wkf and partner.partner_type in ('internal', 'intermission', 'section'):
                 return {
                     'value': {'partner_id2': False, 'partner_id': False,},
                     'warning': {
                         'title': _('Error'),
                         'message': _("In a PICK from scratch, your are not allowed to choose this type of partner."),
                     },
+                }
+            default_loc = partner.property_stock_supplier.id
+            move_ids = move_obj.search(cr, uid, [('picking_id', '=', ids[0]), ('location_id', '!=', default_loc)], context=context)
+            if not picking.from_wkf and move_ids and picking.type == 'in':
+                move_obj.write(cr, uid, move_ids, {'location_id': default_loc}, context=context)
+                return {
+                    'value': v,
+                    'domain': d,
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The source location of lines has been changed according to the new partner'),
+                    }
                 }
 
         return {'value': v,
@@ -1984,7 +1997,6 @@ class stock_location(osv.osv):
             return []
         if context is None:
             context = {}
-
         partner_id2 = arg[0][2][0]
         ext_cu = arg[0][2][1]
 
@@ -1992,7 +2004,8 @@ class stock_location(osv.osv):
         if not partner_id2 and not ext_cu:
             domain = []
         elif partner_id2:
-            domain = [('usage', '=', 'supplier')]
+            partner_data = self.pool.get('res.partner').browse(cr ,uid, partner_id2, fields_to_fetch=['property_stock_supplier'], context=context)
+            domain = [('usage', '=', 'supplier'), ('id', '=', partner_data.property_stock_supplier.id)]
         else: # ext_cu
             domain = [('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')]
 

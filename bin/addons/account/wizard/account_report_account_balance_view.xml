@@ -40,7 +40,8 @@
             <xpath expr="//field[@name='journal_ids']" position="replace">
                 <group col="4" colspan="4">
                     <button name="remove_journals" string="Remove all journals" type="object" colspan="1" />
-                    <label string="" colspan="3" />
+                    <field name="rev_journal_ids" colspan="1" />
+                    <label string="" colspan="2" />
                     <field name="journal_ids" colspan="4" nolabel="1" noteditable="1">
                         <tree noteditable="1" editable="top" string="Account Journal">
                             <field name="instance_id" />
@@ -54,6 +55,7 @@
 
             <xpath expr="//page[@name='journal_ids']" position="after">
                 <page string="Accounts filter" name="account_ids">
+                    <field name="rev_account_ids"/>
                     <field name="account_ids" colspan="4" nolabel="1"
                         domain="[('type', '!=', 'view')]" >
                         <tree noteditable="1" editable="top" string="Account">

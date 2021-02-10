@@ -380,12 +380,14 @@ class update(osv.osv):
         self._logger.info("::::::::[%s] Data Push :: Confirming updates session: %s" % (entity.name, session_id))
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm updates...'))
 
-        update_ids = self.search(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id)], context=context)
-        sequence = None
-        if update_ids:
+        has_updates = self.search_exists(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id), ('sequence', '=', False)], context=context)
+        sequence = False
+        nb_updates = 0
+        if has_updates:
             sequence = self._get_next_sequence(cr, uid, context=context)
-            self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
-        self._logger.info("::::::::[%s] Data Push :: Number of data pushed: %d" % (entity.name, len(update_ids)))
+            cr.execute('''update sync_server_update set sequence=%s where session_id=%s and source=%s and sequence is null''', (sequence, session_id, entity.id))
+            nb_updates = cr.rowcount
+        self._logger.info("::::::::[%s] Data Push :: Number of data pushed: %d" % (entity.name, nb_updates))
         if sequence:
             self._logger.info("::::::::[%s] Data Push :: New server's sequence number: %s" % (entity.name, sequence))
         return (True, sequence)
