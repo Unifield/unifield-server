@@ -658,7 +658,6 @@ class shipment(osv.osv):
                 'location_dest_id': picking.warehouse_id.lot_output_id.id,
                 'selected_number': family.selected_number,
             }
-            shadow_move_vals = move_vals.copy()
 
             new_move = move_obj.copy(cr, uid, move.id, move_vals, context=context)
             move_obj.action_confirm(cr, uid, new_move, context=context)
@@ -670,6 +669,8 @@ class shipment(osv.osv):
                 'location_id': picking.warehouse_id.lot_dispatch_id.id,
                 'location_dest_id': picking.warehouse_id.lot_distribution_id.id,
                 'state': 'done',
+                'product_qty': selected_qty,
+                'line_number': move.line_number,
             }
             move_obj.copy(cr, uid, move.id, shadow_move_vals, context=context)
 
