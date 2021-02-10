@@ -391,18 +391,28 @@ class account_account(osv.osv):
         """
         Returns a domain with the G/L accounts selectable in the contract in context.
         The accounts must appear either in the G/L accounts or in the Account/Destination combinations linked to the
-        Funding Pools selected in the contract.
+        Funding Pools selected in the contract. In case PF has been selected, all accounts allowing an AD are selectable.
         """
         if context is None:
             context = {}
         contract_obj = self.pool.get('financing.contract.contract')
+        acc_obj = self.pool.get('account.account')
         analytic_acc_obj = self.pool.get('account.analytic.account')
         acc_ids = set()
         if context.get('contract_id'):
             contract = contract_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids'], context=context)
-            for contract_fp_line in contract.funding_pool_ids:
-                acc_ids.update([t[0] for t in
-                                analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, contract_fp_line.funding_pool_id.id, context=context)])
+            try:
+                pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                                            'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                pf_id = 0
+            funding_pool_ids = [contract_fp_line.funding_pool_id.id for contract_fp_line in contract.funding_pool_ids]
+            if pf_id in funding_pool_ids:
+                acc_ids.update(acc_obj.search(cr, uid, [('type', '!=', 'view'), ('is_analytic_addicted', '=', True)], context=context))
+            else:
+                for funding_pool_id in funding_pool_ids:
+                    acc_ids.update([t[0] for t in
+                                    analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, funding_pool_id, context=context)])
         return [('id', 'in', list(acc_ids))]
 
     def _get_selected_in_contract(self, cr, uid, account_ids, name=False, args=False, context=None):
