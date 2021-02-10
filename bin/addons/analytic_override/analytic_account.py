@@ -863,14 +863,14 @@ class analytic_account(osv.osv):
             'target': 'current',
         }
 
-    def get_cc_linked_to_fp(self, cr, uid, fp_id, context=None):
+    def get_cc_linked_to_fp(self, cr, uid, fp_id, pf=False, context=None):
         """
         Returns a browse record list of all Cost Centers compatible with the Funding Pool in parameter:
         - if "Allow all Cost Centers" is ticked: all CC linked to the prop. instance of the FP
         - else all CC selected in the FP form.
 
         Note: this method matches with what has been selected in the Cost centers tab of the FP form.
-              It returns an empty list for PF.
+              It returns an empty list for PF, unless "pf" is set to True (then all CC are returned).
         """
         if context is None:
             context = {}
@@ -879,9 +879,17 @@ class analytic_account(osv.osv):
                          fields_to_fetch=['category', 'allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
                          context=context)
         if fp.category == 'FUNDING':
-            if fp.allow_all_cc_with_fp and fp.instance_id:
+            try:
+                pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                                            'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                pf_id = 0
+            all_cc_ids = self.search(cr, uid, [('category', '=', 'OC'), ('type', '!=', 'view')], order='code', context=context)
+            if pf and fp.id == pf_id:
+                cc_list = all_cc_ids and self.browse(cr, uid, all_cc_ids, context=context) or []
+            elif fp.allow_all_cc_with_fp and fp.instance_id:
                 # inactive CC are included on purpose, to match with selectable CC in FP form
-                for cc_id in self.search(cr, uid, [('category', '=', 'OC'), ('type', '!=', 'view')], order='code', context=context):
+                for cc_id in all_cc_ids:
                     cc = self.browse(cr, uid, cc_id, context=context)
                     if fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
                         cc_list.append(cc)

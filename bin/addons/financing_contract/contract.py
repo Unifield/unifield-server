@@ -81,7 +81,7 @@ class financing_contract_funding_pool_line(osv.osv):
         # making that the deleted costcenters from the sender were not taken into account
         if not context.get('sync_update_execution') and vals.get('contract_id') and vals.get('funding_pool_id'):
             # get the Cost Centers linked to the Funding Pool
-            fp_cc_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, vals['funding_pool_id'], context=context)]
+            fp_cc_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, vals['funding_pool_id'], pf=True, context=context)]
 
             # get the format instance
             cc_rows = format_obj.browse(cr, uid, vals['contract_id'], context=context).cost_center_ids
