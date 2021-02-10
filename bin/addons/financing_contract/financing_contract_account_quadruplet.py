@@ -96,7 +96,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 lnk.id = fpad.tuple_id AND
                 fp.id = fpad.funding_pool_id AND
                 lnk.destination_id = dest.id AND
-                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id) AND
+                fp.id != (SELECT res_id FROM ir_model_data WHERE 
+                          module='analytic_distribution' and name='analytic_account_msf_private_funds' LIMIT 1)
 
            UNION
 
@@ -123,7 +125,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 fp_account_rel.account_id= gl_account.id and
                 lnk.account_id = gl_account.id and
                 lnk.destination_id = dest.id and
-                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id) AND
+                fp.id != (SELECT res_id FROM ir_model_data WHERE 
+                          module='analytic_distribution' and name='analytic_account_msf_private_funds' LIMIT 1)
 
             UNION
 
@@ -148,7 +152,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 fp_account_rel.account_id= gl_account.id and
                 lnk.account_id = gl_account.id and
                 lnk.destination_id = dest.id and
-                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id) AND
+                fp.id != (SELECT res_id FROM ir_model_data WHERE 
+                          module='analytic_distribution' and name='analytic_account_msf_private_funds' LIMIT 1)
 
             UNION
 
@@ -173,7 +179,28 @@ class financing_contract_account_quadruplet(osv.osv):
                 lnk.id = fpad.tuple_id and
                 fp.id = fpad.funding_pool_id and
                 lnk.destination_id = dest.id and
-                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id)
+                (dest.allow_all_cc = 't' or dest_cc_rel.cost_center_id = cc.id) AND
+                fp.id != (SELECT res_id FROM ir_model_data WHERE 
+                          module='analytic_distribution' and name='analytic_account_msf_private_funds' LIMIT 1)
+                
+            UNION
+            
+            -- PF
+            SELECT
+            lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, 
+            (SELECT res_id FROM ir_model_data WHERE 
+                module='analytic_distribution' and name='analytic_account_msf_private_funds' LIMIT 1) AS funding_pool_id, 
+            lnk.name AS account_destination_name, lnk.account_id, lnk.disabled, lnk.id AS account_destination_link_id
+            FROM
+                account_analytic_account cc,
+                account_destination_link lnk,
+                account_analytic_account dest
+            LEFT JOIN destination_cost_center_rel dest_cc_rel ON dest_cc_rel.destination_id = dest.id
+            WHERE
+                cc.type != 'view' AND
+                cc.category = 'OC' AND
+                lnk.destination_id = dest.id AND
+                (dest.allow_all_cc = 't' OR dest_cc_rel.cost_center_id = cc.id)
             ) AS combinations
            )""")
         return res
