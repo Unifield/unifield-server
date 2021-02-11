@@ -52,7 +52,7 @@ class report_interactive(report_sxw.rml_parse):
         """
         data = hasattr(self, 'datas') and getattr(self, 'datas') or {}
         if data.get('out_currency'):
-            currency = self.pool.get('res.currency').read(self.cr, self.uid, self.datas['out_currency'], ['name'])['name']
+            currency = self.pool.get('res.currency').read(self.cr, self.uid, data['out_currency'], ['name'])['name']
         else:
             currency = contract.reporting_currency.name
         return currency
@@ -64,10 +64,11 @@ class report_interactive(report_sxw.rml_parse):
 
     def getLines(self,contract):
         pool = pooler.get_pool(self.cr.dbname)
+        data = hasattr(self, 'datas') and getattr(self, 'datas') or {}
 
         self.context.update({'mako': True})
-        if 'out_currency' in self.datas:
-            out_currency = self.datas['out_currency']
+        if data.get('out_currency'):
+            out_currency = data['out_currency']
         else:
             out_currency = contract.reporting_currency.id
         self.context.update({'out_currency': out_currency})

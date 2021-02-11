@@ -235,7 +235,7 @@ class financing_contract_contract(osv.osv):
 
         res = []
         if domain:
-            res = res + domain
+            res = domain
 
         if temp_domain:
             res = ['&'] + temp_domain + res

@@ -64,7 +64,7 @@ class report_project_expenses2(report_sxw.rml_parse):
         self.len1 += 1
         self.len2 += 1
         self.totalBookAmt += analytic_line.amount_currency
-        if not contract.id in self.totalRptCurrency:
+        if contract.id not in self.totalRptCurrency:
             self.totalRptCurrency[contract.id] = 0.0
         self.totalRptCurrency[contract.id] += amount
         return amount
