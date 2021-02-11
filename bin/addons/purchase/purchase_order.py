@@ -1078,14 +1078,14 @@ class purchase_order(osv.osv):
 
         if 'partner_id' in vals:
             partner = partner_obj.browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist_purchase', 'partner_type'], context=context)
+            to_curr_id = partner.property_product_pricelist_purchase.currency_id.id
+            if vals.get('pricelist_id') and partner.partner_type == 'external':
+                to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
+
             for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id'], context=context):
                 if order.state in ('draft', 'draft_p', 'validated') and vals['partner_id'] != order.partner_id.id:
                     for line in order.order_line:
                         if line.state in ('draft', 'validated_n', 'validated'):
-                            to_curr_id = partner.property_product_pricelist_purchase.currency_id.id
-                            if vals.get('pricelist_id') and partner.partner_type == 'external':
-                                to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
-
                             if line.product_id:
                                 to_suppinf_ids = suppinf_obj.search(cr, uid, [('name', '=', partner.id), ('product_id', '=', line.product_id.id)], context=context)
                                 price_to_convert = line.product_id.standard_price
@@ -1104,14 +1104,12 @@ class purchase_order(osv.osv):
                                         partinf_line = partinf_obj.browse(cr, uid, part_inf_ids[0], fields_to_fetch=['price', 'currency_id'], context=context)
                                         price_to_convert = partinf_line.price
                                         from_curr_id = partinf_line.currency_id.id
-
-                                new_price = cur_obj.compute(cr, uid, from_curr_id, to_curr_id, price_to_convert, round=False)
-                                pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
                             else:
-                                new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id,
-                                                            line.price_unit, round=False)
-                                pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
-                break
+                                from_curr_id = order.pricelist_id.currency_id.id
+                                price_to_convert = line.price_unit
+
+                            new_price = cur_obj.compute(cr, uid, from_curr_id, to_curr_id, price_to_convert, round=False)
+                            pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
 
         return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context)
 
