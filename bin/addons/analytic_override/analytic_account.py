@@ -863,14 +863,15 @@ class analytic_account(osv.osv):
             'target': 'current',
         }
 
-    def get_cc_linked_to_fp(self, cr, uid, fp_id, pf=False, context=None):
+    def get_cc_linked_to_fp(self, cr, uid, fp_id, pf=False, pf_instance_id=False, context=None):
         """
         Returns a browse record list of all Cost Centers compatible with the Funding Pool in parameter:
         - if "Allow all Cost Centers" is ticked: all CC linked to the prop. instance of the FP
         - else all CC selected in the FP form.
 
         Note: this method matches with what has been selected in the Cost centers tab of the FP form.
-              It returns an empty list for PF, unless "pf" is set to True (then all CC are returned).
+              It returns an empty list for PF, unless "pf" is set to True. Then it returns either all CC, or all CC
+              linked to the "pf_instance_id" if it is set.
         """
         if context is None:
             context = {}
@@ -884,16 +885,25 @@ class analytic_account(osv.osv):
                                                                             'analytic_account_msf_private_funds')[1]
             except ValueError:
                 pf_id = 0
+            # inactive CC are included on purpose, to match with selectable CC in FP form
             all_cc_ids = self.search(cr, uid, [('category', '=', 'OC'), ('type', '!=', 'view')], order='code', context=context)
+            all_cc = all_cc_ids and self.browse(cr, uid, all_cc_ids, context=context) or []
             if pf and fp.id == pf_id:
-                cc_list = all_cc_ids and self.browse(cr, uid, all_cc_ids, context=context) or []
+                if pf_instance_id:
+                    # UC1: PF with restriction on an Prop. Instance
+                    for cc in all_cc:
+                        if pf_instance_id in [inst.id for inst in cc.cc_instance_ids]:
+                            cc_list.append(cc)
+                else:
+                    # UC2: PF with no restriction on Prop. Instance
+                    cc_list = all_cc
             elif fp.allow_all_cc_with_fp and fp.instance_id:
-                # inactive CC are included on purpose, to match with selectable CC in FP form
-                for cc_id in all_cc_ids:
-                    cc = self.browse(cr, uid, cc_id, context=context)
+                # UC3: Allow all Cost Centers
+                for cc in all_cc:
                     if fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
                         cc_list.append(cc)
             else:
+                # UC4: CC selected in the FP form
                 cc_list = fp.cost_center_ids or []
         return cc_list
 
