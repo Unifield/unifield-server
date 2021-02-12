@@ -885,26 +885,29 @@ class analytic_account(osv.osv):
                                                                             'analytic_account_msf_private_funds')[1]
             except ValueError:
                 pf_id = 0
-            # inactive CC are included on purpose, to match with selectable CC in FP form
-            all_cc_ids = self.search(cr, uid, [('category', '=', 'OC'), ('type', '!=', 'view')], order='code', context=context)
-            all_cc = all_cc_ids and self.browse(cr, uid, all_cc_ids, context=context) or []
-            if pf and fp.id == pf_id:
-                if pf_restrict_instance_id:
-                    # UC1: PF with restriction on an Prop. Instance
-                    for cc in all_cc:
-                        if pf_restrict_instance_id in [inst.id for inst in cc.cc_instance_ids]:
-                            cc_list.append(cc)
-                else:
-                    # UC2: PF with no restriction on Prop. Instance
-                    cc_list = all_cc
-            elif fp.allow_all_cc_with_fp and fp.instance_id:
-                # UC3: Allow all Cost Centers
-                for cc in all_cc:
-                    if fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
-                        cc_list.append(cc)
-            else:
-                # UC4: CC selected in the FP form
+            is_pf = pf and fp.id == pf_id
+            allow_all_cc = fp.allow_all_cc_with_fp and fp.instance_id
+            if not is_pf and not allow_all_cc:
+                # UC1: CC selected in the FP form
                 cc_list = fp.cost_center_ids or []
+            else:
+                # inactive CC are included on purpose, to match with the selectable CC in the FP form
+                all_cc_ids = self.search(cr, uid, [('category', '=', 'OC'), ('type', '!=', 'view')], order='code', context=context)
+                all_cc = all_cc_ids and self.browse(cr, uid, all_cc_ids, context=context) or []
+                prop_instance_id = False
+                if is_pf and pf_restrict_instance_id:
+                    # UC2: PF with restriction on an Prop. Instance
+                    prop_instance_id = pf_restrict_instance_id
+                elif allow_all_cc:
+                    # UC3: Allow all Cost Centers
+                    prop_instance_id = fp.instance_id.id
+                if prop_instance_id:
+                    for cc in all_cc:
+                        if prop_instance_id in [inst.id for inst in cc.cc_instance_ids]:
+                            cc_list.append(cc)
+                elif is_pf:
+                    # UC4: PF with no restriction on Prop. Instance
+                    cc_list = all_cc
         return cc_list
 
     def get_acc_dest_linked_to_fp(self, cr, uid, fp_id, context=None):
