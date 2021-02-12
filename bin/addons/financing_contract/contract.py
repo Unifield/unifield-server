@@ -70,7 +70,7 @@ class financing_contract_funding_pool_line(osv.osv):
         # US-113: Check if the call is from sync update
         if context.get('sync_update_execution') and vals.get('contract_id', False):
             # US-113: and if there is any financing contract existed for this format, if no, then ignore this call
-            exist = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', vals['contract_id'])])
+            exist = contract_obj.search_exist(cr, uid, [('format_id', '=', vals['contract_id'])])
             if not exist:
                 return None
 
@@ -87,7 +87,7 @@ class financing_contract_funding_pool_line(osv.osv):
             instance_id = contract and contract.instance_id.id or False
             # get the Cost Centers linked to the Funding Pool
             fp_cc_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, vals['funding_pool_id'], pf=True,
-                                                                            pf_instance_id=instance_id, context=context)]
+                                                                            pf_restrict_instance_id=instance_id, context=context)]
 
             # get the format instance
             cc_rows = format_obj.browse(cr, uid, vals['contract_id'], context=context).cost_center_ids
