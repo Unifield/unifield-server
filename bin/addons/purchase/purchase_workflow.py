@@ -15,6 +15,10 @@ class purchase_order_line(osv.osv):
     def validated(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if not ids:
+            return True
+
         cr.execute("""select
                 pol.line_number, prod.default_code
             from
