@@ -131,6 +131,16 @@ class financing_contract_contract(osv.osv):
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
     _trace = True
+    # _order: see search_web
+
+    def search_web(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Changes the default display order of the contracts.
+        The field "eligibility_to_date" can't be used directly in _order as it belongs to financing.contract.format.
+        """
+        if not count and not order:
+            order = 'eligibility_to_date desc, id desc'
+        return super(financing_contract_contract, self).search_web(cr, uid, args, offset, limit, order, context, count)
 
     def contract_open_proxy(self, cr, uid, ids, context=None):
         # utp-1030/7: check grant amount when going on in workflow
