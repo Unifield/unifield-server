@@ -215,6 +215,7 @@ class financing_contract_account_quadruplet(osv.osv):
         contract_id = context.get('contract_id', False)
         if contract_id:
             ctr_obj = self.pool.get('financing.contract.contract')
+            analytic_acc_obj = self.pool.get('account.analytic.account')
             contract = ctr_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids', 'cost_center_ids', 'quad_gen_date'], context=context)
             cr.execute('''select max(last_modification) from ir_model_data where module='sd' and (
                 model in ('account.analytic.account', 'account.destination.link') or (model = 'financing.contract.contract' and res_id = %s)
@@ -222,8 +223,20 @@ class financing_contract_account_quadruplet(osv.osv):
             last_obj_modified = cr.fetchone()[0]
             if not contract.quad_gen_date or last_obj_modified > contract.quad_gen_date or contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S'):
                 # ignore quad_gen_date in the future
-                cc_ids = [cc.id for cc in contract.cost_center_ids]
                 fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
+                try:
+                    pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                                                'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    pf_id = 0
+                if pf_id in fp_ids:
+                    # all CC linked to the contract Prop. Instance
+                    cc_ids = [cc.id for cc in
+                              analytic_acc_obj.get_cc_linked_to_fp(cr, uid, pf_id, pf=True,
+                                                                   pf_restrict_instance_id=contract.instance_id.id, context=context)]
+                else:
+                    # CC selected in contract form
+                    cc_ids = [cc.id for cc in contract.cost_center_ids]
                 if not cc_ids:
                     # do not traceback if cc / fp not set on contract
                     cc_ids = [0]
@@ -324,10 +337,29 @@ class financing_contract_account_quadruplet(osv.osv):
             return res
 
         ctr_obj = self.pool.get('financing.contract.contract')
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         contract = ctr_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids', 'cost_center_ids'])
+        quad_domain = []
         cc_ids = [cc.id for cc in contract.cost_center_ids]
         fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
-        return [('cost_center_id', 'in', cc_ids), ('funding_pool_id', 'in', fp_ids)]
+        try:
+            pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                                        'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            pf_id = 0
+        if pf_id in fp_ids:
+            pf_cc_ids = [cc.id for cc in
+                         analytic_acc_obj.get_cc_linked_to_fp(cr, uid, pf_id, pf=True,
+                                                              pf_restrict_instance_id=contract.instance_id.id, context=context)]
+            quad_domain.append('|')
+            quad_domain.append('&')
+            quad_domain.append(('cost_center_id', 'in', pf_cc_ids))
+            quad_domain.append(('funding_pool_id', '=', pf_id))
+            fp_ids.remove(pf_id)
+        quad_domain.append('&')
+        quad_domain.append(('cost_center_id', 'in', cc_ids))
+        quad_domain.append(('funding_pool_id', 'in', fp_ids))
+        return quad_domain
 
     def _get_valid(self, cr, uid, ids, field_name, arg, context=None):
         res = {}

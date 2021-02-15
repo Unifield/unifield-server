@@ -81,13 +81,8 @@ class financing_contract_funding_pool_line(osv.osv):
         #US-345: the following block cannot be executed in the sync context, because it would then reset all costcenters from the funding pools!
         # making that the deleted costcenters from the sender were not taken into account
         if not context.get('sync_update_execution') and vals.get('contract_id') and vals.get('funding_pool_id'):
-            # get the contract related to the current "financing_contract_format"
-            contract_ids = contract_obj.search(cr, uid, [('format_id', '=', vals['contract_id'])], limit=1, context=context)
-            contract = contract_ids and contract_obj.browse(cr, uid, contract_ids[0], fields_to_fetch=['instance_id'], context=context) or False
-            instance_id = contract and contract.instance_id.id or False
-            # get the Cost Centers linked to the Funding Pool
-            fp_cc_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, vals['funding_pool_id'], pf=True,
-                                                                            pf_restrict_instance_id=instance_id, context=context)]
+            # get the Cost Centers linked to the Funding Pool (empty list for PF)
+            fp_cc_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, vals['funding_pool_id'], pf=False, context=context)]
 
             # get the format instance
             cc_rows = format_obj.browse(cr, uid, vals['contract_id'], context=context).cost_center_ids
