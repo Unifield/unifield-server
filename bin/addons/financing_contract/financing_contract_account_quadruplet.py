@@ -224,7 +224,14 @@ class financing_contract_account_quadruplet(osv.osv):
             last_obj_modified = cr.fetchone()[0]
             if not contract.quad_gen_date or last_obj_modified > contract.quad_gen_date or contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S'):
                 # ignore quad_gen_date in the future
+                cc_ids = [cc.id for cc in contract.cost_center_ids]
                 fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
+                # do not traceback if cc / fp not set on contract
+                if not cc_ids:
+                    cc_ids = [0]
+                if not fp_ids:
+                    fp_ids = [0]
+                pf_cc_ids = [0]  # CC to link to PF ONLY IF PF has been selected in the contract form
                 try:
                     pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
                                                                                 'analytic_account_msf_private_funds')[1]
@@ -232,24 +239,19 @@ class financing_contract_account_quadruplet(osv.osv):
                     pf_id = 0
                 if pf_id in fp_ids:
                     # all CC linked to the contract Prop. Instance
-                    cc_ids = [cc.id for cc in
-                              analytic_acc_obj.get_cc_linked_to_fp(cr, uid, pf_id, pf=True,
-                                                                   pf_restrict_instance_id=contract.instance_id.id, context=context)]
-                else:
-                    # CC selected in contract form
-                    cc_ids = [cc.id for cc in contract.cost_center_ids]
-                if not cc_ids:
-                    # do not traceback if cc / fp not set on contract
-                    cc_ids = [0]
-                if not fp_ids:
-                    fp_ids = [0]
-
+                    pf_cc_ids = [cc.id for cc in
+                                 analytic_acc_obj.get_cc_linked_to_fp(cr, uid, pf_id, pf=True,
+                                                                      pf_restrict_instance_id=contract.instance_id.id, context=context)]
+                    fp_ids.remove(pf_id)
+                    if not fp_ids:
+                        fp_ids = [0]
                 cr.execute('''
                     update financing_contract_account_quadruplet set disabled='t'
                     where
-                        funding_pool_id in %s and
-                        cost_center_id in %s
-                ''', (tuple(fp_ids), tuple(cc_ids)))
+                        (funding_pool_id = %s and cost_center_id in %s)
+                        or
+                        (funding_pool_id in %s and cost_center_id in %s)
+                ''', (pf_id, tuple(pf_cc_ids), tuple(fp_ids), tuple(cc_ids)))
 
                 cr.execute('''
                     INSERT INTO financing_contract_account_quadruplet
@@ -259,10 +261,12 @@ class financing_contract_account_quadruplet(osv.osv):
                         from
                             financing_contract_account_quadruplet_view
                         where
-                            funding_pool_id in %s and
-                            cost_center_id in %s
+                            (funding_pool_id = %s and cost_center_id in %s)
+                            or
+                            (funding_pool_id in %s and cost_center_id in %s)
                     )
-                    ON CONFLICT ON CONSTRAINT financing_contract_account_quadruplet_check_unique DO UPDATE SET disabled=EXCLUDED.disabled''', (tuple(fp_ids), tuple(cc_ids)))
+                    ON CONFLICT ON CONSTRAINT financing_contract_account_quadruplet_check_unique DO UPDATE SET disabled=EXCLUDED.disabled''',
+                           (pf_id, tuple(pf_cc_ids), tuple(fp_ids), tuple(cc_ids)))
                 cr.execute('update financing_contract_contract set quad_gen_date=%s where id=%s', (last_obj_modified, contract_id))
 
         return True
