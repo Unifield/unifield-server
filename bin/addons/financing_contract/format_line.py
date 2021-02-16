@@ -194,7 +194,9 @@ class financing_contract_format_line(osv.osv):
         gen_domain = {}
         gen_domain['date_domain'] = date_domain
 
-        cost_center_domain = self._create_domain('cost_center_id', browse_format.cost_center_ids)
+        # TODO JN: adapt the cost_center_domain. Use this stub in the meantime:
+        #cost_center_domain = self._create_domain('cost_center_id', browse_format.cost_center_ids)
+        cost_center_domain = '(\'cost_center_id\', \'!=\', 0)'
         gen_domain['cost_center_domain'] = cost_center_domain
 
 

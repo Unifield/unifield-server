@@ -603,6 +603,7 @@ class financing_contract_contract(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
 
         if 'donor_id' in vals:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, vals['donor_id'], context=context)
@@ -621,6 +622,7 @@ class financing_contract_contract(osv.osv):
 
             # if there is some FP in this contract format, then perform the "recovery" of cost center ids, if not just use the one from the form
             if f_value.funding_pool_ids:
+                # TODO JN: anything to change here?
                 cc_rows = f_value.cost_center_ids # retrieve all the cc stored previously in the DB
                 cc_ids = []
                 for cc in cc_rows:
@@ -633,7 +635,9 @@ class financing_contract_contract(osv.osv):
 
         # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
         # get list of all valid ids for this contract
-        format =  self.browse(cr,uid,ids,context=context)[0].format_id
+        # TODO JN: make a loop on contract ids?
+        financing_contract = self.browse(cr, uid, ids, context=context)[0]
+        format = financing_contract.format_id
         funding_pool_ids = [x.funding_pool_id.id for x in format.funding_pool_ids]
 
         if not context.get('sync_update_execution'):
@@ -641,11 +645,29 @@ class financing_contract_contract(osv.osv):
             if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
                 raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
 
-
         cost_center_ids = [x.id for x in format.cost_center_ids]
 
         quad_obj = self.pool.get('financing.contract.account.quadruplet')
-        valid_quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','in',funding_pool_ids),('cost_center_id','in',cost_center_ids)], context=context)
+        quad_domain = []
+        try:
+            pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                                        'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            pf_id = 0
+        if pf_id in funding_pool_ids:
+            # all CC linked to the contract Prop. Instance
+            pf_cc_ids = [cc.id for cc in
+                         analytic_acc_obj.get_cc_linked_to_fp(cr, uid, pf_id, pf=True,
+                                                              pf_restrict_instance_id=financing_contract.instance_id.id, context=context)]
+            funding_pool_ids.remove(pf_id)
+            quad_domain.append('|')
+            quad_domain.append('&')
+            quad_domain.append(('cost_center_id', 'in', pf_cc_ids))
+            quad_domain.append(('funding_pool_id', '=', pf_id))
+        quad_domain.append('&')
+        quad_domain.append(('cost_center_id', 'in', cost_center_ids))
+        quad_domain.append(('funding_pool_id', 'in', funding_pool_ids))
+        valid_quad_ids = quad_obj.search(cr, uid, quad_domain, context=context)
 
         # filter current assignments and re-write entries if necessary
         format_obj = self.pool.get('financing.contract.format')
