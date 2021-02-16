@@ -578,11 +578,11 @@ class wizard_import_po_simulation_screen(osv.osv):
                     break
                 try:
                     percent = float(values[idx+2])
-                except TypeError:
+                except (TypeError, ValueError):
                     errors.append(_('%% in AD must be a number (value found %s), AD in file ignored') % (values[idx+2]))
                     ad = []
                     break
-                ad.append([values[idx], values[idx+1], percent])
+                ad.append(['%s'%values[idx], '%s'%values[idx+1], percent])
                 sum_percent += percent
                 idx += 4
         if ad and abs(100-sum_percent) > 0.001:
@@ -1153,7 +1153,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
 
         except Exception, e:
             logging.getLogger('po.simulation simulate').warn('Exception', exc_info=True)
-            self.write(cr, uid, ids, {'message': e}, context=context)
+            self.write(cr, uid, ids, {'state': 'error', 'message': "Unknown error:\n%s\n---\n%s" % (e, tools.misc.get_traceback(e))}, context=context)
             cr.commit()
             cr.close(True)
         finally:
