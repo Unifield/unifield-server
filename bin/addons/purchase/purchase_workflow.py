@@ -15,6 +15,10 @@ class purchase_order_line(osv.osv):
     def validated(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if not ids:
+            return True
+
         cr.execute("""select
                 pol.line_number, prod.default_code
             from
@@ -38,11 +42,12 @@ class purchase_order_line(osv.osv):
 
         if nsl:
             # checks before validating the line:
-            self.check_origin_for_validation(cr, uid, ids, context=context)
-            self.check_analytic_distribution(cr, uid, ids, context=context)
-            self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
-            self.check_unit_price(cr, uid, ids, context=context)
-            self.check_po_tax(cr, uid, ids, context=context)
+            ids_to_check = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+            self.check_origin_for_validation(cr, uid, ids_to_check, context=context)
+            self.check_analytic_distribution(cr, uid, ids_to_check, context=context)
+            self.check_if_stock_take_date_with_esc_partner(cr, uid, ids_to_check, context=context)
+            self.check_unit_price(cr, uid, ids_to_check, context=context)
+            self.check_po_tax(cr, uid, ids_to_check, context=context)
             wiz_id = self.pool.get('purchase.order.line.nsl.validation.wizard').create(cr, uid, {'pol_ids': [(6, 0, ids)], 'message': ', '.join(nsl)}, context=context)
             return {
                 'type': 'ir.actions.act_window',
