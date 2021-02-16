@@ -979,7 +979,8 @@ class stock_mission_report(osv.osv):
                 WHERE
                     pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                     po.id = pol.order_id and
-                    po.partner_id = p.id
+                    po.partner_id = p.id and
+                    pol.product_id is not null
                 GROUP BY pol.product_id, pol.product_uom, p.name
                 UNION
                 SELECT m.product_id as product_id, sum(m.product_qty) as product_qty, m.product_uom as uom_id, p.name as p_name
