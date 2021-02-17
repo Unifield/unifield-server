@@ -886,7 +886,7 @@ class analytic_account(osv.osv):
             except ValueError:
                 pf_id = 0
             is_pf = pf and fp.id == pf_id
-            allow_all_cc = fp.allow_all_cc_with_fp and fp.instance_id
+            allow_all_cc = fp.instance_id and fp.allow_all_cc_with_fp
             if not is_pf and not allow_all_cc:
                 # UC1: CC selected in the FP form
                 cc_list = fp.cost_center_ids or []
