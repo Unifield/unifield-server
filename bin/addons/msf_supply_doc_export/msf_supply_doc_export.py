@@ -1295,13 +1295,13 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             # Discrepancies
             discrep_in_po, discrep_si_po, func_discrep_in_po, func_discrep_si_po = '-', '-', '-', '-'
             if in_unit_price != '-':
-                discrep_in_po = in_unit_price - line[4]
+                discrep_in_po = round(in_unit_price - line[4], 4)
             if si_unit_price != '-':
-                discrep_si_po = si_unit_price - line[4]
+                discrep_si_po = round(si_unit_price - line[4], 4)
             if func_in_unit_price != '-':
-                func_discrep_in_po = func_in_unit_price - func_pol_unit_price
+                func_discrep_in_po = round(func_in_unit_price - func_pol_unit_price, 4)
             if func_si_unit_price != '-':
-                func_discrep_si_po = func_si_unit_price - func_pol_unit_price
+                func_discrep_si_po = round(func_si_unit_price - func_pol_unit_price, 4)
 
             # Dates comparison and Actual Supplier Lead Time
             days_cdd_receipt, days_rdd_receipt, days_crea_receipt, act_sup_lt, discrep_lt_act_theo = '-', '-', '-', '-', '-'

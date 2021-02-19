@@ -1395,7 +1395,7 @@ class stock_move(osv.osv):
         if val_type == 'in' and not vals.get('date_expected'):
             vals['date_expected'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
-        if vals.get('date_expected'):
+        if vals.get('date_expected') and (not context.get('keep_date') or not vals.get('date')):
             vals['date'] = vals.get('date_expected')
 
         if vals.get('location_dest_id', False):

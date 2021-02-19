@@ -1145,6 +1145,7 @@ class stock_picking(osv.osv):
         currency_cache = {}
         move_lines_cancelled = []
         out_data = {}
+        po_currency_id = False
         for move_line in data.get('move_lines'):
             move_data = self.format_data(cr, uid, move_line, source, context=context)
             dpo_line_id = move_data['dpo_line_id']
@@ -1153,7 +1154,7 @@ class stock_picking(osv.osv):
             move_data['dpo_line_id'] = False
             move_data['sync_dpo'] = False
             move_data['purchase_line_id'] = dpo_line_id
-            pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id'], context=context)
+            pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id', 'confirmation_date'], context=context)
             if not pick_data['purchase_id']:
                 po = pol.order_id
                 if po.order_type != 'direct':
@@ -1167,6 +1168,7 @@ class stock_picking(osv.osv):
                 pick_data['partner_id2'] = po.partner_id.id
                 pick_data['address_id'] = po.partner_address_id.id
                 pick_data['origin'] = po.name
+                po_currency_id = po.pricelist_id.currency_id.id
             else:
                 if pol.order_id.id != pick_data['purchase_id']:
                     raise Exception('Line %s, purchase order not found' % (move_data['line_number'],))
@@ -1179,9 +1181,16 @@ class stock_picking(osv.osv):
             cur_sdref = move_line.get('price_currency_id', {}).get('id')
             if cur_sdref:
                 if cur_sdref not in currency_cache:
-                    currency_cache['cur_sdref'] = curr_obj.find_sd_ref(cr, uid, xmlid_to_sdref(cur_sdref), context=context)
+                    currency_cache[cur_sdref] = curr_obj.find_sd_ref(cr, uid, xmlid_to_sdref(cur_sdref), context=context)
                 move_data['price_currency_id'] = currency_cache.get(cur_sdref)
-            move_data['price_unit'] = move_line['price_unit']
+            if move_data.get('price_currency_id') and move_data['price_currency_id'] != po_currency_id and move_line['price_unit']:
+                ctx_fx = context.copy()
+                if pol.confirmation_date:
+                    ctx_fx['currency_date'] = pol.confirmation_date
+                move_data['price_unit'] = curr_obj.compute(cr, uid, move_data['price_currency_id'], po_currency_id, move_line['price_unit'], round=False, context=ctx_fx)
+                move_data['price_currency_id'] = po_currency_id
+            else:
+                move_data['price_unit'] = move_line['price_unit']
             move_data['location_id'] = location_id
             move_data['location_dest_id'] = location_id
             move_data['reason_type_id'] = reason_type_id
@@ -1195,7 +1204,9 @@ class stock_picking(osv.osv):
         if not pick_data['purchase_id']:
             return "Ignored because old DPO flow no po found"
 
-        pick_id = self.create(cr, uid, pick_data, context=context)
+        ctx_picking = context.copy()
+        ctx_picking['keep_date'] = True
+        pick_id = self.create(cr, uid, pick_data, context=ctx_picking)
         if pick_data['state'] == 'cancel':
             self.action_cancel(cr, uid, [pick_id])
         else:
