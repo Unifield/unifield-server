@@ -15957,8 +15957,8 @@ msgstr "Production"
 #. module: purchase
 #: code:addons/purchase/purchase_workflow.py:677
 #, python-format
-msgid "Line %s: Please choose a product before confirming the line"
-msgstr "Ligne %s: Veuillez choisir un produit avant de confirmer la ligne"
+msgid "Line #%s: Please choose a product before confirming the line."
+msgstr "Ligne #%s: Veuillez choisir un produit avant de confirmer la ligne."
 
 #. module: base_setup
 #: view:base.setup.installer:0
@@ -39401,10 +39401,15 @@ msgstr "Règlement des factures"
 
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:1654
-#: code:addons/purchase/purchase_workflow.py:673
 #, python-format
 msgid "Delivery Confirmed Date is a mandatory field."
 msgstr "La Date de Livraison Confirmée est un champ obligatoire."
+
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:673
+#, python-format
+msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
+msgstr "Ligne #%s: La Date de Livraison Confirmée est un champ obligatoire."
 
 #. module: stock_schedule
 #: selection:stock.frequence,recurrence_type:0
