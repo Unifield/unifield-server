@@ -59,5 +59,23 @@
                 </form>
             </field>
         </record>
+
+        <record id="view_expired_expiring_stock_lines_form" model="ir.ui.view">
+            <field name="name">view.expired.expiring.stock.lines.form</field>
+            <field name="model">view.expired.expiring.stock.lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Expired/Expiring Products">
+                    <field name="product_id" />
+                    <field name="prodlot_id" />
+                    <field name="expired_date" />
+                    <field name="product_qty" />
+                    <field name="product_uom" />
+                    <field name="location_id" />
+                    <field name="location_dest_id" />
+                    <field name="reason_type_id" />
+                </form>
+            </field>
+        </record>
     </data>
 </openerp>

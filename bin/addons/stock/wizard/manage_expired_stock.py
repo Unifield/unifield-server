@@ -175,6 +175,7 @@ manage_expired_stock()
 class view_expired_expiring_stock(osv.osv):
     _name = 'view.expired.expiring.stock'
     _description = 'View Expired/Expiring Products'
+    _rec_name = 'mng_exp_id'
 
     _columns = {
         'mng_exp_id': fields.many2one('manage.expired.stock', string='Manage Expired Stock Id', readonly=True),
