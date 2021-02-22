@@ -39,7 +39,10 @@ class chronogram(report_sxw.rml_parse):
             returns the number of empty cells before the Order Preperation Date
 
         '''
-        dt = datetime.strptime(o.date_preparing, '%Y-%m-%d')
+        if not o.date_preparing.val:
+            dt = datetime.now()
+        else:
+            dt = datetime.strptime(o.date_preparing, '%Y-%m-%d')
         if cycle > 1:
             dt += relativedelta.relativedelta(**normalize_td(o.time_unit_lt, (cycle-1) * (o.order_coverage or 0)))
         if calendar_start == dt:
@@ -50,7 +53,10 @@ class chronogram(report_sxw.rml_parse):
             divisor = (calendar_start + relativedelta.relativedelta(months=1, day=1, days=-1)).day
         elif o.time_unit_lt == 'w':
             divisor = 7.
-        return self.get_cells((dt-calendar_start).days / float(divisor), o.time_unit_lt) - 1
+        ret = self.get_cells((dt-calendar_start).days / float(divisor), o.time_unit_lt) - 1
+        if ret < 0:
+            return False
+        return ret
 
 
     def num_cells_in_month(self, dt):
@@ -83,7 +89,10 @@ class chronogram(report_sxw.rml_parse):
         ][nb]
 
     def get_start(self, o):
-        date_preparing = datetime.strptime(o.date_preparing, '%Y-%m-%d')
+        if not o.date_preparing.val:
+            date_preparing = datetime.now()
+        else:
+            date_preparing = datetime.strptime(o.date_preparing, '%Y-%m-%d')
 
         if o.time_unit_lt == 'w':
             cols = 0
