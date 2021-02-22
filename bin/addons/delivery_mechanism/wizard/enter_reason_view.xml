@@ -8,6 +8,13 @@
             <field name="arch" type="xml">
             <form string="Enter Reason for Cancellation">
                 <separator string="Select a reason for Incoming Shipment cancellation" colspan="4"/>
+                <field name="in_from_dpo" invisible="1" />
+                   <group colspan="4" col="1" attrs="{'invisible': [('in_from_dpo', '=', False)]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px"><translate>In this context C&amp;R is not possible so order must be recreated if still needed.</translate></h4>
+                        </html>
+                    </group>
+                    <newline />
                 <field name="picking_id" colspan="4" />
                 <field name="change_reason" colspan="4" />
                 <group colspan="2" />

@@ -104,6 +104,7 @@
                         <field name="requested_date_in_past" invisible="1"/>
                         <field name="update_in_progress" invisible="1" readonly="1"/>
                         <field name="is_validated_and_synced" invisible="1"/>
+                        <field name="po_version" invisible="1"/>
                         <field name="msg_big_qty" invisible="1"/>
                         <group colspan="6">
                             <html>
@@ -281,9 +282,9 @@
                                     <field name="soq_updated" invisible="1" readonly="1"/>
                                     <field name="order_state_purchase_order_line" invisible="True"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated', 'validated_n'))]}"/>
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
                                     <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
-                                    <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
+                                    <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', '|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct'), '&amp;', ('invoice_method', '!=', 'order'), ('po_version', '!=', 1)]}"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', '&amp;', ('fake_state', '!=', 'draft'), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('fake_state', 'not in', ['draft', 'validated', 'validated_n']), ('partner_type', 'in', ['external', 'esc'])]}"/>
                                 </tree>
                                 <!-- default form view -->
@@ -424,7 +425,7 @@
                     </group>
                     <group colspan="4" col="16">
                         <field name="state" readonly="1"/>
-                        <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', 'not in', ['confirmed', 'confirmed_p']), ('order_type', '!=', 'direct')]}"/>
+                        <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', '|',  ('state', 'not in', ['confirmed', 'confirmed_p']), ('order_type', '!=', 'direct'), '&amp;', ('invoice_method', '!=', 'order'), ('po_version', '&gt;', 1)]}"/>
                         <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc'])]}" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}"/>
                         <button name="validate_lines" states="draft,draft_p" string="Validate document" type="object" icon="gtk-go-forward" help="all the lines will be Validated where this status change is feasible" />

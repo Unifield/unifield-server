@@ -52,6 +52,45 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF20.0
+    def us_7866_fill_in_target_cc_code(self, cr, uid, *a, **b):
+        """
+        Fills in the new "cost_center_code" field of the Account Target Cost Centers.
+        """
+        cr.execute("""
+                   UPDATE account_target_costcenter t_cc
+                   SET cost_center_code = (SELECT code FROM account_analytic_account a_acc WHERE a_acc.id = t_cc.cost_center_id);
+                   """)
+        self._logger.warn('Cost Center Code updated in %s Target CC.' % (cr.rowcount,))
+        return True
+
+    def us_7848_cold_chain(self, cr, uid, *a, **b):
+        for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'return_ppl_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+            cr.execute("update %s set kc_check = '' where kc_check != ''" % (table, )) # not_a_user_entry
+            cr.execute(""" update %s rel set kc_check='X'
+                from product_product prod, product_cold_chain c
+                where
+                    prod.id = rel.product_id and
+                    prod.cold_chain = c.id and
+                    c.cold_chain='t'
+            """ % (table, )) # not_a_user_entry
+        return True
+
+    def us_7749_migrate_dpo_flow(self, cr, uid, *a, **b):
+        # ignore old DPO IN: do not generate sync msg for old IN
+        cr.execute("update stock_picking set dpo_incoming='f' where dpo_incoming='t'")
+        cr.execute('update purchase_order set po_version=1')
+        cr.execute("update purchase_order set po_version=2, invoice_method='picking' where order_type='direct' and state in ('draft', 'validated')")
+        return True
+
+    def us_6796_hide_prod_status_inconsistencies(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': instance.level != 'project'}, context={})
+        return True
+
     # UF19.0
     def us_7808_ocg_rename_esc(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
@@ -3570,25 +3609,25 @@ class patch_scripts(osv.osv):
         :param b: Named parameters
         :return: True
         """
-        prd_obj = self.pool.get('product.product')
-        data_obj = self.pool.get('ir.model.data')
+        #prd_obj = self.pool.get('product.product')
+        #data_obj = self.pool.get('ir.model.data')
 
-        heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
-        no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+        #heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
+        #no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
-        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
-        if prd_ids:
-            cr.execute("""
-                UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
-            """, (heat_id, tuple(prd_ids),))
+        #prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
+        #if prd_ids:
+        #    cr.execute("""
+        #        UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
+        #    """, (heat_id, tuple(prd_ids),))
 
-        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
-        if no_prd_ids:
-            cr.execute("""
-                UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
-            """, (no_heat_id, tuple(no_prd_ids),))
+        #no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
+        #if no_prd_ids:
+        #    cr.execute("""
+        #        UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
+        #    """, (no_heat_id, tuple(no_prd_ids),))
 
-        cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
+        #cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
 
         return True
 

@@ -281,8 +281,16 @@ class account_invoice(osv.osv):
 
         if auto_cv and from_cancel:
             # we cancel the last IN from PO and no draft invoice exist
-            if not self.pool.get('stock.move').search_exist(cr, uid, [('type', '=', 'in'), ('id', 'not in', from_cancel), ('state', 'not in', ['cancel', 'done']), ('picking_id.purchase_id', 'in', po_ids)], context=context):
-                if not self.pool.get('account.invoice').search_exist(cr, uid, [('purchase_ids', 'in', po_ids), ('state', '=', 'draft')], context=context):
+            if not self.pool.get('account.invoice').search_exist(cr, uid, [('purchase_ids', 'in', po_ids), ('state', '=', 'draft')], context=context):
+                dpo_ids = self.pool.get('purchase.order').search(cr, uid, [('id', 'in', po_ids), ('po_version', '!=', 1), ('order_type', '=', 'direct')], context=context)
+                # for dpo we can have further IN if the first one is cancelled
+                if dpo_ids:
+                    po_ids = list(set(po_ids) - set(dpo_ids))
+                    # can not use 0.001 because total is digits: (16, 2)
+                    commit_ids = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', 'in', dpo_ids), ('total', '<', 0.01)], context=context)
+                    if commit_ids:
+                        self.pool.get('account.commitment').action_commitment_done(cr, uid, commit_ids, context=context)
+                if not self.pool.get('stock.move').search_exist(cr, uid, [('type', '=', 'in'), ('id', 'not in', from_cancel), ('state', 'not in', ['cancel', 'done']), ('picking_id.purchase_id', 'in', po_ids)], context=context):
                     self.pool.get('purchase.order')._finish_commitment(cr, uid, po_ids, context=context)
                     return True
 
@@ -310,8 +318,8 @@ class account_invoice(osv.osv):
                     to_process.append(inv.id)
                     # UTP-536 : Check if the PO is closed and all SI are draft, then close the CV
                     po_states = ['done']
-                    if po.order_type == 'direct':
-                        # DPO specific use case: CV and SI are both created at DPO confirmation
+                    if po.order_type == 'direct' and po.po_version == 1:
+                        # DPO v1 specific use case: CV and SI are both created at DPO confirmation
                         # ==> close the CVs if the DPO is at least "Confirmed" and no SI is in Draft anymore
                         po_states = ['confirmed', 'confirmed_p', 'done']
                     if po.state in po_states and all(x.id in ids or x.state != 'draft' for x in po.invoice_ids):

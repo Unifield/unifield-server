@@ -9,7 +9,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <label string="Select the lines to be split; the wizard will create a new invoice and adjust the original one." align="0.0"/>
-                <field name="invoice_line_ids" nolabel="1">
+                <field name="invoice_line_ids" nolabel="1" o2m_selectable="2">
                     <tree editable='bottom' hide_new_button="1">
                         <field name="product_id"/>
                         <field name="description"/>

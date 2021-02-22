@@ -2,6 +2,7 @@
 
 from osv import fields, osv
 from tools.translate import _
+import itertools
 assert _
 
 class physical_inventory_generate_counting_sheet(osv.osv_memory):
@@ -59,55 +60,77 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         location_id = inventory["location_id"][0]
         product_ids = inventory["product_ids"]
 
-        bn_and_eds = self.get_BN_and_ED_for_products_at_location(cr, uid, location_id, product_ids, context=context)
-
         # Prepare the inventory lines to be created
-
         inventory_counting_lines_to_create = []
-        for key in sorted(bn_and_eds.keys(), key=lambda x: x[1]):
-            product_id = key[0]
-            bn_and_eds_for_this_product = bn_and_eds[key]
-            # If no bn / ed related to this product, create a single inventory
-            # line
-            if bn_and_eds_for_this_product == (False, False, False):
-                if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, False, context=context):
-                    continue
-                else:
+        if not prefill_bn and not prefill_ed:
+            prods = self.pool.get('product.product').browse(cr, uid, product_ids, fields_to_fetch=['batch_management', 'perishable'], context=context)
+            for prod in prods:
+                if prod.batch_management or prod.perishable:
+                    for x in itertools.repeat(None, 3):
+                        values = {
+                            "line_no": len(inventory_counting_lines_to_create) + 1,
+                            "inventory_id": inventory_id,
+                            "product_id": prod.id,
+                            "batch_number": False,
+                            "expiry_date": False
+                        }
+                        inventory_counting_lines_to_create.append(values)
+                elif not only_with_stock_level or (only_with_stock_level and self.not_zero_stock_on_location(cr, uid, location_id, prod.id, False, context=context)):
                     values = {
                         "line_no": len(inventory_counting_lines_to_create) + 1,
                         "inventory_id": inventory_id,
-                        "product_id": product_id,
+                        "product_id": prod.id,
                         "batch_number": False,
                         "expiry_date": False
                     }
                     inventory_counting_lines_to_create.append(values)
-            elif not bn_and_eds_for_this_product:
-                # BN/ED product with no stock move in this location
-                if not only_with_stock_level:
-                    values = {
-                        "line_no": len(inventory_counting_lines_to_create) + 1,
-                        "inventory_id": inventory_id,
-                        "product_id": product_id,
-                        "batch_number": False,
-                        "expiry_date": False
-                    }
-                    inventory_counting_lines_to_create.append(values)
-            else:
-                # Otherwise, create an inventory line for this product ~and~ for
-                # each BN/ED
-                for bn_and_ed in sorted(bn_and_eds_for_this_product, key=lambda x: x[1] or x[0]):
-                    if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id,
-                                                                                     bn_and_ed[2], context=context):
+        else:
+            bn_and_eds = self.get_BN_and_ED_for_products_at_location(cr, uid, location_id, product_ids, context=context)
+
+            for key in sorted(bn_and_eds.keys(), key=lambda x: x[1]):
+                product_id = key[0]
+                bn_and_eds_for_this_product = bn_and_eds[key]
+                # If no bn / ed related to this product, create a single inventory
+                # line
+                if bn_and_eds_for_this_product == (False, False, False):
+                    if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, False, context=context):
                         continue
                     else:
                         values = {
                             "line_no": len(inventory_counting_lines_to_create) + 1,
                             "inventory_id": inventory_id,
                             "product_id": product_id,
-                            "batch_number": bn_and_ed[0] if prefill_bn else False,
-                            "expiry_date": bn_and_ed[1] if prefill_ed else False
+                            "batch_number": False,
+                            "expiry_date": False
                         }
                         inventory_counting_lines_to_create.append(values)
+                elif not bn_and_eds_for_this_product:
+                    # BN/ED product with no stock move in this location
+                    if not only_with_stock_level:
+                        values = {
+                            "line_no": len(inventory_counting_lines_to_create) + 1,
+                            "inventory_id": inventory_id,
+                            "product_id": product_id,
+                            "batch_number": False,
+                            "expiry_date": False
+                        }
+                        inventory_counting_lines_to_create.append(values)
+                else:
+                    # Otherwise, create an inventory line for this product ~and~ for
+                    # each BN/ED
+                    for bn_and_ed in sorted(bn_and_eds_for_this_product, key=lambda x: x[1] or x[0]):
+                        if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id,
+                                                                                         bn_and_ed[2], context=context):
+                            continue
+                        else:
+                            values = {
+                                "line_no": len(inventory_counting_lines_to_create) + 1,
+                                "inventory_id": inventory_id,
+                                "product_id": product_id,
+                                "batch_number": bn_and_ed[0] if prefill_bn else False,
+                                "expiry_date": bn_and_ed[1] if prefill_ed else False
+                            }
+                            inventory_counting_lines_to_create.append(values)
 
         # Get the existing inventory counting lines (to be cleared)
 

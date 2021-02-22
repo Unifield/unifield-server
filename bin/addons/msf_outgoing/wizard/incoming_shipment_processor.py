@@ -1141,7 +1141,7 @@ class stock_move_in_processor(osv.osv):
         'kc_check': fields.function(
             _get_product_info,
             method=True,
-            string='KC',
+            string='CC',
             type='char',
             size=8,
             store={
@@ -1149,7 +1149,7 @@ class stock_move_in_processor(osv.osv):
             },
             readonly=True,
             multi='product_info',
-            help="Ticked if the product is a Heat Sensitive Item",
+            help="Ticked if the product is a cold Chain Item",
         ),
         'ssl_check': fields.function(
             _get_product_info,
