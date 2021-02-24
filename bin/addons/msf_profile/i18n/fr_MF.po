@@ -39403,10 +39403,15 @@ msgstr "Règlement des factures"
 
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:1654
-#: code:addons/purchase/purchase_workflow.py:673
 #, python-format
 msgid "Delivery Confirmed Date is a mandatory field."
 msgstr "La Date de Livraison Confirmée est un champ obligatoire."
+
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:673
+#, python-format
+msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
+msgstr "Ligne #%s: La Date de Livraison Confirmée est un champ obligatoire."
 
 #. module: stock_schedule
 #: selection:stock.frequence,recurrence_type:0
