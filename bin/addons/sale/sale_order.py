@@ -653,12 +653,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'picked_rate': fields.function(_picked_rate, method=True, string='Picked', type='float'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=False),
         'yml_module_name': fields.char(size=1024, string='Name of the module which created the object in the yml tests', readonly=True),
-        'company_id2': fields.many2one('res.company', 'Company', select=1),
+        'company_id2': fields.many2one('res.company', 'Company', select=1, internal=1),
         'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=False),
         'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current field order."),
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
         'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current field order."),
-        'pricelist_id': fields.many2one('product.pricelist', 'Currency', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}, help="Currency for current field order."),
+        'pricelist_id': fields.many2one('product.pricelist', 'Currency', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}, help="Currency for current field order.", internal=1),
         'invoice_quantity': fields.selection([('order', 'Ordered Quantities'), ('procurement', 'Shipped Quantities')], 'Invoice on', help="The sale order will automatically create the invoice proposition (draft invoice). Ordered and delivered quantities may not be the same. You have to choose if you want your invoice based on ordered or shipped quantities. If the product is a service, shipped quantities means hours spent on the associated tasks.", required=True, readonly=True),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
@@ -680,7 +680,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
         'fo_to_resource': fields.boolean(string='FO created to resource FO in exception', readonly=True),
-        'parent_order_name': fields.char(size=64, string='Parent order name', help='In case of this FO is created to re-source a need, this field contains the name of the initial FO (before split).'),
+        'parent_order_name': fields.char(size=64, string='Parent order name', help='In case of this FO is created to re-source a need, this field contains the name of the initial FO (before split).', internal=1),
         'sourced_references': fields.one2many(
             'sync.order.label',
             'order_id',
@@ -689,7 +689,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
         'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
-        'draft_cancelled': fields.boolean(string='State', readonly=True),
+        'draft_cancelled': fields.boolean(string='Cancelled in Draft State', readonly=True),
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
     }
@@ -2092,7 +2092,7 @@ class sale_order_line(osv.osv):
         'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original FO/IR line', help='Original line from which the current one has been cancel and ressourced'),
         'resourced_at_state': fields.char('Resourced at state', size=128, help='The state of the original line when the resourced line has been created'),
         'stock_take_date': fields.date('Date of Stock Take', required=False),
-        'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
+        'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer', internal=1),
         'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'is_line_split': fields.boolean(string='This line is a split line?'),  # UTP-972: Use boolean to indicate if the line is a split line

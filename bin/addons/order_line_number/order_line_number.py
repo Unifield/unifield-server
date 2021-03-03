@@ -27,7 +27,7 @@ class sale_order(osv.osv):
 
     _inherit = 'sale.order'
     _description = 'Sales Order'
-    _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade'),
+    _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade', internal=1),
                 }
 
     def create_sequence(self, cr, uid, vals, context=None):
@@ -189,7 +189,7 @@ class purchase_order(osv.osv):
 
     _inherit = 'purchase.order'
     _description = 'Purchase Order'
-    _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade'),
+    _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade', internal=1),
                 }
 
     def create_sequence(self, cr, uid, vals, context=None):
@@ -316,7 +316,7 @@ class supplier_catalogue(osv.osv):
 
     _inherit = 'supplier.catalogue'
     _description = 'Supplier catalogue'
-    _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade'),
+    _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade', internal=1),
                 }
 
     def create_sequence(self, cr, uid, vals, context=None):

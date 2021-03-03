@@ -1010,6 +1010,7 @@ class sale_order(osv.osv):
             string='To partner',
             readonly=True,
             store=False,
+            internal=1,
         ),
     }
 

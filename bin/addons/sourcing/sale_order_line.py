@@ -430,8 +430,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'customer': fields.related(
             'order_id',
             'partner_id',
+            relation='res.partner',
             string='Customer',
             readonly=True,
+            internal=1,
         ),
         'po_cft': fields.selection(
             _SELECTION_PO_CFT,
