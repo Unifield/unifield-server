@@ -508,8 +508,8 @@ class stock_picking(osv.osv):
                     new_std_price = ((current_price * product_availability[line.product_id.id])
                                      + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
 
-            new_std_price = currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
-                                                 new_std_price, round=True, context=context)
+            new_std_price = round(currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
+                                                       new_std_price, round=False, context=context), 5)
 
             # Write the field according to price type field
             product_obj.write(cr, uid, [line.product_id.id], {'standard_price': new_std_price})
