@@ -74,10 +74,10 @@
                                     <td></td>
                                     <td class="db_login_buttons">
                                         % if cp.config('dbbutton.visible', 'openerp-web'):
-                                            <button type="button" class="static_boxes" tabindex="-1" onclick="location.href='${py.url('/openerp/database')}'">${_("Databases")}
+                                            <button type="button" class="static_boxes" tabindex="-1" onclick="location.href='${py.url('/openerp/database')}'" id="databases">${_("Databases")}
                                             </button>
                                         % endif
-                                        <button type="button" class="static_boxes" onclick="disable_save()">${_("Login")}</button>
+                                        <button type="button" class="static_boxes" onclick="disable_save()" id="login">${_("Login")}</button>
                                     </td>
                                 </tr>
                             </table>
