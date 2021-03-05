@@ -1823,43 +1823,6 @@ class stock_move(osv.osv):
                                  (move.product_id.categ_id.name, move.product_id.categ_id.id,))
         return journal_id, acc_src, acc_dest, acc_variation
 
-    def _get_reference_accounting_values_for_valuation(self, cr, uid, move, context=None):
-        """
-        Return the reference amount and reference currency representing the inventory valuation for this move.
-        These reference values should possibly be converted before being posted in Journals to adapt to the primary
-        and secondary currencies of the relevant accounts.
-        """
-        product_uom_obj = self.pool.get('product.uom')
-
-        # by default the reference currency is that of the move's company
-        reference_currency_id = move.company_id.currency_id.id
-
-        default_uom = move.product_id.uom_id.id
-        qty = product_uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, default_uom)
-
-        # if product is set to average price and a specific value was entered in the picking wizard,
-        # we use it
-        if move.product_id.cost_method == 'average' and move.price_unit:
-            reference_amount = qty * move.price_unit
-            reference_currency_id = move.price_currency_id.id or reference_currency_id
-
-        # Otherwise we default to the company's valuation price type, considering that the values of the
-        # valuation field are expressed in the default currency of the move's company.
-
-        elif (move.product_id.cost_method != 'average' or not move.price_unit) and move.purchase_line_id and move.picking_id.purchase_id.pricelist_id:
-            # no average price costing or cost not specified during picking validation, we will
-            # plug the purchase line values if they are found.
-            reference_amount, reference_currency_id = move.purchase_line_id.price_unit, move.picking_id.purchase_id.pricelist_id.currency_id.id
-        else:
-            if context is None:
-                context = {}
-            currency_ctx = dict(context, currency_id = move.company_id.currency_id.id)
-            amount_unit = move.product_id.price_get('standard_price', currency_ctx)[move.product_id.id]
-            reference_amount = amount_unit * qty or 1.0
-
-        return reference_amount, reference_currency_id
-
-
     def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         choose if the corresponding out stock move must be updated
