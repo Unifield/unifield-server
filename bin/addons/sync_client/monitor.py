@@ -61,6 +61,7 @@ class MonitorLogger(object):
             'nb_data_not_run': 0,
 
         }
+        self.ok_before_last_dump = False
         self.info.update(defaults)
         self.final_status = 'ok'
         self.messages = []
@@ -219,9 +220,10 @@ class sync_monitor(osv.osv):
         is_syncing = self.pool.get('sync.client.entity').is_syncing()
         max_id = 0
         if is_syncing:
-            for monitor in self.browse(cr, uid, ids, context=context):
-                if monitor.status == 'in-progress' and monitor.id > max_id:
-                    max_id = monitor.id
+            max_monitor_ids = self.search(cr, uid, [('my_instance', '=', True)], order='id desc', limit=1, context=context)
+            if max_monitor_ids:
+                if self.read(cr, uid, max_monitor_ids[0], ['status'])['status'] == 'in-progress':
+                    max_id = max_monitor_ids[0]
         if max_id:
             if self.pool.get('sync.client.entity').aborting:
                 res[max_id] = "aborting"

@@ -7,6 +7,7 @@
             model="replenishment.parent.segment"
             name="report_replenishment_parent_segment_chronogram_xls"
             file="procurement_cycle/report/chronogram.mako"
+            target_filename="Chronogram_%(year)s_%(month)s_%(day)s"
             report_type="webkit"
             menu="True"
             />

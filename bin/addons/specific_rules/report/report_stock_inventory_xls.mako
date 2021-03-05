@@ -232,7 +232,7 @@
     </Row>
     
     % for prd in lines:
-      % if prd['sum_qty'] or prd['with_product_list']:
+      % if prd['sum_qty'] or prd['with_zero']:
       <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
           <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
@@ -245,7 +245,7 @@
           <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(round(prd['sum_value'], 2))|x}</Data></Cell>
       </Row>
         % for line in prd['lines'].itervalues():
-          % if line['qty'] or prd['with_product_list']:
+          % if line['qty'] or prd['with_zero']:
           <Row ss:AutoFitHeight="1">
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>

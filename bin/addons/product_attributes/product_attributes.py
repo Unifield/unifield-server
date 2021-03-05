@@ -2749,7 +2749,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
-        new_data = self.read(cr, uid, nsl_prod_id, ['default_code','old_code', 'allow_merge'], context=context)
+        new_data = self.read(cr, uid, nsl_prod_id, ['default_code','old_code', 'allow_merge', 'product_tmpl_id'], context=context)
         if not new_data['allow_merge']:
             raise osv.except_osv(_('Warning'), _('New product %s condition not met') % new_data['default_code'])
 
@@ -2790,13 +2790,17 @@ class product_attributes(osv.osv):
         }
 
 
+        old_prod_data = self.read(cr, uid, local_id, self.merged_fields_to_keep+['default_code', 'product_tmpl_id'], context=context)
         default_code = new_data['default_code']
         for table in ['product_product', 'product_template']:
             for x in cr.get_referenced(table):
                 if (x[0], x[1]) in blacklist_table.get(table):
                     continue
 
-                params = {'old_prod': local_id, 'nsl_prod_id': nsl_prod_id}
+                if table == 'product_product':
+                    params = {'old_prod': local_id, 'nsl_prod_id': nsl_prod_id}
+                else:
+                    params = {'old_prod': old_prod_data['product_tmpl_id'][0], 'nsl_prod_id': new_data['product_tmpl_id'][0]}
                 if cr.column_exists(x[0], 'default_code'):
                     params['default_code'] = default_code
                     add_query = ' , default_code=%(default_code)s '
@@ -2806,7 +2810,6 @@ class product_attributes(osv.osv):
                 cr.execute('update '+x[0]+' set '+x[1]+'=%(nsl_prod_id)s '+add_query+' where '+x[1]+'=%(old_prod)s', params) # not_a_user_entry
 
         new_write_data = {'active': True, 'replace_product_id': local_id}
-        old_prod_data = self.read(cr, uid, local_id, self.merged_fields_to_keep+['default_code'], context=context)
         write_context = context.copy()
         if not context.get('sync_update_execution'):
             fields_to_keep = self.merged_fields_to_keep

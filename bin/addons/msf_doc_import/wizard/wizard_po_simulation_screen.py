@@ -578,11 +578,11 @@ class wizard_import_po_simulation_screen(osv.osv):
                     break
                 try:
                     percent = float(values[idx+2])
-                except TypeError:
+                except (TypeError, ValueError):
                     errors.append(_('%% in AD must be a number (value found %s), AD in file ignored') % (values[idx+2]))
                     ad = []
                     break
-                ad.append([values[idx], values[idx+1], percent])
+                ad.append(['%s'%values[idx], '%s'%values[idx+1], percent])
                 sum_percent += percent
                 idx += 4
         if ad and abs(100-sum_percent) > 0.001:
@@ -1008,12 +1008,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                         values_line_errors.append( _('Line %s of the PO: %s') % (line_number, err1))
                         continue
 
-                    if not is_delete_line and line_number and not ext_ref and len(SIMU_LINES[line_number]['line_ids']) > 1:
-                        err1 = _('multiple match lines, the line can not be processed')
-                        values_line_errors.append(_('Line %s of the PO: %s') % (line_number, err1))
-                        continue
-
-
                     to_delete = False
                     to_update = False
                     to_split = False
@@ -1035,10 +1029,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                     else:
                         if line_number and ext_ref:
                             if ext_ref not in SIMU_LINES['ext_ref'] and SIMU_LINES[line_number].get(False):
-                                if len(SIMU_LINES[line_number].get(False)) > 1:
-                                    err1 = _('multiple match lines, the line can not be processed')
-                                    values_line_errors.append(_('Line %s of the PO: %s') % (line_number, err1))
-                                    continue
                                 # UC 1
                                 to_update = self.best_matching_lines(cr, uid, [lx for lx in SIMU_LINES[line_number].get(False) if lx not in found_wiz_lines], values[x][2], values[x][4], context)
 
@@ -1153,7 +1143,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
 
         except Exception, e:
             logging.getLogger('po.simulation simulate').warn('Exception', exc_info=True)
-            self.write(cr, uid, ids, {'message': e}, context=context)
+            self.write(cr, uid, ids, {'state': 'error', 'message': "Unknown error:\n%s\n---\n%s" % (e, tools.misc.get_traceback(e))}, context=context)
             cr.commit()
             cr.close(True)
         finally:
