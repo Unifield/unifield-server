@@ -12,15 +12,69 @@ class purchase_order_line(osv.osv):
     _name = "purchase.order.line"
     _inherit = "purchase.order.line"
 
+    def validated(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            return True
+
+        cr.execute("""select
+                pol.line_number, prod.default_code
+            from
+                purchase_order_line pol,
+                purchase_order po,
+                product_product prod,
+                res_partner part
+            where
+                pol.order_id = po.id and
+                prod.id = pol.product_id and
+                part.id = po.partner_id and
+                part.partner_type = 'esc' and
+                prod.standard_ok = 'non_standard_local' and
+                pol.state = 'draft' and
+                pol.id in %s
+            """, (tuple(ids), )
+        )
+        nsl = []
+        for pol_data in cr.fetchall():
+            nsl.append(_('L%s : %s') % (pol_data[0], pol_data[1]))
+
+        if nsl:
+            # checks before validating the line:
+            ids_to_check = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+            self.check_origin_for_validation(cr, uid, ids_to_check, context=context)
+            self.check_analytic_distribution(cr, uid, ids_to_check, context=context)
+            self.check_if_stock_take_date_with_esc_partner(cr, uid, ids_to_check, context=context)
+            self.check_unit_price(cr, uid, ids_to_check, context=context)
+            self.check_po_tax(cr, uid, ids_to_check, context=context)
+            wiz_id = self.pool.get('purchase.order.line.nsl.validation.wizard').create(cr, uid, {'pol_ids': [(6, 0, ids)], 'message': ', '.join(nsl)}, context=context)
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order.line.nsl.validation.wizard',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                'height': '400px',
+                'width': '520px',
+            }
+
+        return netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order.line', ids, 'validated', cr)
+
+
     def get_split_info(self, cr, uid, pol, context=None):
         sol_values = {}
 
         if pol.is_line_split:
+            sol_values['is_line_split'] = True
             split_po_ids = self.search(cr, uid, [('is_line_split', '=', False), ('line_number', '=', pol.line_number), ('order_id', '=', pol.order_id.id)], context=context)
             if split_po_ids:
                 split_po = self.browse(cr, uid, split_po_ids[0], fields_to_fetch=['linked_sol_id'], context=context)
                 if split_po.linked_sol_id:
                     sol_values['line_number'] = split_po.linked_sol_id.line_number
+                    sol_values['original_line_id'] = split_po.linked_sol_id.id
         return sol_values
 
 
@@ -90,7 +144,7 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False, for_claim=False):
+    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False, for_claim=False, so_id=False):
         '''
         update corresponding FO lines in the same instance
         '''
@@ -98,20 +152,21 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         context['from_back_sync'] = True
         for pol in self.browse(cr, uid, ids, context=context):
             to_trigger = False
             # linked FO line already exists ?
             # => if yes update it, else create new
             create_line = False
-            if not pol.linked_sol_id:
+            if so_id or not pol.linked_sol_id:
                 # try to get the linked sale.order:
-                so_id = pol.link_so_id.id
+                if not so_id:
+                    so_id = pol.link_so_id.id
                 if not so_id:
                     so_id = self.pool.get('sale.order').search(cr, uid, [
                         ('name', '=', pol.origin),
                         ('procurement_request', 'in', ['t', 'f']),
+                        ('state', 'not in', ['done', 'cancel']),
                     ], context=context)
                     so_id = so_id and so_id[0] or False
                 if not so_id:
@@ -121,6 +176,8 @@ class purchase_order_line(osv.osv):
                     to_trigger = True
                 create_line = True
             elif pol.linked_sol_id:
+                if pol.linked_sol_id.state in ('done', 'cancel'):
+                    continue
                 sale_order = pol.linked_sol_id.order_id
             else:
                 # case of PO line from scratch, nothing to update
@@ -203,35 +260,41 @@ class purchase_order_line(osv.osv):
                                                                                                          ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
                 if pol.created_by_sync:
                     sol_values['created_by_sync'] = True
+                    sol_values['sync_pushed_from_po'] = True
+
+                if pol.order_id.order_type == 'direct' and pol.order_id.po_version > 1:
+                    sol_values['dpo_line_id'] = pol.id
+
+                if pol.resourced_original_line:
+                    sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False
+                    sol_values['resourced_original_remote_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.sync_linked_pol or False
+
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
-                self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
+                pol_to_write = {'linked_sol_id': new_sol, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context), 'link_so_id': sale_order.id}
+                if not pol.origin:
+                    pol_to_write['origin'] = sale_order.name
+                self.write(cr, uid, [pol.id], pol_to_write, context=context)
 
                 if to_trigger:
                     # IR is cancel but a new line is added, trigger a new wkf
                     # UC: IR > PO > FO (full claim retrun + replacement on IN)
                     cr.execute("update sale_order set state='draft' where id=%s", (so_id,))
 
+
                 # if OUT move already exists for this sale.order.line, then the split going to be created must be linked to
                 # the right OUT move (moves are already splits at this level):
                 if sol_values['is_line_split']:
                     netsvc.LocalService('workflow').trg_validate(uid, 'sale.order.line', new_sol, 'sourced', cr)
-                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
-                        ('sale_line_id', '=', sol_values['original_line_id']),
-                        ('type', '=', 'out'),
-                        ('state', 'in', ['assigned', 'confirmed'])],
-                        context=context)
-                    if linked_out_moves:
-                        # try first confirmed OUT, if not found link assigned OUT
-                        out_to_update = False
-                        for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
-                            if out_move.product_qty == sol_values['product_uom_qty']:
-                                if out_move.state == 'confirmed':
-                                    out_to_update = out_move.id
-                                    break
-                                elif out_move.state == 'assigned':
-                                    out_to_update = out_move.id
-                        if out_to_update:
-                            self.pool.get('stock.move').write(cr, uid, [out_to_update], {'sale_line_id': new_sol}, context=context)
+                    out_picks = self.pool.get('stock.picking').search(cr, uid, [('sale_id', '=', so_id), ('type', '=', 'out'), '|', ('subtype', '=', 'standard'), '&', ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)
+                    move_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', out_picks), ('state', '=', 'confirmed'), ('sale_line_id', '=', sol_values['original_line_id']), ('product_qty', '=', sol_values['product_uom_qty'])], limit=1, context=context)
+                    if move_ids:
+                        # last remaining OUT line
+                        self.pool.get('stock.move').write(cr, uid, move_ids, {'sale_line_id': new_sol}, context=context)
+                    else:
+                        move_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', out_picks), ('state', '=', 'confirmed'), ('sale_line_id', '=', sol_values['original_line_id']), ('product_qty', '>', sol_values['product_uom_qty'])], order='product_uom_qty desc', limit=1, context=context)
+                        if move_ids:
+                            new_move = self.pool.get('stock.move').split(cr, uid, move_ids[0], sol_values['product_uom_qty'], False, context=context)
+                            self.pool.get('stock.move').write(cr, uid, new_move, {'sale_line_id': new_sol}, context=context)
 
             else:  # update FO line
                 if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and not pol.linked_sol_id.order_id.analytic_distribution_id and ad_id and not sale_order.procurement_request:
@@ -243,15 +306,7 @@ class purchase_order_line(osv.osv):
                 if pol.linked_sol_id.original_line_id:
                     sol_values.pop('original_line_id')
                 if pol.linked_sol_id.state == 'confirmed' and 'product_uom_qty' in sol_values and sol_values['product_uom_qty'] != pol.linked_sol_id.product_uom_qty:
-                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
-                        ('sale_line_id', '=', pol.linked_sol_id.id),
-                        ('type', '=', 'out'),
-                        ('state', 'in', ['assigned', 'confirmed']),
-                        ('product_qty', '=',  pol.linked_sol_id.product_uom_qty)
-                    ], context=context)
-                    if linked_out_moves:
-                        self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'product_qty': sol_values['product_uom_qty'], 'product_uos_qty': sol_values['product_uom_qty']}, context=context)
-                    elif for_claim:
+                    if for_claim:
                         # if claim created but IR already confirmed, if qty can't be decreased on OUT because OUT was split, cancel the qty related to the claim
                         linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
                             ('sale_line_id', '=', pol.linked_sol_id.id),
@@ -347,12 +402,14 @@ class purchase_order_line(osv.osv):
                 'date_planned': pol.date_planned or (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d'),
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'set_as_sourced_n': True,
+                'created_by_sync': True,
             }
 
             if pol.resourced_original_line:
                 # pol resourced, set orginal line on new line
                 sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False
                 sol_values['resourced_original_remote_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.sync_linked_pol or False
+                #sol_values['original_line_id'] = sol_values['resourced_original_line']
             # if PO line has an analytic distribution, we copy it
             ad_id = pol.analytic_distribution_id or pol.order_id.analytic_distribution_id
             if ad_id and not sale_order.procurement_request:
@@ -366,7 +423,8 @@ class purchase_order_line(osv.osv):
             new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
             # update current PO line:
-            self.write(cr, uid, pol.id, {'link_so_id': fo_id, 'linked_sol_id': new_sol_id, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context)}, context=context)
+            pol_values = {'link_so_id': fo_id, 'linked_sol_id': new_sol_id, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context)}
+            self.write(cr, uid, pol.id, pol_values, context=context)
 
         context['from_back_sync'] = False
         return new_sol_id
@@ -545,7 +603,10 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
-        to_complete_ids = self.search(cr, uid, [('id', '=', ids), ('from_fo', '=', True), ('origin', '=', False), ('sync_linked_sol', '=', False)])
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        to_complete_ids = self.search(cr, uid, [('id', 'in', ids), ('from_fo', '=', True), ('origin', '=', False), ('sync_linked_sol', '=', False)])
         if to_complete_ids:
             error = []
             for line in self.read(cr, uid, to_complete_ids, ['line_number', 'default_code'], context=context):
@@ -683,27 +744,41 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids):
             if not pol.confirmed_delivery_date:
-                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+                raise osv.except_osv(_('Error'), _('Line #%s: Delivery Confirmed Date is a mandatory field.') % pol.line_number)
 
-            if not pol.product_id and pol.linked_sol_id and not pol.linked_sol_id.order_id.procurement_request:
-                # PO nomen (PROJ) => FO (nomen COO)
+            if not pol.product_id:
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
+
+            sourced_on_dpo = pol.from_dpo_line_id
 
             if pol.order_type != 'direct' and not pol.from_synchro_return_goods:
                 # create incoming shipment (IN):
-                in_id = self.pool.get('stock.picking').search(cr, uid, [
-                    ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']),
-                    ('type', '=', 'in'),
-                ])
+
+                if sourced_on_dpo:
+                    in_domain = [
+                        ('purchase_id', '=', pol.order_id.id),
+                        ('state', '=', 'shipped'),
+                        ('type', '=', 'in'),
+                        ('dpo_incoming', '=', True)
+                    ]
+                else:
+                    in_domain = [
+                        ('purchase_id', '=', pol.order_id.id),
+                        ('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']),
+                        ('type', '=', 'in')
+                    ]
+                in_id = self.pool.get('stock.picking').search(cr, uid, in_domain)
                 created = False
                 if not in_id:
-                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context)
+                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context, sourced_on_dpo)
                     in_id = [in_id]
                     created = True
                 incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)
                 if created:
-                    wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
+                    if sourced_on_dpo:
+                        wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_shipped', cr)
+                    else:
+                        wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
                 else:
                     self.pool.get('stock.move').in_action_confirm(cr, uid, incoming_move_id, context)
 
@@ -747,7 +822,7 @@ class purchase_order_line(osv.osv):
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
-            if pol.order_id.invoice_method == 'order':
+            if pol.order_id.po_version == 1 and pol.order_id.invoice_method == 'order':
                 pol_to_invoice[pol.id] = True
 
 
@@ -772,19 +847,31 @@ class purchase_order_line(osv.osv):
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
 
+        pol_to_invoice = {}
+        fol_sourced_on_dpo = set()
         for pol in self.browse(cr, uid, ids, context=context):
             # no PICK/OUT needed in this cases; close SO line:
             internal_ir = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False  # PO line from Internal IR
-            dpo = pol.order_id.order_type == 'direct' or False  # direct PO
+            dpo = pol.order_id.order_type == 'direct' and pol.order_id.po_version == 1 or False  # direct PO
             ir_non_stockable = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.product_id.type in ('consu', 'service', 'service_recep') or False
 
             if internal_ir or dpo or ir_non_stockable:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
+            if pol.order_id.po_version > 1:
+                if pol.order_id.invoice_method == 'order':
+                    pol_to_invoice[pol.id] = True
+                if pol.linked_sol_id:
+                    fol_sourced_on_dpo.add(pol.linked_sol_id.id)
             # cancel remaining SYS-INT
             self.pool.get('stock.move').decrement_sys_init(cr, uid, 'all', pol_id=pol.id, context=context)
         self.write(cr, uid, ids, {'state': 'done', 'closed_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
+        if fol_sourced_on_dpo:
+            for sol_id_to_check in fol_sourced_on_dpo:
+                wf_service.trg_write(uid, 'sale.order.line', sol_id_to_check, cr)
 
+        if pol_to_invoice:
+            self.generate_invoice(cr, uid, pol_to_invoice.keys(), context=context)
         return True
 
 
@@ -808,7 +895,6 @@ class purchase_order_line(osv.osv):
                 if pol.cancelled_by_sync:
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
-
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True
@@ -856,12 +942,9 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wf_service = netsvc.LocalService("workflow")
-        for po in self.browse(cr, uid, ids, context=context):
-            for pol_id in [pol.id for pol in po.order_line]:
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'validated', cr)
+        po = self.browse(cr, uid, ids[0], context=context)
+        return self.pool.get('purchase.order.line').validated(cr, uid, [pol.id for pol in po.order_line], context=context)
 
-        return True
 
 
     def confirm_lines(self, cr, uid, ids, context=None):
@@ -874,18 +957,25 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        pol_obj = self.pool.get('purchase.order.line')
         for po in self.browse(cr, uid, ids, context=context):
-            pol_ids_to_confirm = []
+            # raise asap
             if po.partner_type == 'esc':
-                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po.id), ('state', 'in', ['validated', 'validated_p']), ('stock_take_date', '=', False)], context=context)
+                pol_ids = pol_obj.search(cr, uid, [('order_id', '=', po.id), ('state', 'in', ['validated', 'validated_n']), ('stock_take_date', '=', False)], context=context)
                 if pol_ids:
-                    pol_line = self.pool.get('purchase.order.line').read(cr, uid, pol_ids, ['line_number'], context=context)
+                    pol_line = pol_obj.read(cr, uid, pol_ids, ['line_number'], context=context)
                     raise osv.except_osv(_('Error'), _('Line %s: Date of Stock Take is required for PO to ESC') % ', '.join(['#%s'%x['line_number'] for x in pol_line]))
 
-            for pol in po.order_line:
-                if pol.state not in ('cancel', 'cancel_r') and not pol.confirmed_delivery_date:
-                    raise osv.except_osv(_('Error'), _('Line #%s: Delivery Confirmed Date is a mandatory field.') % pol.line_number)
-                pol_ids_to_confirm.append(pol.id)
+            pol_ids_to_confirm = pol_obj.search(cr, uid, [('order_id', '=', po.id), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+            missing_cdd = pol_obj.search(cr, uid, [('confirmed_delivery_date', '=', False), ('id', 'in', pol_ids_to_confirm)], limit=1, context=context)
+            if missing_cdd:
+                pol_line = pol_obj.read(cr, uid, missing_cdd, ['line_number'], context=context)
+                raise osv.except_osv(_('Error'), _('Line #%s: Delivery Confirmed Date is a mandatory field.') % pol_line[0]['line_number'])
+
+            missing_prod = pol_obj.search(cr, uid, [('product_id', '=', False), ('id', 'in', pol_ids_to_confirm)], limit=1, context=context)
+            if missing_prod:
+                pol_line = pol_obj.read(cr, uid, missing_prod, ['line_number'], context=context)
+                raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol_line[0]['line_number'])
 
             return self.pool.get('purchase.order.line').button_confirmed(cr, uid, pol_ids_to_confirm, context=context)
 

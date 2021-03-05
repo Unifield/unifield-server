@@ -1,11 +1,11 @@
-from osv import osv, fields
+from osv import osv
 import tools
 
 class UpdateReceived(osv.osv):
     _inherit = 'sync.client.update_received'
     _name = 'sync_remote_warehouse.update_received'
     _sync_field = 'usb_sync_field'
-    
+
     def _conflict(self, cr, uid, sdref, next_version, context=None):
         ir_data = self.pool.get('ir.model.data')
         data_id = ir_data.find_sd_ref(cr, uid, sdref, context=context)
@@ -25,18 +25,18 @@ UpdateReceived()
 class UpdateToSend(osv.osv):
     _inherit = 'sync.client.update_to_send'
     _name = 'sync_remote_warehouse.update_to_send'
-    
-    def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
-        return super(UpdateToSend, self).sync_finished(cr, uid, update_ids, sync_field="usb_sync_date", context=context)
-    
+
+    def sync_finished(self, cr, uid, session_id, sync_field='sync_date', context=None):
+        return super(UpdateToSend, self).sync_finished(cr, uid, session_id, sync_field="usb_sync_date", context=context)
+
     def create_update(self, cr, uid, rule_id, session_id, context=None):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
-        
+
         def create_normal_update(self, rule, context):
             domain = eval(rule.domain or '[]')
-            included_fields = eval(rule.included_fields or '[]') 
-            if not 'id' in included_fields: 
+            included_fields = eval(rule.included_fields or '[]')
+            if not 'id' in included_fields:
                 included_fields.append('id')
 
             ids_need_to_push = self.usb_need_to_push(cr, uid, context=context)
@@ -73,7 +73,7 @@ class UpdateToSend(osv.osv):
                 return 0
 
             ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, module='sd', context=context), context=context)
+                                              self.search_deleted(cr, uid, module='sd', context=context), context=context)
 
             if not ids_to_delete:
                 return 0

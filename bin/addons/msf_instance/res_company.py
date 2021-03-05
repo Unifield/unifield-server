@@ -130,8 +130,12 @@ class res_company(osv.osv):
         ret = super(res_company, self).write(cr, uid, ids, vals, context=context)
         if check_menu:
             level = self._get_instance_level(cr, uid)
+            # Hide Stock & Pipe per Product and per Instance Report in Coordo and Project
             stock_pipe_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_menu')[1]
             self.pool.get('ir.ui.menu').write(cr, uid, stock_pipe_report_menu_id, {'active': level == 'section'}, context=context)
+            # Hide Product Status Inconsistencies in Project
+            report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+            self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': level != 'project'}, context=context)
         return ret
 
     def _get_instance_level(self, cr, uid):

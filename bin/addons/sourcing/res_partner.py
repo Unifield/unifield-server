@@ -86,12 +86,14 @@ class res_partner(osv.osv):
                 if arg[1] != '=' or not isinstance(arg[2], (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
-                    so = self.pool.get('sale.order').browse(cr, uid, arg[2])
+                    so = self.pool.get('sale.order').browse(cr, uid, arg[2], fields_to_fetch=['partner_id', 'procurement_request', 'partner_type'])
                     newargs.append(('id', '!=', so.partner_id.id))
                     if not so.procurement_request:
                         types_allowed = ['external', 'esc']
                         if so.partner_type not in ['internal', 'section', 'intermission']:
                             types_allowed.extend(['internal', 'section', 'intermission'])
+                        elif so.partner_type == 'internal':
+                            types_allowed.extend(['section', 'intermission'])
                         newargs.append(('partner_type', 'in', types_allowed))
             else:
                 newargs.append(args)
@@ -180,12 +182,15 @@ class res_partner(osv.osv):
         for arg in args:
             if arg[0] == 'line_contains_fo':
                 if type(arg[2]) == type(list()):
-                    for line in self.pool.get('sale.order.line').browse(cr, uid, arg[2][0][2], context=context):
+                    for line in self.pool.get('sale.order.line').browse(cr, uid, arg[2][0][2], fields_to_fetch=['partner_id', 'order_id'], context=context):
                         res.append(('id', '!=', line.partner_id.id))
                         if not line.order_id.procurement_request:
                             types_allowed = ['external', 'esc']
                             if line.partner_id.partner_type not in ['internal', 'section', 'intermission']:
                                 types_allowed.extend(['internal', 'section', 'intermission'])
+                            elif line.partner_id.partner_type == 'internal':
+                                types_allowed.extend(['section', 'intermission'])
+
                             res.append(('partner_type', 'in', types_allowed))
 
         return res

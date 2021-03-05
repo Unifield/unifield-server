@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-<record id="manage_expired_stock_form_view" model="ir.ui.view">
+        <record id="manage_expired_stock_form_view" model="ir.ui.view">
             <field name="name">manage.expired.stock.form.view</field>
             <field name="model">manage.expired.stock</field>
             <field name="type">form</field>
@@ -10,9 +10,14 @@
                     <separator colspan="4" string="Select the locations" />
                     <field name="location_id" string="Source Location" colspan="2" />
                     <field name="dest_loc_id" string="Destination Location" colspan="2" />
+                    <separator colspan="4" string="Parameters" />
+                    <field name="bned_date_sel" colspan="2" required="1" />
+                    <field name="in_next_x_weeks" colspan="2" attrs="{'invisible': [('bned_date_sel', '!=', 'soon_exp_prod')]}" />
                     <separator colspan="4" string="Actions" />
-                    <button name="create_int_expired_stock" string="Create Internal Move with expired stock"
-                            icon="terp-document-new" type="object" colspan="4" />
+                    <group col="2" colspan="4">
+                        <button name="open_view_expired_expiring_stock" string="View Expired/Expiring products" icon="gtk-go-forward" type="object" attrs="{'invisible': [('bned_date_sel', '!=', 'soon_exp_prod')]}" />
+                        <button name="create_int_expired_stock" string="Create Internal Move with expired stock" icon="terp-document-new" type="object" />
+                    </group>
                 </form>
             </field>
         </record>
@@ -30,5 +35,47 @@
                   parent="stock.menu_stock_inventory_control"
                   sequence="100"/>
 
+        <record id="view_expired_expiring_stock_form" model="ir.ui.view">
+            <field name="name">view.expired.expiring.stock.form</field>
+            <field name="model">view.expired.expiring.stock</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Select Expired/Expiring products">
+                    <field name="v_mng_exp_lines_ids" colspan="4" nolabel="1" mode="tree,form" o2m_selectable="2">
+                        <tree string="Expired/Expiring Products" noteditable="1">
+                            <field name="product_id" />
+                            <field name="prodlot_id" />
+                            <field name="expired_date" />
+                            <field name="product_qty" />
+                            <field name="product_uom" invisible="1" />
+                            <button name="unlink" string="Delete" icon="gtk-del" type="object"/>
+                        </tree>
+                    </field>
+                    <group colspan="4" col="3">
+                        <button name="del_sel_prod" string="Delete Selected Products" icon="gtk-del" type="object" set_ids="v_mng_exp_lines_ids" />
+                        <button name="create_int_expired_expiring_stock" string="Add all displayed Products to an Internal Move" icon="terp-document-new" type="object" />
+                        <button name="cancel" string="Cancel" icon="gtk-cancel" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_expired_expiring_stock_lines_form" model="ir.ui.view">
+            <field name="name">view.expired.expiring.stock.lines.form</field>
+            <field name="model">view.expired.expiring.stock.lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Expired/Expiring Products">
+                    <field name="product_id" />
+                    <field name="prodlot_id" />
+                    <field name="expired_date" />
+                    <field name="product_qty" />
+                    <field name="product_uom" />
+                    <field name="location_id" />
+                    <field name="location_dest_id" />
+                    <field name="reason_type_id" />
+                </form>
+            </field>
+        </record>
     </data>
 </openerp>

@@ -97,6 +97,7 @@ class sale_order_line(osv.osv):
         has_filter = False
 
         operator = ['=', '!=']
+
         for x in domain:
             if x[0]  in fields_filter:
                 if x[1] not in operator:
@@ -104,6 +105,9 @@ class sale_order_line(osv.osv):
                 fields_filter[x[0]].update({'operator': x[1], 'filter': x[2]})
                 has_filter = True
             else:
+                # US-7407: OST custom filter: change done (db value) vs Closed (user value)
+                if x[0] == 'state' and x[2] and isinstance(x[2], basestring) and x[2].lower() == 'closed':
+                    x = ('state', x[1], 'done')
                 new_dom.append(x)
         ret = super(sale_order_line, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
         if has_filter:
@@ -1250,6 +1254,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 domain.append(('rfq_ok', '=', True))
             elif sourcing_line.po_cft == 'dpo':
                 domain.append(('order_type', '=', 'direct'))
+                domain.append(('dest_address_id', '=', sourcing_line.order_id.partner_shipping_id.id))
 
             # supplier's order creation mode:
             if sourcing_line.supplier.po_by_project in ('project', 'category_project') or (sourcing_line.po_cft == 'dpo' and sourcing_line.supplier.po_by_project == 'all'):
@@ -1365,6 +1370,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     'dest_partner_id': sourcing_line.order_id.partner_id.id,
                     'dest_address_id': sourcing_line.order_id.partner_shipping_id.id,
                 })
+                #if sourcing_line.order_id.partner_id.partner_type in ('esc', 'external'):
+                #    po_values['po_version'] = 2 # TODO NEEDED ?
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
 
@@ -1587,11 +1594,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         if not po_to_use: # then create new PO:
                             po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new PO:
-                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
+                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id', 'name'],  context=context)
                             self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                             self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                         else:
-                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id'], context=context)
+                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id'], context=context)
 
                         target_currency_id = po.pricelist_id.currency_id.id
                         # No AD on sourcing line if it comes from IR:

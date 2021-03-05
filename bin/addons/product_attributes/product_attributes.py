@@ -180,8 +180,12 @@ class product_cold_chain(osv.osv):
     _columns = {
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True, translate=1),
+        'cold_chain': fields.boolean('Cold Chain'),
     }
 
+    _defaults = {
+        'cold_chain': False,
+    }
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -507,30 +511,15 @@ class product_attributes(osv.osv):
 
     def _compute_is_kc(self, cr, uid, product, context=None):
         """
-        Return True if the product is considered as a Keep Cool product
+        Return True if the product is considered as a Cold Chain product
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls this method
         :param product: browse_record of a product.product
         :param context: Context of the call
         :return: True or False
         """
-        return product.heat_sensitive_item.code == 'yes'
+        return product.cold_chain and product.cold_chain.cold_chain or False
 
-    def _compute_kc_txt(self, cr, uid, product, context=None):
-        """
-        Return the character to display on views or reports ('X' or '?' or '') for Keep Cool
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: 'X' or '?' or ''
-        """
-        if product.heat_sensitive_item.code == 'no_know':
-            return '?'
-        elif product.heat_sensitive_item.code == 'no':
-            return ''
-        else:
-            return 'X'
 
     def _compute_is_dg(self, cr, uid, product, context=None):
         """
@@ -611,7 +600,7 @@ class product_attributes(osv.osv):
     def _compute_kc_dg_cs_ssl_values(self, cr, uid, ids, field_names, args, context=None):
         """
         Compute the character to display ('X' or '?' or '') according to product values
-        for Keep Cool, Dangerous Goods, Controlled Substance and Short Shelf Life.
+        for Cold Chain, Dangerous Goods, Controlled Substance and Short Shelf Life.
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls this method
         :param ids: List of ID of product.product to compute values
@@ -745,6 +734,23 @@ class product_attributes(osv.osv):
             res[_id] = True
         return res
 
+    def _get_cold_chain_products(self, cr, uid, ids, context=None):
+        # do not return product ids to write to not trigger mass update
+
+        for cold in self.pool.get('product.cold_chain').read(cr, uid, ids, ['cold_chain'], context=context):
+            is_kc = cold['cold_chain']
+            cr.execute('''
+                update product_product  set
+                    is_kc=%(is_kc)s
+                where
+                    cold_chain = %(cold_id)s and
+                    is_kc != %(is_kc)s
+            ''', {'cold_id': cold['id'], 'is_kc': is_kc})
+            nb_updated = cr.rowcount
+            if nb_updated:
+                logging.getLogger('cold chain').info('Cold chain id:%s, update %s products' % (cold['id'], nb_updated))
+            return []
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -825,24 +831,12 @@ class product_attributes(osv.osv):
             _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
-            string='Is Keep Cool ?',
+            string='Is Cold Chain ?',
             multi='kc',
             readonly=True,
             store={
-                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
-            }
-        ),
-        'kc_txt': fields.function(
-            _compute_kc_dg_cs_ssl_values,
-            _fnct_migrate=do_not_migrate,
-            method=True,
-            type='char',
-            size=8,
-            string='Keep Cool icon',
-            multi='kc',
-            readonly=True,
-            store={
-                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['cold_chain'], 10),
+                'product.cold_chain': (_get_cold_chain_products, ['cold_chain'], 20),
             }
         ),
         'heat_sensitive_item': fields.many2one(
@@ -850,7 +844,7 @@ class product_attributes(osv.osv):
             string='Temperature sensitive item',
             required=True,
         ),
-        'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
+        'cold_chain': fields.many2one('product.cold_chain', 'Thermosensitivity'),
         'show_cold_chain': fields.boolean('Show cold chain'),
         # Inverse of m2m options_ids
         'options_ids_inv': fields.many2many('product.product', 'product_options_rel', 'product_option_id', 'product_id', 'Options Inv.'),
@@ -1382,10 +1376,16 @@ class product_attributes(osv.osv):
         """
         heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
         heat3_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no_know')[1]
+
+        sensitive = heat and heat not in [heat2_id, heat3_id]
+
+        values = {
+            'show_cold_chain': sensitive
+        }
+        if not sensitive:
+            values['cold_chain'] = False
         return {
-            'value': {
-                'show_cold_chain': heat and heat not in [heat2_id, heat3_id]
-            }
+            'value': values
         }
 
     def _check_gmdn_code(self, cr, uid, ids, context=None):
@@ -1629,7 +1629,6 @@ class product_attributes(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
         int_stat_obj = self.pool.get('product.international.status')
 
@@ -1706,18 +1705,6 @@ class product_attributes(osv.osv):
         check_reactivate = False
         prod_state = ''
         if 'state_ud' in vals:
-            # just update SMRL that belongs to our instance:
-            local_smrl_ids = smrl_obj.search(cr, uid, [
-                ('product_id', 'in', ids),
-                ('full_view', '=', False),
-                ('mission_report_id.local_report', '=', True),
-                ('state_ud', '!=', vals['state_ud'] or ''),
-            ], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=no_sync_context)
-
             if not context.get('sync_update_execution'):
                 if self.mapping_ud.get(vals['state_ud']):
                     prod_state =  self.mapping_ud[vals['state_ud']]
@@ -1728,20 +1715,7 @@ class product_attributes(osv.osv):
                 elif 'oc_subscription' not in vals:
                     check_reactivate = True
 
-
-        if intstat_code:
-            # just update SMRL that belongs to our instance:
-            local_smrl_ids = smrl_obj.search(cr, uid, [
-                ('international_status_code', '!=', intstat_code),
-                ('product_id', 'in', ids),
-                ('full_view', '=', False),
-                ('mission_report_id.local_report', '=', True)
-            ], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=no_sync_context)
-        else:
+        if not intstat_code:
             unidata_product = self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context)
 
 
@@ -1753,6 +1727,7 @@ class product_attributes(osv.osv):
 
             if not vals['oc_subscription']:
                 vals['active'] = False
+                # to fix in US-7883: oc_subscription=False must preval on vals['state_ud'], so vals['state'] must be set to 'archived' or 'phase_out' ?
                 prod_state = 'archived'
             elif prod_state != 'archived':
                 if not prod_state and 'state' not in vals:
@@ -1761,7 +1736,6 @@ class product_attributes(osv.osv):
 
                 vals['active'] = True
 
-        # update local stock mission report lines :
         if not prod_state and 'state' in vals:
             if vals['state']:
                 state_id = vals['state']
@@ -1814,6 +1788,8 @@ class product_attributes(osv.osv):
 
             if prod_state == 'archived' and unidata_product:
                 # received archived: set as phase out, when the "active" update is processed it will set archived state if inactivation is allowed
+                #if vals.get('active') or self.search(cr, uid, [('id', 'in', ids), ('active', '=', True)]):
+                # this must be done only if the product is not already inactive (US-7883)
                 vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
 
         ud_unable_to_inactive = []
@@ -1825,30 +1801,12 @@ class product_attributes(osv.osv):
                 ids = list(set(ids) - ud_unable_to_inactive)
                 ud_unable_to_inactive = list(ud_unable_to_inactive)
 
-        if 'state' in vals:
-            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
-
         if ids and 'active' in vals:
             # to manage sync update generation on active field
             fields_to_update = ['active_change_date=%(now)s']
             if context.get('sync_update_execution'):
                 fields_to_update += ['active_sync_change_date=%(now)s']
             cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
-
-            local_smrl_ids = smrl_obj.search(cr, uid, [
-                ('product_id', 'in', ids),
-                ('full_view', '=', False),
-                ('mission_report_id.local_report', '=', True),
-                ('product_active', '!=', vals['active'])
-            ], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_active': vals['active']}, context=no_sync_context)
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
@@ -1876,12 +1834,6 @@ class product_attributes(osv.osv):
             vals['active'] = True
             vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
             super(product_attributes, self).write(cr, uid, ud_unable_to_inactive, vals, context=context)
-
-            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', 'phase_out'), ('product_id', 'in', ud_unable_to_inactive), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': 'phase_out'}, context=no_sync_context)
 
         if product_uom_categ:
             uom_categ = 'uom_id' in vals and vals['uom_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_id'], context=context).category_id.id or False
@@ -1971,7 +1923,7 @@ class product_attributes(osv.osv):
             has_product_list = [x[0] for x in cr.fetchall()]
             if context.get('sync_update_execution') and has_product_list:
                 # update to deactivate product is executed before the update to remove prod from list
-                # so we have to check if a update is in the pipe
+                # so we have to check if an update is in the pipe
                 cr.execute('''select d.name from ir_model_data d
                         left join sync_client_update_received up on up.run='f' and up.is_deleted='t' and up.sdref=d.name
                          where d.model='product.list.line' and d.module='sd' and
@@ -1983,7 +1935,7 @@ class product_attributes(osv.osv):
 
             # Check if the product is in some purchase order lines or request for quotation lines
             has_po_line = po_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                       ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                       ('state', 'not in', ['draft', 'done', 'cancel', 'cancel_r'])], context=context)
 
             # Check if the product is in some tender lines
             has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
@@ -1992,12 +1944,13 @@ class product_attributes(osv.osv):
             # Check if the product is in field order lines or in internal request lines
             context.update({'procurement_request': True})
             has_fo_line = fo_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                       ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                       ('state', 'not in', ['draft', 'done', 'cancel', 'cancel_r'])], context=context)
 
             # Check if the product is in stock picking
             # All stock moves in a stock.picking not draft/cancel/done/delivered or all stock moves in a shipment not delivered/done/cancel
             has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
                                                       ('picking_id', '!=', False),
+                                                      ('state', 'not in', ['done', 'cancel']),
                                                       '|', ('picking_id.state', 'not in', ['draft', 'done', 'delivered', 'cancel']),
                                                       '&', ('picking_id.shipment_id', '!=', False),
                                                       ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
@@ -2796,7 +2749,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
-        new_data = self.read(cr, uid, nsl_prod_id, ['default_code','old_code', 'allow_merge'], context=context)
+        new_data = self.read(cr, uid, nsl_prod_id, ['default_code','old_code', 'allow_merge', 'product_tmpl_id'], context=context)
         if not new_data['allow_merge']:
             raise osv.except_osv(_('Warning'), _('New product %s condition not met') % new_data['default_code'])
 
@@ -2837,13 +2790,17 @@ class product_attributes(osv.osv):
         }
 
 
+        old_prod_data = self.read(cr, uid, local_id, self.merged_fields_to_keep+['default_code', 'product_tmpl_id'], context=context)
         default_code = new_data['default_code']
         for table in ['product_product', 'product_template']:
             for x in cr.get_referenced(table):
                 if (x[0], x[1]) in blacklist_table.get(table):
                     continue
 
-                params = {'old_prod': local_id, 'nsl_prod_id': nsl_prod_id}
+                if table == 'product_product':
+                    params = {'old_prod': local_id, 'nsl_prod_id': nsl_prod_id}
+                else:
+                    params = {'old_prod': old_prod_data['product_tmpl_id'][0], 'nsl_prod_id': new_data['product_tmpl_id'][0]}
                 if cr.column_exists(x[0], 'default_code'):
                     params['default_code'] = default_code
                     add_query = ' , default_code=%(default_code)s '
@@ -2853,7 +2810,6 @@ class product_attributes(osv.osv):
                 cr.execute('update '+x[0]+' set '+x[1]+'=%(nsl_prod_id)s '+add_query+' where '+x[1]+'=%(old_prod)s', params) # not_a_user_entry
 
         new_write_data = {'active': True, 'replace_product_id': local_id}
-        old_prod_data = self.read(cr, uid, local_id, self.merged_fields_to_keep+['default_code'], context=context)
         write_context = context.copy()
         if not context.get('sync_update_execution'):
             fields_to_keep = self.merged_fields_to_keep
@@ -2878,7 +2834,7 @@ class product_attributes(osv.osv):
             'secondary_qty', 'secondary_val',
             'cu_qty', 'cu_val',
             'cross_qty', 'cross_val',
-            'wh_qty', 'internal_qty'
+            'wh_qty', 'internal_qty',
             'quarantine_qty', 'input_qty', 'opdd_qty'
         ]
         cr.execute('''
@@ -2887,8 +2843,7 @@ class product_attributes(osv.osv):
                 mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
                 product_id in %(product_ids)s
         ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (nsl_prod_id, local_id)}) # not_a_user_entry
-        cr.execute("delete from mission_line_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
-        cr.execute("delete from mission_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
+        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (nsl_prod_id, ))
 
         return True
 

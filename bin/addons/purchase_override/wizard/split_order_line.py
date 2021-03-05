@@ -92,7 +92,6 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 self.infolog(cr, uid, "The PO line id:%s (line number: %s) has been split" % (
                     split.purchase_line_id.id, split.purchase_line_id.line_number,
                 ))
-
                 # Change the qty of the old line
                 self.pool.get('purchase.order.line').write(cr, uid, [split.purchase_line_id.id], {
                     'product_qty': split.original_qty - split.new_line_qty,

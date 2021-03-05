@@ -39,6 +39,7 @@
         'account_analytic_line_view.xml',
         'account_sequence.xml',
         'wizard/account_report_partner_balance_tree_view.xml', # uf-1715
+        'wizard/fo_follow_up_finance_wizard_view.xml',
         'cash_request_data.xml',
         'cash_request_view.xml',
     ],

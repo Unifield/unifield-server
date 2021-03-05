@@ -294,7 +294,7 @@
                     <para style="LineHeader">Expiry Date</para>
                 </td>
                 <td>
-                    <para style="LineHeader">KC</para>
+                    <para style="LineHeader">CC</para>
                 </td>
                 <td>
                     <para style="LineHeader">DG</para>
@@ -378,7 +378,7 @@
                             <para style="LineHeader">Expiry Date</para>
                         </td>
                         <td>
-                            <para style="LineHeader">KC</para>
+                            <para style="LineHeader">CC</para>
                         </td>
                         <td>
                             <para style="LineHeader">DG</para>
@@ -465,7 +465,7 @@
                         <para style="LineValue">[[ m.prodlot_id and formatLang(m.prodlot_id.life_date, date=True) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.product_id.kc_txt or ' ' ]]</para>
+                        <para style="LineValue">[[ m.product_id.is_kc and 'X' or ' ' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_id.dg_txt or ' ' ]]</para>
