@@ -648,7 +648,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         # Do not prevent modification during synchro
-        if not context.get('from_vi_import') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        if not context.get('from_vi_import') and not context.get('sync_update_execution') and not context.get('sync_message_execution') and 'cancel_only' not in context:
             error_lines = []
             linked_orders = []
             for pol in self.browse(cr, uid, ids, context=context):
