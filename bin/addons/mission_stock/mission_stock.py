@@ -872,6 +872,10 @@ class stock_mission_report(osv.osv):
                         self.update_lines(cr, uid, [report['id']])
 
                 logger.info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                if report['local_report']:
+                    # Update the update date on report
+                    self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+
                 self._get_export(cr, uid, report['id'], product_values,
                                  csv=csv, xls=xls,
                                  with_valuation=with_valuation,
@@ -887,8 +891,6 @@ class stock_mission_report(osv.osv):
                 self.write(cr, uid, [report['id']], {'export_state': 'done',
                                                      'export_error_msg': False}, context=context)
 
-                # Update the update date on report
-                self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                 logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             except Exception as e:
                 cr.rollback()
@@ -938,6 +940,36 @@ class stock_mission_report(osv.osv):
             coordo_id = self.pool.get('msf.instance').browse(cr, uid, coordo[0], context=context).instance
 
         for report_id in report_ids:
+            cr.execute('''
+                update stock_mission_report_line line
+                    set
+                        product_state=state.code,
+                        product_active=prod.active,
+                        international_status_code=international_status.code,
+                        state_ud=prod.state_ud
+                    from
+                        product_product prod, product_template tmp, product_international_status international_status, product_status state
+                    where
+                        tmp.id = prod.product_tmpl_id and
+                        prod.id = line.product_id and
+                        state.id = tmp.state and
+                        international_status.id = prod.international_status and
+                        (line.product_state != state.code or line.product_active != prod.active or line.international_status_code!=international_status.code or line.state_ud!=prod.state_ud) and
+                        line.mission_report_id = %s
+                        returning line.id
+                ''', (report_id,))
+            line_to_touch = [x[0] for x in cr.fetchall()]
+            if line_to_touch:
+                cr.execute('''update ir_model_data set
+                        last_modification=NOW(),
+                        touched='[''product_state'', ''product_active'', ''international_status_code'', ''state_ud'']'
+                    where
+                        model='stock.mission.report.line' and
+                        module='sd' and
+                        res_id in %s
+                    ''', (tuple(line_to_touch), ))
+
+
             # In-Pipe moves
             cr.execute('''
               SELECT product_id, sum(product_qty), uom_id, p_name
@@ -947,7 +979,8 @@ class stock_mission_report(osv.osv):
                 WHERE
                     pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                     po.id = pol.order_id and
-                    po.partner_id = p.id
+                    po.partner_id = p.id and
+                    pol.product_id is not null
                 GROUP BY pol.product_id, pol.product_uom, p.name
                 UNION
                 SELECT m.product_id as product_id, sum(m.product_qty) as product_qty, m.product_uom as uom_id, p.name as p_name

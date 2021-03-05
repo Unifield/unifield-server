@@ -150,7 +150,8 @@ class account_invoice_sync(osv.osv):
                 'product_id': product_id,
                 'uos_id': uom_id,
             }
-            if from_supply and inv_linked_po and inv_line.get('sale_order_line_id', {}).get('sync_local_id'):
+            fo_line_dict = inv_line.get('sale_order_line_id') or {}
+            if from_supply and inv_linked_po and fo_line_dict.get('sync_local_id'):
                 # fill in the AD at line level if applicable
                 # search the matching between PO line and invoice line
                 po_line_ids = pol_obj.search(cr, uid, [('order_id', '=', inv_linked_po.id), ('sync_linked_sol', '=', inv_line['sale_order_line_id']['sync_local_id'])], context=context)

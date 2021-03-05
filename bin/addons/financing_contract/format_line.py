@@ -490,6 +490,18 @@ class financing_contract_format_line(osv.osv):
                 ) RETURNING id
                 ''', (link_sdref.get(data[0]), aa_sdref.get(data[1]), aa_sdref.get(data[2])))
                 quad_id = cr.fetchone()
+                if not quad_id:
+                    # combination is now invalid so it can't be retrieved from financing_contract_account_quadruplet_view
+                    cr.execute('''INSERT INTO financing_contract_account_quadruplet (account_destination_name, account_id, cost_center_id, disabled, account_destination_link_id, funding_pool_id, account_destination_id) (select
+                           name, account_id, %(cost_center_id)s, 't', id, %(funding_pool_id)s, destination_id
+                           from
+                              account_destination_link
+                           where
+                              id = %(destination_link_id)s
+                        ) RETURNING id
+                    ''', {'cost_center_id': aa_sdref.get(data[2]), 'funding_pool_id': aa_sdref.get(data[1]), 'destination_link_id': link_sdref.get(data[0])})
+                    quad_id = cr.fetchone()
+
             cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id, account_quadruplet_id) values (%s, %s)', (id, quad_id[0]))
 
         return True

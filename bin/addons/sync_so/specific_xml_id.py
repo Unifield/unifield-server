@@ -684,6 +684,10 @@ class funding_pool_distribution_line(osv.osv):
                 for pol in line_data.distribution_id.purchase_line_ids:
                     if pol.order_id.partner_id.partner_type == 'internal' and pol.order_id.partner_id.name != res[line_id]:
                         res[line_id] = pol.order_id.partner_id.name
+            elif line_data.distribution_id and line_data.distribution_id.sale_order_line_ids:
+                for sol in line_data.distribution_id.sale_order_line_ids:
+                    if sol.order_id.partner_id.partner_type == 'internal' and sol.order_id.partner_id.name != res[line_id]:
+                        res[line_id] = sol.order_id.partner_id.name
 
             # US-450: also sent fp.line to related G/L journal instance
             if line_data.distribution_id and line_data.distribution_id.move_line_ids:

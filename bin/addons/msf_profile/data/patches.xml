@@ -626,5 +626,26 @@
             <field name="method">us_7243_migrate_contract_quad</field>
         </record>
 
+        <record id="us_7808_ocg_rename_esc" model="patch.scripts">
+            <field name="method">us_7808_ocg_rename_esc</field>
+        </record>
+
+        <!-- UF20.0 -->
+        <record id="us_7848_cold_chain" model="patch.scripts">
+            <field name="method">us_7848_cold_chain</field>
+        </record>
+
+        <record id="us_7749_migrate_dpo_flow" model="patch.scripts">
+            <field name="method">us_7749_migrate_dpo_flow</field>
+        </record>
+
+        <record id="us_7866_fill_in_target_cc_code" model="patch.scripts">
+            <field name="method">us_7866_fill_in_target_cc_code</field>
+        </record>
+
+        <record id="us_6796_hide_prod_status_inconsistencies" model="patch.scripts">
+            <field name="method">us_6796_hide_prod_status_inconsistencies</field>
+        </record>
+
     </data>
 </openerp>

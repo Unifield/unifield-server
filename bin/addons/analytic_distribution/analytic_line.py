@@ -533,7 +533,7 @@ class analytic_line(osv.osv):
             # - cost center and funding pool compatibility
             if not ad_obj.check_fp_cc_compatibility(cr, uid, new_fp_id, new_cc_id, context=context):
                 # not compatible with CC
-                res.append((id, entry_sequence, _('CC')))
+                res.append((id, entry_sequence, _('CC ')))
                 return False
 
             # - destination / account

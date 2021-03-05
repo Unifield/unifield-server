@@ -213,7 +213,7 @@ class stock_picking(osv.osv):
         fields_as_ro = False
         for pick in self.browse(cr, uid, ids, context=context):
             if pick.type == 'in':
-                fields_as_ro = pick.partner_id.partner_type == 'esc' and pick.state == 'updated' or pick.partner_id.partner_type in ('internal', 'intermission', 'section')  and pick.state == 'shipped'
+                fields_as_ro = pick.partner_id.partner_type == 'esc' and pick.state == 'updated'
 
             if pick.type in ['in', 'out']:
                 if not context.get('yesorno', False):
@@ -282,7 +282,7 @@ class stock_picking(osv.osv):
 
                 if not context.get('force_process', False) and pick.type == 'in' \
                    and not pick.in_dpo \
-                   and pick.state != 'shipped' and pick.partner_id.partner_type == 'internal':
+                   and pick.state != 'shipped' and pick.partner_id.partner_type in ('internal', 'section', 'intermission'):
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
                                                                                   'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
                     res['view_id'] = [view_id]

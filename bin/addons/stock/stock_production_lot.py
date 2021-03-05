@@ -243,7 +243,7 @@ class stock_production_lot(osv.osv):
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         '''
-        function for KC/SSL/DG/NP products
+        function for CC/SSL/DG/NP products
         '''
         result = {}
         for id in ids:
@@ -252,8 +252,8 @@ class stock_production_lot(osv.osv):
                 result[id].update({f: False})
 
         for obj in self.browse(cr, uid, ids, context=context):
-            # keep cool
-            result[obj.id]['kc_check'] = obj.product_id.kc_txt
+            # cold chain
+            result[obj.id]['kc_check'] = obj.product_id.is_kc and 'X' or ''
             # ssl
             result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
@@ -371,7 +371,7 @@ class stock_production_lot(osv.osv):
                                            help="Current real quantity of products with this Batch Number in company warehouses",
                                            digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'src_product_id': fields.function(_get_dummy, fnct_search=_src_product, method=True, type="boolean", string="By product"),
-        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='char', size=8, readonly=True, multi="m"),
+        'kc_check': fields.function(_get_checks_all, method=True, string='CC', type='char', size=8, readonly=True, multi="m"),
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='char', size=8, readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='char', size=8, readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='CS', type='char', size=8, readonly=True, multi="m"),
@@ -400,7 +400,7 @@ class stock_production_lot(osv.osv):
                     cr, uid, context['product_id'])
                 duration = getattr(product, dtype)
                 # set date to False when no expiry time specified on the product
-                date = duration and (datetime.datetime.today() + relativedelta(months=duration))
+                date = duration and (datetime.today() + relativedelta(months=duration))
             return date and date.strftime('%Y-%m-%d') or False
         return calc_date
 

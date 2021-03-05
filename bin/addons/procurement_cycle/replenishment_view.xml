@@ -239,7 +239,7 @@
                     <field name="name_parent_seg" />
                     <field name="description_parent_seg" attrs="{'readonly': [('state_parent', '!=', 'draft')]}"/>
                     <field name="location_config_id" attrs="{'readonly': [('state_parent', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
-                    <field name="time_unit_lt" on_change="compute_next_order_received(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state_parent', '!=', 'draft')]}" />
+                    <field name="time_unit_lt" on_change="on_change_lt(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state_parent', '!=', 'draft')]}" />
                     <notebook colspan="4">
                         <page string="Parameters">
                             <html colspan="4">
@@ -275,7 +275,7 @@
                                 </group>
 
                                 <group colspan="2" col="2">
-                                    <field name="order_coverage" attrs="{'readonly': [('state_parent', '!=', 'draft')], 'required': [('state_parent', '=', 'draft')]}" on_change="compute_next_order_received(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+                                    <field name="order_coverage" attrs="{'readonly': [('state_parent', '!=', 'draft')], 'required': [('state_parent', '=', 'draft')]}" on_change="on_change_lt(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
                                 </group>
                             </group>
 
@@ -491,6 +491,7 @@
                     <field name="name_seg" />
                     <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <field name="parent_id" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="change_parent_id(parent_id)"/>
+                    <field name="description_parent_seg" readonly="1"  string="Parent Description"/>
                     <field name="location_config_id" readonly="1"/>
                     <field name="time_unit_lt" readonly="1" />
                     <notebook colspan="4">

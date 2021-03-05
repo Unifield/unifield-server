@@ -2326,7 +2326,7 @@ class account_model_line(osv.osv):
     _name = "account.model.line"
     _description = "Account Model Entries"
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
+        'name': fields.char('Description', size=64, required=True),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the resources from lower sequences to higher ones"),
         'quantity': fields.float('Quantity', digits_compute=dp.get_precision('Account'), help="The optional quantity on entries"),
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),

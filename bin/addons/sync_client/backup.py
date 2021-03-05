@@ -384,6 +384,8 @@ class BackupConfig(osv.osv):
                 error = 'The backup file should be bigger that 0 (actually size=%s bytes)' % os.stat(outfile).st_size
             if error:
                 self._logger.exception('Cannot perform the backup %s.' % error)
+                # commit to not lock the sql transaction
+                cr.commit()
                 raise osv.except_osv(_('Error! Cannot perform the backup.'), error)
             return "Backup done"
         raise osv.except_osv(_('Error! Cannot perform the backup'), "No backup path defined")

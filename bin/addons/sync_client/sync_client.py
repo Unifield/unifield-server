@@ -351,10 +351,12 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 try:
                     if make_log:
                         all_status = logger.info.values()
-                        if 'ok' in all_status and step == 'status' and logger.info.get(step) in ('failed', 'aborted'):
+                        if 'ok' in all_status and step == 'status' and logger.info.get(step) in ('failed', 'aborted') and not logger.ok_before_last_dump:
+                            # ok_before_last_dump: if backup after sync fails do not generate a new backup
                             try:
                                 self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
                             except Exception, e:
+                                logger.append("Cannot create backup")
                                 self._logger.exception("Can't create backup %s" % tools.ustr(e))
                 finally:
                     sync_lock.release()
@@ -747,12 +749,11 @@ class Entity(osv.osv):
 
         entity = self.get_entity(cr, uid, context)
         session_id = entity.session_id
-        update_ids = updates.search(cr, uid, [('session_id', '=', session_id)], context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.confirm_update(entity.identifier, self._hardware_id, session_id, {'md5': get_md5(session_id)})
         if not res[0]:
             raise Exception, res[1]
-        updates.sync_finished(cr, uid, update_ids, context=context)
+        updates.sync_finished(cr, uid, session_id, context=context)
         self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         #state update validate => init
         return res[1]
@@ -1388,6 +1389,9 @@ class Entity(osv.osv):
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync(cr, uid, context=context)
         #Check for a backup after automatic sync
+        logger = context.get('logger')
+        if logger:
+            logger.ok_before_last_dump = True
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'afterautomaticsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
@@ -1403,6 +1407,9 @@ class Entity(osv.osv):
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
         self.sync(cr, uid, context=context)
         #Check for a backup after automatic sync
+        logger = context.get('logger')
+        if logger:
+            logger.ok_before_last_dump = True
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'aftermanualsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
