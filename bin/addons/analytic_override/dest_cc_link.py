@@ -32,12 +32,15 @@ class dest_cc_link(osv.osv):
                                    domain="[('category', '=', 'DEST'), ('type', '!=', 'view')]"),
         'cc_id': fields.many2one('account.analytic.account', "Cost Center", required=True,
                                  domain="[('category', '=', 'OC'), ('type', '!=', 'view')]"),
+        'cc_name': fields.related('cc_id', 'name', type="char", string="Cost Center Name", readonly=True, store=False),
         'inactive_from': fields.date('Inactive from', required=False),
     }
 
     _order = 'dest_id, cc_id'
 
-    # TODO: constraints
+    _sql_constraints = [
+        ('dest_cc_uniq', 'unique(dest_id, cc_id)', 'This Cost Center has already been added to this Destination.')
+    ]
 
 
 dest_cc_link()

@@ -142,9 +142,10 @@
                                 </tree>
                             </field>
                             <!-- TODO: onchange -->
-                            <field name="dest_cc_link_ids" nolabel="1" colspan="4" widget="many2many">
+                            <field name="dest_cc_link_ids" nolabel="1" colspan="4">
                                 <tree string="Cost Centers" editable="bottom">
-                                    <field name="cc_id"/>
+                                    <field name="cc_id" string="Code"/>
+                                    <field name="cc_name" string="Name"/>
                                     <field name="inactive_from"/>
                                 </tree>
                             </field>
