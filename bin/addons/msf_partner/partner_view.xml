@@ -215,7 +215,7 @@
                                         <field name="name"/>
                                         <field domain="[('domain', '=', 'contact')]" name="title" size="0" widget="selection"/>
                                         <field name="function"/>
-                                        <field name="active"/>
+                                        <field name="active" on_change="on_change_active_addr(active)"/>
                                     </group>
                                 </form>
                                 <tree string="Partner Contacts">

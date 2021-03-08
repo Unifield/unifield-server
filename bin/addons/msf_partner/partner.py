@@ -992,30 +992,15 @@ class res_partner_address(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
-        If the address is linked to a open Shipment, prevent the deletion
         Check if the deleted address is not a system one
         """
-        if context is None:
-            context = {}
+        res = super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
-        ship_obj = self.pool.get('shipment')
-        ship_domain = [('state', 'in', ['draft', 'shipped']), ('address_id', 'in', ids)]
-        open_ship_ids = ship_obj.search(cr, uid, ship_domain, context=context)
-
-        if open_ship_ids:
-            ship_names = [s.name for s in
-                          ship_obj.browse(cr, uid, open_ship_ids, fields_to_fetch=['name'], context=context)]
-            raise osv.except_osv(_('Error'),
-                                 _('The Address can not be deactivated. There is open SHIPs for this address: %s.\nPlease process them first.')
-                                 % (', '.join(ship_names)))
-        else:
-            res = super(res_partner_address, self).unlink(cr, uid, ids, context=context)
-
-            #US-1344: treat deletion of partner
-            ir_model_data_obj = self.pool.get('ir.model.data')
-            mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner.address'), ('res_id', 'in', ids)])
-            ir_model_data_obj.unlink(cr, uid, mdids, context)
-            return res
+        #US-1344: treat deletion of partner
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner.address'), ('res_id', 'in', ids)])
+        ir_model_data_obj.unlink(cr, uid, mdids, context)
+        return res
 
     def create(self, cr, uid, vals, context=None):
         '''

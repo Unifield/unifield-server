@@ -372,7 +372,32 @@ class res_partner_address(osv.osv):
     def get_city(self, cr, uid, id):
         return self.browse(cr, uid, id).city
 
+    def on_change_active_addr(self, cr, uid, ids, active, context=None):
+        """
+        If the address is linked to a open Shipment, prevent the deactivation
+        """
+        # some verifications
+        if not ids:
+            return {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        if not active:
+            ship_obj = self.pool.get('shipment')
+            ship_domain = [('state', 'in', ['draft', 'shipped']), ('address_id', 'in', ids)]
+            open_ship_ids = ship_obj.search(cr, uid, ship_domain, context=context)
+            if open_ship_ids:
+                ship_names = [s.name for s in ship_obj.browse(cr, uid, open_ship_ids, fields_to_fetch=['name'], context=context)]
+                return {'value': {'active': True},
+                        'warning': {'title': _('Error'),
+                                    'message': _('The Address can not be deactivated. There is open SHIPs for this address: %s.\nPlease process them first.')
+                                               % (', '.join(ship_names),)}}
+        return {}
+
+
 res_partner_address()
+
 
 class res_partner_bank_type(osv.osv):
     _description='Bank Account Type'
