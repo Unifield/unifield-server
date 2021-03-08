@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2021 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,26 +18,27 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Analytic for MSF",
-    "version": "1.1",
-    "author" : "MSF, TeMPO Consulting",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic"],
-    "description": """Module for defining analytic object related as:
-      - analytic distribution
-      - analytic accounts
-      - analytic lines
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'dest_cc_link.xml',
-    ],
-    'test': [],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-}
+
+from osv import osv
+from osv import fields
+
+
+class dest_cc_link(osv.osv):
+    _name = "dest.cc.link"
+    _description = "Combination Destination / Cost Center"
+
+    _columns = {
+        'dest_id': fields.many2one('account.analytic.account', string="Destination", required=True,
+                                   domain="[('category', '=', 'DEST'), ('type', '!=', 'view')]"),
+        'cc_id': fields.many2one('account.analytic.account', "Cost Center", required=True,
+                                 domain="[('category', '=', 'OC'), ('type', '!=', 'view')]"),
+        'inactive_from': fields.date('Inactive from', required=False),
+    }
+
+    _order = 'dest_id, cc_id'
+
+    # TODO: constraints
+
+
+dest_cc_link()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

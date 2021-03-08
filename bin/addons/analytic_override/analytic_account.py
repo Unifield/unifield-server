@@ -463,6 +463,7 @@ class analytic_account(osv.osv):
         'dest_cc_ids': fields.many2many('account.analytic.account', 'destination_cost_center_rel',
                                         'destination_id', 'cost_center_id', string='Cost Centers',
                                         domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
+        'dest_cc_link_ids': fields.one2many('dest.cc.link', 'dest_id', string="Cost Centers", required=False),
         'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),  # for the Destinations
         'allow_all_cc_with_fp': fields.boolean(string="Allow all Cost Centers"),  # for the Funding Pools
         'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
