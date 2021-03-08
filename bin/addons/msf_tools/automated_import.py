@@ -73,6 +73,44 @@ class automated_import(osv.osv):
 
         return True
 
+    def _check_unicity(self, cr, uid, ids, context=None):
+        '''
+            if the function_id allows multiple then the server / src_path must be unique
+            if not multiple: then function_id must be unique
+        '''
+
+        error = []
+        cr.execute('''
+            select function.name
+                from automated_import import, automated_import_function function
+            where
+                function.id = import.function_id and
+                coalesce(function.multiple, 'f') = 'f'
+            group by function.name
+            having(count(*) > 1)
+        ''')
+        for x in cr.fetchall():
+            error.append(_('Another Automated import with same functionality "%s" already exists (maybe inactive). Only one automated import must be created for a '\
+                           'same functionality. Please select an other functionality.') % x[0])
+
+        cr.execute('''
+            select function.name
+                from automated_import import, automated_import_function function
+            where
+                function.id = import.function_id and
+                coalesce(function.multiple, 'f') = 't' and
+                coalesce(src_path, '') != ''
+            group by function.name, src_path, ftp_url
+            having(count(*) > 1)
+        ''')
+        for x in cr.fetchall():
+            error.append(_('Another Automated import with same functionality "%s", same server and same source already exists (maybe inactive).') % x[0])
+
+        if error:
+            raise osv.except_osv(_('Warning'), "\n".join(error))
+
+        return True
+
     def _get_isadmin(self, cr, uid, ids, *a, **b):
         ret = {}
         for _id in ids:
@@ -168,9 +206,8 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         ),
         (
             'import_function_id_uniq',
-            'unique(function_id)',
-            _('Another Automated import with same functionality already exists (maybe inactive). Only one automated import must be created for a '\
-              'same functionality. Please select an other functionality.'),
+            'unique(name)',
+            _('Another Automated import with same name already exists (maybe inactive).'),
         ),
         (
             'import_positive_interval',
@@ -181,6 +218,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
 
     _constraints = [
         (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path', 'dest_path_failure']),
+        (_check_unicity, _('There is a problem with paths'), []),
     ]
 
     def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
@@ -290,14 +328,20 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
 
         main_path = os.path.join(config.get('root_path'), 'vi_auto_import')
         write_me = {'ftp_source_ok': False, 'ftp_dest_ok': False, 'ftp_dest_fail_ok': False, 'ftp_report_ok': False, 'ftp_ok': False, 'active': True, 'interval_unit': 'months', 'interval': 12}
+
+        prefix = ''
+        for job in self.browse(cr, uid, ids, fields_to_fetch=['name', 'function_id'], context=context):
+            if job.function_id.multiple:
+                num = self.search(cr, uid, [('function_id', '=', job.function_id.id), ('active', 'in', ['t', 'f'])], count=True, context=context)
+                if num > 1:
+                    prefix = num
+            self.log(cr, uid, job.id, 'Auto configuration done on job %s' % job.name)
+
         for directory in ['src_path', 'dest_path', 'dest_path_failure', 'report_path']:
-            target = os.path.join(main_path, directory)
+            target = os.path.join(main_path, '%s%s' % (directory, prefix))
             write_me[directory] = target
             if not os.path.exists(target):
                 os.makedirs(target)
-
-        for job in self.read(cr, uid, ids, ['name'], context=context):
-            self.log(cr, uid, job['id'], 'Auto configuration done on job %s' % job['name'])
         self.write(cr, uid, ids, write_me, context=context)
         return True
 

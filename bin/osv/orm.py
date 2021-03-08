@@ -4007,7 +4007,7 @@ class orm(orm_template):
                                                     [('res_id','in',list(sub_ids)),('model','=',self._name)],
                                                     order='NO_ORDER', context=context)
 
-            if self._name in xmlid_no_delete.prevent_deletion:
+            if referenced_ids and self._name in xmlid_no_delete.prevent_deletion:
                 cr.execute('''select module, name from ir_model_data
                         where
                             (module, name) in %s and
