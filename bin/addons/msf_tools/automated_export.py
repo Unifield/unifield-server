@@ -34,6 +34,16 @@ import pooler
 class automated_export(osv.osv):
     _name = 'automated.export'
 
+
+    def _auto_init(self, cr, context=None):
+        res = super(automated_export, self)._auto_init(cr, context)
+        # migration delete old constraint
+        cr.drop_constraint_if_exists('automated_export', 'automated_export_export_name_uniq')
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'automated_export_function_id_partner_id_uniq'")
+        if not cr.fetchone():
+            cr.execute("CREATE UNIQUE INDEX automated_export_function_id_partner_id_uniq ON automated_export (function_id, coalesce(partner_id, 0))")
+        return res
+
     _columns = {
         'name': fields.char(
             size=128,
@@ -77,6 +87,7 @@ class automated_export(osv.osv):
             required=True,
         ),
         'disable_cron': fields.related('function_id', 'disable_cron', string='Cron disabled', type='boolean', write_relate=False),
+        'multiple': fields.related('function_id', 'multiple', string='Multiple', type='boolean', write_relate=False),
         'export_format': fields.selection(
             selection=[
                 ('excel', 'Excel'),
@@ -109,6 +120,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'partner_id': fields.many2one('res.partner', 'Partner', domain=[('supplier', '=', True), ('partner_type', '=', 'esc')]),
 
     }
 
@@ -127,10 +139,11 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             _('Another Automated export with same name already exists (maybe inactive). Automated export name must be unique. Please select an other name.'),
         ),
         (
-            'export_function_id_uniq',
-            'unique(function_id)',
-            _('Another Automated export with same functionality already exists (maybe inactive). Only one automated export must be created for a '\
-              'same functionality. Please select an other functionality.'),
+            # declared in _auto_init
+            'function_id_partner_id_uniq',
+            '',
+            _('Another Automated export with same functionality and same partner already exists (maybe inactive). Only one automated export must be created for a '\
+              'same functionality and partner.'),
         ),
         (
             'export_positive_interval',
@@ -141,9 +154,12 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
 
     def change_function_id(self, cr, uid, ids, function_id, context=None):
         disable_cron = False
+        multiple = False
         if function_id:
-            disable_cron = self.pool.get('automated.export.function').browse(cr, uid, function_id, context=context).disable_cron
-        return {'value': {'disable_cron': disable_cron}}
+            fct_data = self.pool.get('automated.export.function').browse(cr, uid, function_id, context=context)
+            disable_cron = fct_data.disable_cron
+            multiple = fct_data.multiple
+        return {'value': {'disable_cron': disable_cron, 'multiple': multiple}}
 
     def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
         if context is None:

@@ -41,10 +41,14 @@
                     <field name="function_id" widget="selection" on_change="change_function_id(function_id)"/>
                     <field name="active" />
                     <field name="export_format" attrs="{'invisible': [('disable_cron', '=', True)]}"/>
+                    <label colspan="2" />
+                    <field name="partner_id" attrs="{'invisible': [('multiple', '=', False)]}"/>
+                    <newline />
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
                     <button name="sent_to_remote" string="Manually send to FTP" colspan="2" type="object" icon="cloud.png" attrs="{'invisible': ['|', ('disable_cron', '=', False), ('ftp_ok', '=', False)]}" />
 
                     <field name="disable_cron" invisible="1" />
+                    <field name="multiple" invisible="1" />
 
                     <separator colspan="4" string="FTP server" />
                     <group col="4" colspan="4">

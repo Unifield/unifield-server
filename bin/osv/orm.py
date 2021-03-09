@@ -3425,6 +3425,8 @@ class orm(orm_template):
         cr.commit()     # start a new transaction
 
         for (key, con, null) in self._sql_constraints:
+            if not con:
+                continue
             conname = '%s_%s' % (self._table, key)
 
             cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname=%s", (conname,))
