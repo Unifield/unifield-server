@@ -137,8 +137,11 @@
                                     confirm="Do you really want to remove all the Cost Centers selected?"
                             />
                             <separator/>
-                            <button icon="gtk-add" string="Add several Cost Centers"
-                                    name="open_multiple_cc_selection_wizard" type="object"/>
+                            <group colspan="6" col="4">
+                                <button icon="gtk-add" string="Add several Cost Centers" colspan="1"
+                                        name="open_multiple_cc_selection_wizard" type="object"/>
+                                <label string="" colspan="3"/>
+                            </group>
                             <field name="dest_cc_link_ids" nolabel="1" colspan="4" on_change="on_change_cc_ids(dest_cc_link_ids)">
                                 <tree string="Cost Centers" editable="bottom">
                                     <field name="cc_id" string="Code"/>
