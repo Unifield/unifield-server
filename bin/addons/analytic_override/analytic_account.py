@@ -983,6 +983,28 @@ class analytic_account(osv.osv):
             return False
         return True
 
+    def open_multiple_cc_selection_wizard(self, cr, uid, ids, context=None):
+        """
+        Creates and displays a Multiple CC Selection Wizard linked to the current Destination
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        multiple_cc_wiz_obj = self.pool.get('multiple.cc.selection.wizard')
+        if ids:
+            multiple_cc_wiz_id = multiple_cc_wiz_obj.create(cr, uid, {'dest_id': ids[0]}, context=context)
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'multiple.cc.selection.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [multiple_cc_wiz_id],
+                'context': context,
+            }
+        return True
+
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

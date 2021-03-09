@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- MULTIPLE CC SELECTION WIZARD - FORM VIEW -->
+        <record id="multiple_cc_selection_wizard_form_view" model="ir.ui.view">
+            <field name="name">multiple.cc.selection.wizard.form</field>
+            <field name="model">multiple.cc.selection.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Add several Cost Centers">
+                    <label nolabel="1" colspan="4"
+                           string="This wizard enables you to select several Cost Centers at once to be added to the Destination. The inactivation date of the related Dest / CC combinations will remain empty."/>
+                    <field name="cc_ids" nolabel="1" colspan="4">
+                        <tree string="Cost Centers">
+                            <field name="code"/>
+                            <field name="name"/>
+                        </tree>
+                    </field>
+                    <group colspan="6" col="4">
+                        <label string="" colspan="2"/>
+                        <button icon="gtk-cancel" string="Cancel" special="cancel" colspan="1"/>
+                        <button icon="gtk-add" string="Add" name="multiple_cc_add" type="object" colspan="1"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

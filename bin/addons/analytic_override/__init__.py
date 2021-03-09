@@ -23,5 +23,6 @@ import analytic_distribution
 import analytic_account
 import analytic_line
 import dest_cc_link
+import multiple_cc_selection_wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

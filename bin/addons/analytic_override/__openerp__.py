@@ -33,6 +33,7 @@
     "update_xml": [
         'security/ir.model.access.csv',
         'dest_cc_link.xml',
+        'multiple_cc_selection_wizard.xml',
     ],
     'test': [],
     'demo_xml': [
