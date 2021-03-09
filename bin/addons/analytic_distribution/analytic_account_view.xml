@@ -137,8 +137,7 @@
                                     confirm="Do you really want to remove all the Cost Centers selected?"
                             />
                             <separator/>
-                            <field name="dest_cc_link_ids" nolabel="1" colspan="4"
-                                   on_change="on_change_cc_ids(dest_cc_link_ids)">
+                            <field name="dest_cc_link_ids" nolabel="1" colspan="4" on_change="on_change_cc_ids(dest_cc_link_ids)">
                                 <tree string="Cost Centers" editable="bottom">
                                     <field name="cc_id" string="Code"/>
                                     <field name="cc_name" string="Name"/>

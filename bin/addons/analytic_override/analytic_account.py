@@ -930,9 +930,13 @@ class analytic_account(osv.osv):
 
     def button_dest_cc_clear(self, cr, uid, ids, context=None):
         """
-        Removes all Cost Centers (in fact dest_cc_links) selected in the Destination view
+        Removes all Dest / CC combinations selected in the Cost Centers tab of the Destination form
         """
-        self.write(cr, uid, ids, {'dest_cc_link_ids': [(6, 0, [])]}, context=context)
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        for dest in self.browse(cr, uid, ids, fields_to_fetch=['dest_cc_link_ids'], context=context):
+            dest_cc_link_ids = [dcl.id for dcl in dest.dest_cc_link_ids]
+            if dest_cc_link_ids:
+                dest_cc_link_obj.unlink(cr, uid, dest_cc_link_ids, context=context)
         return True
 
     def button_dest_clear(self, cr, uid, ids, context=None):
