@@ -3732,7 +3732,13 @@ class stock_picking(osv.osv):
             )
 
         ppl_processor = self.pool.get('ppl.processor')
-        picking = self.browse(cr, uid, ids[0], context=context)
+        picking = self.browse(cr, uid, ids[0], fields_to_fetch=['move_lines', 'address_id'], context=context)
+        if picking.address_id and picking.address_id.active is False:  # Check the Delivery Address
+            addr_name = self.pool.get('res.partner.address').name_get(cr, uid, [picking.address_id.id])[0][1]
+            raise osv.except_osv(
+                _('Error'),
+                _('The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process.')
+                  % (addr_name))
         rounding_issues = []
         for move in picking.move_lines:
             if move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
@@ -3760,7 +3766,6 @@ class stock_picking(osv.osv):
                 'view_type': 'form',
                 'context': context,
             }
-
 
         return self.ppl_step2_run_wiz(cr, uid, ids, context)
 

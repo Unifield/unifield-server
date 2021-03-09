@@ -111902,3 +111902,9 @@ msgid "The Address can not be deactivated. There is open SHIPs for this address:
 "Please process them first."
 msgstr "L'Adresse ne peut pas être désactivée. Il y a des Éxpéditions ouvertes pour cette adresse: %s.\n"
 "Veuillez les traiter en premier lieu."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3740
+#, python-format
+msgid "The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process."
+msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée (%s). Veuillez en sélectionner une autre pour pouvoir continuer le traitement."
