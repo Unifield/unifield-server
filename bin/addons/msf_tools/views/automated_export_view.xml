@@ -11,6 +11,7 @@
                     <filter name="inactive" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
                     <field name="name" />
                     <field name="function_id" />
+                    <field name="partner_id" />
                 </search>
             </field>
         </record>
@@ -23,6 +24,7 @@
                 <tree string="Automated exports">
                     <field name="name" />
                     <field name="function_id" />
+                    <field name="partner_id" />
                     <field name="start_time" />
                     <field name="interval" />
                     <field name="interval_unit" />
@@ -42,7 +44,7 @@
                     <field name="active" />
                     <field name="export_format" attrs="{'invisible': [('disable_cron', '=', True)]}"/>
                     <label colspan="2" />
-                    <field name="partner_id" attrs="{'invisible': [('multiple', '=', False)]}"/>
+                    <field name="partner_id" attrs="{'invisible': [('multiple', '=', False)], 'required': [('multiple', '=', True)]}"/>
                     <newline />
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
                     <button name="sent_to_remote" string="Manually send to FTP" colspan="2" type="object" icon="cloud.png" attrs="{'invisible': ['|', ('disable_cron', '=', False), ('ftp_ok', '=', False)]}" />
