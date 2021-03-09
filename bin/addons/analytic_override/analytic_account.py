@@ -578,39 +578,49 @@ class analytic_account(osv.osv):
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
         return res
 
-    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, cc_ids, acc_type='destination', field_name='allow_all_cc', context=None):
+    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, cc_ids, acc_type='destination', field_name='allow_all_cc',
+                               m2m=False, context=None):
         """
         If the user tries to tick the box "Allow all Cost Centers" whereas CC are selected,
         informs him that he has to remove the CC first
         (acc_type = name of the Analytic Account Type to which the CC are linked, displayed in the warning msg)
         """
         res = {}
-        if allow_all_cc and cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
-            # NOTE: the msg is stored in a variable on purpose, otherwise the ".po" translation files would wrongly contain Python code
-            msg = 'Please remove the Cost Centers linked to the %s before ticking this box.' % acc_type.title()
-            warning = {
-                'title': _('Warning!'),
-                'message': _(msg)
-            }
-            res['warning'] = warning
-            res['value'] = {field_name: False, }
+        if allow_all_cc:
+            if m2m:
+                cc_filled_in = cc_ids and cc_ids[0][2] or False  # e.g. [(6, 0, [1, 2])]
+            else:
+                cc_filled_in = cc_ids or False
+            if cc_filled_in:
+                # NOTE: the msg is stored in a variable on purpose, otherwise the ".po" translation files would wrongly contain Python code
+                msg = 'Please remove the Cost Centers linked to the %s before ticking this box.' % acc_type.title()
+                warning = {
+                    'title': _('Warning!'),
+                    'message': _(msg)
+                }
+                res['warning'] = warning
+                res['value'] = {field_name: False, }
         return res
 
     def on_change_allow_all_cc_with_fp(self, cr, uid, ids, allow_all_cc_with_fp, cost_center_ids, context=None):
         return self.on_change_allow_all_cc(cr, uid, ids, allow_all_cc_with_fp, cost_center_ids, acc_type='funding pool',
-                                           field_name='allow_all_cc_with_fp', context=context)
+                                           field_name='allow_all_cc_with_fp', m2m=True, context=context)
 
-    def on_change_cc_ids(self, cr, uid, ids, cc_ids, field_name='allow_all_cc', context=None):
+    def on_change_cc_ids(self, cr, uid, ids, cc_ids, field_name='allow_all_cc', m2m=False, context=None):
         """
         If at least a CC is selected, unticks the box "Allow all Cost Centers"
         """
         res = {}
-        if cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+        if m2m:
+            cc_filled_in = cc_ids and cc_ids[0][2] or False  # e.g. [(6, 0, [1, 2])]
+        else:
+            cc_filled_in = cc_ids or False
+        if cc_filled_in:
             res['value'] = {field_name: False, }
         return res
 
     def on_change_cc_with_fp(self, cr, uid, ids, cost_center_ids, context=None):
-        return self.on_change_cc_ids(cr, uid, ids, cost_center_ids, field_name='allow_all_cc_with_fp', context=context)
+        return self.on_change_cc_ids(cr, uid, ids, cost_center_ids, field_name='allow_all_cc_with_fp', m2m=True, context=context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
@@ -920,9 +930,9 @@ class analytic_account(osv.osv):
 
     def button_dest_cc_clear(self, cr, uid, ids, context=None):
         """
-        Removes all Cost Centers selected in the Destination view
+        Removes all Cost Centers (in fact dest_cc_links) selected in the Destination view
         """
-        self.write(cr, uid, ids, {'dest_cc_ids': [(6, 0, [])]}, context=context)
+        self.write(cr, uid, ids, {'dest_cc_link_ids': [(6, 0, [])]}, context=context)
         return True
 
     def button_dest_clear(self, cr, uid, ids, context=None):

@@ -132,17 +132,13 @@
                             </field>
                         </page>
                         <page string="Cost Centers" attrs="{'invisible': [('category', '!=', 'DEST')]}">
-                            <field name="allow_all_cc" colspan="4" on_change="on_change_allow_all_cc(allow_all_cc, dest_cc_ids)"/>
-                            <button name="button_dest_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="4"/>
+                            <field name="allow_all_cc" colspan="4" on_change="on_change_allow_all_cc(allow_all_cc, dest_cc_link_ids)"/>
+                            <button name="button_dest_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="4"
+                                    confirm="Do you really want to remove all the Cost Centers selected?"
+                            />
                             <separator/>
-                            <field name="dest_cc_ids" nolabel="1" colspan="4" on_change="on_change_cc_ids(dest_cc_ids)">
-                                <tree string="Cost Centers">
-                                    <field name="code"/>
-                                    <field name="name"/>
-                                </tree>
-                            </field>
-                            <!-- TODO: onchange -->
-                            <field name="dest_cc_link_ids" nolabel="1" colspan="4">
+                            <field name="dest_cc_link_ids" nolabel="1" colspan="4"
+                                   on_change="on_change_cc_ids(dest_cc_link_ids)">
                                 <tree string="Cost Centers" editable="bottom">
                                     <field name="cc_id" string="Code"/>
                                     <field name="cc_name" string="Name"/>
