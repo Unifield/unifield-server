@@ -442,6 +442,25 @@ class analytic_account(osv.osv):
             }
         return res
 
+    def _get_selected_in_dest(self, cr, uid, cc_ids, name=False, args=False, context=None):
+        """
+        Returns True for the Cost Centers already selected in the Destination:
+        they will be displayed in grey in the list and won't be re-selectable.
+        """
+        if context is None:
+            context = {}
+        if isinstance(cc_ids, (int, long)):
+            cc_ids = [cc_ids]
+        selected = []
+        dest_id = context.get('current_destination_id') or False
+        if dest_id:
+            dest = self.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
+            selected = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
+        res = {}
+        for cc_id in cc_ids:
+            res[cc_id] = cc_id in selected
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -499,6 +518,8 @@ class analytic_account(osv.osv):
         'fp_account_ids': fields.many2many('account.account', 'fp_account_rel', 'fp_id', 'account_id', string='G/L Accounts',
                                            domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't')]",
                                            help="G/L accounts linked to the Funding Pool", order_by='code'),
+        'selected_in_dest': fields.function(_get_selected_in_dest, string='Selected in Destination', method=True,
+                                            type='boolean', store=False),
     }
 
     _defaults ={

@@ -39,7 +39,7 @@ class dest_cc_link(osv.osv):
     _order = 'dest_id, cc_id'
 
     _sql_constraints = [
-        ('dest_cc_uniq', 'unique(dest_id, cc_id)', 'This Cost Center has already been added to this Destination.')
+        ('dest_cc_uniq', 'unique(dest_id, cc_id)', 'Each Cost Center can only be added once to the same Destination.')
     ]
 
 
