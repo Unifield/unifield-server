@@ -29,9 +29,9 @@ class dest_cc_link(osv.osv):
 
     _columns = {
         'dest_id': fields.many2one('account.analytic.account', string="Destination", required=True,
-                                   domain="[('category', '=', 'DEST'), ('type', '!=', 'view')]"),
+                                   domain="[('category', '=', 'DEST'), ('type', '!=', 'view')]", ondelete='cascade'),
         'cc_id': fields.many2one('account.analytic.account', "Cost Center", required=True,
-                                 domain="[('category', '=', 'OC'), ('type', '!=', 'view')]"),
+                                 domain="[('category', '=', 'OC'), ('type', '!=', 'view')]", ondelete='cascade'),
         'cc_name': fields.related('cc_id', 'name', type="char", string="Cost Center Name", readonly=True, store=False),
         'inactive_from': fields.date('Inactivation Combination Dest / CC from', required=False),
     }
