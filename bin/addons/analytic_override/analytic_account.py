@@ -717,7 +717,7 @@ class analytic_account(osv.osv):
             if vals['category'] != 'DEST':
                 vals['destination_ids'] = [(6, 0, [])]
                 vals['dest_cc_ids'] = [(6, 0, [])]
-                vals['dest_cc_link_ids'] = [(6, 0, [])]
+                vals['dest_cc_link_ids'] = []  # related dest.cc.links (if any) are deleted in clean_dest_cc_link
                 vals['allow_all_cc'] = False  # default value
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
@@ -819,6 +819,23 @@ class analytic_account(osv.osv):
                     self.log(cr, uid, analytic_account_id, _('At least one Analytic Journal Item using the Analytic Account %s '
                                                              'has a Posting Date outside the activation dates selected.') % (analytic_acc.code))
 
+    def clean_dest_cc_link(self, cr, uid, ids, vals, context=None):
+        """
+        In case Dest CC Links are reset in an analytic account: deletes the related existing Dest CC Links if any.
+        Probable UC: Dest CC Links selected on a destination, then account changed to another category.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if 'dest_cc_link_ids' in vals and not vals['dest_cc_link_ids']:
+            dcl_ids = []
+            for analytic_acc in self.browse(cr, uid, ids, fields_to_fetch=['dest_cc_link_ids'], context=context):
+                dcl_ids.extend([dcl.id for dcl in analytic_acc.dest_cc_link_ids])
+            if dcl_ids:
+                self.pool.get('dest.cc.link').unlink(cr, uid, dcl_ids, context=context)
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Some verifications before analytic account creation
@@ -838,9 +855,10 @@ class analytic_account(osv.osv):
             if init_cc_fx_gain and vals.get('code') == init_cc_fx_gain:
                 vals['for_fx_gain_loss'] = True
                 param.set_param(cr, 1, 'INIT_CC_FX_GAIN', '')
-        ids = super(analytic_account, self).create(cr, uid, vals, context=context)
-        self._check_name_unicity(cr, uid, ids, context=context)
-        return ids
+        analytic_acc_id = super(analytic_account, self).create(cr, uid, vals, context=context)
+        self._check_name_unicity(cr, uid, analytic_acc_id, context=context)
+        self.clean_dest_cc_link(cr, uid, analytic_acc_id, vals, context=context)
+        return analytic_acc_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -856,6 +874,7 @@ class analytic_account(osv.osv):
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
+        self.clean_dest_cc_link(cr, uid, ids, vals, context=context)
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
         self.check_access_rule(cr, uid, ids, 'write', context=context)
         if context.get('from_web', False) or context.get('from_import_menu', False):
