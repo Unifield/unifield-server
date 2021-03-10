@@ -40,8 +40,8 @@ class analytic_account(osv.osv):
         if context is None:
             context = {}
         res = {}
-        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'type', 'allow_all_cc', 'dest_cc_ids'], context=context):
-            if a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_ids:
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'type', 'allow_all_cc', 'dest_cc_link_ids'], context=context):
+            if a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_link_ids:
                 res[a.id] = True
             else:
                 res[a.id] = False
@@ -95,7 +95,7 @@ class analytic_account(osv.osv):
                 arg.append(('category', '!=', 'DEST'))
                 arg.append(('type', '=', 'view'))
                 arg.append(('allow_all_cc', '=', True))
-                arg.append(('dest_cc_ids', '!=', False))
+                arg.append(('dest_cc_link_ids', '!=', False))
             # filter: inactive
             elif x[0] == 'filter_active' and x[2] is False:
                 arg.append('|')
@@ -108,7 +108,7 @@ class analytic_account(osv.osv):
                 arg.append(('category', '=', 'DEST'))
                 arg.append(('type', '=', 'normal'))
                 arg.append(('allow_all_cc', '=', False))
-                arg.append(('dest_cc_ids', '=', False))
+                arg.append(('dest_cc_link_ids', '=', False))
         return arg
 
     def _get_fake(self, cr, uid, ids, *a, **b):
@@ -717,6 +717,7 @@ class analytic_account(osv.osv):
             if vals['category'] != 'DEST':
                 vals['destination_ids'] = [(6, 0, [])]
                 vals['dest_cc_ids'] = [(6, 0, [])]
+                vals['dest_cc_link_ids'] = [(6, 0, [])]
                 vals['allow_all_cc'] = False  # default value
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
@@ -759,6 +760,7 @@ class analytic_account(osv.osv):
         default['tuple_destination_summary'] = []
         default['line_ids'] = []
         default['dest_cc_ids'] = []
+        default['dest_cc_link_ids'] = []
         return super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
 
     def _check_name_unicity(self, cr, uid, ids, context=None):
