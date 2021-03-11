@@ -647,5 +647,10 @@
             <field name="method">us_6796_hide_prod_status_inconsistencies</field>
         </record>
 
+        <!-- UF21.0 -->
+        <record id="us_7295_update_new_dest_cc_link" model="patch.scripts">
+            <field name="method">us_7295_update_new_dest_cc_link</field>
+        </record>
+
     </data>
 </openerp>
