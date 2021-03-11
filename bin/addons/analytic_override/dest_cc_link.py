@@ -26,6 +26,8 @@ from osv import fields
 class dest_cc_link(osv.osv):
     _name = "dest.cc.link"
     _description = "Destination / Cost Center Combination"
+    _rec_name = "cc_id"
+    _trace = True
 
     _columns = {
         'dest_id': fields.many2one('account.analytic.account', string="Destination", required=True,
