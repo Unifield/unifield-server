@@ -717,7 +717,7 @@ class analytic_account(osv.osv):
             if vals['category'] != 'DEST':
                 vals['destination_ids'] = [(6, 0, [])]
                 vals['dest_cc_ids'] = [(6, 0, [])]
-                vals['dest_cc_link_ids'] = []  # related dest.cc.links (if any) are deleted in clean_dest_cc_link
+                vals['dest_cc_link_ids'] = []  # related dest.cc.links (if any) are deleted in _clean_dest_cc_link
                 vals['allow_all_cc'] = False  # default value
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
@@ -819,7 +819,7 @@ class analytic_account(osv.osv):
                     self.log(cr, uid, analytic_account_id, _('At least one Analytic Journal Item using the Analytic Account %s '
                                                              'has a Posting Date outside the activation dates selected.') % (analytic_acc.code))
 
-    def clean_dest_cc_link(self, cr, uid, ids, vals, context=None):
+    def _clean_dest_cc_link(self, cr, uid, ids, vals, context=None):
         """
         In case Dest CC Links are reset in an analytic account: deletes the related existing Dest CC Links if any.
         Probable UC: Dest CC Links selected on a destination, then account changed to another category.
@@ -836,6 +836,22 @@ class analytic_account(osv.osv):
                 self.pool.get('dest.cc.link').unlink(cr, uid, dcl_ids, context=context)
         return True
 
+    def _update_synched_dest_cc_ids(self, cr, uid, dest_ids, vals, context):
+        """
+        For synch made before or while US-7295 was released: changes the dest_cc_ids into dest_cc_link_ids
+        """
+        if context and vals and context.get('sync_update_execution') and vals.get('dest_cc_ids') and vals['dest_cc_ids'][0][2]:
+            dest_cc_link_obj = self.pool.get('dest.cc.link')
+            if isinstance(dest_ids, (int, long)):
+                dest_ids = [dest_ids]
+            for dest_id in dest_ids:
+                for cc_id in vals['dest_cc_ids'][0][2]:
+                    dest = self.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
+                    if cc_id not in [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]:
+                        dest_cc_link_obj.create(cr, uid, {'dest_id': dest_id, 'cc_id': cc_id}, context=context)
+            del vals['dest_cc_ids']
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Some verifications before analytic account creation
@@ -848,6 +864,10 @@ class analytic_account(osv.osv):
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
+        vals_copy = vals.copy()
+        if context and vals and context.get('sync_update_execution') and vals.get('dest_cc_ids') and vals['dest_cc_ids'][0][2]:
+            # will be replaced by dest_cc_link_ids in _update_synched_dest_cc_ids (called after create because it uses the id generated)
+            del vals['dest_cc_ids']
         # for auto instance creation, fx gain has been stored, need HQ sync + instance sync to get CC
         if context.get('sync_update_execution') and vals.get('code') and vals.get('category') == 'OC':
             param = self.pool.get('ir.config_parameter')
@@ -857,7 +877,8 @@ class analytic_account(osv.osv):
                 param.set_param(cr, 1, 'INIT_CC_FX_GAIN', '')
         analytic_acc_id = super(analytic_account, self).create(cr, uid, vals, context=context)
         self._check_name_unicity(cr, uid, analytic_acc_id, context=context)
-        self.clean_dest_cc_link(cr, uid, analytic_acc_id, vals, context=context)
+        self._clean_dest_cc_link(cr, uid, analytic_acc_id, vals, context=context)
+        self._update_synched_dest_cc_ids(cr, uid, analytic_acc_id, vals_copy, context)
         return analytic_acc_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -874,7 +895,8 @@ class analytic_account(osv.osv):
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
-        self.clean_dest_cc_link(cr, uid, ids, vals, context=context)
+        self._clean_dest_cc_link(cr, uid, ids, vals, context=context)
+        self._update_synched_dest_cc_ids(cr, uid, ids, vals, context)
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
         self.check_access_rule(cr, uid, ids, 'write', context=context)
         if context.get('from_web', False) or context.get('from_import_menu', False):
