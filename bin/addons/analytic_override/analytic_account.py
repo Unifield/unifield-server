@@ -284,8 +284,8 @@ class analytic_account(osv.osv):
                     raise osv.except_osv(_('Error'), _('Filter not implemented on Destinations.'))
                 all_dest_ids = self.search(cr, uid, [('category', '=', 'DEST')], context=context)
                 compatible_dest_ids = []
-                for dest in self.browse(cr, uid, all_dest_ids, fields_to_fetch=['allow_all_cc', 'dest_cc_ids'], context=context):
-                    if dest.allow_all_cc or (cc and cc in [c.id for c in dest.dest_cc_ids]):
+                for dest in self.browse(cr, uid, all_dest_ids, fields_to_fetch=['allow_all_cc', 'dest_cc_link_ids'], context=context):
+                    if dest.allow_all_cc or (cc and cc in [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]):
                         compatible_dest_ids.append(dest.id)
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
