@@ -836,19 +836,37 @@ class analytic_account(osv.osv):
                 self.pool.get('dest.cc.link').unlink(cr, uid, dcl_ids, context=context)
         return True
 
+    def _dest_cc_ids_must_be_updated(self, vals, context):
+        """
+        Returns True if dest_cc_ids in vals must be changed to dest_cc_link_ids (the goal of this method is to ensure
+        that the same condition is used everywhere and that the UC where all CC are removed is taken into account)
+        """
+        if context and vals and context.get('sync_update_execution') and vals.get('dest_cc_ids') and vals['dest_cc_ids'][0][2] is not None:
+            return True
+        return False
+
     def _update_synched_dest_cc_ids(self, cr, uid, dest_ids, vals, context):
         """
         For synch made before or while US-7295 was released: changes the dest_cc_ids into dest_cc_link_ids
         """
-        if context and vals and context.get('sync_update_execution') and vals.get('dest_cc_ids') and vals['dest_cc_ids'][0][2]:
+        if self._dest_cc_ids_must_be_updated(vals, context):
             dest_cc_link_obj = self.pool.get('dest.cc.link')
             if isinstance(dest_ids, (int, long)):
                 dest_ids = [dest_ids]
             for dest_id in dest_ids:
-                for cc_id in vals['dest_cc_ids'][0][2]:
-                    dest = self.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
-                    if cc_id not in [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]:
-                        dest_cc_link_obj.create(cr, uid, {'dest_id': dest_id, 'cc_id': cc_id}, context=context)
+                dest = self.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
+                # note: after US-7295 patch script no instance has any dest_cc_ids, all CC links are necessarily dest.cc.link
+                current_cc_ids = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
+                new_cc_ids = vals['dest_cc_ids'][0][2] or []  # take into account the UC where all CC are removed
+                # delete the CC to be deleted
+                cc_to_be_deleted = [c for c in current_cc_ids if c not in new_cc_ids]
+                if cc_to_be_deleted:
+                    dcl_to_be_deleted = dest_cc_link_obj.search(cr, uid, [('dest_id', '=', dest_id), ('cc_id', 'in', cc_to_be_deleted)],
+                                                                order='NO_ORDER', context=context)
+                    dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
+                # create the CC to be created
+                for cc_id in [c for c in new_cc_ids if c not in current_cc_ids]:
+                    dest_cc_link_obj.create(cr, uid, {'dest_id': dest_id, 'cc_id': cc_id}, context=context)
             del vals['dest_cc_ids']
         return True
 
@@ -865,9 +883,8 @@ class analytic_account(osv.osv):
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         vals_copy = vals.copy()
-        if context and vals and context.get('sync_update_execution') and vals.get('dest_cc_ids') and vals['dest_cc_ids'][0][2]:
-            # will be replaced by dest_cc_link_ids in _update_synched_dest_cc_ids (called after create because it uses the id generated)
-            del vals['dest_cc_ids']
+        if self._dest_cc_ids_must_be_updated(vals, context):
+            del vals['dest_cc_ids']  # replaced by dest_cc_link_ids in _update_synched_dest_cc_ids (called after create as it uses the new id)
         # for auto instance creation, fx gain has been stored, need HQ sync + instance sync to get CC
         if context.get('sync_update_execution') and vals.get('code') and vals.get('category') == 'OC':
             param = self.pool.get('ir.config_parameter')
