@@ -37,10 +37,11 @@ class analytic_distribution(osv.osv):
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
         if destination_id and cost_center_id:
-            dest = analytic_acc_obj.browse(cr, uid, destination_id, fields_to_fetch=['category', 'allow_all_cc', 'dest_cc_ids'], context=context)
+            dest = analytic_acc_obj.browse(cr, uid, destination_id,
+                                           fields_to_fetch=['category', 'allow_all_cc', 'dest_cc_link_ids'], context=context)
             cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category'], context=context)
             if dest and cc and dest.category == 'DEST' and cc.category == 'OC' and not dest.allow_all_cc and \
-                    cc.id not in [c.id for c in dest.dest_cc_ids]:
+                    cc.id not in [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]:
                 return False
         return True
 
