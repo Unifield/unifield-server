@@ -483,6 +483,9 @@ class analytic_account(osv.osv):
                                         'destination_id', 'cost_center_id', string='Cost Centers',
                                         domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
         'dest_cc_link_ids': fields.one2many('dest.cc.link', 'dest_id', string="Cost Centers", required=False),
+        'dest_cc_link_inactive_from': fields.related('dest_cc_link_ids', 'inactive_from', type='date', readonly=True,
+                                                     string='Inactivation Combination Dest / CC from', store=False,
+                                                     help="Technical field used for Import Tools only"),
         'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),  # for the Destinations
         'allow_all_cc_with_fp': fields.boolean(string="Allow all Cost Centers"),  # for the Funding Pools
         'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,

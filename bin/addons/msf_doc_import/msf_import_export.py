@@ -1025,6 +1025,7 @@ class msf_import_export(osv.osv_memory):
                         data['tuple_destination_account_ids'] = [(6, 0, [])]
 
                 # Destinations
+                dest_cc_tuple_list = []
                 if import_brw.model_list_selection == 'destinations':
                     context['from_import_menu'] = True
                     data['category'] = 'DEST'
@@ -1042,14 +1043,16 @@ class msf_import_export(osv.osv_memory):
                     if data['type'] not in ['normal', 'view']:
                         raise Exception(_('The Type must be either "Normal" or "View".'))
                     # Cost Centers
-                    if data.get('dest_cc_ids'):
+                    # TODO (WIP): creation, edition (date), deletion
+                    dest_cc_list = []
+                    dest_cc_date_list = []
+                    if data.get('dest_cc_link_ids'):
                         if data.get('allow_all_cc'):
                             raise Exception(_("Please either list the Cost Centers to allow, or allow all Cost Centers."))
-                        dest_cc_list = []
                         split_char = ';'
-                        if split_char not in data.get('dest_cc_ids'):
+                        if split_char not in data.get('dest_cc_link_ids'):
                             split_char = ','
-                        for cost_center in data.get('dest_cc_ids').split(split_char):
+                        for cost_center in data.get('dest_cc_link_ids').split(split_char):
                             cc = cost_center.strip()
                             if cc not in cost_centers_cache:
                                 cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), ('code', '=', cc)]
@@ -1059,9 +1062,27 @@ class msf_import_export(osv.osv_memory):
                                 dest_cc_list.append(cc_ids[0])
                             else:
                                 raise Exception(_('Cost Center "%s" not found.') % cc)
-                        data['dest_cc_ids'] = [(6, 0, dest_cc_list)]
-                    else:
-                        data['dest_cc_ids'] = [(6, 0, [])]
+                    if data.get('dest_cc_link_inactive_from'):
+                        split_char = ';'
+                        if split_char not in data.get('dest_cc_link_inactive_from'):
+                            split_char = ','
+                        for cost_center_date in data.get('dest_cc_link_inactive_from').split(split_char):
+                            cc_date = cost_center_date.strip()
+                            if cc_date:
+                                cc_date = '2021-03-31'  # TODO: get and check date
+                            else:
+                                cc_date = False  # the related Dest/CC combination has no inactivation date
+                            dest_cc_date_list.append(cc_date)
+                        del data['dest_cc_link_inactive_from']
+                    if len(dest_cc_date_list) > len(dest_cc_list):
+                        raise Exception(_('The number of dates in the column "Inactivation Combination Dest / CC from" '
+                                          'exceeds the number of Cost Centers indicated.'))
+                    for num, cc in enumerate(dest_cc_list):
+                        try:
+                            dest_cc_date = dest_cc_date_list[num]
+                        except IndexError:
+                            dest_cc_date = False
+                        dest_cc_tuple_list.append((cc, dest_cc_date))
                     # Accounts
                     if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
                         acc_list = []
@@ -1164,6 +1185,7 @@ class msf_import_export(osv.osv_memory):
 
                 data.update(forced_values)
 
+                id_created = False
                 if data.get('comment') == '[DELETE]':
                     impobj.unlink(cr, uid, ids_to_update, context=context)
                     nb_lines_deleted += len(ids_to_update)
@@ -1182,11 +1204,26 @@ class msf_import_export(osv.osv_memory):
                             line_created = impobj.create(cr, uid, data, context=context)
                             lines_already_updated.append(line_created)
                     else:
-                        impobj.create(cr, uid, data, context=context)
+                        id_created = impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
                     if allow_partial:
                         cr.commit()
+                # For Dest CC Links: create the links if necessary
+                if dest_cc_tuple_list:
+                    if ids_to_update:
+                        if isinstance(ids_to_update, (int, long)):
+                            ids_to_update = [ids_to_update]
+                        dest_ids = ids_to_update
+                    elif id_created:
+                        dest_ids = [id_created]
+                    else:
+                        dest_ids = []
+                    for dest_id in dest_ids:
+                        for cc, inactive_date in dest_cc_tuple_list:
+                            self.pool.get('dest.cc.link').create(cr, uid,
+                                                                 {'cc_id': cc, 'dest_id': dest_id, 'inactive_from': inactive_date},
+                                                                 context=context)
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 if raise_on_error:
