@@ -32,6 +32,8 @@ from tools.translate import _
 from tempfile import TemporaryFile
 from lxml import etree
 from lxml.etree import XMLSyntaxError
+#from mx import DateTime
+from datetime import datetime
 
 from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 from msf_doc_import.msf_import_export_conf import MODEL_DICT
@@ -1069,7 +1071,12 @@ class msf_import_export(osv.osv_memory):
                         for cost_center_date in data.get('dest_cc_link_inactive_from').split(split_char):
                             cc_date = cost_center_date.strip()
                             if cc_date:
-                                cc_date = '2021-03-31'  # TODO: get and check date
+                                cc_date = cc_date.replace(' 00:00:00.00', '')  # can be if there is only one date in the cell
+                                try:
+                                    cc_date = datetime.strptime(cc_date, "%Y-%m-%d")
+                                except ValueError:
+                                    raise Exception(_('The dates in the column "Inactivation Combination Dest / CC from" '
+                                                      'should use the format YYYY-MM-DD.'))
                             else:
                                 cc_date = False  # the related Dest/CC combination has no inactivation date
                             dest_cc_date_list.append(cc_date)
