@@ -65,7 +65,7 @@ class patch_scripts(osv.osv):
 
         cr.execute('''
             update automated_export exp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
-                from automated_import_function function
+                from automated_export_function function
             where
                 function.id = exp.function_id and
                 exp.partner_id is null and
