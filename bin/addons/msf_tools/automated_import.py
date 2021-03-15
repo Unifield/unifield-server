@@ -33,6 +33,16 @@ from ftplib import FTP
 
 class automated_import(osv.osv):
     _name = 'automated.import'
+    _order = 'name, id'
+
+    def _auto_init(self, cr, context=None):
+        res = super(automated_import, self)._auto_init(cr, context)
+        # migration delete old constraint
+        cr.drop_constraint_if_exists('automated_import', 'automated_import_import_function_id_uniq')
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'automated_import_function_id_partner_id_uniq'")
+        if not cr.fetchone():
+            cr.execute("CREATE UNIQUE INDEX automated_import_function_id_partner_id_uniq ON automated_import (function_id, coalesce(partner_id, 0))")
+        return res
 
     def _check_paths(self, cr, uid, ids, context=None):
         """
@@ -161,6 +171,7 @@ class automated_import(osv.osv):
             string='Functionality',
             required=True,
         ),
+        'multiple': fields.related('function_id', 'multiple', string='Multiple', type='boolean', write_relate=False),
         'active': fields.boolean(
             string='Active',
             readonly=True,
@@ -187,6 +198,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'is_admin': fields.function(_get_isadmin, method=True, type='boolean', string='Is Admin'),
+        'partner_id': fields.many2one('res.partner', 'Partner', domain=[('partner_type', '=', 'esc')]),
     }
 
     _defaults = {
@@ -205,9 +217,9 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             _('Another Automated import with same name already exists (maybe inactive). Automated import name must be unique. Please select an other name.'),
         ),
         (
-            'import_function_id_uniq',
-            'unique(name)',
-            _('Another Automated import with same name already exists (maybe inactive).'),
+            'function_id_partner_id_uniq',
+            '',
+            _('Another Automated import with same function / same partner already exists (maybe inactive).'),
         ),
         (
             'import_positive_interval',
@@ -220,6 +232,17 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path', 'dest_path_failure']),
         (_check_unicity, _('There is a problem with paths'), []),
     ]
+
+    def change_function_id(self, cr, uid, ids, function_id, context=None):
+        multiple = False
+        value = {}
+        if function_id:
+            fct_data = self.pool.get('automated.import.function').browse(cr, uid, function_id, context=context)
+            multiple = fct_data.multiple
+            if not multiple:
+                value['partner_id'] = False
+        value['multiple'] = multiple
+        return {'value': value}
 
     def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
         if context is None:

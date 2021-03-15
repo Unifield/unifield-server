@@ -33,7 +33,7 @@ import pooler
 
 class automated_export(osv.osv):
     _name = 'automated.export'
-
+    _order = 'name, id'
 
     def _auto_init(self, cr, context=None):
         res = super(automated_export, self)._auto_init(cr, context)
