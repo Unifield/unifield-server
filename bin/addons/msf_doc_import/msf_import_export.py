@@ -32,7 +32,6 @@ from tools.translate import _
 from tempfile import TemporaryFile
 from lxml import etree
 from lxml.etree import XMLSyntaxError
-#from mx import DateTime
 from datetime import datetime
 
 from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
