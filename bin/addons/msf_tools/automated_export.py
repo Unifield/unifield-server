@@ -38,7 +38,7 @@ class automated_export(osv.osv):
     def _auto_init(self, cr, context=None):
         res = super(automated_export, self)._auto_init(cr, context)
         # migration delete old constraint
-        cr.drop_constraint_if_exists('automated_export', 'automated_export_export_name_uniq')
+        cr.drop_constraint_if_exists('automated_export', 'automated_export_export_function_id_uniq')
         cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'automated_export_function_id_partner_id_uniq'")
         if not cr.fetchone():
             cr.execute("CREATE UNIQUE INDEX automated_export_function_id_partner_id_uniq ON automated_export (function_id, coalesce(partner_id, 0))")
