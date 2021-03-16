@@ -1259,9 +1259,9 @@ class product_attributes(osv.osv):
                 error = True
                 msg = _('be exchanged')
                 st_cond = product.state.no_external or product.state.no_esc or product.state.no_internal
-            elif product.no_external and 'external' in constraints:
+            elif product.no_external and 'external' in constraints and not sale_obj:
                 error = True
-                msg = _('be %s externally') % (sale_obj and _('shipped') or _('purchased'))
+                msg = _('be %s externally') % (_('purchased'))
                 st_cond = product.state.no_external
             elif product.no_esc and 'esc' in constraints:
                 error = True
