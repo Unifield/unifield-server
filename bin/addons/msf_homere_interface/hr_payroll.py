@@ -202,6 +202,26 @@ class hr_payroll(osv.osv):
             ])
         return to_update
 
+    def _get_trigger_state_dest_cc_link(self, cr, uid, ids, context=None):
+        """
+        Returns the list of Payroll Entries for which the AD state should be re-computed
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cc_ids = []
+        dest_ids = []
+        payroll_obj = self.pool.get('hr.payroll.msf')
+        for dest_cc_link in self.browse(cr, uid, ids, context=context):
+            cc_ids.append(dest_cc_link.cc_id.id)
+            dest_ids.append(dest_cc_link.dest_id.id)
+        payroll_ids = payroll_obj.search(cr, uid, [('state', '=', 'draft'),
+                                                   '|',
+                                                   ('cost_center_id', 'in', cc_ids),
+                                                   ('destination_id', 'in', dest_ids)], order='NO_ORDER', context=context)
+        return payroll_ids
+
     def _has_third_party(self, cr, uid, ids, name, arg, context=None):
         """
         Returns True if the Payroll entry is linked to either an Employee or a Supplier
@@ -242,12 +262,13 @@ class hr_payroll(osv.osv):
                                               'hr.payroll.msf': (lambda self, cr, uid, ids, c=None: ids, ['account_id', 'cost_center_id', 'funding_pool_id', 'destination_id'], 10),
                                               'account.account': (_get_trigger_state_account, ['user_type_code', 'destination_ids'], 20),
                                               'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'allow_all_cc',
-                                                                                                    'dest_cc_ids', 'allow_all_cc_with_fp',
+                                                                                                    'allow_all_cc_with_fp',
                                                                                                     'cost_center_ids', 'select_accounts_only',
                                                                                                     'fp_account_ids',
                                                                                                     'tuple_destination_account_ids'],
                                                                            20),
                                               'account.destination.link': (_get_trigger_state_dest_link, ['account_id', 'destination_id'], 30),
+                                              'dest.cc.link': (_get_trigger_state_dest_cc_link, ['cc_id', 'dest_id'], 40),
                                           }
                                           ),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
