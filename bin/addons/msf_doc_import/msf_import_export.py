@@ -1242,7 +1242,11 @@ class msf_import_export(osv.osv_memory):
                                                                       limit=1, context=context)
                                     if dcl_ids:
                                         dest_cc_link = dest_cc_link_obj.read(cr, uid, dcl_ids[0], ['inactive_from'], context=context)
-                                        if dest_cc_link['inactive_from'] != inactive_date:
+                                        if dest_cc_link['inactive_from']:
+                                            current_inactive_dt = datetime.strptime(dest_cc_link['inactive_from'], "%Y-%m-%d")
+                                        else:
+                                            current_inactive_dt = False
+                                        if current_inactive_dt != inactive_date:
                                             dest_cc_link_obj.write(cr, uid, dest_cc_link['id'], {'inactive_from': inactive_date}, context=context)
                             # UC4: combinations to be deleted in existing Destinations
                             cc_to_be_deleted = [c for c in current_cc_ids if c not in new_cc_ids]
