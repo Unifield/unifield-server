@@ -461,6 +461,27 @@ class analytic_account(osv.osv):
             res[cc_id] = cc_id in selected
         return res
 
+    def _get_dest_cc_link_inactive_from(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns a dict with key = id of the analytic account,
+        and value = string with all its Dest/CC Link Inactivation Dates separated by a comma.
+        Note that the date format is the same in EN and FR, and that empty dates are not ignored.
+        E.g.: '2021-03-02,2021-03-01,,2021-03-03,'
+
+        This is used in Destination Import Tools, in particular for the Export of existing entries used as examples.
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'dest_cc_link_ids'], context=context):
+            inactive_date_list = []
+            if a.category == 'DEST':
+                for cc_link in a.dest_cc_link_ids:
+                    inactive_date_str = "%s" % (cc_link.inactive_from or "")
+                    inactive_date_list.append(inactive_date_str)
+            res[a.id] = ",".join(inactive_date_list)
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -483,9 +504,10 @@ class analytic_account(osv.osv):
                                         'destination_id', 'cost_center_id', string='Cost Centers',
                                         domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
         'dest_cc_link_ids': fields.one2many('dest.cc.link', 'dest_id', string="Cost Centers", required=False),
-        'dest_cc_link_inactive_from': fields.related('dest_cc_link_ids', 'inactive_from', type='date', readonly=True,
-                                                     string='Inactivation Combination Dest / CC from', store=False,
-                                                     help="Technical field used for Import Tools only"),
+        'dest_cc_link_inactive_from': fields.function(_get_dest_cc_link_inactive_from, method=True, type='char',
+                                                      store=False, readonly=True,
+                                                      string='Inactivation Combination Dest / CC from',
+                                                      help="Technical field used for Import Tools only"),
         'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),  # for the Destinations
         'allow_all_cc_with_fp': fields.boolean(string="Allow all Cost Centers"),  # for the Funding Pools
         'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
