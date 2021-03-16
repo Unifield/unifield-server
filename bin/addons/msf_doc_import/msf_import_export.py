@@ -648,6 +648,7 @@ class msf_import_export(osv.osv_memory):
         acc_obj = self.pool.get('account.account')
         acc_analytic_obj = self.pool.get('account.analytic.account')
         acc_dest_obj = self.pool.get('account.destination.link')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
 
         cost_centers_cache = {}
         gl_account_cache = {}
@@ -1044,7 +1045,6 @@ class msf_import_export(osv.osv_memory):
                     if data['type'] not in ['normal', 'view']:
                         raise Exception(_('The Type must be either "Normal" or "View".'))
                     # Cost Centers
-                    # TODO (WIP): creation, edition (date), deletion
                     dest_cc_list = []
                     dest_cc_date_list = []
                     if data.get('dest_cc_link_ids'):
@@ -1217,19 +1217,40 @@ class msf_import_export(osv.osv_memory):
                         cr.commit()
                 # For Dest CC Links: create the links if necessary
                 if dest_cc_tuple_list:
-                    if ids_to_update:
+                    # UC1: new dest
+                    if id_created:
+                        for cc, inactive_date in dest_cc_tuple_list:
+                            dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': id_created, 'inactive_from': inactive_date},
+                                                    context=context)
+                    elif ids_to_update:
                         if isinstance(ids_to_update, (int, long)):
                             ids_to_update = [ids_to_update]
-                        dest_ids = ids_to_update
-                    elif id_created:
-                        dest_ids = [id_created]
-                    else:
-                        dest_ids = []
-                    for dest_id in dest_ids:
-                        for cc, inactive_date in dest_cc_tuple_list:
-                            self.pool.get('dest.cc.link').create(cr, uid,
-                                                                 {'cc_id': cc, 'dest_id': dest_id, 'inactive_from': inactive_date},
-                                                                 context=context)
+                        for dest_id in ids_to_update:
+                            dest = acc_analytic_obj.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
+                            current_cc_ids = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
+                            new_cc_ids = []
+                            for cc, inactive_date in dest_cc_tuple_list:
+                                new_cc_ids.append(cc)
+                                # UC2: new combinations in existing Destinations
+                                if cc not in current_cc_ids:
+                                    dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': dest_id, 'inactive_from': inactive_date},
+                                                            context=context)
+                                else:
+                                    # UC3: combinations to be updated with new dates
+                                    dcl_ids = dest_cc_link_obj.search(cr, uid,
+                                                                      [('dest_id', '=', dest_id), ('cc_id', '=', cc)],
+                                                                      limit=1, context=context)
+                                    if dcl_ids:
+                                        dest_cc_link = dest_cc_link_obj.read(cr, uid, dcl_ids[0], ['inactive_from'], context=context)
+                                        if dest_cc_link['inactive_from'] != inactive_date:
+                                            dest_cc_link_obj.write(cr, uid, dest_cc_link['id'], {'inactive_from': inactive_date}, context=context)
+                            # UC4: combinations to be deleted in existing Destinations
+                            cc_to_be_deleted = [c for c in current_cc_ids if c not in new_cc_ids]
+                            if cc_to_be_deleted:
+                                dcl_to_be_deleted = dest_cc_link_obj.search(cr, uid,
+                                                                            [('dest_id', '=', dest_id), ('cc_id', 'in', cc_to_be_deleted)],
+                                                                            order='NO_ORDER', context=context)
+                                dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 if raise_on_error:
