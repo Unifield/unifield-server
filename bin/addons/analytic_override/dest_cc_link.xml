@@ -9,6 +9,8 @@
                 <field name="arch" type="xml">
                     <form noteditable="1">
                         <field name="cc_id"/>
+                        <newline/>
+                        <field name="active_from"/>
                         <field name="inactive_from"/>
                     </form>
                 </field>
@@ -22,6 +24,7 @@
                 <field name="arch" type="xml">
                     <tree>
                         <field name="cc_id"/>
+                        <field name="active_from"/>
                         <field name="inactive_from"/>
                     </tree>
                 </field>
@@ -36,6 +39,7 @@
                     <search>
                         <group>
                             <field name="cc_id"/>
+                            <field name="active_from"/>
                             <field name="inactive_from"/>
                         </group>
                     </search>

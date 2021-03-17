@@ -56,7 +56,7 @@ class patch_scripts(osv.osv):
     def us_7295_update_new_dest_cc_link(self, cr, uid, *a, **b):
         """
         CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new field "dest_cc_link_ids"
-        => recreates the links without inactivation date
+        => recreates the links without activation/inactivation dates
         """
         cr.execute("""
                    INSERT INTO dest_cc_link(dest_id, cc_id)

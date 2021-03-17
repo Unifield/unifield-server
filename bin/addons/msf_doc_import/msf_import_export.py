@@ -627,6 +627,53 @@ class msf_import_export(osv.osv_memory):
             # thread.join(wait_time)
         return self.bg_import(cr, uid, wiz, expected_headers, rows, raise_on_error=raise_on_error,  context=context)
 
+    def _handle_dest_cc_dates(self, data, dest_cc_list, dest_cc_tuple_list):
+        """
+        Gets and checks the dest_cc_link_active_from and dest_cc_link_inactive_from dates.
+        Updates the dest_cc_tuple_list with tuples containing (cost_center, active_date, inactive_date)
+        """
+        dest_cc_active_date_list = []
+        dest_cc_inactive_date_list = []
+        active_from = (True, 'dest_cc_link_active_from', _("Activation Combination Dest / CC from"))
+        inactive_from = (False, 'dest_cc_link_inactive_from', _("Inactivation Combination Dest / CC from"))
+        for t in [active_from, inactive_from]:
+            active = t[0]
+            col_name = t[1]
+            col_str = t[2]
+            dest_cc_date_list = []
+            if data.get(col_name):
+                split_char = ';'
+                if split_char not in data.get(col_name):
+                    split_char = ','
+                for cost_center_date in data.get(col_name).split(split_char):
+                    cc_date = cost_center_date.strip()
+                    if cc_date:
+                        cc_date = cc_date.replace(' 00:00:00.00', '')  # can be if there is only one date in the cell
+                        try:
+                            cc_date = datetime.strptime(cc_date, "%Y-%m-%d")
+                        except ValueError:
+                            raise Exception(_('The dates in the column "%s" should use the format YYYY-MM-DD.') % col_str)
+                    else:
+                        cc_date = False  # the related Dest/CC combination has no activation/inactivation date
+                    dest_cc_date_list.append(cc_date)
+                del data[col_name]
+            if len(dest_cc_date_list) > len(dest_cc_list):
+                raise Exception(_('The number of dates in the column "%s" exceeds the number of Cost Centers indicated.') % col_str)
+            if active:
+                dest_cc_active_date_list = dest_cc_date_list[:]
+            else:
+                dest_cc_inactive_date_list = dest_cc_date_list[:]
+        for num, cc in enumerate(dest_cc_list):
+            try:
+                dest_cc_active_date = dest_cc_active_date_list[num]
+            except IndexError:
+                dest_cc_active_date = False
+            try:
+                dest_cc_inactive_date = dest_cc_inactive_date_list[num]
+            except IndexError:
+                dest_cc_inactive_date = False
+            dest_cc_tuple_list.append((cc, dest_cc_active_date, dest_cc_inactive_date))
+
     def bg_import(self, cr, uid, import_brw, headers, rows, raise_on_error=False, context=None):
         """
         Run the import of lines in background
@@ -1046,7 +1093,6 @@ class msf_import_export(osv.osv_memory):
                         raise Exception(_('The Type must be either "Normal" or "View".'))
                     # Cost Centers
                     dest_cc_list = []
-                    dest_cc_date_list = []
                     if data.get('dest_cc_link_ids'):
                         if data.get('allow_all_cc'):
                             raise Exception(_("Please either list the Cost Centers to allow, or allow all Cost Centers."))
@@ -1063,32 +1109,7 @@ class msf_import_export(osv.osv_memory):
                                 dest_cc_list.append(cc_ids[0])
                             else:
                                 raise Exception(_('Cost Center "%s" not found.') % cc)
-                    if data.get('dest_cc_link_inactive_from'):
-                        split_char = ';'
-                        if split_char not in data.get('dest_cc_link_inactive_from'):
-                            split_char = ','
-                        for cost_center_date in data.get('dest_cc_link_inactive_from').split(split_char):
-                            cc_date = cost_center_date.strip()
-                            if cc_date:
-                                cc_date = cc_date.replace(' 00:00:00.00', '')  # can be if there is only one date in the cell
-                                try:
-                                    cc_date = datetime.strptime(cc_date, "%Y-%m-%d")
-                                except ValueError:
-                                    raise Exception(_('The dates in the column "Inactivation Combination Dest / CC from" '
-                                                      'should use the format YYYY-MM-DD.'))
-                            else:
-                                cc_date = False  # the related Dest/CC combination has no inactivation date
-                            dest_cc_date_list.append(cc_date)
-                        del data['dest_cc_link_inactive_from']
-                    if len(dest_cc_date_list) > len(dest_cc_list):
-                        raise Exception(_('The number of dates in the column "Inactivation Combination Dest / CC from" '
-                                          'exceeds the number of Cost Centers indicated.'))
-                    for num, cc in enumerate(dest_cc_list):
-                        try:
-                            dest_cc_date = dest_cc_date_list[num]
-                        except IndexError:
-                            dest_cc_date = False
-                        dest_cc_tuple_list.append((cc, dest_cc_date))
+                    self._handle_dest_cc_dates(data, dest_cc_list, dest_cc_tuple_list)
                     # Accounts
                     if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
                         acc_list = []
@@ -1224,19 +1245,21 @@ class msf_import_export(osv.osv_memory):
                     else:
                         # UC2: new dest
                         if id_created:
-                            for cc, inactive_date in dest_cc_tuple_list:
-                                dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': id_created, 'inactive_from': inactive_date},
+                            for cc, active_date, inactive_date in dest_cc_tuple_list:
+                                dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': id_created,
+                                                                  'active_from': active_date, 'inactive_from': inactive_date},
                                                         context=context)
                         elif ids_to_update:
                             for dest_id in ids_to_update:
                                 dest = acc_analytic_obj.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
                                 current_cc_ids = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
                                 new_cc_ids = []
-                                for cc, inactive_date in dest_cc_tuple_list:
+                                for cc, active_date, inactive_date in dest_cc_tuple_list:
                                     new_cc_ids.append(cc)
                                     # UC3: new combinations in existing Destinations
                                     if cc not in current_cc_ids:
-                                        dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': dest_id, 'inactive_from': inactive_date},
+                                        dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': dest_id,
+                                                                          'active_from': active_date, 'inactive_from': inactive_date},
                                                                 context=context)
                                     else:
                                         # UC4: combinations to be updated with new dates
@@ -1244,14 +1267,20 @@ class msf_import_export(osv.osv_memory):
                                                                           [('dest_id', '=', dest_id), ('cc_id', '=', cc)],
                                                                           limit=1, context=context)
                                         if dcl_ids:
-                                            dest_cc_link = dest_cc_link_obj.read(cr, uid, dcl_ids[0], ['inactive_from'], context=context)
+                                            dest_cc_link = dest_cc_link_obj.read(cr, uid, dcl_ids[0],
+                                                                                 ['active_from', 'inactive_from'], context=context)
+                                            if dest_cc_link['active_from']:
+                                                current_active_dt = datetime.strptime(dest_cc_link['active_from'], "%Y-%m-%d")
+                                            else:
+                                                current_active_dt = False
                                             if dest_cc_link['inactive_from']:
                                                 current_inactive_dt = datetime.strptime(dest_cc_link['inactive_from'], "%Y-%m-%d")
                                             else:
                                                 current_inactive_dt = False
-                                            if current_inactive_dt != inactive_date:
+                                            if (current_active_dt != active_date) or (current_inactive_dt != inactive_date):
                                                 dest_cc_link_obj.write(cr, uid, dest_cc_link['id'],
-                                                                       {'inactive_from': inactive_date}, context=context)
+                                                                       {'active_from': active_date, 'inactive_from': inactive_date},
+                                                                       context=context)
                                 # UC5: combinations to be deleted in existing Destinations
                                 cc_to_be_deleted = [c for c in current_cc_ids if c not in new_cc_ids]
                                 if cc_to_be_deleted:

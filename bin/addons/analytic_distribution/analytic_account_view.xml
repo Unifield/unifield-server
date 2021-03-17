@@ -149,6 +149,7 @@
                                 <tree string="Cost Centers" editable="bottom">
                                     <field name="cc_id" string="Code"/>
                                     <field name="cc_name" string="Name"/>
+                                    <field name="active_from"/>
                                     <field name="inactive_from"/>
                                 </tree>
                             </field>

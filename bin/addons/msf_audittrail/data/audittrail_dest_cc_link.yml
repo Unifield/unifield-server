@@ -7,7 +7,7 @@
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['cc_id', 'inactive_from']
+        fields = ['cc_id', 'active_from', 'inactive_from']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'dest.cc.link'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'dest.cc.link'), ('name', '=', 'cc_id')], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'dest.cc.link'), ('name', '=', 'dest_id')], context=context)
