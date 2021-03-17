@@ -1878,6 +1878,9 @@ class stock_location(osv.osv):
         @param field_names: Name of field
         @return: Dictionary of values
         """
+        if context is None:
+            context = {}
+
         result = super(stock_location, self)._product_value(cr, uid, ids, field_names, arg, context=context)
 
         product_product_obj = self.pool.get('product.product')
@@ -1887,7 +1890,9 @@ class stock_location(osv.osv):
         currency = currency_obj.read(cr, uid, currency_id, ['rounding'], context=context)
 
         lang_obj = self.pool.get('res.lang')
-        lang_ids = lang_obj.search(cr, uid, [('code', '=', context.get('lang', 'en_US'))])
+        lang_ids = lang_obj.search(cr, uid, [('code', '=', context.get('lang', 'en_MF'))])
+        if not lang_ids:
+            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
         lang = lang_obj.browse(cr, uid, lang_ids[0])
 
         if context.get('product_id'):
