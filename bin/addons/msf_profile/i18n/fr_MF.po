@@ -111990,3 +111990,9 @@ msgstr "Les dates dans la colonne \"%s\" doivent utiliser le format AAAA-MM-JJ."
 #: view:multiple.cc.selection.wizard:0
 msgid "This wizard enables you to select several Cost Centers at once to be added to the Destination. The activation and inactivation dates of the related Dest / CC combinations will remain empty."
 msgstr "Cet assistant vous permet de sélectionner en une fois plusieurs Centres de Coût à ajouter à la Destination. Les dates d'activation et d'inactivation des Combinaisons Dest / CC associées resteront vides."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_line.py:192
+#, python-format
+msgid "The combination \"%s - %s\" is not active."
+msgstr "La combinaison \"%s - %s\" n'est pas active."
