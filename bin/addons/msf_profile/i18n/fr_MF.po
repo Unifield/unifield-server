@@ -21108,6 +21108,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: report:kitting.order.report:0
 #: field:replenishment.inventory.review.line.exp,name:0
 #: field:replenishment.segment.line.amc.month_exp,name:0
+#: view:account.analytic.account:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -34811,6 +34812,7 @@ msgstr "Michigan"
 #: field:products.situation.report,p_code:0
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:86
 #: field:account.target.costcenter,cost_center_code:0
+#: view:account.analytic.account:0
 #, python-format
 msgid "Code"
 msgstr "Code"
@@ -44529,9 +44531,10 @@ msgstr "User Type Name"
 msgid "No donation account found for this line: %s. (product: %s)"
 msgstr "No donation account found for this line: %s. (product: %s)"
 
-#. modules: account, base
+#. modules: account, base, analytic_override
 #: view:account.addtmpl.wizard:0
 #: view:res.widget.wizard:0
+#: view:multiple.cc.selection.wizard:0
 msgid "Add"
 msgstr "Ajouter"
 
@@ -66084,6 +66087,9 @@ msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la list
 #: report:addons/account/report/free_allocation_report.mako:176
 #: field:free.allocation.wizard,cost_center_ids:0
 #: field:account.analytic.account,dest_cc_ids:0
+#: field:account.analytic.account,dest_cc_link_ids:0
+#: view:multiple.cc.selection.wizard:0
+#: field:multiple.cc.selection.wizard,cc_ids:0
 msgid "Cost Centers"
 msgstr "Centres de Coût"
 
@@ -80565,6 +80571,7 @@ msgstr "Entrées fournisseurs pour la Cash Request"
 #: code:addons/register_accounting/wizard/wizard_register_import.py:570
 #: report:addons/account/report/free_allocation_report.mako:205
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:606
+#: field:dest.cc.link,cc_id:0
 #, python-format
 msgid "Cost Center"
 msgstr "Centre de Coût"
@@ -94516,6 +94523,8 @@ msgstr "Facture venant de"
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/account/report/invoice_excel_export.mako:75
 #: field:financing.contract.account.quadruplet,account_destination_id:0
+#: field:dest.cc.link,dest_id:0
+#: field:multiple.cc.selection.wizard,dest_id:0
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -95888,7 +95897,7 @@ msgstr "Montants Réels"
 msgid "Search Uninvoiced Lines"
 msgstr "Rechercher Lignes non-facturées"
 
-#. modules: res_currency_functional, financing_contract, msf_tools, account_hq_entries, account_override, product_attributes, base_report_designer, register_accounting, procurement_cycle, msf_accrual, finance, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase_compare_rfq, board, stock_override, msf_doc_import, analytic_distribution, threshold_value, msf_homere_interface, msf_instance, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, base, account_period_closing_level, msf_currency_revaluation, msf_supply_doc_export, product_list, procurement_report, msf_budget, account_corrections, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, vertical_integration, procurement, sourcing, purchase, msf_audittrail, tender_flow, stock, msf_profile
+#. modules: res_currency_functional, financing_contract, msf_tools, account_hq_entries, account_override, product_attributes, base_report_designer, register_accounting, procurement_cycle, msf_accrual, finance, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase_compare_rfq, board, stock_override, msf_doc_import, analytic_distribution, threshold_value, msf_homere_interface, msf_instance, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, base, account_period_closing_level, msf_currency_revaluation, msf_supply_doc_export, product_list, procurement_report, msf_budget, account_corrections, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, vertical_integration, procurement, sourcing, purchase, msf_audittrail, tender_flow, stock, msf_profile, analytic_override
 #: view:account.addtmpl.wizard:0
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
@@ -96122,6 +96131,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:product.stock_out:0
 #: view:replenishment.parent.segment:0
 #: view:view.expired.expiring.stock:0
+#: view:multiple.cc.selection.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -111894,3 +111904,89 @@ msgstr "Ajouter les Produits affichés à un Mouvement Interne"
 #, python-format
 msgid "You must have at least one line to create the Internal Move"
 msgstr "Vous devez avoir au moins une ligne pour pouvoir créer le Mouvement Interne"
+
+#. module: analytic_distribution
+#: view:account.analytic.account:0
+msgid "Remove all"
+msgstr "Supprimer tout"
+
+#. module: analytic_distribution
+#: view:account.analytic.account:0
+msgid "Do you really want to remove all the Cost Centers selected?"
+msgstr "Voulez-vous vraiment supprimer tous les Centres de Coût sélectionnés ?"
+
+#. modules: analytic_override, analytic_distribution
+#: view:account.analytic.account:0
+#: view:multiple.cc.selection.wizard:0
+msgid "Add several Cost Centers"
+msgstr "Ajouter plusieurs Centres de Coût"
+
+#. modules: msf_doc_import, analytic_override
+#: field:account.analytic.account,dest_cc_link_active_from:0
+#: field:dest.cc.link,active_from:0
+#: code:addons/msf_doc_import/msf_import_export.py:639
+#, python-format
+msgid "Activation Combination Dest / CC from"
+msgstr "Activation Combinaison Dest / CC à partir du"
+
+#. modules: msf_doc_import, analytic_override
+#: field:account.analytic.account,dest_cc_link_inactive_from:0
+#: field:dest.cc.link,inactive_from:0
+#: code:addons/msf_doc_import/msf_import_export.py:640
+#, python-format
+msgid "Inactivation Combination Dest / CC from"
+msgstr "Inactivation Combinaison Dest / CC à partir du"
+
+#. module: analytic_override
+#: help:account.analytic.account,dest_cc_link_active_from:0
+#: help:account.analytic.account,dest_cc_link_inactive_from:0
+msgid "Technical field used for Import Tools only"
+msgstr "Champ technique utilisé pour les Outils d'Import uniquement"
+
+#. module: analytic_override
+#: field:account.analytic.account,selected_in_dest:0
+msgid "Selected in Destination"
+msgstr "Sélectionné dans la Destination"
+
+#. module: analytic_override
+#: model:ir.model,name:analytic_override.model_dest_cc_link
+msgid "Destination / Cost Center Combination"
+msgstr "Combinaison Destination / Centre de Coût"
+
+#. module: analytic_override
+#: field:dest.cc.link,cc_name:0
+msgid "Cost Center Name"
+msgstr "Nom du Centre de Coût"
+
+#. module: analytic_override
+#: sql_constraint:dest.cc.link:0
+msgid "Each Cost Center can only be added once to the same Destination."
+msgstr "Chaque Centre de Coût ne peut être ajouté qu'une seule fois à une même Destination."
+
+#. module: analytic_override
+#: sql_constraint:dest.cc.link:0
+msgid "The Activation date of the \"Combination Dest / CC\" must be before the Inactivation date."
+msgstr "La date d'Activation de la \"Combinaison Dest / CC\" doit précéder la date d'Inactivation."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:663
+#, python-format
+msgid "The number of dates in the column \"%s\" exceeds the number of Cost Centers indicated."
+msgstr "Le nombre de dates dans la colonne \"%s\" dépasse le nombre de Centres de Coût indiqués."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:679
+#, python-format
+msgid "The activation date related to the Cost Center %s must be before the inactivation date."
+msgstr "La date d'activation associée au Centre de Coût %s doit précéder la date d'inactivation."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:657
+#, python-format
+msgid "The dates in the column \"%s\" should use the format YYYY-MM-DD."
+msgstr "Les dates dans la colonne \"%s\" doivent utiliser le format AAAA-MM-JJ."
+
+#. module: analytic_override
+#: view:multiple.cc.selection.wizard:0
+msgid "This wizard enables you to select several Cost Centers at once to be added to the Destination. The activation and inactivation dates of the related Dest / CC combinations will remain empty."
+msgstr "Cet assistant vous permet de sélectionner en une fois plusieurs Centres de Coût à ajouter à la Destination. Les dates d'activation et d'inactivation des Combinaisons Dest / CC associées resteront vides."

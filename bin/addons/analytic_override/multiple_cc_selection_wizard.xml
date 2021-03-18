@@ -10,7 +10,7 @@
             <field name="arch" type="xml">
                 <form string="Add several Cost Centers">
                     <label nolabel="1" colspan="6"
-                           string="This wizard enables you to select several Cost Centers at once to be added to the Destination. The inactivation date of the related Dest / CC combinations will remain empty."/>
+                           string="This wizard enables you to select several Cost Centers at once to be added to the Destination. The activation and inactivation dates of the related Dest / CC combinations will remain empty."/>
                     <field name="cc_ids" nolabel="1" colspan="6">
                         <tree string="Cost Centers">
                             <field name="code"/>

@@ -676,7 +676,7 @@ class msf_import_export(osv.osv_memory):
                 dest_cc_inactive_date = False
             if dest_cc_active_date and dest_cc_inactive_date and dest_cc_active_date >= dest_cc_inactive_date:
                 cc_code = self.pool.get('account.analytic.account').read(cr, uid, cc, ['code'], context=context)['code'] or ''
-                raise Exception(_('The activation date related to the CC %s must be before the inactivation date.') % cc_code)
+                raise Exception(_('The activation date related to the Cost Center %s must be before the inactivation date.') % cc_code)
             dest_cc_tuple_list.append((cc, dest_cc_active_date, dest_cc_inactive_date))
 
     def bg_import(self, cr, uid, import_brw, headers, rows, raise_on_error=False, context=None):
