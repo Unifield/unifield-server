@@ -627,11 +627,13 @@ class msf_import_export(osv.osv_memory):
             # thread.join(wait_time)
         return self.bg_import(cr, uid, wiz, expected_headers, rows, raise_on_error=raise_on_error,  context=context)
 
-    def _handle_dest_cc_dates(self, data, dest_cc_list, dest_cc_tuple_list):
+    def _handle_dest_cc_dates(self, cr, uid, data, dest_cc_list, dest_cc_tuple_list, context=None):
         """
         Gets and checks the dest_cc_link_active_from and dest_cc_link_inactive_from dates.
         Updates the dest_cc_tuple_list with tuples containing (cost_center, active_date, inactive_date)
         """
+        if context is None:
+            context = {}
         dest_cc_active_date_list = []
         dest_cc_inactive_date_list = []
         active_from = (True, 'dest_cc_link_active_from', _("Activation Combination Dest / CC from"))
@@ -672,6 +674,9 @@ class msf_import_export(osv.osv_memory):
                 dest_cc_inactive_date = dest_cc_inactive_date_list[num]
             except IndexError:
                 dest_cc_inactive_date = False
+            if dest_cc_active_date and dest_cc_inactive_date and dest_cc_active_date >= dest_cc_inactive_date:
+                cc_code = self.pool.get('account.analytic.account').read(cr, uid, cc, ['code'], context=context)['code'] or ''
+                raise Exception(_('The activation date related to the CC %s must be before the inactivation date.') % cc_code)
             dest_cc_tuple_list.append((cc, dest_cc_active_date, dest_cc_inactive_date))
 
     def bg_import(self, cr, uid, import_brw, headers, rows, raise_on_error=False, context=None):
@@ -1109,7 +1114,7 @@ class msf_import_export(osv.osv_memory):
                                 dest_cc_list.append(cc_ids[0])
                             else:
                                 raise Exception(_('Cost Center "%s" not found.') % cc)
-                    self._handle_dest_cc_dates(data, dest_cc_list, dest_cc_tuple_list)
+                    self._handle_dest_cc_dates(cr, uid, data, dest_cc_list, dest_cc_tuple_list, context=context)
                     # Accounts
                     if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
                         acc_list = []
