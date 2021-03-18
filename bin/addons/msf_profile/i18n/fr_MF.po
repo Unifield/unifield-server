@@ -111894,3 +111894,21 @@ msgstr "Ajouter les Produits affichés à un Mouvement Interne"
 #, python-format
 msgid "You must have at least one line to create the Internal Move"
 msgstr "Vous devez avoir au moins une ligne pour pouvoir créer le Mouvement Interne"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1956
+#, python-format
+msgid "The Order Type of this Purchase Order can not be changed. One of its lines has a Service Product sourced from a%s."
+msgstr "Le Type de Commande de ce Bon de Commande ne peut pas être changé. Une de ses lignes a un Produit Service qui a été sourcé d'une%s."
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1956
+#, python-format
+msgid "n Internal Request"
+msgstr " Demande Interne"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1956
+#, python-format
+msgid " Field Order"
+msgstr " Commande de Terrain"
