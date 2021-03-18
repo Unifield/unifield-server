@@ -111996,3 +111996,9 @@ msgstr "Cet assistant vous permet de sélectionner en une fois plusieurs Centres
 #, python-format
 msgid "The combination \"%s - %s\" is not active."
 msgstr "La combinaison \"%s - %s\" n'est pas active."
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_distribution.py:269
+#, python-format
+msgid "%sThe combination \"%s - %s\" is not active."
+msgstr "%sLa combinaison \"%s - %s\" n'est pas active."
