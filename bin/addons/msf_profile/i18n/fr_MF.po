@@ -111894,3 +111894,9 @@ msgstr "Ajouter les Produits affichés à un Mouvement Interne"
 #, python-format
 msgid "You must have at least one line to create the Internal Move"
 msgstr "Vous devez avoir au moins une ligne pour pouvoir créer le Mouvement Interne"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1266
+#, python-format
+msgid "be donated to an Inter-section"
+msgstr "être donnée à une Inter-section"

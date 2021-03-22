@@ -846,7 +846,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 for order in self.browse(cr, uid, ids):
                     for line in order.order_line:
                         if line.product_id:
-                            res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order'})
+                            res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order', 'sale_type': order_type})
                             if test:
                                 res.setdefault('value', {}).update({'partner_order_id': False, 'partner_shipping_id': False, 'partner_invoice_id': False})
                                 return res
@@ -2358,10 +2358,10 @@ class sale_order_line(osv.osv):
 
         return new_data
 
-    def product_id_change_orig(self, cr, uid, ids, pricelist, product, qty=0,
-                               uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-                               lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
-        if not  partner_id:
+    def product_id_change_orig(self, cr, uid, ids, pricelist, product, qty=0, uom=False, qty_uos=0, uos=False, name='',
+                               partner_id=False, lang=False, update_tax=True, date_order=False, packaging=False,
+                               fiscal_position=False, flag=False):
+        if not partner_id:
             raise osv.except_osv(_('No Customer Defined !'), _('You have to select a customer in the sales form !\nPlease set one customer before choosing a product.'))
         warning = {}
         product_uom_obj = self.pool.get('product.uom')
@@ -2485,10 +2485,9 @@ class sale_order_line(osv.osv):
                 result.update({'price_unit': price})
         return {'value': result, 'domain': domain, 'warning': warning}
 
-
-    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
-                          uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-                          lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0, uom=False, qty_uos=0, uos=False, name='',
+                          partner_id=False, lang=False, update_tax=True, date_order=False, packaging=False,
+                          fiscal_position=False, flag=False, context=None):
         """
         If we select a product we change the procurement type to its own procurement method (procure_method).
         If there isn't product, the default procurement method is 'From Order' (make_to_order).
@@ -2499,8 +2498,7 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
-        res = self.product_id_change_orig(cr, uid, ids, pricelist, product, qty,
-                                          uom, qty_uos, uos, name, partner_id,
+        res = self.product_id_change_orig(cr, uid, ids, pricelist, product, qty, uom, qty_uos, uos, name, partner_id,
                                           lang, update_tax, date_order, packaging, fiscal_position, flag)
 
         if 'domain' in res:
@@ -2509,7 +2507,8 @@ class sale_order_line(osv.osv):
         if product:
             if partner_id:
                 # Test the compatibility of the product with the partner of the order
-                res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order'})
+                sale_type = context.get('sale_id') and self.pool.get('sale.order').read(cr, uid, context['sale_id'], ['order_type'])['order_type'] or False
+                res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order', 'sale_type': sale_type})
                 if test:
                     return res
 
@@ -2901,7 +2900,8 @@ class sale_order_line(osv.osv):
                                      date_order=date_order,
                                      packaging=packaging,
                                      fiscal_position=fiscal_position,
-                                     flag=flag)
+                                     flag=flag,
+                                     context=context)
 
         if context and context.get('categ') and product:
             # Check consistency of product
