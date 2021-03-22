@@ -2137,7 +2137,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         partner_id = 'supplier' in value and value['supplier'] or partner_id
 
         if partner_id:
-            p_type = self.pool.get('res.partner').search(cr, uid, partner_id, ['partner_type'], context=context)['partner_type']
+            p_type = self.pool.get('res.partner').read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type']
             if po_cft == 'pli' and p_type != 'external':
                 res['warning'] = {
                     'title': _('Warning'),
