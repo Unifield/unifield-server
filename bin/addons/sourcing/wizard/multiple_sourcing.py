@@ -438,7 +438,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             },
         }
 
-    def change_po_cft(self, cr, uid, ids, po_cft, context=None):
+    def change_po_cft(self, cr, uid, ids, po_cft, supplier_id, context=None):
         """
         Unset the supplier if tender is choose
         :param cr: Cursor to the database
@@ -450,6 +450,17 @@ class multiple_sourcing_wizard(osv.osv_memory):
         """
         if po_cft == 'cft':
             return {'value': {'supplier_id': False}}
+
+        if supplier_id:
+            suppl_type = self.pool.get('res.partner').read(cr, uid, supplier_id, ['partner_type'], context=context)['partner_type']
+            if po_cft == 'pli' and suppl_type != 'external':
+                return {
+                    'value': {'po_cft': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _("""You can't source with 'Purchase List' to a non-external partner."""),
+                    },
+                }
 
         return {}
 
@@ -486,6 +497,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 'supplier_type': partner and partner.partner_type or False,
                 'supplier_split_po': partner and partner.split_po or False,
             })
+
+            # Search the local market partner id
+            data_obj = self.pool.get('ir.model.data')
+            data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'),
+                                                ('name', '=', 'res_partner_local_market')], limit=1, order='NO_ORDER')
+            if data_id and partner.id == data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']:
+                result['value'].update({'po_cft': 'pli'})
         else:
             result['value'].update({
                 'supplier_type': False,

@@ -111906,6 +111906,7 @@ msgstr "Vous ne pouvez pas sourcer avec 'Liste d'Achats' vers un partenaire non-
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:2144
+#: code:addons/sourcing/wizard/multiple_sourcing.py:461
 #, python-format
 msgid "'Purchase List' is not allowed with a non-external partner."
 msgstr "'Liste d'Achats' n'est pas autorisé avec un partenaire non-externe."
