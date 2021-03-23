@@ -2649,7 +2649,7 @@ class sale_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             if line.order_id and line.order_id.partner_id and line.product_id:
-                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order'}, context=context):
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order', 'sale_type': line.order_id.order_type}, context=context):
                     return False
 
         return True

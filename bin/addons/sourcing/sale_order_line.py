@@ -1550,7 +1550,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if sourcing_line.procurement_request:  # Check constraints on lines
                 check_vals = {'constraints': 'consumption'}
             else:
-                check_vals = {'obj_type': 'sale.order', 'partner_id': sourcing_line.order_id.partner_id.id}
+                order = sourcing_line.order_id
+                check_vals = {'obj_type': 'sale.order', 'partner_id': order.partner_id.id, 'sale_type': order.order_type}
             if sourcing_line.product_id.id:
                 self.pool.get('product.product')._get_restriction_error(cr, uid, [sourcing_line.product_id.id], vals=check_vals,
                                                                         context=context)
