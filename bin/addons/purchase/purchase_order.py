@@ -1496,7 +1496,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Date of Stock Take of all/selected Order lines ?'), }
+        return {'name': _('Do you want to update the Date of Stock Take of all/selected draft Order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
