@@ -16585,6 +16585,7 @@ msgstr ","
 #: field:product.history.consumption,location_dest_id:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:198
 #: report:addons/stock/report/stock_delivery_report_xls.mako:224
+#: field:view.expired.expiring.stock.lines,location_dest_id:0
 #, python-format
 msgid "Destination Location"
 msgstr "Zone Destination"
@@ -19382,6 +19383,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: report:addons/stock/report/stock_delivery_report_xls.mako:223
 #: field:stock.delivery.wizard,location_id:0
 #: report:kitting.order.report:0
+#: field:view.expired.expiring.stock.lines,location_id:0
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -39401,10 +39403,15 @@ msgstr "Règlement des factures"
 
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:1654
-#: code:addons/purchase/purchase_workflow.py:673
 #, python-format
 msgid "Delivery Confirmed Date is a mandatory field."
 msgstr "La Date de Livraison Confirmée est un champ obligatoire."
+
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:673
+#, python-format
+msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
+msgstr "Ligne #%s: La Date de Livraison Confirmée est un champ obligatoire."
 
 #. module: stock_schedule
 #: selection:stock.frequence,recurrence_type:0
@@ -40169,6 +40176,7 @@ msgstr "De confirmé à attribué."
 #: field:product.stock_out.line,substitute_3_uom_id:0
 #: field:product.stock_out.line,uom_id:0
 #: report:kitting.order.report:0
+#: field:view.expired.expiring.stock.lines,product_uom:0
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -51166,6 +51174,7 @@ msgstr "Transport management"
 #: view:stock.picking:0
 #: field:report.stock.move,reason_type_id:0
 #: field:stock.reception.wizard,reason_type_id:0
+#: field:view.expired.expiring.stock.lines,reason_type_id:0
 msgid "Reason type"
 msgstr "Type de raison"
 
@@ -111871,6 +111880,7 @@ msgstr "Selectionner les Produits Expirés/Expirants"
 #. module: stock
 #: model:ir.model,name:stock.model_view_expired_expiring_stock_lines
 #: view:view.expired.expiring.stock:0
+#: view:view.expired.expiring.stock.lines:0
 msgid "Expired/Expiring Products"
 msgstr "Produits Expirés/Expirants"
 
