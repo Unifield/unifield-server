@@ -1007,7 +1007,8 @@ Nothing has been imported because of %s. See below:
 
                         if err_msg:
                             for err in err_msg:
-                                err = _('Line %s of the Excel file: %s') % (file_line[0], err)
+                                if wiz.filetype == 'excel':
+                                    err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
                 if wiz.with_pack and not context.get('auto_import_ok'):
@@ -1051,7 +1052,8 @@ Nothing has been imported because of %s. See below:
 
                     if err_msg:
                         for err in err_msg:
-                            err = _('Line %s of the Excel file: %s') % (in_line, err)
+                            if wiz.filetype == 'excel':
+                                err = _('Line %s of the Excel file: %s') % (in_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
                     cr.commit()
@@ -1680,7 +1682,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if write_vals.get('imp_external_ref'):
                     errors.append(_('No original IN lines with external ref \'%s\' found.') % write_vals['imp_external_ref'])
                 else:
-                    errors.append(_('Line does not correspond to original IN'))
+                    errors.append(_('IN Line %s does not correspond to original IN') % (line.line_number or '',))
 
             error_msg = line.error_msg or ''
             for err in errors:
