@@ -259,15 +259,10 @@ class analytic_distribution(osv.osv):
                     else:
                         raise osv.except_osv(_('Error'), _('%sDestination %s is either inactive at the date %s, or it allows no Cost Center.') %
                                              (prefix, cline.destination_id.code or '', posting_date))
-                if cline.destination_id and cline.analytic_id:
-                    dcl_ids = dest_cc_link_obj.search(cr, uid,
-                                                      [('dest_id', '=', cline.destination_id.id), ('cc_id', '=', cline.analytic_id.id)],
-                                                      limit=1)
-                    if dcl_ids:
-                        dcl = dest_cc_link_obj.browse(cr, uid, dcl_ids[0], fields_to_fetch=['active_from', 'inactive_from'])
-                        if (dcl.active_from and posting_date < dcl.active_from) or (dcl.inactive_from and posting_date >= dcl.inactive_from):
-                            raise osv.except_osv(_('Error'), _("%sThe combination \"%s - %s\" is not active.") %
-                                                 (prefix, cline.destination_id.code or '', cline.analytic_id.code or ''))
+                if cline.destination_id and cline.analytic_id and \
+                        dest_cc_link_obj.is_inactive_dcl(cr, uid, cline.destination_id.id, cline.analytic_id.id, posting_date):
+                    raise osv.except_osv(_('Error'), _("%sThe combination \"%s - %s\" is not active.") %
+                                         (prefix, cline.destination_id.code or '', cline.analytic_id.code or ''))
 
 
 
