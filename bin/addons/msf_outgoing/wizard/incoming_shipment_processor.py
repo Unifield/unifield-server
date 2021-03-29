@@ -721,7 +721,7 @@ class stock_incoming_processor(osv.osv):
             select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.quantity)
             from stock_move_in_processor wiz_line
             left join stock_incoming_processor wiz on wiz.id = wiz_line.wizard_id
-            left join stock_move move_in on move_in.picking_id = wiz.picking_id and move_in.line_number = wiz_line.line_number
+            left join stock_move move_in on move_in.picking_id = wiz.picking_id and move_in.id = wiz_line.move_id
             left join purchase_order_line pol on pol.id = move_in.purchase_line_id
             where
                 wiz.id = %s
