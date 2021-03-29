@@ -47,6 +47,20 @@ class dest_cc_link(osv.osv):
                                                                      'must be before the Inactivation date.')
     ]
 
+    def is_inactive_dcl(self, cr, uid, dest_id, cc_id, posting_date, context=None):
+        """
+        Returns True if the Dest CC Link with the dest_id and cc_id exists and that the posting_date
+        is outside its validity date range.
+        """
+        if context is None:
+            context = {}
+        inactive_dcl = False
+        dcl_ids = self.search(cr, uid, [('dest_id', '=', dest_id), ('cc_id', '=', cc_id)], limit=1, context=context)
+        if dcl_ids:
+            dcl = self.browse(cr, uid, dcl_ids[0], fields_to_fetch=['active_from', 'inactive_from'])
+            inactive_dcl = (dcl.active_from and posting_date < dcl.active_from) or (dcl.inactive_from and posting_date >= dcl.inactive_from)
+        return inactive_dcl
+
 
 dest_cc_link()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -413,6 +413,7 @@ class analytic_line(osv.osv):
             ids = [ids]
         # Prepare some value
         ad_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         account = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category', 'date_start', 'date'], context=context)
         account_type = account and account.get('category', False) or False
         res = []
@@ -449,10 +450,11 @@ class analytic_line(osv.osv):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
                 if check_accounts and aline.account_id.id in check_accounts:
                     continue
-                if ad_obj.check_dest_cc_compatibility(cr, uid, aline.destination_id and aline.destination_id.id or False,
-                                                      account_id, context=context):
-                    if ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context):
-                        res.append(aline.id)
+                dest_id = aline.destination_id and aline.destination_id.id or False
+                if ad_obj.check_dest_cc_compatibility(cr, uid, dest_id, account_id, context=context) and \
+                    ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context) and \
+                        not dest_cc_link_obj.is_inactive_dcl(cr, uid, dest_id, account_id, aline.date, context=context):
+                    res.append(aline.id)
         elif account_type == 'FUNDING':
             # Browse all analytic line to verify them
             for aline in self.browse(cr, uid, ids):
@@ -475,10 +477,11 @@ class analytic_line(osv.osv):
             for aline in self.browse(cr, uid, ids, context=context):
                 # the following check is included into check_fp_acc_dest_compatibility:
                 # account_id in [x.id for x in aline.general_account_id.destination_ids]
-                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, aline.cost_center_id and aline.cost_center_id.id or False,
-                                                      context=context) and \
+                cc_id = aline.cost_center_id and aline.cost_center_id.id or False
+                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, cc_id, context=context) and \
                     ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
-                                                           account_id, context=context):
+                                                           account_id, context=context) and \
+                        not dest_cc_link_obj.is_inactive_dcl(cr, uid, account_id, cc_id, aline.date, context=context):
                     res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
