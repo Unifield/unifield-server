@@ -184,12 +184,8 @@ class account_analytic_line(osv.osv):
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (dest.name or '',))
-            if dest and cc:
-                dcl_ids = dest_cc_link_obj.search(cr, uid, [('dest_id', '=', dest.id), ('cc_id', '=', cc.id)], limit=1, context=context)
-                if dcl_ids:
-                    dcl = dest_cc_link_obj.browse(cr, uid, dcl_ids[0], fields_to_fetch=['active_from', 'inactive_from'], context=context)
-                    if (dcl.active_from and date < dcl.active_from) or (dcl.inactive_from and date >= dcl.inactive_from):
-                        raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active.") % (dest.code or '', cc.code or ''))
+            if dest and cc and dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
+                raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active.") % (dest.code or '', cc.code or ''))
         return True
 
     def _check_document_date(self, cr, uid, ids):
