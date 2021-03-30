@@ -440,6 +440,13 @@ class analytic_line(osv.osv):
                     oc_dest_date_stop = min(aline.cost_center_id.date or '9999-01-01', aline.destination_id.date or '9999-01-01')
                     if (oc_dest_date_start and wiz_date < oc_dest_date_start) or (oc_dest_date_stop and wiz_date >= oc_dest_date_stop):
                         expired_date_ids.append(aline.id)
+                    else:
+                        # check the Dest/CC link validity with the original Dest and CC which will be used in the REV
+                        destination_id = aline.destination_id and aline.destination_id.id or False
+                        cost_center_id = aline.cost_center_id and aline.cost_center_id.id or False
+                        if destination_id and cost_center_id and \
+                                dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, wiz_date, context=context):
+                            expired_date_ids.append(aline.id)
             if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date >= date_stop):
                 expired_date_ids.append(aline.id)
         # Process regarding account_type
