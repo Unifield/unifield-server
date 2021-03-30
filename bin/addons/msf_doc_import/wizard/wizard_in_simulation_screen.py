@@ -551,7 +551,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
                         m.picking_id = p.id and
                         p.type = 'out' and
                         (
-                            p.subtype = 'simple' and p.state = 'done' or
+                            p.subtype = 'standard' and p.state = 'done' or
                             p.subtype = 'picking' and m.state != 'cancel' and p.state in ('done', 'assigned')
                         ) and
                         m.in_out_updated = 'f' and
