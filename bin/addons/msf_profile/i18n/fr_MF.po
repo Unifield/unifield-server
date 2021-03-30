@@ -17223,6 +17223,7 @@ msgstr "object.query.wizard.values"
 #: view:stock.picking:0
 #: selection:stock.picking,subtype:0
 #: selection:stock.move,picking_subtype:0
+#: code:addons/msf_outgoing/report/picking_ticket.py:79
 msgid "PPL"
 msgstr "LPC"
 
