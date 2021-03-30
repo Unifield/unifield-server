@@ -47,6 +47,25 @@ class dest_cc_link(osv.osv):
                                                                      'must be before the Inactivation date.')
     ]
 
+    def _bypass(self, vals, context=None):
+        """
+        Returns True if at sync time the CC to be added to the Dest CC Link isn't found. It means that the CC doesn't
+        exist in the current instance so the creation/edition of the related Dest CC Link should be ignored.
+        """
+        if context is None:
+            context = {}
+        return context.get('sync_update_execution') and 'cc_id' in vals and not vals['cc_id']
+
+    def create(self, cr, uid, vals, context=None):
+        if not self._bypass(vals, context=context):
+            return super(dest_cc_link, self).create(cr, uid, vals, context=context)
+        return False
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not self._bypass(vals, context=context):
+            return super(dest_cc_link, self).write(cr, uid, ids, vals, context=context)
+        return False
+
     def is_inactive_dcl(self, cr, uid, dest_id, cc_id, posting_date, context=None):
         """
         Returns True if the Dest CC Link with the dest_id and cc_id exists and that the posting_date
