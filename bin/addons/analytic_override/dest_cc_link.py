@@ -21,6 +21,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 
 class dest_cc_link(osv.osv):
@@ -47,6 +48,33 @@ class dest_cc_link(osv.osv):
                                                                      'must be before the Inactivation date.')
     ]
 
+    def _check_analytic_lines(self, cr, uid, ids, context=None):
+        """
+        Displays a non-blocking message on the top of the page in case some AJI using the Dest/CC link have been booked
+        outside its activation dates.
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            aal_obj = self.pool.get('account.analytic.line')
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            for dcl in self.browse(cr, uid, ids, context=context):
+                if dcl.active_from or dcl.inactive_from:
+                    dcl_dom = [('cost_center_id', '=', dcl.cc_id.id), ('destination_id', '=', dcl.dest_id.id)]
+                    if dcl.active_from and dcl.inactive_from:
+                        dcl_dom.append('|')
+                    if dcl.active_from:
+                        dcl_dom.append(('date', '<', dcl.active_from))
+                    if dcl.inactive_from:
+                        dcl_dom.append(('date', '>=', dcl.inactive_from))
+                    if aal_obj.search_exist(cr, uid, dcl_dom, context=context):
+                        # TODO JN: fix the display of this message (With log called on the analytic acc. obj? With action_xmlid?)
+                        # [+ translate the message once it's OK]
+                        self.log(cr, uid, dcl.id, _('At least one Analytic Journal Item using the combination \"%s - %s\" '
+                                                    'has a Posting Date outside the activation dates selected.') %
+                                 (dcl.dest_id.code or '', dcl.cc_id.code or ''))
+
     def _bypass(self, vals, context=None):
         """
         Returns True if at sync time the CC to be added to the Dest CC Link isn't found. It means that the CC doesn't
@@ -69,11 +97,14 @@ class dest_cc_link(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         """
-        See _bypass
+        See _bypass and _check_analytic_lines
         """
-        if not self._bypass(vals, context=context):
-            return super(dest_cc_link, self).write(cr, uid, ids, vals, context=context)
-        return self.unlink(cr, uid, ids, context=context)
+        if self._bypass(vals, context=context):
+            res = self.unlink(cr, uid, ids, context=context)
+        else:
+            res = super(dest_cc_link, self).write(cr, uid, ids, vals, context=context)
+            self._check_analytic_lines(cr, uid, ids, context=context)
+        return res
 
     def is_inactive_dcl(self, cr, uid, dest_id, cc_id, posting_date, context=None):
         """
