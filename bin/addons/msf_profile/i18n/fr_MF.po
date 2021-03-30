@@ -24457,8 +24457,8 @@ msgstr "Lignes d'Ecriture"
 #. module: msf_tools
 #: model:ir.actions.report.xml,name:msf_tools.report_stopped_products_xls
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:57
-msgid "Stopped products"
-msgstr "Produits Stoppés"
+msgid "Phase Out products"
+msgstr "Produits Supprimés"
 
 #. modules: tender_flow, product_asset, update_client, register_accounting, return_claim, msf_doc_import, supplier_catalogue, purchase_compare_rfq, product_list, stock, reason_types_moves, stock_override, purchase_override, specific_rules, kit, base, msf_tools, sales_followup, account, msf_outgoing, order_nomenclature, msf_field_access_rights, sale, msf_button_access_rights, analytic_distribution, msf_supply_doc_export, consumption_calculation, procurement_request
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:153
@@ -63481,8 +63481,8 @@ msgstr "Xor"
 #: view:export.report.stopped.products:0
 #: model:ir.actions.act_window,name:msf_tools.export_report_stopped_products_action
 #: model:ir.ui.menu,name:msf_tools.export_report_stopped_products_menu
-msgid "Export Stopped Products"
-msgstr "Exporter produits stoppés"
+msgid "Export Phase Out Products"
+msgstr "Exporter produits supprimés"
 
 #. module: account
 #: model:ir.actions.report.xml,name:account.account_central_journal
@@ -103819,8 +103819,8 @@ msgstr "Instance/Mission"
 
 #. module: msf_tools
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:73
-msgid "There is no stopped products to report"
-msgstr "Il n'y a aucun produit stoppé"
+msgid "There is no phase out products to report"
+msgstr "Il n'y a aucun produit supprimé"
 
 #. module: msf_tools, product
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
