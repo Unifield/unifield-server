@@ -50,21 +50,30 @@ class dest_cc_link(osv.osv):
     def _bypass(self, vals, context=None):
         """
         Returns True if at sync time the CC to be added to the Dest CC Link isn't found. It means that the CC doesn't
-        exist in the current instance so the creation/edition of the related Dest CC Link should be ignored.
+        exist in the current instance, so:
+        - in case of a creation: the related Dest CC Link should be ignored.
+        - in case of an edition: the related Dest CC Link should be DELETED (UC: in HQ create a Dest CC Link with a CC
+            linked to a coordo, sync to this coordo, then edit the link with a CC not linked to this coordo).
         """
         if context is None:
             context = {}
         return context.get('sync_update_execution') and 'cc_id' in vals and not vals['cc_id']
 
     def create(self, cr, uid, vals, context=None):
+        """
+        See _bypass
+        """
         if not self._bypass(vals, context=context):
             return super(dest_cc_link, self).create(cr, uid, vals, context=context)
         return False
 
     def write(self, cr, uid, ids, vals, context=None):
+        """
+        See _bypass
+        """
         if not self._bypass(vals, context=context):
             return super(dest_cc_link, self).write(cr, uid, ids, vals, context=context)
-        return False
+        return self.unlink(cr, uid, ids, context=context)
 
     def is_inactive_dcl(self, cr, uid, dest_id, cc_id, posting_date, context=None):
         """
