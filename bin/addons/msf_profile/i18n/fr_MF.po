@@ -111998,7 +111998,13 @@ msgid "The combination \"%s - %s\" is not active."
 msgstr "La combinaison \"%s - %s\" n'est pas active."
 
 #. module: analytic_distribution
-#: code:addons/analytic_distribution/analytic_distribution.py:269
+#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:1024
 #, python-format
-msgid "%sThe combination \"%s - %s\" is not active."
-msgstr "%sLa combinaison \"%s - %s\" n'est pas active."
+msgid "The combination \"%s - %s\" is not active at this date: %s"
+msgstr "La combinaison \"%s - %s\" n'est pas active à cette date : %s"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_distribution.py:264
+#, python-format
+msgid "%sThe combination \"%s - %s\" is not active at this date: %s"
+msgstr "%sLa combinaison \"%s - %s\" n'est pas active à cette date : %s"
