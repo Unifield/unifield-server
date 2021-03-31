@@ -833,6 +833,7 @@ class substitute_item(osv.osv_memory):
                 'lot_id_substitute_item': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'exp_substitute_item': fields.date(string='Expiry Date'),
                 'type_check': fields.char(string='Type Check', size=1024, readonly=True),
+                'comment': fields.char(size=256, string='Comment'),
                 # functions
                 'hidden_perishable_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='Exp', multi='get_vals_substitute_item', store=False, readonly=True),
                 'hidden_batch_management_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='B.Num', multi='get_vals_substitute_item', store=False, readonly=True),
@@ -843,8 +844,22 @@ class substitute_item(osv.osv_memory):
                 'integrity_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=INTEGRITY_STATUS_SELECTION, string=' ', multi='get_vals_substitute_item', store=False, readonly=True),
                 }
 
-    _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
-                 'type_check': 'out',
+    def _get_comment(self, cr, uid, context=None):
+        '''
+        Get the comment of the product to substitute if there is only one
+        '''
+        if context is None:
+            context = {}
+
+        comment = ''
+        if self._name == 'substitute.item':
+            comment = 'a'
+
+        return comment
+
+    _defaults = {
+        'type_check': 'out',  # in is used, meaning a new prod lot will be created if the specified expiry date does not exist
+        'comment': _get_comment,
     }
 
 substitute_item()

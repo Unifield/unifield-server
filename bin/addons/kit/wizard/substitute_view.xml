@@ -24,17 +24,12 @@
                         	<tree hide_new_button="True" hide_delete_button="True" string="Products to remove from the Kit" editable="top" colors="red:integrity_status_func_substitute_item!='empty'">
 	                			<field name="module_substitute_item" readonly="True" />
 			            		<field name="product_id_substitute_item" readonly="True" />
-			            		<field name="qty_substitute_item" readonly="True" />
+			            		<field name="qty_substitute_item" />
 			            		<field name="uom_id_substitute_item" readonly="True" />
-			            		<field name="asset_id_substitute_item"
-			            			domain="[('product_id', '=', product_id_substitute_item)]"
-			            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
-			            		<field name="lot_mirror"
-               						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
-                        			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
-			            		<field name="exp_substitute_item"
-                					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
-                					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+			            		<field name="asset_id_substitute_item" readonly="True" />
+								<field name="comment" readonly="True" />
+			            		<field name="lot_mirror" readonly="True" />
+			            		<field name="exp_substitute_item" readonly="True" />
                 				<field name="type_check" invisible="True" />
                 				<field name="hidden_asset_mandatory" invisible="True" />
                 				<field name="hidden_batch_management_mandatory" string="Lot" />
@@ -44,7 +39,7 @@
                         </field>
                     </group>
                     <group col="4" colspan="4">
-                        <field name="replacement_item_ids" nolabel="True">
+                        <field name="replacement_item_ids" nolabel="True" context="{'wizard_ids': wizard_ids}">
                         	<tree string="Products from the stock to the Kit" editable="top" colors="red:integrity_status_func_substitute_item != 'empty' or availability_status_hidden_func_substitute_item != 'available'">
                         		<field name="product_id_substitute_item"
                 					on_change="on_change_product_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item, context)"
@@ -65,6 +60,7 @@
                 				<field name="asset_id_substitute_item"
                 					domain="[('product_id', '=', product_id_substitute_item)]"
 			            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
+               					<field name="comment" />
                					<field name="type_check" invisible="True" />
                					<field name="hidden_asset_mandatory" invisible="True" />
                 				<field name="hidden_batch_management_mandatory" string="Lot" />
@@ -98,6 +94,7 @@
             		<field name="qty_substitute_item" readonly="True" />
             		<field name="uom_id_substitute_item" readonly="True" />
             		<field name="asset_id_substitute_item" />
+            		<field name="comment" />
             		<field name="lot_mirror" />
             		<field name="exp_substitute_item" />
             		<field name="hidden_asset_mandatory" invisible="True" />
