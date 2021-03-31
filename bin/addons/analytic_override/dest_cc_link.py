@@ -69,8 +69,8 @@ class dest_cc_link(osv.osv):
                     if dcl.inactive_from:
                         dcl_dom.append(('date', '>=', dcl.inactive_from))
                     if aal_obj.search_exist(cr, uid, dcl_dom, context=context):
-                        # TODO JN: fix the display of this message (With log called on the analytic acc. obj? With action_xmlid?)
-                        # [+ translate the message once it's OK]
+                        # TODO JN: fix the display of this message [+ translate the message once it's OK]
+                        # ==> With log called on the analytic acc. obj? With action_xmlid? With view_id in context?
                         self.log(cr, uid, dcl.id, _('At least one Analytic Journal Item using the combination \"%s - %s\" '
                                                     'has a Posting Date outside the activation dates selected.') %
                                  (dcl.dest_id.code or '', dcl.cc_id.code or ''))
@@ -82,6 +82,9 @@ class dest_cc_link(osv.osv):
         - in case of a creation: the related Dest CC Link should be ignored.
         - in case of an edition: the related Dest CC Link should be DELETED (UC: in HQ create a Dest CC Link with a CC
             linked to a coordo, sync to this coordo, then edit the link with a CC not linked to this coordo).
+
+        TODO JN: is this way of proceeding OK? Should we instead use an owner_field to send the updates only to the
+        coordos in which the CCs exist? Will this cover the UC described just above?
         """
         if context is None:
             context = {}
