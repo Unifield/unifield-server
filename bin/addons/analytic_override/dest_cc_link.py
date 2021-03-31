@@ -89,11 +89,13 @@ class dest_cc_link(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         """
-        See _bypass
+        See _bypass and _check_analytic_lines
         """
+        res = False
         if not self._bypass(vals, context=context):
-            return super(dest_cc_link, self).create(cr, uid, vals, context=context)
-        return False
+            res = super(dest_cc_link, self).create(cr, uid, vals, context=context)
+            self._check_analytic_lines(cr, uid, res, context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         """
