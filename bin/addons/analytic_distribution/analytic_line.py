@@ -423,6 +423,7 @@ class analytic_line(osv.osv):
         date_start = account and account.get('date_start', False) or False
         date_stop = account and account.get('date', False) or False
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
+        cmp_dates = {}
         for aline in self.browse(cr, uid, ids):
             # UTP-800: Change date comparison regarding FP. If FP, use document date. Otherwise use date.
             aline_cmp_date = aline.date
@@ -449,6 +450,7 @@ class analytic_line(osv.osv):
                             expired_date_ids.append(aline.id)
             if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date >= date_stop):
                 expired_date_ids.append(aline.id)
+            cmp_dates[aline.id] = aline_cmp_date
         # Process regarding account_type
         if account_type == 'OC':
             for aline in self.browse(cr, uid, ids):
@@ -460,7 +462,7 @@ class analytic_line(osv.osv):
                 dest_id = aline.destination_id and aline.destination_id.id or False
                 if ad_obj.check_dest_cc_compatibility(cr, uid, dest_id, account_id, context=context) and \
                     ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context) and \
-                        not dest_cc_link_obj.is_inactive_dcl(cr, uid, dest_id, account_id, aline.date, context=context):
+                        not dest_cc_link_obj.is_inactive_dcl(cr, uid, dest_id, account_id, cmp_dates[aline.id], context=context):
                     res.append(aline.id)
         elif account_type == 'FUNDING':
             # Browse all analytic line to verify them
@@ -488,7 +490,7 @@ class analytic_line(osv.osv):
                 if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, cc_id, context=context) and \
                     ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
                                                            account_id, context=context) and \
-                        not dest_cc_link_obj.is_inactive_dcl(cr, uid, account_id, cc_id, aline.date, context=context):
+                        not dest_cc_link_obj.is_inactive_dcl(cr, uid, account_id, cc_id, cmp_dates[aline.id], context=context):
                     res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
