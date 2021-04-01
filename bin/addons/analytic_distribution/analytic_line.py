@@ -452,6 +452,7 @@ class analytic_line(osv.osv):
                 expired_date_ids.append(aline.id)
             cmp_dates[aline.id] = aline_cmp_date
         # Process regarding account_type
+        ids = [i for i in ids if i not in expired_date_ids]  # exclude the AJI in expired_date_ids
         if account_type == 'OC':
             for aline in self.browse(cr, uid, ids):
                 # Verify that:
@@ -496,10 +497,6 @@ class analytic_line(osv.osv):
             # Case of FREE1 and FREE2 lines
             for i in ids:
                 res.append(i)
-        # Delete elements that are in expired_date_ids
-        for e in expired_date_ids:
-            if e in res:
-                res.remove(e)
         return res
 
     def check_dest_cc_fp_compatibility(self, cr, uid, ids,

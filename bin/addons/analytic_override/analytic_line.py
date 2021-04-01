@@ -184,7 +184,8 @@ class account_analytic_line(osv.osv):
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (dest.name or '',))
-            if dest and cc and dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
+            if context.get('from') != 'mass_reallocation' and dest and cc and \
+                    dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
                 raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active.") % (dest.code or '', cc.code or ''))
         return True
 
