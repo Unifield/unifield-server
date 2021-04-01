@@ -43,9 +43,14 @@ class multiple_cc_selection_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         dest_cc_link_obj = self.pool.get('dest.cc.link')
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         wiz = self.browse(cr, uid, ids[0], context=context)
-        for cc in wiz.cc_ids:
-            dest_cc_link_obj.create(cr, uid, {'dest_id': wiz.dest_id.id, 'cc_id': cc.id}, context=context)
+        if wiz.cc_ids:
+            for cc in wiz.cc_ids:
+                dest_cc_link_obj.create(cr, uid, {'dest_id': wiz.dest_id.id, 'cc_id': cc.id}, context=context)
+            if wiz.dest_id.allow_all_cc:
+                # automatically untick the box "Allow all Cost Centers" (same behavior as for a manual CC addition)
+                analytic_acc_obj.write(cr, uid, wiz.dest_id.id, {'allow_all_cc': False}, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 
