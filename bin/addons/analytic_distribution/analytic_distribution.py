@@ -237,7 +237,7 @@ class analytic_distribution(osv.osv):
     def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False, prefix='', from_supply=False):
         """
         Checks the Cost Center Distribution Lines of the distribution in param.:
-        raises an error if the CC or the Dest. used is not active at the posting date selected (or today's date)
+        raises an error if the CC, the Dest., or their combination is not active at the posting date selected (or today's date)
         If needed a "prefix" can be added to the error message.
         """
         cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
