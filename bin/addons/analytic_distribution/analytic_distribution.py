@@ -147,6 +147,7 @@ class analytic_distribution(osv.osv):
         if context is None:
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         # Have an analytic distribution on another account than analytic-a-holic account make no sense. So their analytic distribution is valid
         if account_id:
             account =  self.pool.get('account.account').read(cr, uid, account_id, ['is_analytic_addicted'])
@@ -184,6 +185,9 @@ class analytic_distribution(osv.osv):
                     if not analytic_acc_obj.is_account_active(fp_line.destination_id, posting_date):
                         return 'invalid'
                     if not analytic_acc_obj.is_account_active(fp_line.cost_center_id, posting_date):
+                        return 'invalid'
+                    if not dest_cc_link_obj.is_inactive_dcl(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id,
+                                                            posting_date, context=context):
                         return 'invalid'
                 if doc_date and fp_line.analytic_id and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
                     return 'invalid'
