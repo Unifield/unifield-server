@@ -492,6 +492,9 @@ class hq_entries(osv.osv):
     def _check_cc(self, cr, uid, ids, context=None):
         """
         At synchro time sets HQ entry to Not Run if the Cost Center used in the line doesn't exist or is inactive
+
+        Note: if the CC is active but the Dest/CC combination is inactive, the sync update is NOT blocked:
+              the HQ entry will be created with an invalid AD to be fixed before validation.
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
