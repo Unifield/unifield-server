@@ -99910,6 +99910,12 @@ msgid "%s: inactive FP (%s)"
 msgstr "%s: FP inactif (%s)"
 
 #. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:94
+#, python-format
+msgid "%s: inactive combination (%s - %s)"
+msgstr "%s: combinaison inactive (%s - %s)"
+
+#. module: account_hq_entries
 #: field:hq.entries,is_account_partner_compatible:0
 msgid "Account and partner compatible ?"
 msgstr "Compte et partenaire compatibles ?"
