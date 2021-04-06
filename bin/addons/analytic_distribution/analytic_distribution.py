@@ -186,8 +186,8 @@ class analytic_distribution(osv.osv):
                         return 'invalid'
                     if not analytic_acc_obj.is_account_active(fp_line.cost_center_id, posting_date):
                         return 'invalid'
-                    if not dest_cc_link_obj.is_inactive_dcl(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id,
-                                                            posting_date, context=context):
+                    if dest_cc_link_obj.is_inactive_dcl(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id,
+                                                        posting_date, context=context):
                         return 'invalid'
                 if doc_date and fp_line.analytic_id and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
                     return 'invalid'
