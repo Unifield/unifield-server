@@ -154,7 +154,8 @@ class analytic_distribution(osv.osv):
                 return 'valid'
         if not distrib_id:
             if parent_id:
-                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context, amount=amount)
+                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context=context,
+                                                    doc_date=doc_date, posting_date=posting_date, manual=manual, amount=amount)
             return 'none'
         distrib = self.browse(cr, uid, distrib_id)
         if not distrib.funding_pool_lines:
