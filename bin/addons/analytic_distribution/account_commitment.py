@@ -189,8 +189,9 @@ class account_commitment(osv.osv):
                             raise osv.except_osv(_('Warning'), _('No analytic distribution found for %s %s') % (cl.account_id.code, cl.initial_amount))
                         for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                             for distrib_line in distrib_lines:
-                                if (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start) or \
-                                        (distrib_line.analytic_id.date and date >= distrib_line.analytic_id.date):
+                                if distrib_line.analytic_id and \
+                                    (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start or
+                                    distrib_line.analytic_id.date and date >= distrib_line.analytic_id.date):
                                     raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') %
                                                          (distrib_line.analytic_id.name,))
                         dest_cc_tuples = set()  # check each Dest/CC combination only once
