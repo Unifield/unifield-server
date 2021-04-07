@@ -470,7 +470,8 @@ class product_product(osv.osv):
             ret.joins['"product_product"'] = [('"stock_mission_report_line_location"', 'id', 'product_id', 'LEFT JOIN')]
             ret.where_clause.append(' "stock_mission_report_line_location"."remote_instance_id" is NULL AND "stock_mission_report_line_location"."location_id" in %s ')
             ret.where_clause_params.append(tuple(location_ids))
-            ret.having = ' GROUP BY "product_product"."id" HAVING sum("stock_mission_report_line_location"."quantity") >0 '
+            ret.having_group_by = ' GROUP BY "product_product"."id" '
+            ret.having = ' HAVING sum("stock_mission_report_line_location"."quantity") >0 '
         if filter_in_any_product_list:
             ret.tables.append('"product_list_line"')
             ret.joins['"product_product"'] = [('"product_list_line"', 'id', 'name', 'INNER JOIN')]
