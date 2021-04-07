@@ -852,8 +852,15 @@ class substitute_item(osv.osv_memory):
             context = {}
 
         comment = ''
-        if self._name == 'substitute.item':
-            comment = 'a'
+        if context.get('subs_ids'):
+            if not isinstance(context.get('subs_ids'), (int, long)):
+                context['subs_ids'] = context.get('subs_ids')[0]
+            sub_comps = self.pool.get('substitute').browse(cr, uid, context['subs_ids']).composition_item_ids
+        if self._name == 'substitute.item' and context.get('comp_item_ids'):
+            comp_item_ids = context.get('comp_item_ids')[0][2]
+            if len(comp_item_ids) == 1:
+                comp_items = self.pool.get('substitute.item.mirror').browse(cr, uid, comp_item_ids, fields_to_fetch=['comment'], context=context)
+                comment = comp_items[0].comment or ''
 
         return comment
 
