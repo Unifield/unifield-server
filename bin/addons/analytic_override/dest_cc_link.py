@@ -31,6 +31,12 @@ class dest_cc_link(osv.osv):
     _trace = True
 
     def _get_current_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns a dict with key = value = current DB id.
+
+        current_id is an internal field used to make the CC read-only except for new lines (= without DB id).
+        The goal is to prevent the edition of a Dest CC Link with a CC linked to a different coordo than the previous CC.
+        """
         res = {}
         for i in ids:
             res[i] = i
@@ -80,40 +86,20 @@ class dest_cc_link(osv.osv):
                                                     'has a Posting Date outside the activation dates selected.') %
                                  (dcl.dest_id.code or '', dcl.cc_id.code or ''))
 
-    def _bypass(self, vals, context=None):
-        """
-        Returns True if at sync time the CC to be added to the Dest CC Link isn't found. It means that the CC doesn't
-        exist in the current instance, so:
-        - in case of a creation: the related Dest CC Link should be ignored.
-        - in case of an edition: the related Dest CC Link should be DELETED (UC: in HQ create a Dest CC Link with a CC
-            linked to a coordo, sync to this coordo, then edit the link with a CC not linked to this coordo).
-
-        TODO JN: is this way of proceeding OK? Should we instead use an owner_field to send the updates only to the
-        coordos in which the CCs exist? Will this cover the UC described just above?
-        """
-        if context is None:
-            context = {}
-        return context.get('sync_update_execution') and 'cc_id' in vals and not vals['cc_id']
-
     def create(self, cr, uid, vals, context=None):
         """
-        See _bypass and _check_analytic_lines
+        See _check_analytic_lines
         """
-        res = False
-        if not self._bypass(vals, context=context):
-            res = super(dest_cc_link, self).create(cr, uid, vals, context=context)
-            self._check_analytic_lines(cr, uid, res, context=context)
+        res = super(dest_cc_link, self).create(cr, uid, vals, context=context)
+        self._check_analytic_lines(cr, uid, res, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
         """
-        See _bypass and _check_analytic_lines
+        See _check_analytic_lines
         """
-        if self._bypass(vals, context=context):
-            res = self.unlink(cr, uid, ids, context=context)
-        else:
-            res = super(dest_cc_link, self).write(cr, uid, ids, vals, context=context)
-            self._check_analytic_lines(cr, uid, ids, context=context)
+        res = super(dest_cc_link, self).write(cr, uid, ids, vals, context=context)
+        self._check_analytic_lines(cr, uid, ids, context=context)
         return res
 
     def is_inactive_dcl(self, cr, uid, dest_id, cc_id, posting_date, context=None):

@@ -111998,6 +111998,11 @@ msgid "This wizard enables you to select several Cost Centers at once to be adde
 msgstr "Cet assistant vous permet de sélectionner en une fois plusieurs Centres de Coût à ajouter à la Destination. Les dates d'activation et d'inactivation des Combinaisons Dest / CC associées resteront vides."
 
 #. module: analytic_override
+#: field:dest.cc.link,current_id:0
+msgid "DB Id (used by the UI)"
+msgstr "Id BD (utilisé par l'UI)"
+
+#. module: analytic_override
 #: code:addons/analytic_override/analytic_line.py:192
 #, python-format
 msgid "The combination \"%s - %s\" is not active."
