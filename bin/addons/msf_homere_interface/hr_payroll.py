@@ -43,6 +43,7 @@ class hr_payroll(osv.osv):
         # Prepare some values
         res = {}
         ad_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -82,6 +83,10 @@ class hr_payroll(osv.osv):
             if line.destination_id:
                 dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, context={'date': line.date})
                 if dest and dest.filter_active is False:
+                    res[line.id] = 'invalid'
+                    continue
+            if line.destination_id and line.cost_center_id:
+                if dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context):
                     res[line.id] = 'invalid'
                     continue
             # G Check
