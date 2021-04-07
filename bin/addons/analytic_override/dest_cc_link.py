@@ -30,6 +30,12 @@ class dest_cc_link(osv.osv):
     _rec_name = "cc_id"
     _trace = True
 
+    def _get_current_id(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for i in ids:
+            res[i] = i
+        return res
+
     _columns = {
         'dest_id': fields.many2one('account.analytic.account', string="Destination", required=True,
                                    domain="[('category', '=', 'DEST'), ('type', '!=', 'view')]", ondelete='cascade', select=1),
@@ -38,6 +44,7 @@ class dest_cc_link(osv.osv):
         'cc_name': fields.related('cc_id', 'name', type="char", string="Cost Center Name", readonly=True, write_relate=False, store=False),
         'active_from': fields.date('Activation Combination Dest / CC from', required=False),
         'inactive_from': fields.date('Inactivation Combination Dest / CC from', required=False),
+        'current_id': fields.function(_get_current_id, method=1, type='integer', internal=1, string="DB Id (used by the UI)"),
     }
 
     _order = 'dest_id, cc_id'

@@ -147,7 +147,8 @@
                                    on_change="on_change_cc_ids(dest_cc_link_ids)"
                                    context="{'current_destination_id': record_id}">
                                 <tree string="Cost Centers" editable="bottom">
-                                    <field name="cc_id" string="Code"/>
+                                    <field name="current_id" invisible="1" />
+                                    <field name="cc_id" string="Code" attrs="{'readonly': [('current_id', '!=', False)]}"/>
                                     <field name="cc_name" string="Name"/>
                                     <field name="active_from"/>
                                     <field name="inactive_from"/>
