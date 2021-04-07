@@ -69,8 +69,6 @@ class dest_cc_link(osv.osv):
                     if dcl.inactive_from:
                         dcl_dom.append(('date', '>=', dcl.inactive_from))
                     if aal_obj.search_exist(cr, uid, dcl_dom, context=context):
-                        # TODO JN: fix the display of this message [+ translate the message once it's OK]
-                        # ==> With log called on the analytic acc. obj? With view_id in context?
                         self.log(cr, uid, dcl.id, _('At least one Analytic Journal Item using the combination \"%s - %s\" '
                                                     'has a Posting Date outside the activation dates selected.') %
                                  (dcl.dest_id.code or '', dcl.cc_id.code or ''))
