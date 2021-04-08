@@ -47142,7 +47142,7 @@ msgstr "Pacific/Saipan"
 #: code:addons/analytic_distribution/wizard/commitment_analytic_reallocation.py:140
 #, python-format
 msgid "Non compatible entries found: %s"
-msgstr "Non compatible entries found: %s"
+msgstr "Ecritures non compatibles trouvées : %s"
 
 #. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, product_nomenclature, return_claim, sync_client, res_currency_tables, supplier_catalogue, import_data, stock_batch_recall, stock, product, reason_types_moves, consumption_calculation, register_accounting, specific_rules, kit, base, account_period_closing_level, account_subscription, msf_cross_docking, purchase, account, msf_outgoing, resource, procurement_auto, msf_config_locations, sale, account_override, sourcing, sync_so, res_currency_functional, account_hq_entries
 #: code:addons/account/account.py:445
@@ -100220,6 +100220,12 @@ msgstr "Date de la DEST"
 #, python-format
 msgid "CC date"
 msgstr "Date du CC"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_line.py:563
+#, python-format
+msgid "DEST/CC combination date"
+msgstr "Date de la combinaison DEST/CC"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_line.py:548

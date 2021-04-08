@@ -522,6 +522,7 @@ class analytic_line(osv.osv):
                         new_cc_id, new_cc_br,
                         new_fp_id, new_fp_br):
             ad_obj = self.pool.get('analytic.distribution')
+            dest_cc_link_obj = self.pool.get('dest.cc.link')
             if not general_account_br.is_analytic_addicted:
                 res.append((id, entry_sequence, ''))
                 return False
@@ -557,6 +558,9 @@ class analytic_line(osv.osv):
                 return False
             if not check_date(new_cc_br, posting_date):
                 res.append((id, entry_sequence, _('CC date')))
+                return False
+            if new_dest_id and new_cc_id and dest_cc_link_obj.is_inactive_dcl(cr, uid, new_dest_id, new_cc_id, posting_date, context=context):
+                res.append((id, entry_sequence, _('DEST/CC combination date')))
                 return False
             if new_fp_id != msf_pf_id and not \
                     check_date(new_fp_br, posting_date):
