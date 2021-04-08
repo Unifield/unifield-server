@@ -42,18 +42,47 @@ class dest_cc_link(osv.osv):
             res[i] = i
         return res
 
+    def _get_cc_code(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns a dict with key = Dest CC Link id, and value = related Cost Center code.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for dcl in self.browse(cr, uid, ids, fields_to_fetch=['cc_id'], context=context):
+            res[dcl.id] = dcl.cc_id.code or ''
+        return res
+
+    def _get_dest_cc_link_to_update(self, cr, uid, analytic_acc_ids, context=None):
+        """
+        Returns the list of Dest CC Links for which the CC code should be updated.
+        """
+        if context is None:
+            context = {}
+        if isinstance(analytic_acc_ids, (int, long)):
+            analytic_acc_ids = [analytic_acc_ids]
+        return self.pool.get('dest.cc.link').search(cr, uid, [('cc_id', 'in', analytic_acc_ids)], order='NO_ORDER', context=context)
+
     _columns = {
         'dest_id': fields.many2one('account.analytic.account', string="Destination", required=True,
                                    domain="[('category', '=', 'DEST'), ('type', '!=', 'view')]", ondelete='cascade', select=1),
-        'cc_id': fields.many2one('account.analytic.account', "Cost Center", required=True,
+        'cc_id': fields.many2one('account.analytic.account', "Cost Center", required=True, sort_column='cc_code',
                                  domain="[('category', '=', 'OC'), ('type', '!=', 'view')]", ondelete='cascade', select=1),
+        'cc_code': fields.function(_get_cc_code, method=True, string="Cost Center Code", type='char', size=24,
+                                   readonly=True,
+                                   store={
+                                       'account.analytic.account': (_get_dest_cc_link_to_update, ['code'], 10),
+                                       'dest.cc.link': (lambda self, cr, uid, ids, c=None: ids, ['cc_id'], 20),
+                                   }),
         'cc_name': fields.related('cc_id', 'name', type="char", string="Cost Center Name", readonly=True, write_relate=False, store=False),
         'active_from': fields.date('Activation Combination Dest / CC from', required=False),
         'inactive_from': fields.date('Inactivation Combination Dest / CC from', required=False),
         'current_id': fields.function(_get_current_id, method=1, type='integer', internal=1, string="DB Id (used by the UI)"),
     }
 
-    _order = 'dest_id, cc_id'
+    _order = 'dest_id, cc_code, id'
 
     _sql_constraints = [
         ('dest_cc_uniq', 'UNIQUE(dest_id, cc_id)', 'Each Cost Center can only be added once to the same Destination.'),

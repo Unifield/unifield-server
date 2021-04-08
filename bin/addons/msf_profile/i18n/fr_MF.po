@@ -111960,6 +111960,11 @@ msgid "Destination / Cost Center Combination"
 msgstr "Combinaison Destination / Centre de Coût"
 
 #. module: analytic_override
+#: field:dest.cc.link,cc_code:0
+msgid "Cost Center Code"
+msgstr "Code du Centre de Coût"
+
+#. module: analytic_override
 #: field:dest.cc.link,cc_name:0
 msgid "Cost Center Name"
 msgstr "Nom du Centre de Coût"
