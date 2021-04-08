@@ -823,7 +823,7 @@ MochiKit.Base.update(ListView.prototype, {
         var self = this;
         var req = openobject.http.postJSON('/openerp/listgrid/save', args);
 
-        var $current_record = jQuery('table[id="'+this.name+'_grid'+'"]').find('tr.grid-row[record="'+id+'"]');
+        var $current_record = jQuery('table[id="'+this.name+'_grid'+'"]').find('tr.grid-row[record="'+(id||-1)+'"]');
         req.addCallback(function(obj) {
             if (obj.error) {
                 error_display(obj.error);

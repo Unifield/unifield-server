@@ -510,8 +510,12 @@ function onBooleanClicked(name){
  */
 function getFormData(extended, include_readonly, parentNode) {
 
+    var from_evaldom_ctx = false;
     if (!parentNode) {
         var parentNode = openobject.dom.get('_terp_list') || document.forms['view_form'];
+        if (extended == 1) {
+            from_evaldom_ctx = true;
+        }
     }
 
     var frm = {};
@@ -617,7 +621,7 @@ function getFormData(extended, include_readonly, parentNode) {
             }
 
             /* onchange: extended =1, save extended = 3 */
-            if (extended != 2 && kind == 'float' && $this.attr('en_thousand_sep')) {
+            if ((extended == 3 || !from_evaldom_ctx) && kind == 'float' && $this.attr('en_thousand_sep')) {
                 attrs['en_thousand_sep'] = $this.attr('en_thousand_sep');
             }
 
