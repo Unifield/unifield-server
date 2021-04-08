@@ -63482,7 +63482,7 @@ msgstr "Xor"
 #: model:ir.actions.act_window,name:msf_tools.export_report_stopped_products_action
 #: model:ir.ui.menu,name:msf_tools.export_report_stopped_products_menu
 msgid "Export Phase Out Products"
-msgstr "Exporter produits supprimés"
+msgstr "Exporter Produits Supprimés"
 
 #. module: account
 #: model:ir.actions.report.xml,name:account.account_central_journal

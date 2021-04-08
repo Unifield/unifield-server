@@ -198,7 +198,6 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
         smrl_ids = smrl_obj.search(self.cr, self.uid, [
             ('full_view', '=', False),
             ('product_state', '=', 'phase_out'),
-            ('product_active', '=', True),
             '|', ('internal_qty', '!=', 0),
             ('in_pipe_qty', '!=', 0)
         ], context=self.localcontext)
