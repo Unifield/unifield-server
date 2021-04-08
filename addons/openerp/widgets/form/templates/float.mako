@@ -4,8 +4,10 @@
         kind="${kind}" 
         name='${name}' 
         id ='${name}' 
-        % if not en_thousand_sep and value:
+        % if not en_thousand_sep:
             en_thousand_sep = 'False'
+        % endif
+        % if not en_thousand_sep and value:
             value="${value.replace(',', '')}"
         % else:
             value="${value}"
