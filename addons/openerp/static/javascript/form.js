@@ -614,6 +614,11 @@ function getFormData(extended, include_readonly, parentNode) {
                 attrs['required'] = 1;
             }
 
+            /* onchange: extended =1, save extended = 3 */
+            if (extended != 2 && kind == 'float' && $this.attr('en_thousand_sep')) {
+                attrs['en_thousand_sep'] = $this.attr('en_thousand_sep');
+            }
+
             switch (kind) {
                 case "picture":
                     name = this.id;
