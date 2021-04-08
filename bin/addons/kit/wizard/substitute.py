@@ -355,6 +355,7 @@ class substitute(osv.osv_memory):
                                'item_exp': item.exp_substitute_item,
                                'item_kit_id': obj.kit_id.id,
                                'item_description': 'Replacement Item from %s location.'%item.location_id_substitute_item.name,
+                               'comment': item.comment or '',
                                }
                 item_obj.create(cr, uid, item_values, context=context)
             # confirm - force availability and validate the internal picking
