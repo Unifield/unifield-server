@@ -146,6 +146,19 @@ class dest_cc_link(osv.osv):
                 inactive_dcl = (dcl.active_from and posting_date < dcl.active_from) or (dcl.inactive_from and posting_date >= dcl.inactive_from)
         return inactive_dcl
 
+    def on_change_cc_id(self, cr, uid, ids, cc_id):
+        """
+        Fills in the CC Name as soon as a CC is selected
+        """
+        res = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        if cc_id:
+            name = analytic_acc_obj.read(cr, uid, cc_id, ['name'])['name']
+        else:
+            name = False
+        res['value'] = {'cc_name': name, }
+        return res
+
 
 dest_cc_link()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
