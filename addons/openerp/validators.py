@@ -94,7 +94,7 @@ class Float(formencode.validators.Number):
                 raise ValueError
             value = format.parse_decimal(value)
         except ValueError:
-            raise formencode.api.Invalid(_('Invalid literal for float :%s') % value, value, state)
+            raise formencode.api.Invalid(_('Invalid literal for float'), value, state)
         return value
 
 class FloatTime(Float):

@@ -848,6 +848,15 @@ MochiKit.Base.update(ListView.prototype, {
                         $req_field.removeClass('errorfield');
                     }
                 }
+                if (obj.error_field) {
+                    var $field_error = $current_record.find('td [id="'+'_terp_listfields/'+obj.error_field+'"]');
+                    if ($field_error.length) {
+                        $field_error.addClass('errorfield');
+                        if (!$focus_field) {
+                            $focus_field = $field_error;
+                        }
+                    }
+                }
                 if($focus_field) {
                     $focus_field.focus();
                 }

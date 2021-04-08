@@ -261,8 +261,10 @@ function validate_required(form){
         if (!value) {
             jQuery(elem2).addClass('errorfield');
             result = false;
-        }
-        else
+        } else if (kind == 'float' && jQuery(elem).attr('en_thousand_sep') && value.indexOf(',') !== -1) {
+            jQuery(elem2).addClass('errorfield');
+            result = false;
+        } else
             if (jQuery(elem2).hasClass('errorfield')) {
                 jQuery(elem2).removeClass('errorfield');
             }
