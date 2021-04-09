@@ -104,8 +104,11 @@
                             </page>
                             <page string="Products">
                                 <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view')]" />
+                                <button name="set_src_location" string="Set Source on selected lines" icon="gtk-go-down" colspan="1"  type="object" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('type_return_claim', 'not in', ['supplier', 'transport'])]}" set_ids="product_line_ids_return_claim"/>
+                                <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4"
-                                    attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}">
+                                    attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}"
+                                    o2m_selectable="2">
                                     <tree string="Products" editable="top" colors="red:integrity_status_claim_product_line != 'empty'">
                                         <field name="name" invisible="True" />
                                         <field name="product_id_claim_product_line" domain="[('picking_ids', '=', parent.picking_id_return_claim)]"
@@ -133,8 +136,9 @@
                                         <field name="uom_id_claim_product_line" on_change="onchange_uom_qty(uom_id_claim_product_line, qty_claim_product_line)" />
                                         <field name="hidden_stock_available_claim_product_line" invisible="False" />
                                         <field name="price_unit_claim_product_line" string="Price Unit" />
+                                        <field name="price_currency_claim_product_line" />
                                         <field name="stock_move_id_claim_product_line" invisible="True" />
-                                        
+
                                         <field name="type_check" invisible="True" />
                                         <field name="hidden_batch_management_mandatory_claim_product_line" string="Lot" />
                                         <field name="hidden_perishable_mandatory_claim_product_line" string="Exp" />

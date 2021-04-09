@@ -493,6 +493,16 @@ class return_claim(osv.osv):
                               'state': state}
         return result
 
+    def set_src_location(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning!'), _('Please select at least one line'))
+
+        claim = self.browse(cr, uid, ids[0], fields_to_fetch=['default_src_location_id_return_claim'], context=context)
+        self.pool.get('claim.product.line').write(cr, uid, context['button_selected_ids'], {'src_location_id_claim_product_line': claim.default_src_location_id_return_claim.id}, context=context)
+        return True
+
     def check_product_lines_integrity(self, cr, uid, ids, context=None):
         '''
         integrity check on product lines
@@ -1437,20 +1447,21 @@ class claim_event(osv.osv):
             'claim_name': obj.return_claim_id_claim_event.name,
             'already_shipped': False,
         }
-        move_values = {'type': 'out',
-                       'reason_type_id': context['common']['rt_goods_return'],
-                       'location_dest_id': data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1],
-                       }
+        move_values = {
+            'type': 'out',
+            'reason_type_id': context['common']['rt_goods_return'],
+            'location_dest_id': data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1],
+        }
         # update the picking
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
-        # the destination location of the processed IN/INT moves must be the source of the PICK moves
+
+        # the src location of OUT must be the destination of the pick that raises the claim
         for i, move in enumerate(event_picking.move_lines):
             move_values_set_loc = move_values
-            # set the same line number as the original move
-            move_values_set_loc.update({'location_id': origin_picking.move_lines[i].location_dest_id.id})
-            # get the move values according to claim type
+            if obj.from_picking_wizard_claim_event:
+                move_values_set_loc.update({'location_id': origin_picking.move_lines[i].location_dest_id.id})
             move_obj.write(cr, uid, move.id, move_values_set_loc, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
@@ -1607,11 +1618,12 @@ class claim_event(osv.osv):
         pick_obj.write(cr, uid, [event_picking.id], picking_values, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking.id], picking_values, context=context)
-        # the destination location of the processed IN/INT moves must be the source of the PICK moves
+
+        # the src location of OUT must be the destination of the pick that raises the claim
         for i, move in enumerate(event_picking.move_lines):
             move_values_set_loc = move_values
-            # set the same line number as the original move
-            move_values_set_loc.update({'location_id': origin_picking.move_lines[i].location_dest_id.id})
+            if obj.from_picking_wizard_claim_event:
+                move_values_set_loc.update({'location_id': origin_picking.move_lines[i].location_dest_id.id})
             # get the move values according to claim type
             move_obj.write(cr, uid, move.id, move_values_set_loc, context=context)
         # update the destination location for each move
@@ -1661,6 +1673,7 @@ class claim_event(osv.osv):
                 'target': 'crash',
                 'domain': '[]',
                 'context': context}
+
 
     def _do_process_event(self, cr, uid, ids, context=None):
         """
@@ -1726,7 +1739,8 @@ class claim_event(osv.osv):
             if not integrity_check:
                 return False
 
-            # Create picking object if not coming from chained IN picking process
+
+            # claim from scratch: create the template picking
             if not event.from_picking_wizard_claim_event:
                 claim = event.return_claim_id_claim_event
                 # we use default values as if the picking was from chained creation (so type is 'internal')
@@ -2143,6 +2157,7 @@ class claim_product_line(osv.osv):
             kit_check = product_obj.type == 'product' and product_obj.subtype == 'kit'
             result.setdefault('value', {})['hidden_kit_claim_product_line'] = kit_check
             result.setdefault('value', {})['price_unit_claim_product_line'] = product_obj.product_tmpl_id.standard_price
+            result.setdefault('value', {})['price_currency_claim_product_line'] = product_obj.currency_id.id
 
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
@@ -2202,7 +2217,7 @@ class claim_product_line(osv.osv):
     _columns = {'integrity_status_claim_product_line': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
                 'name': fields.char(string='Name', size=1024),  # auto data from create/write
                 'qty_claim_product_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='uom_id_claim_product_line'),
-                'price_unit_claim_product_line': fields.float(string='Currency', digits_compute=dp.get_precision('Account'), required=True),
+                'price_unit_claim_product_line': fields.float(string='Price Unit', digits_compute=dp.get_precision('Account'), required=True),
                 # many2one
                 'claim_id_claim_product_line': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
                 'product_id_claim_product_line': fields.many2one('product.product', string='Product', required=True),
@@ -2212,7 +2227,7 @@ class claim_product_line(osv.osv):
                 'asset_id_claim_product_line' : fields.many2one('product.asset', string='Asset'),
                 'composition_list_id_claim_product_line': fields.many2one('composition.kit', string='Kit'),
                 'src_location_id_claim_product_line': fields.many2one('stock.location', string='Src Location'),
-                'price_currency_claim_product_line': fields.many2one('res.currency', string='Currency'),
+                'price_currency_claim_product_line': fields.many2one('res.currency', string='Currency', required=1),
                 'stock_move_id_claim_product_line': fields.many2one('stock.move', string='Corresponding IN stock move'),  # value from wizard process
                 'type_check': fields.char(string='Type Check', size=1024,),  # default value
                 # functions
