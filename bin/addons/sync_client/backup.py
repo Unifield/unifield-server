@@ -363,7 +363,7 @@ class BackupConfig(osv.osv):
             except Exception, e:
                 # If there is exception with the opening of the file
                 if isinstance(e, IOError):
-                    error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(e.strerror, e.filename)
+                    error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(tools.ustr(e.strerror), tools.ustr(e.filename))
                 else:
                     error = "Backup Error: %s. Please provide the correct path or deactivate the backup feature." % e
                 self._logger.exception('Cannot perform the backup %s.' % error)
@@ -372,12 +372,11 @@ class BackupConfig(osv.osv):
                 cr.commit()
 
             res = tools.pg_dump(cr.dbname, outfile)
-            version_instance_module.create(cr, uid, {'backup_path': outfile, 'backup_size': os.path.getsize(outfile), 'backup_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
 
             # check the backup file
             error = None
             if res:
-                error = "Couldn't dump database : pg_dump return an error for path %s." % outfile
+                error = "Couldn't dump database : pg_dump returns an error for path %s." % outfile
             elif not os.path.isfile(outfile):
                 error = 'The backup file could not be found on the disk with path %s' % outfile
             elif not os.stat(outfile).st_size > 0:
@@ -387,6 +386,8 @@ class BackupConfig(osv.osv):
                 # commit to not lock the sql transaction
                 cr.commit()
                 raise osv.except_osv(_('Error! Cannot perform the backup.'), error)
+            else:
+                version_instance_module.create(cr, uid, {'backup_path': outfile, 'backup_size': os.path.getsize(outfile), 'backup_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
             return "Backup done"
         raise osv.except_osv(_('Error! Cannot perform the backup'), "No backup path defined")
 

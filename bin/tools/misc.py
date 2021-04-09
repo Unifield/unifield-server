@@ -281,6 +281,10 @@ def pg_dump(db_name, outfile=False):
         cmd.append(db_name)
         if outfile:
             res = exec_pg_command(*tuple(cmd))
+            if res != 0:
+                error_txt = 'pg_dump return code %s, outfile: %s' % (res, outfile)
+                _logger.error(error_txt)
+                raise Exception(error_txt)
         else:
             # TODO: current pg_dump method do not return the same type of
             # variable depending of outfile, if outfile, it return an int, else
