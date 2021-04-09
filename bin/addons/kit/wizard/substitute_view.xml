@@ -39,7 +39,7 @@
                         </field>
                     </group>
                     <group col="4" colspan="4">
-                        <field name="replacement_item_ids" nolabel="True" context="{'comp_item_ids': composition_item_ids, 'subs_ids': active_ids or wizard_ids or active_id}">
+                        <field name="replacement_item_ids" nolabel="True" context="{'comp_item_ids': composition_item_ids">
                         	<tree string="Products from the stock to the Kit" editable="top" colors="red:integrity_status_func_substitute_item != 'empty' or availability_status_hidden_func_substitute_item != 'available'">
                         		<field name="product_id_substitute_item"
                 					on_change="on_change_product_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,parent.composition_item_ids,comment, context)"
