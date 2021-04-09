@@ -692,7 +692,7 @@ class substitute_item(osv.osv_memory):
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
 
-    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, composition_item_ids=False, comment=False, context=None):
         '''
         the product changes, set the hidden flag if necessary
         '''
@@ -715,6 +715,12 @@ class substitute_item(osv.osv_memory):
             result.setdefault('value', {})['hidden_batch_management_mandatory'] = product.batch_management
             result.setdefault('value', {})['hidden_perishable_mandatory'] = product.perishable
             result.setdefault('value', {})['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
+        # Set the comment of the product to substitute if there is only one in the "Products to remove from the Kit"
+        if not comment and composition_item_ids:
+            comp_item_ids = composition_item_ids[0][2]
+            if len(comp_item_ids) == 1:
+                comp_items = self.pool.get('substitute.item.mirror').browse(cr, uid, comp_item_ids, fields_to_fetch=['comment'], context=context)
+                result.setdefault('value', {})['comment'] = comp_items[0].comment or ''
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
@@ -853,10 +859,6 @@ class substitute_item(osv.osv_memory):
             context = {}
 
         comment = ''
-        if context.get('subs_ids'):
-            if not isinstance(context.get('subs_ids'), (int, long)):
-                context['subs_ids'] = context.get('subs_ids')[0]
-            sub_comps = self.pool.get('substitute').browse(cr, uid, context['subs_ids']).composition_item_ids
         if self._name == 'substitute.item' and context.get('comp_item_ids'):
             comp_item_ids = context.get('comp_item_ids')[0][2]
             if len(comp_item_ids) == 1:
