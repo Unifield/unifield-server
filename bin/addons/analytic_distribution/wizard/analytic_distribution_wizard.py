@@ -1083,7 +1083,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
             distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
-            if not distrib_id:
+            if not distrib_id or not self.pool.get('analytic.distribution').exists(cr, uid, distrib_id, context=context):
                 # create a new analytic distribution
                 analytic_vals = {}
                 if wiz.partner_type:#UF-2138: added the ref to partner type of FO/PO
