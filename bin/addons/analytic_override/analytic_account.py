@@ -282,11 +282,20 @@ class analytic_account(osv.osv):
                 cc = arg[2]
                 if operator != '=' or not isinstance(cc, (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter not implemented on Destinations.'))
-                all_dest_ids = self.search(cr, uid, [('category', '=', 'DEST')], context=context)
-                compatible_dest_ids = []
-                for dest in self.browse(cr, uid, all_dest_ids, fields_to_fetch=['allow_all_cc', 'dest_cc_link_ids'], context=context):
-                    if dest.allow_all_cc or (cc and cc in [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]):
-                        compatible_dest_ids.append(dest.id)
+                if not cc:
+                    # by default if no CC is selected display only the Destinations compatible with all CC
+                    compatible_dest_ids = self.search(cr, uid, [('category', '=', 'DEST'),
+                                                                ('type', '!=', 'view'),
+                                                                ('allow_all_cc', '=', True)], context=context)
+                else:
+                    compatible_dest_sql = """
+                        SELECT dest.id
+                        FROM account_analytic_account dest
+                        WHERE dest.category = 'DEST' AND dest.type != 'view'
+                        AND (dest.allow_all_cc = 't' OR dest.id IN (SELECT dest_id FROM dest_cc_link WHERE cc_id = %s));
+                    """
+                    cr.execute(compatible_dest_sql, (cc,))
+                    compatible_dest_ids = [x[0] for x in cr.fetchall()]
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
