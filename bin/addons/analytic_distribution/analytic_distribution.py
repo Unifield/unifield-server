@@ -212,7 +212,7 @@ class analytic_distribution(osv.osv):
                     return 'invalid'
         return 'valid'
 
-    def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, context=None):
+    def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, posting_date=False, context=None):
         """
         Give analytic state from the given information.
         Return result and some info if needed.
@@ -223,6 +223,7 @@ class analytic_distribution(osv.osv):
         # Prepare some values
         res = 'valid'
         info = ''
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
         # DISTRIBUTION VERIFICATION
         # Check that destination is compatible with account
@@ -231,6 +232,9 @@ class analytic_distribution(osv.osv):
         # Check that Destination and Cost Center are compatible
         if not self.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
             return 'invalid', _('Cost Center not compatible with destination')
+        # Check that their combination is active
+        if posting_date and dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, posting_date):
+            return 'invalid', _('Inactive DEST/CC combination')
         # Check that cost center is compatible with FP
         if not self.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id, context=context):
             return 'invalid', _('Cost Center not compatible with FP')

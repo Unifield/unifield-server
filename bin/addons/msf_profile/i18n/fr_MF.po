@@ -100233,6 +100233,12 @@ msgstr "Date de la combinaison DEST/CC"
 msgid "FP date"
 msgstr "Date du FP"
 
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_distribution.py:237
+#, python-format
+msgid "Inactive DEST/CC combination"
+msgstr "Combinaison DEST/CC inactive"
+
 #. module: msf_printed_documents
 #: code:addons/msf_printed_documents/report/report_reception.py:80
 #, python-format
