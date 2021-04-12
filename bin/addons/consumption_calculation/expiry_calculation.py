@@ -408,7 +408,7 @@ class product_likely_expire_report(osv.osv):
                 if report.segment_id.rule != 'cycle':
                     segment_product_amc[segment_line.product_id.id] = local_amc.get(segment_line.id, 0)
                 else:
-                    for x in xrange(1, 13):
+                    for x in xrange(1, 19):
                         fmc_from = getattr(segment_line, 'rr_fmc_from_%d'%x)
                         fmc_to = getattr(segment_line, 'rr_fmc_to_%d'%x)
                         fmc_value = getattr(segment_line, 'rr_fmc_%d'%x)
