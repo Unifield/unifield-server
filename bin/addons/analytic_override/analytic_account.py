@@ -289,10 +289,10 @@ class analytic_account(osv.osv):
                                                                 ('allow_all_cc', '=', True)], context=context)
                 else:
                     compatible_dest_sql = """
-                        SELECT dest.id
-                        FROM account_analytic_account dest
-                        WHERE dest.category = 'DEST' AND dest.type != 'view'
-                        AND (dest.allow_all_cc = 't' OR dest.id IN (SELECT dest_id FROM dest_cc_link WHERE cc_id = %s));
+                        SELECT id
+                        FROM account_analytic_account
+                        WHERE category = 'DEST' AND type != 'view'
+                        AND (allow_all_cc = 't' OR id IN (SELECT dest_id FROM dest_cc_link WHERE cc_id = %s));
                     """
                     cr.execute(compatible_dest_sql, (cc,))
                     compatible_dest_ids = [x[0] for x in cr.fetchall()]
