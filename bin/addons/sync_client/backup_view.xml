@@ -219,7 +219,8 @@ action = {
           <group colspan="4" col="6">
               <field name="name"/>
               <field name="mtime"/>
-              <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward"/>
+              <field name="failed" invisible="1" />
+              <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward" attrs="{'invisible': [('failed', '=', True)]}"/>
          </group>
         </form>
       </field>
