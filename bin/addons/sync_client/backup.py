@@ -449,6 +449,7 @@ class backup_download(osv.osv):
         'name': fields.char("File name", size=128, readonly=True),
         'path': fields.text("File path", readonly=True),
         'mtime': fields.datetime("Modification Time", readonly=True),
+        'failed': fields.boolean('Failed'),
     }
 
     def _get_bck_path(self, cr, uid, context=None):
@@ -469,13 +470,14 @@ class backup_download(osv.osv):
         path = self._get_bck_path(cr, uid, context)
         if path:
             for f in os.listdir(path):
-                if f.endswith('.dump'):
+                if f.endswith('.dump') or f.endswith('.KO'):
                     full_name = os.path.join(path, f)
                     if os.path.isfile(full_name):
+                        failed = f.endswith('.KO')
                         stat = os.stat(full_name)
                         #US-653: Only list the files with size > 0 to avoid web side error
-                        if stat.st_size:
-                            data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime))}
+                        if stat.st_size or failed:
+                            data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)), 'failed': failed}
                             if full_name in all_bck:
                                 self.write(cr, uid, [all_bck[full_name]], data, context=context)
                                 del all_bck[full_name]
@@ -498,14 +500,20 @@ class backup_download(osv.osv):
         }
 
     def get_content(self, cr, uid, ids, context=None):
-        name = self.read(cr, uid, ids[0], ['name'], context=context)['name']
-        name = name.replace('.dump', '')
+        f_data = self.read(cr, uid, ids[0], ['name', 'failed'], context=context)
+        if f_data['failed']:
+            raise osv.except_osv(_('Warning'), _('This is a failed backup'))
+
+        name = f_data['name'].replace('.dump', '')
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'backup.download',
             'datas': {'ids': [ids[0]], 'target_filename': name}
         }
 
+    _default = {
+        'failed': False,
+    }
 backup_download()
 
 class msf_instance_cloud_progress(osv.osv_memory):

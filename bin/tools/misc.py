@@ -299,6 +299,7 @@ def pg_dump(db_name, outfile=False):
         if outfile:
             try:
                 os.remove(outfile)
+                open('%s.KO' % outfile, 'a').close()
             except:
                 pass
             res = -1
