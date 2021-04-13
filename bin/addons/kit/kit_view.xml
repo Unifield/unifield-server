@@ -397,7 +397,7 @@
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
-            		<field name="state" invisible="True" />
+            		<field name="state" string="Status" />
             	</tree>
             </field>
 		</record>
@@ -431,7 +431,12 @@
             <field name="priority">1</field><!-- because of links from product.product -->
             <field name="arch" type="xml">
                 <search string="Search Real Kit Composition Item">
-                    <field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" string="Kit" />
+                    <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
+                    <filter icon="gtk-execute" name="in_production" string="In Production" domain="[('state','=', 'in_production')]" separator="1" />
+                    <filter icon="gtk-paste-v" name="completed" string="Completed" domain="[('state','=','completed')]" />
+                    <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=', 'cancel')]" separator="1" />
+                    <separator orientation="vertical" />
+					<field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" string="Kit" />
                     <field name="item_module" select="1" />
                     <field name="item_product_id" select="1" />
                     <field name="item_lot" select="1" />
