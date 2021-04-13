@@ -233,7 +233,7 @@ class analytic_distribution(osv.osv):
         if not self.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
             return 'invalid', _('Cost Center not compatible with destination')
         # Check that their combination is active
-        if posting_date and dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, posting_date):
+        if posting_date and dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, posting_date, context=context):
             return 'invalid', _('Inactive DEST/CC combination')
         # Check that cost center is compatible with FP
         if not self.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id, context=context):

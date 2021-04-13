@@ -36,7 +36,7 @@ class multiple_cc_selection_wizard(osv.osv_memory):
     def multiple_cc_add(self, cr, uid, ids, context=None):
         """
         Adds the Cost Centers selected in the wizard to the current destination
-        without filling in the inactivation date of the related combinations.
+        without filling in the activation and inactivation dates of the related combinations.
         """
         if context is None:
             context = {}

@@ -1246,7 +1246,8 @@ class msf_import_export(osv.osv_memory):
                     if not dest_cc_tuple_list and ids_to_update:
                         # UC1: Dest CC Link column empty => delete all current Dest/CC combinations attached to the Dest
                         old_dcl_ids = dest_cc_link_obj.search(cr, uid, [('dest_id', 'in', ids_to_update)], order='NO_ORDER', context=context)
-                        dest_cc_link_obj.unlink(cr, uid, old_dcl_ids, context=context)
+                        if old_dcl_ids:
+                            dest_cc_link_obj.unlink(cr, uid, old_dcl_ids, context=context)
                     else:
                         # UC2: new dest
                         if id_created:

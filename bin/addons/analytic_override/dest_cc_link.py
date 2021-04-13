@@ -68,7 +68,7 @@ class dest_cc_link(osv.osv):
     _columns = {
         'dest_id': fields.many2one('account.analytic.account', string="Destination", required=True,
                                    domain="[('category', '=', 'DEST'), ('type', '!=', 'view')]", ondelete='cascade', select=1),
-        'cc_id': fields.many2one('account.analytic.account', "Cost Center", required=True, sort_column='cc_code',
+        'cc_id': fields.many2one('account.analytic.account', string="Cost Center", required=True, sort_column='cc_code',
                                  domain="[('category', '=', 'OC'), ('type', '!=', 'view')]", ondelete='cascade', select=1),
         'cc_code': fields.function(_get_cc_code, method=True, string="Cost Center Code", type='char', size=24,
                                    readonly=True,

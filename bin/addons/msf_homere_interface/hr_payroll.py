@@ -273,7 +273,8 @@ class hr_payroll(osv.osv):
                                                                                                     'tuple_destination_account_ids'],
                                                                            20),
                                               'account.destination.link': (_get_trigger_state_dest_link, ['account_id', 'destination_id'], 30),
-                                              'dest.cc.link': (_get_trigger_state_dest_cc_link, ['cc_id', 'dest_id'], 40),
+                                              'dest.cc.link': (_get_trigger_state_dest_cc_link,
+                                                               ['cc_id', 'dest_id', 'active_from', 'inactive_from'], 40),
                                           }
                                           ),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,

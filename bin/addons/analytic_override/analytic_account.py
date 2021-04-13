@@ -41,7 +41,7 @@ class analytic_account(osv.osv):
             context = {}
         res = {}
         for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'type', 'allow_all_cc', 'dest_cc_link_ids'], context=context):
-            if a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_link_ids:
+            if a.category == 'DEST' and a.type != 'view' and not a.allow_all_cc and not a.dest_cc_link_ids:
                 res[a.id] = True
             else:
                 res[a.id] = False
@@ -106,7 +106,7 @@ class analytic_account(osv.osv):
                 arg.append('&')
                 arg.append('&')
                 arg.append(('category', '=', 'DEST'))
-                arg.append(('type', '=', 'normal'))
+                arg.append(('type', '!=', 'view'))
                 arg.append(('allow_all_cc', '=', False))
                 arg.append(('dest_cc_link_ids', '=', False))
         return arg
@@ -481,6 +481,8 @@ class analytic_account(osv.osv):
         """
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = {}
         for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'dest_cc_link_ids'], context=context):
             active_date_list = []
@@ -958,9 +960,9 @@ class analytic_account(osv.osv):
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
-        self._clean_dest_cc_link(cr, uid, ids, vals, context=context)
         self._update_synched_dest_cc_ids(cr, uid, ids, vals, context)
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
+        self._clean_dest_cc_link(cr, uid, ids, vals, context=context)
         self.check_access_rule(cr, uid, ids, 'write', context=context)
         if context.get('from_web', False) or context.get('from_import_menu', False):
             cat_instance = self.read(cr, uid, ids, ['category', 'instance_id', 'is_pf'], context=context)[0]
@@ -1059,6 +1061,8 @@ class analytic_account(osv.osv):
         """
         Removes all Dest / CC combinations selected in the Cost Centers tab of the Destination form
         """
+        if context is None:
+            context = {}
         dest_cc_link_obj = self.pool.get('dest.cc.link')
         for dest in self.browse(cr, uid, ids, fields_to_fetch=['dest_cc_link_ids'], context=context):
             dest_cc_link_ids = [dcl.id for dcl in dest.dest_cc_link_ids]
