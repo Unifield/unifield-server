@@ -36,14 +36,16 @@ class analytic_distribution(osv.osv):
         if context is None:
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        ret = True   # by default if either dest or cc is missing
         if destination_id and cost_center_id:
-            dest = analytic_acc_obj.browse(cr, uid, destination_id,
-                                           fields_to_fetch=['category', 'allow_all_cc', 'dest_cc_link_ids'], context=context)
-            cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category'], context=context)
-            if dest and cc and dest.category == 'DEST' and cc.category == 'OC' and not dest.allow_all_cc and \
-                    cc.id not in [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]:
-                return False
-        return True
+            if analytic_acc_obj.search_exist(cr, uid, [('id', '=', destination_id), ('allow_all_cc', '=', True)], context=context):
+                ret = True
+            elif dest_cc_link_obj.search_exist(cr, uid, [('dest_id', '=', destination_id), ('cc_id', '=', cost_center_id)], context=context):
+                ret = True
+            else:
+                ret = False
+        return ret
 
     def check_fp_cc_compatibility(self, cr, uid, fp_id, cost_center_id, context=None):
         """
