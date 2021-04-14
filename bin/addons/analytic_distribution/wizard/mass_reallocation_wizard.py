@@ -324,6 +324,7 @@ class mass_reallocation_wizard(osv.osv_memory):
 
         # US_366: Check if a wizard is already in progress
         wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
+        period_obj = self.pool.get('account.period')
         wiz_in_progress = wiz_mass_obj.search(cr, 1, [('process_in_progress', '=', True)], context=context)
         if wiz_in_progress:
             raise osv.except_osv(_('Error'), _('A wizard is already \
@@ -344,6 +345,9 @@ class mass_reallocation_wizard(osv.osv_memory):
             account_id = wiz.account_id.id
 
             date = wiz.date or strftime('%Y-%m-%d')
+            period_dom = [('date_start', '<=', date), ('date_stop', '>=', date), ('special', '=', False), ('state', '=', 'draft')]
+            if wiz.account_id.category in ['OC', 'DEST'] and not period_obj.search_exist(cr, uid, period_dom, context=context):
+                raise osv.except_osv(_('Error'), _('No open period found for given date: %s') % date)
             # Don't process lines:
             # - that have same account (or cost_center_id)
             # - that are commitment lines

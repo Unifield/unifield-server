@@ -445,6 +445,7 @@ class analytic_line(osv.osv):
                         # check the Dest/CC link validity with the original Dest and CC which will be used in the REV
                         destination_id = aline.destination_id and aline.destination_id.id or False
                         cost_center_id = aline.cost_center_id and aline.cost_center_id.id or False
+                        # note: wiz_date is an open period (check has been done at wizard level)
                         if destination_id and cost_center_id and \
                                 dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, wiz_date, context=context):
                             expired_date_ids.append(aline.id)
