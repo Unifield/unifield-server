@@ -567,9 +567,10 @@ product will be shown.""",
             ave_price_list = {}
             new_cr.execute("""
                 SELECT distinct on (m.id) m.id, new_standard_price FROM stock_move m
-                LEFT JOIN standard_price_track_changes tc on tc.product_id = m.product_id AND tc.change_date < m.date
-                ORDER BY m.id, change_date ASC;
-            """)
+                LEFT JOIN standard_price_track_changes tc on tc.product_id = m.product_id AND tc.change_date >= m.date
+                WHERE m.id IN %s
+                ORDER BY m.id, change_date ASC
+            """, (tuple(datas['moves']),))
             for move_d in new_cr.fetchall():
                 ave_price_list[move_d[0]] = move_d[1]
 
@@ -694,8 +695,8 @@ product will be shown.""",
                     # Get average price
                     func_ave_price = ave_price_list.get(move['move_id'], False) or move['standard_price']
                     if currency_id != move['product_currency_id']:
-                        func_ave_price = round(curr_obj.compute(cr, uid, move['product_currency_id'], currency_id,
-                                                                func_ave_price, round=False, context=self.localcontext), 2)
+                        func_ave_price = curr_obj.compute(cr, uid, move['product_currency_id'], currency_id,
+                                                          func_ave_price, round=False, context=self.localcontext)
 
                     yield [
                         move['default_code'],

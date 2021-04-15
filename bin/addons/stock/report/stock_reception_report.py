@@ -30,9 +30,10 @@ class stock_reception_report(report_sxw.rml_parse):
         ave_price_list = {}
         self.cr.execute("""
             SELECT distinct on (m.id) m.id, new_standard_price FROM stock_move m
-            LEFT JOIN standard_price_track_changes tc on tc.product_id = m.product_id AND tc.change_date < m.date
+            LEFT JOIN standard_price_track_changes tc on tc.product_id = m.product_id AND tc.change_date >= m.date
+            WHERE m.id IN %s
             ORDER BY m.id, change_date ASC;
-        """)
+        """, (tuple(moves_ids),))
         for move_d in self.cr.fetchall():
             ave_price_list[move_d[0]] = move_d[1]
 
