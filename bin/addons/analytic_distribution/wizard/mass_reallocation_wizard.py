@@ -345,9 +345,6 @@ class mass_reallocation_wizard(osv.osv_memory):
             account_id = wiz.account_id.id
 
             date = wiz.date or strftime('%Y-%m-%d')
-            period_dom = [('date_start', '<=', date), ('date_stop', '>=', date), ('special', '=', False), ('state', '=', 'draft')]
-            if wiz.account_id.category in ['OC', 'DEST'] and not period_obj.search_exist(cr, uid, period_dom, context=context):
-                raise osv.except_osv(_('Error'), _('No open period found for given date: %s') % date)
             # Don't process lines:
             # - that have same account (or cost_center_id)
             # - that are commitment lines

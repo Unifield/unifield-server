@@ -414,6 +414,7 @@ class analytic_line(osv.osv):
         # Prepare some value
         ad_obj = self.pool.get('analytic.distribution')
         dest_cc_link_obj = self.pool.get('dest.cc.link')
+        period_obj = self.pool.get('account.period')
         account = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category', 'date_start', 'date'], context=context)
         account_type = account and account.get('category', False) or False
         res = []
@@ -424,6 +425,8 @@ class analytic_line(osv.osv):
         date_stop = account and account.get('date', False) or False
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
         cmp_dates = {}
+        wiz_period_open = period_obj.search_exist(cr, uid, [('date_start', '<=', wiz_date), ('date_stop', '>=', wiz_date),
+                                                            ('special', '=', False), ('state', '=', 'draft')], context=context)
         for aline in self.browse(cr, uid, ids):
             # UTP-800: Change date comparison regarding FP. If FP, use document date. Otherwise use date.
             aline_cmp_date = aline.date
@@ -437,18 +440,20 @@ class analytic_line(osv.osv):
                 if aline.journal_id.type == 'hq' or aline.period_id and aline.period_id.state in ['done', 'mission-closed']:
                     aline_cmp_date = wiz_date
                     # these lines will be reverted, check if the reverted line is active
-                    oc_dest_date_start = max(aline.cost_center_id.date_start, aline.destination_id.date_start)
-                    oc_dest_date_stop = min(aline.cost_center_id.date or '9999-01-01', aline.destination_id.date or '9999-01-01')
-                    if (oc_dest_date_start and wiz_date < oc_dest_date_start) or (oc_dest_date_stop and wiz_date >= oc_dest_date_stop):
+                    if not wiz_period_open:
                         expired_date_ids.append(aline.id)
                     else:
-                        # check the Dest/CC link validity with the original Dest and CC which will be used in the REV
-                        destination_id = aline.destination_id and aline.destination_id.id or False
-                        cost_center_id = aline.cost_center_id and aline.cost_center_id.id or False
-                        # note: wiz_date is an open period (check has been done at wizard level)
-                        if destination_id and cost_center_id and \
-                                dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, wiz_date, context=context):
+                        oc_dest_date_start = max(aline.cost_center_id.date_start, aline.destination_id.date_start)
+                        oc_dest_date_stop = min(aline.cost_center_id.date or '9999-01-01', aline.destination_id.date or '9999-01-01')
+                        if (oc_dest_date_start and wiz_date < oc_dest_date_start) or (oc_dest_date_stop and wiz_date >= oc_dest_date_stop):
                             expired_date_ids.append(aline.id)
+                        else:
+                            # check the Dest/CC link validity with the original Dest and CC which will be used in the REV
+                            destination_id = aline.destination_id and aline.destination_id.id or False
+                            cost_center_id = aline.cost_center_id and aline.cost_center_id.id or False
+                            if destination_id and cost_center_id and \
+                                    dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, wiz_date, context=context):
+                                expired_date_ids.append(aline.id)
             if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date >= date_stop):
                 expired_date_ids.append(aline.id)
             cmp_dates[aline.id] = aline_cmp_date
