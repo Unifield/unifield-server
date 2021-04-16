@@ -586,6 +586,7 @@ class purchase_order_line(osv.osv):
         'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR/FO name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
         'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
+        'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
     }
 
     _defaults = {
