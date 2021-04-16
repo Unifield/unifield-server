@@ -55342,8 +55342,8 @@ msgstr "En mois"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1556
 #, python-format
-msgid "Line does not correspond to original IN"
-msgstr "La ligne ne correspond pas à la réception originale"
+msgid "IN Line %s does not correspond to original IN"
+msgstr "La ligne %s du IN ne correspond pas à la réception originale"
 
 #. module: hr
 #: view:hr.job:0
