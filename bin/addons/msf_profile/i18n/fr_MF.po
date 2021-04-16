@@ -87584,7 +87584,7 @@ msgstr "The UoM is not compatible with the product."
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:196
 #, python-format
-msgid "The source location is not compatible with the patner"
+msgid "The source location is not compatible with the partner"
 msgstr "La zone source n'est pas compatible avec le partenaire"
 
 #. module: account
