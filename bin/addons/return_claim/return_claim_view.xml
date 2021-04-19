@@ -112,7 +112,7 @@
                                     <tree string="Products" editable="top" colors="red:integrity_status_claim_product_line != 'empty'">
                                         <field name="name" invisible="True" />
                                         <field name="product_id_claim_product_line" domain="[('picking_ids', '=', parent.picking_id_return_claim)]"
-                                            on_change="on_change_product_id(src_location_id_claim_product_line,product_id_claim_product_line,lot_id_claim_product_line,uom_id_claim_product_line,context)"
+                                            on_change="on_change_product_id(src_location_id_claim_product_line,product_id_claim_product_line,lot_id_claim_product_line,uom_id_claim_product_line, parent.picking_id_return_claim, context)"
                                             context="location=src_location_id_claim_product_line,uom=uom_id_claim_product_line" />
                                         <field name="asset_id_claim_product_line"
                                             attrs="{'readonly': [('hidden_asset_claim_product_line', '=', False)]}" />

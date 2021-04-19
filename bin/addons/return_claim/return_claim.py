@@ -2130,11 +2130,12 @@ class claim_product_line(osv.osv):
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
 
-    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, picking_id=False, context=None):
         '''
         the product changes, set the hidden flag if necessary
         '''
         result = {}
+        print picking_id
         # product changes, prodlot is always cleared
         result.setdefault('value', {})['lot_id_claim_product_line'] = False
         result.setdefault('value', {})['expiry_date_claim_product_line'] = False
@@ -2145,9 +2146,14 @@ class claim_product_line(osv.osv):
         result.setdefault('value', {})['hidden_perishable_mandatory_claim_product_line'] = False
         result.setdefault('value', {})['hidden_asset_claim_product_line'] = False
         result.setdefault('value', {})['hidden_kit_claim_product_line'] = False
+        result['value']['stock_move_id_claim_product_line'] = False
 
         if product_id:
             product_obj = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            if picking_id:
+                move_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', picking_id), ('product_id', '=', product_id)], context=context)
+                if move_ids:
+                    result['value']['stock_move_id_claim_product_line'] = move_ids[0]
             # set the default uom
             uom_id = product_obj.uom_id.id
             result.setdefault('value', {})['uom_id_claim_product_line'] = uom_id
