@@ -627,22 +627,22 @@
                                     <field name="rr_fmc_to_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}" on_change="change_fmc('to', '11', rr_fmc_to_11, True)" nolabel="1" depends="rr_fmc_to_10"/>
                                     <field name="rr_fmc_12" invisible="context.get('rule')!='cycle'" />
                                     <field name="rr_fmc_from_12" invisible="context.get('rule')!='cycle'" readonly="1" nolabel="1"/>
-                                    <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('to', '12', rr_fmc_to_12, False)" nolabel="1" depends="rr_fmc_to_11"/>
+                                    <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('to', '12', rr_fmc_to_12, True)" nolabel="1" depends="rr_fmc_to_11"/>
                                     <field name="rr_fmc_13" invisible="context.get('rule')!='cycle'" />
                                     <field name="rr_fmc_from_13" invisible="context.get('rule')!='cycle'" readonly="1" nolabel="1"/>
-                                    <field name="rr_fmc_to_13" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_13', '!=', False)]}" on_change="change_fmc('to', '13', rr_fmc_to_13, False)" nolabel="1" depends="rr_fmc_to_12"/>
+                                    <field name="rr_fmc_to_13" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_13', '!=', False)]}" on_change="change_fmc('to', '13', rr_fmc_to_13, True)" nolabel="1" depends="rr_fmc_to_12"/>
                                     <field name="rr_fmc_14" invisible="context.get('rule')!='cycle'" />
                                     <field name="rr_fmc_from_14" invisible="context.get('rule')!='cycle'" readonly="1" nolabel="1"/>
-                                    <field name="rr_fmc_to_14" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_14', '!=', False)]}" on_change="change_fmc('to', '14', rr_fmc_to_14, False)" nolabel="1" depends="rr_fmc_to_13"/>
+                                    <field name="rr_fmc_to_14" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_14', '!=', False)]}" on_change="change_fmc('to', '14', rr_fmc_to_14, True)" nolabel="1" depends="rr_fmc_to_13"/>
                                     <field name="rr_fmc_15" invisible="context.get('rule')!='cycle'" />
                                     <field name="rr_fmc_from_15" invisible="context.get('rule')!='cycle'" readonly="1" nolabel="1"/>
-                                    <field name="rr_fmc_to_15" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_15', '!=', False)]}" on_change="change_fmc('to', '15', rr_fmc_to_15, False)" nolabel="1" depends="rr_fmc_to_14"/>
+                                    <field name="rr_fmc_to_15" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_15', '!=', False)]}" on_change="change_fmc('to', '15', rr_fmc_to_15, True)" nolabel="1" depends="rr_fmc_to_14"/>
                                     <field name="rr_fmc_16" invisible="context.get('rule')!='cycle'" />
                                     <field name="rr_fmc_from_16" invisible="context.get('rule')!='cycle'" readonly="1" nolabel="1"/>
-                                    <field name="rr_fmc_to_16" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_16', '!=', False)]}" on_change="change_fmc('to', '16', rr_fmc_to_16, False)" nolabel="1" depends="rr_fmc_to_15"/>
+                                    <field name="rr_fmc_to_16" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_16', '!=', False)]}" on_change="change_fmc('to', '16', rr_fmc_to_16, True)" nolabel="1" depends="rr_fmc_to_15"/>
                                     <field name="rr_fmc_17" invisible="context.get('rule')!='cycle'" />
                                     <field name="rr_fmc_from_17" invisible="context.get('rule')!='cycle'" readonly="1" nolabel="1"/>
-                                    <field name="rr_fmc_to_17" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_17', '!=', False)]}" on_change="change_fmc('to', '17', rr_fmc_to_17, False)" nolabel="1" depends="rr_fmc_to_16"/>
+                                    <field name="rr_fmc_to_17" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_17', '!=', False)]}" on_change="change_fmc('to', '17', rr_fmc_to_17, True)" nolabel="1" depends="rr_fmc_to_16"/>
                                     <field name="rr_fmc_18" invisible="context.get('rule')!='cycle'" />
                                     <field name="rr_fmc_from_18" invisible="context.get('rule')!='cycle'" readonly="1" nolabel="1"/>
                                     <field name="rr_fmc_to_18" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_18', '!=', False)]}" on_change="change_fmc('to', '18', rr_fmc_to_18, False)" nolabel="1" depends="rr_fmc_to_17"/>
