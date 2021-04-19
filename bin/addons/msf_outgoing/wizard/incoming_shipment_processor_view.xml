@@ -75,7 +75,7 @@
                                        readonly="1"
                                        context="{'search_default_supplier': True}"/>
                                 <field name="claim_type"
-                                       attrs="{'readonly': [('register_a_claim', '=', False)]}"
+                                       attrs="{'readonly': [('register_a_claim', '=', False)], 'required': [('register_a_claim', '=', True)]}"
                                        on_change="onchange_claim_type(claim_type)"/>
                                 <field name="claim_replacement_picking_expected"
                                        attrs="{'invisible': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return', 'missing'))],
