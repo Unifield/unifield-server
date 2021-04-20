@@ -305,9 +305,9 @@ class wizard_cancel_lines(osv.osv_memory):
         return res
 
     def cancel_resource_selected_lines(self, cr, uid, ids, context=None):
-        return self.cancel_selected_lines(cr, uid, ids, True, context=context)
+        return self.cancel_selected_lines(cr, uid, ids, context=context, resource=True)
 
-    def cancel_selected_lines(self, cr, uid, ids, resource, context=None):
+    def cancel_selected_lines(self, cr, uid, ids, context=None, resource=False):
         '''
         Cancel only the selected lines
         '''
@@ -329,7 +329,7 @@ class wizard_cancel_lines(osv.osv_memory):
                 'from_cancel_wizard': True,
             })
             # Method to cancel FO/IR/PO line
-            if resource:  # Cancel & resource PO line(s)
+            if resource and wiz.initial_doc_type == 'purchase.order':  # Cancel & resource PO line(s)
                 line_obj.cancel_and_resource_pol(cr, uid, line_ids, context=context)
             else:
                 line_obj.action_cancel(cr, uid, line_ids, context=context)
