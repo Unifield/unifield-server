@@ -1128,10 +1128,11 @@ class return_claim(osv.osv):
 
         # search for the claim
         origin_claim = source + '.' + claim_info.name
-        claim_id = self.search(cr, uid, [('origin_claim', '=', origin_claim)], limit=1, context=context)[0]
-
-        if not claim_id:
+        claim_ids = self.search(cr, uid, [('origin_claim', '=', origin_claim)], limit=1, context=context)
+        if not claim_ids:
             raise osv.except_osv(_('Error !'), _('Counterpart claim of %s not found') % (origin_claim))
+
+        claim_id = claim_ids[0]
 
         self.write(cr, uid, claim_id, ({'state': 'done'}), context=context)
 

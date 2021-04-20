@@ -2048,6 +2048,30 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _get_dpo_id(self, cr, uid, ids, name, arg, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return []
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+
+        cr.execute('''
+            select sol.id, pol.order_id
+            from
+                sale_order_line sol
+            left join
+                purchase_order_line pol on pol.linked_sol_id = sol.id
+            where
+                sol.id in %s
+        ''', (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+        return ret
+
+
     _max_value = 10**10
     _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
     _name = 'sale.order.line'
@@ -2110,6 +2134,7 @@ class sale_order_line(osv.osv):
         'created_by_rfq': fields.many2one('purchase.order', string='Created by RfQ'),
         'created_by_rfq_line': fields.many2one('purchase.order.line', string='Created by RfQ line'),
         'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
+        'dpo_id': fields.function(_get_dpo_id, method=True, type='many2one', relation='purchase.order', string='DPO'),
         'sync_sourced_origin': fields.char(string='Sync. Origin', size=256),
         'cancel_split_ok': fields.float(
             digits=(16,2),
