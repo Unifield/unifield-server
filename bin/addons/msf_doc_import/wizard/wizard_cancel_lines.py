@@ -311,7 +311,8 @@ class wizard_cancel_lines(osv.osv_memory):
         '''
         Cancel only the selected lines
         '''
-        context = context is None and {} or context
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -323,7 +324,6 @@ class wizard_cancel_lines(osv.osv_memory):
                 for l in line[2]:
                     line_ids.append(l)
 
-            context['noraise'] = True
             context.update({
                 'noraise': True,
                 'from_cancel_wizard': True,
