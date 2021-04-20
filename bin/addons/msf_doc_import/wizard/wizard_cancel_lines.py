@@ -95,7 +95,7 @@ def bcl(self, cr, uid, ids, context=None):
     # To display cancel & resource for PO from FO/IR
     if self._name == 'purchase.order':
         po = self.browse(cr, uid, ids[0], fields_to_fetch=['po_from_fo', 'po_from_ir'], context=context)
-        if po.po_from_fo or po.po_form_ir:
+        if po.po_from_fo or po.po_from_ir:
             wiz_fields.update({'sourced_po': True})
 
     if wiz_fields:
