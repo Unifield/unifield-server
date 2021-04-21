@@ -168,7 +168,7 @@ class wizard_import_pick_line(osv.osv_memory):
                                                                       pick_ext_cu=picking.ext_cu, product_id=to_write['product_id'],
                                                                       check_type='src', row=row, cell_nb=8, context=context)
                         if partner_loc and partner_loc != src_value['location_id']:
-                            raise osv.except_osv(_('Error'), _('The source location is not compatible with the patner'))
+                            raise osv.except_osv(_('Error'), _('The source location is not compatible with the partner'))
 
                         to_write.update({'location_id': src_value['location_id'], 'is_ext_cu': src_value['is_ext_cu'],
                                          'error_list': src_value['error_list'],})

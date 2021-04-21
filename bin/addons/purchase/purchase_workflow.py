@@ -759,7 +759,8 @@ class purchase_order_line(osv.osv):
                         ('purchase_id', '=', pol.order_id.id),
                         ('state', '=', 'shipped'),
                         ('type', '=', 'in'),
-                        ('dpo_incoming', '=', True)
+                        ('dpo_incoming', '=', True),
+                        ('dpo_id_incoming', '=', pol.from_dpo_id),
                     ]
                 else:
                     in_domain = [
@@ -770,7 +771,7 @@ class purchase_order_line(osv.osv):
                 in_id = self.pool.get('stock.picking').search(cr, uid, in_domain)
                 created = False
                 if not in_id:
-                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context, sourced_on_dpo)
+                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context, sourced_on_dpo, pol.from_dpo_id)
                     in_id = [in_id]
                     created = True
                 incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)

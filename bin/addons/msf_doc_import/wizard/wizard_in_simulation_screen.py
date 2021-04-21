@@ -270,6 +270,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             if move.state not in ('draft', 'cancel', 'done'):
                 line_obj.create(cr, uid, {
                     'move_id': move.id,
+                    'initial_move_id': move.id,
                     'simu_id': import_id,
                     'move_product_id': move.product_id and move.product_id.id or False,
                     'move_product_qty': move.product_qty or 0.00,
@@ -531,6 +532,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     p.subtype = 'picking' and
                     p.state = 'draft' and
                     m.state in ('assigned', 'confirmed') and
+                    m.in_out_updated = 'f' and
                     m.sale_line_id in %s
                 group by
                     m.sale_line_id
@@ -548,7 +550,11 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     where
                         m.picking_id = p.id and
                         p.type = 'out' and
-                        p.state not in  ('draft', 'cancel') and
+                        (
+                            p.subtype = 'standard' and p.state = 'done' or
+                            p.subtype = 'picking' and m.state != 'cancel' and p.state in ('done', 'assigned')
+                        ) and
+                        m.in_out_updated = 'f' and
                         m.sale_line_id in %s
                     group by
                         m.sale_line_id
@@ -1007,7 +1013,8 @@ Nothing has been imported because of %s. See below:
 
                         if err_msg:
                             for err in err_msg:
-                                err = _('Line %s of the Excel file: %s') % (file_line[0], err)
+                                if wiz.filetype == 'excel':
+                                    err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
                 if wiz.with_pack and not context.get('auto_import_ok'):
@@ -1016,7 +1023,7 @@ Nothing has been imported because of %s. See below:
                         select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.imp_product_qty)
                         from wizard_import_in_line_simulation_screen wiz_line
                         left join wizard_import_in_simulation_screen wiz on wiz.id = wiz_line.simu_id
-                        left join stock_move move_in on move_in.picking_id = wiz.picking_id and move_in.line_number = wiz_line.line_number
+                        left join stock_move move_in on move_in.picking_id = wiz.picking_id and ( move_id is not null and move_in.id = wiz_line.move_id or move_id is null and move_in.id = wiz_line.initial_move_id)
                         left join purchase_order_line pol on pol.id = move_in.purchase_line_id
                         where
                             (wiz_line.type_change in ('', 'split') or wiz_line.type_change is NULL) and
@@ -1051,7 +1058,8 @@ Nothing has been imported because of %s. See below:
 
                     if err_msg:
                         for err in err_msg:
-                            err = _('Line %s of the Excel file: %s') % (in_line, err)
+                            if wiz.filetype == 'excel':
+                                err = _('Line %s of the Excel file: %s') % (in_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
                     cr.commit()
@@ -1347,6 +1355,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'simu_id': fields.many2one('wizard.import.in.simulation.screen', string='Simu ID', required=True, ondelete='cascade'),
         # Values from move line
         'move_id': fields.many2one('stock.move', string='Move', readonly=True),
+        'initial_move_id': fields.many2one('stock.move', string='Initial Move', readonly=True),
         'move_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True, related_uom='move_uom_id'),
         'move_uom_id': fields.many2one('product.uom', string='Ordered UoM', readonly=True),
@@ -1370,6 +1379,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                                          ('new', 'New')], string='CHG', readonly=True),
         'error_msg': fields.text(string='Error message', readonly=True),
         'parent_line_id': fields.many2one('wizard.import.in.line.simulation.screen', string='Parent line', readonly=True),
+        'parent_move_id': fields.many2one('stock.move', string='Parent Move', readonly=True),
         # Values after import
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_asset_id': fields.many2one('product.asset', string='Asset', readonly=True),
@@ -1680,7 +1690,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if write_vals.get('imp_external_ref'):
                     errors.append(_('No original IN lines with external ref \'%s\' found.') % write_vals['imp_external_ref'])
                 else:
-                    errors.append(_('Line does not correspond to original IN'))
+                    errors.append(_('IN Line %s does not correspond to original IN') % (line.line_number or '',))
 
             error_msg = line.error_msg or ''
             for err in errors:
@@ -1846,6 +1856,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'expiry_date': line.imp_exp_date,
                     'line_number': line.line_number,
                     'move_id': move.id,
+                    'initial_move_id': move.id,
                     'split_move_ok': line.type_change == 'split',
                     'prodlot_id': batch_id,
                     'product_id': line.imp_product_id.id,
