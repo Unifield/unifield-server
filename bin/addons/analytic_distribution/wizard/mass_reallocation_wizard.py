@@ -324,7 +324,6 @@ class mass_reallocation_wizard(osv.osv_memory):
 
         # US_366: Check if a wizard is already in progress
         wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
-        period_obj = self.pool.get('account.period')
         wiz_in_progress = wiz_mass_obj.search(cr, 1, [('process_in_progress', '=', True)], context=context)
         if wiz_in_progress:
             raise osv.except_osv(_('Error'), _('A wizard is already \
