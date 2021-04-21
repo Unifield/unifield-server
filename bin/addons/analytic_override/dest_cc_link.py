@@ -117,10 +117,16 @@ class dest_cc_link(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         """
-        See _check_analytic_lines
+        Creates the Dest CC Combination, and:
+        - displays an informative message on the top of the page if existing AJIs are using the combination outside its activation interval.
+        - unticks the box "Allow all Cost Centers" from the related Dest
+          (UC: edit a Dest. having the box ticked, untick the box, add a CC and click on Cancel)
         """
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         res = super(dest_cc_link, self).create(cr, uid, vals, context=context)
         self._check_analytic_lines(cr, uid, res, context=context)
+        dest_id = self.read(cr, uid, res, ['dest_id'])['dest_id'][0]
+        analytic_acc_obj.write(cr, uid, dest_id, {'allow_all_cc': False}, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
