@@ -119,9 +119,12 @@ class dest_cc_link(osv.osv):
         """
         Creates the Dest CC Combination, and:
         - displays an informative message on the top of the page if existing AJIs are using the combination outside its activation interval.
-        - unticks the box "Allow all Cost Centers" from the related Dest
-          (UC: edit a Dest. having the box ticked, untick the box, add a CC and click on Cancel)
+        - unticks the box "Allow all Cost Centers" from the related Dest.
+          (UC: edit a Dest. having the box ticked, untick the box, add a CC and click on Cancel.
+           CC isn't removed by the Cancel button as it is a o2m, so the box should remain unticked.)
         """
+        if context is None:
+            context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
         res = super(dest_cc_link, self).create(cr, uid, vals, context=context)
         self._check_analytic_lines(cr, uid, res, context=context)
