@@ -128,7 +128,7 @@ class dest_cc_link(osv.osv):
         analytic_acc_obj = self.pool.get('account.analytic.account')
         res = super(dest_cc_link, self).create(cr, uid, vals, context=context)
         self._check_analytic_lines(cr, uid, res, context=context)
-        dest_id = self.read(cr, uid, res, ['dest_id'])['dest_id'][0]
+        dest_id = self.read(cr, uid, res, ['dest_id'], context=context)['dest_id'][0]
         if analytic_acc_obj.search_exist(cr, uid, [('id', '=', dest_id), ('allow_all_cc', '=', True)], context=context):
             analytic_acc_obj.write(cr, uid, dest_id, {'allow_all_cc': False}, context=context)
         return res
