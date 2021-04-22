@@ -108943,6 +108943,7 @@ msgstr "Fractionner Bon Client"
 
 #. module: account_override
 #: view:account.invoice:0
+#: code:addons/account_override/invoice.py:1281
 msgid "Split Donation"
 msgstr "Fractionner Donation"
 

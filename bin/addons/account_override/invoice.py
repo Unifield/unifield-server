@@ -1277,6 +1277,8 @@ class account_invoice(osv.osv):
                 wizard_title = _('Split Stock Transfer Voucher')
             elif context.get('is_intermission') and context.get('intermission_type', '') == 'out':
                 wizard_title = _('Split Intermission Voucher OUT')
+            elif context.get('is_inkind_donation'):
+                wizard_title = _('Split Donation')
             else:
                 wizard_title = _('Split Invoice')
             return {
