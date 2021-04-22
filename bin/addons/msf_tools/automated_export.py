@@ -109,10 +109,12 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'pause': fields.integer('Pause between generation and transfer (in seconds)'),
 
     }
 
     _defaults = {
+        'pause': 120,
         'interval': lambda *a: 1,
         'interval_unit': lambda *a: 'hours',
         'active': lambda *a: False,
