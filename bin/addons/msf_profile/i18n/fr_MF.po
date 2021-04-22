@@ -108941,6 +108941,11 @@ msgstr "Fractionner Bon Intermission OUT"
 msgid "Split Stock Transfer Voucher"
 msgstr "Fractionner Bon Client"
 
+#. module: account_override
+#: view:account.invoice:0
+msgid "Split Donation"
+msgstr "Fractionner Donation"
+
 #. modules: account_override, register_accounting
 #: view:account.invoice:0
 #: view:account.invoice:0
