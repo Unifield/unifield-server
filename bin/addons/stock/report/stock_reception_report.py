@@ -29,13 +29,13 @@ class stock_reception_report(report_sxw.rml_parse):
 
         for move in move_obj.browse(self.cr, self.uid, moves_ids, context=self.localcontext):
             pick = move.picking_id
-            pol = move.purchase_line_id
-            po = pol.order_id
-            sol = move.purchase_line_id.linked_sol_id
+            pol = move.purchase_line_id or False
+            po = pol and pol.order_id or False
+            sol = pol and pol.linked_sol_id or False
             int_name = move.move_dest_id and move.move_dest_id.picking_id.type == 'internal' and \
                 move.move_dest_id.picking_id.subtype == 'standard' and move.move_dest_id.picking_id.name or ''
             func_price_unit = move.price_unit
-            if move.company_id.currency_id.id != po.pricelist_id.currency_id.id:
+            if pol and move.company_id.currency_id.id != po.pricelist_id.currency_id.id:
                 self.localcontext['currency_date'] = move.date
                 func_price_unit = round(curr_obj.compute(self.cr, self.uid, po.pricelist_id.currency_id.id,
                                                          move.company_id.currency_id.id, move.price_unit,
@@ -80,15 +80,15 @@ class stock_reception_report(report_sxw.rml_parse):
                 'purchase_order': pick.purchase_id and pick.purchase_id.name or '',
                 'supplier': pick.partner_id and pick.partner_id.name or '',
                 'purchase_id': po,  # For category, type and priority
-                'dr_date': pol.date_planned or po.delivery_requested_date,
-                'dc_date': pol.confirmed_delivery_date or po.delivery_confirmed_date,
-                'origin': move.origin,
+                'dr_date': pol and (pol.date_planned or po.delivery_requested_date) or False,
+                'dc_date': pol and (pol.confirmed_delivery_date or po.delivery_confirmed_date) or False,
+                'origin': move.origin or '',
                 'backorder': pick.backorder_id and pick.backorder_id.name or '',
                 'line': move.line_number,
                 'product_code': move.product_id and move.product_id.default_code or '',
                 'product_desc': move.product_id and move.product_id.name or '',
                 'uom': move.product_uom and move.product_uom.name or '',
-                'qty_ordered': pol.product_qty,
+                'qty_ordered': pol and pol.product_qty or 0.00,
                 'qty_received': move.product_qty,
                 'unit_price': move.price_unit,
                 'currency': move.price_currency_id and move.price_currency_id.name or '',

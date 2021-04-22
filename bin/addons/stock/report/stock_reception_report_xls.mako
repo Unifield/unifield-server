@@ -267,9 +267,9 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_order']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['supplier']|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'order_type')|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'categ')|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'priority')|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'order_type') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'categ') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'priority') or ''|x}</Data></Cell>
                 % if move['dr_date'] and isDate(move['dr_date']):
                 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['dr_date'])|n}</Data></Cell>
                 % else:
