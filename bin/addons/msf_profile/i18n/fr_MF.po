@@ -27827,11 +27827,6 @@ msgstr "Total Cheque:"
 msgid "Enable upgrade from this time"
 msgstr "Enable upgrade from this time"
 
-#. module: account_override
-#: view:account.invoice:0
-msgid "Cancelled Invoices"
-msgstr "Cancelled Invoices"
-
 #. module: resource
 #: model:ir.model,name:resource.model_resource_calendar_leaves
 #: view:resource.calendar.leaves:0

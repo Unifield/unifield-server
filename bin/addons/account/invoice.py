@@ -419,7 +419,7 @@ class account_invoice(osv.osv):
                 node.set('string', partner_string)
             res['arch'] = etree.tostring(doc)
         elif view_type == 'search':
-            # remove the Cancel filter in all invoices but IVO and STV
+            # remove the Cancel filter in all invoices but IVO and STV (in Donations the filter is named differently)
             context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
                 context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
             context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
