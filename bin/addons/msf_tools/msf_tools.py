@@ -348,14 +348,23 @@ class data_tools(osv.osv):
         """
         return re.sub('[\r\n]', ' ', string_to_format or '').strip()
 
-    def replace_line_breaks_from_vals(self, vals, fields):
+    def replace_line_breaks_from_vals(self, vals, fields, replace=None):
         """
         Updates the vals (dict) in param.
         For each of the fields (list) in param which is found in vals, applies "replace_line_breaks" to its value.
+        If the value of a field listed in the "replace" list (usually a mandatory field) ends up empty, its empty value is replaced by "/".
         """
+        if replace is None:
+            replace = []
+        default_char = '/'
         for field in fields:
             if vals.get(field):
-                vals.update({field: self.replace_line_breaks(vals[field])})
+                new_value = self.replace_line_breaks(vals[field])
+                if not new_value and field in replace:
+                    new_value = default_char
+                vals.update({field: new_value})
+            elif field in vals and field in replace:
+                vals.update({field: default_char})
         return True
 
 
