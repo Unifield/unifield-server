@@ -2009,6 +2009,8 @@ class product_attributes(osv.osv):
                 for po_line in po_line_obj.browse(cr, uid, has_po_line, context=context):
                     if po_line.order_id.id not in po_ids:
                         po_ids.append(po_line.order_id.id)
+                        if not po_line.order_id.active:
+                            continue
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': po_line.order_id.rfq_ok and 'Request for Quotation' or 'Purchase order',
                                                         'internal_type': 'purchase.order',
@@ -2031,6 +2033,8 @@ class product_attributes(osv.osv):
                 for fo_line in fo_line_obj.browse(cr, uid, has_fo_line, context=context):
                     if fo_line.order_id.id not in fo_ids:
                         fo_ids.append(fo_line.order_id.id)
+                        if not fo_line.order_id.active:
+                            continue
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': fo_line.order_id.procurement_request and 'Internal request' or 'Field order',
                                                         'internal_type': 'sale.order',
