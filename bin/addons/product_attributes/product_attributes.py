@@ -1934,17 +1934,36 @@ class product_attributes(osv.osv):
 
 
             # Check if the product is in some purchase order lines or request for quotation lines
-            has_po_line = po_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                       ('state', 'not in', ['draft', 'done', 'cancel', 'cancel_r'])], context=context)
+            cr.execute('''
+                select
+                    pol.id
+                from
+                    purchase_order po, purchase_order_line pol
+                where
+                    po.id = pol.order_id and
+                    pol.state not in ('draft', 'done', 'cancel', 'cancel_r') and
+                    po.active = 't' and
+                    pol.product_id = %s
+            ''', (product.id, ))
+            has_po_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in some tender lines
             has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
                                                                ('tender_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
 
             # Check if the product is in field order lines or in internal request lines
-            context.update({'procurement_request': True})
-            has_fo_line = fo_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                       ('state', 'not in', ['draft', 'done', 'cancel', 'cancel_r'])], context=context)
+            cr.execute('''
+                select
+                    sol.id
+                from
+                    sale_order so, sale_order_line sol
+                where
+                    so.id = sol.order_id and
+                    sol.state not in ('draft', 'done', 'cancel', 'cancel_r') and
+                    so.active = 't' and
+                    sol.product_id = %s
+            ''', (product.id, ))
+            has_fo_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in stock picking
             # All stock moves in a stock.picking not draft/cancel/done/delivered or all stock moves in a shipment not delivered/done/cancel
@@ -2009,8 +2028,6 @@ class product_attributes(osv.osv):
                 for po_line in po_line_obj.browse(cr, uid, has_po_line, context=context):
                     if po_line.order_id.id not in po_ids:
                         po_ids.append(po_line.order_id.id)
-                        if not po_line.order_id.active:
-                            continue
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': po_line.order_id.rfq_ok and 'Request for Quotation' or 'Purchase order',
                                                         'internal_type': 'purchase.order',
@@ -2033,8 +2050,6 @@ class product_attributes(osv.osv):
                 for fo_line in fo_line_obj.browse(cr, uid, has_fo_line, context=context):
                     if fo_line.order_id.id not in fo_ids:
                         fo_ids.append(fo_line.order_id.id)
-                        if not fo_line.order_id.active:
-                            continue
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': fo_line.order_id.procurement_request and 'Internal request' or 'Field order',
                                                         'internal_type': 'sale.order',
