@@ -1,6 +1,6 @@
 import inspect
 
-import pooler
+from . import pooler
 
 __all__ = ['TemplateEditor']
 

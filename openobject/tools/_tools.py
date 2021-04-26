@@ -19,7 +19,8 @@
 #
 ###############################################################################
 import logging
-import urlparse
+#import urlparse
+from urllib import parse
 import cherrypy
 from formencode import NestedVariables
 import cgitb, sys
@@ -35,7 +36,7 @@ def csrf_check():
     if not cherrypy.request.method == 'POST': return;
 
     referer = cherrypy.request.headers.get('Referer', '')
-    if not(urlparse.urlsplit(referer).path and referer.startswith(cherrypy.request.base)):
+    if not(parse.urlsplit(referer).path and referer.startswith(cherrypy.request.base)):
         raise cherrypy.HTTPError(403, "Request Forbidden -- You are not allowed to access this resource.")
 cherrypy.tools.csrf = cherrypy.Tool('before_handler', csrf_check)
 

@@ -2,7 +2,7 @@ import logging
 import os
 import imp
 import itertools
-
+import functools
 import cherrypy
 import openobject.tools.ast
 from openobject import paths
@@ -61,7 +61,7 @@ class Node(Singleton):
         for attr in ('init', 'update', 'demo'):
             if hasattr(self, attr):
                 setattr(node, attr, True)
-        self.children.sort(lambda x, y: cmp(x.name, y.name))
+        self.children.sort(key=lambda x: x.name)
 
     def __setattr__(self, name, value):
         super(Singleton, self).__setattr__(name, value)
@@ -126,7 +126,7 @@ def upgrade_graph(graph, module_list):
         package, deps, data = packages[0]
 
         # if all dependencies of 'package' are already in the graph, add 'package' in the graph
-        if reduce(lambda x, y: x and y in graph, deps, True):
+        if functools.reduce(lambda x, y: x and y in graph, deps, True):
             if not package in current:
                 packages.pop(0)
                 continue

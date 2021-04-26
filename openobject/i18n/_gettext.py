@@ -52,7 +52,7 @@ def _load_translation(path, locale, domain):
     popath = join(path, 'po', domain, '%s.po' % locale)
     modir = join(locale_path, str(locale), 'LC_MESSAGES')
     if not exists(modir):
-        os.makedirs(modir, 0700)
+        os.makedirs(modir, 0o700)
     mopath = join(modir, domain + '.mo')
 
     if not exists(mopath) or getmtime(mopath) < getmtime(popath):
@@ -88,7 +88,7 @@ def _load_translations(path, locales, domain):
         translation = None
         try:
             translation = _load_translation(path, locale, domain)
-        except babel.core.UnknownLocaleError, e:
+        except babel.core.UnknownLocaleError as e:
             # don't load unknown locales such as Klingon (tlh)
             cherrypy.log.error("%s, ignoring translation file" % e, context='i18n', severity=logging.WARN)
         except SyntaxError:

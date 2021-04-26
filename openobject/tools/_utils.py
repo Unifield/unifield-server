@@ -33,7 +33,7 @@ def url(_cppath, _cpparams=None, **kw):
     params.update(kw)
 
     kv = []
-    for k, v in params.iteritems():
+    for k, v in params.items():
         if isinstance(k, basestring) and isinstance(v, basestring):
             if isinstance(k, unicode):
                 k = k.encode('utf-8')
@@ -137,7 +137,7 @@ def attrs(*args, **kw):
     }
 
     result = []
-    for name, value in kv.iteritems():
+    for name, value in kv.items():
         if callable(value):
             value = value()
         if value is not None:
@@ -161,7 +161,7 @@ def decorated(wrapper, func, **attrs):
     wrapper.__dict__ = func.__dict__.copy()
     wrapper.__module__ = func.__module__
 
-    for k, v in attrs.iteritems():
+    for k, v in attrs.items():
         try:
             setattr(wrapper, k, v)
         except:

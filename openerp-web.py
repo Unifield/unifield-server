@@ -13,7 +13,7 @@ from openobject.commands import start, ConfigurationError
 if __name__ == "__main__":
     try:
         start()
-    except ConfigurationError, exc:
+    except ConfigurationError as exc:
         sys.stderr.write(str(exc)+"\n")
         sys.exit(1)
 

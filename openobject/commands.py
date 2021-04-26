@@ -6,10 +6,7 @@ import threading
 from optparse import OptionParser
 
 import cherrypy
-try:
-    from cherrypy.lib.reprconf import as_dict
-except ImportError:
-    from cherrypy._cpconfig import as_dict
+from cherrypy.lib.reprconf import Parser
 
 import openobject
 import openobject.release
@@ -70,13 +67,13 @@ def start():
                                  options.config)
 
     error_config = False
-    app_config = as_dict(options.config)
+    app_config = Parser().dict_from_file(options.config)
     if options.config_override:
         try:
-            over_config = as_dict(options.config_override)
-            for section, value in over_config.iteritems():
+            over_config = Parser().dict_from_file(options.config_override)
+            for section, value in over_config.items():
                 app_config.setdefault(section, {}).update(value)
-        except Exception, error_config:
+        except Exception as error_config:
             pass
     openobject.configure(app_config)
 
@@ -108,7 +105,7 @@ def start():
             pass
     port = cherrypy.config.get('server.socket_port')
 
-    if not isinstance(port, (int, long)) or port < 1 or port > 65535:
+    if not isinstance(port, int) or port < 1 or port > 65535:
         cherrypy.log('Wrong configuration socket_port: %s' % (port,), "ERROR")
         raise ConfigurationError(_("Wrong configuration socket_port: %s") %
                                  port)

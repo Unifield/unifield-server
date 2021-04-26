@@ -1,10 +1,10 @@
-from itertools import izip, islice
+from itertools import islice
 from inspect import getargspec
 
 import cherrypy
 from formencode.api import Invalid
 
-from _utils import decorated
+from ._utils import decorated
 
 
 __all__ = ["validate", "error_handler", "exception_handler"]
@@ -56,7 +56,7 @@ def validate(form=None, validators=None):
                 value.pop('self', None)
                 try:
                     kw.update(form.validate(value, None))
-                except Invalid, e:
+                except Invalid as e:
                     errors = e.unpack_errors()
                     cherrypy.request.validation_exception = e
                     cherrypy.request.validation_value = value
@@ -69,13 +69,13 @@ def validate(form=None, validators=None):
                         try:
                             kw[field] = validator.to_python(
                                 kw.get(field, None), None)
-                        except Invalid, error:
+                        except Invalid as error:
                             errors[field] = error
                 else:
                     try:
                         value = kw.copy()
                         kw.update(validators.to_python(value, None))
-                    except Invalid, e:
+                    except Invalid as e:
                         errors = e.unpack_errors()
                         cherrypy.request.validation_exception = e
                         cherrypy.request.validation_value = value

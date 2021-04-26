@@ -20,7 +20,7 @@
 ###############################################################################
 
 import socket
-import xmlrpclib
+import xmlrpc.client
 
 import openobject.errors
 
@@ -127,10 +127,10 @@ class RPCGateway(object):
         try:
             result = self.__rpc__(obj, method, args, auth=auth)
             return self.__convert(result)
-        except socket.error, e:
+        except socket.error as e:
             raise openobject.errors.TinyException(e.message or e.strerror, title=_('Application Error'))
 
-        except RPCException, err:
+        except RPCException as err:
             if err.type in ('warning', 'UserError'):
                 if err.message in ('ConcurrencyException') and len(args) > 4:
                     common.concurrency(err.message, err.data, args)
@@ -149,7 +149,7 @@ class RPCGateway(object):
             else:
                 common.error(_('Application Error'), err.backtrace)
 
-        except Exception, e:
+        except Exception as e:
             common.error(_('Application Error'), str(e))
 
     def execute(self, obj, method, *args):
@@ -188,12 +188,12 @@ class XMLRPCGateway(RPCGateway):
         self._url = self.connection_string + 'xmlrpc/'
 
     def __rpc__(self, obj, method, args=(), auth=True):
-        sock = xmlrpclib.ServerProxy(self._url + str(obj))
+        sock = xmlrpc.client.ServerProxy(self._url + str(obj))
         try:
             if auth:
                 args = (self.session.db, self.session.uid, self.session.password) + args
             return getattr(sock, method)(*args)
-        except xmlrpclib.Fault, err:
+        except xmlrpc.client.Fault as err:
             raise RPCException(err.faultCode, err.faultString)
 
 
@@ -213,10 +213,10 @@ class NETRPCGateway(RPCGateway):
             sock.disconnect()
             return res
 
-        except xmlrpclib.Fault, err:
+        except xmlrpc.client.Fault as err:
             raise RPCException(err.faultCode, err.faultString)
 
-        except TinySocketError, err:
+        except TinySocketError as err:
             raise RPCException(err.faultCode, err.faultString)
 
 
@@ -297,7 +297,7 @@ class RPCSession(object):
     def listdb(self):
         try:
             return self.execute_noauth('db', 'list')
-        except openobject.errors.TinyError, e:
+        except openobject.errors.TinyError as e:
             if e.message == 'AccessDenied':
                 return None
             raise
@@ -359,7 +359,7 @@ class RPCSession(object):
                 self.fail_login_attempt(client_ip)
             else:
                 self.unban(client_ip)
-        except Exception, e:
+        except Exception as e:
             if e.title == 'updater.py':
                 return -2
             elif e.title == 'ServerUpdate':
@@ -412,7 +412,7 @@ class RPCSession(object):
         try:
             error_message = self.execute_noauth('common', 'change_password', db, user,
                                                 password, new_password, confirm_password)
-        except Exception, e:
+        except Exception as e:
             error_message = e.message
         return error_message
 
@@ -549,15 +549,15 @@ if __name__=="__main__":
     initialize(host, port, protocol, storage=dict())
 
     res = session.listdb()
-    print res
+    print(res)
 
     res = session.login('t1', 'admin', 'admin')
-    print res
+    print(res)
 
     res = RPCProxy('res.users').read([session.uid], ['name'])
-    print res
+    print(res)
 
-    print session.context
+    print(session.context)
 
 
 # vim: ts=4 sts=4 sw=4 si et

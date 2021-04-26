@@ -85,7 +85,7 @@ def get_pool():
     if db_name in pool_dict:
         pool = pool_dict[db_name]
     else:
-        import addons
+        from . import addons
 
         pool = pool_dict[db_name] = Pool()
         

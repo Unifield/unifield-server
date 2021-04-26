@@ -1,7 +1,7 @@
-import utils
-import validators
-import tests
-import widgets
-import controllers
+from . import utils
+from . import validators
+from . import tests
+from . import widgets
+from . import controllers
 
 

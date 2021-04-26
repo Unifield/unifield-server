@@ -27,8 +27,8 @@ from mako.lookup import TemplateLookup
 from openobject import templating, paths, pooler
 
 from openobject import i18n
-import _utils as utils
-import resources
+from . import _utils as utils
+from . import resources
 import types
 import tempfile
 

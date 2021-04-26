@@ -1,11 +1,11 @@
-import urlparse
+from urllib import parse
 import cherrypy
 
 from openobject import pooler
-from openobject.tools import expose
+from openobject.tools._expose import expose  #import _export #import expose
 from openobject.errors import AuthenticationError
 
-from _base import BaseController
+from ._base import BaseController
 
 
 class Root(BaseController):

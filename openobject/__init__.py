@@ -8,7 +8,7 @@ if os.path.exists(libdir) and libdir not in sys.path:
     sys.path.insert(0, libdir)
 
 import cherrypy
-import controllers._root
+from . import controllers
 import openobject
 from logging import handlers
 
@@ -57,8 +57,8 @@ def ustr(value):
 
 __builtins__['ustr'] = ustr
 
-import i18n
-i18n.install()
+from . import i18n
+i18n._gettext.install()
 
 application = cherrypy.tree.mount(controllers._root.Root(), '/')
 def enable_static_paths():
@@ -103,9 +103,9 @@ def configure(app_config):
     # logging config
     log = cherrypy.log
 
-    error_level = logging._levelNames.get(
+    error_level = logging._levelToName.get(
         _global.get('log.error_level'), 'WARNING')
-    access_level = logging._levelNames.get(
+    access_level = logging._levelToName.get(
         _global.get('log.access_level'), 'INFO')
     log.error_log.setLevel(error_level)
     log.access_log.setLevel(access_level)
