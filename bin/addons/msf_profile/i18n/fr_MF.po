@@ -105861,6 +105861,12 @@ msgid "This document has been generated via a Supply workflow or via synchroniza
 msgstr "Ce document a été généré via un flux \"Supply\" ou via la synchronisation. Les lignes existantes ne peuvent pas être supprimées."
 
 #. module: account_override
+#: code:addons/account_override/invoice.py:2008
+#, python-format
+msgid "This donation has been generated via a Supply workflow. Existing lines can't be deleted."
+msgstr "Cette donation a été générée via un flux \"Supply\". Les lignes existantes ne peuvent pas être supprimées."
+
+#. module: account_override
 #: code:addons/account_override/invoice.py:1785
 #, python-format
 msgid "This document has been generated via synchronization. You can't split its lines."
