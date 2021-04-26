@@ -53,6 +53,7 @@
                     <label colspan="2" />
                     <field name="partner_id" attrs="{'invisible': [('multiple', '=', False)], 'required': [('multiple', '=', True)]}"/>
                     <newline />
+                    <field name="pause" attrs="{'invisible': [('disable_cron', '=', False)]}"/>
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
                     <button name="sent_to_remote" string="Manually send to FTP" colspan="2" type="object" icon="cloud.png" attrs="{'invisible': ['|', ('disable_cron', '=', False), ('ftp_ok', '=', False)]}" />
 
