@@ -477,10 +477,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                          el.purchase_line_id.state == 'sourced_v'):
                 res[el.id] = False
             # verify invoice state
-            if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close']:
+            if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close', 'cancel']:
                 res[el.id] = False
             # verify invoice line state
-            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
+            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in \
+                    ['open', 'paid', 'inv_close', 'cancel']:
                 res[el.id] = False
             # verify commitment state
             if el.commitment_id and el.commitment_id.state in ['done']:
