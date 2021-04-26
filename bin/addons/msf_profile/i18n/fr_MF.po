@@ -109096,6 +109096,11 @@ msgstr "Les valeurs des lignes du Solde de Clôture doivent être uniques par re
 msgid "Cancelled Intermission Voucher OUT"
 msgstr "Bon Intermission OUT annulé"
 
+#. module: account
+#: report:account.invoice2:0
+msgid "Cancelled In-kind Donation"
+msgstr "Donation en nature annulée"
+
 #. module: msf_outgoing
 #: field:stock.reserved.products,prodlot_id:0
 msgid "Batch Number - Expiry Date"
