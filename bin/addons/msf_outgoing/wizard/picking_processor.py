@@ -138,6 +138,7 @@ class stock_picking_processor(osv.osv):
             help="Is at least one line contains a cool chain product.",
             multi='kc_dg',
         ),
+        'has_extra': fields.boolean('Has extra qty on lines'),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None):
@@ -152,7 +153,8 @@ class stock_picking_processor(osv.osv):
 
         res = super(stock_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context)
 
-        res['date'] = time.strftime('%Y-%m-%d %H:%M:%S'),
+        res['date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        res['has_extra'] = False
 
         return res
 
@@ -262,6 +264,34 @@ class stock_picking_processor(osv.osv):
         for wizard in self.browse(cr, uid, ids, context=context):
             line_obj = self.pool.get(wizard._columns['move_ids']._obj)
             wiz_lines_moves_ids = [line.move_id.id for line in wizard.move_ids]
+            if self._name == 'stock.incoming.processor' and wizard.picking_id.purchase_id:
+                # JFB TODO: Claim ?
+                # compare the qty ordered on PO with qty already processed in other move + qty to process in this move
+                cr.execute('''
+                    select
+                        pol.id, sum(m.product_qty * coalesce(m_uom.factor, 1)) - pol.product_qty * pol_uom.factor
+                    from
+                        purchase_order_line pol, stock_move m, stock_picking p, product_uom pol_uom,product_uom m_uom
+                    where
+                        m.picking_id = p.id and
+                        (m.state = 'done' or m.picking_id = %s) and
+                        m.state != 'cancel' and
+                        p.type = 'in' and
+                        pol.id = m.purchase_line_id and
+                        pol_uom.id = pol.product_uom and
+                        m_uom.id = m.product_uom and
+                        p.purchase_id = %s and
+                        pol.id in (
+                            select m1.purchase_line_id from stock_move m1 where m1.picking_id = %s
+                        )
+                    group by pol.id, pol_uom.factor
+                    having sum(m.product_qty * coalesce(m_uom.factor, 1)) - pol.product_qty * pol_uom.factor > 0.01
+                ''', (wizard.picking_id.id, wizard.picking_id.purchase_id.id, wizard.picking_id.id))
+                extra_qty_pol = {}
+                for x in cr.fetchall():
+                    extra_qty_pol[x[0]] = x[1]
+
+            has_extra = False
             for move in wizard.picking_id.move_lines:
                 if move.state in ('draft', 'done', 'cancel', 'confirmed') or move.product_qty == 0.00\
                         or move.id in wiz_lines_moves_ids:
@@ -272,6 +302,15 @@ class stock_picking_processor(osv.osv):
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
                 if line_obj._name == 'stock.move.in.processor':
+                    if move.purchase_line_id and extra_qty_pol.get(move.purchase_line_id.id) and extra_qty_pol[move.purchase_line_id.id] > 0.01:
+                        extra_in_move_uom = extra_qty_pol[move.purchase_line_id.id] / ( move.product_uom.factor or 1)
+                        line_data['extra_qty'] = min(extra_in_move_uom, line_data['ordered_quantity'])
+                        has_extra = True
+                        if extra_in_move_uom > line_data['ordered_quantity']:
+                            extra_qty_pol[move.purchase_line_id.id] -= line_data['extra_qty'] * (move.product_uom.factor or 1)
+                        else:
+                            extra_qty_pol[move.purchase_line_id.id] = 0
+
                     if wizard.fields_as_ro:
                         line_data['cost_as_ro'] = True
 
@@ -293,6 +332,8 @@ class stock_picking_processor(osv.osv):
                             'pack_info_id': move.pack_info_id.id,
                         })
                 line_obj.create(cr, uid, line_data, context=context)
+            if has_extra:
+                self.write(cr, uid, wizard.id, {'has_extra': True}, context=context)
 
         return True
 
@@ -783,6 +824,7 @@ class stock_move_processor(osv.osv):
             ondelete='set null',
         ),
         'change_reason': fields.char(size=256, string='Change reason'),
+        'extra_qty': fields.float_null('Extra qty received vs ordered', readonly=1, related_uom='uom_id'),
     }
 
     _defaults = {

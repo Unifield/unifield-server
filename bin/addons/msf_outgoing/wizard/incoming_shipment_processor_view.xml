@@ -24,6 +24,7 @@
                     <field name="contains_kc" invisible="1" />
                     <field name="location_dest_active_ok" invisible="1"/>
                     <field name="draft" invisible="1" />
+                    <field name="has_extra" invisible="1" />
                     <field name="forbidden_product" nolabel="1" widget="html_text" colspan="4"/>
                     <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', True), ('contains_kc', '=', False)]}">
                         <html>
@@ -62,7 +63,7 @@
                         </html>
                     </group>
                     <separator colspan="4" string="Move lines" />
-                    <field name="move_ids" mode="tree" context="{'display_process_to_ship_button': display_process_to_ship_button}"
+                    <field name="move_ids" mode="tree" context="{'display_process_to_ship_button': display_process_to_ship_button, 'has_extra': has_extra}"
                         colspan="4" nolabel="1" />
                     <group colspan="4" col="4" name="claim">
                         <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
@@ -177,6 +178,7 @@
                         on_change="onchange_uom_qty(uom_id, quantity)"
                         />
                     <field name="uom_id" readonly="1" />
+                    <field name="extra_qty" readonly="1" invisible="not context.get('has_extra', False)"/>
                     <field name="from_pack" readonly="1" />
                     <field name="to_pack" readonly="1" />
                     <field name="filter_pack" filter_selector="1" invisible="1" />
