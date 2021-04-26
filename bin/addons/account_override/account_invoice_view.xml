@@ -387,10 +387,12 @@
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
                                 <tree string="Donation Lines" editable="both"
                                       colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:analytic_distribution_state in ('none','valid') and inactive_product == False">
+                                    <field name="from_supply" invisible="1"/>
                                     <field name="line_number" readonly="1" displayon="noteditable"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="product_id"
+                                           attrs="{'readonly': [('from_supply', '=', True)]}"
                                            on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
                                     />
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
@@ -400,7 +402,10 @@
                                     <field name="analytic_distribution_state_recap" readonly="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="have_analytic_distribution_from_header" invisible="1"/>
-                                    <field name="quantity" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
+                                    <field name="quantity"
+                                           attrs="{'readonly': [('from_supply', '=', True)]}"
+                                           on_change="onchange_donation_qty_price(quantity, price_unit, context)"
+                                    />
                                     <field name="price_unit" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
                                     <field name="price_subtotal" readonly="1"/>
                                     <field name="name"/>
@@ -408,10 +413,18 @@
                                     <field name="inactive_error" invisible="1" />
                                 </tree>
                                 <form string="Donation Line">
-                                    <field name="product_id" on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)" default_focus="1"/>
+                                    <field name="from_supply" invisible="1"/>
+                                    <field name="product_id"
+                                           attrs="{'readonly': [('from_supply', '=', True)]}"
+                                           on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
+                                           default_focus="1"
+                                    />
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
                                     <field name="name" colspan="4" />
-                                    <field name="quantity" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
+                                    <field name="quantity"
+                                           attrs="{'readonly': [('from_supply', '=', True)]}"
+                                           on_change="onchange_donation_qty_price(quantity, price_unit, context)"
+                                    />
                                     <field name="price_unit" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
                                     <field name="price_subtotal" readonly="1"/>
                                     <separator colspan="4" string="Notes" />
