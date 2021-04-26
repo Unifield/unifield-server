@@ -61,6 +61,7 @@
             <field name="model_id" model="ir.model" search="[('model', '=', 'supplier.catalogue')]" />
             <field name="method_to_call">auto_import</field>
             <field name="startswith">SCL_</field>
+            <field name="multiple" eval="True" />
         </record>
 
         <record id="auto_import_fnct_product_list" model="automated.import.function">
@@ -75,6 +76,7 @@
             <field name="model_id" model="ir.model" search="[('model', '=', 'stock.picking')]" />
             <field name="method_to_call">auto_import_incoming_shipment</field>
             <field name="startswith">SHPM_</field>
+            <field name="multiple" eval="True" />
         </record>
 
         <record id="auto_import_fnct_purchase_order" model="automated.import.function">
@@ -82,13 +84,15 @@
             <field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]" />
             <field name="method_to_call">auto_import_purchase_order</field>
             <field name="startswith">POV_</field>
+            <field name="multiple" eval="True" />
         </record>
-        
+
         <record id="auto_import_fnct_confirmed_purchase_order" model="automated.import.function">
             <field name="name">Import Purchase Order and confirm</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]" />
             <field name="method_to_call">auto_import_confirmed_purchase_order</field>
             <field name="startswith">POV_</field>
+            <field name="multiple" eval="True" />
         </record>
 
         <record id="auto_import_fnct_product_categories" model="automated.import.function">
