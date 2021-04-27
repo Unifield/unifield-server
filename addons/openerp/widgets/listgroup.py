@@ -26,8 +26,9 @@ import cherrypy
 from openerp.utils import rpc
 from openobject.i18n import format
 
-from listgrid import List, CELLTYPES
-from pager import Pager
+from .listgrid import List, CELLTYPES
+from .pager import Pager
+from functools import reduce
 
 
 def parse(group_by, hiddens, headers, group_level, groups):
@@ -39,9 +40,9 @@ def parse(group_by, hiddens, headers, group_level, groups):
             else:
                 i += 1
 
-    if isinstance(groups, basestring):
+    if isinstance(groups, str):
         groups = groups.split(',')
-    if isinstance(group_by, basestring):
+    if isinstance(group_by, str):
         group_by = group_by.split(',')
 
     for grp in range(len(group_by)):
@@ -83,27 +84,27 @@ def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, con
     computation = False
 
     if fields:
-        for key, val in fields.items():
+        for key, val in list(fields.items()):
             if val.get('digits'):
                 digits = val['digits']
             # custom fields - decimal_precision computation
             if val.get('computation'):
                 computation = val['computation']
-    if isinstance(digits, basestring):
+    if isinstance(digits, str):
         digits = eval(digits)
     integer, digit = digits
 
-    if isinstance(computation, basestring):
+    if isinstance(computation, str):
         computation = eval(computation)
 
     if total_fields and group_by:
-        for sum_key, sum_val in total_fields.items():
+        for sum_key, sum_val in list(total_fields.items()):
             total_fields[sum_key][1] = 0
-            if grp_records and grp_records[0].has_key(sum_key):
+            if grp_records and sum_key in grp_records[0]:
                 uom_id = set()
                 if rounding_values and fields.get(sum_key, {}).get('related_uom'):
                     uom_id = set([x.get(fields[sum_key]['related_uom']) for x in grp_records])
-                value = sum(map(lambda x: x[sum_key], grp_records))
+                value = sum([x[sum_key] for x in grp_records])
                 if isinstance(value, float):
                     rounding_digit = digit
                     if len(uom_id) == 1 and list(uom_id)[0] in rounding_values:
@@ -114,7 +115,7 @@ def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, con
                     total_fields[sum_key][1] = value
     if grp_records:
         for rec in grp_records:
-            for key, val in rec.items():
+            for key, val in list(rec.items()):
                 if isinstance(val, float):
                     rounding_digit = digit
                     if rounding_values and fields.get(key, {}).get('related_uom'):
@@ -249,7 +250,7 @@ class ListGroup(List):
             order_by = False
 
         self.grp_records = proxy.read_group(self.context.get('__domain', []) + (self.domain or []),
-                                            fields.keys(), self.group_by_ctx, read_offset, read_limit, self.context, read_groupby)
+                                            list(fields.keys()), self.group_by_ctx, read_offset, read_limit, self.context, read_groupby)
 
         if order_by:
             self.grp_records = sorted(self.grp_records, key=itemgetter(terp_params.sort_key), reverse=rev)
@@ -263,7 +264,7 @@ class ListGroup(List):
 
         if self.pageable:
             if limited_groupby:
-                self.count = proxy.read_group(self.context.get('__domain', []) + (self.domain or []), fields.keys(), self.group_by_ctx, 0, False, self.context, False, True)
+                self.count = proxy.read_group(self.context.get('__domain', []) + (self.domain or []), list(fields.keys()), self.group_by_ctx, 0, False, self.context, False, True)
             else:
                 self.count = len(self.grouped)
 
@@ -349,7 +350,7 @@ class MultipleGroup(List):
             return
 
         self.grp_records = proxy.read_group(self.context.get('__domain', []),
-                                            fields.keys(), self.group_by_ctx, 0, False, self.context)
+                                            list(fields.keys()), self.group_by_ctx, 0, False, self.context)
 
         for grp_rec in self.grp_records:
             grp_rec['__level'] = self.group_level

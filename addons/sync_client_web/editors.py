@@ -17,7 +17,7 @@ class BaseTemplEditor(openobject.templating.TemplateEditor):
 
 class HeaderTempEditor(openobject.templating.TemplateEditor):
     templates = ['/openerp/controllers/templates/header.mako']
-    BINARY_ATTACHMENTS_FORM = u'<ul id="skip-links">'
+    BINARY_ATTACHMENTS_FORM = '<ul id="skip-links">'
 
     def edit(self, template, template_text):
         output = super(HeaderTempEditor, self).edit(template, template_text)

@@ -25,7 +25,7 @@ This modules implements custom authorization logic for the OpenERP Web Client.
 import types
 
 from openobject.controllers import BaseController
-from utils import secured
+from .utils import secured
 
 __all__ = ["SecuredController"]
 

@@ -1,2 +1,2 @@
-import _diagram
-import process
+from . import _diagram
+from . import process

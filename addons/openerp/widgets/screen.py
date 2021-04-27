@@ -147,7 +147,7 @@ class Screen(TinyInputWidget):
         self.view_id = view.get('view_id', self.view_id)
         self.view = view  
         
-        from _views import get_view_widget
+        from ._views import get_view_widget
         self.widget = get_view_widget(view_type, self)
 
         self.string = (self.widget or '') and self.widget.string
@@ -159,7 +159,7 @@ class Screen(TinyInputWidget):
         self.button_cancel = (self.widget or False) and view_type == 'form' and not self.widget.hide_button_cancel
 
         toolbar = {}
-        for item, value in view.get('toolbar', {}).items():
+        for item, value in list(view.get('toolbar', {}).items()):
             if value: toolbar[item] = value
 
         submenu = view.get('submenu', {})

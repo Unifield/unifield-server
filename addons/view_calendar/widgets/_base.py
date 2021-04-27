@@ -31,7 +31,7 @@ from openerp.utils import rpc, node_attributes, cache
 
 from openerp.widgets import TinyWidget, ConcurrencyInfo, get_widget
 
-from utils import Day, parse_datetime
+from .utils import Day, parse_datetime
 import logging
 
 COLOR_PALETTE = ['#f57900', '#cc0000', '#d400a8', '#75507b', '#3465a4', '#73d216', '#c17d11', '#edd400',
@@ -163,7 +163,7 @@ class ICalendar(TinyWidget):
         self.info_fields = self.parse(root, view['fields'])
 
         fields = view['fields']
-        fields = fields.keys() + [self.date_start, self.date_stop, self.date_delay, self.color_field, 'state']
+        fields = list(fields.keys()) + [self.date_start, self.date_stop, self.date_delay, self.color_field, 'state']
 
         fields = list(set([x for x in fields if x]))
 
@@ -270,7 +270,7 @@ class ICalendar(TinyWidget):
 
         ids = proxy.search(domain, 0, 0, order_by, ctx)
 
-        result = proxy.read(ids, self.fields.keys()+['__last_update'], ctx)
+        result = proxy.read(ids, list(self.fields.keys())+['__last_update'], ctx)
 
         ConcurrencyInfo.update(self.model, result)
         self.concurrency_info = ConcurrencyInfo(self.model, ids)

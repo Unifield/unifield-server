@@ -21,7 +21,7 @@
 
 import os
 
-icons = map(lambda x: (x,x), ['STOCK_ABOUT', 'STOCK_ADD', 'STOCK_APPLY', 'STOCK_BOLD',
+icons = [(x,x) for x in ['STOCK_ABOUT', 'STOCK_ADD', 'STOCK_APPLY', 'STOCK_BOLD',
 'STOCK_CANCEL', 'STOCK_CDROM', 'STOCK_CLEAR', 'STOCK_CLOSE', 'STOCK_COLOR_PICKER',
 'STOCK_CONNECT', 'STOCK_CONVERT', 'STOCK_COPY', 'STOCK_CUT', 'STOCK_DELETE',
 'STOCK_DIALOG_AUTHENTICATION', 'STOCK_DIALOG_ERROR', 'STOCK_DIALOG_INFO',
@@ -47,7 +47,7 @@ icons = map(lambda x: (x,x), ['STOCK_ABOUT', 'STOCK_ADD', 'STOCK_APPLY', 'STOCK_
 'terp-account', 'terp-crm', 'terp-mrp', 'terp-product', 'terp-purchase',
 'terp-sale', 'terp-tools', 'terp-administration', 'terp-hr', 'terp-partner',
 'terp-project', 'terp-report', 'terp-stock', 'terp-calendar', 'terp-graph',
-])
+]]
 
 stock_items = {
 'STOCK_ABOUT' : 'gtk-about',

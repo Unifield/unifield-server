@@ -15,7 +15,7 @@ def to_kw(func, args, kw):
     argnames, defaults = getargspec(func)[::3]
     defaults = defaults or []
 
-    kv = zip(islice(argnames, 0, len(argnames) - len(defaults)), args)
+    kv = list(zip(islice(argnames, 0, len(argnames) - len(defaults)), args))
     kw.update(kv)
 
     return args[len(argnames)-len(defaults):], kw
@@ -65,7 +65,7 @@ def validate(form=None, validators=None):
             if validators:
 
                 if isinstance(validators, dict):
-                    for field, validator in validators.iteritems():
+                    for field, validator in validators.items():
                         try:
                             kw[field] = validator.to_python(
                                 kw.get(field, None), None)

@@ -90,7 +90,7 @@ class Diagram(TinyWidget):
                     if fld.nodeName == 'field':
                         attrs = node_attributes(fld)
                         name = attrs['name']
-                        if attrs.has_key('invisible') and attrs['invisible']=='1':
+                        if 'invisible' in attrs and attrs['invisible']=='1':
                             self.node_flds['invisible'].append(name)
                         else:
                             self.node_flds['visible'].append(name)

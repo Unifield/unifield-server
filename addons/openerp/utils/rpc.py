@@ -24,10 +24,10 @@ import xmlrpc.client
 
 import openobject.errors
 
-import common
+from . import common
 
-from tiny_socket import TinySocket
-from tiny_socket import TinySocketError
+from .tiny_socket import TinySocket
+from .tiny_socket import TinySocketError
 from datetime import datetime, timedelta
 from collections import OrderedDict
 import cherrypy
@@ -115,7 +115,7 @@ class RPCGateway(object):
 
         elif isinstance(result, dict):
             newres = {}
-            for key, val in result.items():
+            for key, val in list(result.items()):
                 newres[key] = self.__convert(val)
 
             return newres
@@ -557,7 +557,7 @@ if __name__=="__main__":
     res = RPCProxy('res.users').read([session.uid], ['name'])
     print(res)
 
-    print(session.context)
+    print((session.context))
 
 
 # vim: ts=4 sts=4 sw=4 si et

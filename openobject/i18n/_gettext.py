@@ -1,4 +1,4 @@
-from __future__ import with_statement
+
 
 import atexit
 import glob
@@ -158,7 +158,7 @@ class lazystring(object):
         return self.func(*self.args, **self.kw)
 
     def __unicode__(self):
-        return unicode(self.eval())
+        return str(self.eval())
 
     def __str__(self):
         return str(self.eval())

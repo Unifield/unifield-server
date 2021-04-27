@@ -1,4 +1,4 @@
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import cherrypy
 from mako.filters import html_escape
@@ -24,7 +24,7 @@ def url(_cppath, _cpparams=None, **kw):
     """
 
     path = _cppath
-    if not isinstance(_cppath, basestring):
+    if not isinstance(_cppath, str):
         path = "/".join(list(_cppath))
 
     params = _cpparams or {}
@@ -33,16 +33,16 @@ def url(_cppath, _cpparams=None, **kw):
     params.update(kw)
 
     kv = []
-    for k, v in params.items():
-        if isinstance(k, basestring) and isinstance(v, basestring):
-            if isinstance(k, unicode):
+    for k, v in list(params.items()):
+        if isinstance(k, str) and isinstance(v, str):
+            if isinstance(k, str):
                 k = k.encode('utf-8')
-            if isinstance(v, unicode):
+            if isinstance(v, str):
                 v = v.encode('utf-8')
-            k = urllib.quote_plus(k)
-            v = urllib.quote_plus(v)
+            k = urllib.parse.quote_plus(k)
+            v = urllib.parse.quote_plus(v)
         elif isinstance(v, dict):
-            v = urllib.quote_plus('%s'%v)
+            v = urllib.parse.quote_plus('%s'%v)
 
         kv.append("%s=%s" % (k, v))
 
@@ -65,7 +65,7 @@ def url_plus(_cppath, _cpparams=None, **kw):
 
 
 def redirect(_cppath, _cpparams=None, **kw):
-    if isinstance(_cppath, unicode):
+    if isinstance(_cppath, str):
         _cppath = _cppath.encode('utf-8')
     if 'X-Requested-With' in cherrypy.request.headers:
         kw['requested_with'] = cherrypy.request.headers['X-Requested-With']
@@ -92,10 +92,10 @@ class NoEscape(object):
 
     def __call__(self, *args, **kw):
         try:
-            return unicode(self.value(*args, **kw))
+            return str(self.value(*args, **kw))
         except:
             pass
-        return unicode(self.value)
+        return str(self.value)
 
     def encode(self, encoding):
         return self().encode(encoding)
@@ -137,7 +137,7 @@ def attrs(*args, **kw):
     }
 
     result = []
-    for name, value in kv.items():
+    for name, value in list(kv.items()):
         if callable(value):
             value = value()
         if value is not None:
@@ -161,7 +161,7 @@ def decorated(wrapper, func, **attrs):
     wrapper.__dict__ = func.__dict__.copy()
     wrapper.__module__ = func.__module__
 
-    for k, v in attrs.items():
+    for k, v in list(attrs.items()):
         try:
             setattr(wrapper, k, v)
         except:

@@ -5,8 +5,8 @@ import zlib
 
 from openobject.tools import expose, ast
 
-import actions
-import controllers
+from . import actions
+from . import controllers
 
 class Execute(controllers.SecuredController):
     _cp_path = "/openerp/execute"

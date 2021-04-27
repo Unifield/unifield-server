@@ -3,7 +3,7 @@ import cherrypy
 import os
 import shutil
 import tempfile
-from cStringIO import StringIO
+from io import StringIO
 
 from openerp.controllers import form
 from openerp.utils import rpc
@@ -31,7 +31,7 @@ class ModuleForm(form.Form):
         modules = rpc.RPCProxy('ir.module.module')
         web_modules = modules.list_web()
         if not web_modules: return []
-        addons_to_load = map(operator.itemgetter(0), web_modules)
+        addons_to_load = list(map(operator.itemgetter(0), web_modules))
 
         addons_to_download = [
             name for (name, version) in web_modules
@@ -54,7 +54,7 @@ class ModuleForm(form.Form):
             shutil.move(os.path.join(temp_dir, 'web'), module_dir)
             shutil.rmtree(temp_dir)
 
-            dependencies = map(lambda u: u.encode('utf-8'), module['depends'])
+            dependencies = [u.encode('utf-8') for u in module['depends']]
             descriptor = open(os.path.join(module_dir, '__openerp__.py'), 'wb')
             descriptor.write('# -*- coding: utf-8 -*-\n')
             descriptor.write("%s" % ({

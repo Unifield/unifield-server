@@ -29,8 +29,8 @@ from openobject.i18n.format import format_date_custom
 from openerp.utils import rpc, node_attributes
 from openerp.widgets import TinyWidget
 
-from _base import ICalendar, TinyCalendar
-from utils import Day, Week, Month, Year
+from ._base import ICalendar, TinyCalendar
+from .utils import Day, Week, Month, Year
 
 class MiniCalendar(TinyWidget):
     template = 'view_calendar/widgets/templates/mini.mako'
@@ -75,14 +75,14 @@ class GroupBox(TinyWidget):
         try:
             key = None
             if colors:
-                if isinstance(colors.items()[0][0], basestring):
+                if isinstance(list(colors.items())[0][0], str):
                     key = lambda x: x[0][0]
-                elif isinstance(colors.items()[0][0][0], (int, long)):
+                elif isinstance(list(colors.items())[0][0][0], int):
                     key = lambda x: x[0][1]
 
-            sorted_colors = sorted(colors.items(), key=key)
+            sorted_colors = sorted(list(colors.items()), key=key)
         except:
-            sorted_colors = sorted(colors.items(), key=None)
+            sorted_colors = sorted(list(colors.items()), key=None)
 
         return sorted_colors
 
@@ -270,7 +270,7 @@ class GanttCalendar(ICalendar):
             dp = day - 1
             dn = day + 1
             self.days = [dp, day, dn]
-            self.title = u"%s, %s, %s" % (ustr(dp), ustr(day), ustr(dn))
+            self.title = "%s, %s, %s" % (ustr(dp), ustr(day), ustr(dn))
             self.selected_day = day
 
             self.headers = [(24, ustr(dp)), (24, ustr(day)), (24, ustr(dn))]
@@ -280,7 +280,7 @@ class GanttCalendar(ICalendar):
             self.days = [d for d in Week(day)]
             self.title = _("%s, Week %s") % (y, day.strftime("%W"))
             self.selected_day = _get_selection_day(day, self.selected_day, 'week')
-            self.headers = [(12, u"%s %s" % (d.month2.name, d.day)) for d in self.days]
+            self.headers = [(12, "%s %s" % (d.month2.name, d.day)) for d in self.days]
             self.subheaders = []
             for x in self.days:
                 for i in [0, 12]:
@@ -291,7 +291,7 @@ class GanttCalendar(ICalendar):
             wp = w - 1
             wn = w + 1
             self.days = wp.days + w.days + wn.days
-            self.title = _(u"%s - %s") % (ustr(self.days[0]), ustr(self.days[-1]))
+            self.title = _("%s - %s") % (ustr(self.days[0]), ustr(self.days[-1]))
             self.selected_day = _get_selection_day(day, self.selected_day, 'week')
             self.headers = [(7, _("Week %s") % w1[0].strftime('%W')) for w1 in [wp, w, wn]]
             self.subheaders = [format_date_custom(x, "E d") for x in itertools.chain(wp, w, wn)]
@@ -324,7 +324,7 @@ class GanttCalendar(ICalendar):
             yr = Year(y)
 
             self.days = yr.days
-            self.title = u"Year %s" % (y)
+            self.title = "Year %s" % (y)
             self.selected_day = _get_selection_day(day, self.selected_day, 'year')
             self.headers = [(m.range[-1], m.name) for m in yr.months]
             self.subheaders = [_("W %s") % x[0].strftime('%W') for x in yr.weeks]

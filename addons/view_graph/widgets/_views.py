@@ -1,4 +1,4 @@
-from _graph import Graph
+from ._graph import Graph
 from openerp.widgets import TinyView
 
 

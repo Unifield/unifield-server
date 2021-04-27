@@ -122,11 +122,11 @@ class State(Form):
             'options': {}
         }
 
-        for color, expr in bgcolors.items():
+        for color, expr in list(bgcolors.items()):
             if eval(expr, result):
                 data['color'] = color
 
-        for shape, expr in shapes.items():
+        for shape, expr in list(shapes.items()):
             if eval(expr, result):
                 data['shape'] = shape
 
@@ -159,9 +159,8 @@ class Connector(Form):
                                         ('model', '=', params.model),
                                         ('relation', '=', params.context.get('m2o_model', ''))])
 
-        fields = map(lambda field: field['name'],
-                     proxy_field.read(field_ids, ['name'],
-                                      rpc.session.context))
+        fields = [field['name'] for field in proxy_field.read(field_ids, ['name'],
+                                      rpc.session.context)]
 
         connector = rpc.RPCProxy(params.model).read(params.id, fields,
                                                     rpc.session.context)
@@ -315,7 +314,7 @@ class Workflow(Form):
         for node in graph_search['blank_nodes']:
             isolate_nodes[node['id']] = node
         else:
-            y = map(lambda t: t['y'],filter(lambda x: x['y'] if x['x']==20 else None, nodes.values()))
+            y = [t['y'] for t in [x for x in list(nodes.values()) if x['y'] if x['x']==20 else None]]
             y_max = (y and max(y)) or 120
 
         connectors = {}
@@ -367,11 +366,11 @@ class Workflow(Form):
                 options={}
             )
 
-            for color, expr in bgcolors.items():
+            for color, expr in list(bgcolors.items()):
                 if eval(expr, act):
                     n['color'] = color
 
-            for shape, expr in shapes.items():
+            for shape, expr in list(shapes.items()):
                 if eval(expr, act):
                     n['shape'] = shape
 

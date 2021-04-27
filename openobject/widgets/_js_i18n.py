@@ -2,7 +2,7 @@ import os
 
 from openobject import i18n
 
-from _resource import JSLink
+from ._resource import JSLink
 
 
 class JSI18n(JSLink):

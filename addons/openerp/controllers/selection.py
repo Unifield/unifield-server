@@ -36,5 +36,5 @@ class Selection(SecuredController):
     def action(self, **kw):
         params, data = TinyDict.split(kw)
 
-        import actions
+        from . import actions
         return actions.execute(params.action, **params.data)

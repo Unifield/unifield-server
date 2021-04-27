@@ -57,7 +57,7 @@ class M2O(TinyInputWidget):
 
         if value and isinstance(value, (tuple, list)) and len(value) == 2:
             self.default, self.text = value
-        elif value and isinstance(value, basestring):
+        elif value and isinstance(value, str):
             self.text = value
         else:
             self.default = value

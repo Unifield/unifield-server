@@ -28,11 +28,11 @@ import cherrypy
 from openerp.utils import rpc, icons, common, expr_eval, node_attributes
 from openerp.widgets import TinyWidget, TinyInputWidget, ConcurrencyInfo, get_widget
 
-import form
+from . import form
 from openobject import tools
 from openobject.tools import ast
 from openobject.i18n import format
-from pager import Pager
+from .pager import Pager
 
 
 class List(TinyWidget):
@@ -235,7 +235,7 @@ class List(TinyWidget):
             ctx.update(context)
 
             try:    
-                data = proxy.read_web(ids, fields.keys() + ['__last_update'], ctx)
+                data = proxy.read_web(ids, list(fields.keys()) + ['__last_update'], ctx)
             except:
                 pass
 
@@ -244,7 +244,7 @@ class List(TinyWidget):
             self.concurrency_info = ConcurrencyInfo(self.model, ids)
 
             order_data = [(d['id'], d) for d in data]
-            orderer = dict(zip(ids, count()))
+            orderer = dict(list(zip(ids, count())))
             ordering = sorted(order_data, key=lambda object: orderer[object[0]])
             data = [i[1] for i in ordering]
 
@@ -259,11 +259,11 @@ class List(TinyWidget):
         self.values = copy.deepcopy(data)
         self.headers, self.hiddens, self.data, self.field_total, self.field_real_total, self.buttons = self.parse(root, fields, data)
 
-        for k, v in self.field_total.items():
+        for k, v in list(self.field_total.items()):
             if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
                 self.field_total[k][1] = self.do_sum(self.data, k)
 
-        for k, v in self.field_real_total.items():
+        for k, v in list(self.field_real_total.items()):
             if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
                 self.field_real_total[k][1] = self.do_real_sum(self.data, k)
 
@@ -348,12 +348,12 @@ class List(TinyWidget):
             attrs = d[field].attrs
 
         digits = attrs.get('digits', (16,2))
-        if isinstance(digits, basestring):
+        if isinstance(digits, str):
             digits = eval(digits)
 
         # custom fields - decimal_precision computation
         computation = attrs.get('computation', False)
-        if isinstance(computation, basestring):
+        if isinstance(computation, str):
             computation = eval(computation)
 
         integer, digit = digits
@@ -373,12 +373,12 @@ class List(TinyWidget):
             attrs = d[field].attrs
 
         digits = attrs.get('digits', (16,2))
-        if isinstance(digits, basestring):
+        if isinstance(digits, str):
             digits = eval(digits)
 
         # custom fields - decimal_precision computation
         computation = attrs.get('computation', False)
-        if isinstance(computation, basestring):
+        if isinstance(computation, str):
             computation = eval(computation)
 
         integer, digit = digits
@@ -472,10 +472,10 @@ class List(TinyWidget):
                     name = attrs['name']
 
                     if name in myfields:
-                        print "-"*30
-                        print " malformed view for:", self.model
-                        print " duplicate field:", name
-                        print "-"*30
+                        print("-"*30)
+                        print(" malformed view for:", self.model)
+                        print(" duplicate field:", name)
+                        print("-"*30)
                         raise common.error(_('Application Error'), _('Invalid view, duplicate field: %s') % name)
 
                     myfields.append(name)
@@ -488,8 +488,8 @@ class List(TinyWidget):
                     try:
                         fields[name].update(attrs)
                     except:
-                        print "-"*30,"\n malformed tag for:", attrs
-                        print "-"*30
+                        print("-"*30,"\n malformed tag for:", attrs)
+                        print("-"*30)
                         raise
 
                     kind = fields[name]['type']
@@ -503,7 +503,7 @@ class List(TinyWidget):
                         visval = fields[name].get('invisible', 'False')
                         invisible = visval if isinstance(visval, bool) \
                             else eval(visval, {'context': self.context})
-                    except NameError, e:
+                    except NameError as e:
                         cherrypy.log.error(e, context='listgrid.List.parse')
                         invisible = False
 
@@ -534,7 +534,7 @@ class List(TinyWidget):
                             else:
                                 cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
 
-                        for color, expr in self.colors.items():
+                        for color, expr in list(self.colors.items()):
                             try:
                                 if expr_eval(expr,
                                              dict(row_value, active_id=rpc.session.active_id or False)):
@@ -634,7 +634,7 @@ class M2O(Char):
 
     def get_text(self):
 
-        if isinstance(self.value, (int, long)):
+        if isinstance(self.value, int):
             self.value = self.value, rpc.name_get(self.attrs['relation'], self.value, rpc.session.context)
 
         if self.value and len(self.value) > 0:
@@ -696,12 +696,12 @@ class Float(Char):
             return self.null_value
 
         digits = self.attrs.get('digits', (16,2))
-        if isinstance(digits, basestring):
+        if isinstance(digits, str):
             digits = eval(digits)
 
         # custom fields - decimal_precision computation
         computation = self.attrs.get('computation', False)
-        if isinstance(computation, basestring):
+        if isinstance(computation, str):
             computation = eval(computation)
 
         if self.attrs.get('rounding'):
@@ -736,7 +736,7 @@ class Int(Char):
 
     def get_text(self):
         if self.value:
-            if isinstance(self.value, (unicode, str)):
+            if isinstance(self.value, str):
                 return ast.literal_eval(self.value)
             return int(self.value)
 

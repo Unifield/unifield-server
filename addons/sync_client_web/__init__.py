@@ -1,2 +1,2 @@
-import controllers
-import editors
+from . import controllers
+from . import editors

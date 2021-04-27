@@ -38,8 +38,8 @@ from openerp import validators
 from openerp.utils import rpc, get_server_version, is_server_local, serve_file
 from tempfile import NamedTemporaryFile
 import shutil
-import ConfigParser
-from ConfigParser import NoOptionError, NoSectionError
+import configparser
+from configparser import NoOptionError, NoSectionError
 import threading
 
 TRUE_LIST = (True, 'True', 'true', 'TRUE', 'Yes', 'YES', 'yes')
@@ -288,7 +288,7 @@ class Database(BaseController):
             self.msg = {'message': (_("The server crashed during installation.\nWe suggest you to drop this database.")),
                         'title': (_('Error during database creation'))}
             return self.create()
-        except openobject.errors.AccessDenied, e:
+        except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Bad super admin password'),
                         'title' : e.title}
             return self.create()
@@ -316,7 +316,7 @@ class Database(BaseController):
             config_file_path = os.path.join(paths.root(), '..', 'unifield-server', 'UFautoInstall', config_file_name)
         if not os.path.exists(config_file_path):
             return False
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.read(config_file_path)
         dbname = config.get('instance', 'db_name')
         self.resume, self.progress, self.state, self.error, monitor_status = rpc.session.execute_db('creation_get_resume_progress', dbname)
@@ -389,7 +389,7 @@ class Database(BaseController):
             self.msg = {'message': ustr(_("The auto creation config file '%s' does not exists.") % file_path),
                         'title': ustr(_('Auto creation file not found'))}
 
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.read(file_path)
         try:
             db_name = config.get('instance', 'db_name')
@@ -635,7 +635,7 @@ class Database(BaseController):
         except DatabaseCreationCrash:
             self.msg = {'message': (_("The server crashed during installation.\nWe suggest you to drop this database.")),
                         'title': (_('Error during database creation'))}
-        except openobject.errors.AccessDenied, e:
+        except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Bad super admin password'),
                         'title' : e.title}
 
@@ -660,7 +660,7 @@ class Database(BaseController):
             self.check_config_file(config_file_path)
             if self.msg:
                 return self.auto_create()
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read(config_file_path)
 
             config_dict =  {x:dict(config.items(x)) for x in config.sections()}
@@ -685,7 +685,7 @@ class Database(BaseController):
             create_thread.start()
             create_thread.join(0.5)
 
-        except openobject.errors.AccessDenied, e:
+        except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
         except DatabaseExist:
@@ -718,7 +718,7 @@ class Database(BaseController):
             else:
                 self.msg = {'message': _('You are trying to delete a production database, please disconnect from sync server before to delete it.'),
                             'title': 'Producion database deletion'}
-        except openobject.errors.AccessDenied, e:
+        except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
         except Exception:
@@ -757,7 +757,7 @@ class Database(BaseController):
                     cherrypy.response.headers['Content-Type'] = "application/data"
                     cherrypy.response.headers['Content-Disposition'] = 'filename="%s.dump"' % '-'.join(filename)
                     return base64.decodestring(res)
-        except openobject.errors.AccessDenied, e:
+        except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
             return self.backup()
@@ -808,13 +808,13 @@ class Database(BaseController):
             else:
                 data = base64.encodestring(filename.file.read())
                 rpc.session.execute_db('restore', password, dbname, data)
-        except openobject.errors.AccessDenied, e:
+        except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
             if hasattr(cherrypy.request, 'input_values') and filename:
                 cherrypy.request.input_values['fpath'] = filename
             return self.restore()
-        except Exception, e:
+        except Exception as e:
             msg = _("Could not restore database")
             if isinstance(e, openobject.errors.TinyException):
                 if 'Database already exists' in e.message:
@@ -844,7 +844,7 @@ class Database(BaseController):
                         'title': _('Information'),
                         'redirect_to': '/openerp/login'}
             return self.password()
-        except openobject.errors.AccessDenied, e:
+        except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Bad super admin password'),
                         'title' : e.title}
             return self.password()

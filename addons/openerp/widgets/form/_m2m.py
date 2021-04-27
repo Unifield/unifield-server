@@ -128,7 +128,7 @@ class M2M(TinyInputWidget):
         current.domain = current.domain or []
         current.context = current.context or {}
 
-        if isinstance(self.context, basestring):
+        if isinstance(self.context, str):
             # XXX: parent record for O2M
             #if self.parent:
             #    ctx['parent'] = EvalEnvironment(self.parent)
@@ -177,7 +177,7 @@ class M2M(TinyInputWidget):
     def set_value(self, value):
 
         ids = value
-        if isinstance(ids, basestring):
+        if isinstance(ids, str):
             if not ids.startswith('['):
                 ids = '[' + ids + ']'
             ids = eval(ids)

@@ -76,7 +76,7 @@ class BabelCommand(BaseCommand):
     def execute(self, command, *args, **kw):
 
         args = self._args + [command] + list(args)
-        for k, v in kw.items():
+        for k, v in list(kw.items()):
             args += ['-%s' % k, v]
 
         self.cmd.run(args)
@@ -107,7 +107,7 @@ class BabelCommand(BaseCommand):
 
         os.chdir(path)
 
-        print "Creating '%s'..." % pot
+        print("Creating '%s'..." % pot)
         self.execute("extract", '.', o=pot, F=mappath)
 
     def run(self, argv):

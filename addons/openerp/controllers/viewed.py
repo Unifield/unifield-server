@@ -26,7 +26,7 @@ from openerp import utils, widgets, validators
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, common, icons, cache, TinyDict
 
-from form import Form
+from .form import Form
 from openobject.tools import url, expose
 
 
@@ -138,7 +138,7 @@ def xml_locate(expr, ref):
         nodes = [n for n in ref.childNodes if n.localName == name]
         try:
             return nodes[index-1]
-        except Exception, e:
+        except Exception as e:
             return []
 
     parts = expr.split('/')
@@ -216,7 +216,7 @@ class ViewEd(SecuredController):
         except:
             pass
 
-        if isinstance(view_id, basestring) or not view_id:
+        if isinstance(view_id, str) or not view_id:
             raise common.message(_("Invalid view id."))
 
         res = rpc.RPCProxy('ir.ui.view').read([view_id], ['model', 'type'])[0]
@@ -250,7 +250,7 @@ class ViewEd(SecuredController):
                 else:
                     if node.nodeType==node.ELEMENT_NODE and node.localName==node2.localName:
                         res = True
-                        for attr in node2.attributes.keys():
+                        for attr in list(node2.attributes.keys()):
                             if attr=='position':
                                 continue
                             if node.hasAttribute(attr):
@@ -281,11 +281,11 @@ class ViewEd(SecuredController):
                 else:
                     attrs = ''.join([
                         ' %s="%s"' % (attr, node2.getAttribute(attr))
-                        for attr in node2.attributes.keys()
+                        for attr in list(node2.attributes.keys())
                         if attr != 'position'
                     ])
                     tag = "<%s%s>" % (node2.localName, attrs)
-                    raise AttributeError, "Couldn't find tag '%s' in parent view" % tag
+                    raise AttributeError("Couldn't find tag '%s' in parent view" % tag)
             return doc_src.toxml().replace('\t', '')
 
         views = rpc.RPCProxy('ir.ui.view')
@@ -440,16 +440,16 @@ class ViewEd(SecuredController):
         model = _get_model(field_node, parent_model=model)
 
         # get the fields
-        fields = rpc.RPCProxy(model).fields_get(False, rpc.session.context).keys()
+        fields = list(rpc.RPCProxy(model).fields_get(False, rpc.session.context).keys())
 
-        nodes = _CHILDREN.keys()
+        nodes = list(_CHILDREN.keys())
         nodes.remove('view')
 
         nodes.sort()
         fields.sort()
 
         positions = [('inside', 'Inside'), ('after', 'After'), ('before', 'Before')]
-        if field_node.localName in [k for k,v in _CHILDREN.items() if not v] + ['field']:
+        if field_node.localName in [k for k,v in list(_CHILDREN.items()) if not v] + ['field']:
             positions = [('after', 'After'), ('before', 'Before'), ('inside', 'Inside')]
 
         return dict(view_id=view_id, xpath_expr=xpath_expr, nodes=nodes, fields=fields, model=model, positions=positions)
@@ -547,7 +547,7 @@ class ViewEd(SecuredController):
             for attr in attrs:
                 node.removeAttribute(attr)
 
-            for attr, val in kw.items():
+            for attr, val in list(kw.items()):
                 if val:
                     node.setAttribute(attr, val)
 
@@ -577,7 +577,7 @@ class ViewEd(SecuredController):
                 if position == 'inside':
                     node.appendChild(new_node)
 
-            except Exception, e:
+            except Exception as e:
                 return dict(error=ustr(e))
 
         elif _terp_what == "move":
@@ -633,7 +633,7 @@ class ViewEd(SecuredController):
 
         try:
             views.write(view_id, {'arch': doc.toxml(encoding="utf-8")})
-        except Exception, e:
+        except Exception as e:
             error = str(e)
         return dict(error=error)
 
@@ -809,7 +809,7 @@ class WidgetProperty(widgets.SelectField):
 
     def __init__(self, name, default=None):
 
-        options = widgets.get_registered_widgets().keys()
+        options = list(widgets.get_registered_widgets().keys())
         options.sort()
         options = [''] + options
 

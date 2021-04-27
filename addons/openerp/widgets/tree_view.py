@@ -27,8 +27,8 @@ from openobject.widgets import Form
 from openerp.utils import rpc
 from openerp.utils import node_attributes
 
-from sidebar import Sidebar
-import treegrid
+from .sidebar import Sidebar
+from . import treegrid
 
 
 class ViewTree(Form):
@@ -110,7 +110,7 @@ class ViewTree(Form):
         self.ids = ids
 
         toolbar = {}
-        for item, value in view.get('toolbar', {}).items():
+        for item, value in list(view.get('toolbar', {}).items()):
             if value: toolbar[item] = value
         if toolbar:
             self.sidebar = Sidebar(self.model, None, toolbar, context=self.context, view_id=self.view_id)

@@ -26,7 +26,7 @@ from openerp.utils import rpc, common, TinyDict, serve_file
 
 from openobject.tools import expose, redirect
 
-import actions
+from . import actions
 
 class Attachment(SecuredController):
 
@@ -84,7 +84,7 @@ class Attachment(SecuredController):
                 'datas': base64.encodestring(datas.file.read()),
             }, ctx)
             return {'id': attachment_id, 'name': datas.filename}
-        except Exception, e:
+        except Exception as e:
             return {'error': ustr(e)}
 
     @expose('json', methods=('POST',))
@@ -93,7 +93,7 @@ class Attachment(SecuredController):
         try:
             proxy.unlink([int(id)], rpc.session.context)
             return {}
-        except Exception, e:
+        except Exception as e:
             return {'error': ustr(e)}
 
 

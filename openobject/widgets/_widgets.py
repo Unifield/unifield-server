@@ -1,7 +1,7 @@
 import re
 
-from _base import *
-from _resource import *
+from ._base import *
+from ._resource import *
 
 import formencode
 

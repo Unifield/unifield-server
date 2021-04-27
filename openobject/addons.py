@@ -25,7 +25,7 @@ class Graph(dict):
         level = 0
         done = set(self.keys())
         while done:
-            level_modules = [(name, module) for name, module in self.items() if module.depth==level]
+            level_modules = [(name, module) for name, module in list(self.items()) if module.depth==level]
             for name, module in level_modules:
                 done.remove(name)
                 yield module
@@ -75,7 +75,7 @@ class Node(Singleton):
                 setattr(child, name, value + 1)
 
     def __iter__(self):
-        return itertools.chain(iter(self.children), *map(iter, self.children))
+        return itertools.chain(iter(self.children), *list(map(iter, self.children)))
 
     def __str__(self):
         return self._pprint()
@@ -141,7 +141,7 @@ def upgrade_graph(graph, module_list):
         packages.pop(0)
 
     for package in later:
-        unmet_deps = filter(lambda p: p not in graph, dependencies[package])
+        unmet_deps = [p for p in dependencies[package] if p not in graph]
         cherrypy.log('module %s: Unmet dependencies: %s' % (package, ', '.join(unmet_deps)), "ERROR")
 
     result = len(graph) - len_graph

@@ -30,7 +30,7 @@ def init_rpc_session():
     port = config.get('openerp.server.port')
     protocol = config.get('openerp.server.protocol')
 
-    import rpc
+    from . import rpc
     rpc.initialize(host, port, protocol, storage=CPSessionWrapper())
 
 init_rpc_session()

@@ -2,7 +2,7 @@
 """
 try:
     # first, try importing directly for Python 2.6 or 2.7
-    from ast import literal_eval
+    from .ast import literal_eval
 except ImportError:
     from _ast import *
     def parse(expr, filename='<unknown>', mode='exec'):
@@ -20,12 +20,13 @@ except ImportError:
         lists, dicts, booleans, and None.
         """
         _safe_names = {'None': None, 'True': True, 'False': False}
-        if isinstance(node_or_string, basestring):
+        if isinstance(node_or_string, str):
             node_or_string = parse(node_or_string, mode='eval')
         if isinstance(node_or_string, Expression):
             node_or_string = node_or_string.body
         def _convert(node):
-            if isinstance(node, Str):
+            print(type(node))
+            if isinstance(node, (Str, node.NameConstant)):
                 return node.s
             elif isinstance(node, Num):
                 return node.n

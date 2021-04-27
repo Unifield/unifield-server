@@ -71,7 +71,7 @@ def start():
     if options.config_override:
         try:
             over_config = Parser().dict_from_file(options.config_override)
-            for section, value in over_config.items():
+            for section, value in list(over_config.items()):
                 app_config.setdefault(section, {}).update(value)
         except Exception as error_config:
             pass

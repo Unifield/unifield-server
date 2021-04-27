@@ -1,3 +1,3 @@
-import widgets
-import controllers
+from . import widgets
+from . import controllers
 

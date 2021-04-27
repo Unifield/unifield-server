@@ -50,7 +50,7 @@ def fixup_data_pytz_zoneinfo():
     for root, _, filenames in os.walk(os.path.join(tzdir, "zoneinfo")):
         base = os.path.join('pytz', root[len(tzdir) + 1:])
         r[base] = [os.path.join(root, f) for f in filenames]
-    return r.items()
+    return list(r.items())
 
 def byte_compile_noop(py_files, optimize=0, force=0,
                       target_dir=None, verbose=1, dry_run=0,
@@ -76,14 +76,14 @@ def byte_compile_noop(py_files, optimize=0, force=0,
 
         if force or newer(file.__file__, cfile):
             if verbose:
-                print "fake-byte-compiling %s to %s" % (file.__file__, dfile)
+                print("fake-byte-compiling %s to %s" % (file.__file__, dfile))
             if not dry_run:
                 mkpath(os.path.dirname(cfile))
                 copy_file(file.__file__, cfile, preserve_mode=0)
         else:
             if verbose:
-                print "skipping byte-compilation of %s to %s" % \
-                      (file.__file__, dfile)
+                print("skipping byte-compilation of %s to %s" % \
+                      (file.__file__, dfile))
         compiled_files.append(dfile)
     return compiled_files
 

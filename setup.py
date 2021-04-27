@@ -15,7 +15,7 @@ author_email = None
 url = None
 download_url = None
 
-execfile(os.path.join("openobject", "release.py"))
+exec(compile(open(os.path.join("openobject", "release.py")).read(), os.path.join("openobject", "release.py"), 'exec'))
 
 version_dash_incompatible = False
 if 'bdist_rpm' in sys.argv:

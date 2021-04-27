@@ -18,13 +18,13 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import cherrypy
 from openerp import widgets as tw
 from openerp.utils import rpc, TinyDict, context_with_concurrency_info, expr_eval, node_attributes
 
-from form import Form, get_validation_schema, default_error_handler, default_exception_handler
+from .form import Form, get_validation_schema, default_error_handler, default_exception_handler
 from openobject.tools import expose, validate, error_handler, exception_handler
 
 import xml.dom.minidom
@@ -58,7 +58,7 @@ class OpenO2M(Form):
 
         # save view_params for later phazes
         vp = vp.make_plain('_terp_view_params/')
-        hiddens = map(lambda x: tw.form.Hidden(name=x, default=ustr(vp[x])), vp)
+        hiddens = [tw.form.Hidden(name=x, default=ustr(vp[x])) for x in vp]
 
         params.prefix = params.o2m
         params.views = wid.view
@@ -174,7 +174,7 @@ class OpenO2M(Form):
         try:
             if id:
                 res  = proxy.unlink([int(id)])
-        except Exception, e:
+        except Exception as e:
             error = ustr(e)
             
         return dict(error=error)

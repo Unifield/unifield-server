@@ -22,9 +22,7 @@ class _CommandType(type):
         return obj
 
 
-class BaseCommand(object):
-
-    __metaclass__ = _CommandType
+class BaseCommand(object, metaclass=_CommandType):
 
     def __init__(self):
         self.parser = OptionParser(usage=self.usage)
@@ -62,14 +60,14 @@ class CommandLine(object):
 
     def _help(self):
 
-        print self.parser.format_help()
-        print "Commands:"
+        print(self.parser.format_help())
+        print("Commands:")
         longest = max([len(command) for command in COMMANDS])
         format = "  %%-%ds %%s" % max(8, longest + 1)
-        commands = COMMANDS.items()
+        commands = list(COMMANDS.items())
         commands.sort()
         for name, command in commands:
-            print format % (name, command.description)
+            print(format % (name, command.description))
 
 
 def main():

@@ -45,7 +45,7 @@ class String(BaseValidator):
     if_empty = False
 
     def _to_python(self, value, state):
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             return value.encode('utf-8')
 
         return value
@@ -143,7 +143,7 @@ class Selection(BaseValidator):
 
     def _to_python(self, value, state):
 
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             if re.match('True|False|None', value):
                 return eval(value)
             if re.match('^\-+|\d+$', value):
@@ -159,7 +159,7 @@ class Reference(BaseValidator):
 
     def _to_python(self, value, state):
 
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = eval(value)
 
         id, ref = value
@@ -227,7 +227,7 @@ class many2many(BaseValidator):
 
     def _to_python(self, value, state):
 
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = eval(value)
 
         if not isinstance(value, (tuple, list)):

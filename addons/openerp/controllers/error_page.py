@@ -79,7 +79,7 @@ class ErrorPage(BaseController):
                 return dict(message=_('Your problem has been sent to the quality team\nWe will recontact you after analysing the problem.'))
             else:
                 return dict(error=_('Your problem could not be sent to the quality team\nPlease report this error manually at %s') % ('support@openerp.com'))
-        except Exception, e:
+        except Exception as e:
             return dict(error=str(e))
 
 _ep = ErrorPage()

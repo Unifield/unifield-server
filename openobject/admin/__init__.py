@@ -1,3 +1,3 @@
-from _admin import *
+from ._admin import *
 
-import i18n
+from . import i18n

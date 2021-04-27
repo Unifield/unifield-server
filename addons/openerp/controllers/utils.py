@@ -44,11 +44,11 @@ def get_db_list():
 
     if os.name == 'nt':
         try:
-            import _winreg
-            reg = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                                  "Control Panel\\International", 0, _winreg.KEY_READ)
-            value, regtype = _winreg.QueryValueEx(reg, "LocaleName")
-            _winreg.CloseKey(reg)
+            import winreg
+            reg = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                  "Control Panel\\International", 0, winreg.KEY_READ)
+            value, regtype = winreg.QueryValueEx(reg, "LocaleName")
+            winreg.CloseKey(reg)
             if value != 'en-US':
                 result['bad_regional'] = _("On the server system user account must have English (United States) as Format in the regional settings")
         except:
@@ -155,7 +155,7 @@ def secured(fn):
 
         for k in ('db', 'user', 'password'):
             kw.pop(k, None)
-        for k in kw.keys():
+        for k in list(kw.keys()):
             if k.startswith('login_'):
                 del kw[k]
 
@@ -163,7 +163,7 @@ def secured(fn):
         for k in ('db', 'user', 'password', 'new_password', 'confirm_password'):
             if k in kw:
                 kw.pop(k, None)
-        for k in kw.keys():
+        for k in list(kw.keys()):
             if k.startswith('login_'):
                 del kw[k]
 

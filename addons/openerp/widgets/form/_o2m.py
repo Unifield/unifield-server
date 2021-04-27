@@ -219,7 +219,7 @@ class O2M(TinyInputWidget):
                 id = ids[0] if ids else None
                 current.id = id
 
-        if current and params.source and isinstance(params.source, basestring) and self.name in params.source.split('/'):
+        if current and params.source and isinstance(params.source, str) and self.name in params.source.split('/'):
             id = current.id
 
         id = id or None

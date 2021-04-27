@@ -46,7 +46,7 @@ def get_search_default(attrs, screen_context=None, default_domain=None, add_acti
         group_by = ctx.get('group_by')
         if group_by:
             if isinstance(group_by, list):
-                str_ctx = map(lambda x: 'group_' + x, group_by)
+                str_ctx = ['group_' + x for x in group_by]
             else:
                 str_ctx = 'group_' + group_by
             result = str_ctx in screen_context.get('group_by', [])
@@ -106,7 +106,7 @@ class RangeWidget(TinyInputWidget):
 
     def set_value(self, value):
 
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             start = value
             end = ''
         else:
@@ -148,7 +148,7 @@ class Filter(TinyInputWidget):
             self.group_context = self.filter_context.get('group_by', False)
             if self.group_context:
                 if isinstance(self.group_context, list):
-                    self.group_context = map(lambda x: 'group_' + x, self.group_context)
+                    self.group_context = ['group_' + x for x in self.group_context]
                 else:
                     self.group_context = 'group_' + self.group_context
         if default_search:
@@ -218,7 +218,7 @@ class Search(TinyInputWidget):
         self.source = source
         if kw.get('clear'):
             self.source = None
-        if group_by_ctx and isinstance(group_by_ctx, basestring):
+        if group_by_ctx and isinstance(group_by_ctx, str):
             self.groupby += group_by_ctx.split(',')
         else:
             self.groupby = group_by_ctx
@@ -233,7 +233,7 @@ class Search(TinyInputWidget):
         if not self.filter_status and (values and values.get('filter_status')):
             self.filter_status = values['filter_status']
         
-        if isinstance (self.search_view, basestring):
+        if isinstance (self.search_view, str):
             self.search_view = eval(self.search_view)
 
         if not self.search_view:
@@ -263,7 +263,7 @@ class Search(TinyInputWidget):
 
         self.fields_list = [
             (field_name, ustr(field['string']), field['type'])
-            for field_name, field in self.fields.iteritems()
+            for field_name, field in self.fields.items()
             if field['type'] != 'binary'
             if field.get('selectable')
             if not field.get('internal') or not expr_eval(field.get('internal'), ctx)
@@ -400,8 +400,8 @@ class Search(TinyInputWidget):
                     try:
                         fields[name].update(attrs)
                     except:
-                        print "-"*30,"\n malformed tag for:", attrs
-                        print "-"*30
+                        print("-"*30,"\n malformed tag for:", attrs)
+                        print("-"*30)
                         raise
 
                     if attrs.get('widget'):
@@ -442,7 +442,7 @@ class Search(TinyInputWidget):
                             type2 = fields[name].get('type2')
                             many2one_int = False
                             if kind == 'many2one':
-                                if isinstance(default_search, (int, long)):
+                                if isinstance(default_search, int):
                                     many2one_int = True
                                     defval = default_search
                                 elif model:

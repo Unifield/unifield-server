@@ -1,3 +1,3 @@
-from diagram import Diagram
+from .diagram import Diagram
 
-from _views import *
+from ._views import *

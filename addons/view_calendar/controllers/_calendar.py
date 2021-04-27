@@ -102,7 +102,7 @@ class TinyCalendar(Form):
 
         try:
             proxy.unlink([params.id], ctx)
-        except Exception, e:
+        except Exception as e:
             error = ustr(e)
 
         return dict(error=error)
@@ -147,7 +147,7 @@ class TinyCalendar(Form):
             proxy.write([params.id], data, ctx)
             info = proxy.read([params.id], ['__last_update'])[0]['__last_update']
             info = {'%s,%s'%(params.model, params.id): info}
-        except Exception, e:
+        except Exception as e:
             error = ustr(e)
 
         return dict(error=error, info=info)
@@ -225,7 +225,7 @@ class TinyCalendar(Form):
         if id and level and level_value:
             try:
                 proxy.write([id], {level['link']: level_value})
-            except Exception, e:
+            except Exception as e:
                 return dict(error=ustr(e))
 
         if 'sequence' not in fields:
@@ -247,7 +247,7 @@ class TinyCalendar(Form):
             seq = sequence2[n]
             try:
                 proxy.write([id], {'sequence': seq})
-            except Exception, e:
+            except Exception as e:
                 return dict(error=ustr(e))
 
         return dict()

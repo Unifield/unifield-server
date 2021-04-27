@@ -42,7 +42,7 @@ def _boolean_attr(attrs, name):
         return attrs.get(name)
 
     val = attrs.get(name)
-    if isinstance(val, basestring) and val.lower() in ('false', 'none', '0'):
+    if isinstance(val, str) and val.lower() in ('false', 'none', '0'):
         return False
 
     return (attrs.get(name) and True) or _attrs_boolean.get(name)
@@ -161,7 +161,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
 
         super(TinyInputWidget, self).__init__(**attrs)
 
-        if isinstance(self.states, basestring):
+        if isinstance(self.states, str):
             self.states = self.states.split(',')
 
         self.select = _boolean_attr(attrs, 'select')
@@ -203,7 +203,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
 
         @param value: the value
         """
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = ustr(value)
 
         self.default = value

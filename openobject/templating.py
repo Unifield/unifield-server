@@ -23,7 +23,7 @@ class EditorType(type):
         for template in attributes.get('templates', []):
             pooler.register_object(cls, template, group=EDITORS_GROUP)
 
-class TemplateEditor(object):
+class TemplateEditor(object, metaclass=EditorType):
     """
     Template edition object. Subclass to specify edition/overrides to
     perform on existing Mako templates before lexing and interpreting
@@ -33,7 +33,6 @@ class TemplateEditor(object):
                     strings, from the web client root, starting with a
                     '/'
     """
-    __metaclass__ = EditorType
 
     def edit(self, template, template_text):
         """

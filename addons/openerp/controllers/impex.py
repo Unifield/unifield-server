@@ -18,7 +18,7 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import StringIO
+import io
 import csv
 import xml.dom.minidom
 import cherrypy
@@ -145,7 +145,7 @@ class ImpEx(SecuredController):
         proxy = rpc.RPCProxy('ir.exports')
 
         if selected_list and name:
-            if isinstance(selected_list, basestring):
+            if isinstance(selected_list, str):
                 selected_list = [selected_list]
             exp_id = proxy.create({'name' : name, 'resource' : params.model, 'export_fields' : [(0, 0, {'name' : f}) for f in selected_list]})
             kw['_export_id'] = exp_id
@@ -198,7 +198,7 @@ class ImpEx(SecuredController):
 
         fields.update({'id': {'string': 'ID'}, '.id': {'string': 'Database ID'}})
 
-        fields_order = fields.keys()
+        fields_order = list(fields.keys())
         fields_order.sort(lambda x,y: -cmp(fields[x].get('string', ''), fields[y].get('string', '')))
         records = []
 
@@ -209,7 +209,7 @@ class ImpEx(SecuredController):
 
             if import_compat and value.get('readonly', False):
                 ok = False
-                for sl in value.get('states', {}).values():
+                for sl in list(value.get('states', {}).values()):
                     for s in sl:
                         ok = ok or (s==('readonly',False))
                 if not ok: continue
@@ -247,7 +247,7 @@ class ImpEx(SecuredController):
 
                     elif (value['type'] == 'many2one') or (value['type'] == 'many2many' and is_importing):
                         m2ofields.append(field)
-                        cfields_order = cfields.keys()
+                        cfields_order = list(cfields.keys())
                         cfields_order.sort(lambda x,y: -cmp(cfields[x].get('string', ''), cfields[y].get('string', '')))
                         children = []
                         for j, fld in enumerate(cfields_order):
@@ -259,7 +259,7 @@ class ImpEx(SecuredController):
                         cherrypy.session['fld'] = m2ofields
 
                     else:
-                        cfields_order = cfields.keys()
+                        cfields_order = list(cfields.keys())
                         cfields_order.sort(lambda x,y: -cmp(cfields[x].get('string', ''), cfields[y].get('string', '')))
                         children = []
                         for j, fld in enumerate(cfields_order):
@@ -273,7 +273,7 @@ class ImpEx(SecuredController):
                     ref = value.pop('relation')
                     proxy = rpc.RPCProxy(ref)
                     cfields = proxy.fields_get(False, rpc.session.context)
-                    cfields_order = cfields.keys()
+                    cfields_order = list(cfields.keys())
                     cfields_order.sort(lambda x,y: -cmp(cfields[x].get('string', ''), cfields[y].get('string', '')))
                     children = []
                     for j, fld in enumerate(cfields_order):
@@ -330,7 +330,7 @@ class ImpEx(SecuredController):
             _fields = {'id': 'ID' , '.id': 'Database ID' }
 
             def model_populate(fields, prefix_node='', prefix=None, prefix_value='', level=2):
-                fields_order = fields.keys()
+                fields_order = list(fields.keys())
                 fields_order.sort(lambda x,y: -cmp(fields[x].get('string', ''), fields[y].get('string', '')))
 
                 for field in fields_order:
@@ -358,7 +358,7 @@ class ImpEx(SecuredController):
             fld = item.replace('/.id','.id')
             flds.append(fld)
 
-        if isinstance(fields, basestring):
+        if isinstance(fields, str):
             fields = fields.replace('/.id','.id')
             flds = [fields]
 
@@ -423,7 +423,7 @@ class ImpEx(SecuredController):
             report_path = rpc.session.execute('report', 'export', flds, domain,
                                               params.model, params.fields2, None, export_format, ids, ctx)
 
-        if isinstance(report_path, (int, long)):
+        if isinstance(report_path, int):
             # this is a background_id, the background wizzard should be displayed
             cherrypy.response.headers['Content-Type'] = 'text/html'
             raise tools.redirect('/openerp/downloadbg', res_id=report_path)
@@ -479,7 +479,7 @@ class ImpEx(SecuredController):
                 elif x>y: return -1
                 else: return 0
 
-            fields_order = fields.keys()
+            fields_order = list(fields.keys())
             fields_order.sort(lambda x,y: str_comp(fields[x].get('string', ''), fields[y].get('string', '')))
             for field in fields_order:
                 if (not fields[field].get('readonly')\
@@ -523,7 +523,7 @@ class ImpEx(SecuredController):
                     word = ustr(word.decode(csvcode))
                     if word in _fields:
                         fields.append((word, _fields[word]))
-                    elif word in _fields_invert.keys():
+                    elif word in list(_fields_invert.keys()):
                         fields.append((_fields_invert[word], word))
                     else:
                         error = {'message':_("You cannot import the field '%s', because we cannot auto-detect it" % (word,))}
@@ -544,7 +544,7 @@ class ImpEx(SecuredController):
         res = None
 
         content = csvfile.file.read()
-        input=StringIO.StringIO(content)
+        input=io.StringIO(content)
         limit = 0
         data = []
 
@@ -560,7 +560,7 @@ class ImpEx(SecuredController):
                     fields = line
                 else:
                     data.append(line)
-        except csv.Error, e:
+        except csv.Error as e:
             return self.imp(
                 error={
                     'message': ustr(e),
@@ -576,9 +576,9 @@ class ImpEx(SecuredController):
 
         for line in data:
             try:
-                datas.append(map(lambda x:x.decode(csvcode).encode('utf-8'), line))
+                datas.append([x.decode(csvcode).encode('utf-8') for x in line])
             except:
-                datas.append(map(lambda x:x.decode('latin').encode('utf-8'), line))
+                datas.append([x.decode('latin').encode('utf-8') for x in line])
 
         # If the file contains nothing,
         if not datas:
@@ -589,7 +589,7 @@ class ImpEx(SecuredController):
         try:
             res = rpc.session.execute('object', 'execute', params.model, 'import_data_web', fields, datas, 'init', '',
                                       False, ctx, False, True, True)
-        except Exception, e:
+        except Exception as e:
             error = {'message':ustr(e), 'title':_('XML-RPC error')}
             return self.imp(error=error, **kw)
 

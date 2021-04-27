@@ -1,1 +1,1 @@
-import widgets
+from . import widgets

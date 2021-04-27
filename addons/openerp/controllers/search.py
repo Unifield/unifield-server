@@ -21,16 +21,16 @@
 import simplejson
 from openerp.utils import rpc, expr_eval, TinyDict, TinyForm, TinyFormError, format_datetime_value
 
-import actions
-from form import Form
-from error_page import _ep
+from . import actions
+from .form import Form
+from .error_page import _ep
 import openobject.i18n.format
 from openobject.tools import expose, ast
 
 def cleanup_group_by(s):
     if s is None:
         return ''
-    if isinstance(s, unicode):
+    if isinstance(s, str):
         try:
             s = str(s)
         except Exception:
@@ -144,9 +144,9 @@ class Search(Form):
         try:
             ctx = TinyForm(**kw).to_python()
             pctx = ctx
-        except TinyFormError, e:
+        except TinyFormError as e:
             return dict(error_field=e.field, error=ustr(e))
-        except Exception, e:
+        except Exception as e:
             return dict(error=_ep.render())
 
         prefix = params.prefix
@@ -170,7 +170,7 @@ class Search(Form):
         if params.active_id and not params.active_ids:
             ctx['active_ids'] = [params.active_id]
 
-        if domain and isinstance(domain, basestring):
+        if domain and isinstance(domain, str):
             domain = expr_eval(domain, ctx)
 
         if domain and len(domain) >= 2 and domain[-2] in ['&', '|']: # For custom domain ('AND', OR') from search view.
@@ -178,7 +178,7 @@ class Search(Form):
             dom2 = domain[:-2]
             domain = dom2 + dom1
 
-        if context and isinstance(context, basestring):
+        if context and isinstance(context, str):
             if not context.startswith('{'):
                 context = "dict(%s)"%context
                 ctx['dict'] = dict # required
@@ -186,7 +186,7 @@ class Search(Form):
             context = expr_eval(context, ctx)
 
 #           Fixed many2one pop up in listgrid when value is None.
-            for key, val in context.items():
+            for key, val in list(context.items()):
                 if val is None:
                     context[key] = False
 
@@ -194,7 +194,7 @@ class Search(Form):
             context = expr_eval(context, ctx)
         parent_context.update(context)
 
-        if isinstance(params.group_by, basestring):
+        if isinstance(params.group_by, str):
             params.group_by = cleanup_group_by(params.group_by).split(',')
         elif not isinstance(params.group_by, list):
             params.group_by = []
@@ -219,9 +219,9 @@ class Search(Form):
 
         all_values = {}
         errors = []
-        for k, v in record.items():
+        for k, v in list(record.items()):
             values = {}
-            for key, val in v.items():
+            for key, val in list(v.items()):
                 for field in val:
                     fld = {
                         'value': val[field],
@@ -233,9 +233,9 @@ class Search(Form):
 
                     try:
                         TinyForm(**datas).to_python()
-                    except TinyFormError, e:
+                    except TinyFormError as e:
                         errors.append({e.field: ustr(e)})
-                    except Exception, e:
+                    except Exception as e:
                         errors.append({field: ustr(e)})
 
                     datas['rec'] = field
@@ -274,15 +274,15 @@ class Search(Form):
 
         ctx = {}
         ctx['set_by_field'] = []
-        for fld_name, src_context in search_context.iteritems():
+        for fld_name, src_context in search_context.items():
             c = src_context.get('context', {})
             v = src_context.get('value')
-            if v and isinstance(v, basestring) and '__' in v:
+            if v and isinstance(v, str) and '__' in v:
                 value, operator = v.split('__')
                 v = int(value)
             update_ctx = expr_eval(c, self=v)
             if update_ctx:
-                ctx['set_by_field'] += update_ctx.keys()
+                ctx['set_by_field'] += list(update_ctx.keys())
 
             ctx.update(update_ctx)
 
@@ -293,7 +293,7 @@ class Search(Form):
         domain = []
         check_domain = all_domains.get('check_domain')
 
-        if check_domain and isinstance(check_domain, basestring):
+        if check_domain and isinstance(check_domain, str):
             domain = expr_eval(check_domain, context) or []
 
         search_data = {}
@@ -304,7 +304,7 @@ class Search(Form):
         fld = {}
 
         if domains:
-            for field, value in domains.iteritems():
+            for field, value in domains.items():
 
                 if '/' in field:
                     fieldname, bound = field.split('/')
@@ -325,7 +325,7 @@ class Search(Form):
 
                 try:
                     TinyForm(**data).to_python()
-                except TinyFormError, e:
+                except TinyFormError as e:
                     error_field = e.field
                     error = ustr(e)
                     all_error.append(dict(error=error, error_field=error_field))
@@ -386,10 +386,10 @@ class Search(Form):
 
         # conversion of the pseudo domain from the javascript to a valid domain
         ncustom_domain = []
-        for i in xrange(max(len(custom_domains) - 1, 0)):
+        for i in range(max(len(custom_domains) - 1, 0)):
             ncustom_domain.append("|")
         for and_list in custom_domains:
-            for i in xrange(max(len(and_list) - 1, 0)):
+            for i in range(max(len(and_list) - 1, 0)):
                 ncustom_domain.append("&")
             ncustom_domain += [tuple(x) for x in and_list]
 
@@ -434,11 +434,11 @@ class Search(Form):
     def save_filter(self, **kw):
         model = kw.get('model')
         domain = kw.get('domain')
-        if isinstance(domain,basestring):
+        if isinstance(domain,str):
             domain = eval(domain) or []
 
         custom_filter = kw.get('custom_filter')
-        if isinstance(custom_filter,basestring):
+        if isinstance(custom_filter,str):
             custom_filter = eval(custom_filter)
 
         if custom_filter:
@@ -451,7 +451,7 @@ class Search(Form):
             group_by = cleanup_group_by(group_by).split(',')
 
         if group_by:
-            group_by_ctx = map(lambda x: x.split('group_')[-1], group_by)
+            group_by_ctx = [x.split('group_')[-1] for x in group_by]
         else:
             group_by_ctx = []
         return dict(model=model, domain=domain, flag=flag, group_by=group_by_ctx, filtername=selected_filter)
@@ -501,13 +501,13 @@ class Search(Form):
                 'values': rpc.RPCProxy(model).name_search(text, (params.domain or []), 'ilike', ctx, int(limit)),
                 'error': None
             }
-        except Exception, e:
+        except Exception as e:
             return {'error': ustr(e), 'values': False}
 
     def context_get(self, parent_context):
         # Need to remove default keys,group_by,search_default of the parent context
         context_own = dict(parent_context)
-        for ctx in parent_context.items():
+        for ctx in list(parent_context.items()):
             if ctx[0].startswith('default_') or ctx[0] in ('set_editable','set_visible')\
                     or ctx[0] == 'group_by' or ctx[0].startswith('search_default_'):
                 del context_own[ctx[0]]

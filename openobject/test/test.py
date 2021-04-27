@@ -43,8 +43,8 @@ def run():
     clp = test.CommandLineParser(testList)
     success = clp.run()
     if clp.interactive:
-        print
-        raw_input('hit enter')
+        print()
+        input('hit enter')
     sys.exit(success)
 
 

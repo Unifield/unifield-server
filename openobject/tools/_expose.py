@@ -59,7 +59,7 @@ def get_template_lookup():
     return lookup
 
 def load_template(template):
-    if not isinstance(template, basestring):
+    if not isinstance(template, str):
         return template
     return get_template_lookup().get_template(template)
 
@@ -118,7 +118,7 @@ def _get_vars():
 
     cherrypy.request._terp_template_vars = _vars = {}
 
-    for prefix, cbs in _var_providers.iteritems():
+    for prefix, cbs in _var_providers.items():
         if prefix:
             provider = _Provider()
             for cb in cbs:
@@ -212,7 +212,7 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
                     jset = js.setdefault('head', OrderedSet())
                     jset.add_all([js_i18n])
 
-                    for value in res.itervalues():
+                    for value in res.values():
 
                         if isinstance(value, Widget):
                             css.add_all(value.retrieve_css())
@@ -224,8 +224,8 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
             if isinstance(res, cherrypy.lib.file_generator):
                 # generator: i.e download backup
                 return res
-            if not isinstance(res, basestring):
-                return unicode(res).encode("utf-8")
+            if not isinstance(res, str):
+                return str(res).encode("utf-8")
 
             return res
 

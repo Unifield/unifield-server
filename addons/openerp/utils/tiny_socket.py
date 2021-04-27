@@ -20,7 +20,7 @@
 ###############################################################################
 
 import socket
-import cPickle
+import pickle
 import sys
 
 import cherrypy
@@ -65,7 +65,7 @@ class TinySocket(object):
         self.sock.close()
 
     def send(self, msg, exception=False, traceback=None):
-        msg = cPickle.dumps([msg,traceback])
+        msg = pickle.dumps([msg,traceback])
         if len(msg) <= 10**8-1:
             self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
         else:
@@ -80,7 +80,7 @@ class TinySocket(object):
             while len(buf) < size:
                 chunk = self.sock.recv(size - len(buf))
                 if chunk == '':
-                    raise RuntimeError, "socket connection broken"
+                    raise RuntimeError("socket connection broken")
                 buf += chunk
             return buf
 
@@ -91,7 +91,7 @@ class TinySocket(object):
             size = newsize*10**8+size
             buf = read(self.sock, 1)
         exception = buf != '0' and buf or False
-        res = cPickle.loads(read(self.sock, size))
+        res = pickle.loads(read(self.sock, size))
 
         if isinstance(res[0],Exception):
             if exception:

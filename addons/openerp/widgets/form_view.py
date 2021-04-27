@@ -21,11 +21,11 @@
 
 import cherrypy
 
-from search import Search
-from screen import Screen
-from sidebar import Sidebar
-from listgroup import ListGroup
-from logs import Logs
+from .search import Search
+from .screen import Screen
+from .sidebar import Sidebar
+from .listgroup import ListGroup
+from .logs import Logs
 
 from openobject.widgets import Form
 

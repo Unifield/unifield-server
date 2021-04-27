@@ -65,13 +65,13 @@ class Action(TinyInputWidget):
 
             self.context = expr_eval(self.action.get('context', '{}'), ctx)
             self.domain = expr_eval(self.action['domain'], ctx)
-            views = dict(map(lambda x: (x[1], x[0]), self.action['views']))
+            views = dict([(x[1], x[0]) for x in self.action['views']])
             view_mode = self.action.get('view_mode', 'tree,form').split(',')
-            view_ids = map(lambda x: views.get(x, False), view_mode)
+            view_ids = [views.get(x, False) for x in view_mode]
             
-            if views.keys() != view_mode:
-                view_mode = map(lambda x: x[1], self.action['views'])
-                view_ids = map(lambda x: x[0], self.action['views'])
+            if list(views.keys()) != view_mode:
+                view_mode = [x[1] for x in self.action['views']]
+                view_ids = [x[0] for x in self.action['views']]
             
             if self.action['view_type'] == 'form':
 

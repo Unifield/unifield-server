@@ -24,7 +24,7 @@ from openerp.controllers import SecuredController
 from openerp.utils import rpc
 from openobject.tools import expose
 
-import actions
+from . import actions
 
 class DownLoadBg(SecuredController):
 

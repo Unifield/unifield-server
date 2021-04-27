@@ -23,18 +23,18 @@
 """
 import base64
 import time
-import urlparse
+import urllib.parse
 import zlib
 
 import cherrypy
 from openerp.utils import rpc, common, expr_eval, TinyDict, is_server_local, serve_file
 
-from form import Form
+from .form import Form
 from openobject import tools
-from selection import Selection
-from tree import Tree
-from wizard import Wizard
-import urllib
+from .selection import Selection
+from .tree import Tree
+from .wizard import Wizard
+import urllib.request, urllib.parse, urllib.error
 import unicodedata
 import os
 
@@ -148,7 +148,7 @@ def _print_data(data):
                 return serve_file.serve_file(data['path'],
                                              "application/x-download", 'attachment',
                                              **serve_data)
-            except Exception, e:
+            except Exception as e:
                 cherrypy.response.headers['Content-Type'] = 'text/html'
                 if 'Content-Disposition' in cherrypy.response.headers:
                     del(cherrypy.response.headers['Content-Disposition'])
@@ -264,7 +264,7 @@ def execute_report(name, **data):
 
         return _print_data(val)
 
-    except rpc.RPCException, e:
+    except rpc.RPCException as e:
         raise e
 
 def act_window_close(action=False, *args, **b):
@@ -461,10 +461,10 @@ def act_window_opener(action, data):
     # and immune when using urlsafe_b64encode
     compressed_payload = base64.urlsafe_b64encode(zlib.compress(payload))
     url = ('/openerp/execute?' +
-           urllib.urlencode({'payload': compressed_payload}))
+           urllib.parse.urlencode({'payload': compressed_payload}))
 
     if open_new_tab:
-        url = '/?' + urllib.urlencode({'next': url})
+        url = '/?' + urllib.parse.urlencode({'next': url})
 
     cherrypy.response.headers['X-Target'] = action['target']
     cherrypy.response.headers['Location'] = url
@@ -500,7 +500,7 @@ def execute(action, **data):
 
 def execute_url(**data):
     url = data.get('url') or ''
-    parsed = urlparse.urlsplit(url)
+    parsed = urllib.parse.urlsplit(url)
     if not (parsed.netloc or parsed.path.startswith('/')):
         raise common.message(_('Relative URLs are not supported'))
 
@@ -570,8 +570,8 @@ def execute_by_keyword(keyword, adds=None, **data):
             id = data.get('id', False)
             if (id): id = int(id)
             actions = rpc.session.execute('object', 'execute', 'ir.values', 'get', 'action', keyword, [(data['model'], id)], False, ctx)
-            actions = map(lambda x: x[2], actions)
-        except rpc.RPCException, e:
+            actions = [x[2] for x in actions]
+        except rpc.RPCException as e:
             raise e
 
     keyact = {}
@@ -585,7 +585,7 @@ def execute_by_keyword(keyword, adds=None, **data):
         raise common.message(_('No action defined'))
 
     if len(keyact) == 1:
-        key = keyact.keys()[0]
+        key = list(keyact.keys())[0]
         if data.get('context'):
             data['context'].update(rpc.session.context)
         return execute(keyact[key], **data)

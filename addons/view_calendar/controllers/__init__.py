@@ -1,1 +1,1 @@
-import _calendar
+from . import _calendar

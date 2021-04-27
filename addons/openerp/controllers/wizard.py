@@ -25,7 +25,7 @@ from openerp import widgets as tw, validators
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, icons, TinyDict
 
-import form
+from . import form
 from openobject.tools import expose, redirect, validate, error_handler
 from openobject import pooler
 import openobject
@@ -114,7 +114,7 @@ class Wizard(SecuredController):
                 return dict(form=form, buttons=buttons)
 
             elif res['type']=='action':
-                import actions
+                from . import actions
                 # If configuration is done 
                 if res.get('action') and res.get('action').get('res_model') == 'ir.ui.menu' and res['state'] == 'end':
                     return self.end()
@@ -126,7 +126,7 @@ class Wizard(SecuredController):
                 state = res['state']
 
             elif res['type']=='print':
-                import actions
+                from . import actions
 
                 datas['report_id'] = res.get('report_id', False)
                 if res.get('get_id_from_action', False):
@@ -161,7 +161,7 @@ class Wizard(SecuredController):
             except:
                 pass
 
-        import actions
+        from . import actions
         return actions.close_popup()
 
     def get_validation_schema(self):
@@ -182,7 +182,7 @@ class Wizard(SecuredController):
         cherrypy.request.terp_buttons = buttons
 
         vals = cherrypy.request.terp_validators
-        keys = vals.keys()
+        keys = list(vals.keys())
         for k in keys:
             if k not in kw:
                 vals.pop(k)

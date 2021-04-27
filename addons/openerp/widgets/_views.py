@@ -4,9 +4,9 @@ from openobject import pooler
 from openerp.utils import rpc
 from openobject.i18n.format import convert_date_format_in_domain
 
-import form
-import listgrid
-import listgroup
+from . import form
+from . import listgrid
+from . import listgroup
 
 __all__ = ["TinyView", "FormView", "ListView",
            "get_view_widget", "get_registered_views"]
@@ -25,9 +25,7 @@ class ViewType(type):
         return obj
 
 
-class TinyView(object):
-
-    __metaclass__ = ViewType
+class TinyView(object, metaclass=ViewType):
 
     _name = None
     _type = None
@@ -147,7 +145,7 @@ def get_registered_views():
     pool = pooler.get_pool()
     Views = pool.get_group("view_types")
 
-    views = [(kind, ViewType()) for kind, ViewType in Views.iteritems()]
+    views = [(kind, ViewType()) for kind, ViewType in Views.items()]
     views.sort(lambda a, b: cmp(a[1].priority, b[1].priority))
 
     return views

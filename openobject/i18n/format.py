@@ -217,7 +217,7 @@ def _convert_date_format_in_domain(domain, fields, context):
 
     date_fields = dict([(field_name, field_def['type'])
                             for field_name, field_def
-                                in fields.items()
+                                in list(fields.items())
                                     if field_def['type'] in ['date', 'datetime', 'time']])
 
     if 'lang' not in cherrypy.session:
@@ -258,7 +258,7 @@ def _convert_date_format_in_domain(domain, fields, context):
                     server_dformat = DT_FORMAT_INFO['datetime'][0]
 
                 ok = True
-                for k, v in time_format_convert_map.items():
+                for k, v in list(time_format_convert_map.items()):
                     if k in user_dformat:
                         user_dformat = user_dformat.replace(k, v)
                 if re.findall(r'%[CGsuV]', user_dformat):
@@ -316,12 +316,12 @@ def format_decimal(value, digits=2, **kwargs):
             decimals = decimals + '0'*(min_digits - len(decimals))
         if not decimals:
             return val
-    result = val + unicode(numbers.get_decimal_symbol(locale) + decimals)
+    result = val + str(numbers.get_decimal_symbol(locale) + decimals)
     return result
 
 def parse_decimal(value):
 
-    if isinstance(value, basestring):
+    if isinstance(value, str):
 
         value = ustr(value)
 

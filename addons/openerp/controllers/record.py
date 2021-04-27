@@ -23,7 +23,7 @@ import time
 from openerp.utils import expr_eval, TinyDict
 from openerp.widgets import TinyWidget, TinyInputWidget
 
-from form import Form
+from .form import Form
 
 
 class Record(dict):
@@ -56,7 +56,7 @@ class Record(dict):
         return data
 
     def expr_eval(self, expr, source=None):
-        if not isinstance(expr, basestring):
+        if not isinstance(expr, str):
             return expr
 
         return expr_eval(

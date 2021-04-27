@@ -30,7 +30,7 @@ import servicemanager
 import sys
 import subprocess
 import os
-import thread
+import _thread
 
 class OpenERPWebService(win32serviceutil.ServiceFramework):
     # required info
@@ -87,7 +87,7 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
         # Start OpenERP Web itself
         self.StartOpenERP()
         # start the loop waiting for the Service Manager's stop signal
-        thread.start_new_thread(self.StartControl, (self.hWaitStop,))
+        _thread.start_new_thread(self.StartControl, (self.hWaitStop,))
         # Log a info message that the server is running
         servicemanager.LogInfoMsg("OpenERP Web up and running")
         # verification if the server is really running, else quit with an error

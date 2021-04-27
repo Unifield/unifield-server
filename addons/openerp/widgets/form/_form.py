@@ -34,10 +34,11 @@ from openerp import validators
 from openerp.utils import rpc, icons, common, TinyDict, node_attributes, get_node_xpath, expr_eval, get_size
 from openerp.widgets import TinyWidget, TinyInputWidget, InputWidgetLabel, ConcurrencyInfo, get_widget, register_widget
 
-from _binary import Image
+from ._binary import Image
 from openobject import tools
 from openobject.i18n import get_locale, format
 from openobject.widgets import JSLink, locations
+from functools import reduce
 
 
 class Frame(TinyWidget):
@@ -183,7 +184,7 @@ class Frame(TinyWidget):
             states = widget.states
             # convert into JS
             if isinstance(states, dict):
-                states = dict([(k, dict(v)) for k, v in states.iteritems()])
+                states = dict([(k, dict(v)) for k, v in states.items()])
 
             attrs.update(states=simplejson.dumps(states),
                          widget=widget.name)
@@ -216,7 +217,7 @@ class Frame(TinyWidget):
                 attrs['nowrap'] = 'nowrap'
 
         attrs['class'] = attrs.get('class', '') + ' item-%s' % widget.__class__.__name__.lower()
-        if self.columns and not attrs.has_key('width'):
+        if self.columns and 'width' not in attrs:
             if label:
                 attrs['width'] = str((100 / self.columns) * (colspan + 1) - 1) + '%'
             else:
@@ -334,7 +335,7 @@ class Label(TinyWidget):
         self.align = 'center'
 
         align = attrs.get('align', 0.5)
-        if isinstance(align, basestring):
+        if isinstance(align, str):
             try:
                 align = eval(align)
             except:
@@ -348,7 +349,7 @@ class Label(TinyWidget):
             self.align = 'right'
 
     def set_value(self, value):
-        self.field_value = unicode(value or '', 'utf-8')
+        self.field_value = str(value or '', 'utf-8')
 
 register_widget(Label, ["label"])
 
@@ -478,14 +479,14 @@ class Float(TinyInputWidget):
             if rounding_value in attrs.get('uom_rounding'):
                 rounding = int(abs(math.log10(attrs['uom_rounding'][rounding_value])))
         digits = attrs.get('digits', (16,2))
-        if isinstance(digits, basestring):
+        if isinstance(digits, str):
             digits = eval(digits)
 
         integer, digit = digits
 
         # custom fields - decimal_precision computation
         computation = attrs.get('computation', False)
-        if isinstance(computation, basestring):
+        if isinstance(computation, str):
             computation = eval(computation)
         self.validator = validators.Float(digit=digit, computation=computation, rounding=rounding)
 
@@ -551,7 +552,7 @@ class Selection(TinyInputWidget):
             proxy = rpc.RPCProxy(attrs['relation'])
             try:
                 domain = attrs.get('domain', [])
-                if isinstance(domain, (str, unicode)):
+                if isinstance(domain, str):
                     try:
                         domain = eval(domain)
                     except:
@@ -563,10 +564,10 @@ class Selection(TinyInputWidget):
             except:
                 self.options = []
 
-        if self.options and self.options[0][0] == '' and isinstance(self.options[0][0], unicode):
+        if self.options and self.options[0][0] == '' and isinstance(self.options[0][0], str):
             self.validator = validators.Selection()
         # determine the actual type
-        elif self.options and isinstance(self.options[0][0], basestring):
+        elif self.options and isinstance(self.options[0][0], str):
             self.kind = 'char'
             self.validator = validators.String()
         else:
@@ -728,7 +729,7 @@ class Group(TinyWidget):
     def __init__(self, **attrs):
         super(Group, self).__init__(**attrs)
 
-        if isinstance(self.states, basestring):
+        if isinstance(self.states, str):
             self.states = self.states.split(',')
         self.set_state(attrs.get('state', 'draft'))
 
@@ -856,7 +857,7 @@ class Form(TinyInputWidget):
                         newfields[k] = fields[k]
                     fields = newfields
                 else:
-                    fields_to_read = fields.keys()
+                    fields_to_read = list(fields.keys())
                 lval = proxy.read(ids[:1], fields_to_read + ['__last_update'], self.context)
 
                 if lval:
@@ -886,11 +887,11 @@ class Form(TinyInputWidget):
             elif 'x_state' in fields: # if nodefault and x_state get x_state only (for custom objects)
                 defaults = proxy.default_get(['x_state'], self.context)
 
-        except Exception,e:
+        except Exception as e:
             raise common.warning(e)
 
         if defaults:
-            for k, v in defaults.items():
+            for k, v in list(defaults.items()):
                 values.setdefault(k, v)
 
         self.state = values.get('state', values.get('x_state'))
@@ -919,7 +920,7 @@ class Form(TinyInputWidget):
 
         # We should generate hidden fields for fields which are not in view, as
         # the values of such fields might be used during `onchange`
-        for name, attrs in fields.items():
+        for name, attrs in list(fields.items()):
             if name not in self.view_fields:
 
                 kind = attrs.get('type', 'char')
@@ -1024,13 +1025,13 @@ class Form(TinyInputWidget):
                             del attrs_dict['readonly']
 
                         if attrs_dict:
-                            attrs['attrs'] = unicode(attrs_dict)
+                            attrs['attrs'] = str(attrs_dict)
                         else:
                             del attrs['attrs']
                     fields[name].update(attrs)
                 except:
-                    print "-"*30,"\n malformed tag for:", attrs
-                    print "-"*30
+                    print("-"*30,"\n malformed tag for:", attrs)
+                    print("-"*30)
                     raise
 
                 kind = fields[name]['type']
@@ -1039,10 +1040,10 @@ class Form(TinyInputWidget):
                     continue
 
                 if name in self.view_fields:
-                    print "-"*30
-                    print " malformed view for:", self.model
-                    print " duplicate field:", name
-                    print "-"*30
+                    print("-"*30)
+                    print(" malformed view for:", self.model)
+                    print(" duplicate field:", name)
+                    print("-"*30)
                     raise common.error(_('Application Error'), _('Invalid view, duplicate field: %s') % name)
 
                 self.view_fields.append(name)
@@ -1141,7 +1142,7 @@ class Form(TinyInputWidget):
     def get_defaults(self, fields, domain=[], context={}):
         if len(fields):
             proxy = rpc.RPCProxy(self.model)
-            default_values = proxy.default_get(fields.keys(), context)
+            default_values = proxy.default_get(list(fields.keys()), context)
             for d in domain:
                 if d[0] in fields and not fields.get(d[0], {}).get('readonly',False):
                     if d[1] == '=':

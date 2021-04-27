@@ -46,9 +46,9 @@ class Pool(object):
     def load(self, package):
         ''' Loads all the objects of the provided package in the current pooler
         '''
-        for group, registry in _REGISTRY.iteritems():
+        for group, registry in _REGISTRY.items():
             if package in registry:
-                for key, typ in registry[package].iteritems():
+                for key, typ in registry[package].items():
                     types = self.types_pool.setdefault(group, {})
                     if key in types:
                         # new type is already a super class of current type
@@ -69,7 +69,7 @@ def restart_pool():
     db_name = None #cherrypy.session['db']
     
     if db_name in pool_dict:
-        import addons
+        from . import addons
         
         del pool_dict[db_name]
         del addons._loaded[db_name]

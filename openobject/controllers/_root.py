@@ -92,7 +92,7 @@ class Root(BaseController):
 
         # Try successive objects (reverse order)
         num_candidates = len(trail) - 1
-        for i in xrange(num_candidates, -1, -1):
+        for i in range(num_candidates, -1, -1):
             curpath, candidate = trail[i]
             if candidate is None:
                 continue

@@ -1,6 +1,6 @@
 import copy
 
-from itertools import count, chain, ifilterfalse
+from itertools import count, chain, filterfalse
 
 import cherrypy
 import formencode.foreach
@@ -9,8 +9,8 @@ import openobject
 from openobject import tools
 from openobject.validators import *
 
-from _meta import WidgetType
-from _utils import OrderedSet
+from ._meta import WidgetType
+from ._utils import OrderedSet
 
 
 __all__ = ['Widget', 'InputWidget']
@@ -18,9 +18,7 @@ __all__ = ['Widget', 'InputWidget']
 
 _serial_generator = count()
 
-class Widget(object):
-
-    __metaclass__ = WidgetType
+class Widget(object, metaclass=WidgetType):
 
     template = None
 
@@ -48,16 +46,16 @@ class Widget(object):
 
     def __init__(self, name=None, **params):
         # set each keyword args as attribute
-        for k, v in params.iteritems():
+        for k, v in params.items():
             if not k.startswith('_'):
                 try:
                     setattr(self, k, v)
-                except AttributeError, e:
+                except AttributeError as e:
                     #skip setting the value of a read only property
                     pass
 
         self._name = name
-        self._serial = _serial_generator.next()
+        self._serial = next(_serial_generator)
 
         # params & member_widgets
         for name in chain(self.__class__.params, self.__class__.member_widgets):
@@ -68,7 +66,7 @@ class Widget(object):
                 elif isinstance(attr, dict):
                     attr = attr.copy()
                 setattr(self, name, attr)
-            except AttributeError, e:
+            except AttributeError as e:
                 pass
 
         self._resources = OrderedSet()
@@ -112,7 +110,7 @@ class Widget(object):
                 for widget in attr:
                     yield widget
             elif isinstance(attr, dict):
-                for name, widget in attr.iteritems():
+                for name, widget in attr.items():
                     yield widget
             elif attr is not None:
                 yield attr
@@ -147,7 +145,7 @@ class Widget(object):
 
         name = getattr(item, "name", item)
         item_params = {}
-        for k, v in params.iteritems():
+        for k, v in params.items():
             if isinstance(v, dict):
                 if name in v:
                     item_params[k] = v[name]
@@ -155,7 +153,7 @@ class Widget(object):
 
     def display_member(self, item, value, **params):
 
-        if isinstance(item, basestring):
+        if isinstance(item, str):
             item = getattr(self, item, None)
 
         assert isinstance(item, Widget), "Invalid member widget."
@@ -324,7 +322,7 @@ class InputWidget(Widget):
         validation fails the original value will be returned unmodified."""
 
         # don't validate empty values
-        if value is None or (isinstance(value, basestring) and value.strip() == ""):
+        if value is None or (isinstance(value, str) and value.strip() == ""):
             return value
 
         try:

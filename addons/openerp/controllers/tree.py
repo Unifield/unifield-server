@@ -27,7 +27,7 @@ import time
 import simplejson
 import cherrypy
 
-import actions
+from . import actions
 import math
 from openobject.i18n.format import format_datetime
 from openobject.i18n.format import format_decimal
@@ -39,7 +39,7 @@ from openerp.widgets import tree_view
 
 def decimal_formatter(value, info):
     digits = info.get('digits', (16,2))
-    if isinstance(digits, basestring):
+    if isinstance(digits, str):
         digits = eval(digits)
     integer, digit = digits
 
@@ -167,24 +167,24 @@ class Tree(SecuredController):
         if colors is None:
             colors = {}
 
-        if isinstance(ids, basestring):
-            ids = map(int, ids.split(','))
+        if isinstance(ids, str):
+            ids = list(map(int, ids.split(',')))
         elif isinstance(ids, list):
-            ids = map(int, ids)
+            ids = list(map(int, ids))
 
-        if isinstance(fields, basestring):
+        if isinstance(fields, str):
             fields = eval(fields)
 
-        if isinstance(domain, basestring):
+        if isinstance(domain, str):
             domain = eval(domain)
 
-        if isinstance(context, basestring):
+        if isinstance(context, str):
             context = eval(context)
         
-        if isinstance(colors, basestring):
+        if isinstance(colors, str):
             colors = eval(colors)
             
-        if isinstance(fields_info, basestring):
+        if isinstance(fields_info, str):
             fields_info = simplejson.loads(fields_info)
 
         if field_parent and field_parent not in fields:
@@ -217,7 +217,7 @@ class Tree(SecuredController):
 
         for item in result:
             if colors:
-                for color, expr in colors.items():
+                for color, expr in list(colors.items()):
                     try:
                         if expr_eval(expr,item or False):
                             item['color'] = color
@@ -238,7 +238,7 @@ class Tree(SecuredController):
         records = []
         for item in result:
             # empty string instead of False or None
-            for k, v in item.items():
+            for k, v in list(item.items()):
                 if v is None or v is False:
                     item[k] = ''
 
@@ -281,7 +281,7 @@ class Tree(SecuredController):
         ctx.update(context)
 
         if ids:
-            ids = map(int, ids.split(','))
+            ids = list(map(int, ids.split(',')))
 
         id = (ids or False) and ids[0]
 
@@ -305,7 +305,7 @@ class Tree(SecuredController):
         if not action:
             return self.do_action('tree_but_action', datas=kw)
 
-        import actions
+        from . import actions
 
         ids = params.selection or []
         id = (ids or False) and ids[0]
@@ -318,7 +318,7 @@ class Tree(SecuredController):
 
         ids = params.selection or []
         if ids:
-            import actions
+            from . import actions
             return actions.execute_window(False, res_id=ids, model=params.model, domain=params.domain)
         else:
             raise common.message(_('No resource selected'))

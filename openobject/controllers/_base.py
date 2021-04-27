@@ -39,9 +39,7 @@ class ControllerType(type):
             pooler.register_object(cls, key=path, group="controllers")
 
 
-class BaseController(object):
-    __metaclass__ = ControllerType
-
+class BaseController(object, metaclass=ControllerType):
     _cp_path = None
 
     def _get_path(self):

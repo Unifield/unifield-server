@@ -26,8 +26,8 @@ from openerp.controllers import SecuredController
 from openerp.utils import rpc, TinyDict, TinyForm, TinyFormError, context_with_concurrency_info, cache
 from openerp.widgets import listgrid, listgroup
 
-import form
-import wizard
+from . import form
+from . import wizard
 from openobject.tools import expose, ast
 
 class List(SecuredController):
@@ -99,10 +99,10 @@ class List(SecuredController):
                     id = proxy.create(data, params.parent.context or {})
                     ids = [id] + ids
 
-        except TinyFormError, e:
+        except TinyFormError as e:
             error_field = e.field
             error = ustr(e)
-        except Exception, e:
+        except Exception as e:
             error = ustr(e)
 
         return dict(error_field=error_field, error=error, id=id, ids=str([int(i) for i in ids]))
@@ -135,7 +135,7 @@ class List(SecuredController):
                     return dict(res_ids = ids)
 
                 return dict(ids = params.ids, count = len(params.ids))
-            except Exception, e:
+            except Exception as e:
                 error = ustr(e)
 
         return dict(error=error)
@@ -220,7 +220,7 @@ class List(SecuredController):
             if isinstance(params.group_by_ctx, str):
                 params.group_by_ctx = params.group_by_ctx.split('group_')[-1]
             else:
-                params.group_by_ctx = map(lambda x: x.split('group_')[-1], params.group_by_ctx)
+                params.group_by_ctx = [x.split('group_')[-1] for x in params.group_by_ctx]
 
         if params.domain is None:
             params.domain = []
@@ -244,7 +244,7 @@ class List(SecuredController):
         params, data = TinyDict.split(kw)
 
         groupby = params.get('_terp_group_by_ctx')
-        if groupby and isinstance(groupby, basestring):
+        if groupby and isinstance(groupby, str):
             groupby = groupby.split(',')
 
         if params.get('_terp_filters_context'):
@@ -267,14 +267,14 @@ class List(SecuredController):
 
         # clean defaults groupby if options available
         if params['_terp_search_data'] and params['_terp_search_data'].get('group_by_ctx',False):
-            for k,v in params.context.items():
+            for k,v in list(params.context.items()):
                 if k.startswith('search_default') and k[15:] not in params['_terp_search_data'].get('group_by_ctx',{}):
                     del params['_terp_context'][k]
 
         if params.get('_terp_clear') or params.get('_terp_ids_to_show'):
             params.search_domain, params.filter_domain, params.ids = [], [], []
             params.search_data = {}
-            for k,v in params.context.items():
+            for k,v in list(params.context.items()):
                 if k.startswith('search_default'):
                     del params.context[k]
 
@@ -359,7 +359,7 @@ class List(SecuredController):
             if btype == 'workflow':
                 res = rpc.session.execute('object', 'exec_workflow', model, name, ids)
                 if isinstance(res, dict):
-                    import actions
+                    from . import actions
                     return actions.execute(res, ids=ids)
                 else:
                     return dict(reload=True, list_grid=list_grid)
@@ -373,13 +373,13 @@ class List(SecuredController):
                 res = rpc.session.execute('object', 'execute', model, name, ids, ctx)
 
                 if isinstance(res, dict):
-                    import actions
+                    from . import actions
                     return actions.execute(res, ids=ids)
                 else:
                     return dict(reload=True, list_grid=list_grid)
 
             elif btype == 'action':
-                import actions
+                from . import actions
 
                 action_id = int(name)
                 action_type = actions.get_action_type(action_id)
@@ -401,7 +401,7 @@ class List(SecuredController):
 
             else:
                 return dict(error = "Unallowed button type")
-        except Exception, e:
+        except Exception as e:
             return dict(error = ustr(e))
 
     @expose('json', methods=('POST',))
@@ -497,7 +497,7 @@ class List(SecuredController):
                 proxy.write([prev_id], {'sequence': cur_seq}, ctx)
 
             return dict()
-        except Exception, e:
+        except Exception as e:
             return dict(error=str(e))
 
     @expose('json', methods=('POST',))
@@ -530,7 +530,7 @@ class List(SecuredController):
                 proxy.write([next_id], {'sequence': cur_seq}, ctx)
 
             return dict()
-        except Exception, e:
+        except Exception as e:
             return dict(error=str(e))
 
 # vim: ts=4 sts=4 sw=4 si et

@@ -25,7 +25,7 @@ from openerp.utils import rpc, TinyDict
 import openerp.controllers.actions as actions
 import openerp.controllers.form as form
 from openobject.tools import expose
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
 class Process(SecuredController):
@@ -67,8 +67,8 @@ class Process(SecuredController):
         from openobject import release
         lang = rpc.session.context.get('lang','en_US')
         context_help = 'http://doc.openerp.com/v6.0/index.php?model=%s&lang=%s&version=%s' % (res_model, lang, release.version)
-        edit_process_url = ('/openerp/form/edit?'+urllib.urlencode({'model': 'process.process', 'id': id}))
-        edit_process_url =  '/?' + urllib.urlencode({'next': edit_process_url})
+        edit_process_url = ('/openerp/form/edit?'+urllib.parse.urlencode({'model': 'process.process', 'id': id}))
+        edit_process_url =  '/?' + urllib.parse.urlencode({'next': edit_process_url})
         
         return dict(id=id, res_model=res_model, res_id=res_id, title=title, selection=selection, fields=fields,
                     help=help, process_title=process_title, context_help=context_help, lang=lang, 
@@ -110,7 +110,7 @@ class Process(SecuredController):
 
         # last modified by
         graph['perm'] = update_perm(graph['perm'] or {})
-        for nid, node in graph['nodes'].items():
+        for nid, node in list(graph['nodes'].items()):
             if not node.get('res'):
                 continue
             node['res']['perm'] = update_perm(node['res']['perm'] or {})

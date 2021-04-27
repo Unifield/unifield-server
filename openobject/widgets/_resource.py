@@ -1,8 +1,8 @@
 import os
 
 import openobject
-from _base import Widget
-from _utils import Enum
+from ._base import Widget
+from ._utils import Enum
 from openobject import tools
 
 

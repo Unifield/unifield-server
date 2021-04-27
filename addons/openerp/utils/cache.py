@@ -19,13 +19,13 @@
 #
 ###############################################################################
 import copy
-import cPickle
+import pickle
 import functools
 
 import cherrypy
 from mako.util import LRUCache
 
-import rpc
+from . import rpc
 
 __cache = LRUCache(cherrypy.config.get('server.db_cache_size', 8))
 

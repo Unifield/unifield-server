@@ -24,7 +24,7 @@ from openerp.utils import rpc
 from openobject.tools import expose
 
 import base64
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import zlib
 
 class progress_bar(SecuredController):
@@ -41,7 +41,7 @@ class progress_bar(SecuredController):
                     'data': {}
                 })
                 compressed_payload = base64.urlsafe_b64encode(zlib.compress(payload))
-                url = ('/openerp/execute?' + urllib.urlencode({'payload': compressed_payload}))
+                url = ('/openerp/execute?' + urllib.parse.urlencode({'payload': compressed_payload}))
             return {'progress': 100, 'state': 'done', 'target': url, 'target_name': job['target_name'], 'src_name': job['src_name'], 'job_name': job['name']}
 
         percent = 100*(job['nb_processed'] or 0)/(job['total'] or 1)

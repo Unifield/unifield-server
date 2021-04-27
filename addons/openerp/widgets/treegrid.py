@@ -66,7 +66,7 @@ class TreeGrid(TinyWidget):
 
         def _jsonify(obj):
 
-            for k, v in obj.items():
+            for k, v in list(obj.items()):
                 if isinstance(v, dict):
                     obj[k] = _jsonify(v)
 

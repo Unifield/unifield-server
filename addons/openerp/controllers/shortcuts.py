@@ -66,7 +66,7 @@ class Shortcuts(SecuredController):
 
     @expose()
     def default(self):
-        import actions
+        from . import actions
         domain = [('user_id', '=', rpc.session.uid), ('resource', '=', 'ir.ui.menu')]
         return actions.execute_window(False, 'ir.ui.view_sc', res_id=None, domain=domain, view_type='form', mode='tree,form')
 

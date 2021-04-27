@@ -29,24 +29,24 @@ def ustr(value):
     @return: unicode string
     """
 
-    if isinstance(value, unicode):
+    if isinstance(value, str):
         return value
 
     if hasattr(value, "__unicode__"):
-        return unicode(value)
+        return str(value)
 
     try: # first try without encoding
-        return unicode(value)
+        return str(value)
     except:
         pass
 
     try: # then try with utf-8
-        return unicode(value, 'utf-8')
+        return str(value, 'utf-8')
     except:
         pass
 
     try: # then try with extened iso-8858
-        return unicode(value, 'iso-8859-15')
+        return str(value, 'iso-8859-15')
     except:
         pass
 

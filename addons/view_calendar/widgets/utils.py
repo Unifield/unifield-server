@@ -54,7 +54,7 @@ def parse_datetime(string):
     should be in ISO format.
     """
 
-    if not isinstance(string, basestring):
+    if not isinstance(string, str):
         raise TypeError('expected string or buffer')
 
     kind = 'datetime'
@@ -87,7 +87,7 @@ class Day(datetime.date):
     month2 = property(month2)
     name = property(name)
 
-    def next(self):
+    def __next__(self):
         return self + 1
 
     def prev(self):
@@ -100,7 +100,7 @@ class Day(datetime.date):
         return self.fromordinal(self.toordinal() - value)
 
     def __unicode__(self):
-        return '%s %d, %s' % (unicode(MONTH_NAMES[self.month]), self.day, self.year)
+        return '%s %d, %s' % (str(MONTH_NAMES[self.month]), self.day, self.year)
 
     def __str__(self):
         return '%s %d, %s' % (MONTH_NAMES[self.month], self.day, self.year)
@@ -143,7 +143,7 @@ class Week(object):
     days = property(days)
     number = property(number)
 
-    def next(self):
+    def __next__(self):
         return self + 1
 
     def prev(self):
@@ -171,10 +171,10 @@ class Week(object):
         if first.year == last.year:
             return _('%(first)s to %(last)s %(month)s', 
                         first=first.day, last=last.day, month=first.strftime('%B'))
-        return '%s - %s' % (unicode(self.days[0]), unicode(self.days[-1]))
+        return '%s - %s' % (str(self.days[0]), str(self.days[-1]))
 
     def __str__(self):
-        return unicode(self).encode('utf8')
+        return str(self).encode('utf8')
 
     def __repr__(self):
         return 'Week(%s, %s)' % (self.days[0], self.days[-1])
@@ -221,7 +221,7 @@ class Month(object):
     days = property(days)
     weeks = property(weeks)
 
-    def next(self):
+    def __next__(self):
         """Get next month.
         """
         return self + 1
@@ -263,7 +263,7 @@ class Month(object):
         return hash((self.year, self.month))
 
     def __unicode__(self):
-        return '%s %d' % (unicode(self.name), self.year)
+        return '%s %d' % (str(self.name), self.year)
 
     def __str__(self):
         return '%s %d' % (self.name, self.year)
@@ -287,7 +287,7 @@ class Year(object):
         m = Month(self.year, 1)
         while(m.year == self.year):
             self.__months += [m]
-            m = m.next()
+            m = next(m)
 
         return self.__months
 
@@ -298,7 +298,7 @@ class Year(object):
         w = Week(Day(self.year, 1, 1))
         while (w[0].year == self.year or w[-1].year == self.year):
             self.__weeks += [w]
-            w = w.next()
+            w = next(w)
 
         return self.__weeks
 
@@ -309,7 +309,7 @@ class Year(object):
         d = Day(self.year, 1, 1)
         while (d.year == self.year):
             self.__days += [d]
-            d = d.next()
+            d = next(d)
 
         return self.__days
 
@@ -317,7 +317,7 @@ class Year(object):
     weeks = property(weeks)
     months = property(months)
 
-    def next(self):
+    def __next__(self):
         """Get next year
         """
         return self + 1
@@ -343,7 +343,7 @@ class Year(object):
         return hash(self.year)
 
     def __unicode__(self):
-        return unicode(self.year)
+        return str(self.year)
 
     def __str__(self):
         return str(self.year)

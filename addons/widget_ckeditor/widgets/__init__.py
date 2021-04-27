@@ -1,1 +1,1 @@
-from _ckeditor import *
+from ._ckeditor import *

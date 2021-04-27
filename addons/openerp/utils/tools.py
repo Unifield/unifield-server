@@ -36,7 +36,7 @@ import tempfile
 import cherrypy
 from dateutil.relativedelta import relativedelta
 
-import rpc
+from . import rpc
 
 def expr_eval(string, context=None, self=None):
     context = dict(context or {},
@@ -46,7 +46,7 @@ def expr_eval(string, context=None, self=None):
                    datetime=datetime,
                    relativedelta=relativedelta)
     context['self'] = self
-    if isinstance(string, basestring):
+    if isinstance(string, str):
         try:
             value = eval(string.strip(), context)
         except:
@@ -76,7 +76,7 @@ def expr_eval(string, context=None, self=None):
                 ]
             value[index] = (domain_element[0], domain_element[1], operand)
     elif isinstance(value, dict):
-        for key, v in value.items():
+        for key, v in list(value.items()):
             if v == 'active_id' or v == ['active_id']:
                 value[key] = context.get('active_id', False)
     return value
@@ -176,7 +176,7 @@ def get_xpath(expr, pn):
 
         for child in pn.childNodes:
             if child.localName and child.localName == name:
-                if param and key in child.attributes.keys():
+                if param and key in list(child.attributes.keys()):
                     if child.getAttribute(key) == value:
                         return child
                 else:
@@ -211,9 +211,9 @@ def get_size(data):
     Return the size in a human readable format
     """
     units = ('Bytes', 'KB', 'MB', 'GB', 'TB')
-    if isinstance(data, basestring):
+    if isinstance(data, str):
         size = float(len(data))
-    elif isinstance(data, (int, long)):
+    elif isinstance(data, int):
         size = float(data)
     elif isinstance(data, float):
         size = data

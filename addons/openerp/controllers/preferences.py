@@ -28,8 +28,8 @@ from openobject.tools import expose, redirect
 
 from openerp.utils import rpc, TinyDict, cache
 
-import database
-from form import Form
+from . import database
+from .form import Form
 
 class PrefsPassword(database.FormPassword):
     action = "/openerp/pref/password"
@@ -92,7 +92,7 @@ class Preferences(Form):
         params, data = TinyDict.split(kw)
         proxy = rpc.RPCProxy('res.users')
         # validators generally do that...
-        for key in data.keys():
+        for key in list(data.keys()):
             if not data[key]: data[key] = False
             elif int_pattern.match(data[key]):
                 data[key] = int(data[key])
@@ -124,7 +124,7 @@ class Preferences(Form):
                 _('Could not change your password.'))
         except openobject.errors.AccessDenied:
             context['errors'].append(_('Original password incorrect, your password was not changed.'))
-        except Exception, e:
+        except Exception as e:
             context['errors'].append(str(e))
         return context
 

@@ -24,7 +24,7 @@ import operator
 import random
 import re
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import xml.dom.minidom
 
 import simplejson
@@ -120,7 +120,7 @@ class GraphData(object):
         self.values = []
         self.group_by = group_by
         add_grp_field = ''
-        if self.group_by and not fields.has_key(self.group_by[0]):
+        if self.group_by and self.group_by[0] not in fields:
             add_grp_field = cache.fields_get(self.model, [self.group_by[0]], rpc.session.context)
             fields.update(add_grp_field)
         axis, axis_data, axis_group = self.parse(root, fields)
@@ -136,14 +136,14 @@ class GraphData(object):
             ids = proxy.search(domain, 0, 0, 0, ctx)
 
         rec_ids = []
-        values = proxy.read(ids, fields.keys(), ctx)
+        values = proxy.read(ids, list(fields.keys()), ctx)
 
         for value in values:
             res = {}
             rec_ids.append(value.get('id'))
             res['temp_id'] = value.get('id')
 
-            for x in axis_data.keys():
+            for x in list(axis_data.keys()):
                 if fields[x]['type'] in ('many2one', 'char','time','text'):
                     res[x] = value[x]
                     if isinstance(res[x], (list, tuple)):
@@ -231,7 +231,7 @@ class GraphData(object):
         for field in axis[1:]:
             data_all = {}
             for val in datas:
-                group_eval = ','.join(map(lambda x: val[x], self.axis_group_field.iterkeys()))
+                group_eval = ','.join([val[x] for x in iter(self.axis_group_field.keys())])
                 axis_group[group_eval] = 1
 
                 key_ids = {
@@ -243,7 +243,7 @@ class GraphData(object):
 
                 val[axis[0]] = ustr(val[axis[0]])
                 key_value = val[axis[0]]
-                key = urllib.quote_plus(ustr(key_value).encode('utf-8'))
+                key = urllib.parse.quote_plus(ustr(key_value).encode('utf-8'))
                 info = data_axis.setdefault(key, {})
 
                 data_all.setdefault(key_value, {})
@@ -265,12 +265,12 @@ class GraphData(object):
 
                 total_ids.append(key_ids)
             data_ax.append(data_all)
-        axis_group = axis_group.keys()
+        axis_group = list(axis_group.keys())
         axis_group.sort()
-        keys = keys.keys()
+        keys = list(keys.keys())
         keys.sort()
 
-        for l in sorted(label.iterkeys()):
+        for l in sorted(label.keys()):
             x = 0
             for i in total_ids:
                 if i.get('prod_id') == l and x == 0:
@@ -278,7 +278,7 @@ class GraphData(object):
                     x += 1
                     temp_dom.append(dd)
 
-            if not isinstance(l, basestring):
+            if not isinstance(l, str):
                 l = ustr(l)
 
             if(len(l) > 10):
@@ -294,7 +294,7 @@ class GraphData(object):
 
         values = {}
         for field in axis[1:]:
-            values[field] = map(lambda x: data_axis[x][field], keys)
+            values[field] = [data_axis[x][field] for x in keys]
 
         n = len(axis)-1
         stack_list = []
@@ -304,10 +304,10 @@ class GraphData(object):
 
         if len(axis_group) > 1 and kind == 'bar':
 
-            group_field = self.axis_group_field.keys()[0]
+            group_field = list(self.axis_group_field.keys())[0]
             new_keys = []
             for k in keys:
-                k = urllib.unquote_plus(k)
+                k = urllib.parse.unquote_plus(k)
                 k = k.decode('utf-8')
                 new_keys += [k]
 
@@ -419,20 +419,20 @@ class BarChart(GraphData):
         dataset = result.setdefault('dataset', [])
 
         for i in label_x:
-            i = re.sub(ur'[êéèë]', 'e', i)
-            i = re.sub(ur'[ïî]', 'i', i)
-            i = re.sub(ur'[àâáâãä]', 'a', i)
-            i = re.sub(ur'[ç]', 'c', i)
-            i = re.sub(ur'[òóôõö]', 'o', i)
-            i = re.sub(ur'[ýÿ]', 'y', i)
-            i = re.sub(ur'[ñ]', 'n', i)
-            i = re.sub(ur'[ÁÂÃÄ]', 'A', i)
-            i = re.sub(ur'[ÈÉÊË]', 'E', i)
-            i = re.sub(ur'[ÌÍÎÏ]', 'I', i)
-            i = re.sub(ur'[ÒÓÔÕÖ]', 'O', i)
-            i = re.sub(ur'[ÙÚÛÜ]', 'U', i)
-            i = re.sub(ur'[Ý]', 'Y', i)
-            i = re.sub(ur'[Ñ]', 'N', i)
+            i = re.sub(r'[êéèë]', 'e', i)
+            i = re.sub(r'[ïî]', 'i', i)
+            i = re.sub(r'[àâáâãä]', 'a', i)
+            i = re.sub(r'[ç]', 'c', i)
+            i = re.sub(r'[òóôõö]', 'o', i)
+            i = re.sub(r'[ýÿ]', 'y', i)
+            i = re.sub(r'[ñ]', 'n', i)
+            i = re.sub(r'[ÁÂÃÄ]', 'A', i)
+            i = re.sub(r'[ÈÉÊË]', 'E', i)
+            i = re.sub(r'[ÌÍÎÏ]', 'I', i)
+            i = re.sub(r'[ÒÓÔÕÖ]', 'O', i)
+            i = re.sub(r'[ÙÚÛÜ]', 'U', i)
+            i = re.sub(r'[Ý]', 'Y', i)
+            i = re.sub(r'[Ñ]', 'N', i)
 
             lbl = {'text': i, 'colour': "#432BAF"}
 
@@ -577,7 +577,7 @@ class PieChart(GraphData):
             return res
 
         dataset = result.setdefault('dataset', [])
-        value = values.values()[0]
+        value = list(values.values())[0]
 
         url = []
         for dom in domain:

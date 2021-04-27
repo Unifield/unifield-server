@@ -54,7 +54,7 @@ class ViewList(SecuredController):
             raise redirect('/openerp/viewlist', model=model)
 
         proxy = rpc.RPCProxy(model)
-        fields = proxy.fields_get({}).keys()
+        fields = list(proxy.fields_get({}).keys())
         string = "Unknown"
 
         try:

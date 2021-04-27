@@ -73,7 +73,7 @@ class Root(SecuredController):
 
     @expose()
     def report(self, report_name=None, **kw):
-        import actions
+        from . import actions
         return actions.execute_report(report_name, **TinyDict(**kw))
 
     @expose()
@@ -267,7 +267,7 @@ class Root(SecuredController):
         error = None
         try:
             rpc.RPCProxy('publisher_warranty.contract').del_user_message(log_id)
-        except Exception, e:
+        except Exception as e:
             error = e
         return dict(error=error)
 

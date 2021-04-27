@@ -63,7 +63,7 @@ class FieldPref(SecuredController):
     def reset_apply(self, **kw):
         params, data = TinyDict.split(kw)
         if params.to_del:
-            rpc.RPCProxy('ir.values').delete_default(params.to_del.values(), params.model, params.field.split('/')[-1])
+            rpc.RPCProxy('ir.values').delete_default(list(params.to_del.values()), params.model, params.field.split('/')[-1])
         return dict(click_ok=1, model=params.model, field=params.field, values=[], admin_profile=self.is_admin_profile(), string=params.string)
 
     @expose('json')
@@ -85,7 +85,7 @@ class FieldPref(SecuredController):
         text = fields[field].get('string')
         deps = []
 
-        for name, attrs in fields.iteritems():
+        for name, attrs in fields.items():
             if attrs.get('change_default'):
                 value = ctx.get(name)
                 if value:
@@ -99,7 +99,7 @@ class FieldPref(SecuredController):
 
         deps = False
         if params.deps:
-            for n, v in params.deps.items():
+            for n, v in list(params.deps.items()):
                 deps = "%s=%s" %(n,v)
                 break
 

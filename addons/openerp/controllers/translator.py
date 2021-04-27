@@ -62,7 +62,7 @@ class Translator(SecuredController):
         view_fields = view_view['fields']
         view_relates = view_view.get('toolbar')
 
-        names = view_fields.keys()
+        names = list(view_fields.keys())
         names.sort(lambda x,y: cmp(view_fields[x].get('string', ''), view_fields[y].get('string', '')))
 
         if translate == 'fields' and params.id:
@@ -117,7 +117,7 @@ class Translator(SecuredController):
                     if value: data += [(name, value, None, None)]
 
         if translate == 'relates' and view_relates:
-            for bar, tools in view_relates.items():
+            for bar, tools in list(view_relates.items()):
                 for tool in tools:
 
                     value = {}
@@ -156,13 +156,13 @@ class Translator(SecuredController):
             if not params.id:
                 raise common.message(_("You need to save the resource before adding translations."))
 
-            for lang, value in data.items():
+            for lang, value in list(data.items()):
 
                 context = copy.copy(ctx)
                 context['lang'] = adapt_context(lang)
 
-                for name, val in value.items():
-                    if isinstance(val, basestring):
+                for name, val in list(value.items()):
+                    if isinstance(val, str):
                         val = [val]
 
                     for v in val:
@@ -186,18 +186,18 @@ class Translator(SecuredController):
                 })
 
         if translate == 'labels':
-            for lang, value in data.items():
-                for name, val in value.items():
+            for lang, value in list(data.items()):
+                for name, val in list(value.items()):
                     rpc.session.execute('object', 'execute', params.model, 'write_string', False, [lang], {name: val})
 
         if translate == 'relates':
-            for lang, value in data.items():
-                for name, val in value.items():
+            for lang, value in list(data.items()):
+                for name, val in list(value.items()):
                     rpc.session.execute('object', 'execute', params.models[name], 'write', [int(name)], {'name': val}, {'lang': lang})
 
         if translate == 'view':
-            for lang, value in data.items():
-                for id, val in value.items():
+            for lang, value in list(data.items()):
+                for id, val in list(value.items()):
                     rpc.session.execute('object', 'execute', 'ir.translation', 'write', [int(id)], {'value': val})
 
         # Encoding fields_value to prevent escaping characters and shorten sent data
