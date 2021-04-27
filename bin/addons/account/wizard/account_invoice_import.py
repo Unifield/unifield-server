@@ -195,6 +195,8 @@ class account_invoice_import(osv.osv_memory):
                     # restricted_area = accounts allowed. Note: the context is different for each type and used in the related fnct_search
                     if invoice.is_intermission:
                         restricted_area = 'intermission_lines'  # for IVI / IVO
+                    elif invoice.is_inkind_donation:  # for Donations
+                        restricted_area = 'donation_lines'
                     else:
                         restricted_area = 'invoice_lines'  # for SI / STV
                     if not account_obj.search_exist(cr, uid, [('id', '=', account.id), ('restricted_area', '=', restricted_area)],
