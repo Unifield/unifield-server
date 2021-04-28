@@ -1,2 +1,2 @@
-from . import _base
-from . import _root
+from ._base import *
+from ._root import *

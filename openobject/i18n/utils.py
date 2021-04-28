@@ -47,7 +47,7 @@ def parse_http_accept_header(accept):
             item = item.strip()
             if item:
                 items.append((item, q))
-    items.sort(lambda i1, i2: cmp(i2[1], i1[1]))
+    items.sort(key=lambda i1: i1[1])
     return [item[0] for item in items]
 
 def get_accept_languages(accept):

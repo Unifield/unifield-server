@@ -27,7 +27,8 @@ from openerp.utils import rpc
 
 from openobject import tools
 from openobject import paths
-from openobject.tools import expose, redirect
+from openobject.tools._expose import expose
+from openobject.tools._utils import redirect
 import openobject
 
 

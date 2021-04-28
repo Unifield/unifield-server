@@ -24,7 +24,7 @@ import cherrypy
 from openerp import utils, widgets as tw
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, common, TinyDict, TinyForm, expr_eval, serve_file
-from error_page import _ep
+from .error_page import _ep
 from openobject.tools import expose, redirect, validate, error_handler, exception_handler
 import openobject
 import openobject.paths
@@ -196,7 +196,7 @@ class Form(SecuredController):
         if params.view_type == 'form' and params.id:
             try:
                 loading_ids = rpc.RPCProxy('job.in_progress').search([('model', '=', params.model), ('res_id', '=', params.id), ('read', '=', False)])
-            except openobject.errors.TinyWarning, e:
+            except openobject.errors.TinyWarning as e:
                 # backkground compatibility between web and server
                 if e.message == "Object job.in_progress doesn't exist":
                     loading_ids = []

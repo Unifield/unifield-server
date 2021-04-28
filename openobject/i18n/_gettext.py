@@ -48,7 +48,7 @@ def _load_translation(path, locale, domain):
     :rtype: babel.support.Translations | gettext.NullTranslation
     """
     locale_path = join(_machine_objects_cache,
-                       hashlib.md5(path).hexdigest()[:8], 'locale')
+                       hashlib.md5(path.encode('utf8')).hexdigest()[:8], 'locale')
     popath = join(path, 'po', domain, '%s.po' % locale)
     modir = join(locale_path, str(locale), 'LC_MESSAGES')
     if not exists(modir):

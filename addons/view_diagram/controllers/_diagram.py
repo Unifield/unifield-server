@@ -314,7 +314,7 @@ class Workflow(Form):
         for node in graph_search['blank_nodes']:
             isolate_nodes[node['id']] = node
         else:
-            y = [t['y'] for t in [x for x in list(nodes.values()) if x['y'] if x['x']==20 else None]]
+            y = [t['y'] for t in [x['x'] == 20 and x['y'] or None for x in list(nodes.values())]]
             y_max = (y and max(y)) or 120
 
         connectors = {}

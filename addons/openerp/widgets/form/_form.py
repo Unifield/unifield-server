@@ -36,7 +36,8 @@ from openerp.widgets import TinyWidget, TinyInputWidget, InputWidgetLabel, Concu
 
 from ._binary import Image
 from openobject import tools
-from openobject.i18n import get_locale, format
+from openobject.i18n.utils import get_locale
+from openobject.i18n import format
 from openobject.widgets import JSLink, locations
 from functools import reduce
 
