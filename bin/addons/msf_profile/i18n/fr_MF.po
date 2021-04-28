@@ -21695,7 +21695,7 @@ msgstr "Etc/GMT-2"
 #: field:tender,notes:0
 #: view:real.average.consumption:0
 #: field:real.average.consumption,notes:0
-#: report:addons/account/report/export_invoice.mako:127
+#: report:addons/account/report/export_invoice.mako:126
 #, python-format
 msgid "Notes"
 msgstr "Notes"

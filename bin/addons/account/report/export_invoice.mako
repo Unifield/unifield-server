@@ -123,9 +123,7 @@
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Quantity')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Description')}</Data></Cell>
-      % if o.is_inkind_donation:
-        <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Notes')}</Data></Cell>
-      % endif
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Notes')}</Data></Cell>
   </Row>
 
   <% is_ro = is_readonly(o) %>
@@ -152,10 +150,8 @@
 
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.name or ''|x}</Data></Cell>
 
-        % if o.is_inkind_donation:
-            <!-- export Notes including line breaks (|xn) -->
-            <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
-        % endif
+        <!-- export Notes including line breaks (|xn) -->
+        <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
     </Row>
   % endfor
 
