@@ -5,7 +5,7 @@
     <body>
         <form id="report" action="/openerp/report" method="POST" target="_blank">
             <input type="hidden" name="report_name" value="${name}">
-            % for key, value in data.iteritems():
+            % for key, value in data.items():
                 <input type="hidden" name="${key}" value="${value}">
             % endfor
         </form>

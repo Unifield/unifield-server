@@ -47,7 +47,7 @@ __sub = {'d': '%d', 'M': '%m', 'y': '%Y'}
 def _to_posix_format(format):
     """Convert LDML format string to posix format string.
     """
-    return __pat.sub(lambda m: __sub[m.group(1)[0]], format)
+    return __pat.sub(lambda m: __sub[m.group(1)[0]], str(format))
 
 def format_date_custom(dt, fmt="y-M-d"):
     return dates.format_date(dt, format=fmt, locale=get_locale())

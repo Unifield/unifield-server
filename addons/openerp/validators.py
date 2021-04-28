@@ -45,8 +45,8 @@ class String(BaseValidator):
     if_empty = False
 
     def _to_python(self, value, state):
-        if isinstance(value, str):
-            return value.encode('utf-8')
+        if isinstance(value, bytes):
+            return value.decode('utf-8')
 
         return value
 
@@ -178,7 +178,7 @@ class Binary(BaseValidator):
 
         if isinstance(value, BINARY_FIELD_STORAGE_CLASS):
             if value.filename:
-                return base64.encodestring(value.file.read())
+                return base64.encodestring(value.file.read()).decode('utf8')
             elif self.not_empty:
                 raise formencode.api.Invalid(_('Please select a file.'), value, state)
         elif value:

@@ -144,9 +144,13 @@ def get_validation_schema(self):
 
     vals = cherrypy.request.terp_validators
     keys = vals.keys()
+    to_remove =[]
     for k in keys:
         if k not in kw:
-            vals.pop(k)
+            to_remove.append(k)
+
+    for k in to_remove:
+        vals.pop(k)
 
     if 'fields' in vals:
         vals[FIELDS_INTERNAL_NAME] = vals.pop('fields')
@@ -642,7 +646,7 @@ class Form(SecuredController):
             if res:
                 return res
 
-        import actions
+        from . import actions
         return actions.close_popup(reload=False)
     def button_action_save(self, _, params):
         params.id = False
@@ -652,7 +656,7 @@ class Form(SecuredController):
         model, id, _, _ = self._get_button_infos(params)
         res = rpc.session.execute('object', 'exec_workflow', model, name, id)
         if isinstance(res, dict):
-            import actions
+            from . import actions
             return actions.execute(res, ids=[id])
         params.button = None
 
@@ -667,13 +671,13 @@ class Form(SecuredController):
         if model.endswith('.installer'):
             rpc.session.context_reload()
         if isinstance(res, dict):
-            import actions
+            from . import actions
             return actions.execute(res, ids=[id], context=ctx)
         params.button = None
 
     def button_action_action(self, name, params):
         model, id, ids, ctx = self._get_button_infos(params)
-        import actions
+        from . import actions
 
         action_id = int(name)
         action_type = actions.get_action_type(action_id)
@@ -1122,7 +1126,7 @@ class Form(SecuredController):
             ids = [id]
 
         if len(ids):
-            import actions
+            from . import actions
             return actions.execute_by_keyword(name, adds=adds, model=model, id=id, ids=ids, report_type='pdf')
         else:
             raise common.message(_("No record selected"))    
@@ -1172,7 +1176,7 @@ class Form(SecuredController):
             action['domain'] = ustr(domain)
 
         action['form_context'] = context or {}
-        import actions
+        from . import actions
         return actions.execute(action, model=params.model, id=id, ids=ids, report_type='pdf', context_menu=context_menu)
 
     @expose()
@@ -1437,7 +1441,7 @@ class Form(SecuredController):
     def action_submenu(self, **kw):
         params, data = TinyDict.split(kw)
 
-        import actions
+        from . import actions
 
         act_id = rpc.session.execute('object', 'execute', 'ir.model.data', 'search', [('name','=', params.action_id)])
         res_model = rpc.session.execute('object', 'execute', 'ir.model.data', 'read', act_id, ['res_id'])

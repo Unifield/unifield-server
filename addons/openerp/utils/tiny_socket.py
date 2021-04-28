@@ -79,12 +79,12 @@ class TinySocket(object):
     def receive(self):
 
         def read(socket, size):
-            buf=''
+            buf=b''
             while len(buf) < size:
                 chunk = self.sock.recv(size - len(buf))
                 if chunk == '':
                     raise RuntimeError("socket connection broken")
-                buf += chunk.decode('utf8')
+                buf += chunk
             return buf
 
         size = int(read(self.sock, 8))
@@ -94,7 +94,8 @@ class TinySocket(object):
             size = newsize*10**8+size
             buf = read(self.sock, 1)
         exception = buf != '0' and buf or False
-        res = pickle.loads(read(self.sock, size).encode('utf8'))
+        # pickel compat with py2.7
+        res = pickle.loads(read(self.sock, size), fix_imports=True, encoding='utf8')
 
         if isinstance(res[0],Exception):
             if exception:

@@ -23,7 +23,7 @@ import sys
 
 import cherrypy
 from openerp.utils import rpc
-
+from cherrypy import _cperror
 import openobject.errors
 from openobject.controllers import BaseController
 from openobject.tools import expose, redirect
@@ -58,6 +58,7 @@ class ErrorPage(BaseController):
         title=value.title
         error=value.message
 
+
         target = cherrypy.request.path_info or '/openerp/form/save'
 
         if isinstance(value, openobject.errors.Concurrency):
@@ -69,7 +70,7 @@ class ErrorPage(BaseController):
             cherrypy.response.headers['X-Maintenance-Error'] = "1"
 
         return dict(title=title, error=error, maintenance=maintenance,
-                    concurrency=concurrency, all_params=all_params, target=target)
+                    concurrency=concurrency, all_params=all_params, target=target, tb=_cperror.format_exc())
 
     @expose('json')
     def submit(self, tb, explanation, remarks, name):

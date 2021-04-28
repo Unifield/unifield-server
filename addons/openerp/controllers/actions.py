@@ -138,7 +138,7 @@ def _print_data(data):
     cherrypy.response.headers['Content-Type'] = PRINT_FORMATS[data['format']]
     if data.get('code','normal')=='zlib':
         import zlib
-        content = zlib.decompress(base64.decodestring(data['result']))
+        content = zlib.decompress(base64.decodestring(data['result'].encode('utf8')))
     else:
         if not data.get('result') and data.get('path'):
             try:
@@ -158,8 +158,7 @@ def _print_data(data):
                     os.remove(data['path'])
 #            return cherrypy.lib.static.serve_file(data['path'], "application/x-download", 'attachment')
 
-        content = base64.decodestring(data['result'])
-
+        content = base64.decodestring(data['result'].encode('utf8'))
     return content
 
 def execute_report(name, **data):
@@ -254,14 +253,13 @@ def execute_report(name, **data):
         cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
         report_type = val['format']
 
-        try:
-            report_name = report_name.decode('utf-8')
-        except UnicodeEncodeError:
-            # replace all compatibility characters with their equivalents ("e with accent" becomes "e"...)
-            report_name = unicodedata.normalize('NFKD', report_name).encode('ascii','ignore')
+        #try:
+        #    report_name = report_name.decode('utf-8')
+        #except UnicodeEncodeError:
+        #    # replace all compatibility characters with their equivalents ("e with accent" becomes "e"...)
+        #    report_name = unicodedata.normalize('NFKD', report_name).encode('ascii','ignore')
         val['filename'] =  attachment + report_name + '.' + report_type
         cherrypy.response.headers['Content-Disposition'] = '%sfilename="' % attachment + report_name + '.' + report_type + '"'
-
         return _print_data(val)
 
     except rpc.RPCException as e:
@@ -459,7 +457,7 @@ def act_window_opener(action, data):
     # "special" characters which get urlencoded originally (thus several
     # times over). base64 strings are far less sensitive to this issue,
     # and immune when using urlsafe_b64encode
-    compressed_payload = base64.urlsafe_b64encode(zlib.compress(payload))
+    compressed_payload = base64.urlsafe_b64encode(zlib.compress(payload.encode('utf8')))
     url = ('/openerp/execute?' +
            urllib.parse.urlencode({'payload': compressed_payload}))
 

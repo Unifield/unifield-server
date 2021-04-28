@@ -26,7 +26,7 @@
         <div class="spacer"></div>
 
             <table width="100%" border="0" class="fields">
-                % for i, (key, value) in enumerate(values.iteritems()):
+                % for i, (key, value) in enumerate(values.items()):
                 <tr>
                     <td width="25px"><input type="radio" id="_terp_action_${i}" name="_terp_action" value="${value}"/></td>
                     <td><label for="_terp_action_${i}">${key}</label></td>

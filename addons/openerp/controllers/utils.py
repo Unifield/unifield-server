@@ -287,7 +287,7 @@ def secured(fn):
             # Authorized. Set db, user name in cookies
             cookie = cherrypy.response.cookie
             cookie['terp_db'] = db
-            cookie['terp_user'] = user.encode('utf-8')
+            cookie['terp_user'] = user
             cookie['terp_db']['max-age'] = 3600
             cookie['terp_user']['max-age'] = 3600
             cookie['terp_db']['path'] = '/'

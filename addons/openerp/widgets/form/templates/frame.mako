@@ -7,7 +7,7 @@
     <tr>
         % for attrs, widget  in row:
         <td ${py.attrs(attrs)}>
-            % if isinstance(widget, basestring):
+            % if isinstance(widget, str):
                 <% widget_item = attrs['widget_item'][1] %>
                 % if attrs.get('is_search'):
                     <% filters = attrs.get('widget_item')[1].filters %>

@@ -146,6 +146,6 @@ def get_registered_views():
     Views = pool.get_group("view_types")
 
     views = [(kind, ViewType()) for kind, ViewType in Views.items()]
-    views.sort(lambda a, b: cmp(a[1].priority, b[1].priority))
+    views.sort(key=lambda a: a[1].priority)
 
     return views

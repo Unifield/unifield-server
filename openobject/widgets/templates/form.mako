@@ -51,7 +51,7 @@
                 <script type="text/javascript">
                 function replace_pass_submit() {
                     var this_form = false;
-                    % for src_field, target_field in replace_password_fields.iteritems():
+                    % for src_field, target_field in replace_password_fields.items():
                         if (!this_form) {
                             this_form = $("#${target_field}").attr('form');
                             var result = true;

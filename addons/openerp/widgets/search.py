@@ -270,7 +270,7 @@ class Search(TinyInputWidget):
         ]
 
         if self.fields_list:
-            self.fields_list.sort(lambda x, y: cmp(x[1], y[1]))
+            self.fields_list.sort(key=lambda x: x[1])
 
         self.frame = self.parse(model, dom, self.fields, values)
         for oreddom in self.listof_ored_domain:
@@ -294,7 +294,7 @@ class Search(TinyInputWidget):
             action.append(act['id'])
 
             sorted_filters.append(action)
-        sorted_filters.sort(lambda x, y: cmp(x[1], y[1]))
+        sorted_filters.sort(key=lambda x: x[1])
 
         self.filters_list = sorted_filters
 

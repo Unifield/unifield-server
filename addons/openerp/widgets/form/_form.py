@@ -77,8 +77,8 @@ class Frame(TinyWidget):
         for child in self.children:
 
             string = not child.nolabel and child.string
-            rowspan = child.rowspan or 1
-            colspan = child.colspan or 1
+            rowspan = child.rowspan and int(child.rowspan) or 1
+            colspan = child.colspan and int(child.colspan) or 1
             if isinstance(child, NewLine):
                 self.add_row()
 

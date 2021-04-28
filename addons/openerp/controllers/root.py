@@ -35,6 +35,8 @@ def _cp_on_error():
     errorpage = cherrypy.request.pool.get_controller("/openerp/errorpage")
     message = errorpage.render()
     cherrypy.response.status = 500
+    if isinstance(message, str):
+        message = message.encode('utf8')
     cherrypy.response.body = [message]
 
 cherrypy.config.update({'request.error_response': _cp_on_error})
