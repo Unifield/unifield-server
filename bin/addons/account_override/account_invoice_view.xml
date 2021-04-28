@@ -442,7 +442,11 @@
                                 <label string="" colspan="2"/>
                                 <field name="have_donation_certificate" invisible="1"/>
                                 <button name="button_donation_certificate" type="object" string="No Donation certificate" icon="terp-mail-replied" readonly="1" attrs="{'invisible': [('have_donation_certificate', '!=', False)]}"/>
-                                <button name="button_donation_certificate" type="object" string="Donation certificate" icon="terp-mail-replied" attrs="{'invisible': [('have_donation_certificate', '=', False)]}"/>
+                                <button name="button_donation_certificate" type="object"
+                                        string="Donation certificate" icon="terp-mail-replied"
+                                        attrs="{'invisible': [('have_donation_certificate', '=', False)]}"
+                                        force_editable="1"
+                                />
                                 <field name="state"/>
                                 <field name="amount_total"/>
                             </group>
