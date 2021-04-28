@@ -153,7 +153,7 @@
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.name or ''|x}</Data></Cell>
 
         % if o.is_inkind_donation:
-            <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
         % endif
     </Row>
   % endfor
