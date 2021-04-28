@@ -22,7 +22,7 @@
 import socket
 import pickle
 import sys
-
+import struct
 import cherrypy
 
 DNS_CACHE = {}
@@ -65,13 +65,16 @@ class TinySocket(object):
         self.sock.close()
 
     def send(self, msg, exception=False, traceback=None):
-        msg = pickle.dumps([msg,traceback])
+        msg = pickle.dumps([msg,traceback], protocol=2, fix_imports=True)
         if len(msg) <= 10**8-1:
-            self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
+            #self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
+            self.sock.sendall(struct.pack('8ss%ds'%len(msg), ('%8d'%len(msg)).encode('utf8'), (exception and "1" or "0").encode('utf8'), msg))
         else:
             n8size = len(msg)%10**8
             n16size = len(msg)/10**8
-            self.sock.sendall('%8d%s%16d%s%s' % (n8size, "3", n16size, exception and "1" or "0", msg))
+            #self.sock.sendall(('%8d%s%16d%s%s' % (n8size, "3", n16size, exception and "1" or "0", msg)).encode('utf8'))
+            self.sock.sendall(struct.pack('8ss16ss%ds'%len(msg), ('%8d'%n8size).encode('utf8'), "3".encode('utf8'), ('%16d'%n16size).encode('utf8'), (exception and "1" or "0").encode('utf8'), msg))
+
 
     def receive(self):
 
@@ -81,7 +84,7 @@ class TinySocket(object):
                 chunk = self.sock.recv(size - len(buf))
                 if chunk == '':
                     raise RuntimeError("socket connection broken")
-                buf += chunk
+                buf += chunk.decode('utf8')
             return buf
 
         size = int(read(self.sock, 8))
@@ -91,7 +94,7 @@ class TinySocket(object):
             size = newsize*10**8+size
             buf = read(self.sock, 1)
         exception = buf != '0' and buf or False
-        res = pickle.loads(read(self.sock, size))
+        res = pickle.loads(read(self.sock, size).encode('utf8'))
 
         if isinstance(res[0],Exception):
             if exception:
