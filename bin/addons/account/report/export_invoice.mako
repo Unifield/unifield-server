@@ -103,11 +103,19 @@
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
-      <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.document_date or False|n}T00:00:00.000</Data></Cell>
+      % if isDate(o.document_date):
+          <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.document_date|n}T00:00:00.000</Data></Cell>
+      % else:
+          <Cell ss:StyleID="non_editable"><Data ss:Type="String"></Data></Cell>
+      % endif
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-      <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.date_invoice or False|n}T00:00:00.000</Data></Cell>
+      % if isDate(o.date_invoice):
+          <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.date_invoice|n}T00:00:00.000</Data></Cell>
+      % else:
+          <Cell ss:StyleID="non_editable"><Data ss:Type="String"></Data></Cell>
+      % endif
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Account')}</Data></Cell>
