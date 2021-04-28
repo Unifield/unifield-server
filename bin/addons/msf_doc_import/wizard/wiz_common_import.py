@@ -177,12 +177,14 @@ class wizard_common_import_line(osv.osv_memory):
         'current_id': fields.function(_get_current_id, method=True, type='integer', string='ID'),
         'msg': fields.text('Msg'),
         'display_error': fields.boolean('Error'),
+        'already_running': fields.boolean('Already running'),
     }
 
     _defaults = {
         'search_default_not_restricted': 0,
         'msg': '',
         'display_error': False,
+        'already_running': False,
     }
 
     def add_products(self, cr, uid, ids, product_ids, context=None):
@@ -237,12 +239,13 @@ class wizard_common_import_line(osv.osv_memory):
         context = context is None and {} or context
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
-        fields_to_read = ['parent_id',
-                          'parent_model',
-                          'line_model',
-                          'product_ids']
+        fields_to_read = ['parent_id', 'parent_model', 'line_model', 'product_ids', 'already_running']
 
         for wiz in self.read(cr, uid, ids, fields_to_read, context=context):
+            if wiz['already_running']:
+                return True
+            else:
+                self.write(cr, uid, wiz['id'], {'already_running': True}, context=context)
             parent_id = wiz['parent_id']
             line_obj = self.pool.get(wiz['line_model'])
             product_ids = wiz['product_ids']
