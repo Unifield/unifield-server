@@ -224,8 +224,8 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
             if isinstance(res, cherrypy.lib.file_generator):
                 # generator: i.e download backup
                 return res
-            if not isinstance(res, str):
-                return str(res).encode("utf-8")
+            #if not isinstance(res, str):
+            #    return str(res).encode("utf-8")
 
             return res
 
