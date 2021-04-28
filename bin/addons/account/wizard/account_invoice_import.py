@@ -103,6 +103,7 @@ class account_invoice_import(osv.osv_memory):
                     'quantity': 3,
                     'unit_price': 4,
                     'description': 5,
+                    'notes': 6,
                 }
                 # number of the first line in the file containing data (not header)
                 base_num = 10
@@ -166,6 +167,7 @@ class account_invoice_import(osv.osv_memory):
                     quantity = line[cols['quantity']] or 0.0
                     unit_price = line[cols['unit_price']] or 0.0
                     description = line[cols['description']] and tools.ustr(line[cols['description']])
+                    notes = line[cols['notes']] and tools.ustr(line[cols['notes']])
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
@@ -229,6 +231,7 @@ class account_invoice_import(osv.osv_memory):
                         vals['quantity'] = quantity
 
                     vals['name'] = description
+                    vals['note'] = notes
 
                     # update the line
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals, context=context)

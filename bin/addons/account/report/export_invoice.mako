@@ -153,6 +153,7 @@
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.name or ''|x}</Data></Cell>
 
         % if o.is_inkind_donation:
+            <!-- export Notes including line breaks (|xn) -->
             <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
         % endif
     </Row>
