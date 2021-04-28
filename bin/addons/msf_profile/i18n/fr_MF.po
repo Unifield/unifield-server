@@ -108981,6 +108981,12 @@ msgid "Line %s: the account (mandatory) is missing."
 msgstr "Ligne %s : il manque le compte (obligatoire)."
 
 #. module: account
+#: code:addons/account/wizard/account_invoice_import.py:234
+#, python-format
+msgid "Line %s: the description (mandatory) is missing."
+msgstr "Ligne %s : il manque la description (obligatoire)."
+
+#. module: account
 #: code:addons/account/wizard/account_invoice_import.py:163
 #, python-format
 msgid "Line %s: the account %s doesn't exist."

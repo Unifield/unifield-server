@@ -230,6 +230,9 @@ class account_invoice_import(osv.osv_memory):
                             continue
                         vals['quantity'] = quantity
 
+                    if not description:
+                        errors.append(_("Line %s: the description (mandatory) is missing.") % (current_line_num,))
+                        continue
                     vals['name'] = description
                     vals['note'] = notes
 
