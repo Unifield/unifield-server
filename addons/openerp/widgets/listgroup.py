@@ -171,7 +171,7 @@ class ListGroup(List):
         # adding the piece of code to set limit as 0 to get rid of pager's negative offset error.
         # Here, we don't change the self.limit as Pager needs -1 to treat Unlimited limit  atribute
         terp_offset, terp_limit = self.offset, self.limit
-        if self.limit < 0:
+        if self.limit and self.limit < 0:
             terp_offset, terp_limit = 0, 0
 
         custom_search_domain = getattr(cherrypy.request, 'custom_search_domain', [])
@@ -188,7 +188,7 @@ class ListGroup(List):
 
             ids = proxy.search(self.domain, terp_offset, terp_limit, 0, self.context)
 
-            if len(ids) < self.limit:
+            if self.limit and len(ids) < self.limit:
                 self.count = len(ids)
             else:
                 self.count = proxy.search_count(domain, context)
@@ -303,12 +303,12 @@ class MultipleGroup(List):
         proxy = rpc.RPCProxy(model)
         self.rounding_values = view.get('uom_rounding', {})
         if ids is None:
-            if self.limit > 0:
+            if self.limit and self.limit > 0:
                 ids = proxy.search(self.domain, self.offset, self.limit, 0, rpc.session.context.copy())
             else:
                 ids = proxy.search(self.domain, 0, 0, 0, rpc.session.context.copy())
 
-            if len(ids) < self.limit:
+            if self.limit and len(ids) < self.limit:
                 self.count = len(ids)
             else:
                 self.count = proxy.search_count(domain, rpc.session.context.copy())

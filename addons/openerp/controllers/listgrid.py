@@ -185,6 +185,7 @@ class List(SecuredController):
 
     @expose()
     def multiple_groupby(self, model, name, grp_domain, group_by, view_id, view_type, parent_group, group_level, groups, no_leaf, **kw):
+        print('iii')
         grp_domain = ast.literal_eval(grp_domain)
         view = cache.fields_view_get(model, view_id, view_type, rpc.session.context.copy())
         group_by = ast.literal_eval(group_by)
@@ -209,7 +210,7 @@ class List(SecuredController):
                 'sort_order': kw.get('sort_order')}
 
         listgrp = listgroup.MultipleGroup(name, model, view, ids=None, domain= domain, parent_group=parent_group, group_level=group_level, groups=groups, context=context, **args)
-        return listgrp.render()
+        return listgrp.render().encode("utf8")
 
     @expose('json')
     def reload_graph(self, **kw):
