@@ -80,6 +80,8 @@ class wizard_split_invoice(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('%s: Quantity should be inferior or equal to initial quantity!') % wiz_line.description)
             # Price unit
             if wiz_line.price_unit <= 10**-3:
+                # US-8295 Note that this check is kept on purpose on Donations even if they can have lines with amount zero. The only way to
+                # use the split feature with those lines is to remove them from the Split wizard in order to send them to the second invoice.
                 raise osv.except_osv(_('Warning'), _('%s: Unit price should be positive!') % wiz_line.description)
             # We add line if its quantity have changed or that another line have been deleted from original invoice
             #+ (so that the number of original invoice are more than invoice line in the current wizard)
