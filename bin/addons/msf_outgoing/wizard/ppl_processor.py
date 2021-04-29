@@ -55,7 +55,7 @@ class ppl_processor(osv.osv):
     def do_reset_step2(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pick_id = []
@@ -69,7 +69,7 @@ class ppl_processor(osv.osv):
     def do_save_draft_step2(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'draft_step2': True}, context=context)
@@ -192,7 +192,7 @@ class ppl_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -286,7 +286,7 @@ class ppl_family_processor(osv.osv):
 
         if pack_type :
             # if 'pack_type' is not a list, turn it into list
-            if isinstance(pack_type, (int, long)):
+            if isinstance(pack_type, int):
                 pack_type = [pack_type]
 
             p_type = p_type_obj.browse(cr, uid, pack_type[0])

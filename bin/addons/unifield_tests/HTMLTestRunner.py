@@ -91,7 +91,7 @@ Version in 0.7.1
 # TODO: simplify javascript using ,ore than 1 class in the class attribute?
 
 from datetime import datetime, timedelta
-import StringIO
+import io
 import sys
 import unittest
 from xml.sax import saxutils
@@ -542,7 +542,7 @@ class _TestResult(TestResult):
         self.start_time = datetime.now()
         TestResult.startTest(self, test)
         # just one buffer for both stdout and stderr
-        self.outputBuffer = StringIO.StringIO()
+        self.outputBuffer = io.StringIO()
         stdout_redirector.fp = self.outputBuffer
         stderr_redirector.fp = self.outputBuffer
         self.stdout0 = sys.stdout
@@ -648,7 +648,7 @@ class HTMLTestRunner(Template_mixin):
             if not err:
                 self.total_duration = str(datetime.now() - start_time)
                 self.generateReport(test, result)
-                print >>sys.stderr, '\nTime Elapsed: %s' % (self.total_duration)
+                print('\nTime Elapsed: %s' % (self.total_duration), file=sys.stderr)
                 return result
 
 
@@ -659,7 +659,7 @@ class HTMLTestRunner(Template_mixin):
         classes = []
         for n,t,d,o,e in result_list:
             cls = t.__class__
-            if not rmap.has_key(cls):
+            if cls not in rmap:
                 rmap[cls] = []
                 classes.append(cls)
             rmap[cls].append((n,t,d,o,e))

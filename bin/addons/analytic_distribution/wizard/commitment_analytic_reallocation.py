@@ -96,11 +96,11 @@ class int_commitment_realloc_wizard(osv.osv_memory):
         line_ids = aal.search(cr, uid, domain, context=context)
         if not line_ids:
             return { 'type': 'ir.actions.act_window_close', 'context': context}
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
 
         # wizard data
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
         dest_id = wiz.destination_id and wiz.destination_id.id or False

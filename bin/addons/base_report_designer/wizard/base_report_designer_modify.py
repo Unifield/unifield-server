@@ -23,7 +23,7 @@ import time
 import wizard
 import osv
 import pooler
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import base64
 import tools
 from tools.translate import _
@@ -93,9 +93,9 @@ class base_report_file_sxw(osv.osv_memory):
 
     def upload_report(self, cr, uid, ids, context=None):
         from base_report_designer import  openerp_sxw2rml
-        import StringIO
+        import io
         data=self.read(cr,uid,ids)[0]
-        sxwval = StringIO.StringIO(base64.decodestring(data['file_sxw_upload']))
+        sxwval = io.StringIO(base64.decodestring(data['file_sxw_upload']))
         fp = tools.file_open('normalized_oo2rml.xsl',subdir='addons/base_report_designer/openerp_sxw2rml')
         newrmlcontent = str(openerp_sxw2rml.sxw2rml(sxwval, xsl=fp.read()))
         report = self.pool.get('ir.actions.report.xml').write(cr, uid, [data['report_id']], {

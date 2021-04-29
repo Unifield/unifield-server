@@ -21,7 +21,7 @@ import netsvc
 #    and finally remove all dots (unexpected dots appears when the system
 #    language is not english)
 def get_valid_xml_name(*args):
-    return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '').replace(',', '_')
+    return "_".join([str(x) for x in [_f for _f in args if _f]]).replace('.', '').replace(',', '_')
 
 class fiscal_year(osv.osv):
 
@@ -248,7 +248,7 @@ class account_target_costcenter(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context.get('sync_update_execution'):
@@ -273,7 +273,7 @@ class account_analytic_account(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # get all active project instance with the cost center in one of its target lines
         if dest_field == 'category':
-            if isinstance(ids, (long, int)):
+            if isinstance(ids, int):
                 ids = [ids]
             res = dict.fromkeys(ids, False)
             for account_id in ids:
@@ -394,7 +394,7 @@ class msf_instance(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if 'state' in vals and vals['state'] == 'active' and current_instance.level == 'section':
@@ -602,7 +602,7 @@ class account_analytic_line(osv.osv):
         if not 'cost_center_id' in vals:
             return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Only set the correction date if data not come from sync
@@ -740,7 +740,7 @@ class product_product(osv.osv):
         if not ids:
             return True
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         res_id = ids[0]
 
@@ -774,7 +774,7 @@ class product_product(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         try:
             res = super(product_product, self).unlink(cr, uid, ids, context=context)
-        except AttributeError, e:
+        except AttributeError as e:
             """
             UFTP-208: when deleting a Temporary product (default_code 'XXX')
             comming from GUI duplication, we dive into get_unique_xml_name
@@ -901,7 +901,7 @@ class hr_employee(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         super(hr_employee, self).unlink(cr, uid, ids, context)
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         cr.execute("delete from ir_model_data where model=%s and res_id in %s", (self._name, tuple(ids)))
         return True

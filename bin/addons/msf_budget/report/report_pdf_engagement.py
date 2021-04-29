@@ -179,7 +179,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
             fiscalyear_id = pool.get('account.fiscalyear').find(cr, uid, po_date, False, context=context)
             if fiscalyear_id:
                 fiscalyear = pool.get('account.fiscalyear').browse(cr, uid, fiscalyear_id, context=context)
-                cost_center_ids = temp_data.keys()
+                cost_center_ids = list(temp_data.keys())
 
                 # add by cost center
                 for cost_dest in cost_center_ids:
@@ -189,7 +189,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     destination_id = split[1] and int(split[1])
 
 
-                    expense_account_ids = temp_data[str(cost_center_id)+'_'+str(destination_id)].keys()
+                    expense_account_ids = list(temp_data[str(cost_center_id)+'_'+str(destination_id)].keys())
                     # Create the actual domain
                     actual_domain = [('cost_center_id', '=', cost_center_id)]
                     actual_domain.append(('date', '>=', fiscalyear.date_start))
@@ -206,7 +206,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     # we only save the main accounts, not the destinations (new key: account id only)
                     actuals = dict([(item[0], actuals[item]) for item in actuals if item[1] is False])
 
-                    for account_id in actuals.keys():
+                    for account_id in list(actuals.keys()):
                         if account_id in expense_account_ids:
                             # sum the values, we only need the total
                             total_actual = sum(actuals[account_id])
@@ -233,7 +233,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         budget_data = pool.get('msf.budget.line').read(cr, uid, budget_line_ids, ['account_id', 'total'])
                         budget_amounts = dict([(x.get('account_id', [])[0], x.get('total', 0.0)) for x in budget_data])
 
-                        for account_id in budget_amounts.keys():
+                        for account_id in list(budget_amounts.keys()):
                             # sum the values, we only need the total
                             total_budget = budget_amounts[account_id]
                             # create the line to add
@@ -241,12 +241,12 @@ class report_pdf_engagement(report_sxw.rml_parse):
                             temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id] = [sum(pair) for pair in zip(temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id], budget_line)]
                     else:
                         # No budget found, fill the corresponding lines with "Budget Missing"
-                        for account_id in temp_data[str(cost_center_id)+'_'+str(destination_id)].keys():
+                        for account_id in list(temp_data[str(cost_center_id)+'_'+str(destination_id)].keys()):
                             temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id][0] = str('Budget missing')
 
             # Now we format the data to form the result
             total_values = [0, 0, 0, 0, 0]
-            cost_center_ids = temp_data.keys()
+            cost_center_ids = list(temp_data.keys())
             cost_center_ids.sort(self._cmp_cc_dest)
 
             for cost_dest in cost_center_ids:
@@ -256,7 +256,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 destination_id = split[1] and int(split[1])
 
                 cost_center_data = temp_data[str(cost_center_id)+'_'+str(destination_id)]
-                expense_account_ids = cost_center_data.keys()
+                expense_account_ids = list(cost_center_data.keys())
 
                 expense_accounts = pool.get('account.account').browse(cr, uid, expense_account_ids, context=context)
                 for expense_account in sorted(expense_accounts, key=lambda a: a.code):
@@ -277,7 +277,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 # empty line between cost centers
                 res.append([''] * 8)
             # append formatted total
-            res.append(['TOTALS', ''] + map(int, total_values) + [''])
+            res.append(['TOTALS', ''] + list(map(int, total_values)) + [''])
         return res
 
 report_sxw.report_sxw('report.msf.pdf.engagement', 'purchase.order', 'addons/msf_budget/report/engagement.rml', parser=report_pdf_engagement, header=False)

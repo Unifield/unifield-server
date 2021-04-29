@@ -120,7 +120,7 @@ class account_analytic_account(osv.osv):
             for child in account.child_ids:
                 if child.state == 'template':
                     account.child_ids.pop(account.child_ids.index(child))
-            result[account.id] = map(lambda x: x.id, account.child_ids)
+            result[account.id] = [x.id for x in account.child_ids]
 
         return result
 

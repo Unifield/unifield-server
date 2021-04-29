@@ -177,10 +177,10 @@ def main():
     for fname in file_list:
         these_errors = check(fname)
         if these_errors:
-            print '\n'.join(str(e) for e in these_errors)
+            print('\n'.join(str(e) for e in these_errors))
             errors.extend(these_errors)
     if errors:
-        print '%d total errors' % len(errors)
+        print('%d total errors' % len(errors))
         return 1
     else:
         return 0

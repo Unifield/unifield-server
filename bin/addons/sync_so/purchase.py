@@ -34,7 +34,7 @@ class purchase_order_line_sync(osv.osv):
     _inherit = 'purchase.order.line'
 
     def _get_sync_local_id(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for pol in self.read(cr, uid, ids, ['order_id'], context=context):
@@ -47,7 +47,7 @@ class purchase_order_line_sync(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -115,7 +115,7 @@ class purchase_order_line_sync(osv.osv):
                 po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', partner_ref[:-2]), ('split_during_sll_mig', '=', True)], context=context)
 
         if not po_ids:
-            raise Exception, "Cannot find the parent PO with partner ref %s" % partner_ref
+            raise Exception("Cannot find the parent PO with partner ref %s" % partner_ref)
 
         # retrieve data:
         pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
@@ -183,11 +183,11 @@ class purchase_order_line_sync(osv.osv):
             if sol_dict['is_line_split']:
                 sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
                 if not sync_linked_sol:
-                    raise Exception, "Original PO line not found when trying to split the PO line"
+                    raise Exception("Original PO line not found when trying to split the PO line")
                 sync_linked_sol = '%s/%s' % (order_name, sync_linked_sol)
                 orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
                 if not orig_pol:
-                    raise Exception, "Original PO line not found when trying to split the PO line"
+                    raise Exception("Original PO line not found when trying to split the PO line")
                 orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin', 'state', 'analytic_distribution_id'], context=context)
                 pol_values['original_line_id'] = orig_pol[0]
                 pol_values['line_number'] = orig_pol_info.line_number
@@ -506,7 +506,7 @@ class purchase_order_line_to_split(osv.osv):
                 })
             self.create(cr, uid, line_vals, context=context)
         else:
-            raise Exception, "No Order line DB ID given in the sync. message"
+            raise Exception("No Order line DB ID given in the sync. message")
 
         return
 
@@ -547,7 +547,7 @@ class purchase_order_sync(osv.osv):
         'is_validated_and_synced': fields.function(
             _is_validated_and_synced, method=True,
             type='boolean',
-            string=u"Validated and Synced"),
+            string="Validated and Synced"),
     }
 
     _defaults = {
@@ -621,7 +621,7 @@ class purchase_order_sync(osv.osv):
                 # UF-1830: Create a message to remove the invalid reference to the inexistent document
                 so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)
                 return "Recovery: the original PO " + so_info.name + " has been created after the backup and thus cannot be updated"
-            raise Exception, "Cannot find the original PO with the given info."
+            raise Exception("Cannot find the original PO with the given info.")
 
         po_value = self.browse(cr, uid, po_id)
         ref = po_value.partner_ref
@@ -674,7 +674,7 @@ class purchase_order_sync(osv.osv):
                 if 'analytic_distribution_id' in header_result:
                     del header_result['analytic_distribution_id']
             else:
-                raise Exception, "Sorry, Push Flow for intersection partner is only available for Donation or Loan FOs! " + source
+                raise Exception("Sorry, Push Flow for intersection partner is only available for Donation or Loan FOs! " + source)
 
         # the case of intermission, the AD will be updated below, after creating the PO
         if partner_type == 'intermission' and 'analytic_distribution_id' in header_result:
@@ -714,7 +714,7 @@ class purchase_order_sync(osv.osv):
 
     def check_existing_po(self, cr, uid, source, so_dict):
         if not source:
-            raise Exception, "The partner is missing!"
+            raise Exception("The partner is missing!")
 
         name = source + '.' + so_dict.get('name')
         po_ids = self.search(cr, uid, [('partner_ref', '=', name), ('state', '!=', 'cancelled')])
@@ -725,10 +725,10 @@ class purchase_order_sync(osv.osv):
 
     def check_mandatory_fields(self, cr, uid, so_dict):
         if not so_dict.get('delivery_confirmed_date'):
-            raise Exception, "The delivery confirmed date is missing - please verify the values of the sync message!"
+            raise Exception("The delivery confirmed date is missing - please verify the values of the sync message!")
 
         if not so_dict.get('state'):
-            raise Exception, "The state of the split FO is missing - please verify the values of the sync message!"
+            raise Exception("The state of the split FO is missing - please verify the values of the sync message!")
 
     # UTP-872: If the PO is a split one, then still allow it to be confirmed without po_line
     def _hook_check_po_no_line(self, po, context):
@@ -749,7 +749,7 @@ class purchase_order_sync(osv.osv):
                 # UF-1830: Create a message to remove the invalid reference to the inexistent document
                 so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)
                 return "Recovery: the FO " + so_info.name + " does not exist any more due to recovery. The reference to it will be set to void"
-            raise Exception, "Cannot find the original PO with the given info."
+            raise Exception("Cannot find the original PO with the given info.")
 
         so_dict = so_info.to_dict()
 
@@ -817,16 +817,16 @@ class purchase_order_sync(osv.osv):
         if 'purchase.order.line' in context['changes']:
             for rec_line in self.pool.get('purchase.order.line').browse(
                     cr, uid,
-                    context['changes']['purchase.order.line'].keys(),
+                    list(context['changes']['purchase.order.line'].keys()),
                     context=context):
                 if self.pool.get('purchase.order.line').exists(cr, uid, rec_line.id, context): # check the line exists
                     lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = context['changes']['purchase.order.line'][rec_line.id]
         # monitor changes on purchase.order
-        for id, changes in changes.items():
+        for id, changes in list(changes.items()):
             logger = get_sale_purchase_logger(cr, uid, self, id, \
                                               context=context)
             if 'order_line' in changes:
-                old_lines, new_lines = map(set, changes['order_line'])
+                old_lines, new_lines = list(map(set, changes['order_line']))
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
                 logger.is_product_removed |= (len(old_lines - new_lines) > 0)
 
@@ -838,7 +838,7 @@ class purchase_order_sync(osv.osv):
             logger.is_date_modified |= ('delivery_confirmed_date' in changes)
             logger.is_status_modified |= ('state' in changes)
             # handle line's changes
-            for line_id, line_changes in lines.get(id, {}).items():
+            for line_id, line_changes in list(lines.get(id, {}).items()):
                 logger.is_quantity_modified |= ('product_qty' in line_changes)
                 logger.is_product_price_modified |= \
                     ('price_unit' in line_changes)
@@ -882,7 +882,7 @@ class purchase_order_sync(osv.osv):
 
 
         if not po_id:
-            raise Exception, "The split PO linked to " + so_info.name + "at " + source + " not found!"
+            raise Exception("The split PO linked to " + so_info.name + "at " + source + " not found!")
 
         self.check_mandatory_fields(cr, uid, so_dict)
 

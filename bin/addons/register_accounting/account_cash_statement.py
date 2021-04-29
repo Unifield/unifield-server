@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from register_tools import create_cashbox_lines, previous_register_id
+from .register_tools import create_cashbox_lines, previous_register_id
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -102,7 +102,7 @@ class account_cash_statement(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids] # Calculate the starting balance
 
         # Prepare some values
@@ -321,7 +321,7 @@ class account_bank_statement_line(osv.osv):
             cash_register_op_advance_po_id m2o allowed
             for an Operational advance type for specific treatment account
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for o in self.browse(cr, uid, ids, context=context):
             if o.cash_register_op_advance_po_id:

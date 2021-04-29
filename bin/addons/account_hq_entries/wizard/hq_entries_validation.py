@@ -37,7 +37,7 @@ class hq_entries_validation(osv.osv_memory):
         Get the "first" period open or field-closed among December periods,
         i.e. in order of priority: 12, 13, 14 or 15 (or None)
         '''
-        args = [('number', 'in', range(12, 16)), ('state', 'not in', ['created', 'mission-closed', 'done'])]
+        args = [('number', 'in', list(range(12, 16))), ('state', 'not in', ['created', 'mission-closed', 'done'])]
         period_obj = self.pool.get('account.period')
         period_ids = period_obj.search(cr, uid, args, limit=1, order='number asc', context=context)
         return period_ids and period_ids[0] or None
@@ -58,7 +58,7 @@ class hq_entries_validation(osv.osv_memory):
     def default_get(self, cr, uid, fields, context=None):
         # check transaction before showing wizard
         line_ids = context and context.get('active_ids', []) or []
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
 
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
@@ -73,7 +73,7 @@ class hq_entries_validation(osv.osv_memory):
         view = super(hq_entries_validation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if 'period_id' in view['fields'] and 'active_id' in context:
             # get December Periods (12 to 15) if they are not Draft, Mission-Closed or HQ-Closed
-            view['fields']['period_id']['domain'] = [('number', 'in', range(12, 16)),
+            view['fields']['period_id']['domain'] = [('number', 'in', list(range(12, 16))),
                                                      ('state', 'not in', ['created', 'mission-closed', 'done'])]
             lines = self.browse(cr, uid, context.get('active_id', False), context).line_ids
             # if there is at least one HQ Entry in December, the period_id (used to book the entry) is required,
@@ -139,7 +139,7 @@ class hq_entries_validation(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not period_id:
             raise osv.except_osv(_('Error'), _('Period is missing!'))
@@ -303,7 +303,7 @@ class hq_entries_validation(osv.osv_memory):
             # original move line
             original_ml_result = res_move[line.id]
             # Mark new journal items as corrections for the first one
-            new_expense_ml_ids = new_res_move.values()
+            new_expense_ml_ids = list(new_res_move.values())
             pure_ad_cor_ji_ids += new_expense_ml_ids
             corr_name = 'COR1 - ' + original_move.name
             # US-1347: JI COR and REV Entries Ref. must be the Entry Sequence from the original entry
@@ -388,14 +388,14 @@ class hq_entries_validation(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.running:
                 return {}
             self.write(cr, uid, [wiz.id], {'running': True})
             active_ids = [x.id for x in wiz.process_ids]
-            if isinstance(active_ids, (int, long)):
+            if isinstance(active_ids, int):
                 active_ids = [active_ids]
             # Fetch some data
             ana_line_obj = self.pool.get('account.analytic.line')
@@ -480,7 +480,7 @@ class hq_entries_validation(osv.osv_memory):
                                              date=line.date, doc_date=document_date)
                     if write:
                         all_lines.update(write)
-                        self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
+                        self.pool.get('hq.entries').write(cr, uid, list(write.keys()), {'user_validated': True}, context=context)
 
             for line in account_change:
                 curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
@@ -547,7 +547,7 @@ class hq_entries_validation(osv.osv_memory):
                     cor_vals.update({'name': new_name})
                 ana_line_obj.write(cr, uid, cor_ids, cor_vals)
                 # UTP-1118: Change entry sequence so that it's compatible with analytic journal (correction)
-                if isinstance(cor_ids, (int, long)):
+                if isinstance(cor_ids, int):
                     cor_ids = [cor_ids]
                 cor_ids += res_reverse
                 odhq_journal_id = journal_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)

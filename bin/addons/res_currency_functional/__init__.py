@@ -19,12 +19,12 @@
 #
 ##############################################################################
 
-import res_currency_rate_functional
-import account_move_compute_currency
-import account_move_line_compute_currency
-import account_bank_statement_line_compute_currency
-import analytic_move_line_compute_currency
-import order_line_compute_currency
-import wizard
+from . import res_currency_rate_functional
+from . import account_move_compute_currency
+from . import account_move_line_compute_currency
+from . import account_bank_statement_line_compute_currency
+from . import analytic_move_line_compute_currency
+from . import order_line_compute_currency
+from . import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

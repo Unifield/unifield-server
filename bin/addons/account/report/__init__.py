@@ -19,31 +19,31 @@
 #
 ##############################################################################
 
-import account_central_journal
-import account_general_journal
-import account_journal
-import account_balance
-import account_general_ledger
-import account_partner_ledger
+from . import account_central_journal
+from . import account_general_journal
+from . import account_journal
+from . import account_balance
+from . import account_general_ledger
+from . import account_partner_ledger
 #import invoice
-import account_print_invoice
+from . import account_print_invoice
 #import overdue
-import account_print_overdue
-import account_aged_partner_balance
+from . import account_print_overdue
+from . import account_aged_partner_balance
 #import tax_report
-import account_tax_report
-import account_tax_code
-import account_balance_landscape
-import account_invoice_report
-import account_report
-import account_entries_report
-import account_analytic_entries_report
-import account_balance_sheet
-import account_profit_loss
-import account_liquidity_balance
-import free_allocation_report
-import invoice_excel_export
-import export_invoice
+from . import account_tax_report
+from . import account_tax_code
+from . import account_balance_landscape
+from . import account_invoice_report
+from . import account_report
+from . import account_entries_report
+from . import account_analytic_entries_report
+from . import account_balance_sheet
+from . import account_profit_loss
+from . import account_liquidity_balance
+from . import free_allocation_report
+from . import invoice_excel_export
+from . import export_invoice
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

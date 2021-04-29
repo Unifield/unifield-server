@@ -26,7 +26,7 @@ import logging
 
 from sync_common import xmlid_to_sdref
 from sync_client import get_sale_purchase_logger
-import picking_rw
+from . import picking_rw
 
 class stock_move(osv.osv):
 
@@ -75,7 +75,7 @@ class stock_picking(osv.osv):
         if rw_type == self.CENTRAL_PLATFORM:
             message = "Sorry, the given operation is only available for Remote Warehouse instance!"
             self._logger.info(message)
-            raise Exception, message
+            raise Exception(message)
 
         pick_dict = in_info.to_dict()
         pick_name = pick_dict['name']
@@ -124,7 +124,7 @@ class stock_picking(osv.osv):
             if not existing_pick:
                 message = "Sorry, the INT: " + pick_name + " does not exist in " + cr.dbname
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
 
             self.action_cancel(cr, uid,existing_pick, context=context)
             message = "Cancelled successfully the Internal Picking: " + pick_name
@@ -151,14 +151,14 @@ class stock_picking(osv.osv):
                 if not existing_pick:
                     message = "Sorry, the IN: " + pick_name + " does not exist in " + cr.dbname
                     self._logger.info(message)
-                    raise Exception, message
+                    raise Exception(message)
                 
                 self.action_cancel(cr, uid,existing_pick, context=context)
                 message = "Cancelled successfully the Incoming Shipment: " + pick_name
             else:
                 message = "Sorry, the case without the origin PO is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
         else:
             message = "Sorry, the given operation is only available for Remote Warehouse instance!"
         
@@ -219,7 +219,7 @@ class stock_picking(osv.osv):
             else:
                 message = "Sorry, the case without the origin PO is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
         else:
             message = "Sorry, the given operation is only available for Remote Warehouse instance!"
         
@@ -281,11 +281,11 @@ class stock_picking(osv.osv):
                 else:
                     message = "The IN: " + pick_name + " not found in " + cr.dbname
                     self._logger.info(message)
-                    raise Exception, message
+                    raise Exception(message)
             else:
                 message = "Sorry, the case without the origin PO is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
                 
         elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
@@ -548,7 +548,7 @@ class stock_picking(osv.osv):
             else:
                 message = "The IN: " + pick_name + " not found in " + cr.dbname
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
                 
         elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"

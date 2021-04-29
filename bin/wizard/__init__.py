@@ -32,6 +32,7 @@ from osv.osv import except_osv
 from osv.orm import except_orm
 from netsvc import Logger, LOG_ERROR
 import sys
+from functools import reduce
 
 class except_wizard(Exception):
     def __init__(self, name, value):
@@ -92,7 +93,7 @@ class interface(netsvc.Service):
                 # fetch user-set defaut values for the field... shouldn't we pass it the uid?
                 defaults = ir.ir_get(cr, uid, 'default', False, [('wizard.'+self.wiz_name, False)])
                 default_values = dict([(x[1], x[2]) for x in defaults])
-                for val in fields.keys():
+                for val in list(fields.keys()):
                     if 'default' in fields[val]:
                         # execute default method for this field
                         if callable(fields[val]['default']):
@@ -152,7 +153,7 @@ class interface(netsvc.Service):
                 next_state = result_def['next_state'](self, cr, uid, data, context)
                 return self.execute_cr(cr, uid, data, next_state, context)
         
-        except Exception, e:
+        except Exception as e:
             if isinstance(e, except_wizard) \
                 or isinstance(e, except_osv) \
                 or isinstance(e, except_orm):
@@ -160,7 +161,7 @@ class interface(netsvc.Service):
             else:
                 import traceback
                 tb_s = reduce(lambda x, y: x+y, traceback.format_exception(
-                    sys.exc_type, sys.exc_value, sys.exc_traceback))
+                    sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                 logger = Logger()
                 logger.notifyChannel("web-services", LOG_ERROR,
                         'Exception in call: ' + tb_s)

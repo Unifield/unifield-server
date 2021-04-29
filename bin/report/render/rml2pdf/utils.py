@@ -126,13 +126,13 @@ def _process_text(self, txt):
                 txt = None
                 expr = sps.pop(0)
                 txt = eval(expr, self.localcontext)
-                if txt and isinstance(txt, basestring):
+                if txt and isinstance(txt, str):
                     txt = tools.ustr(txt)
             except psycopg2.Error:
                 raise
             except Exception:
                 pass
-            if isinstance(txt, basestring):
+            if isinstance(txt, str):
                 result += str2xml(txt)
             elif txt and (txt is not None) and (txt is not False):
                 result += ustr(txt)
@@ -169,7 +169,7 @@ def unit_get(size):
 def tuple_int_get(node, attr_name, default=None):
     if not node.get(attr_name):
         return default
-    return map(int, node.get(attr_name).split(','))
+    return list(map(int, node.get(attr_name).split(',')))
 
 def bool_get(value):
     return (str(value)=="1") or (value.lower()=='yes')

@@ -51,11 +51,12 @@ import re
 import base64
 
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from LoginTest import *
-    from lib.logreport import *
-    from lib.rpc import *
+from functools import reduce
+if __name__!="package":
+    from .lib.gui import *
+    from .LoginTest import *
+    from .lib.logreport import *
+    from .lib.rpc import *
     database="test"
     uid = 1
 
@@ -112,7 +113,7 @@ class ConvertBracesToField( unohelper.Base, XJobExecutor ):
             nCount += 1
         getList(oRepeatInObjects,sHost,nCount)
         for ro in oRepeatInObjects:
-            if ro.find("(")<>-1:
+            if ro.find("(")!=-1:
                 saRepeatInList.append( [ ro[:ro.find("(")], ro[ro.find("(")+1:ro.find(")")] ])
         try:
             oParEnum = doc.getTextFields().createEnumeration()
@@ -121,13 +122,13 @@ class ConvertBracesToField( unohelper.Base, XJobExecutor ):
                 if oPar.supportsService("com.sun.star.text.TextField.DropDown"):
                     for reg in regexes:
                         res=re.findall(reg[0],oPar.Items[1])
-                        if len(res) <> 0:
+                        if len(res) != 0:
                             if res[0][0] == "objects":
                                 sTemp = docinfo.getUserFieldValue(3)
                                 sTemp = "|-." + sTemp[sTemp.rfind(".")+1:] + ".-|"
                                 oPar.Items=(sTemp.encode("utf-8"),oPar.Items[1].replace(' ',""))
                                 oPar.update()
-                            elif type(res[0]) <> type(u''):
+                            elif type(res[0]) != type(''):
 
                                 sObject = self.getRes(self.sock, docinfo.getUserFieldValue(3), res[0][0][res[0][0].find(".")+1:].replace(".","/"))
                                 r = self.sock.execute(database, uid, self.password, docinfo.getUserFieldValue(3) , 'fields_get')
@@ -143,22 +144,22 @@ class ConvertBracesToField( unohelper.Base, XJobExecutor ):
                                 try:
                                     sObject = self.getRes(self.sock, obj, res[0][res[0].find(".")+1:].replace(".","/"))
                                     r = self.sock.execute(database, uid, self.password, sObject , 'read',[1])
-                                except Exception,e:
+                                except Exception as e:
                                     r = "TTT"
                                     self.logobj.log_write('ConvertBracesToField', LOG_ERROR, str(e))
-                                if len(r) <> 0:
-                                    if r <> "TTT":
+                                if len(r) != 0:
+                                    if r != "TTT":
                                         if len(res)>1:
                                             sExpr=""
-                                            print res
+                                            print(res)
                                             if reg[1] == 'Field':
                                                 for ires in res:
                                                     try:
                                                         sExpr=r[0][ires[ires.rfind(".")+1:]]
                                                         break
-                                                    except Exception,e:
+                                                    except Exception as e:
                                                         import traceback,sys
-                                                        info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                                                        info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                                                         self.logobj.log_write('ConvertBracesToField', LOG_ERROR,info)
                                                 try:
                                                     oPar.Items=(sExpr.encode("utf-8") ,oPar.Items[1])
@@ -167,7 +168,7 @@ class ConvertBracesToField( unohelper.Base, XJobExecutor ):
                                                     oPar.Items=(str(sExpr) ,oPar.Items[1])
                                                     oPar.update()
                                                     import traceback,sys
-                                                    info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                                                    info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                                                     self.logobj.log_write('ConvertBracesToField', LOG_ERROR, info)
 
                                         else:
@@ -178,24 +179,24 @@ class ConvertBracesToField( unohelper.Base, XJobExecutor ):
                                                     oPar.Items=(sExpr.encode("utf-8") ,oPar.Items[1])
                                                     oPar.update()
                                                 else:
-                                                     oPar.Items=(u"/",oPar.Items[1])
+                                                     oPar.Items=("/",oPar.Items[1])
                                                      oPar.update()
                                             except:
                                                 oPar.Items=(str(sExpr) ,oPar.Items[1])
                                                 oPar.update()
                                                 import traceback,sys
-                                                info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                                                info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                                                 self.logobj.log_write('ConvertBracesToField', LOG_ERROR,info)
 
                                     else:
-                                        oPar.Items=(u""+r,oPar.Items[1])
+                                        oPar.Items=(""+r,oPar.Items[1])
                                         oPar.update()
                                 else:
-                                    oPar.Items=(u"TTT",oPar.Items[1])
+                                    oPar.Items=("TTT",oPar.Items[1])
                                     oPar.update()
         except:
             import traceback,sys
-            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             self.logobj.log_write('ConvertBraceToField', LOG_ERROR, info)
 
     def getRes(self,sock,sObject,sVar):
@@ -203,7 +204,7 @@ class ConvertBracesToField( unohelper.Base, XJobExecutor ):
         doc =desktop.getCurrentComponent()
         docinfo=doc.getDocumentInfo()
         res = sock.execute(database, uid, self.password, sObject , 'fields_get')
-        key = res.keys()
+        key = list(res.keys())
         key.sort()
         myval=None
         if not sVar.find("/")==-1:
@@ -237,15 +238,15 @@ class ConvertBracesToField( unohelper.Base, XJobExecutor ):
                 found = doc.findFirst( search )
                 while found:
                     res=re.findall(reg[0],found.String)
-                    print len(res)
+                    print(len(res))
 
                     if found.String not in [r[0] for r in aReportSyntex] and len(res) == 1 :
                         text=found.getText()
                         oInputList = doc.createInstance("com.sun.star.text.TextField.DropDown")
-                        if reg[1]<>"Expression":
-                            oInputList.Items=(u""+found.String,u""+found.String)
+                        if reg[1]!="Expression":
+                            oInputList.Items=(""+found.String,""+found.String)
                         else:
-                            oInputList.Items=(u"?",u""+found.String)
+                            oInputList.Items=("?",""+found.String)
                         aReportSyntex.append([oInputList,reg[1]])
                         text.insertTextContent(found,oInputList,False)
                         found.String =""
@@ -265,20 +266,20 @@ class ConvertBracesToField( unohelper.Base, XJobExecutor ):
                         text=found.getText()
 
                         oInputList = doc.createInstance("com.sun.star.text.TextField.DropDown")
-                        if res[1]<>"Expression":
-                            oInputList.Items=(u""+found.String,u""+found.String)
+                        if res[1]!="Expression":
+                            oInputList.Items=(""+found.String,""+found.String)
                         else:
-                            oInputList.Items=(u"?",u""+found.String)
+                            oInputList.Items=("?",""+found.String)
                         aReportSyntex.append([oInputList,res[1]])
                         text.insertTextContent(found,oInputList,False)
                         found.String =""
                         found = doc.findNext(found.End, search)
         except:
             import traceback,sys
-            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             self.logobj.log_write('ConvertBraceToField', LOG_ERROR, info)
 
-if __name__<>"package":
+if __name__!="package":
     ConvertBracesToField(None)
 else:
     g_ImplementationHelper.addImplementation( ConvertBracesToField, "org.openoffice.openerp.report.convertBF", ("com.sun.star.task.Job",),)

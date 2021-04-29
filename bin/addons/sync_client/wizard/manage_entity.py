@@ -49,12 +49,12 @@ class entity_manager(osv.osv_memory):
         hardware_id = self.pool.get('sync.client.entity')._hardware_id
         try:
             res = proxy.get_entity(uuid, hardware_id, context)
-            if res and not res[0]: raise StandardError, res[1]
+            if res and not res[0]: raise Exception(res[1])
             my_infos = res[1]
             res = proxy.get_children(uuid, hardware_id, context)
-            if res and not res[0]: raise StandardError, res[1]
+            if res and not res[0]: raise Exception(res[1])
             my_infos.update({'entity_ids' : [(0,0, data) for data in res[1]], 'state' : 'ready' })
-        except StandardError, e:
+        except Exception as e:
             sync_log(self, e, 'error')
             raise osv.except_osv(_('Error !'), res[1])
         else:

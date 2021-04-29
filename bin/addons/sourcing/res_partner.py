@@ -65,7 +65,7 @@ class res_partner(osv.osv):
         return res
 
     def _get_fake(self, cr, uid, ids, fields, arg, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         result = {}
         for l_id in ids:
@@ -76,14 +76,14 @@ class res_partner(osv.osv):
         if context is None:
             context = {}
         active_id = context.get('active_id', False)
-        if isinstance(active_id, (int, long)):
+        if isinstance(active_id, int):
             active_id = [active_id]
         if not args:
             return []
         newargs = []
         for arg in args:
             if arg[0] == 'check_partner':
-                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                if arg[1] != '=' or not isinstance(arg[2], int):
                     raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
                     so = self.pool.get('sale.order').browse(cr, uid, arg[2], fields_to_fetch=['partner_id', 'procurement_request', 'partner_type'])
@@ -105,7 +105,7 @@ class res_partner(osv.osv):
         newargs = []
         for arg in args:
             if arg[0] == 'check_partner_rfq':
-                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                if arg[1] != '=' or not isinstance(arg[2], int):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_rfq different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
                     tender = self.pool.get('tender').browse(cr, uid, arg[2])
@@ -119,7 +119,7 @@ class res_partner(osv.osv):
         if context is None:
             context = {}
         active_ids = context.get('active_ids', False)
-        if isinstance(active_ids, (int, long)):
+        if isinstance(active_ids, int):
             active_ids = [active_ids]
         if not args:
             return []
@@ -151,7 +151,7 @@ class res_partner(osv.osv):
             if arg[0] == 'check_partner_po':
                 if arg[1] != '=' \
                    or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
-                   or not isinstance(arg[2]['partner_id'], (int, long)):
+                   or not isinstance(arg[2]['partner_id'], int):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_po different than (arg[0], =, %s) not implemented.') % arg[2])
                 order_type = arg[2]['order_type']
                 split_po = arg[2]['split_po']

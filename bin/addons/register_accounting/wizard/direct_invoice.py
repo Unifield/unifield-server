@@ -93,7 +93,7 @@ class wizard_account_invoice(osv.osv):
         """
         Check that all line have a valid analytic distribution state
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for w in self.browse(cr, uid, ids):
             for l in w.invoice_line:
@@ -264,7 +264,7 @@ class wizard_account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         invoice = self.browse(cr, uid, ids[0], context=context)
@@ -366,7 +366,7 @@ class wizard_account_invoice_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No direct invoice line given. Please save your direct invoice line before.'))

@@ -69,7 +69,7 @@ class purchase_order_change_currency(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         c = context.copy()

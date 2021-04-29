@@ -147,18 +147,18 @@ class return_claim(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
         # we test if new event are allowed
         data = self.allow_new_event(cr, uid, ids, context=context)
         fields_tools = self.pool.get('fields.tools')
-        if not all(x['allow'] for x in data.values()):
+        if not all(x['allow'] for x in list(data.values())):
             # we get an event type and new event are not allowed, the specified type does not allow further events
-            event_type_name = [x['last_type'][1] for x in data.values() if (not x['allow'] and x['last_type'])]
+            event_type_name = [x['last_type'][1] for x in list(data.values()) if (not x['allow'] and x['last_type'])]
             # we get a state, the state of the previous event does not allow further events
-            state = [x['state'] for x in data.values() if not x['allow']]
+            state = [x['state'] for x in list(data.values()) if not x['allow']]
             if event_type_name:
                 # not allowed previous event (last_type is present)
                 raise osv.except_osv(_('Warning !'), _('Previous event (%s) does not allow further event.') % event_type_name[0])
@@ -168,7 +168,7 @@ class return_claim(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('State of previous event (%s) does not allow further event.') % state_name)
             else:
                 # not allowed claim type (no last_type)
-                claim_type_name = [x['claim_type'][1] for x in data.values()][0]
+                claim_type_name = [x['claim_type'][1] for x in list(data.values())][0]
                 raise osv.except_osv(_('Warning !'), _('Claim Type (%s) does not allow events.') % claim_type_name)
         # claim data
         claim_data = claim_type = self.read(cr, uid, ids, ['type_return_claim', 'partner_id_return_claim', 'picking_id_return_claim'], context=context)[0]
@@ -348,7 +348,7 @@ class return_claim(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pick_obj = self.pool.get('stock.picking')
@@ -418,7 +418,7 @@ class return_claim(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
@@ -500,7 +500,7 @@ class return_claim(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -586,7 +586,7 @@ class return_claim(osv.osv):
                     item.write({'integrity_status_claim_product_line': 'not_exist_in_picking'}, context=context)
 
         # check the encountered errors
-        return all([not x for x in errors.values()])
+        return all([not x for x in list(errors.values())])
 
     def get_last_event(self, cr, uid, ids, pos=-1, context=None):
         '''
@@ -595,7 +595,7 @@ class return_claim(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -630,7 +630,7 @@ class return_claim(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for claim in self.browse(cr, uid, ids, context=context):
@@ -711,7 +711,7 @@ class return_claim(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # results
         result = {}
@@ -1646,7 +1646,7 @@ class claim_event(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         claim_ids = context['active_ids']
@@ -1682,7 +1682,7 @@ class claim_event(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Load common data
@@ -1844,7 +1844,7 @@ class claim_event(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # results
         result = {}
@@ -2156,7 +2156,7 @@ class claim_product_line(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # results
@@ -2269,7 +2269,7 @@ class stock_picking(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -2348,7 +2348,7 @@ class stock_picking(osv.osv):
         if not isinstance(wizards, list):
             wizards = [wizards]
 
-        if not isinstance(picking, (int, long)):
+        if not isinstance(picking, int):
             raise osv.except_osv(
                 _('Processing Error'),
                 _('No picking found !'),
@@ -2502,7 +2502,7 @@ class product_product(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}

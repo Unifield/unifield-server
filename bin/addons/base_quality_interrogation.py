@@ -19,11 +19,11 @@
 #
 ##############################################################################
 
-import xmlrpclib
-import ConfigParser
+import xmlrpc.client
+import configparser
 import optparse
 import sys
-import thread
+import _thread
 import threading
 import os
 import time
@@ -64,13 +64,13 @@ def execute(connector, method, *args):
     res = False
     try:
         res = getattr(connector,method)(*args)
-    except socket.error,e:
+    except socket.error as e:
         if e.args[0] == 111:
             if wait_count > wait_limit:
-                print "Server is taking too long to start, it has exceeded the maximum limit of %d seconds."%(wait_limit)
+                print("Server is taking too long to start, it has exceeded the maximum limit of %d seconds."%(wait_limit))
                 clean()
                 sys.exit(1)
-            print 'Please wait %d sec to start server....'%(waittime)
+            print('Please wait %d sec to start server....'%(waittime))
             wait_count += 1
             time.sleep(waittime)
             res = execute(connector, method, *args)
@@ -80,14 +80,14 @@ def execute(connector, method, *args):
     return res
 
 def login(uri, dbname, user, pwd):
-    conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/common')
+    conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/common')
     uid = execute(conn,'login',dbname, user, pwd)
     return uid
 
 def import_translate(uri, user, pwd, dbname, translate_in):
     uid = login(uri, dbname, user, pwd)
     if uid:
-        conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/wizard')
+        conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/wizard')
         wiz_id = execute(conn,'create',dbname, uid, pwd, 'base.language.import')
         for trans_in in translate_in:
             lang,ext = os.path.splitext(trans_in.split('/')[-1])
@@ -98,7 +98,7 @@ def import_translate(uri, user, pwd, dbname, translate_in):
                 if 'datas' in res:
                     datas['form'].update( res['datas'].get('form',{}) )
                 if res['type']=='form':
-                    for field in res['fields'].keys():
+                    for field in list(res['fields'].keys()):
                         datas['form'][field] = res['fields'][field].get('value', False)
                     state = res['state'][-1][0]
                     trans_obj = open(trans_in)
@@ -116,7 +116,7 @@ def check_quality(uri, user, pwd, dbname, modules, quality_logs):
     uid = login(uri, dbname, user, pwd)
     quality_logs += 'quality-logs'
     if uid:
-        conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/object')
+        conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/object')
         final = {}
         for module in modules:
             qualityresult = {}
@@ -151,7 +151,7 @@ def check_quality(uri, user, pwd, dbname, modules, quality_logs):
         #print "LOG PATH%s"%(os.path.realpath('quality_log.pck'))
         return True
     else:
-        print 'Login Failed...'
+        print('Login Failed...')
         clean()
         sys.exit(1)
 
@@ -159,17 +159,17 @@ def check_quality(uri, user, pwd, dbname, modules, quality_logs):
 
 def wait(id,url=''):
     progress=0.0
-    sock2 = xmlrpclib.ServerProxy(url+'/xmlrpc/db')
+    sock2 = xmlrpc.client.ServerProxy(url+'/xmlrpc/db')
     while not progress==1.0:
         progress,users = execute(sock2,'get_progress',admin_passwd, id)
     return True
 
 
 def create_db(uri, dbname, user='admin', pwd='admin', lang='en_US'):
-    conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/db')
-    obj_conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/object')
-    wiz_conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/wizard')
-    login_conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/common')
+    conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/db')
+    obj_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/object')
+    wiz_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/wizard')
+    login_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/common')
     db_list = execute(conn, 'list')
     if dbname in db_list:
         drop_db(uri, dbname)
@@ -179,7 +179,7 @@ def create_db(uri, dbname, user='admin', pwd='admin', lang='en_US'):
     return True
 
 def drop_db(uri, dbname):
-    conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/db')
+    conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/db')
     db_list = execute(conn,'list')
     if dbname in db_list:
         execute(conn, 'drop', admin_passwd, dbname)
@@ -193,7 +193,7 @@ def make_links(uri, uid, dbname, source, destination, module, user, pwd):
     for path in source:
         if os.path.isdir(path + '/' + module):
             os.symlink(path + '/' + module, destination + '/' + module)
-            obj_conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/object')
+            obj_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/object')
             execute(obj_conn, 'execute', dbname, uid, pwd, 'ir.module.module', 'update_list')
             module_ids = execute(obj_conn, 'execute', dbname, uid, pwd, 'ir.module.module', 'search', [('name','=',module)])
             if len(module_ids):
@@ -212,8 +212,8 @@ def install_module(uri, dbname, modules, addons='', extra_addons='',  user='admi
             for module in modules:
                 make_links(uri, uid, dbname, extra_addons, addons, module, user, pwd)
 
-        obj_conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/object')
-        wizard_conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/wizard')
+        obj_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/object')
+        wizard_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/wizard')
         module_ids = execute(obj_conn, 'execute', dbname, uid, pwd, 'ir.module.module', 'search', [('name','in',modules)])
         execute(obj_conn, 'execute', dbname, uid, pwd, 'ir.module.module', 'button_install', module_ids)
         wiz_id = execute(wizard_conn, 'create', dbname, uid, pwd, 'module.upgrade.simple')
@@ -231,8 +231,8 @@ def install_module(uri, dbname, modules, addons='', extra_addons='',  user='admi
 def upgrade_module(uri, dbname, modules, user='admin', pwd='admin'):
     uid = login(uri, dbname, user, pwd)
     if uid:
-        obj_conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/object')
-        wizard_conn = xmlrpclib.ServerProxy(uri + '/xmlrpc/wizard')
+        obj_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/object')
+        wizard_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/wizard')
         module_ids = execute(obj_conn, 'execute', dbname, uid, pwd, 'ir.module.module', 'search', [('name','in',modules)])
         execute(obj_conn, 'execute', dbname, uid, pwd, 'ir.module.module', 'button_upgrade', module_ids)
         wiz_id = execute(wizard_conn, 'create', dbname, uid, pwd, 'module.upgrade.simple')
@@ -288,7 +288,7 @@ if command not in ('start-server','create-db','drop-db','install-module','upgrad
 
 def die(cond, msg):
     if cond:
-        print msg
+        print(msg)
         sys.exit(1)
 
 die(opt.modules and (not opt.db_name),
@@ -311,11 +311,11 @@ options = {
     'extra-addons':opt.extra_addons or []
 }
 
-options['modules'] = opt.modules and map(lambda m: m.strip(), opt.modules.split(',')) or []
+options['modules'] = opt.modules and [m.strip() for m in opt.modules.split(',')] or []
 # Hint:i18n-import=purchase:ar_AR.po+sale:fr_FR.po,nl_BE.po
 if opt.translate_in:
     translate = opt.translate_in
-    for module_name,po_files in map(lambda x:tuple(x.split(':')),translate.split('+')):
+    for module_name,po_files in [tuple(x.split(':')) for x in translate.split('+')]:
         for po_file in po_files.split(','):
             if module_name == 'base':
                 po_link = '%saddons/%s/i18n/%s'%(options['root-path'],module_name,po_file)
@@ -344,12 +344,12 @@ try:
     clean()
     sys.exit(0)
 
-except xmlrpclib.Fault, e:
-    print e.faultString
+except xmlrpc.client.Fault as e:
+    print(e.faultString)
     clean()
     sys.exit(1)
-except Exception, e:
-    print e
+except Exception as e:
+    print(e)
     clean()
     sys.exit(1)
 

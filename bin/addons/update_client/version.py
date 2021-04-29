@@ -14,7 +14,7 @@ import time
 import logging
 
 import hashlib
-from StringIO import StringIO
+from io import StringIO
 import tarfile
 from base64 import b64decode, b64encode
 
@@ -22,7 +22,7 @@ IMPORT_PATCH_SUCCESS, \
     IMPORT_PATCH_INVALID, \
     IMPORT_PATCH_UNKNOWN, \
     IMPORT_PATCH_IGNORED, \
-    = range(4)
+    = list(range(4))
 
 class version(osv.osv):
 
@@ -214,7 +214,7 @@ class entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         try:
             res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), self._hardware_id, current_revision)
-        except osv.except_osv, e:
+        except osv.except_osv as e:
             if all(substr in e.value
                    for substr in
                    ('sync_manager', 'object has no attribute', 'get_next_revisions')):

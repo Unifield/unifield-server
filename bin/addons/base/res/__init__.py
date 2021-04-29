@@ -21,17 +21,17 @@
 
 import tools
 
-import country
-import bank
-import res_lang
-import partner
-import res_config
-import res_currency
-import res_company
-import res_user
-import res_request
-import res_lang 
-import res_log 
-import ir_property
-import res_widget
+from . import country
+from . import bank
+from . import res_lang
+from . import partner
+from . import res_config
+from . import res_currency
+from . import res_company
+from . import res_user
+from . import res_request
+from . import res_lang 
+from . import res_log 
+from . import ir_property
+from . import res_widget
 

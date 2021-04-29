@@ -75,7 +75,7 @@ class DomApiGeneral:
         selected_nodes = []
         for n in nodelist:
             check = 1
-            for a in attr_dict.keys():
+            for a in list(attr_dict.keys()):
                 if n.getAttribute(a) != attr_dict[a]:
                     # at least one incorrect attribute value?
                     check = 0
@@ -114,9 +114,9 @@ class DomApiGeneral:
             return v
 
     def openOfficeStringUtf8(self,string):
-        if type(string) == unicode:
+        if type(string) == str:
             return string.encode("utf-8")
-        tempstring = unicode(string,"cp1252").encode("utf-8")
+        tempstring = str(string,"cp1252").encode("utf-8")
         return tempstring
 
 class DomApi(DomApiGeneral):
@@ -135,14 +135,14 @@ class DomApi(DomApiGeneral):
         # ******** always use the following order:
         self.buildStyleDict()
         self.buildStylePropertiesDict()
-        if self.styles_dom.getElementsByTagName("style:page-master").__len__()<>0:
+        if self.styles_dom.getElementsByTagName("style:page-master").__len__()!=0:
             self.page_master = self.styles_dom.getElementsByTagName("style:page-master")[0]
-        if  self.styles_dom.getElementsByTagName("style:page-layout").__len__()<>0 :
+        if  self.styles_dom.getElementsByTagName("style:page-layout").__len__()!=0 :
 			self.page_master = self.styles_dom.getElementsByTagName("style:page-layout")[0]        
         self.document = self.content_dom.getElementsByTagName("office:document-content")[0]
 
     def buildStylePropertiesDict(self):
-        for s in self.style_dict.keys():
+        for s in list(self.style_dict.keys()):
             self.style_properties_dict[s] = self.getStylePropertiesDict(s)
 
     def updateWithPercents(self,dict,updatedict):
@@ -151,9 +151,9 @@ class DomApi(DomApiGeneral):
             # no style hierarchies for this style? =>
             return
         new_updatedict = copy.copy(updatedict)
-        for u in new_updatedict.keys():
+        for u in list(new_updatedict.keys()):
             try:
-                if new_updatedict[u].find("""%""") != -1 and dict.has_key(u):
+                if new_updatedict[u].find("""%""") != -1 and u in dict:
                     number = float(self.re_digits.search(dict[u]).group(1))
                     unit = self.re_digits.search(dict[u]).group(2)
                     new_number = self.stringPercentToFloat(new_updatedict[u]) * number
@@ -189,7 +189,7 @@ class DomApi(DomApiGeneral):
                 c = self.findChildrenByName(s,"style:properties")
             c = c[0]
             dict = self.style_properties_dict[(s.getAttribute("style:name")).encode("utf-8")] or {}
-            for attribute in dict.keys():
+            for attribute in list(dict.keys()):
                 c.setAttribute(self.openOfficeStringUtf8(attribute),self.openOfficeStringUtf8(dict[attribute]))
 
     def transferStylesXml(self):
@@ -217,7 +217,7 @@ class DomApi(DomApiGeneral):
         #all_styles += self.content_dom.getElementsByTagName("draw:image")
         all_styles = self.content_dom.getElementsByTagName("*")
         for s in all_styles:
-            for x in s._attrs.keys():
+            for x in list(s._attrs.keys()):
                 v = s.getAttribute(x)
                 s.setAttribute(x,"%s" % self._lengthToFloat(v))
                 # convert float to string first!
@@ -254,7 +254,7 @@ class DomApi(DomApiGeneral):
         children = self.style_dict[style_name].childNodes
         for c in children:
             if c.nodeType == c.ELEMENT_NODE and c.nodeName.find("properties")>0 :
-                for attr in c._attrs.keys():
+                for attr in list(c._attrs.keys()):
                     res[attr] = c.getAttribute(attr).encode("utf-8")
         return res
 
@@ -303,7 +303,7 @@ class PyOpenOffice(object):
 
 def sxw2rml(sxw_file, xsl, output='.', save_pict=False):
     from lxml import etree
-    from StringIO import StringIO
+    from io import StringIO
 
     tool = PyOpenOffice(output, save_pict = save_pict)
     res = tool.unpackNormalize(sxw_file)
@@ -355,6 +355,6 @@ if __name__ == "__main__":
     xsl = file(os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]), xsl_file)).read()
     result = sxw2rml(f, xsl, output=opt.output, save_pict=False)
 
-    print result
+    print(result)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

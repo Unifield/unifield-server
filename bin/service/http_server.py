@@ -30,24 +30,24 @@
 
 
 """
-import websrv_lib
+from . import websrv_lib
 import base64
 import netsvc
 import errno
 import threading
 import tools
 import posixpath
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import os
 import select
 import socket
-import xmlrpclib
+import xmlrpc.client
 import logging
 import pooler
 
-import SimpleXMLRPCServer
-import BaseHTTPServer
-from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
+import xmlrpc.server
+import http.server
+from xmlrpc.server import SimpleXMLRPCDispatcher
 
 try:
     import fcntl
@@ -59,7 +59,7 @@ try:
 except ImportError:
     class SSLError(Exception): pass
 
-class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, BaseHTTPServer.HTTPServer):
+class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, http.server.HTTPServer):
     """ A threaded httpd server, with all the necessary functionality for us.
 
         It also inherits the xml-rpc dispatcher, so that some xml-rpc functions
@@ -76,7 +76,7 @@ class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, 
         self.logRequests = logRequests
 
         SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
-        BaseHTTPServer.HTTPServer.__init__(self, addr, requestHandler)
+        http.server.HTTPServer.__init__(self, addr, requestHandler)
 
         self.numThreads = 0
         self.proto = proto
@@ -175,7 +175,7 @@ class BaseHttpDaemon(threading.Thread, netsvc.Server):
         while self.running:
             try:
                 self.server.handle_request()
-            except (socket.error, select.error), e:
+            except (socket.error, select.error) as e:
                 if self.running or e.args[0] != errno.EBADF:
                     raise
         return True
@@ -264,7 +264,7 @@ def list_http_services(protocol=None):
     else:
         raise Exception("Incorrect protocol or no http services")
 
-class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
+class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,HttpLogHandler,xmlrpc.server.SimpleXMLRPCRequestHandler):
     rpc_paths = []
     protocol_version = 'HTTP/1.1'
 
@@ -273,7 +273,7 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,Http
     xmlrpc_uid_cache = {}
 
     def __init__(self, conn, addr, svr):
-        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self, conn, addr, svr)
+        xmlrpc.server.SimpleXMLRPCRequestHandler.__init__(self, conn, addr, svr)
         # Always use gzip.
         self.encode_threshold = 0
 
@@ -311,8 +311,8 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,Http
         try:
             service_name = self.path.split("/")[-1]
             return self.dispatch(service_name, method, params)
-        except netsvc.OpenERPDispatcherException, e:
-            raise xmlrpclib.Fault(tools.exception_to_unicode(e.exception), e.traceback)
+        except netsvc.OpenERPDispatcherException as e:
+            raise xmlrpc.client.Fault(tools.exception_to_unicode(e.exception), e.traceback)
 
     def handle(self):
         pass
@@ -322,7 +322,7 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,Http
 
     def setup(self):
         self.connection = websrv_lib.dummyconn()
-        self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
+        self.rpc_paths = ['/%s' % s for s in list(netsvc.ExportService._services.keys())]
 
 def init_xmlrpc():
     if tools.config.get('xmlrpc', False):
@@ -357,9 +357,9 @@ class StaticHTTPHandler(HttpLogHandler, websrv_lib.FixSendError, websrv_lib.Http
         # abandon query parameters
         path = path.split('?',1)[0]
         path = path.split('#',1)[0]
-        path = posixpath.normpath(urllib.unquote(path))
+        path = posixpath.normpath(urllib.parse.unquote(path))
         words = path.split('/')
-        words = filter(None, words)
+        words = [_f for _f in words if _f]
         path = self.__basepath
         for word in words:
             if word in (os.curdir, os.pardir): continue
@@ -424,13 +424,13 @@ class OerpAuthProxy(websrv_lib.AuthProxy):
         self.auth_tries += 1
         raise websrv_lib.AuthRequiredExc(atype='Basic', realm=self.provider.realm)
 
-import security
+from . import security
 class OpenERPAuthProvider(websrv_lib.AuthProvider):
     def __init__(self,realm='OpenERP User'):
         self.realm = realm
 
     def setupAuth(self, multi, handler):
-        if not multi.sec_realms.has_key(self.realm):
+        if self.realm not in multi.sec_realms:
             multi.sec_realms[self.realm] = OerpAuthProxy(self)
         handler.auth_proxy = multi.sec_realms[self.realm]
 
@@ -440,7 +440,7 @@ class OpenERPAuthProvider(websrv_lib.AuthProvider):
             if uid is False:
                 return False
             return (user, passwd, db, uid)
-        except Exception,e:
+        except Exception as e:
             logging.getLogger("auth").debug("Fail auth: %s" % e )
             return False
 

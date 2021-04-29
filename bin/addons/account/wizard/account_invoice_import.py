@@ -106,36 +106,36 @@ class account_invoice_import(osv.osv_memory):
                 }
                 # number of the first line in the file containing data (not header)
                 base_num = 10
-                rows.next()  # number is ignored
-                rows.next()  # journal is ignored
-                currency_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
+                next(rows)  # number is ignored
+                next(rows)  # journal is ignored
+                currency_line = import_cell_data_obj.get_line_values(cr, uid, ids, next(rows))
                 try:
                     currency_name = currency_line[1]
-                except IndexError, e:
+                except IndexError as e:
                     raise osv.except_osv(_('Warning'), _('No currency found.'))
                 currency_ids = currency_obj.search(cr, uid,
                                                    [('name', '=', currency_name), ('currency_table_id', '=', False),
                                                     ('active', '=', True)], limit=1, context=context)
                 if not currency_ids:
                     raise osv.except_osv(_('Error'), _("Currency %s not found or inactive.") % (currency_name or '',))
-                partner_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
+                partner_line = import_cell_data_obj.get_line_values(cr, uid, ids, next(rows))
                 try:
                     partner_name = partner_line[1]
-                except IndexError, e:
+                except IndexError as e:
                     raise osv.except_osv(_('Warning'), _('No partner found.'))
                 partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_name), ('active', '=', True)], context=context)
                 if not partner_ids:
                     raise osv.except_osv(_('Error'), _("Partner %s not found or inactive.") % (partner_name or '',))
-                rows.next()  # document date is ignored
-                posting_date_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
+                next(rows)  # document date is ignored
+                posting_date_line = import_cell_data_obj.get_line_values(cr, uid, ids, next(rows))
                 try:
                     posting_date = posting_date_line[1] or False
-                except IndexError, e:
+                except IndexError as e:
                     posting_date = False
                 if posting_date:
                     try:
                         posting_date = posting_date.strftime('%Y-%m-%d')
-                    except AttributeError, e:
+                    except AttributeError as e:
                         raise osv.except_osv(_('Warning'), _("The posting date has a wrong format."))
                 invoice_dom = [('id', '=', invoice.id),
                                ('currency_id', '=', currency_ids[0]),
@@ -147,7 +147,7 @@ class account_invoice_import(osv.osv_memory):
                                            "doesn't match with the current invoice."))
                 # ignore: header account, empty line, line with titles
                 for i in range(3):
-                    rows.next()
+                    next(rows)
                 header_percent = 10  # percentage of the process reached AFTER having checked the header
                 self.write(cr, uid, [wiz.id], {'message': _('Checking lines…'), 'progression': header_percent}, context)
                 lines_percent = 99  # % of the process to be reached AFTER having checked and updated the lines
@@ -171,7 +171,7 @@ class account_invoice_import(osv.osv_memory):
                         continue
                     try:
                         line_number = int(line_number)
-                    except ValueError, e:
+                    except ValueError as e:
                         errors.append(_("Line %s: the line number format is incorrect.") % (current_line_num,))
                         continue
                     invoice_line_dom = [('invoice_id', '=', invoice.id), ('line_number', '=', line_number)]
@@ -204,7 +204,7 @@ class account_invoice_import(osv.osv_memory):
                     vals['account_id'] = account.id
                     try:
                         unit_price = float(unit_price)
-                    except ValueError, e:
+                    except ValueError as e:
                         errors.append(_("Line %s: the unit price format is incorrect.") % (current_line_num,))
                         continue
                     vals['price_unit'] = unit_price
@@ -221,7 +221,7 @@ class account_invoice_import(osv.osv_memory):
                             vals['product_id'] = product_ids[0]
                         try:
                             quantity = float(quantity)
-                        except ValueError, e:
+                        except ValueError as e:
                             errors.append(_("Line %s: the quantity format is incorrect.") % (current_line_num,))
                             continue
                         vals['quantity'] = quantity

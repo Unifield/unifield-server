@@ -19,9 +19,9 @@
 #
 ##############################################################################
 
-import wizard_csv_report
-import wizard_interactive_report
-import wizard_financing_currency_export
-import wizard_financing_contract_warning
+from . import wizard_csv_report
+from . import wizard_interactive_report
+from . import wizard_financing_currency_export
+from . import wizard_financing_contract_warning
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

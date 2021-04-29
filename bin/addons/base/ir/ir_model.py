@@ -51,7 +51,7 @@ def _in_modules(self, cr, uid, ids, field_name, arg, context=None):
 
     result = {}
     xml_ids = osv.osv._get_xml_ids(self, cr, uid, ids)
-    for k,v in xml_ids.iteritems():
+    for k,v in xml_ids.items():
         result[k] = ', '.join(sorted(installed_modules & set(xml_id.split('.')[0] for xml_id in v)))
     return result
 
@@ -207,16 +207,16 @@ class ir_model(osv.osv):
         x_custom_model._name = model
         x_custom_model._module = False
         a = x_custom_model.createInstance(self.pool, '', cr)
-        if (not a._columns) or ('x_name' in a._columns.keys()):
+        if (not a._columns) or ('x_name' in list(a._columns.keys())):
             x_name = 'x_name'
         else:
-            x_name = a._columns.keys()[0]
+            x_name = list(a._columns.keys())[0]
         x_custom_model._rec_name = x_name
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         model = self.browse(cr, uid, res_id, fields_to_fetch=['model'])
         a = 'ir_model_%s' % model.model.replace('.', '')
-        print a
+        print(a)
         return a
 
 ir_model()
@@ -302,7 +302,7 @@ class ir_model_fields(osv.osv):
 
     def unlink(self, cr, user, ids, context=None):
         for field in self.browse(cr, user, ids, context):
-            if field.state <> 'manual':
+            if field.state != 'manual':
                 raise except_orm(_('Error'), _("You cannot remove the field '%s' !") %(field.name,))
         #
         # MAY BE ADD A ALTER TABLE DROP ?
@@ -442,7 +442,7 @@ class ir_model_fields(osv.osv):
             ctx = context.copy()
             ctx.update({'select': vals.get('select_level','0'),'update_custom_fields':True})
 
-            for model_key, patch_struct in models_patch.items():
+            for model_key, patch_struct in list(models_patch.items()):
                 obj = patch_struct[0]
                 for col_name, col_prop, val in patch_struct[1]:
                     setattr(obj._columns[col_name], col_prop, val)
@@ -539,7 +539,7 @@ class ir_model_access(osv.osv):
         else:
             model_name = model
 
-        if isinstance(group_ids, (int, long)):
+        if isinstance(group_ids, int):
             group_ids = [group_ids]
         for group_id in group_ids:
             cr.execute("SELECT perm_" + mode + " "
@@ -618,7 +618,7 @@ class ir_model_access(osv.osv):
                 where
                     m.model=%s and
                     a.group_id is not null and perm_''' + mode, (model_name, )) # not_a_user_entry
-            groups = ', '.join(map(lambda x: x[0], cr.fetchall())) or '/'
+            groups = ', '.join([x[0] for x in cr.fetchall()]) or '/'
             msgs = {
                 'read':   _("You can not read this document (%s) ! Be sure your user belongs to one of these groups: %s."),
                 'write':  _("You can not write in this document (%s) ! Be sure your user belongs to one of these groups: %s."),
@@ -945,7 +945,7 @@ class ir_model_data(osv.osv):
 
         cr.commit()
         if not config.get('import_partial'):
-            for (model, res_id) in self.unlink_mark.keys():
+            for (model, res_id) in list(self.unlink_mark.keys()):
                 if self.pool.get(model):
                     self.__logger.info('Deleting %s@%s', res_id, model)
                     try:
@@ -960,9 +960,9 @@ class ir_model_data(osv.osv):
                                 self.__logger.warn(
                                     'Got %d %s for (%s, %d): %s',
                                     len(ids), self._name, model, res_id,
-                                    map(itemgetter('module','name'),
+                                    list(map(itemgetter('module','name'),
                                         self.read(cr, uid, ids,
-                                                  ['name', 'module'])))
+                                                  ['name', 'module']))))
                             self.unlink(cr, uid, ids)
                             cr.execute(
                                 'DELETE FROM ir_values WHERE value=%s',

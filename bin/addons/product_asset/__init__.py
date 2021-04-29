@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import product_asset
-import report
+from . import product_asset
+from . import report
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

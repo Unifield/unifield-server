@@ -192,7 +192,7 @@ class product_mass_update(osv.osv):
         """
         This button is only for updating the view.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return True
@@ -204,7 +204,7 @@ class product_mass_update(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Unlink existing errors
@@ -488,7 +488,7 @@ class product_mass_update(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context.update({'active_id': ids[0]})
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_product_line_import]

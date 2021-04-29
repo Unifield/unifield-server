@@ -57,7 +57,7 @@ class internal_request_import(osv.osv):
     def _check_header_error_lines(self, cr, uid, ids, field_names=None, arg=None, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
 
@@ -71,7 +71,7 @@ class internal_request_import(osv.osv):
     def _check_error_lines(self, cr, uid, ids, field_names=None, arg=None, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
 
@@ -242,7 +242,7 @@ class internal_request_import(osv.osv):
         '''
         Display the simulation screen
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if ids and self.browse(cr, uid, ids, context=context)[0].state == 'done':
@@ -260,7 +260,7 @@ class internal_request_import(osv.osv):
         '''
         Launch the simulation routine in background
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for ir_imp in self.browse(cr, uid, ids, context=context):
@@ -323,7 +323,7 @@ class internal_request_import(osv.osv):
             if context is None:
                 context = {}
 
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
 
             start_time = time.time()
@@ -367,7 +367,7 @@ class internal_request_import(osv.osv):
                 '''
                 # Check number of columns on lines
 
-                for x in xrange(2, nb_file_header_lines+1):
+                for x in range(2, nb_file_header_lines+1):
                     nb_to_check = 2
                     if nb_file_header_lines >= x > NB_OF_HEADER_LINES:
                         continue
@@ -381,7 +381,7 @@ class internal_request_import(osv.osv):
                         % (first_line_index, nb_file_lines_columns)
                     file_format_errors.append(error_msg)
 
-                for x in xrange(first_line_index, len(values)+1):
+                for x in range(first_line_index, len(values)+1):
                     if len(values.get(x, [])) < nb_file_lines_columns:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The line information must be on at least %s columns. The line %s has %s columns') % (x, nb_file_lines_columns, x, len(values.get(x, [])))
@@ -550,7 +550,7 @@ class internal_request_import(osv.osv):
                     ir_line_numbers = [line.line_number for line in ir_order.order_line]
 
                 # Loop on lines
-                for x in xrange(first_line_index+1, len(values)+1):
+                for x in range(first_line_index+1, len(values)+1):
                     red = False
                     line_errors = ''
                     ignored_line = False
@@ -558,7 +558,7 @@ class internal_request_import(osv.osv):
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             required_field = True
-                            if len(manda_field) > 3 and isinstance(manda_field[3], (tuple, list, )) and \
+                            if len(manda_field) > 3 and isinstance(manda_field[3], (tuple, list )) and \
                                     len(manda_field[3]) == 3:
                                 col, op, val = manda_field[3]
                                 if op == '!=':
@@ -798,7 +798,7 @@ class internal_request_import(osv.osv):
             cr.commit()
             cr.close(True)
 
-        except Exception, e:
+        except Exception as e:
             logging.getLogger('internal.request.import').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
             cr.commit()
@@ -810,7 +810,7 @@ class internal_request_import(osv.osv):
         '''
         Launch the simulation routine in background
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         active_wiz = self.browse(cr, uid, ids, fields_to_fetch=['state', 'order_id'], context=context)[0]
@@ -845,7 +845,7 @@ class internal_request_import(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         cr = pooler.get_db(dbname).cursor()
@@ -926,7 +926,7 @@ class internal_request_import(osv.osv):
 
             cr.commit()
             cr.close(True)
-        except Exception, e:
+        except Exception as e:
             logging.getLogger('ir.simulation.run').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
             res = True
@@ -942,7 +942,7 @@ class internal_request_import(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         data = {'ids': ids}
@@ -1005,7 +1005,7 @@ class internal_request_import_line(osv.osv):
         '''
         Display the error message
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):

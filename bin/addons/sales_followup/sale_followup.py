@@ -215,7 +215,7 @@ class sale_order_followup(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(line_id, (int, long)):
+        if isinstance(line_id, int):
             line_id = [line_id]
 
         po_ids = set()
@@ -236,10 +236,10 @@ class sale_order_followup(osv.osv_memory):
         line_obj = self.pool.get('sale.order.line')
         po_line_ids = []
 
-        if isinstance(purchase_ids, (int, long)):
+        if isinstance(purchase_ids, int):
             purchase_ids = [purchase_ids]
 
-        if isinstance(line_id, (int, long)):
+        if isinstance(line_id, int):
             line_id = [line_id]
 
         for line in line_obj.browse(cr, uid, line_id, context=context):
@@ -253,7 +253,7 @@ class sale_order_followup(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(line_id, (int, long)):
+        if isinstance(line_id, int):
             line_id = [line_id]
 
         rfq_ids = set()
@@ -273,10 +273,10 @@ class sale_order_followup(osv.osv_memory):
         line_obj = self.pool.get('sale.order.line')
         purchase_obj = self.pool.get('purchase.order')
 
-        if isinstance(line_id, (int, long)):
+        if isinstance(line_id, int):
             line_id = [line_id]
 
-        if isinstance(purchase_ids, (int, long)):
+        if isinstance(purchase_ids, int):
             purchase_ids= [purchase_ids]
 
         incoming_ids = []
@@ -296,7 +296,7 @@ class sale_order_followup(osv.osv_memory):
         '''
         line_obj = self.pool.get('sale.order.line')
 
-        if isinstance(line_id, (int, long)):
+        if isinstance(line_id, int):
             line_id = [line_id]
 
         outgoing_ids = []
@@ -317,7 +317,7 @@ class sale_order_followup(osv.osv_memory):
         '''
         line_obj = self.pool.get('sale.order.line')
 
-        if isinstance(line_id, (int, long)):
+        if isinstance(line_id, int):
             line_id = [line_id]
 
         tender_ids = []
@@ -329,7 +329,7 @@ class sale_order_followup(osv.osv_memory):
         return tender_ids
 
     def export_get_file_name(self, cr, uid, ids, prefix='FO_Follow_Up', context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
             return False
@@ -346,7 +346,7 @@ class sale_order_followup(osv.osv_memory):
         """
         Print the report (Excel)
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         datas = {'ids': ids}
         file_name = self.export_get_file_name(cr, uid, ids, context=context)
@@ -364,7 +364,7 @@ class sale_order_followup(osv.osv_memory):
         """
         Print the report (PDF)
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         datas = {'ids': ids}
         file_name = self.export_get_file_name(cr, uid, ids, context=context)
@@ -883,7 +883,7 @@ class stock_move(osv.osv):
         '''
         Returns the good view id
         '''
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         obj_data = self.pool.get('ir.model.data')
@@ -968,7 +968,7 @@ class purchase_order_line(osv.osv):
         Return the form of the object
         '''
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1]
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
         po_id = self.pool.get('purchase.order.line').browse(cr, uid, ids, context=context)[0].order_id.id
         return {'type': 'ir.actions.act_window',

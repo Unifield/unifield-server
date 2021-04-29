@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import product_to_list
-import add_products
+from . import product_to_list
+from . import add_products
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

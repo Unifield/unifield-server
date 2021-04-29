@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-import analytic_distribution
-import analytic_account
-import analytic_line
+from . import analytic_distribution
+from . import analytic_account
+from . import analytic_line
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

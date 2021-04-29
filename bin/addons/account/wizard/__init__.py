@@ -19,54 +19,54 @@
 #
 ##############################################################################
 
-import account_report_common
-import account_report_common_partner
-import account_report_common_journal
-import account_report_common_account
+from . import account_report_common
+from . import account_report_common_partner
+from . import account_report_common_journal
+from . import account_report_common_account
 
-import account_automatic_reconcile
-import account_move_line_reconcile_select
-import account_move_line_unreconcile_select
-import account_reconcile_partner_process
-import account_reconcile
-import account_unreconcile
-import account_invoice_refund
-import account_move_journal
-import account_journal_select
-import account_move_bank_reconcile
-import account_subscription_generate
-import account_report_aged_partner_balance
-import account_report_partner_ledger
-import account_report_partner_balance
-import account_period_close
-import account_fiscalyear_close
-import account_fiscalyear_close_state
-import account_vat
-import account_open_closed_fiscalyear
+from . import account_automatic_reconcile
+from . import account_move_line_reconcile_select
+from . import account_move_line_unreconcile_select
+from . import account_reconcile_partner_process
+from . import account_reconcile
+from . import account_unreconcile
+from . import account_invoice_refund
+from . import account_move_journal
+from . import account_journal_select
+from . import account_move_bank_reconcile
+from . import account_subscription_generate
+from . import account_report_aged_partner_balance
+from . import account_report_partner_ledger
+from . import account_report_partner_balance
+from . import account_period_close
+from . import account_fiscalyear_close
+from . import account_fiscalyear_close_state
+from . import account_vat
+from . import account_open_closed_fiscalyear
 
-import account_invoice_state
-import account_chart
-import account_tax_chart
+from . import account_invoice_state
+from . import account_chart
+from . import account_tax_chart
 #TODO: remove this file no moe used
 # also remove related view fiel
 
-import account_validate_account_move
-import account_use_model
+from . import account_validate_account_move
+from . import account_use_model
 
-import account_report_print_journal
-import account_report_central_journal
-import account_report_general_journal
-import account_report_general_ledger
-import account_report_account_balance
+from . import account_report_print_journal
+from . import account_report_central_journal
+from . import account_report_general_journal
+from . import account_report_general_ledger
+from . import account_report_account_balance
 
-import account_change_currency
+from . import account_change_currency
 
-import account_report_balance_sheet
-import account_report_profit_loss
-import account_report_liquidity_balance
+from . import account_report_balance_sheet
+from . import account_report_profit_loss
+from . import account_report_liquidity_balance
 
-import free_allocation_wizard
-import account_invoice_import
+from . import free_allocation_wizard
+from . import account_invoice_import
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
 

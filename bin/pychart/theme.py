@@ -16,7 +16,7 @@ import sys
 import os
 import re
 import getopt
-import pychart_util
+from . import pychart_util
 
 __doc__ = """This module is defines variables for changing the looks
 of charts. All the variables can be changed either via environment
@@ -90,7 +90,7 @@ def parse_bounding_box(arg):
     
     l = arg.split(",")
     if len(l) != 4:
-        raise ValueError, "Need to specify margin=LEFT,BOTTOM,RIGHT,TOP"
+        raise ValueError("Need to specify margin=LEFT,BOTTOM,RIGHT,TOP")
     for i in range(0, 4):
         val = l[i].strip()
         if val[0] == '+':
@@ -108,7 +108,7 @@ def adjust_bounding_box(bbox):
     It must be a four-tuple of numbers.
     """
     for i in range(0, 4):
-        if bounding_box.has_key(i):
+        if i in bounding_box:
             bbox[i] = bounding_box[i]
         else:
             bbox[i] += delta_bounding_box[i]
@@ -136,7 +136,7 @@ def parse_option(opt, arg):
             output_format = "pdf"
             compress_output = 1
         else:
-            raise ValueError, "Unknown output option: " + str(arg)
+            raise ValueError("Unknown output option: " + str(arg))
     elif opt == "output":
         output_file = arg
     elif opt == "color":
@@ -155,9 +155,9 @@ def parse_option(opt, arg):
     elif opt == "debug-level":
         debug_level = int(arg)
     else:
-        raise getopt.GetoptError, "Unknown option: " + opt + " " + arg
+        raise getopt.GetoptError("Unknown option: " + opt + " " + arg)
     
-if os.environ.has_key("PYCHART_OPTIONS"):
+if "PYCHART_OPTIONS" in os.environ:
     for opt in os.environ["PYCHART_OPTIONS"].split():
         opt, arg = opt.split("=")
         parse_option(opt, arg)
@@ -169,8 +169,8 @@ def add_reinitialization_hook(proc):
     proc()
     
 def usage():
-    print "Usage: %s [options..]" % sys.argv[0]
-    print """
+    print("Usage: %s [options..]" % sys.argv[0])
+    print("""
     --scale=X: Set the scaling factor to X (default: 1.0).
     --format=[ps|png|pdf|x11|svg]: Set the output format (default: ps).
     --font-family=NAME: Set the default font family (default: Helvetica).
@@ -178,7 +178,7 @@ def usage():
     --line-width=NAME: Set the default line width (default: 0.4).
     --debug-level=N: Set the messaging verbosity (default: 0).
     --bbox=LEFT,BOTTOM,RIGHT,TOP: Specifies the amount of space (in PS points) to be left in the edges of the picture (default: -1,-1,+1,+1).
-    """
+    """)
 
 def reinitialize():
     """This procedure must be called after setting variables in
@@ -214,8 +214,8 @@ ar = area.T(...)
                                     "scale=", "font-family=", "font-size=",
                                     "line-width=", "debug-level=",
                                     "bbox="])
-    except getopt.GetoptError, foo:
-        print foo
+    except getopt.GetoptError as foo:
+        print(foo)
         usage()
         raise getopt.GetoptError
     for opt, arg in opts:

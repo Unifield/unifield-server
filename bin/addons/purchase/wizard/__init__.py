@@ -19,11 +19,11 @@
 #
 ##############################################################################
 
-import purchase_order_group
-import purchase_installer
-import purchase_line_invoice
-import purchase_line_cancel
-import purchase_line_manually_confirmed
-import purchase_line_nsl_validation
+from . import purchase_order_group
+from . import purchase_installer
+from . import purchase_line_invoice
+from . import purchase_line_cancel
+from . import purchase_line_manually_confirmed
+from . import purchase_line_nsl_validation
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

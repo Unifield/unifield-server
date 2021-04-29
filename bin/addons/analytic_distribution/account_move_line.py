@@ -52,7 +52,7 @@ class account_move_line(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -81,7 +81,7 @@ class account_move_line(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for ml in self.browse(cr, uid, ids, context=context):
@@ -94,7 +94,7 @@ class account_move_line(osv.osv):
         """
         Get a recap from analytic distribution state and if it come from header or not.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         get_sel = self.pool.get('ir.model.fields').get_browse_selection
@@ -359,7 +359,7 @@ class account_move_line(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No journal item given. Please save your line before.'))
@@ -410,7 +410,7 @@ class account_move_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ad_obj = self.pool.get('analytic.distribution')
         aml_duplication = '__copy_data_seen' in context and 'account.move.line' in context['__copy_data_seen'] or False
@@ -503,7 +503,7 @@ class account_move_line(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context.get('from_web_menu', False):
             res = []
@@ -552,7 +552,7 @@ class account_move_line(osv.osv):
             context = {}
         if 'active_ids' in context:
             ids = context.get('active_ids')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Search valid ids
         domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FUNDING')]
@@ -577,7 +577,7 @@ class account_move_line(osv.osv):
             context = {}
         if 'active_ids' in context:
             ids = context.get('active_ids')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Search valid ids
         domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FREE1')]
@@ -602,7 +602,7 @@ class account_move_line(osv.osv):
             context = {}
         if 'active_ids' in context:
             ids = context.get('active_ids')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Search valid ids
         domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FREE2')]

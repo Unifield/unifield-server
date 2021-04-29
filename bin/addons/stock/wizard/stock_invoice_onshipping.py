@@ -97,7 +97,7 @@ class stock_invoice_onshipping(osv.osv_memory):
         invoice_ids = []
         data_pool = self.pool.get('ir.model.data')
         res = self.create_invoice(cr, uid, ids, context=context)
-        invoice_ids += res.values()
+        invoice_ids += list(res.values())
         inv_type = context.get('inv_type', False)
         action_model = False
         action = {}

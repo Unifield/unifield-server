@@ -20,7 +20,7 @@
 ##############################################################################
 
 
-from ir import *
+from .ir import *
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

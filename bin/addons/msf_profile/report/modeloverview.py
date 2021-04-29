@@ -69,7 +69,7 @@ class modeloverview(report_sxw.rml_parse):
         if selec == "??":
             selec=[('??','??')]
         for elem in selec:
-            ret.append(u"%s → %s"%(tools.ustr(elem[0]), tools.ustr(elem[1])))
+            ret.append("%s → %s"%(tools.ustr(elem[0]), tools.ustr(elem[1])))
         return ret
 
     def isfun(self, model, field):
@@ -126,7 +126,7 @@ class modeloverview(report_sxw.rml_parse):
         modobj = self.pool.get(obj)
         if not hasattr(modobj, '_inherits') or not modobj._inherits:
             return []
-        ret = modobj._inherits.items()
+        ret = list(modobj._inherits.items())
         self.num += len(ret)+1
         return ret
 
@@ -148,7 +148,7 @@ class modeloverview(report_sxw.rml_parse):
             return []
         ret = []
         for const in  modobj._constraints:
-            ret.append("%s : %s"%(const[0].func_name,self.getcall(const[1], modobj)))
+            ret.append("%s : %s"%(const[0].__name__,self.getcall(const[1], modobj)))
         if ret:
             self.num += len(ret)+1
         return ret

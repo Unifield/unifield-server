@@ -38,7 +38,7 @@ class account_model_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -57,7 +57,7 @@ class account_model_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for model in self.browse(cr, uid, ids, context=context):
@@ -70,7 +70,7 @@ class account_model_line(osv.osv):
         """
         If analytic-a-holic account, then this account is allocatable.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for model_line in self.browse(cr, uid, ids):
@@ -83,7 +83,7 @@ class account_model_line(osv.osv):
         """
         Get a recap from analytic distribution state and if it come from header or not.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for model_line in self.browse(cr, uid, ids):
@@ -101,7 +101,7 @@ class account_model_line(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for line in self.browse(cr, uid, ids, context=context):
             if line.account_id.user_type.code in ('expense', 'income'):
@@ -177,7 +177,7 @@ class account_model_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No model line given. Please save your model line before.'))
@@ -244,7 +244,7 @@ class account_model(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for model in self.browse(cr, uid, ids, context=context):
             res[model.id] = False
@@ -263,7 +263,7 @@ class account_model(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         recurring_plan_obj = self.pool.get('account.subscription')
@@ -295,7 +295,7 @@ class account_model(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         recurring_plan_obj = self.pool.get('account.subscription')
         recurring_plan_ids = recurring_plan_obj.search(cr, uid, [('model_id', 'in', ids)], context=context)
@@ -311,7 +311,7 @@ class account_model(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for model in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
@@ -480,7 +480,7 @@ class account_model(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         model = self.browse(cr, uid, ids[0], context=context)
@@ -529,7 +529,7 @@ class account_model(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         recurring_obj = self.pool.get(self._name + '.line')

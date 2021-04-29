@@ -47,12 +47,12 @@
 import uno
 import string
 import unohelper
-import xmlrpclib
+import xmlrpc.client
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from lib.error import ErrorDialog
-    from lib.functions import *
+if __name__!="package":
+    from .lib.gui import *
+    from .lib.error import ErrorDialog
+    from .lib.functions import *
     database="test"
     uid = 3
 
@@ -82,16 +82,16 @@ class Expression(unohelper.Base, XJobExecutor ):
         cursor = doc.getCurrentController().getViewCursor()
         if self.bModify==True:
             oCurObj=cursor.TextField
-            sKey=u""+self.win.getEditText("txtName")
-            sValue=u"[[ " + self.win.getEditText("txtExpression") + " ]]"
+            sKey=""+self.win.getEditText("txtName")
+            sValue="[[ " + self.win.getEditText("txtExpression") + " ]]"
             oCurObj.Items = (sKey,sValue)
             oCurObj.update()
             self.win.endExecute()
         else:
             oInputList = doc.createInstance("com.sun.star.text.TextField.DropDown")
             if self.win.getEditText("txtName")!="" and self.win.getEditText("txtExpression")!="":
-                sKey=u""+self.win.getEditText("txtName")
-                sValue=u"[[ " + self.win.getEditText("txtExpression") + " ]]"
+                sKey=""+self.win.getEditText("txtName")
+                sValue="[[ " + self.win.getEditText("txtExpression") + " ]]"
                 if cursor.TextTable==None:
                     oInputList.Items = (sKey,sValue)
                     text.insertTextContent(cursor,oInputList,False)
@@ -108,7 +108,7 @@ class Expression(unohelper.Base, XJobExecutor ):
     def btnCancel_clicked( self, oActionEvent ):
         self.win.endExecute()
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     Expression()
 elif __name__=="package":
     g_ImplementationHelper.addImplementation( Expression, "org.openoffice.openerp.report.expression", ("com.sun.star.task.Job",),)

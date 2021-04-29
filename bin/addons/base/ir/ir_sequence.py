@@ -114,7 +114,7 @@ class ir_sequence(osv.osv):
         """
         if number_increment == 0:
             raise osv.except_osv(_('Warning!'),_("Increment number must not be zero."))
-        assert isinstance(id, (int, long))
+        assert isinstance(id, int)
         sql = "CREATE SEQUENCE ir_sequence_%03d INCREMENT BY %%s START WITH %%s" % id  # not_a_user_entry
         cr.execute(sql, (number_increment, number_next))
 
@@ -137,7 +137,7 @@ class ir_sequence(osv.osv):
         """
         if number_increment == 0:
             raise osv.except_osv(_('Warning!'),_("Increment number must not be zero."))
-        assert isinstance(id, (int, long))
+        assert isinstance(id, int)
         cr.execute("""
             ALTER SEQUENCE ir_sequence_%03d INCREMENT BY %%s
             """ % id, (number_increment,))  # not_a_user_entry

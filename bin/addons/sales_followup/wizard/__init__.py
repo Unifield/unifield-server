@@ -19,6 +19,6 @@
 # 
 ##############################################################################
 
-import sale_followup_multi_wizard
-import ir_followup_location_wizard
-import ir_track_changes_wizard
+from . import sale_followup_multi_wizard
+from . import ir_followup_location_wizard
+from . import ir_track_changes_wizard

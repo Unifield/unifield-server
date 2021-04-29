@@ -19,11 +19,11 @@
 #
 ##############################################################################
 
-import consumption_calculation
-import expiry_calculation
-import history_consumption
-import weekly_forecast_report
-import report
-import wizard
+from . import consumption_calculation
+from . import expiry_calculation
+from . import history_consumption
+from . import weekly_forecast_report
+from . import report
+from . import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

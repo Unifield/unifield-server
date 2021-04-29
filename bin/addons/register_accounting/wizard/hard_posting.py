@@ -40,7 +40,7 @@ class wizard_hard_posting(osv.osv_memory):
         if context.get('active_ids'):
             # Retrieve statement line ids
             st_line_ids = context.get('active_ids')
-            if isinstance(st_line_ids, (int, long)):
+            if isinstance(st_line_ids, int):
                 st_line_ids = [st_line_ids]
             if all_lines:  # get ALL the register lines to hard-post for this register
                 reg_id = absl_obj.browse(cr, uid, st_line_ids[0], fields_to_fetch=['statement_id'], context=context).statement_id.id

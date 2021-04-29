@@ -39,7 +39,7 @@ class account_analytic_chart(osv.osv_memory):
         if data['instance_ids']:
             context = eval(result['context'])
             context.update({'instance_ids': data['instance_ids']})
-            result['context'] = unicode(context)
+            result['context'] = str(context)
         return result
 
 account_analytic_chart()

@@ -93,7 +93,7 @@ class in_family_processor(osv.osv):
 
         if pack_type :
             # if 'pack_type' is not a list, turn it into list
-            if isinstance(pack_type, (int, long)):
+            if isinstance(pack_type, int):
                 pack_type = [pack_type]
 
             p_type = p_type_obj.browse(cr, uid, pack_type[0])
@@ -140,7 +140,7 @@ class stock_incoming_processor(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -529,7 +529,7 @@ class stock_incoming_processor(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(
@@ -548,7 +548,7 @@ class stock_incoming_processor(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(
@@ -574,7 +574,7 @@ class stock_incoming_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return {
@@ -594,7 +594,7 @@ class stock_incoming_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -623,7 +623,7 @@ class stock_incoming_processor(osv.osv):
     def check_if_has_import_file_in_attachment(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         in_id = self.read(cr, uid, ids[0], ['picking_id'], context=context)['picking_id'][0]
@@ -674,7 +674,7 @@ class stock_incoming_processor(osv.osv):
     def check_before_creating_pack_lines(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
         wizard = self.browse(cr, uid, ids[0], context=context)
 
@@ -709,7 +709,7 @@ class stock_incoming_processor(osv.osv):
     def process_to_ship(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         out = self.read(cr, uid, ids[0], ['linked_to_out'], context=context)
@@ -791,7 +791,7 @@ class stock_incoming_processor(osv.osv):
     def do_in_step2(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for in_proc in self.browse(cr, uid, ids, context=context):
@@ -857,7 +857,7 @@ class stock_move_in_processor(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         main_stock_id = self.pool.get('ir.model.data').get_object_reference(cr,
@@ -875,7 +875,7 @@ class stock_move_in_processor(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         # store the result as most of the time lines have same order_id
         move_purchase_line = self.pool.get('stock.move').read(cr,
-                                                              uid, moves_to_ids.keys(), ['id', 'purchase_line_id'],
+                                                              uid, list(moves_to_ids.keys()), ['id', 'purchase_line_id'],
                                                               context=context)
 
         move_id_to_purchase_line_id = {}
@@ -913,7 +913,7 @@ class stock_move_in_processor(osv.osv):
                     location_ids.append(cd_id)
                 order_id_location_dict[order_id] = location_ids
 
-        for move_id, id in moves_to_ids.iteritems():
+        for move_id, id in moves_to_ids.items():
             location_ids = [main_stock_id] if main_stock_id else []
 
             if move_id in move_id_to_purchase_line_id:
@@ -923,7 +923,7 @@ class stock_move_in_processor(osv.osv):
                     if order_id in order_id_location_dict:
                         location_ids = order_id_location_dict[order_id]
 
-            res[id] = ','.join(map(lambda id: str(id), location_ids))
+            res[id] = ','.join([str(id) for id in location_ids])
 
         # set ids default value for ids with no specific location
         for id in ids:
@@ -943,7 +943,7 @@ class stock_move_in_processor(osv.osv):
     def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -1196,8 +1196,8 @@ class stock_move_in_processor(osv.osv):
         'weight': fields.float_null('Weight', digits=(16,2)),
         'volume': fields.float_null('Volume', digits=(16,2)),
         'height': fields.float_null('Height', digits=(16,2)),
-        'total_volume': fields.float_null(u'Total Volume [dm³]', digits=(16,0)),
-        'total_weight': fields.float_null(u'Total Weight [kg]', digits=(16,0)),
+        'total_volume': fields.float_null('Total Volume [dm³]', digits=(16,0)),
+        'total_weight': fields.float_null('Total Weight [kg]', digits=(16,0)),
         'length': fields.float_null('Length', digits=(16,2)),
         'width': fields.float_null('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
@@ -1250,7 +1250,7 @@ class stock_move_in_processor(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if 'from_pack' in vals or 'to_pack' in vals:
@@ -1280,7 +1280,7 @@ class stock_move_in_processor(osv.osv):
         # Objects
         wiz_obj = self.pool.get('change.product.move.processor')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = super(stock_move_in_processor, self).\
@@ -1299,7 +1299,7 @@ class stock_move_in_processor(osv.osv):
     def onchange_from_pack_to_pack(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return {'value': {'integrity_status': 'empty'}}

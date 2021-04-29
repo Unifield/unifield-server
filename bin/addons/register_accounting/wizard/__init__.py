@@ -21,21 +21,21 @@
 #
 ##############################################################################
 
-import cashbox_closing
-import register_reopen
-import temp_posting
-import hard_posting
-import wizard_cash_return
-import direct_invoice
-import import_invoice_on_registers
-import import_cheque_on_bank_registers
-import register_creation
-import wizard_confirm_bank
-import invoice_date
-import down_payment
-import wizard_register_import
-import wizard_liquidity_position
-import register_opening
+from . import cashbox_closing
+from . import register_reopen
+from . import temp_posting
+from . import hard_posting
+from . import wizard_cash_return
+from . import direct_invoice
+from . import import_invoice_on_registers
+from . import import_cheque_on_bank_registers
+from . import register_creation
+from . import wizard_confirm_bank
+from . import invoice_date
+from . import down_payment
+from . import wizard_register_import
+from . import wizard_liquidity_position
+from . import register_opening
 
 
 

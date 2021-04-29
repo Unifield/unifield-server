@@ -23,7 +23,7 @@ from osv import fields
 from tools.translate import _
 
 import base64
-import StringIO
+import io
 import csv
 import time
 
@@ -201,7 +201,7 @@ class wizard_budget_import(osv.osv_memory):
             # Sometimes, the CSV has not all the needed columns. It's padded.
             #+ We so complete values from budget_values length to 12. So len+1 to 12+1 (=13)
             if len(budget_values) != 12:
-                for x in xrange(len(budget_values)+1, 13, 1):
+                for x in range(len(budget_values)+1, 13, 1):
                     budget_values.update({'month'+str(x): 0.0,})
             # Update vals with month values and create line
             vals.update(budget_values)
@@ -216,7 +216,7 @@ class wizard_budget_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Prepare some values
@@ -259,7 +259,7 @@ class wizard_budget_import(osv.osv_memory):
 
             # And finally read it!
             import_file = base64.decodestring(wiz_file)
-            import_string = StringIO.StringIO(import_file)
+            import_string = io.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
             # A budget import file can contain more than 1 budget. So split budget into multiples ones and browse budget by budget
             for budget_data in self.split_budgets(import_data):
@@ -309,7 +309,7 @@ class wizard_budget_import(osv.osv_memory):
         #+ - otherwise use a wizard for user to inform user the import is OK
         if len(budgets_2be_approved) > 0:
             budget_list = ""
-            for budget_name in budgets_2be_approved.keys():
+            for budget_name in list(budgets_2be_approved.keys()):
                 budget_list += budget_name + "\n"
             wizard_id = self.pool.get('wizard.budget.import.confirm').create(cr, uid, {'budget_list': budget_list}, context=context)
             context.update({'budgets': budgets_2be_approved})

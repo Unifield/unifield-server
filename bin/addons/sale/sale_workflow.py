@@ -33,7 +33,7 @@ class sale_order_line(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -111,7 +111,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # for each line get a new copy:
@@ -138,7 +138,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for sol in self.browse(cr, uid, ids, context=context):
@@ -153,7 +153,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context.get('sync_message_execution'):
@@ -174,7 +174,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -203,7 +203,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sol = self.browse(cr, uid, ids[0], context=context)
@@ -239,7 +239,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
@@ -259,7 +259,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced'}, context=context)
@@ -279,7 +279,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
@@ -299,7 +299,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced_sy'}, context=context)
@@ -313,7 +313,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
@@ -333,7 +333,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sol = self.browse(cr, uid, ids[0], context=context)
@@ -364,7 +364,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pick_to_use = False
@@ -419,7 +419,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         stock_move_obj = self.pool.get('stock.move')
@@ -453,7 +453,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -562,7 +562,7 @@ class sale_order_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for fo_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'tax_id'], context=context):
             if fo_line.tax_id and fo_line.order_id.partner_type in ('intermission', 'section'):
@@ -574,7 +574,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         obj_data = self.pool.get('ir.model.data')
@@ -675,7 +675,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
@@ -688,7 +688,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.check_out_moves_to_cancel(cr, uid, ids, context=context)
@@ -734,7 +734,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.check_out_moves_to_cancel(cr, uid, ids, context=context)
@@ -776,7 +776,7 @@ class sale_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")

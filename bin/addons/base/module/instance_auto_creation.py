@@ -23,7 +23,7 @@ import os
 import time
 import pooler
 import uuid
-import ConfigParser
+import configparser
 import shutil
 
 import tools
@@ -86,7 +86,7 @@ class instance_auto_creation(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # each time a write is done, add a line in the resume
@@ -191,7 +191,7 @@ class instance_auto_creation(osv.osv):
 
             config_file_name = 'uf_auto_install.conf'
             config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', config_file_name)
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read(config_file_path)
             config_dict =  {x:dict(config.items(x)) for x in config.sections()}
 
@@ -397,7 +397,7 @@ class instance_auto_creation(osv.osv):
 
             config_file_name = 'uf_auto_install.conf'
             config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', config_file_name)
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read(config_file_path)
             config_dict =  {x:dict(config.items(x)) for x in config.sections()}
 
@@ -705,12 +705,12 @@ class instance_auto_creation(osv.osv):
                 'default_cash_account': ['cash_debit_account_id', 'cash_credit_account_id'],
             }
 
-            for config_file_prop, unifield_prop in account_property_dict.items():
+            for config_file_prop, unifield_prop in list(account_property_dict.items()):
                 account = config_dict['company'].get(config_file_prop)
                 account_id = account_obj.search(cr, uid, [('code', '=', account)])
                 account_id = account_id and account_id[0] or False
                 if account_id:
-                    if isinstance(unifield_prop, basestring):
+                    if isinstance(unifield_prop, str):
                         unifield_prop = [unifield_prop]
                     for uf_prop in unifield_prop:
                         vals[uf_prop] = account_id

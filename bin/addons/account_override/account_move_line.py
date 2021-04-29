@@ -27,7 +27,7 @@ import re
 import decimal_precision as dp
 from tools.translate import _
 from time import strftime
-import finance_export
+from . import finance_export
 
 
 class account_move_line(osv.osv):
@@ -196,7 +196,7 @@ class account_move_line(osv.osv):
             context = {}
         if not args:
             return []
-        where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
+        where = ' AND '.join(['(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')' for x in args])
         cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
                      GROUP BY id, debit_currency, credit_currency having '+where) # not_a_user_entry
         res = cursor.fetchall()
@@ -248,7 +248,7 @@ class account_move_line(osv.osv):
         """
         Returns False for all ids
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for i in ids:
@@ -296,7 +296,7 @@ class account_move_line(osv.osv):
         """
         Returns a dict. with key containing the JI id, and value containing its DB id used for Vertical Integration
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for i in ids:
@@ -395,7 +395,7 @@ class account_move_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             return 0.0
@@ -418,7 +418,7 @@ class account_move_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             return 0.0
@@ -494,7 +494,7 @@ class account_move_line(osv.osv):
 
     def _check_accounts_partner_compat(self, cr, uid, aml_ids, context=None):
         if context and context.get('from_web_menu', False):
-            if isinstance(aml_ids, (int, long)):
+            if isinstance(aml_ids, int):
                 aml_ids = [aml_ids]
             # get the values of the JI fields related to partner and account
             fields_to_read = ['partner_type', 'partner_txt', 'employee_id', 'transfer_journal_id', 'partner_id', 'account_id']
@@ -631,7 +631,7 @@ class account_move_line(osv.osv):
         period_ids = []
         if context.get('periods'):
             period_ids = context.get('periods')
-            if isinstance(period_ids, (int, long)):
+            if isinstance(period_ids, int):
                 period_ids = [period_ids]
         elif context.get('fiscalyear'):
             fy = context.get('fiscalyear')
@@ -682,7 +682,7 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ml_copied_ids = []
         for ml in self.browse(cr, uid, ids):

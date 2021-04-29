@@ -19,11 +19,11 @@
 #
 ##############################################################################
 
-import supplier_catalogue
-import product
-import partner
-import purchase
-import wizard
-import report
+from . import supplier_catalogue
+from . import product
+from . import partner
+from . import purchase
+from . import wizard
+from . import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

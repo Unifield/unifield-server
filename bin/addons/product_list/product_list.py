@@ -234,7 +234,7 @@ class product_list(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for list in self.browse(cr, uid, ids, context=context):
@@ -354,7 +354,7 @@ class product_list_line(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not context.get('import_error', False):
@@ -445,7 +445,7 @@ product and can't be deleted"""),
         if not context:
             context = {}
 
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}

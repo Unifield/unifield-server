@@ -85,7 +85,7 @@ class sale_donation_stock_moves(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         type_donation_ids = self.pool.get('stock.picking')._get_type_donation_ids(cr, uid)
@@ -152,7 +152,7 @@ class sale_donation_stock_moves(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.get_values(cr, uid, ids, context=context)

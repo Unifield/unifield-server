@@ -130,7 +130,7 @@ your support team and give us this message.
                 return (0, value, None)
             else:
                 try:
-                    if isinstance(value, basestring):
+                    if isinstance(value, str):
                         value = value.rstrip().replace(',', '.')
                     return (0, float(value), None)
                 except Exception as e:
@@ -165,7 +165,7 @@ class abstract_wizard_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}

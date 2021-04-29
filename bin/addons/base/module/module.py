@@ -20,13 +20,13 @@
 #
 ##############################################################################
 import base64
-import cStringIO
+import io
 import imp
 import logging
 import os
 import re
-import StringIO
-import urllib
+import io
+import urllib.request, urllib.parse, urllib.error
 import zipfile
 import zipimport
 
@@ -114,7 +114,7 @@ class module(osv.osv):
         if not mnames:
             return res
 
-        view_id = model_data_obj.search(cr,uid,[('module','in', mnames.keys()),
+        view_id = model_data_obj.search(cr,uid,[('module','in', list(mnames.keys())),
                                                 ('model','in',('ir.ui.view','ir.actions.report.xml','ir.ui.menu'))])
         for data_id in model_data_obj.browse(cr,uid,view_id, fields_to_fetch=['model', 'module', 'res_id', 'name'], context=context):
             # We use try except, because views or menus may not exist
@@ -138,8 +138,8 @@ class module(osv.osv):
                 self.__logger.warning('Unknown error while browsing %s[%s]',
                                       data_id.model, data_id.res_id, exc_info=True)
                 pass
-        for key, value in res.iteritems():
-            for k, v in res[key].iteritems() :
+        for key, value in res.items():
+            for k, v in res[key].items() :
                 res[key][k] = "\n".join(sorted(v))
         return res
 
@@ -211,7 +211,7 @@ class module(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         mod_names = []
         for mod in self.read(cr, uid, ids, ['state','name'], context):
@@ -252,7 +252,7 @@ class module(osv.osv):
         terp = cls.get_module_info(module_name)
         try:
             cls._check_external_dependencies(terp)
-        except Exception, e:
+        except Exception as e:
             if newstate == 'to install':
                 msg = _('Unable to install module "%s" because an external dependency is not met: %s')
             elif newstate == 'to upgrade':
@@ -310,7 +310,7 @@ class module(osv.osv):
                     m.state not in ('uninstalled','uninstallable','to remove')''', (module.name,))
             res = cr.fetchall()
             if res:
-                raise orm.except_orm(_('Error'), _('Some installed modules depend on the module you plan to Uninstall :\n %s') % '\n'.join(map(lambda x: '\t%s: %s' % (x[0], x[1]), res)))
+                raise orm.except_orm(_('Error'), _('Some installed modules depend on the module you plan to Uninstall :\n %s') % '\n'.join(['\t%s: %s' % (x[0], x[1]) for x in res]))
         self.write(cr, uid, ids, {'state': 'to remove'})
         return True
 
@@ -336,7 +336,7 @@ class module(osv.osv):
                 if dep.module_id.state=='installed' and dep.module_id not in todo:
                     todo.append(dep.module_id)
 
-        ids = map(lambda x: x.id, todo)
+        ids = [x.id for x in todo]
         self.write(cr, uid, ids, {'state':'to upgrade'}, context=context)
 
         to_install = []
@@ -389,7 +389,7 @@ class module(osv.osv):
                 updated_values = {}
                 for key in values:
                     old = getattr(mod, key)
-                    updated = isinstance(values[key], basestring) and tools.ustr(values[key]) or values[key]
+                    updated = isinstance(values[key], str) and tools.ustr(values[key]) or values[key]
                     if not old == updated:
                         updated_values[key] = values[key]
                 if terp.get('installable', True) and mod.state == 'uninstallable':
@@ -427,7 +427,7 @@ class module(osv.osv):
             res.append(mod.url)
             if not download:
                 continue
-            zipfile = urllib.urlopen(mod.url).read()
+            zipfile = urllib.request.urlopen(mod.url).read()
             fname = addons.get_module_path(str(mod.name)+'.zip', downloaded=True)
             try:
                 fp = file(fname, 'wb')
@@ -588,7 +588,7 @@ class module(osv.osv):
         :type web_data: bytes
         """
         # cStringIO.StringIO is either read or write, not r/w
-        web_zip = StringIO.StringIO(web_data)
+        web_zip = io.StringIO(web_data)
         web_archive = zipfile.ZipFile(web_zip, 'a')
 
         # get the contents of the i18n or po folder and move them to the
@@ -596,7 +596,7 @@ class module(osv.osv):
         # The POT file will be incorrectly named, but that should not
         # matter since the web client is not going to use it, only the PO
         # files.
-        translations_file = cStringIO.StringIO(
+        translations_file = io.StringIO(
             addons.zip_directory(self._translations_subdir(module), False))
         translations_archive = zipfile.ZipFile(translations_file)
 

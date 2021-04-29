@@ -49,16 +49,17 @@
 import uno
 import string
 import unohelper
-import xmlrpclib
+import xmlrpc.client
 
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from lib.functions import *
-    from lib.error import ErrorDialog
-    from LoginTest import *
-    from lib.logreport import *
-    from lib.rpc import *
+from functools import reduce
+if __name__!="package":
+    from .lib.gui import *
+    from .lib.functions import *
+    from .lib.error import ErrorDialog
+    from .LoginTest import *
+    from .lib.logreport import *
+    from .lib.rpc import *
     database="report"
     uid = 3
 
@@ -120,7 +121,7 @@ class Fields(unohelper.Base, XJobExecutor ):
             text = cursor.getText()
             tcur = text.createTextCursorByRange(cursor)
 
-            self.aVariableList.extend( filter( lambda obj: obj[:obj.find("(")] == "Objects", self.aObjectList ) )
+            self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find("(")] == "Objects"] )
 
             for i in range(len(self.aItemList)):
                 try:
@@ -129,20 +130,20 @@ class Fields(unohelper.Base, XJobExecutor ):
 
                     if component == "Document":
                         sLVal = anItem[anItem.find(",'") + 2:anItem.find("')")]
-                        self.aVariableList.extend( filter( lambda obj: obj[:obj.find("(")] == sLVal, self.aObjectList ) )
+                        self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find("(")] == sLVal] )
 
                     if tcur.TextSection:
                         getRecersiveSection(tcur.TextSection,self.aSectionList)
                         if component in self.aSectionList:
                             sLVal = anItem[anItem.find(",'") + 2:anItem.find("')")]
-                            self.aVariableList.extend( filter( lambda obj: obj[:obj.find("(")] == sLVal, self.aObjectList ) )
+                            self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find("(")] == sLVal] )
 
                     if tcur.TextTable:
                         if not component == "Document" and component[component.rfind(".")+1:] == tcur.TextTable.Name:
                             VariableScope(tcur, self.aVariableList, self.aObjectList, self.aComponentAdd, self.aItemList, component)
                 except:
                     import traceback,sys
-                    info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                    info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                     self.logobj.log_write('Fields', LOG_ERROR, info)
 
             self.bModify=bFromModify
@@ -167,7 +168,7 @@ class Fields(unohelper.Base, XJobExecutor ):
                     self.model_ids =self.sock.execute(database, uid, self.password, 'ir.model' ,  'search', [('model','=',var[var.find("(")+1:var.find(")")])])
                     fields=['name','model']
                     self.model_res = self.sock.execute(database, uid, self.password, 'ir.model', 'read', self.model_ids,fields)
-                    if self.model_res <> []:
+                    if self.model_res != []:
                         self.insVariable.addItem(var[:var.find("(")+1] + self.model_res[0]['name'] + ")" ,self.insVariable.getItemCount())
                     else:
                         self.insVariable.addItem(var ,self.insVariable.getItemCount())
@@ -194,7 +195,7 @@ class Fields(unohelper.Base, XJobExecutor ):
             self.win.setEditText("txtUName",res[0][sMain[sMain.rfind("/")+1:]])
         except:
             import traceback,sys
-            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             self.logobj.log_write('Fields', LOG_ERROR, info)
             self.win.setEditText("txtUName","TTT")
         if self.bModify:
@@ -205,7 +206,7 @@ class Fields(unohelper.Base, XJobExecutor ):
         doc =desktop.getCurrentComponent()
         docinfo=doc.getDocumentInfo()
         res = sock.execute(database, uid, self.password, sObject , 'fields_get')
-        key = res.keys()
+        key = list(res.keys())
         key.sort()
         myval=None
         if not sVar.find("/")==-1:
@@ -243,7 +244,7 @@ class Fields(unohelper.Base, XJobExecutor ):
                 )
             except:
                 import traceback,sys
-                info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                 self.logobj.log_write('Fields', LOG_ERROR, info)
 
     def btnOk_clicked( self, oActionEvent ):
@@ -254,15 +255,15 @@ class Fields(unohelper.Base, XJobExecutor ):
                 itemSelected = self.aListFields[i]
                 itemSelectedPos = i
                 txtUName=self.win.getEditText("txtUName")
-                sKey=u""+txtUName
+                sKey=""+txtUName
                 if itemSelected != "" and txtUName != "" and self.bModify==True :
                     txtUName=self.sGDisplayName
-                    sKey=u""+txtUName
+                    sKey=""+txtUName
                     txtUName=self.sGDisplayName
                     oCurObj=cursor.TextField
                     sObjName=self.insVariable.getText()
                     sObjName=sObjName[:sObjName.find("(")]
-                    sValue=u"[[ " + sObjName + self.aListFields[itemSelectedPos].replace("/",".") + " ]]"
+                    sValue="[[ " + sObjName + self.aListFields[itemSelectedPos].replace("/",".") + " ]]"
                     oCurObj.Items = (sKey,sValue)
                     oCurObj.update()
                     self.win.endExecute()
@@ -274,7 +275,7 @@ class Fields(unohelper.Base, XJobExecutor ):
 
                     widget = ( cursor.TextTable and cursor.TextTable.getCellByName( cursor.Cell.CellName ) or doc.Text )
 
-                    sValue = u"[[ " + sObjName + self.aListFields[itemSelectedPos].replace("/",".") + " ]]"
+                    sValue = "[[ " + sObjName + self.aListFields[itemSelectedPos].replace("/",".") + " ]]"
                     oInputList.Items = (sKey,sValue)
                     widget.insertTextContent(cursor,oInputList,False)
                     self.win.endExecute()
@@ -284,7 +285,7 @@ class Fields(unohelper.Base, XJobExecutor ):
     def btnCancel_clicked( self, oActionEvent ):
         self.win.endExecute()
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     Fields()
 elif __name__=="package":
     g_ImplementationHelper.addImplementation( Fields, "org.openoffice.openerp.report.fields", ("com.sun.star.task.Job",),)

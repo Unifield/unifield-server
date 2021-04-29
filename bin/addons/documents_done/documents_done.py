@@ -567,7 +567,7 @@ class documents_done_problem_line(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}

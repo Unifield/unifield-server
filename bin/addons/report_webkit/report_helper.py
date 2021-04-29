@@ -68,7 +68,7 @@ class WebKitHelper(object):
                                             [('name','=',name)]
                                         )
         if not header_img_id :
-            return u''
+            return ''
         if isinstance(header_img_id, list):
             header_img_id = header_img_id[0]
 

@@ -50,7 +50,7 @@ class return_pack_shipment_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -81,7 +81,7 @@ class return_pack_shipment_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         family_ids = []
@@ -123,7 +123,7 @@ class return_pack_shipment_processor(osv.osv):
         if usb_entity == picking_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
             picking_obj._manual_create_rw_messages(cr, uid, context=context)
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         to_smaller_ids = []
@@ -146,7 +146,7 @@ class return_pack_shipment_processor(osv.osv):
                 else:
                     fo_family[fo_id].append((family.return_from, family.return_to, family.id))
 
-            for sequences in fo_family.values():
+            for sequences in list(fo_family.values()):
                 sequences = sorted(sequences, key=lambda seq: seq[0])
                 if sequences:
                     no_sequence = False
@@ -206,7 +206,7 @@ class return_pack_shipment_family_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -235,7 +235,7 @@ class return_pack_shipment_family_processor(osv.osv):
         'volume': fields.function(
             _get_pack_info,
             method=True,
-            string=u'Volume [dm³]',
+            string='Volume [dm³]',
             type='float',
             store=False,
             readonly=True,

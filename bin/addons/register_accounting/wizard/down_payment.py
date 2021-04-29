@@ -121,7 +121,7 @@ class wizard_down_payment(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse all wizards
         for wiz in self.browse(cr, uid, ids, context=context):

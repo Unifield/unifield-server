@@ -20,7 +20,7 @@
 ##############################################################################
 from osv import fields, osv
 import csv
-import StringIO
+import io
 from tools.translate import _
 import datetime
 from mx.DateTime import *
@@ -89,15 +89,15 @@ class wizard_csv_report(osv.osv_memory):
                 ['State:', contract_state_selection[contract.state]]]
 
     def _enc(self, st):
-        if isinstance(st, unicode):
+        if isinstance(st, str):
             return st.encode('utf8')
         return st
 
     def _create_csv(self, data):
-        buffer = StringIO.StringIO()
+        buffer = io.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
         for line in data:
-            writer.writerow(map(self._enc,line))
+            writer.writerow(list(map(self._enc,line)))
         out = buffer.getvalue()
         buffer.close()
         return (out, 'csv')

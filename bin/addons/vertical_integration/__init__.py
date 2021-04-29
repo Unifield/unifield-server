@@ -22,11 +22,11 @@
 ##############################################################################
 
 import account
-import account_move_line
-import account_analytic_line
-import account_export_mapping
-import country_export_mapping
-import report
-import wizard
+from . import account_move_line
+from . import account_analytic_line
+from . import account_export_mapping
+from . import country_export_mapping
+from . import report
+from . import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

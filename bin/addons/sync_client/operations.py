@@ -101,7 +101,7 @@ class operations_event(osv.osv, ratelimit):
         self._slow_queries[q] = (tot + delta, ct+1)
 
     def _shorten(self, x):
-        if not isinstance(x, basestring):
+        if not isinstance(x, str):
             return x
 
         if len(x) < 80:
@@ -310,7 +310,7 @@ class operations_count(osv.osv, ratelimit):
                                    'count': counts[kind] })
         rows = len(counts)
         # Write out all the histograms
-        for h in self.histogram.values():
+        for h in list(self.histogram.values()):
             limits = h.limits()
             for i in range(len(h.buckets)):
                 kind = "%s:%s" % (h.name, limits[i])

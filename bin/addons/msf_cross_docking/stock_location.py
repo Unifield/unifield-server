@@ -40,7 +40,7 @@ class stock_location(osv.osv):
         return ids[0]
 
     def unlink(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         cross_docking_location = self.search_exist(cr, uid, [('cross_docking_location_ok', '=', True), ('id', 'in', ids)], context=context)
         if cross_docking_location:

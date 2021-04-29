@@ -95,7 +95,7 @@ class stock_pipe_per_product_instance(osv.osv):
         if context is None:
             context ={}
 
-        if isinstance(report_ids, (int, long)):
+        if isinstance(report_ids, int):
             report_ids = [report_ids]
 
         new_cr = pooler.get_db(cr.dbname).cursor()

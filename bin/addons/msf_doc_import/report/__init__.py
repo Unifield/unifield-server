@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-import in_simulation_screen_report_xls
-import po_simulation_screen_report
-import po_simulation_screen_report_xls
+from . import in_simulation_screen_report_xls
+from . import po_simulation_screen_report
+from . import po_simulation_screen_report_xls
 
-import import_generic_template
+from . import import_generic_template

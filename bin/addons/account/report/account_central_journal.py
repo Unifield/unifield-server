@@ -21,7 +21,7 @@
 
 import time
 from report import report_sxw
-from common_report_header import common_report_header
+from .common_report_header import common_report_header
 #
 # Use period and Journal for selection or resources
 #
@@ -63,7 +63,7 @@ class journal_print(report_sxw.rml_parse, common_report_header):
         if new_ids:
             self.cr.execute('SELECT period_id, journal_id FROM account_journal_period WHERE id IN %s', (tuple(new_ids),))
             res = self.cr.fetchall()
-            self.period_ids, self.journal_ids = zip(*res)
+            self.period_ids, self.journal_ids = list(zip(*res))
         res = super(journal_print, self).set_context(objects, data, ids, report_type=report_type)
         common_report_header._set_context(self, data)
         return res

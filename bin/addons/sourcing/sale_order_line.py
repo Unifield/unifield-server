@@ -106,7 +106,7 @@ class sale_order_line(osv.osv):
                 has_filter = True
             else:
                 # US-7407: OST custom filter: change done (db value) vs Closed (user value)
-                if x[0] == 'state' and x[2] and isinstance(x[2], basestring) and x[2].lower() == 'closed':
+                if x[0] == 'state' and x[2] and isinstance(x[2], str) and x[2].lower() == 'closed':
                     x = ('state', x[1], 'done')
                 new_dom.append(x)
         ret = super(sale_order_line, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
@@ -270,7 +270,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -359,7 +359,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}
@@ -416,7 +416,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -634,7 +634,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -802,7 +802,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
 
         for line in self.browse(cr, uid, line_ids, context=context):
@@ -865,7 +865,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context.get('no_check_line', False):
             return True
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -1022,7 +1022,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         product = False
@@ -1126,7 +1126,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         context['procurement_request'] = True
@@ -1234,7 +1234,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res_id = False
@@ -1280,7 +1280,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res_id = False
@@ -1309,7 +1309,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res_id = False
@@ -1338,7 +1338,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
@@ -1382,7 +1382,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         sol = self.browse(cr, uid, ids[0], context=context)
         delivery_requested_date = datetime.strptime(sol.date_planned, DEFAULT_SERVER_DATE_FORMAT)
@@ -1398,7 +1398,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
@@ -1429,7 +1429,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             return False
@@ -1450,7 +1450,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             return False
@@ -1476,7 +1476,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def create_rfq_from_sourcing_line(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             return False
@@ -1510,7 +1510,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def check_location_integrity(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         med_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
@@ -1538,7 +1538,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
@@ -1765,7 +1765,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         order_to_check = {}
@@ -1791,7 +1791,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 )
 
         order_to_process = {}
-        for order_id, state_to_use in order_to_check.iteritems():
+        for order_id, state_to_use in order_to_check.items():
             lines_not_confirmed = self.search(cr, uid, [
                 ('order_id', '=', order_id),
                 ('state', '!=', state_to_use),
@@ -1803,7 +1803,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 order_to_process.setdefault(state_to_use, [])
                 order_to_process[state_to_use].append(order_id)
 
-        for state_to_use, val in order_to_process.iteritems():
+        for state_to_use, val in order_to_process.items():
             queue = deque(val)
             while queue:
                 i = 0
@@ -1882,7 +1882,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
                     'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }, context=context)
-            except osv.except_osv, e:
+            except osv.except_osv as e:
                 logging.getLogger('so confirmation').warn('Osv Exception', exc_info=True)
                 cr.rollback()
                 self.pool.get('sale.order').write(cr, uid, order_id,
@@ -1894,7 +1894,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
                     'error': e.value,
                 }, context=context)
-            except Exception, e:
+            except Exception as e:
                 logging.getLogger('so confirmation').warn('Exception', exc_info=True)
                 cr.rollback()
                 self.pool.get('sale.order').write(cr, uid, order_id,
@@ -1928,7 +1928,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return self.write(cr, uid, ids, {'state': 'draft'}, context=context)

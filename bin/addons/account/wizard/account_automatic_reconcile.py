@@ -227,7 +227,7 @@ class account_automatic_reconcile(osv.osv_memory):
 
             # add the number of transactions for partners who have only one
             # unreconciled transactions to the unreconciled count
-            partner_filter = partner_ids and 'AND partner_id not in (%s)' % ','.join(map(str, filter(None, partner_ids))) or ''
+            partner_filter = partner_ids and 'AND partner_id not in (%s)' % ','.join(map(str, [_f for _f in partner_ids if _f])) or ''
             cr.execute("""
                 SELECT count(*)
                 FROM account_move_line

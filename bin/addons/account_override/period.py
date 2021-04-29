@@ -62,7 +62,7 @@ def get_period_from_date(self, cr, uid, date=False, context=None):
         ], limit=limit,
             order='date_stop desc, name desc', context=context) or []
 
-    if isinstance(period_ids, (int, long)):
+    if isinstance(period_ids, int):
         period_ids = [period_ids]
     return period_ids
 

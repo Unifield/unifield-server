@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import report_stock_inventory
-import report_stock_virtual
-import report_unconsistent_stock
+from . import report_stock_inventory
+from . import report_stock_virtual
+from . import report_unconsistent_stock

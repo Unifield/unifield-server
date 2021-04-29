@@ -20,5 +20,5 @@
 ##############################################################################
 
 #import decimal_precision
-from decimal_precision import get_precision
+from .decimal_precision import get_precision
 

@@ -37,7 +37,7 @@ class purchase_order_line_nsl_validation_wizard(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz = self.browse(cr , uid, ids[0], context=context)

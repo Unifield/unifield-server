@@ -44,7 +44,7 @@ class import_cell_data(osv.osv_memory):
 
     def get_purchase_id(self, cr, uid, ids, row, cell_nb, line_num, error_list, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data and isinstance(cell_data, (str,)):
+        if cell_data and isinstance(cell_data, str):
             purchase_name = cell_data.strip()
             purchase_ids = self.pool.get('purchase.order').search(cr, uid, [('name', '=', purchase_name)])
             if purchase_ids:
@@ -54,7 +54,7 @@ class import_cell_data(osv.osv_memory):
 
     def get_picking_id(self, cr, uid, ids, row, cell_nb, line_num, error_list, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data and isinstance(cell_data, (str,)):
+        if cell_data and isinstance(cell_data, str):
             incoming_shipment_name = cell_data.strip()
             picking_ids = self.pool.get('stock.picking').search(cr, uid, [('name', '=', incoming_shipment_name)])
             if picking_ids:
@@ -64,13 +64,13 @@ class import_cell_data(osv.osv_memory):
     def get_move_line_number(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
-            if isinstance(cell_data, (int, long)):
+            if isinstance(cell_data, int):
                 return cell_data
         return False
 
     def get_product_id(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data and isinstance(cell_data, (str,)):
+        if cell_data and isinstance(cell_data, str):
             default_code = cell_data.strip()
             product_ids = self.pool.get('product.product').search(cr, uid, [('default_code', '=', default_code)])
             if product_ids:
@@ -80,13 +80,13 @@ class import_cell_data(osv.osv_memory):
     def get_product_qty(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
-            if isinstance(cell_data, (float, int, long)):
+            if isinstance(cell_data, (float, int)):
                 return cell_data
         return False
 
     def get_product_uom_id(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data and isinstance(cell_data, (str,)):
+        if cell_data and isinstance(cell_data, str):
             product_uom_name = cell_data.strip()
             product_uom_ids = self.pool.get('product.uom').search(cr, uid, [('name', '=', product_uom_name)])
             if product_uom_ids:
@@ -95,9 +95,9 @@ class import_cell_data(osv.osv_memory):
 
     def get_prodlot_name(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data and isinstance(cell_data, (str,)):
+        if cell_data and isinstance(cell_data, str):
             return cell_data.strip()
-        elif cell_data and isinstance(cell_data, (int,)):
+        elif cell_data and isinstance(cell_data, int):
             return cell_data
         return False
 
@@ -141,7 +141,7 @@ class import_cell_data(osv.osv_memory):
         for cell_nb in range(len(row)):
             cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, context=context)
             # cells filled with whitespace should behave the same as cells that are empty
-            if isinstance(cell_data, basestring) and cell_data.isspace():
+            if isinstance(cell_data, str) and cell_data.isspace():
                 cell_data = ''
             list_of_values.append(cell_data)
         return list_of_values

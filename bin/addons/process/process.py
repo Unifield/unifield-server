@@ -176,7 +176,7 @@ class process_process(osv.osv):
         def update_relatives(nid, ref_id, ref_model):
             relatives = []
 
-            for dummy, tr in transitions.items():
+            for dummy, tr in list(transitions.items()):
                 if tr['source'] == nid:
                     relatives.append(tr['target'])
                 if tr['target'] == nid:
@@ -201,7 +201,7 @@ class process_process(osv.osv):
             for r in relatives:
                 node = nodes[r]
                 if 'res' not in node:
-                    for n, f in fields.items():
+                    for n, f in list(fields.items()):
                         if node['model'] == ref_model:
                             update_relatives(r, ref_id, ref_model)
 
@@ -217,20 +217,20 @@ class process_process(osv.osv):
                                 pass
 
         if res_id:
-            for nid, node in nodes.items():
+            for nid, node in list(nodes.items()):
                 if not node['gray'] and (node['active'] or node['model'] == res_model):
                     update_relatives(nid, res_id, res_model)
                     break
 
         # calculate graph layout
-        g = tools.graph(nodes.keys(), map(lambda x: (x['source'], x['target']), transitions.values()))
+        g = tools.graph(list(nodes.keys()), [(x['source'], x['target']) for x in list(transitions.values())])
         g.process(start)
         g.scale(*scale) #g.scale(100, 100, 180, 120)
         graph = g.result_get()
 
         # fix the height problem
         miny = -1
-        for k,v in nodes.items():
+        for k,v in list(nodes.items()):
             x = graph[k]['x']
             y = graph[k]['y']
             if miny == -1:
@@ -239,7 +239,7 @@ class process_process(osv.osv):
             v['x'] = x
             v['y'] = y
 
-        for k, v in nodes.items():
+        for k, v in list(nodes.items()):
             y = v['y']
             v['y'] = min(y - miny + 10, y)
 
@@ -269,7 +269,7 @@ class process_process(osv.osv):
             nodes[node.id] = pool.get('process.node').copy(cr, uid, node.id, context=context)
 
         # then copy transitions with new nodes
-        for tid, tr in transitions.items():
+        for tid, tr in list(transitions.items()):
             vals = {
                 'source_node_id': nodes[tr['source']],
                 'target_node_id': nodes[tr['target']]
@@ -279,7 +279,7 @@ class process_process(osv.osv):
         # and finally copy the process itself with new nodes
         default.update({
             'active': True,
-            'node_ids': [(6, 0, nodes.values())]
+            'node_ids': [(6, 0, list(nodes.values()))]
         })
         return super(process_process, self).copy(cr, uid, id, default, context)
 

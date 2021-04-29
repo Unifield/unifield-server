@@ -19,14 +19,14 @@
 #
 ##############################################################################
 
-import wizard_budget_import_finish
-import wizard_budget_import_confirm
-import wizard_budget_import
-import wizard_budget_criteria_export
-import wizard_actual_export
-import wizard_local_expenses
-import wizard_budget_summary
-import wizard_budget_monthly
-import wizard_order_impact_vs_budget
+from . import wizard_budget_import_finish
+from . import wizard_budget_import_confirm
+from . import wizard_budget_import
+from . import wizard_budget_criteria_export
+from . import wizard_actual_export
+from . import wizard_local_expenses
+from . import wizard_budget_summary
+from . import wizard_budget_monthly
+from . import wizard_order_impact_vs_budget
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

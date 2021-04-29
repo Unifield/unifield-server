@@ -107,7 +107,7 @@ class stock_picking_processing_info(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         mem_brw = self.browse(cr, uid, ids[0], context=context)
@@ -135,7 +135,7 @@ class stock_picking_processing_info(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = self.close(cr, uid, ids, context=context)
@@ -191,7 +191,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -275,7 +275,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for picking in self.browse(cr, uid, ids, context=context):
@@ -304,7 +304,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
         wizard_obj = self.pool.get('wizard')
@@ -689,7 +689,7 @@ class stock_picking(osv.osv):
             # Call do_incoming_shipment()
             res = self.do_incoming_shipment(new_cr, uid, wizard_ids, context=context)
             new_cr.commit()
-        except Exception, e:
+        except Exception as e:
             new_cr.rollback()
             logging.getLogger('stock.picking').warn('Exception do_incoming_shipment', exc_info=True)
             for wiz in inc_proc_obj.read(new_cr, uid, wizard_ids, ['picking_id'], context=context):
@@ -730,7 +730,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
+        if isinstance(wizard_ids, int):
             wizard_ids = [wizard_ids]
 
         db_data_dict = self._get_db_data_dict(cr, uid)
@@ -1219,7 +1219,7 @@ class stock_picking(osv.osv):
                     'prepare_pick': _('In progress'),
                 }, context=context)
                 pack_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
-                for pack in pack_obj.read_group(cr, uid, [('id', 'in', all_pack_info.keys())], ['packing_list'], ['packing_list'], offset=0, orderby='packing_list'):
+                for pack in pack_obj.read_group(cr, uid, [('id', 'in', list(all_pack_info.keys()))], ['packing_list'], ['packing_list'], offset=0, orderby='packing_list'):
                     pack_ids = pack_obj.search(cr, uid, pack['__domain'], context=context)
 
                     move_to_process_ids = self.pool.get('stock.move').search(cr, uid,

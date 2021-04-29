@@ -1,7 +1,7 @@
 import uuid
 import base64
 from zipfile import ZipFile
-from cStringIO import StringIO
+from io import StringIO
 import csv
 import sys
 from datetime import datetime
@@ -137,10 +137,8 @@ class Entity(osv.osv):
                 entity = self.get_entity(cr, uid, context=context)
                 rev_ids = revisions.search_installed_since(cr, uid,
                                                            entity.usb_last_push_date, context=context)
-                header['patches'] = map(
-                    lambda p: (p.name, p.sum, p.date, p.importance, p.comment),
-                    revisions.browse(cr, uid, rev_ids, context=context))
-            return unicode(header)
+                header['patches'] = [(p.name, p.sum, p.date, p.importance, p.comment) for p in revisions.browse(cr, uid, rev_ids, context=context)]
+            return str(header)
 
         def update_create_package():
             return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid)
@@ -229,7 +227,7 @@ class Entity(osv.osv):
             for rule in update_rule_pool.browse(cr, uid, ids, context=context):
                 rules_data.append(dict(
                     (data, rule[column]) for column, data
-                    in _update_rules_serialization_mapping.items()
+                    in list(_update_rules_serialization_mapping.items())
                 ))
             return rules_data
 
@@ -252,7 +250,7 @@ class Entity(osv.osv):
             for rule in self.browse(cr, uid, ids, context=context):
                 rules_data.append(dict(
                     (data, rule[column]) for column, data
-                    in _message_rules_serialization_mapping.items()
+                    in list(_message_rules_serialization_mapping.items())
                 ))
             return rules_data
 
@@ -396,7 +394,7 @@ class Entity(osv.osv):
             logger.switch('data_push', 'ok')
             logger.switch('msg_push', 'ok')
             logger.switch('status', 'ok')
-        except Exception, e:
+        except Exception as e:
             logger.append(_('Error while creating zip file: %s') % str(e))
             logger.switch('data_push', 'failed')
             logger.switch('msg_push', 'failed')
@@ -561,7 +559,7 @@ class Entity(osv.osv):
                     if revisions:
                         # import patches used by the zip-file
                         revisions._update(patch_cr, uid,
-                                          [dict(zip("name sum date importance comment".split(), p)) for p in header['patches']],
+                                          [dict(list(zip("name sum date importance comment".split(), p))) for p in header['patches']],
                                           context=context)
                         # check database revision
                         if revisions._is_outdated(patch_cr, uid, force_recalculate=True, exact_version=True, context=context):
@@ -603,11 +601,11 @@ class Entity(osv.osv):
             zip_file.close()
 
             logger.switch('status', 'ok')
-        except osv.except_osv, e:
+        except osv.except_osv as e:
             logger.append(_(e.name + ': ' + e.value))
             logger.switch('status','failed')
             raise e
-        except Exception, e:
+        except Exception as e:
             logger.append(_('Error while reading uploaded zip file: %s') % str(e))
             logger.switch('status', 'failed')
             raise e
@@ -674,7 +672,7 @@ class Entity(osv.osv):
                     number_of_updates_ran = self.execute_updates(cr, uid, context=context)
                     self._usb_change_sync_step(cr, uid, 'pull_performed')
                     logger.switch('data_pull','ok')
-                except AttributeError, e:
+                except AttributeError as e:
                     run_error = '%s: %s' % (type(e), str(e))
                     logger.append(_('Error while processing update(s): %s') % run_error)
                     logger.switch('data_pull','failed')
@@ -734,7 +732,7 @@ class Entity(osv.osv):
                     number_of_messages_ran = self.execute_message(cr, uid, context=context)
                     self._usb_change_sync_step(cr, uid, 'pull_performed')
                     logger.switch('msg_pull','ok')
-                except AttributeError, e:
+                except AttributeError as e:
                     run_error = '%s: %s' % (type(e), str(e))
                     logger.append(_('Error while processing message(s): %s') % run_error)
                     logger.switch('msg_pull','failed')

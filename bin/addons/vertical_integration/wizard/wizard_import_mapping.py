@@ -23,7 +23,7 @@ from osv import fields, osv
 from tools.translate import _
 
 import base64
-import StringIO
+import io
 import csv
 
 class wizard_import_mapping(osv.osv_memory):
@@ -50,7 +50,7 @@ class wizard_import_mapping(osv.osv_memory):
 
         for wizard in self.browse(cr, uid, ids, context=context):
             import_file = base64.decodestring(wizard.import_file)
-            import_string = StringIO.StringIO(import_file)
+            import_string = io.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
 
             if context['active_model'] == 'account.export.mapping':

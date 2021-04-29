@@ -37,7 +37,7 @@ from lxml import etree
 import subprocess
 import os
 import shutil
-import ConfigParser
+import configparser
 import codecs
 
 def get_7z():
@@ -98,7 +98,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             context={}
         if context.get('employee_import_wizard_ids', False):
             wiz_ids = context.get('employee_import_wizard_ids')
-            if isinstance(wiz_ids, (int, long)):
+            if isinstance(wiz_ids, int):
                 wiz_ids = [wiz_ids]
             line_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [('wizard_id', 'in', wiz_ids)])
             if line_ids:
@@ -130,7 +130,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         # Clean up error table
         if context.get('employee_import_wizard_ids', False):
             wiz_ids = context.get('employee_import_wizard_ids')
-            if isinstance(wiz_ids, (int, long)):
+            if isinstance(wiz_ids, int):
                 wiz_ids = [wiz_ids]
             line_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [('wizard_id', 'in', wiz_ids)])
             if line_ids:
@@ -400,7 +400,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             bqmodereglement = employee_data.get('bqmodereglement', False)
             bqnom = employee_data.get('bqnom', False)
             bqnumerocompte = employee_data.get('bqnumerocompte', False)
-        except ValueError, e:
+        except ValueError as e:
             raise osv.except_osv(_('Error'), _('The given file is probably corrupted!\n%s') % (e))
         # Process data
         uuid_field = self.pool.get('hr.employee')._columns.get('homere_uuid_key')
@@ -662,7 +662,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 if is_bom != codecs.BOM_UTF8:
                     ini_desc.close()
                     ini_desc = zipobj.open(ini_file)
-                config_parser = ConfigParser.SafeConfigParser()
+                config_parser = configparser.SafeConfigParser()
                 config_parser.readfp(ini_desc)
         else:
             tmpdir = self._extract_7z(cr, uid, filename)
@@ -691,7 +691,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 if is_bom != codecs.BOM_UTF8:
                     ini_file_desc.seek(0)
                 desc_to_close.append(ini_file_desc)
-                config_parser = ConfigParser.SafeConfigParser()
+                config_parser = configparser.SafeConfigParser()
                 config_parser.readfp(ini_file_desc)
 
         if not contract_reader:

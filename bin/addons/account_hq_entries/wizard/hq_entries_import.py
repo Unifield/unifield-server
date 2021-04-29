@@ -54,7 +54,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Seems that some line could be empty
         if line.count('') == 12:
             return False
-        for x in xrange(0,12-len(line)):
+        for x in range(0,12-len(line)):
             line.append('')
         # Prepare some values
         vals = {
@@ -63,7 +63,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         try:
             description, reference, document_date, date, account_description, third_party, booking_amount, booking_currency, \
                 destination, cost_center, funding_pool, free1, free2 = line
-        except ValueError, e:
+        except ValueError as e:
             raise osv.except_osv(_('Error'), _('Unknown format.'))
         acc_obj = self.pool.get('account.account')
         anacc_obj = self.pool.get('account.analytic.account')
@@ -76,7 +76,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
         try:
             line_date = self.parse_date(date)
-        except ValueError, e:
+        except ValueError as e:
             raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (date, e))
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
         if not period_ids:
@@ -90,7 +90,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             try:
                 dd = self.parse_date(document_date)
                 vals.update({'document_date': dd})
-            except ValueError, e:
+            except ValueError as e:
                 raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (document_date, e))
         # [utp-928]
         # Make it impossible to import HQ entries where Doc Date > Posting Date,
@@ -276,7 +276,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Verify that an HQ journal exists
@@ -326,7 +326,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             # Omit first line that contains hearders
             headers = None
             try:
-                headers = reader.next()
+                headers = next(reader)
             except StopIteration:
                 raise osv.except_osv(_('Error'), _('File is empty!'))
             line_index = 1
@@ -338,7 +338,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 try:
                     self.update_hq_entries(cr, uid, line, context=context)
                     created += 1
-                except osv.except_osv, e:
+                except osv.except_osv as e:
                     manage_error(line_index, e.value)
             fileobj.close()
 

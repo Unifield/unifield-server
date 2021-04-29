@@ -36,7 +36,7 @@ class wizard_confirm_bank(osv.osv_memory):
         if context is None:
             context = {}
         # Some verification
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not 'statement_id' in context:
             raise osv.except_osv(_('Error'), _('No register selected. Please do a bank confirmation from a bank statement!'))

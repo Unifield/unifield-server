@@ -224,8 +224,8 @@ class picking_ticket(report_sxw.rml_parse):
             if m.product_id.id not in dict_res[m.line_number]:
                 dict_res[m.line_number][m.product_id.id] = 1
 
-        for ln in dict_res.values():
-            for p in ln.values():
+        for ln in list(dict_res.values()):
+            for p in list(ln.values()):
                 res += p
 
         return res

@@ -59,7 +59,7 @@ class msf_import_export(osv.osv_memory):
         result_list = []
         if 'domain_type' in context:
             domain_type = context['domain_type']
-        for key, value in MODEL_DICT.items():
+        for key, value in list(MODEL_DICT.items()):
             if key in ['product_list_update', 'supplier_catalogue_update']:
                 continue
             if value['domain_type'] == domain_type:
@@ -108,7 +108,7 @@ class msf_import_export(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0])
@@ -383,7 +383,7 @@ class msf_import_export(osv.osv_memory):
                 rows, nb_rows = self.read_file(wiz, context=context)
                 if MODEL_DATA_DICT[selection].get('header_info'):
                     self.check_header_info(cr, uid, wiz, rows, context=context)
-                self.check_missing_columns(cr, uid, wiz, context.get('row', rows.next()), context=context)
+                self.check_missing_columns(cr, uid, wiz, context.get('row', next(rows)), context=context)
         finally:
             fileobj.close()
         return True
@@ -452,7 +452,7 @@ class msf_import_export(osv.osv_memory):
                 _("%s selected (%s) doesn't match with the one you are trying to import. Please check following header fields: %s.") % (
                     _('Product list') if wiz.model_list_selection == 'product_list_update' else _('Supplier catalogue'),
                     wiz.product_list_id.name if wiz.model_list_selection == 'product_list_update' else wiz.supplier_catalogue_id.name,
-                    ', '.join([self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in id_check[wiz.model_list_selection].keys()]).strip(' ,')
+                    ', '.join([self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in list(id_check[wiz.model_list_selection].keys())]).strip(' ,')
                 )
             )
 
@@ -529,7 +529,7 @@ class msf_import_export(osv.osv_memory):
     def import_csv(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -573,7 +573,7 @@ class msf_import_export(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.check_import(cr, uid, ids, context=context)
@@ -583,7 +583,7 @@ class msf_import_export(osv.osv_memory):
             if context.get('row'):
                 head = context.get('row')
             else:
-                head = rows.next()
+                head = next(rows)
             selection = wiz.model_list_selection
             model = MODEL_DICT[selection]['model']
 
@@ -772,7 +772,7 @@ class msf_import_export(osv.osv_memory):
             if value is None or field not in fields_def:
                 return
             if '.' not in field:
-                if fields_def[field]['type'] == 'char' and value and isinstance(value, basestring) and len(value.splitlines()) > 1 and ( field != 'name' or impobj != 'res.partner'):
+                if fields_def[field]['type'] == 'char' and value and isinstance(value, str) and len(value.splitlines()) > 1 and ( field != 'name' or impobj != 'res.partner'):
                     raise osv.except_osv(_('Warning !'), _("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field, tools.ustr(value)))
 
                 if fields_def[field]['type'] == 'selection':
@@ -859,7 +859,7 @@ class msf_import_export(osv.osv_memory):
                 for n, h in enumerate(header_codes):
                     if h in MODEL_DATA_DICT[import_brw.model_list_selection].get('ignore_field', []):
                         continue
-                    if isinstance(line_data[n], basestring):
+                    if isinstance(line_data[n], str):
                         line_data[n] = line_data[n].rstrip()
 
                     # UFTP-327
@@ -1187,7 +1187,7 @@ class msf_import_export(osv.osv_memory):
                     processed.append((row_index+1, line_data))
                     if allow_partial:
                         cr.commit()
-            except (osv.except_osv, orm.except_orm) , e:
+            except (osv.except_osv, orm.except_orm) as e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 if raise_on_error:
                     raise Exception('Line %s, %s' % (row_index+2, e.value))
@@ -1195,7 +1195,7 @@ class msf_import_export(osv.osv_memory):
                 save_error(e.value, row_index)
                 nb_error += 1
                 rejected.append((row_index+1, line_data, e.value))
-            except Exception, e:
+            except Exception as e:
                 logging.getLogger('import data').info('Error %s' % tools.ustr(e))
                 if raise_on_error:
                     raise Exception('Line %s: %s' % (row_index+2, tools.ustr(e)))
@@ -1241,12 +1241,12 @@ class msf_import_export(osv.osv_memory):
             err_msg and _('without errors') or _('imported'),
             nb_imported_lines,
             warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
-                len(import_warnings.keys()) or '',
+                len(list(import_warnings.keys())) or '',
             ),
             nb_update_success,
             nb_succes,
             nb_lines_deleted,
-            err_msg and len(import_errors.keys()) or 0,
+            err_msg and len(list(import_errors.keys())) or 0,
             err_msg and _('(see error messages below)'),
             err_msg and not allow_partial and _("no data will be imported until all the error messages are corrected") or '',
         )

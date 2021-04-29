@@ -19,4 +19,4 @@
 #
 ##############################################################################
 
-import mission_stock_wizard
+from . import mission_stock_wizard

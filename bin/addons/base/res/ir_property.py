@@ -114,7 +114,7 @@ class ir_property(osv.osv):
         if field == 'value_reference':
             if isinstance(value, osv.orm.browse_record):
                 value = '%s,%d' % (value._name, value.id)
-            elif isinstance(value, (int, long)):
+            elif isinstance(value, int):
                 field_id = values.get('fields_id')
                 if not field_id:
                     if not prop:

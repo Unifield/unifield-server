@@ -1,8 +1,8 @@
-import wizard_hq_report_ocg
-import wizard_hq_report_oca
-import ocb_export
-import ocp_export
-import ocb_matching_export
-import ocba_export
-import wizard_import_mapping
-import ocp_matching_export
+from . import wizard_hq_report_ocg
+from . import wizard_hq_report_oca
+from . import ocb_export
+from . import ocp_export
+from . import ocb_matching_export
+from . import ocba_export
+from . import wizard_import_mapping
+from . import ocp_matching_export

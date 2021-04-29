@@ -20,7 +20,7 @@
 ##############################################################################
 from report import report_sxw
 import csv
-import StringIO
+import io
 import pooler
 import locale
 import datetime
@@ -83,7 +83,7 @@ class report_budget_actual(report_sxw.report_sxw):
                                                                                general_domain + actual_domain,
                                                                                context=context)
             # and only keep the main accounts, not the destinations (new key: account id only)
-            actual_expenses = dict([(item[0], actual_expenses[item] + [sum(actual_expenses[item])]) for item in actual_expenses.keys() if item[1] is False])
+            actual_expenses = dict([(item[0], actual_expenses[item] + [sum(actual_expenses[item])]) for item in list(actual_expenses.keys()) if item[1] is False])
 
             # Get engagement expenses
             engagement_expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
@@ -92,7 +92,7 @@ class report_budget_actual(report_sxw.report_sxw):
                                                                                    general_domain + engagement_domain,
                                                                                    context=context)
             # and only keep the main accounts and the sum, not the destinations (new key: account id only)
-            engagement_expenses = dict([(item[0], sum(engagement_expenses[item])) for item in engagement_expenses.keys() if item[1] is False])
+            engagement_expenses = dict([(item[0], sum(engagement_expenses[item])) for item in list(engagement_expenses.keys()) if item[1] is False])
 
             # Get accrual expenses
             accrual_expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
@@ -101,11 +101,11 @@ class report_budget_actual(report_sxw.report_sxw):
                                                                                 general_domain + accrual_domain,
                                                                                 context=context)
             # and only keep the main accounts and the sum, not the destinations (new key: account id only)
-            accrual_expenses = dict([(item[0], sum(accrual_expenses[item])) for item in accrual_expenses.keys() if item[1] is False])
+            accrual_expenses = dict([(item[0], sum(accrual_expenses[item])) for item in list(accrual_expenses.keys()) if item[1] is False])
 
 
-            for expense_account in pool.get('account.account').browse(cr, uid, actual_expenses.keys(), context=context):
-                rounded_values = map(int, map(round, actual_expenses[expense_account.id]))
+            for expense_account in pool.get('account.account').browse(cr, uid, list(actual_expenses.keys()), context=context):
+                rounded_values = list(map(int, list(map(round, actual_expenses[expense_account.id]))))
                 # add line to result (code, name)...
                 line = [expense_account.code + " " + expense_account.name]
                 # ...monthly actual amounts and total, ...
@@ -128,7 +128,7 @@ class report_budget_actual(report_sxw.report_sxw):
         return result
 
     def _enc(self, st):
-        if isinstance(st, unicode):
+        if isinstance(st, str):
             return st.encode('utf8')
         return st
 
@@ -139,10 +139,10 @@ class report_budget_actual(report_sxw.report_sxw):
             export_data += line_data
             export_data += [[''], ['']]
 
-        output = StringIO.StringIO()
+        output = io.StringIO()
         writer = csv.writer(output, quoting=csv.QUOTE_ALL)
         for line in export_data:
-            writer.writerow(map(self._enc,line))
+            writer.writerow(list(map(self._enc,line)))
         out = output.getvalue()
         output.close()
         return (out, 'csv')

@@ -25,7 +25,7 @@ import csv
 from tools.translate import _
 import threading
 import pooler
-import lang_tools
+from . import lang_tools
 
 class msf_language_import(osv.osv_memory):
     """ Language Import """
@@ -149,7 +149,7 @@ class msf_language_import(osv.osv_memory):
                                 'src': src,
                                 })
                     cr.commit()
-                except Exception, e:
+                except Exception as e:
                     cr.rollback()
                     rejected.append(_('Line %s, system error: %s') % (line+1, e))
 
@@ -175,7 +175,7 @@ class msf_language_import(osv.osv_memory):
             cr.commit()
             cr.close(True)
 
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             self.write(cr, uid, [ids[0]], {'data': ''})
             req_id = self.pool.get('res.request').create(cr, uid, {

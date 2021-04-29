@@ -19,5 +19,5 @@
 #
 ##############################################################################
 
-from test_osv import *
-from test_translate import *
+from .test_osv import *
+from .test_translate import *

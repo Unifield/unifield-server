@@ -72,7 +72,7 @@ class account_move_line_reconcile(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         account_move_line_obj = self.pool.get('account.move.line')
@@ -114,7 +114,7 @@ class account_move_line_reconcile(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('You can only do reconciliation on Posted Entries!'))
         # Check lines for transfers cases (this permit to do transfers with more than 2 lines!)
         if len(journals) == 2:
-            keys = journals.keys()
+            keys = list(journals.keys())
             # Cross check on: "third parties" × "journals" (if YES, this is a transfer)
             if keys[0][1] == keys[1][0] and keys[0][0] == keys[1][1]:
                 transfer = True
@@ -122,7 +122,7 @@ class account_move_line_reconcile(osv.osv_memory):
             transfer_with_change = True
         # Cross check on: "journal currency" × "transfer_journal currency" (should check all error cases to avoid transfer_with_change problems)
         if transfer_with_change:
-            keys_c = currencies.keys()
+            keys_c = list(currencies.keys())
             if len(currencies) != 2 or keys_c[0][1] != keys_c[1][0] or keys_c[0][0] != keys_c[1][1]:
                 transfer_with_change = False
                 # UTP-526: Do not raise next error if line comes from the same register and have same amount
@@ -238,7 +238,7 @@ class account_move_line_reconcile(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some value
         to_reconcile = context['active_ids']
@@ -252,7 +252,7 @@ class account_move_line_reconcile(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Do partial reconciliation
         self.pool.get('account.move.line').reconcile_partial(cr, uid, context['active_ids'], 'manual', context=context)

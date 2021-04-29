@@ -201,7 +201,7 @@ class sync_rule(osv.osv):
         children_group = self._get_children_groups(cr, uid, entity, context)
 
         rules_to_send = set()
-        for group_id, rule_ids in rules_ids.items():
+        for group_id, rule_ids in list(rules_ids.items()):
             for rule in self.browse(cr, uid, rule_ids):
                 if rule.direction == 'up' and entity.parent_id: #got a parent in the same group
                     if group_id in ancestor_group:
@@ -217,7 +217,7 @@ class sync_rule(osv.osv):
     def _compute_rules_to_receive(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules_per_group(cr, uid, entity, context)
         rules_to_send = set()
-        for group_id, rule_ids in rules_ids.items():
+        for group_id, rule_ids in list(rules_ids.items()):
             rules_to_send.update(rule_ids)
 
         return list(rules_to_send)
@@ -241,14 +241,14 @@ class sync_rule(osv.osv):
         rules_data = []
         if ids:
             rules_serialization_mapping = dict(
-                sum((c._rules_serialization_mapping.items()
+                sum((list(c._rules_serialization_mapping.items())
                      for c in reversed(self.__class__.mro())
                      if hasattr(c, '_rules_serialization_mapping')), [])
             )
             for rule in self.browse(cr, uid, ids, context=context):
                 rules_data.append(dict(
                     (data, rule[column]) for column, data
-                    in rules_serialization_mapping.items()
+                    in list(rules_serialization_mapping.items())
                 ))
         return rules_data
 
@@ -290,7 +290,7 @@ class sync_rule(osv.osv):
                         # Evaluate date/datetime
                         if field['ttype'] == 'date': datetime.strptime(value, '%Y-%m-%d')
                         if field['ttype'] == 'datetime': datetime.strptime(value, '%Y-%m-%d %H:%M')
-                except Exception, e:
+                except Exception as e:
                     sync_log(self, e, 'error')
                     errors.append("%s: type %s incompatible with field of type %s" % (field['name'], type(value).__name__, field['ttype']))
                     continue
@@ -358,7 +358,7 @@ class sync_rule(osv.osv):
         rule_to_check = []
         for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields','status'], context=context):
             dirty = False
-            for k in rule_data.keys():
+            for k in list(rule_data.keys()):
                 if k in values and values[k] != rule_data[k]:
                     dirty = True
 
@@ -641,14 +641,14 @@ class message_rule(osv.osv):
         rules_data = []
         if ids:
             rules_serialization_mapping = dict(
-                sum((c._rules_serialization_mapping.items()
+                sum((list(c._rules_serialization_mapping.items())
                      for c in reversed(self.__class__.mro())
                      if hasattr(c, '_rules_serialization_mapping')), [])
             )
             for rule in self.browse(cr, uid, ids, context=context):
                 rules_data.append(dict(
                     (data, rule[column]) for column, data
-                    in rules_serialization_mapping.items()
+                    in list(rules_serialization_mapping.items())
                 ))
         return rules_data
 
@@ -678,7 +678,7 @@ class message_rule(osv.osv):
         rule_to_check = []
         for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','remote_call', 'arguments', 'destination_name', 'status'], context=context):
             dirty = False
-            for k in rule_data.keys():
+            for k in list(rule_data.keys()):
                 if k in values and values[k] != rule_data[k]:
                     dirty = True
             if dirty:
@@ -737,8 +737,8 @@ class message_rule(osv.osv):
                 field_ids = self.pool.get('ir.model.fields').search(cr, uid,
                                                                     [('model','=',rec.model_id),('name','=',rec.destination_name)],
                                                                     limit=1, order='NO_ORDER', context=context)
-                if not field_ids: raise StandardError
-            except Exception, e:
+                if not field_ids: raise Exception
+            except Exception as e:
                 sync_log(self, e, 'error')
                 message.append("failed! Field %s doesn't exist\n" % rec.destination_name)
                 error = True

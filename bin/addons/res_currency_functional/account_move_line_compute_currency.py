@@ -288,7 +288,7 @@ class account_move_line_compute_currency(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         reconciled_obj = self.pool.get('account.move.reconcile')
         al_obj = self.pool.get('account.analytic.line')
@@ -364,7 +364,7 @@ class account_move_line_compute_currency(osv.osv):
                     """
                     cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, tuple([al.id])])
                     # Update partner line
-                    if isinstance(other_line_ids, (int, long)):
+                    if isinstance(other_line_ids, int):
                         other_line_ids = [other_line_ids]
                     for o in self.pool.get('account.move.line').browse(cr, uid, other_line_ids):
                         cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple([o.id])])
@@ -656,7 +656,7 @@ class account_move_line_compute_currency(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         self.check_date(cr, uid, vals)
         # Prepare some values
@@ -685,7 +685,7 @@ class account_move_line_compute_currency(osv.osv):
             elif line.reconcile_id:
                 reconciled_move[line.reconcile_id.id] = True
         if reconciled_move and not context.get('from_remove_move_reconcile', False):  # don't update an FXA about to be reversed
-            self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)
+            self.reconciliation_update(cr, uid, list(reconciled_move.keys()), context=context)
         return res
 
     def _get_journal_move_line(self, cr, uid, ids, context=None):

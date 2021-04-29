@@ -21,18 +21,18 @@
 #
 ##############################################################################
 
-import wizard
-import partner
-import account_move_line
-import account_bank_statement
-import account_cash_statement
-import account
-import account_cheque_register
-import invoice
-import purchase
-import report
-import account_analytic_line
-import account_direct_invoice_wizard
+from . import wizard
+from . import partner
+from . import account_move_line
+from . import account_bank_statement
+from . import account_cash_statement
+from . import account
+from . import account_cheque_register
+from . import invoice
+from . import purchase
+from . import report
+from . import account_analytic_line
+from . import account_direct_invoice_wizard
 
 
 

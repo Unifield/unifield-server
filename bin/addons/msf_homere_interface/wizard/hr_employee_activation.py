@@ -39,7 +39,7 @@ class hr_employee_activation(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         employee_obj = self.pool.get('hr.employee')
         data = self.read(cr, uid, ids, ['active_status'], context=context)[0]

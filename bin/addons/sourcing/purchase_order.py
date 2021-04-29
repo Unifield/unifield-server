@@ -96,7 +96,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # get the source document name:

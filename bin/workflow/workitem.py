@@ -24,10 +24,10 @@
 # cr.execute('delete from wkf_triggers where model=%s and res_id=%s', (res_type,res_id))
 #
 
-import instance
+from . import instance
 
-import wkf_expr
-import wkf_logs
+from . import wkf_expr
+from . import wkf_logs
 
 def create(cr, act_datas, inst_id, ident, stack):
     ids = []
@@ -43,7 +43,7 @@ def create(cr, act_datas, inst_id, ident, stack):
 
 def process(cr, workitem, ident, signal=None, force_running=False, stack=None):
     if stack is None:
-        raise 'Error !!!'
+        raise Exception('Error !!!')
     result = True
     cr.execute('select * from wkf_activity where id=%s', (workitem['act_id'],))
     activity = cr.dictfetchone()
@@ -127,7 +127,7 @@ def _execute(cr, workitem, activity, ident, stack):
                 if not (id_new):
                     cr.execute('delete from wkf_workitem where id=%s', (workitem['id'],))
                     return False
-                assert type(id_new)==type(1) or type(id_new)==type(1L), 'Wrong return value: '+str(id_new)+' '+str(type(id_new))
+                assert type(id_new)==type(1) or type(id_new)==type(1), 'Wrong return value: '+str(id_new)+' '+str(type(id_new))
                 cr.execute('select id from wkf_instance where res_id=%s and wkf_id=%s', (id_new,activity['subflow_id']))
                 id_new = cr.fetchone()[0]
             else:
@@ -146,7 +146,7 @@ def _execute(cr, workitem, activity, ident, stack):
 
 def _split_test(cr, workitem, split_mode, ident, signal=None, stack=None):
     if stack is None:
-        raise 'Error !!!'
+        raise Exception('Error !!!!!')
     cr.execute('select * from wkf_transition where act_from=%s order by sequence,id', (workitem['act_id'],))
     test = False
     transitions = []

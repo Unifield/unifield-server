@@ -96,7 +96,7 @@ class export_report_inconsistencies(osv.osv):
         '''
         run the thread protected with a try except
         '''
-        if isinstance(report_ids, (int, long)):
+        if isinstance(report_ids, int):
             report_ids = [report_ids]
         logger = logging.getLogger('Product Status inconsistencies report')
         new_cr = pooler.get_db(cr.dbname).cursor()
@@ -121,7 +121,7 @@ class export_report_inconsistencies(osv.osv):
             context ={}
         attachment_obj = self.pool.get('ir.attachment')
 
-        if isinstance(report_ids, (int, long)):
+        if isinstance(report_ids, int):
             report_ids = [report_ids]
 
         # export datas :
@@ -270,7 +270,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
             )
 
             for smrl_line in smrl_results:
-                smrl = dict(zip(keys, smrl_line))
+                smrl = dict(list(zip(keys, smrl_line)))
                 product_id = smrl.pop('product_id')
                 prod_state_ud = smrl.pop('prod_state_ud')
                 prod_active = smrl.pop('prod_active')
@@ -314,7 +314,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         if not self.inconsistent:
             self.inconsistent = self.get_inconsistent_lines()
 
-        prod_ids = self.inconsistent.keys()
+        prod_ids = list(self.inconsistent.keys())
 
         # order product id by default code
         prod_obj = self.pool.get('product.product')
@@ -349,7 +349,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         '''
         Return the name of the unidata status with the given code
         '''
-        if not code or not isinstance(code, (str, unicode)):
+        if not code or not isinstance(code, str):
             return ''
         return code.capitalize().replace('_', ' ')
 

@@ -34,7 +34,7 @@ class account_fiscalyear(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         level = self.pool.get('res.users').browse(cr, uid, [uid],
@@ -165,7 +165,7 @@ class account_fiscalyear(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return False
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -212,7 +212,7 @@ class account_fiscalyear(osv.osv):
     def btn_mission_reopen(self, cr, uid, ids, context=None):
         if not ids:
             return
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
         fy_id = ids[0]
         ayec_obj = self.pool.get('account.year.end.closing')

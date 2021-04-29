@@ -79,7 +79,7 @@ class account_move_compute_currency(osv.osv):
                 sql = sql_base + ' in %s\nGROUP BY ml.id'  # not_a_user_entry
                 second = args[0][2]
                 # execute it and fetch result
-                if isinstance(second, (int, long)):
+                if isinstance(second, int):
                     second = [second]
                 cr.execute(sql, (tuple(second),))
                 res = cr.fetchall()
@@ -97,7 +97,7 @@ class account_move_compute_currency(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = super(account_move_compute_currency, self).onchange_journal_id(cr, uid, ids, journal_id, context)
         if 'value' not in res:
@@ -144,7 +144,7 @@ class account_move_compute_currency(osv.osv):
             max_sdref = ''
             max_id = 0
 
-            for id, sdref in aml_obj.get_sd_ref(cr, uid, to_sort.keys()).items():
+            for id, sdref in list(aml_obj.get_sd_ref(cr, uid, list(to_sort.keys())).items()):
                 if sdref > max_sdref:
                     max_id = id
                     max_sdref = sdref
@@ -209,7 +209,7 @@ class account_move_compute_currency(osv.osv):
                                (debit, credit, line_to_be_balanced.id))
                     if line_to_be_balanced.reconcile_id:
                         reconcile[line_to_be_balanced.reconcile_id.id] = 1
-        return reconcile.keys()
+        return list(reconcile.keys())
 
     def validate(self, cr, uid, ids, context=None):
         """

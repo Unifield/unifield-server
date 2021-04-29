@@ -19,11 +19,11 @@
 #
 ##############################################################################
 
-import ir
-import module
-import res
-import publisher_warranty
-import currency_date
+from . import ir
+from . import module
+from . import res
+from . import publisher_warranty
+from . import currency_date
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

@@ -93,7 +93,7 @@ class stock_expired_damaged_report(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         move_obj = self.pool.get('stock.move')
@@ -180,7 +180,7 @@ class stock_expired_damaged_report(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         import pooler

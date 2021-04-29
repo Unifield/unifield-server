@@ -54,7 +54,7 @@ class account_line_csv_export(osv.osv_memory):
         field_sel = self.pool.get('ir.model.fields').get_browse_selection
         back_browse = get_back_browse(self, cr, uid, context)
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not writer:
             raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
@@ -68,7 +68,7 @@ class account_line_csv_export(osv.osv_memory):
         else:
             head += [_('Output Debit'), _('Output Credit'), _('Output Currency')]
         head += [_('Reconcile'), _('State')]
-        writer.writerow(map(lambda x: x.encode('utf-8'), head))
+        writer.writerow([x.encode('utf-8') for x in head])
         # Then write lines
         account_move_line_obj = self.pool.get('account.move.line')
         len_ids = len(ids)
@@ -161,7 +161,7 @@ class account_line_csv_export(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         back_browse = get_back_browse(self, cr, uid, context)
         # Is funding pool column needed?
@@ -188,7 +188,7 @@ class account_line_csv_export(osv.osv_memory):
         else:
             head += [_('Output Amount'), _('Output Currency')]
         head+= [_('Reversal Origin'), _('Entry status')]
-        writer.writerow(map(lambda x: x.encode('utf-8'), head))
+        writer.writerow([x.encode('utf-8') for x in head])
         # Sort items
         ids.sort()
         # Then write lines
@@ -262,7 +262,7 @@ class account_line_csv_export(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not writer:
             raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
@@ -276,7 +276,7 @@ class account_line_csv_export(osv.osv_memory):
         # Prepare csv head
         head = [_('Document Date'), _('Posting Date'), _('Sequence'), _('Description'), _('Reference'), _('Account'), _('Third party'), _('Amount In'), _('Amount Out'), _('Currency'), _('Output In'), _('Output Out'), _('Output Currency')]
         head += [_('State'), _('Register Name')]
-        writer.writerow(map(lambda x: x.encode('utf-8'), head))
+        writer.writerow([x.encode('utf-8') for x in head])
         # Sort items
         ids.sort()
         # Then write lines

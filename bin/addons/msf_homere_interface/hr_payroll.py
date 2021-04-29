@@ -38,7 +38,7 @@ class hr_payroll(osv.osv):
          - if compatible with the line, then "valid"
          - all other case are "invalid"
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -161,7 +161,7 @@ class hr_payroll(osv.osv):
         return res
 
     def _get_trigger_state_ana(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         fp = [-1]
@@ -189,7 +189,7 @@ class hr_payroll(osv.osv):
         return pay_obj.search(cr, uid, [('state', '=', 'draft'), ('account_id', 'in', ids)])
 
     def _get_trigger_state_dest_link(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         to_update = []
         pay_obj = self.pool.get('hr.payroll.msf')
@@ -208,7 +208,7 @@ class hr_payroll(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for p in self.browse(cr, uid, ids, fields_to_fetch=['employee_id', 'partner_id'], context=context):

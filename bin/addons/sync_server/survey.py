@@ -89,7 +89,7 @@ class sync_server_survey(osv.osv):
                     r = requests.get(x[url])
                     if r.status_code != 200:
                         raise osv.except_osv(_('Error'), _('Unable to get %s, status code: %s') % (url, r.status_code))
-                except requests.RequestException, e:
+                except requests.RequestException as e:
                     raise osv.except_osv(_('Error'), _('Unable to get %s, error: %s') % (url, tools.ustr(e)))
         self.write(cr, uid, ids, {'activated': True}, context=context)
         return True

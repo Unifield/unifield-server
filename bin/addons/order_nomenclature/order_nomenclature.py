@@ -32,7 +32,7 @@ def _order_nomenclature_get_product_code_name(module, cr, uid, ids, fieldname, a
         'default_code': 'default_code',
         'name': 'default_name',
     }
-    if isinstance(ids, (int, long)):
+    if isinstance(ids, int):
         ids = [ids]
     for rpol in module.read(cr, uid, ids, ['product_id'], context=context):
         res[rpol['id']] = {}
@@ -40,7 +40,7 @@ def _order_nomenclature_get_product_code_name(module, cr, uid, ids, fieldname, a
             res[rpol['id']][fields[f]] = ''
         if rpol['product_id']:
             rp = module.pool.get('product.product').read(cr, uid,
-                                                         [rpol['product_id'][0]], fields.keys(), context=context)
+                                                         [rpol['product_id'][0]], list(fields.keys()), context=context)
             if rp and rp[0]:
                 for f in fields:
                     res[rpol['id']][fields[f]] = rp[0].get(f, '')
@@ -492,7 +492,7 @@ class sale_order_line(osv.osv):
         # the last selected level
         mandaDesc = ''
         levels = constants['levels']
-        ids = filter(lambda x: ('nomen_manda_%i'%x in values) and (values['nomen_manda_%i'%x]), range(levels))
+        ids = [x for x in range(levels) if ('nomen_manda_%i'%x in values) and (values['nomen_manda_%i'%x])]
         if len(ids) > 0:
             id = values['nomen_manda_%i'%max(ids)]
             mandaDesc = self.pool.get('product.nomenclature').name_get(cr, uid, [id], context)[0][1]
@@ -501,8 +501,8 @@ class sale_order_line(osv.osv):
 
         # add optional names
         sublevels = constants['sublevels']
-        ids = filter(lambda x: ('nomen_sub_%i'%x in values) and (values['nomen_sub_%i'%x]), range(sublevels))
-        ids = map(lambda x: values['nomen_sub_%i'%x], ids)
+        ids = [x for x in range(sublevels) if ('nomen_sub_%i'%x in values) and (values['nomen_sub_%i'%x])]
+        ids = [values['nomen_sub_%i'%x] for x in ids]
         subNomenclatures = self.pool.get('product.nomenclature').read(cr, uid, ids, ['name'], context=context)
 
         for n in subNomenclatures:
@@ -532,7 +532,7 @@ class sale_order_line(osv.osv):
 
 
         values = context['result']['value']
-        for k,v in values.items():
+        for k,v in list(values.items()):
             if v:
                 newRule = (k, '=', v)
                 productList.append(newRule)

@@ -64,7 +64,7 @@ class account_analytic_line(osv.osv):
             context = {}
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         sql = "UPDATE " + self._table + " SET partner_txt = %s WHERE id in %s"  # not_a_user_entry
         cr.execute(sql, (value or None, tuple(ids)))

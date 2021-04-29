@@ -44,7 +44,7 @@ class res_currency_table(osv.osv):
         if not context:
             context = {}
         # just get one table
-        if not isinstance(ids, (int, long)):
+        if not isinstance(ids, int):
             ids = ids[0]
         table = self.browse(cr, uid, ids, context=context)
         for currency in table.currency_ids:
@@ -242,7 +242,7 @@ class res_currency(osv.osv):
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         select = ids
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             select = [select]
         res = super(osv.osv, self).read(cr, user, select, fields, context, load)
         for r in res:
@@ -252,7 +252,7 @@ class res_currency(osv.osv):
                     currency_rate_obj=  self.pool.get('res.currency.rate')
                     currency_date = currency_rate_obj.read(cr,user,rates[0],['name'])['name']
                     r['date'] = currency_date
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             return res and res[0] or False
         return res
 
@@ -286,7 +286,7 @@ class res_currency(osv.osv):
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Check if Inter-section partners used one of these currencies
@@ -354,7 +354,7 @@ class res_currency(osv.osv):
         '''
         Unlink the pricelist associated to the currency
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Search for move lines with this currency. If those exists,
@@ -537,7 +537,7 @@ class res_currency(osv.osv):
         accrual_line_obj = self.pool.get('msf.accrual.line')
         keyword = _(keyword)
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])],

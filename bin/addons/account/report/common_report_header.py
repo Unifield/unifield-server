@@ -150,7 +150,7 @@ class common_report_header(object):
         return [_('All Instances')]
 
     def _get_sortby(self, data):
-        raise (_('Error'), _('Not implemented'))
+        raise _('Error')
 
     def _is_filtered(self, data):
         if data.get('form', False) and data['form'].get('filter', False) and data['form']['filter'] != 'filter_no':

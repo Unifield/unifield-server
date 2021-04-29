@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import account_period_create
-import year_end_closing
+from . import account_period_create
+from . import year_end_closing
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

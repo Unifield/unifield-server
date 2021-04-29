@@ -73,7 +73,7 @@ class change_dest_location(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         close_wiz = {'type': 'ir.actions.act_window_close'}
@@ -107,7 +107,7 @@ class change_dest_location(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         loc_obj = self.pool.get('stock.location')

@@ -46,7 +46,7 @@ class import_data(osv.osv_memory):
 
         if data.get('parent_id', False):
             n_obj = self.pool.get('product.nomenclature')
-            if isinstance(data['parent_id'], (int, long)):
+            if isinstance(data['parent_id'], int):
                 parent_ids = [data['parent_id']]
             else:
                 parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
@@ -85,7 +85,7 @@ class import_data(osv.osv_memory):
 
         paec_code = data.get('property_account_expense_categ', False)
         if paec_code:
-            if isinstance(paec_code, (str,unicode)):
+            if isinstance(paec_code, str):
                 re_res = re.findall(r'[0-9]+', paec_code)
                 if re_res:
                     paec_code = re_res[0]
@@ -101,7 +101,7 @@ class import_data(osv.osv_memory):
 
         paic_code = data.get('property_account_income_categ', False)
         if paic_code:
-            if isinstance(paic_code, (str,unicode)):
+            if isinstance(paic_code, str):
                 re_res = re.findall(r'[0-9]+', paic_code)
                 if re_res:
                     paic_code = re_res[0]
@@ -117,7 +117,7 @@ class import_data(osv.osv_memory):
 
         dea_code = data.get('donation_expense_account', False)
         if dea_code:
-            if isinstance(dea_code, (str,unicode)):
+            if isinstance(dea_code, str):
                 re_res = re.findall(r'[0-9]+', dea_code)
                 if re_res:
                     dea_code = re_res[0]
@@ -219,7 +219,7 @@ class import_data(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         processed = []
@@ -303,7 +303,7 @@ class import_data(osv.osv_memory):
         i = 0
         while reader and obj['ignore'] > i:
             i += 1
-            r = reader.next()
+            r = next(reader)
             if r and r[0].split('.')[0] in fields_def:
                 headers = r[:]
 
@@ -492,13 +492,13 @@ class import_data(osv.osv_memory):
                     nb_succes += 1
                     cr.commit()
                 processed.append((i, row))
-            except osv.except_osv, e:
+            except osv.except_osv as e:
                 logging.getLogger('import data').info('Error %s'%e.value)
                 cr.rollback()
                 error = "Line %s, row: %s, %s"%(i, n, e.value)
                 write_error_row(row, i, error)
                 nb_error += 1
-            except Exception, e:
+            except Exception as e:
                 cr.rollback()
                 logging.getLogger('import data').info('Error %s'%e)
                 error = "Line %s, row: %s, %s"%(i, n, e)

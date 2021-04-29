@@ -81,7 +81,7 @@ class purchase_order_line(osv.osv):
         return res
 
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for pol in self.read(cr, uid, ids, ['state']):
@@ -89,7 +89,7 @@ class purchase_order_line(osv.osv):
         return ret
 
     def _get_fake_id(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for pol in self.read(cr, uid, ids, ['id']):
@@ -103,7 +103,7 @@ class purchase_order_line(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}
@@ -120,7 +120,7 @@ class purchase_order_line(osv.osv):
         '''
         Return the name of the PO at project side
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = dict.fromkeys(ids, '')
@@ -138,7 +138,7 @@ class purchase_order_line(osv.osv):
         """
         Return the ID of the first FO line sourced by this PO line
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = dict.fromkeys(ids, False)
@@ -153,7 +153,7 @@ class purchase_order_line(osv.osv):
         '''
         Return the customer ref from "sale.order".client_order_ref
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -171,7 +171,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -204,7 +204,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -311,7 +311,7 @@ class purchase_order_line(osv.osv):
         return False
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for line in self.read(cr, uid, ids, ['analytic_distribution_id']):
@@ -332,7 +332,7 @@ class purchase_order_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -362,7 +362,7 @@ class purchase_order_line(osv.osv):
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         get_sel = self.pool.get('ir.model.fields').get_selection
@@ -411,7 +411,7 @@ class purchase_order_line(osv.osv):
         - product category expense account if no product_id (come from family's product category link)
         """
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -645,7 +645,7 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Do not prevent modification during synchro
@@ -695,7 +695,7 @@ class purchase_order_line(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         try:
@@ -872,7 +872,7 @@ class purchase_order_line(osv.osv):
 
         value.update({
             'name': prod_name,
-            'taxes_id': map(lambda x: x.id, prod.supplier_taxes_id),
+            'taxes_id': [x.id for x in prod.supplier_taxes_id],
             'date_planned': date_planned or dt, 'notes': notes or prod.description_purchase,
             'product_qty': qty,
             'product_uom': uom,
@@ -880,7 +880,7 @@ class purchase_order_line(osv.osv):
         res.update({'value': value})
         domain = {}
 
-        taxes = self.pool.get('account.tax').browse(cr, uid, map(lambda x: x.id, prod.supplier_taxes_id))
+        taxes = self.pool.get('account.tax').browse(cr, uid, [x.id for x in prod.supplier_taxes_id])
         fpos = fiscal_position and self.pool.get('account.fiscal.position').browse(cr, uid, fiscal_position) or False
         res['value']['taxes_id'] = self.pool.get('account.fiscal.position').map_tax(cr, uid, fpos, taxes)
 
@@ -1065,7 +1065,7 @@ class purchase_order_line(osv.osv):
         '''
         Check if there is restriction on lines
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not context:
@@ -1336,7 +1336,7 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = False
@@ -1453,7 +1453,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz_id = self.pool.get('purchase.order.line.cancel.wizard').create(cr, uid, {'pol_id': ids[0]}, context=context)
@@ -1478,7 +1478,7 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         order_ids = []
@@ -1494,7 +1494,7 @@ class purchase_order_line(osv.osv):
         res = super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 
         for pol in self.read(cr, uid, ids, ['line_number'], context=context):
-            self.infolog(cr, uid, u"The PO/RfQ line id:%s (line number: %s) has been deleted" % (
+            self.infolog(cr, uid, "The PO/RfQ line id:%s (line number: %s) has been deleted" % (
                 pol['id'], pol['name'],
             ))
 
@@ -1505,7 +1505,7 @@ class purchase_order_line(osv.osv):
         allow to cancel a PO line partially: split the line then cancel the new splitted line
         and update linked FO/IR lines if has
         '''
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1817,7 +1817,7 @@ class purchase_order_line(osv.osv):
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sol_ids = set()
@@ -1834,7 +1834,7 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wizard = self.pool.get('split.purchase.order.line.wizard')
@@ -1857,7 +1857,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
@@ -1967,7 +1967,7 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
@@ -2000,7 +2000,7 @@ class purchase_order_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Prepare some values
@@ -2098,7 +2098,7 @@ class purchase_order_line(osv.osv):
             }, context=context)
 
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
-        self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
+        self.pool.get('account.invoice').button_compute(cr, uid, list(inv_ids.values()), {'type':'in_invoice'}, set_total=True)
 
 
     def update_date_expected(self, cr, uid, source, data, context=None):

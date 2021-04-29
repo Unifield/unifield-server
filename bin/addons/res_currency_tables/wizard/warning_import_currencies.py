@@ -49,12 +49,12 @@ class warning_import_currencies(osv.osv_memory):
             line_ids = self.pool.get('warning.import.currencies.lines').search(cr, uid, [('wizard_id', '=', w_id)])
             for line in self.pool.get('warning.import.currencies.lines').browse(cr, uid, line_ids, context=context):
                 c_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', line.code), ('active', 'in', ['t', 'f'])])
-                if isinstance(c_ids, (int, long)):
+                if isinstance(c_ids, int):
                     c_ids = [c_ids]
                 if not c_ids:
                     raise osv.except_osv(_('Warning'), _('Currency %s not found!') % line.code or '')
                 c_rate_ids = self.pool.get('res.currency.rate').search(cr, uid, [('currency_id', 'in', c_ids), ('name', '=', line.wizard_id.date)], context=context)
-                if isinstance(c_rate_ids, (int, long)):
+                if isinstance(c_rate_ids, int):
                     c_rate_ids = [c_rate_ids]
                 # Prepare some values
                 rate_vals = {'name': line.wizard_id.date, 'rate': line.rate}

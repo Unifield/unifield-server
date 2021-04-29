@@ -1,4 +1,4 @@
-import version
+from . import version
 import sync_client
-import wizard
-import debugger
+from . import wizard
+from . import debugger

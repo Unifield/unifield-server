@@ -32,7 +32,7 @@ class lang(osv.osv):
     _name = "res.lang"
     _description = "Languages"
 
-    _disallowed_datetime_patterns = tools.DATETIME_FORMATS_MAP.keys()
+    _disallowed_datetime_patterns = list(tools.DATETIME_FORMATS_MAP.keys())
     _disallowed_datetime_patterns.remove('%y') # this one is in fact allowed, just not good practice
 
     def install_lang(self, cr, uid, **args):
@@ -83,7 +83,7 @@ class lang(osv.osv):
                be 100% cross-platform we map to the directives required by
                the C standard (1989 version), always available on platforms
                with a C standard implementation."""
-            for pattern, replacement in tools.DATETIME_FORMATS_MAP.iteritems():
+            for pattern, replacement in tools.DATETIME_FORMATS_MAP.items():
                 format = format.replace(pattern, replacement)
             return str(format)
 

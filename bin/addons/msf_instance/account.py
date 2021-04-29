@@ -33,7 +33,7 @@ class account_period(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             res[id] = False
@@ -130,7 +130,7 @@ class account_period(osv.osv):
         if user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.level and user.company_id.instance_id.level == 'coordo':
             # Check hq entries
             period_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')])
-            if isinstance(period_ids, (int, long)):
+            if isinstance(period_ids, int):
                 period_ids = [period_ids]
             hq_ids = self.pool.get('hq.entries').search(cr, uid, [('period_id', 'in', period_ids), ('user_validated', '=', False)])
             if hq_ids:

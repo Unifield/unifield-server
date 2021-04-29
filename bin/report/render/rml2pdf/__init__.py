@@ -19,5 +19,5 @@
 #
 ##############################################################################
 
-from trml2pdf import parseString, parseNode
+from .trml2pdf import parseString, parseNode
 

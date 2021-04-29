@@ -154,7 +154,7 @@ class reserved_products_wizard(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)

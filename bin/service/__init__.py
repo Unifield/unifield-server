@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import web_services
+from . import web_services
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

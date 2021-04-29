@@ -88,7 +88,7 @@ class account_balance_landscape(report_sxw.rml_parse):
         if perc==1:
             if form['select_account']!=False:
                 ref_ac=self.pool.get('account.account').browse(self.cr, self.uid, form['select_account'], ctx.copy())
-                if ref_ac.balance<>0.00:
+                if ref_ac.balance!=0.00:
                     ref_bal=ref_ac.balance
                 else:
                     ref_bal=1.00
@@ -141,7 +141,7 @@ class account_balance_landscape(report_sxw.rml_parse):
             if tmp:
                 accounts.append(tmp)
 
-        merged_accounts=zip(*accounts)
+        merged_accounts=list(zip(*accounts))
          # used to check for the frst record so all sum_credit and sum_debit r set to 0.00
         if level==1:
             doneAccount={}
@@ -154,7 +154,7 @@ class account_balance_landscape(report_sxw.rml_parse):
             for k in range(0,len(entry)):
                 temp_credit=0.00
                 temp_debit=0.00
-                if entry[0].type <> 'view':
+                if entry[0].type != 'view':
                     temp_credit+=entry[k].credit
                     temp_debit+=entry[k].debit
 
@@ -163,7 +163,7 @@ class account_balance_landscape(report_sxw.rml_parse):
                     self.result_total["sum_debit" + str(k)]=0.00
 
                 if form['account_choice']=='bal_zero':
-                    if temp_credit<>temp_debit:
+                    if temp_credit!=temp_debit:
                         self.result_total["sum_credit" + str(k)]+=temp_credit
                         self.result_total["sum_debit" + str(k)]+=temp_debit
                 else:
@@ -208,7 +208,7 @@ class account_balance_landscape(report_sxw.rml_parse):
         for n in range(0,len(accounts)):
             accounts[n].sort(cmp_code)
         common={}
-        merged_accounts=zip(*accounts)
+        merged_accounts=list(zip(*accounts))
 
         for entry in merged_accounts:
             j=0
@@ -230,14 +230,14 @@ class account_balance_landscape(report_sxw.rml_parse):
                 i=0
                 for i in range(0,len(entry)):
                     if bal_zero==0:
-                        if entry[i].balance<>0.0:
+                        if entry[i].balance!=0.0:
                             checked=4
                             break
                         else:
                             checked=3
                             i=i+1
                     else:
-                        if entry[i].credit <> 0.0 or entry[i].debit <> 0.0:
+                        if entry[i].credit != 0.0 or entry[i].debit != 0.0:
                             checked=4
                             break
                         else:
@@ -271,7 +271,7 @@ class account_balance_landscape(report_sxw.rml_parse):
                     else:
                         temp_cash=entry[j].balance - entry[j-1].balance
                         res["bal_cash"+str(j)]=locale.format("%.2f", temp_cash, grouping=True)
-                        if entry[j-1].balance<>0.00:
+                        if entry[j-1].balance!=0.00:
                             temp_perc=(entry[j].balance - entry[j-1].balance )*100/entry[j-1].balance
                         else:
                             temp_perc=(entry[j].balance) *100
@@ -289,12 +289,12 @@ class account_balance_landscape(report_sxw.rml_parse):
                             res["balance_perc"+str(j)]="/"
                         else:
                             if entry[j].balance==0.00:
-                                if self.baldiv["baldiv"+str(level-1)+str(j)]<>0.00:
+                                if self.baldiv["baldiv"+str(level-1)+str(j)]!=0.00:
                                     res["balance_perc"+str(j)]="0.00%"
                                 else:
                                     res["balance_perc"+str(j)]="/"
                             else:
-                                if self.baldiv["baldiv"+str(level-1)+str(j)]<>0.00:
+                                if self.baldiv["baldiv"+str(level-1)+str(j)]!=0.00:
                                     temp=self.baldiv["baldiv"+str(level-1)+str(j)]
                                     temp1=(entry[j].balance * 100 )/ float(temp)
                                     temp1=round(temp1,2)
@@ -317,7 +317,7 @@ class account_balance_landscape(report_sxw.rml_parse):
                 dir += self.lines(form, [x[1] for x in ids2], done, level+1)
                 if dir==[]:
                     for w in range(0,len(form['fiscalyear'])):
-                        if entry[w].credit <> 0.0 or entry[w].debit <> 0.0 or entry[w].balance<>0.00:
+                        if entry[w].credit != 0.0 or entry[w].debit != 0.0 or entry[w].balance!=0.00:
                             dont_pop=1
                             break
                         else:
@@ -356,7 +356,7 @@ class account_balance_landscape(report_sxw.rml_parse):
                 res['code'] = l['code']
                 res['name'] = l['name']
                 res['level'] = l['level']
-                for k,v in l.items():
+                for k,v in list(l.items()):
                     if k.startswith('debit'+str(year_dict['last_str'])):
                      res['debit'] = v
                     if k.startswith('credit'+str(year_dict['last_str'])):
@@ -379,7 +379,7 @@ class account_balance_landscape(report_sxw.rml_parse):
     def cal_total(self, year_dict):
         total_l = self.result_total
         if total_l:
-            for k,v in total_l.items():
+            for k,v in list(total_l.items()):
                 if k.startswith('sum_debit'+str(year_dict['last_str'])):
                     self.dr_total = v
                 elif k.startswith('sum_credit'+str(year_dict['last_str'])):

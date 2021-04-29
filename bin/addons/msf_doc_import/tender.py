@@ -39,7 +39,7 @@ class tender(osv.osv):
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -169,7 +169,7 @@ class tender(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context.update({'active_id': ids[0]})
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_tender_line_import]
@@ -191,7 +191,7 @@ class tender(osv.osv):
                 }
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for var in self.browse(cr, uid, ids, context=context):
             if var.tender_line_ids:
@@ -242,7 +242,7 @@ class tender_line(osv.osv):
         context = kwargs['context']
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         # we take the values that we are going to write in SO line in "to_write"
@@ -291,7 +291,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

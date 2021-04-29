@@ -96,7 +96,7 @@ class automated_import_function(osv.osv):
         """
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if vals.get('model_id') and vals.get('method_to_call'):

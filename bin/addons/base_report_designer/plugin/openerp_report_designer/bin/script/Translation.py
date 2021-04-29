@@ -48,14 +48,14 @@
 import uno
 import string
 import unohelper
-import xmlrpclib
+import xmlrpc.client
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from lib.functions import *
-    from lib.error import ErrorDialog
-    from LoginTest import *
-    from lib.rpc import *
+if __name__!="package":
+    from .lib.gui import *
+    from .lib.functions import *
+    from .lib.error import ErrorDialog
+    from .LoginTest import *
+    from .lib.rpc import *
     database="test_001"
     uid = 3
 
@@ -112,7 +112,7 @@ class AddLang(unohelper.Base, XJobExecutor ):
             text=cursor.getText()
             tcur=text.createTextCursorByRange(cursor)
 
-	    self.aVariableList.extend( filter( lambda obj: obj[:obj.find("(")] == "Objects", self.aObjectList ) )
+	    self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find("(")] == "Objects"] )
 
             for i in range(len(self.aItemList)):
 		anItem = self.aItemList[i][1]
@@ -120,13 +120,13 @@ class AddLang(unohelper.Base, XJobExecutor ):
 
                 if component == "Document":
 		    sLVal = anItem[anItem.find(",'") + 2:anItem.find("')")]
-		    self.aVariableList.extend( filter( lambda obj: obj[:obj.find("(")] == sLVal, self.aObjectList ) )
+		    self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find("(")] == sLVal] )
 
                 if tcur.TextSection:
                     getRecersiveSection(tcur.TextSection,self.aSectionList)
                     if component in self.aSectionList:
 			sLVal = anItem[anItem.find(",'") + 2:anItem.find("')")]
-			self.aVariableList.extend( filter( lambda obj: obj[:obj.find("(")] == sLVal, self.aObjectList ) )
+			self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find("(")] == sLVal] )
 
                 if tcur.TextTable:
 		    if not component == "Document" and component[component.rfind(".") + 1:] == tcur.TextTable.Name:
@@ -147,7 +147,7 @@ class AddLang(unohelper.Base, XJobExecutor ):
 		    self.model_ids = self.sock.execute(database, uid, self.password, 'ir.model' ,  'search', [('model','=',var[var.find("(")+1:var.find(")")])])
                     fields=['name','model']
                     self.model_res = self.sock.execute(database, uid, self.password, 'ir.model', 'read', self.model_ids,fields)
-                    if self.model_res <> []:
+                    if self.model_res != []:
 			self.insVariable.addItem(var[:var.find("(")+1] + self.model_res[0]['name'] + ")" ,self.insVariable.getItemCount())
                     else:
                         self.insVariable.addItem(var ,self.insVariable.getItemCount())
@@ -188,7 +188,7 @@ class AddLang(unohelper.Base, XJobExecutor ):
         doc =desktop.getCurrentComponent()
         docinfo=doc.getDocumentInfo()
         res = sock.execute(database, uid, self.password, sObject , 'fields_get')
-        key = res.keys()
+        key = list(res.keys())
         key.sort()
         myval=None
         if not sVar.find("/")==-1:
@@ -238,13 +238,13 @@ class AddLang(unohelper.Base, XJobExecutor ):
         itemSelected = self.win.getListBoxSelectedItem( "lstFields" )
         itemSelectedPos = self.win.getListBoxSelectedItemPos( "lstFields" )
         txtUName = self.win.getEditText("txtUName")
-        sKey=u""+ txtUName
+        sKey=""+ txtUName
 
         if itemSelected != "" and txtUName != "" and self.bModify==True :
             oCurObj=cursor.TextField
             sObjName=self.insVariable.getText()
             sObjName=sObjName[:sObjName.find("(")]
-            sValue=u"[[ setLang" + sObjName + self.aListFields[itemSelectedPos].replace("/",".") + ")" " ]]"
+            sValue="[[ setLang" + sObjName + self.aListFields[itemSelectedPos].replace("/",".") + ")" " ]]"
             oCurObj.Items = (sKey,sValue)
             oCurObj.update()
             self.win.endExecute()
@@ -255,7 +255,7 @@ class AddLang(unohelper.Base, XJobExecutor ):
 
             widget = ( cursor.TextTable and cursor.TextTable.getCellByName( cursor.Cell.CellName ) or doc.Text )
 
-            sValue = u"[[setLang" + "(" + sObjName + self.aListFields[itemSelectedPos].replace("/",".") +")" " ]]"
+            sValue = "[[setLang" + "(" + sObjName + self.aListFields[itemSelectedPos].replace("/",".") +")" " ]]"
             oInputList.Items = (sKey,sValue)
             widget.insertTextContent(cursor,oInputList,False)
 
@@ -267,7 +267,7 @@ class AddLang(unohelper.Base, XJobExecutor ):
         self.win.endExecute()
 
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     AddLang()
 elif __name__=="package":
     g_ImplementationHelper.addImplementation( AddLang, "org.openoffice.openerp.report.langtag", ("com.sun.star.task.Job",),)

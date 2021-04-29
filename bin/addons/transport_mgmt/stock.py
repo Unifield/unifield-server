@@ -37,7 +37,7 @@ class stock_incoterms(osv.osv):
         if not context:
             context = {}
             
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = []

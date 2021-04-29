@@ -49,14 +49,14 @@ import re
 import uno
 import string
 import unohelper
-import xmlrpclib
+import xmlrpc.client
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from Expression import Expression
-    from Fields import Fields
-    from Repeatln import RepeatIn
-    from lib.error import *
+if __name__!="package":
+    from .lib.gui import *
+    from .Expression import Expression
+    from .Fields import Fields
+    from .Repeatln import RepeatIn
+    from .lib.error import *
     database="test"
     uid = 3
 
@@ -118,9 +118,9 @@ class modify(unohelper.Base, XJobExecutor ):
         #str = "[[ RepeatIn(objects, 'variable') ]]" #repeatIn
         #str = "[[ saleorder.partner_id.name ]]" # field
         #str = "[[ some thing complex ]]" # expression
-        method1 = lambda x: (u'repeatIn', x.group(1), x.group(2))
-        method2 = lambda x: (u'field', x.group(1), None)
-        method3 = lambda x: (u'expression', x.group(1), None)
+        method1 = lambda x: ('repeatIn', x.group(1), x.group(2))
+        method2 = lambda x: ('field', x.group(1), None)
+        method3 = lambda x: ('expression', x.group(1), None)
         regexes = [
 	    ('\\[\\[ *repeatIn\\( *(.+)*, *\'([a-zA-Z0-9_]+)\' *\\) *\\]\\]', method1),
 	    ('\\[\\[ *([a-zA-Z0-9_\.]+) *\\]\\]', method2),
@@ -131,7 +131,7 @@ class modify(unohelper.Base, XJobExecutor ):
 	    if res:
 		return method(res)
 
-if __name__<>"package":
+if __name__!="package":
     modify(None)
 else:
     g_ImplementationHelper.addImplementation( modify, "org.openoffice.openerp.report.modify", ("com.sun.star.task.Job",),)

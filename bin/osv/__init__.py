@@ -19,9 +19,9 @@
 #
 ##############################################################################
 
-import osv
-import fields
-import xmlid_no_delete
+from . import osv
+from . import fields
+from . import xmlid_no_delete
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

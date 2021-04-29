@@ -61,10 +61,10 @@ class TimeScale(object):
         ccal.minimum_time_unit = 1
 
         #pad worktime slots of calendar (all days should be equally long)
-        slot_sum = lambda slots: sum(map(lambda slot: slot[1] - slot[0], slots))
+        slot_sum = lambda slots: sum([slot[1] - slot[0] for slot in slots])
         day_sum = lambda day: slot_sum(dcal.get_working_times(day))
         
-        max_work_time = max(map(day_sum, range(7)))
+        max_work_time = max(list(map(day_sum, list(range(7)))))
 
         #working_time should have 2/3
         sum_time = 3 * max_work_time / 2
@@ -74,14 +74,14 @@ class TimeScale(object):
             src_slots = dcal.get_working_times(day)
             slots = [0, src_slots, 24*60]
             slots = tuple(cbook.flatten(slots))
-            slots = zip(slots[:-1], slots[1:])
+            slots = list(zip(slots[:-1], slots[1:]))
 
             #balance non working slots
             work_time = slot_sum(src_slots)
             non_work_time = sum_time - work_time
 
-            non_slots = filter(lambda s: s not in src_slots, slots)
-            non_slots = map(lambda s: (s[1] - s[0], s), non_slots)
+            non_slots = [s for s in slots if s not in src_slots]
+            non_slots = [(s[1] - s[0], s) for s in non_slots]
             non_slots.sort()
 
             slots = []
@@ -97,11 +97,11 @@ class TimeScale(object):
             slots.sort()
             return slots
 
-        min_delta = sys.maxint
+        min_delta = sys.maxsize
         for i in range(7):
             slots = create_time_slots(i)
             ccal.working_times[i] = slots
-            min_delta = min(min_delta, min(map(lambda s: s[1] - s[0], slots)))
+            min_delta = min(min_delta, min([s[1] - s[0] for s in slots]))
 
         ccal._recalc_working_time()
 

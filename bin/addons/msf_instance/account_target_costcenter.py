@@ -32,7 +32,7 @@ class account_target_costcenter(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for target_cc in self.browse(cr, uid, ids, fields_to_fetch=['cost_center_id'], context=context):
@@ -45,7 +45,7 @@ class account_target_costcenter(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(analytic_acc_ids, (int, long)):
+        if isinstance(analytic_acc_ids, int):
             analytic_acc_ids = [analytic_acc_ids]
         return self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', 'in', analytic_acc_ids)],
                                                                  order='NO_ORDER', context=context)
@@ -141,7 +141,7 @@ class account_target_costcenter(osv.osv):
         return res_id
 
     def unlink(self, cr, uid, ids, context={}):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # delete lines in instance's children
         lines_to_delete_ids = self.search(cr, uid, [('parent_id', 'in', ids)], context=context)

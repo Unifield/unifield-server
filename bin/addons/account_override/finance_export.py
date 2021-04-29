@@ -24,7 +24,7 @@
 from osv import osv
 from tools.translate import _
 import csv
-from cStringIO import StringIO
+from io import StringIO
 import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
@@ -74,7 +74,7 @@ class finance_archive():
         if not line:
             return []
         for element in line:
-            if type(element) == unicode:
+            if type(element) == str:
                 newline.append(element.encode('utf-8'))
             else:
                 newline.append(element)
@@ -91,7 +91,7 @@ class finance_archive():
             return line
         # Create a list of all elements from line except those given in columns
         newline = []
-        for element in sorted([x for x in xrange(len(line)) if x not in columns]):
+        for element in sorted([x for x in range(len(line)) if x not in columns]):
             newline.append(line[element])
         return newline
 
@@ -127,7 +127,7 @@ class finance_archive():
         is_list = False
         if not ids or not model:
             return ''
-        if not isinstance(ids, (str, unicode, list)):
+        if not isinstance(ids, (str, list)):
             return ''
         if isinstance(ids, list):
             is_list = True
@@ -237,7 +237,7 @@ class finance_archive():
                     update_request = 'UPDATE ' + tablename + ' SET exported=\'t\' WHERE id in %s'  # not_a_user_entry
                     try:
                         cr.execute(update_request, (tuple(ids),))
-                    except Exception, e:
+                    except Exception as e:
                         raise osv.except_osv(_('Error'), _('An error occurred: %s') % (e.message and e.message or '',))
             without_headers = []
             # Check if a function is given. If yes, use it.

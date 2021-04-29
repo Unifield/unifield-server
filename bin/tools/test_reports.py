@@ -114,7 +114,7 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
         :param our_module: the name of the calling module (string), like 'account'
     """
 
-    if not our_module and isinstance(action_id, basestring):
+    if not our_module and isinstance(action_id, str):
         if '.' in action_id:
             our_module = action_id.split('.', 1)[0]
 
@@ -142,7 +142,7 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
     if not wiz_buttons:
         wiz_buttons = []
 
-    if isinstance(action_id, basestring):
+    if isinstance(action_id, str):
         if '.' in action_id:
             act_module, act_xmlid = action_id.split('.', 1)
         else:
@@ -152,7 +152,7 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
             act_xmlid = action_id
         act_model, act_id = pool.get('ir.model.data').get_object_reference(cr, uid, act_module, act_xmlid)
     else:
-        assert isinstance(action_id, (long, int))
+        assert isinstance(action_id, int)
         act_model = 'ir.action.act_window'     # assume that
         act_id = action_id
         act_xmlid = '<%s>' % act_id
@@ -189,15 +189,15 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
             view_res = pool.get(datas['res_model']).fields_view_get(cr, uid, view_id, action['view_type'], context)
             assert view_res and view_res.get('arch'), "Did not return any arch for the view"
             view_data = {}
-            if view_res.get('fields',{}).keys():
-                view_data = pool.get(datas['res_model']).default_get(cr, uid, view_res['fields'].keys(), context)
+            if list(view_res.get('fields',{}).keys()):
+                view_data = pool.get(datas['res_model']).default_get(cr, uid, list(view_res['fields'].keys()), context)
             if datas.get('form'):
                 view_data.update(datas.get('form'))
             if wiz_data:
                 view_data.update(wiz_data)
             log.debug("View data is: %r", view_data)
 
-            for fk, field in view_res.get('fields',{}).items():
+            for fk, field in list(view_res.get('fields',{}).items()):
                 # Default fields returns list of int, while at create()
                 # we need to send a [(6,0,[int,..])]
                 if field['type'] in ('one2many', 'many2many') \
@@ -236,7 +236,7 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
                                 'type': button.getAttribute('type'),
                                 'weight': button_weight,
                                 })
-            except Exception, e:
+            except Exception as e:
                 log.warning("Cannot resolve the view arch and locate the buttons!", exc_info=True)
                 raise AssertionError(e.args[0])
 

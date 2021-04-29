@@ -79,7 +79,7 @@ class purchase_order_group(osv.osv_memory):
         if not allorders:
             raise osv.except_osv(_('Error'), _('No PO merged !'))
         return {
-            'domain': "[('id','in', [" + ','.join(map(str, allorders.keys())) + "])]",
+            'domain': "[('id','in', [" + ','.join(map(str, list(allorders.keys()))) + "])]",
             'name': 'Purchase Orders',
             'view_type': 'form',
             'view_mode': 'tree,form',

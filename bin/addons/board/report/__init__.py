@@ -1,1 +1,1 @@
-import integrity_finance
+from . import integrity_finance

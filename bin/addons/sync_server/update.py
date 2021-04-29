@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from __future__ import with_statement
+
 
 from osv import orm, osv
 from osv import fields
@@ -549,7 +549,7 @@ class update(osv.osv):
 
         while not ids or packet_size < max_size:
             cr.execute(base_query, (offset[0], offset[1], max_size))
-            ids = map(lambda x:x[0], cr.fetchall())
+            ids = [x[0] for x in cr.fetchall()]
             if not ids:
                 break
             for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
@@ -620,8 +620,8 @@ class update(osv.osv):
                     'type' : 'import',
                 })
                 for update in update_to_send:
-                    values = dict(zip(complete_fields[:len(update.values)], eval(update.values)) + \
-                                  forced_values.items())
+                    values = dict(list(zip(complete_fields[:len(update.values)], eval(update.values))) + \
+                                  list(forced_values.items()))
                     data['load'].append({
                         'sdref' : update.sdref,
                         'version' : update.version,
@@ -634,7 +634,7 @@ class update(osv.osv):
             data_packages.append(data)
 
         # Just shorten the log into one line
-        self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, sum(map(lambda x : len(x.get('unload', [])) + len(x.get('load', [])), data_packages))))
+        self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, sum([len(x.get('unload', [])) + len(x.get('load', [])) for x in data_packages])))
         return data_packages
 
 
@@ -644,12 +644,12 @@ class update(osv.osv):
         if forced_values:
             fields += list(set(forced_values.keys()) - set(fields))
             obj = self.pool.get(update.model)
-            inherit_fields = [(item[0], item[1][2]) for item in obj._inherit_fields.items()]
+            inherit_fields = [(item[0], item[1][2]) for item in list(obj._inherit_fields.items())]
             columns = dict(inherit_fields + \
-                           obj._columns.items())
-            for k, v in forced_values.items():
+                           list(obj._columns.items()))
+            for k, v in list(forced_values.items()):
                 if columns[k]._type == 'boolean':
-                    forced_values[k] = unicode(v)
+                    forced_values[k] = str(v)
         return fields, forced_values
 
 update()

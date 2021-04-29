@@ -19,12 +19,12 @@
 #
 ##############################################################################
 
-import substitute
-import confirm
-import kit_selection
-import kit_selection_sale
-import modify_expiry_date
-import process_to_consume
-import assign_to_kit
-import split_move
-import kit_mass_import
+from . import substitute
+from . import confirm
+from . import kit_selection
+from . import kit_selection_sale
+from . import modify_expiry_date
+from . import process_to_consume
+from . import assign_to_kit
+from . import split_move
+from . import kit_mass_import

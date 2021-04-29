@@ -155,7 +155,7 @@ class account_move_line(osv.osv):
 
     def default_get(self, cr, uid, fields, context=None):
         data = self._default_get(cr, uid, fields, context=context)
-        for f in data.keys():
+        for f in list(data.keys()):
             if f not in fields:
                 del data[f]
         return data
@@ -186,9 +186,9 @@ class account_move_line(osv.osv):
 
     def _default_get_move_form_hook(self, cursor, user, data):
         '''Called in the end of default_get method for manual entry in account_move form'''
-        if data.has_key('analytic_account_id'):
+        if 'analytic_account_id' in data:
             del(data['analytic_account_id'])
-        if data.has_key('account_tax_id'):
+        if 'account_tax_id' in data:
             del(data['account_tax_id'])
         return data
 
@@ -230,7 +230,7 @@ class account_move_line(osv.osv):
                 else:
                     line_record_detail = line_record[2]
                 total_new += (line_record_detail['debit'] or 0.00)- (line_record_detail['credit'] or 0.00)
-                for item in line_record_detail.keys():
+                for item in list(line_record_detail.keys()):
                     data[item] = line_record_detail[item]
             if context['journal']:
                 journal_data = journal_obj.browse(cr, uid, context['journal'], context=context)
@@ -344,7 +344,7 @@ class account_move_line(osv.osv):
         if not id:
             return []
         ml = self.browse(cr, uid, id, context=context)
-        return map(lambda x: x.id, ml.move_id.line_id)
+        return [x.id for x in ml.move_id.line_id]
 
     def _balance(self, cr, uid, ids, name, arg, context=None):
         if context is None:
@@ -380,7 +380,7 @@ class account_move_line(osv.osv):
         invoice_names = {False: ''}
         for invoice_id, name in invoice_obj.name_get(cursor, 1, invoice_ids, context=context):
             invoice_names[invoice_id] = name
-        for line_id in res.keys():
+        for line_id in list(res.keys()):
             invoice_id = res[line_id]
             res[line_id] = (invoice_id, invoice_names[invoice_id])
         return res
@@ -414,7 +414,7 @@ class account_move_line(osv.osv):
             context = {}
         if not args:
             return []
-        where = ' AND '.join(map(lambda x: '(abs(sum(debit-credit))'+x[1]+str(x[2])+')',args))
+        where = ' AND '.join(['(abs(sum(debit-credit))'+x[1]+str(x[2])+')' for x in args])
         cursor.execute('SELECT id, SUM(debit-credit) FROM account_move_line \
                         GROUP BY id, debit, credit having '+where)  # not_a_user_entry
         res = cursor.fetchall()
@@ -434,7 +434,7 @@ class account_move_line(osv.osv):
                                                               [(fargs[1], args[i][1], args[i][2])]))
                 i += 1
                 continue
-            if isinstance(args[i][2], basestring):
+            if isinstance(args[i][2], str):
                 res_ids = invoice_obj.name_search(cursor, user, args[i][2], [],
                                                   args[i][1])
                 args[i] = (args[i][0], 'in', [x[0] for x in res_ids])
@@ -476,7 +476,7 @@ class account_move_line(osv.osv):
         return result
 
     def _get_line_account_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id']):
@@ -493,7 +493,7 @@ class account_move_line(osv.osv):
         """
         Informs for each move line if a reconciliation or a partial reconciliation have been made. Else return False.
         """
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
@@ -834,9 +834,9 @@ class account_move_line(osv.osv):
         if not move_ids:
             return True
         recs = obj_move_line.read(cr, uid, move_ids, ['reconcile_id', 'reconcile_partial_id'])
-        full_recs = filter(lambda x: x['reconcile_id'], recs)
+        full_recs = [x for x in recs if x['reconcile_id']]
         rec_ids = [rec['reconcile_id'][0] for rec in full_recs]
-        part_recs = filter(lambda x: x['reconcile_partial_id'], recs)
+        part_recs = [x for x in recs if x['reconcile_partial_id']]
         part_rec_ids = [rec['reconcile_partial_id'][0] for rec in part_recs]
         unlink_ids += rec_ids
         unlink_ids += part_rec_ids
@@ -878,14 +878,14 @@ class account_move_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not context.get('sync_update_execution'):
             return self._update_check(cr, uid, ids, context)
         # When coming from sync, deletion should be less restrictive.
         for l in self.browse(cr, uid, ids):
-            if l.move_id.state <> 'draft' and l.state <> 'draft' and (not l.journal_id.entry_posted) \
+            if l.move_id.state != 'draft' and l.state != 'draft' and (not l.journal_id.entry_posted) \
                     and context.get('sync_update_session') != l.move_id.posted_sync_sequence:
                 raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
             if l.reconcile_id:
@@ -913,7 +913,7 @@ class account_move_line(osv.osv):
         journal_obj = self.pool.get('account.journal')
         period_obj = self.pool.get('account.period')
         journal_id = False
-        if 'date' in vals.keys():
+        if 'date' in list(vals.keys()):
             if 'journal_id' in vals and 'journal_id' not in context:
                 journal_id = vals['journal_id']
             if 'period_id' in vals and 'period_id' not in context:
@@ -1029,7 +1029,7 @@ class account_move_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.period_id and line.period_id.is_system:
                 continue  # US-822 bypass checks below for period 0/16
-            if line.move_id.state <> 'draft' and (not line.journal_id.entry_posted):
+            if line.move_id.state != 'draft' and (not line.journal_id.entry_posted):
                 raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
             if line.reconcile_id:
                 raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
@@ -1048,7 +1048,7 @@ class account_move_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         too_big_amount = 10**10
         if context.get('from_web_menu') or context.get('from_je_import') or context.get('from_invoice_move_creation'):
@@ -1245,7 +1245,7 @@ class account_move_line(osv.osv):
         if entry_seqs:
             account_move_ids = am_obj.search(cr, uid, [('name', 'in', entry_seqs)], order='NO_ORDER', context=context) or []
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             selected_amls = self.browse(cr, uid, ids, fields_to_fetch=['move_id'], context=context)
             for selected_aml in selected_amls:
@@ -1292,7 +1292,7 @@ class account_move_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         active_ids = context.get('active_ids', [])  # to detect if the user has selected several JIs
         if len(ids) != 1 or len(active_ids) > 1:

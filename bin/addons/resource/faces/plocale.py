@@ -38,7 +38,7 @@ def _get_translation():
                 path = os.path.join(path, "locale")
 
             return gettext.translation("faces", path)
-        except Exception, e:
+        except Exception as e:
             return None
 
 def get_gettext():

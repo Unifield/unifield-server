@@ -38,7 +38,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 _HEADER_TYPE = {type('char'): 'string',
                 type(1): 'number',
                 type(1.00): 'number',
-                type(long(1)): 'number',
+                type(int(1)): 'number',
                 type(now()): 'datetime'}
 
 class supplier_catalogue(osv.osv):
@@ -206,7 +206,7 @@ class supplier_catalogue(osv.osv):
         return res
 
     def unlink(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -344,7 +344,7 @@ class supplier_catalogue(osv.osv):
         '''
         Confirm the catalogue and all lines
         '''
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
         line_obj = self.pool.get('supplier.catalogue.line')
 
         line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)],
@@ -391,7 +391,7 @@ class supplier_catalogue(osv.osv):
         '''
         Reset to draft the catalogue
         '''
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
         #line_obj = self.pool.get('supplier.catalogue.line')
         ir_model = self.pool.get('ir.model')
         supplinfo_obj = self.pool.get('product.supplierinfo')
@@ -510,7 +510,7 @@ class supplier_catalogue(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for r in self.read(cr, uid, ids, ['partner_id'],
                            context=context):
@@ -576,7 +576,7 @@ class supplier_catalogue(osv.osv):
         '''
         Opens all lines of this catalogue
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -603,7 +603,7 @@ class supplier_catalogue(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return {'type': 'ir.actions.act_window',
@@ -673,7 +673,7 @@ class supplier_catalogue(osv.osv):
             # take all the lines of the file in a list of dict
             file_values = wiz_common_import.get_file_values(cr, uid, ids, rows, False, error_list, False, context)
 
-            reader.next()
+            next(reader)
             line_num = 1
             for row in reader:
                 error_list_line = []
@@ -786,7 +786,7 @@ class supplier_catalogue(osv.osv):
 
                 if error_list_line:
                     error_list_line.insert(0, _('Line %s of the file was exported in the file of the lines not imported:') % (line_num,))
-                    data = file_values[line_num].items()
+                    data = list(file_values[line_num].items())
                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                     ignore_lines += 1
                     line_num += 1
@@ -801,7 +801,7 @@ class supplier_catalogue(osv.osv):
                 ]
                 catalog_line_id = obj_catalog_line.search(cr, uid, criteria, context=context)
                 if catalog_line_id:
-                    if isinstance(catalog_line_id, (int, long)):
+                    if isinstance(catalog_line_id, int):
                         catalog_line_id = [catalog_line_id]
                     # update product in catalog only if any modification
                     # and only modified fields (for sync)
@@ -862,7 +862,7 @@ class supplier_catalogue(osv.osv):
         return self.write(cr, uid, ids, vals, context=context)
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         message = ''
         plural= ''
@@ -900,7 +900,7 @@ class supplier_catalogue(osv.osv):
                     user_ids = users_obj.search(cr, uid, [('id','=', uid)],
                                                 context=context)
                     if user_ids:
-                        if isinstance(user_ids, (int, long)):
+                        if isinstance(user_ids, int):
                             user_ids = [user_ids]
                         users = users_obj.browse(cr, uid, user_ids,
                                                  context=context)
@@ -1099,7 +1099,7 @@ class supplier_catalogue_line(osv.osv):
         Remove the pricelist line on product supplier information tab
         If the product supplier information has no line, remove it
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
@@ -1138,7 +1138,7 @@ class supplier_catalogue_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not context.get('noraise'):

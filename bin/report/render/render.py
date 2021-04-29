@@ -77,13 +77,13 @@ class render(object):
 
 if __name__=='__main__':
     import time
-    print 'Multi-thread code !'
+    print('Multi-thread code !')
     r = render()
     r.render()
     while not r.is_done():
-        print 'not yet!'
+        print('not yet!')
         time.sleep(1)
-    print 'done!'
+    print('done!')
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

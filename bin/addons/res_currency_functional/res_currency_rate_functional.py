@@ -72,7 +72,7 @@ class res_currency_rate_functional(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Engagement lines object
         eng_obj = self.pool.get('account.analytic.line')
@@ -109,7 +109,7 @@ class res_currency_rate_functional(osv.osv):
         """
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

@@ -43,7 +43,7 @@ class wizard_register_opening_confirmation(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         reg_obj = self.pool.get('account.bank.statement')
         wiz = self.browse(cr, uid, ids[0], context=context)

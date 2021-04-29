@@ -41,7 +41,7 @@ class account_bank_statement_line(osv.osv):
         # Prepare some value
         res = {}
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return nothing if no 'output_currency_id' in context
         if not context or not context.get('output_currency_id', False):

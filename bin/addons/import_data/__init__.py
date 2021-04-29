@@ -1,2 +1,2 @@
-import import_data
-import res_partner
+from . import import_data
+from . import res_partner

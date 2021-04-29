@@ -428,7 +428,7 @@ def compute_uom_value(cr, uid, **kwargs):
             else:
                 uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
     # if the cell is empty
-    except IndexError, e:
+    except IndexError as e:
         error_list.append(_('The UOM Name was empty. (Details: %s)') % e)
         if default_code:
             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id

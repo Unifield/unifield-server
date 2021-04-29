@@ -80,7 +80,7 @@ class invoice(report_sxw.rml_parse):
             pf_done[pf.ident].moves.extend(self._get_moves(pl))
             pf_done[pf.ident].total += self._get_total(pl)
 
-        return sorted(pf_done.values(), key=lambda pf: pf.ident)
+        return sorted(list(pf_done.values()), key=lambda pf: pf.ident)
 
 
     def _get_invoice_ref(self, pl):

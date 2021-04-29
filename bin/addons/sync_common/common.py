@@ -171,7 +171,7 @@ WHITE_LIST_MODEL = [
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']
-OC_LIST_TUPLE = zip([x.lower() for x in OC_LIST], OC_LIST)
+OC_LIST_TUPLE = list(zip([x.lower() for x in OC_LIST], OC_LIST))
 
 def xmlid_to_sdref(xmlid):
     if not xmlid: return None
@@ -219,10 +219,10 @@ def fancy_integer(self, cr, uid, ids, name, arg, context=None):
     assert re_match is not None, "Invalid field detection for fancy integer display"
     target_field = re_match.group(1)
     res = self.read(cr, uid, ids, [target_field], context=context)
-    return dict(zip(
+    return dict(list(zip(
         (rec['id'] for rec in res),
         (rec[target_field] or '' for rec in res),
-    ))
+    )))
 
 
 

@@ -2,7 +2,7 @@
 
 import tools
 import base64
-import cStringIO
+import io
 import pooler
 from osv import fields,osv
 from tools.translate import _
@@ -10,7 +10,7 @@ from tools.misc import get_iso_codes
 import threading
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import logging
-import lang_tools
+from . import lang_tools
 
 class base_language_export(osv.osv_memory):
     _inherit = "base.language.export"
@@ -62,7 +62,7 @@ class base_language_export(osv.osv_memory):
 
             this = self.browse(cr, uid, ids)[0]
             if this.modules:
-                modules = map(lambda m: m.name, this.modules)
+                modules = [m.name for m in this.modules]
                 modules.sort()
 
             if this.lang:
@@ -85,7 +85,7 @@ class base_language_export(osv.osv_memory):
                             row.setdefault('tnrs', []).append('%s:%s:%s' % (type, name, res_id))
 
                         trans_data = []
-                        for (src, trad, type), row in grouped_rows.items():
+                        for (src, trad, type), row in list(grouped_rows.items()):
                             for splited in self.split_xlscell(row['tnrs']):
                                 trans_data.append([src, trad, type, '\n'.join(splited)])
                         xml = SpreadsheetCreator(title=this.name, headers=headers, datas=trans_data)
@@ -98,7 +98,7 @@ class base_language_export(osv.osv_memory):
 
                     out = base64.encodestring(xml.get_xml(default_filters=['decode.utf8']))
             else:
-                buf=cStringIO.StringIO()
+                buf=io.StringIO()
                 tools.trans_export(this.lang, modules, buf, this.format, cr, ignore_name=ignore_name, only_translated_terms=this.only_translated_terms)
                 out = base64.encodestring(buf.getvalue())
                 buf.close()
@@ -129,7 +129,7 @@ class base_language_export(osv.osv_memory):
             })
             cr.commit()
             cr.close(True)
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             req_id = self.pool.get('res.request').create(cr, uid, {
                 'name': _('Export translation failed'),
@@ -218,7 +218,7 @@ class base_language_import(osv.osv_memory):
 
             cr.commit()
             cr.close(True)
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             self.write(cr, uid, [ids[0]], {'data': ''})
             req_id = self.pool.get('res.request').create(cr, uid, {
@@ -270,7 +270,7 @@ class res_lang(osv.osv):
             modobj = self.pool.get('ir.module.module')
             mids = modobj.search(cr, uid, [('state', '=', 'installed')])
             modobj.update_translations(cr, uid, mids, code, context=context)
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             self.pool.get('res.request').create(cr, uid, {
                 'name': _('Failed to install new language %s') % code,

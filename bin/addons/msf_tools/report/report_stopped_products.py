@@ -119,7 +119,7 @@ class export_report_stopped_products(osv.osv):
         if context is None:
             context ={}
 
-        if isinstance(report_ids, (int, long)):
+        if isinstance(report_ids, int):
             report_ids = [report_ids]
 
         import pooler

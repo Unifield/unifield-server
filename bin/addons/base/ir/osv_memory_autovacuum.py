@@ -34,7 +34,7 @@ class osv_memory_autovacuum(osv.osv_memory):
             if isinstance(obj, orm_memory):
                 try:
                     obj.vaccum(cr, uid, force=True)
-                except Exception, e:
+                except Exception as e:
                     logger.error('Error: %s' % misc.get_traceback(e))
         return True
 

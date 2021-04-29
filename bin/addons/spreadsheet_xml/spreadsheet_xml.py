@@ -72,8 +72,8 @@ class SpreadsheetRow(SpreadsheetTools):
     def __iter__(self):
         return self
 
-    def next(self):
-        return SpreadsheetRow(self.node.next())
+    def __next__(self):
+        return SpreadsheetRow(next(self.node))
 
     def len(self):
         """
@@ -102,12 +102,12 @@ class SpreadsheetRow(SpreadsheetTools):
                 index += 1
             else:
                 currindex = int(currindex)
-                for i in xrange(index+1, currindex):
+                for i in range(index+1, currindex):
                     yield SpreadsheetCell()
                 index = currindex
             merged =  self.get(cell, 'MergeAcross', 0)
             yield SpreadsheetCell(cell)
-            for i in xrange(0, int(merged)):
+            for i in range(0, int(merged)):
                 yield SpreadsheetCell()
 
     def gen_cell_list(self):
@@ -136,7 +136,7 @@ class SpreadsheetXML(SpreadsheetTools):
                 if context.get('from_je_import') or context.get('from_regline_import'):
                     # replace any invalid xml 1.0 &#x; where x<32 by a special code
                     for line in fileinput.input(xmlfile, inplace=1):
-                        print re.sub('&#([0-9]|[0-2][0-9]|3[01]);', '%s_\\1' % SPECIAL_CHAR, line)
+                        print(re.sub('&#([0-9]|[0-2][0-9]|3[01]);', '%s_\\1' % SPECIAL_CHAR, line))
 
                 self.xmlobj = etree.parse(xmlfile)
             else:
@@ -162,7 +162,7 @@ class SpreadsheetXML(SpreadsheetTools):
         return SpreadsheetRow(table[0].iter('{%s}Row' % self.defaultns))
 
     def enc(self, s):
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             return s.encode('utf8')
         return s
 
@@ -186,14 +186,14 @@ if __name__=='__main__':
     spreadML = SpreadsheetXML('/mnt/Tempo/TestJFB/test_dates.xml')
     spreadML.getWorksheets()
     # Iterates through all sheets
-    for ws_number in xrange(1, len(spreadML.getWorksheets())):
+    for ws_number in range(1, len(spreadML.getWorksheets())):
         rows = spreadML.getRows(ws_number)
         # ignore the 1st row
-        rows.next()
+        next(rows)
         for row in rows:
             # number of cells: row.len()
             # cells can be retrieve like a list: row.cells[0] or like an iterator:
             for cell in row.iter_cells():
-                print "%s |"%cell.data,
-            print
-            print "-"*4
+                print("%s |"%cell.data, end=' ')
+            print()
+            print("-"*4)

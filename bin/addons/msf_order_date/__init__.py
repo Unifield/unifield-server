@@ -22,5 +22,5 @@
 TRANSPORT_TYPE = [('',''), ('express','Express'), ('hand','Hand carry'), ('sea', 'Sea'), ('air', 'Air'), ('road', 'Road'),] #[('flight', 'By Flight'), ('road', 'By Road'), ('boat', 'By Boat')]
 ZONE_SELECTION = [('national','National'),('international','International')]
 
-import order_dates
-import wizard
+from . import order_dates
+from . import wizard

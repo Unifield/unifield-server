@@ -207,7 +207,7 @@ except ImportError:
         ...
         ValueError: malformed or disallowed expression
         """
-        if isinstance(node_or_string, basestring):
+        if isinstance(node_or_string, str):
             node_or_string = parse(node_or_string)
         if isinstance(node_or_string, ast.Expression):
             node_or_string = node_or_string.body

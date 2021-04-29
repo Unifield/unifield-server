@@ -180,7 +180,7 @@ class stock_location(osv.osv):
         currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         currency_obj = self.pool.get('res.currency')
         currency = currency_obj.browse(cr, uid, currency_id, context=context)
-        for loc_id, product_ids in products_by_location.items():
+        for loc_id, product_ids in list(products_by_location.items()):
             if prod_id:
                 product_ids = [prod_id]
             c = (context or {}).copy()
@@ -286,7 +286,7 @@ class stock_location(osv.osv):
 
     def _search_from_config(self, cr, uid, obj, name, args, context=None):
         for arg in args:
-            if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+            if arg[1] != '=' or not isinstance(arg[2], int):
                 raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
 
             retrict = []
@@ -428,7 +428,7 @@ class stock_location(osv.osv):
         for id in ids:
             quantity_total = 0.0
             total_price = 0.0
-            for uom_id in products_by_uom.keys():
+            for uom_id in list(products_by_uom.keys()):
                 fnc = self._product_get
                 if recursive:
                     fnc = self._product_all_get
@@ -436,7 +436,7 @@ class stock_location(osv.osv):
                 ctx['uom'] = uom_id
                 qty = fnc(cr, uid, id, [x.id for x in products_by_uom[uom_id]],
                           context=ctx)
-                for product_id in qty.keys():
+                for product_id in list(qty.keys()):
                     if not qty[product_id]:
                         continue
                     product = products_by_id[product_id]
@@ -694,7 +694,7 @@ class stock_picking(osv.osv):
         """
         if not value:
             return False
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for pick in self.read(cr, uid, ids,['max_date'], context=context):
             sql_str = """update stock_move set
@@ -717,7 +717,7 @@ class stock_picking(osv.osv):
         """
         if not value:
             return False
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for pick in self.read(cr, uid, ids, ['min_date'], context=context):
             sql_str = """update stock_move set
@@ -778,7 +778,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -810,7 +810,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -975,7 +975,7 @@ class stock_picking(osv.osv):
         """ Confirms picking.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self.write(cr, uid, ids, {'state': 'confirmed'})
         todo = []
@@ -1001,7 +1001,7 @@ class stock_picking(osv.osv):
         """ Changes state of picking to available if all moves are confirmed.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1019,7 +1019,7 @@ class stock_picking(osv.osv):
         """ Changes state of picking to available if moves are confirmed or waiting.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
@@ -1040,7 +1040,7 @@ class stock_picking(osv.osv):
         """ Confirms picking directly from draft state.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         for pick in self.read(cr, uid, ids, ['move_lines']):
@@ -1054,7 +1054,7 @@ class stock_picking(osv.osv):
         """ Validates picking directly from draft state.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
@@ -1069,7 +1069,7 @@ class stock_picking(osv.osv):
         """ Cancels picking and moves.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
@@ -1094,7 +1094,7 @@ class stock_picking(osv.osv):
         """ Tests whether the move is in done or cancel state or not.
         @return: True or False
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         move_obj = self.pool.get('stock.move')
         move_to_write = []
@@ -1117,7 +1117,7 @@ class stock_picking(osv.osv):
         """ Tests whether the move is in assigned state or not.
         @return: True or False
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ok = True
         for pick in self.browse(cr, uid, ids):
@@ -1135,7 +1135,7 @@ class stock_picking(osv.osv):
         Changes picking state to cancel.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1156,7 +1156,7 @@ class stock_picking(osv.osv):
         """ Changes picking state to done.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for sp in self.browse(cr, uid, ids, fields_to_fetch=['type', 'physical_reception_date']):
@@ -1174,7 +1174,7 @@ class stock_picking(osv.osv):
         """ Changes move state to assigned.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids, context=context):
@@ -1252,7 +1252,7 @@ class stock_picking(osv.osv):
                 taxes
             )
         else:
-            return map(lambda x: x.id, taxes)
+            return [x.id for x in taxes]
 
     def _get_account_analytic_invoice(self, cr, uid, picking, move_line):
         return False
@@ -1366,7 +1366,7 @@ class stock_picking(osv.osv):
             account_id = partner.property_account_payable.id
 
         address_contact_id, address_invoice_id = \
-            self._get_address_invoice(cr, uid, picking).values()
+            list(self._get_address_invoice(cr, uid, picking).values())
         if not address_contact_id:
             raise osv.except_osv(
                 _('Error'),
@@ -1606,7 +1606,7 @@ class stock_picking(osv.osv):
                     price_unit = sale_line.price_unit
                     discount = sale_line.discount
                     tax_ids = sale_line.tax_id
-                    tax_ids = map(lambda x: x.id, tax_ids)
+                    tax_ids = [x.id for x in tax_ids]
 
                     account_analytic_id = self._get_account_analytic_invoice(cr, uid, picking, sale_line)
 
@@ -1679,7 +1679,7 @@ class stock_picking(osv.osv):
         """ Test whether the move lines are done or not.
         @return: True or False
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ok = False
 
@@ -1704,14 +1704,14 @@ class stock_picking(osv.osv):
         """ Test whether the move lines are canceled or not.
         @return: True or False
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if self.pool.get('stock.move').search_exist(cr, uid, [('picking_id', 'in', ids), ('state', '!=', 'cancel')]):
             return False
         return True
 
     def allow_cancel(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for pick in self.browse(cr, uid, ids, context=context):
             if not pick.move_lines:
@@ -1723,7 +1723,7 @@ class stock_picking(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         move_obj = self.pool.get('stock.move')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1786,7 +1786,7 @@ class stock_picking(osv.osv):
         @param ids: List of Picking Ids
         @param context: A standard dictionary for contextual values
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1903,7 +1903,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'delivered'}, context=context)

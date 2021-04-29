@@ -112,7 +112,7 @@ class user_access_configurator(osv.osv_memory):
         '''
         return do not change groups
         '''
-        group_immunity_list = [u'Useability / No One', u'Useability / Multi Companies']
+        group_immunity_list = ['Useability / No One', 'Useability / Multi Companies']
         return group_immunity_list
 
     def _get_DNCGL_ids(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -126,7 +126,7 @@ class user_access_configurator(osv.osv_memory):
         '''
         return immunity groups
         '''
-        group_immunity_list = [u'Administration / Access Rights']
+        group_immunity_list = ['Administration / Access Rights']
         # CNCGL names are temporarily added as non active groups are considered to be part of no groups, and therefore always displayed?
 #        group_immunity_list.extend(self._get_DNCGL_name(cr, uid, ids, context=context))
 
@@ -161,7 +161,7 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         data_obj = self.pool.get('ir.model.data')
@@ -281,7 +281,7 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -327,7 +327,7 @@ class user_access_configurator(osv.osv_memory):
                         new_level = file_level_dict[db_group_name]
                         if new_level and new_level.lower() not in LEVEL_SELECTION:
                             raise osv.except_osv(_('Error'),
-                                                 _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (new_level, ', '.join([x.upper() for x in LEVEL_SELECTION.keys()]), '%s$%s' % (db_group_name, new_level)))
+                                                 _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (new_level, ', '.join([x.upper() for x in list(LEVEL_SELECTION.keys())]), '%s$%s' % (db_group_name, new_level)))
                         new_level = new_level and LEVEL_SELECTION[new_level.lower()] or False
                         if level != new_level:
                             # the level change
@@ -339,11 +339,11 @@ class user_access_configurator(osv.osv_memory):
                     deactivate_group_names.append(db_group_name)
 
             # create the new groups from the file
-            for group, level in file_level_dict.items():
+            for group, level in list(file_level_dict.items()):
                 if group not in db_group_names:
                     if level and level.lower() not in LEVEL_SELECTION:
                         raise osv.except_osv(_('Error'),
-                                             _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (level, ', '.join([x.upper() for x in LEVEL_SELECTION.keys()]), '%s$%s' % (group, level)))
+                                             _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (level, ', '.join([x.upper() for x in list(LEVEL_SELECTION.keys())]), '%s$%s' % (group, level)))
                     level = level and LEVEL_SELECTION[level.lower()] or False
                     group_obj.create(cr, uid,
                                      {'name': group,
@@ -364,7 +364,7 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -414,7 +414,7 @@ class user_access_configurator(osv.osv_memory):
                         groups_to_write.setdefault(gp_id, [])
                         groups_to_write[gp_id].append(db_menu_id)
             grp_ids = groups_obj.search(cr, uid, [], context=context)
-            all_menu_in_file = data_structure[obj.id]['menus_groups'].keys()
+            all_menu_in_file = list(data_structure[obj.id]['menus_groups'].keys())
 
             # keep in group menu not listed in the file
             for group in groups_obj.browse(cr, uid, grp_ids):
@@ -489,7 +489,7 @@ class user_access_configurator(osv.osv_memory):
         }
         # create lines for theses models with deletion of existing ACL
         # [(0, 0, {'field_name':field_value_record1, ...}), (0, 0, {'field_name':field_value_record2, ...})]
-        model_obj.write(cr, uid, two_lines_ids.keys(), {'access_ids' : [(0, 0, acl_admin_values), (0, 0, acl_read_values)]}, context=context)
+        model_obj.write(cr, uid, list(two_lines_ids.keys()), {'access_ids' : [(0, 0, acl_admin_values), (0, 0, acl_read_values)]}, context=context)
 
         return True
 
@@ -515,7 +515,7 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # we need to take inactive groups and users into acount, in order to reactivate them and avoid creation of the same group multiple time
@@ -554,7 +554,7 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         data_structure = self._do_process_uac(cr, uid, ids, context=context)
@@ -677,7 +677,7 @@ class user_access_results_groups_line(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}
@@ -772,7 +772,7 @@ class res_groups(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if 'visible_res_groups' in vals and not vals['visible_res_groups']:
@@ -876,7 +876,7 @@ class res_users(osv.osv):
         if not ids:
             return res
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             res[id] = False
@@ -939,7 +939,7 @@ class ir_model_access(osv.osv):
             return False
         # if the group belongs to group not to display, we return False
         # we check module *and* group name
-        if grouparr[1] in never_displayed_groups.keys() and grouparr[0] == never_displayed_groups[grouparr[1]]:
+        if grouparr[1] in list(never_displayed_groups.keys()) and grouparr[0] == never_displayed_groups[grouparr[1]]:
             return False
         return True
 
@@ -950,7 +950,7 @@ class ir_values(osv.osv):
     _name = 'ir.values'
 
     def delete_default(self, cr, uid, ids, model, field, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         is_admin = self.pool.get('res.users').get_admin_profile(cr, uid, context)
         dom = [('id', 'in', ids), ('key', '=', 'default'), ('model', '=', model), ('name', '=', field)]
@@ -1021,7 +1021,7 @@ class board_board(osv.osv):
         from lxml import etree
 
         def encode(s):
-            if isinstance(s, unicode):
+            if isinstance(s, str):
                 return s.encode('utf8')
             return s
 

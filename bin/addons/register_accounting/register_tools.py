@@ -297,7 +297,7 @@ def previous_register_is_closed(self, cr, uid, ids, context=None):
     """
     if not context:
         context = {}
-    if isinstance(ids, (int, long)):
+    if isinstance(ids, int):
         ids = [ids]
     # Verify that the previous register is closed
     for reg in self.pool.get('account.bank.statement').browse(cr, uid, ids, context=context):
@@ -319,7 +319,7 @@ def totally_or_partial_reconciled(self, cr, uid, ids, context=None):
     # Verifications
     if not context:
         context = {}
-    if isinstance(ids, (int, long)):
+    if isinstance(ids, int):
         ids = [ids]
     # Prepare some variables
     absl_obj = self.pool.get('account.bank.statement.line')
@@ -337,7 +337,7 @@ def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None
     """
     Create account_cashbox_lines from the current registers (register_ids) to the next register (to be defined)
     """
-    if isinstance(register_ids, (int, long)):
+    if isinstance(register_ids, int):
         register_ids = [register_ids]
     st_obj = self.pool.get('account.bank.statement')
     for st in st_obj.browse(cr, uid, register_ids, context=context):

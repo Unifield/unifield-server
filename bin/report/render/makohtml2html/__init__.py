@@ -19,4 +19,4 @@
 #
 ##############################################################################
 
-from makohtml2html import parseNode
+from .makohtml2html import parseNode

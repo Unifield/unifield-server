@@ -21,7 +21,7 @@
 
 import time
 import csv
-import StringIO
+import io
 import pooler
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
@@ -31,7 +31,7 @@ class report_open_advances(report_sxw.report_sxw):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def _enc(self, st):
-        if isinstance(st, unicode):
+        if isinstance(st, str):
             return st.encode('utf8')
         return st
 
@@ -67,10 +67,10 @@ class report_open_advances(report_sxw.report_sxw):
         cr.execute(sql_open_advances, (time.strftime('%Y-%m-%d'),))
         res = header + cr.fetchall()
 
-        b = StringIO.StringIO()
+        b = io.StringIO()
         writer = csv.writer(b, quoting=csv.QUOTE_ALL)
         for line in res:
-            writer.writerow(map(self._enc,line))
+            writer.writerow(list(map(self._enc,line)))
         out = b.getvalue()
         b.close()
         return (out, 'csv')

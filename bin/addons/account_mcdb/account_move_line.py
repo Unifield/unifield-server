@@ -65,7 +65,7 @@ class account_move_line(osv.osv):
         # Prepare some value
         res = {}
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

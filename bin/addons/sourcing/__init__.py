@@ -19,15 +19,15 @@
 #
 ##############################################################################
 
-import related_sourcing
-import sale_order_line
-import wizard
+from . import related_sourcing
+from . import sale_order_line
+from . import wizard
 
-import product_supplierinfo
-import product_template
-import purchase_order
-import res_partner
-import sale_order
-import po_automation_config
+from . import product_supplierinfo
+from . import product_template
+from . import purchase_order
+from . import res_partner
+from . import sale_order
+from . import po_automation_config
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

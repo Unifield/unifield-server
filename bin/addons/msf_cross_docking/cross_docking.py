@@ -62,7 +62,7 @@ class purchase_order(osv.osv):
         @param cross_docking_ok: Changed value of cross_docking_ok.
         @return: Dictionary of values.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         warning = {}
@@ -93,7 +93,7 @@ class purchase_order(osv.osv):
         @param location_id: Changed value of location_id.
         @return: Dictionary of values.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         stock_loc_obj = self.pool.get('stock.location')
         res = {}
@@ -130,7 +130,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         setup = setup_obj.get_config(cr, uid)
@@ -201,7 +201,7 @@ class purchase_order(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         stock_loc_obj = self.pool.get('stock.location')
         if 'order_type' in vals and vals['order_type'] == 'direct':
@@ -226,7 +226,7 @@ class purchase_order(osv.osv):
         """
         Check that if you select cross docking, you do not have an other location than cross docking
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -300,7 +300,7 @@ class stock_picking(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         move_obj = self.pool.get('stock.move')
 
@@ -321,7 +321,7 @@ class stock_picking(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
@@ -359,7 +359,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
@@ -405,7 +405,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
         osv_memory object used for the wizard of deliveries.
         For outgoing shipment
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # variable parameters
         move = kwargs.get('move')

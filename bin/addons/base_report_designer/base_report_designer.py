@@ -20,8 +20,8 @@
 ##############################################################################
 
 from osv import osv
-from openerp_sxw2rml import sxw2rml
-from StringIO import StringIO
+from .openerp_sxw2rml import sxw2rml
+from io import StringIO
 import base64
 import pooler
 import addons

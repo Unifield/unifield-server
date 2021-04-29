@@ -21,9 +21,9 @@
 #
 ##############################################################################
 
-import invoice
-import analytic_distribution
-import stock
-import sale
+from . import invoice
+from . import analytic_distribution
+from . import stock
+from . import sale
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

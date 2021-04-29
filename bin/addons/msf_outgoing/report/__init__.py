@@ -19,14 +19,14 @@
 #
 ##############################################################################
 
-import pro_forma_invoice
-import invoice
-import certificate_donation
-import certificate_free_gift
-import stock_picking_test
-import picking_ticket
-import packing_list
-import labels
-import cargo_manifest
-import pre_packing_excel_report
-import freight_manifest
+from . import pro_forma_invoice
+from . import invoice
+from . import certificate_donation
+from . import certificate_free_gift
+from . import stock_picking_test
+from . import picking_ticket
+from . import packing_list
+from . import labels
+from . import cargo_manifest
+from . import pre_packing_excel_report
+from . import freight_manifest

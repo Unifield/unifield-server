@@ -30,7 +30,7 @@ class wizard_compare_rfq(osv.osv_memory):
     _description = 'Compare Quotations'
 
     def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -66,7 +66,7 @@ class wizard_compare_rfq(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if field_name == 'fnct_supplier_id':
@@ -185,7 +185,7 @@ class wizard_compare_rfq(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for tender in t_obj.browse(cr, uid, ids, context=context):
@@ -238,7 +238,7 @@ class wizard_compare_rfq(osv.osv_memory):
 
             context.update({'tender_id': tender.id})
 
-            for line in line_dict.itervalues():
+            for line in line_dict.values():
                 line_vals = line.copy()
                 line_vals['compare_id'] = cmp_id
                 wcrl_obj.create(cr, uid, line_vals, context=context)
@@ -279,7 +279,7 @@ class wizard_compare_rfq(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -349,7 +349,7 @@ class wizard_compare_rfq(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         t_id = False    # Tender ID

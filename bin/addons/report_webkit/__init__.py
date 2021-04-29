@@ -29,9 +29,9 @@
 #
 ##############################################################################
 
-import header
-import company
-import report_helper
-import webkit_report
-import ir_report
-import wizard
+from . import header
+from . import company
+from . import report_helper
+from . import webkit_report
+from . import ir_report
+from . import wizard

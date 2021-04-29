@@ -390,7 +390,7 @@ class update_received(osv.osv,fv_formatter):
 
         # store 1st not run message
         if log:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             cr.execute("""update sync_client_update_received set log_first_notrun=%s
                 where id in %s and
@@ -455,7 +455,7 @@ class update_received(osv.osv,fv_formatter):
     def run(self, cr, uid, ids, context=None):
         try:
             self.execute_update(cr, uid, ids, context=context)
-        except BaseException, e:
+        except BaseException as e:
             sync_log(self, e)
         finally:
             self.write(cr, uid, ids, {'manually_ran': True})
@@ -499,7 +499,7 @@ class update_received(osv.osv,fv_formatter):
                 cr.commit_org, cr.commit = cr.commit, lambda:None
                 cr.execute("SAVEPOINT import_data")
                 res = obj.import_data(cr, uid, fields, values, mode='update', current_module='sd', noupdate=True, context=context)
-            except BaseException, e:
+            except BaseException as e:
                 cr.execute("ROLLBACK TO SAVEPOINT import_data")
                 self._logger.exception("import failure")
                 raise Exception(tools.ustr(e))
@@ -540,7 +540,7 @@ class update_received(osv.osv,fv_formatter):
                 # write only for ids not in log as another write is performed
                 # for those in logs. This avoid two writes on the same object
                 ids_not_in_logs = list(set(update_ids) - set(logs.keys()))
-                ids_in_logs = list(set(update_ids).intersection(logs.keys()))
+                ids_in_logs = list(set(update_ids).intersection(list(logs.keys())))
                 execution_date = datetime.now()
                 if ids_not_in_logs:
                     self.write(cr, uid, ids_not_in_logs, {
@@ -557,7 +557,7 @@ class update_received(osv.osv,fv_formatter):
                         'log' : logs[update_id],
                     }, context=context)
                 logs.clear()
-                for sdref, version in versions.items():
+                for sdref, version in list(versions.items()):
                     try:
                         self.pool.get('ir.model.data').update_sd_ref(
                             cr, uid, sdref,
@@ -608,7 +608,7 @@ class update_received(osv.osv,fv_formatter):
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
                 if result['res']: #US-852: if everything is Ok, then do import as normal
-                    if obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(zip(import_fields, row)), update.sdref, context=context):
+                    if obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(list(zip(import_fields, row))), update.sdref, context=context):
                         self.write(cr, uid, update.id, {
                             'run': True,
                             'editable': False,
@@ -639,7 +639,7 @@ class update_received(osv.osv,fv_formatter):
             while values:
                 try:
                     res = secure_import_data(obj, import_fields, values)
-                except Exception, import_error:
+                except Exception as import_error:
                     import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, tools.ustr(import_error), "\n".join([tools.ustr(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
                     self._set_not_run(cr, uid, update_ids,
@@ -660,7 +660,7 @@ class update_received(osv.osv,fv_formatter):
                     if line_error:
                         # Extract the failed data
                         value_index, import_message = int(line_error.group(1))-1, line_error.group(2)
-                        data = dict(zip(import_fields, values[value_index]))
+                        data = dict(list(zip(import_fields, values[value_index])))
                         if "('warning', 'Warning !')" == import_message:
                             import_message = "Unknown! Please check the constraints of linked models. The use of raise Python's keyword in constraints typically give this message."
                         import_message = "Cannot import in model %s:\nData: %s\nReason: %s\n" % (obj._name, data, import_message)
@@ -685,7 +685,7 @@ class update_received(osv.osv,fv_formatter):
                         try:
                             res = secure_import_data(obj, import_fields, values[:value_index])
                             assert res[0] == value_index, res[2]
-                        except Exception, import_error:
+                        except Exception as import_error:
                             raise Exception(message+import_error.message)
                         success( update_ids[:value_index], \
                                  dict(versions[:value_index]) )
@@ -709,13 +709,13 @@ class update_received(osv.osv,fv_formatter):
             return message
 
         def group_unlink_update_execution(obj, sdref_update_ids):
-            obj_ids = obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), context=context)
+            obj_ids = obj.find_sd_ref(cr, uid, list(sdref_update_ids.keys()), context=context)
             done_ids = []
-            for sdref, id in obj_ids.items():
+            for sdref, id in list(obj_ids.items()):
                 try:
                     update_id = sdref_update_ids[sdref]
                     secure_unlink_data(obj, [id])
-                except BaseException, e:
+                except BaseException as e:
                     if isinstance(e, osv.except_osv):
                         error = '%s: %s' % (e.name, e.value)
                     else:
@@ -757,7 +757,7 @@ class update_received(osv.osv,fv_formatter):
 
         error_message = ""
         imported, deleted = 0, 0
-        rule_seq_list = update_groups.keys()
+        rule_seq_list = list(update_groups.keys())
         rule_seq_list.sort()
         for rule_seq in rule_seq_list:
             updates = update_groups[rule_seq]
@@ -784,13 +784,13 @@ class update_received(osv.osv,fv_formatter):
             #   value is False in order to keep it for group execution
             # - For delete updates, if sdref doesn't exists, the initial value
             #   is True in order to keep ignore it from group deletion
-            sdref_are_deleted = dict.fromkeys(sdref_update_ids.keys(), do_deletion)
+            sdref_are_deleted = dict.fromkeys(list(sdref_update_ids.keys()), do_deletion)
             sdref_are_deleted.update(
-                obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), field='is_deleted', context=context) )
+                obj.find_sd_ref(cr, uid, list(sdref_update_ids.keys()), field='is_deleted', context=context) )
             update_id_are_deleted = {}
             for key in sdref_update_ids:
                 update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
-            deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
+            deleted_update_ids = [update_id for update_id, is_deleted in list(update_id_are_deleted.items()) if is_deleted]
 
 
             if deleted_update_ids:
@@ -831,8 +831,8 @@ class update_received(osv.osv,fv_formatter):
                         'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
                     }, context=context)
 
-            updates = filter(lambda update: update.id not in deleted_update_ids or
-                             (not do_deletion and update.force_recreation), updates)
+            updates = [update for update in updates if update.id not in deleted_update_ids or
+                             (not do_deletion and update.force_recreation)]
 
             if not updates:
                 continue
@@ -845,19 +845,15 @@ class update_received(osv.osv,fv_formatter):
                     for field in eval(updates[0].fields)
                 ]
                 sdref_res_id = obj.find_sd_ref(cr, uid,
-                                               sdref_update_ids.keys(),
+                                               list(sdref_update_ids.keys()),
                                                context=context)
                 confilcting_ids = obj.need_to_push(cr, uid,
-                                                   sdref_res_id.values(), import_fields, context=context)
-                confilcting_updates = filter(
-                    lambda update: update.handle_priority and \
+                                                   list(sdref_res_id.values()), import_fields, context=context)
+                confilcting_updates = [update for update in updates if update.handle_priority and \
                     update.sdref in sdref_res_id and \
-                    sdref_res_id[update.sdref] in confilcting_ids,
-                    updates)
-                updates_to_ignore = filter(
-                    lambda update: priorities[update.source] \
-                    > priorities[local_entity.name],
-                    confilcting_updates)
+                    sdref_res_id[update.sdref] in confilcting_ids]
+                updates_to_ignore = [update for update in confilcting_updates if priorities[update.source] \
+                    > priorities[local_entity.name]]
                 for update in confilcting_updates:
                     if update not in updates_to_ignore:
                         self._logger.warn(
@@ -881,9 +877,7 @@ class update_received(osv.osv,fv_formatter):
                                    % (update.source, local_entity.name),
                                },
                                context=context)
-                    updates = filter(
-                        lambda update: update not in updates_to_ignore,
-                        updates)
+                    updates = [update for update in updates if update not in updates_to_ignore]
             # Proceed
             if not updates:
                 continue
@@ -948,11 +942,11 @@ class update_received(osv.osv,fv_formatter):
             assert sep, "Cannot find an xmlid without specifying its module: xmlid=%s" % module
             return not ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context)
 
-        for i, field, value in zip(range(len(fields)), fields, values):
+        for i, field, value in zip(list(range(len(fields))), fields, values):
             # replace English by MSF English for the updates on partners where English had been selected at some point
             # (so that the initial synchro on new instances isn't blocked)
             if update.model == 'res.partner' and field == 'lang' and value == 'en_US':
-                values[i] = u'en_MF'
+                values[i] = 'en_MF'
             if '/id' not in field: continue
             if not value: continue
             res_val = []
@@ -1006,7 +1000,7 @@ class update_received(osv.osv,fv_formatter):
                         elif check_xmlid(fb):
                             raise ValueError("fallback value %s has been deleted" \
                                              % fb)
-                    except ValueError, e:
+                    except ValueError as e:
                         message += 'Missing record %s and %s, set to False\n' \
                                    % (xmlid, e)
                     else:
@@ -1035,14 +1029,14 @@ class update_link(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context.get('active_ids'):
             ids = context.get('active_ids')
 
         model = context.get('model')
-        if model and isinstance(model, basestring):
+        if model and isinstance(model, str):
             ir_model_obj = self.pool.get('ir.model.data')
             ir_model_data_ids = ir_model_obj.search(cr, uid, [('module', '=', 'sd'),
                                                               ('model', '=', model),

@@ -27,9 +27,9 @@ import time
 from report.interface import report_int
 from report.render import render
 
-import stock_graph
+from . import stock_graph
 import pooler
-import StringIO
+import io
 
 class external_pdf(render):
     def __init__(self, pdf):
@@ -101,7 +101,7 @@ class report_stock(report_int):
         dt = dt_from
         qty = 0
 
-        io = StringIO.StringIO()
+        io = io.StringIO()
         gt = stock_graph.stock_graph(io)
         for prod_id in products:
             gt.add(prod_id, names.get(prod_id, 'Unknown'), products[prod_id])

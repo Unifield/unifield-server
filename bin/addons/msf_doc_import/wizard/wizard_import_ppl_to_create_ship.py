@@ -40,7 +40,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         '''
         res = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -203,9 +203,9 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     break
             self._check_main_header_data(header_data, picking, context)
             # ignore the lines headers
-            current_row = rows.next()
+            current_row = next(rows)
             if not current_row.cells:
-                rows.next()
+                next(rows)
             line_num = 0
             total_line_num = len([row for row in file_obj.getRows()])
             percent_completed = 0
@@ -228,7 +228,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 line_errors = []
 
                 col_count = len(row)
-                template_col_count = len(header_index.items())
+                template_col_count = len(list(header_index.items()))
                 if col_count != template_col_count:
                     message += _(
                         """Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (
@@ -546,7 +546,7 @@ Otherwise, you can continue to use Unifield.""")
         """
         This button is only for updating the view.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         pick_obj = self.pool.get('stock.picking')
         for wiz_read in self.read(cr, uid, ids, ['picking_id', 'state', 'file']):
@@ -563,7 +563,7 @@ Otherwise, you can continue to use Unifield.""")
         Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
         I come back on the home page. Here, I come back on the object on which I opened the wizard.
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz_obj in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_obj.picking_id

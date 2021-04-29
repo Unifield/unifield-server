@@ -30,7 +30,7 @@ class account_report_general_ledger(osv.osv_memory):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             res[id] = False
@@ -163,7 +163,7 @@ class account_report_general_ledger(osv.osv_memory):
     def _print_report(self, cr, uid, ids, data, context=None):
         if not ids:
             return
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

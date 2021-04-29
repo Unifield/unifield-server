@@ -25,7 +25,7 @@ class DuplicateKey(KeyError):
 
 class RejectingDict(dict):
     def __setitem__(self, k, v):
-        if k in self.keys():
+        if k in list(self.keys()):
             raise DuplicateKey(self, k, v)
         else:
             return super(RejectingDict, self).__setitem__(k, v)
@@ -46,7 +46,7 @@ def orm_method_overload(fn):
     """
     Wrapper method to override orm.orm classic methods
     """
-    original_method = getattr(orm.orm, fn.func_name)
+    original_method = getattr(orm.orm, fn.__name__)
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
         if self.pool.get(extended_orm._name) is not None:
@@ -69,7 +69,7 @@ class extended_orm_methods:
         def recur_get_model(model, res):
             ids = self.pool.get('ir.model').search(cr, uid, [('model','=',model._name)])
             res.extend(ids)
-            for parent in model._inherits.keys():
+            for parent in list(model._inherits.keys()):
                 recur_get_model(self.pool.get(parent), res)
             return res
         return recur_get_model(self, [])
@@ -106,7 +106,7 @@ class extended_orm_methods:
         """
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable: ids = [ids]
-        ids = filter(None, ids)
+        ids = [_f for _f in ids if _f]
         if not empty_ids and not ids: return ids if result_iterable else False
 
         sql_params = [self._name]
@@ -179,9 +179,9 @@ SELECT res_id, touched
         try:
             result = RejectingDict((data.res_id, get_fields(data))
                                    for data in model_data_obj.browse(cr, uid, sdref_ids, fields_to_fetch=fields_to_fetch))
-        except DuplicateKey, e:
+        except DuplicateKey as e:
             raise Exception("Duplicate definition of 'sd' xml_id: %d@ir.model.data" % e.key)
-        missing_ids = filter(lambda id:id and not id in result, ids)
+        missing_ids = [id for id in ids if id and not id in result]
         if missing_ids:
             xmlids = dict(
                 (data.res_id, "%(module)s_%(name)s" % data)
@@ -314,9 +314,9 @@ SELECT res_id, touched
 
         # read current values
         if previous_values is not None:
-            whole_fields = previous_values[0].keys()
+            whole_fields = list(previous_values[0].keys())
         elif current_values is not None:
-            whole_fields = current_values.values()[0].keys()
+            whole_fields = list(current_values.values())[0].keys()
         else:
             whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write]
         try:
@@ -331,15 +331,15 @@ SELECT res_id, touched
         # touch things
         if previous_values is None:
             touch(
-                self.get_sd_ref(cr, uid, ids, field='id',
-                                context=context).values(),
+                list(self.get_sd_ref(cr, uid, ids, field='id',
+                                context=context).values()),
                 whole_fields+['id'])
             # handle one2many
             o2m_fields = filter_o2m(whole_fields)
 
             # handle one2many (because orm don't call write() on them)
             for field, column in o2m_fields:
-                for next_rec in current_values.values():
+                for next_rec in list(current_values.values()):
                     if column._obj == self._name:
                         continue
                     if self._name in write_skip_o2m and field in write_skip_o2m[self._name]:
@@ -356,14 +356,12 @@ SELECT res_id, touched
             # check that the previous_values provided is correct
             assert set(ids) == set(previous_values.keys()), \
                 "Missing previous values: %s got, %s expected" \
-                % (previous_values.keys(), ids)
-            for res_id, (data_id, touched) in self.get_sd_ref(cr, uid, ids, \
-                                                              field=['id','touched'], context=context).items():
+                % (list(previous_values.keys()), ids)
+            for res_id, (data_id, touched) in list(self.get_sd_ref(cr, uid, ids, \
+                                                              field=['id','touched'], context=context).items()):
                 prev_rec, next_rec = \
                     previous_values[res_id], current_values[res_id]
-                modified = set(filter(
-                    lambda field: next_rec[field] != prev_rec[field],
-                    whole_fields))
+                modified = set([field for field in whole_fields if next_rec[field] != prev_rec[field]])
                 if modified:
                     touch([data_id], list(
                         modified.union(eval(touched) if touched else [])
@@ -429,7 +427,7 @@ SELECT res_id, touched
 
     def clear_synchronization(self, cr, uid, ids, context=None):
         data_ids = self.get_sd_ref(cr, uid, ids, field='id', context=context)
-        return self.pool.get('ir.model.data').write(cr, uid, data_ids.values(),
+        return self.pool.get('ir.model.data').write(cr, uid, list(data_ids.values()),
                                                     {'force_recreation':False,'touched':False}, context=context)
 
     def find_sd_ref(self, cr, uid, sdrefs, field=None, context=None):
@@ -448,7 +446,7 @@ SELECT res_id, touched
         result_iterable = hasattr(sdrefs, '__iter__')
         if not result_iterable: sdrefs = (sdrefs,)
         elif not isinstance(sdrefs, tuple): sdrefs = tuple(sdrefs)
-        sdrefs = filter(None, sdrefs)
+        sdrefs = [_f for _f in sdrefs if _f]
         if not sdrefs: return {} if result_iterable else False
         if field is None:
             field = 'id' if self._name == 'ir.model.data' else 'res_id'
@@ -461,13 +459,13 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND name IN %%s""" % fiel
 SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name IN %%s""" % field, [self._name,sdrefs])  # not_a_user_entry
         try:
             result = RejectingDict(cr.fetchall())
-        except DuplicateKey, e:
+        except DuplicateKey as e:
             # Should never happen if called on other object than ir.model.data
             raise Exception("Duplicate definition of 'sd' xml_id: %d@ir.model.data" % e.key)
         if field != real_field:
-            read_result = self.pool.get('ir.model.data').read(cr, uid, result.values(), [real_field], context=context)
+            read_result = self.pool.get('ir.model.data').read(cr, uid, list(result.values()), [real_field], context=context)
             read_result = dict((x['id'], x) for x in read_result)
-            result = dict((sdref, read_result[id][real_field]) for sdref, id in result.items())
+            result = dict((sdref, read_result[id][real_field]) for sdref, id in list(result.items()))
         return result if result_iterable else result.get(sdrefs[0], False)
 
     @orm_method_overload
@@ -487,7 +485,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
              not context.get('sync_update_creation')))
 
         if audit_rule_ids or to_be_synchronized or hasattr(self, 'on_create'):
-            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values.keys()+funct_field, context=context))
+            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], list(values.keys())+funct_field, context=context))
 
         if audit_rule_ids:
             audit_obj.audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)
@@ -527,12 +525,12 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
         if to_be_synchronized or hasattr(self, 'on_change') or audit_rule_ids:
             # FIXME: add fields.function for track changes
-            previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
+            previous_values = self.read(cr, uid, ids, list(values.keys())+funct_field, context=context)
 
         result = original_write(self, cr, uid, ids, values,context=context)
         current_values = dict((x['id'], x) for x in self.read(
-            cr, uid, isinstance(ids, (int, long)) and [ids] or ids,
-            values.keys()+funct_field, context=context)
+            cr, uid, isinstance(ids, int) and [ids] or ids,
+            list(values.keys())+funct_field, context=context)
         )
 
         if audit_rule_ids:
@@ -621,7 +619,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         # US_394: Check if object have an ir.translation
         if self._name is not 'ir.translation':
             tr_obj = self.pool.get('ir.translation')
-            for obj_id in isinstance(ids, (int, long)) and [ids] or ids:
+            for obj_id in isinstance(ids, int) and [ids] or ids:
                 # Add commat for prevent delete other object
                 tr_name = str(self._name) + ',%'
                 args = [('name', 'like', tr_name), ('res_id', '=', obj_id)]
@@ -645,7 +643,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not ids: return True
         if not hasattr(ids, '__iter__'): ids = (ids,)
         elif not isinstance(ids, tuple): ids = tuple(ids)
-        ids = filter(None, ids)
+        ids = [_f for _f in ids if _f]
         if not ids: return True
         already_deleted = self.search_deleted(cr, uid, res_ids=ids, context=context)
         to_delete = list(set(ids) - set(already_deleted))
@@ -715,8 +713,8 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                     raise Exception("Malformed extended domain: %s" % tools.ustr(args))
                 if isinstance(item[2], (tuple, list)) \
                    and len(item[2]) == 3 \
-                   and isinstance(item[2][0], basestring) \
-                   and isinstance(item[2][1], basestring) \
+                   and isinstance(item[2][0], str) \
+                   and isinstance(item[2][1], str) \
                    and isinstance(item[2][2], (tuple, list)):
                     model = item[2][0]
                     sub_domain = item[2][2]
@@ -729,8 +727,8 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                         for data in sub_obj.read(cr, user, ids_list, [field], context=context):
                             if isinstance(data[field], (tuple, list)) \
                                and len(data[field]) == 2 \
-                               and isinstance(data[field][0], (int, long)) \
-                               and isinstance(data[field][1], basestring):
+                               and isinstance(data[field][0], int) \
+                               and isinstance(data[field][1], str):
                                 new_ids_append(data[field][0])
                             else:
                                 new_ids_append(data[field])
@@ -814,7 +812,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         """
         rule_dest_field = rule.destination_name
         fields = eval(rule.arguments)
-        if isinstance(res_id, (int, long)):
+        if isinstance(res_id, int):
             res_id = [res_id]
         res =  self.export_data_json(cr, uid, res_id, fields, destination=destination, rule_dest_field=rule_dest_field, context=context)
         return res['datas']
@@ -850,7 +848,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                 if not json_list: #if the list was not created before
                     json_list = [{} for i in record_list]
 
-                for i in xrange(0, len(record_list)):
+                for i in range(0, len(record_list)):
                     if len(field) > 1:
                         if not record_list[i]:
                             json_list[i] = {}
@@ -908,7 +906,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
             if x=='.id': return [x]
             return x.replace(':id','/id').split('/')
 
-        fields_to_export = map(fsplit, fields_to_export)
+        fields_to_export = list(map(fsplit, fields_to_export))
         datas = []
         for row in self.browse(cr, uid, ids, context):
             intersection = False
@@ -923,7 +921,5 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         return uuid + '/' + table_name + '/' + str(res_id)
 
-for symbol in filter(lambda sym: isinstance(sym, types.MethodType),
-                     map(lambda label: getattr(extended_orm_methods, label),
-                         dir(extended_orm_methods))):
-    setattr(orm.orm, symbol.func_name, symbol.im_func)
+for symbol in [sym for sym in [getattr(extended_orm_methods, label) for label in dir(extended_orm_methods)] if isinstance(sym, types.MethodType)]:
+    setattr(orm.orm, symbol.__name__, symbol.__func__)

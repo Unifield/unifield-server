@@ -53,10 +53,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             help=_("Journal used for revaluation entries."),
             readonly=True),
         'result_period_id': fields.many2one(
-            'account.period', string=_(u"Entry period"), required=True,
+            'account.period', string=_("Entry period"), required=True,
             domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '!=', 'created')]"),
         'result_period_internal_id': fields.many2one(
-            'account.period', string=_(u"Entry period"), invisible=True),
+            'account.period', string=_("Entry period"), invisible=True),
         'posting_date': fields.date(
             _('Entry date'), readonly=True,
             help=_("Revaluation entry date (document and posting date)")),
@@ -234,8 +234,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             journal_ids = False
         if not journal_ids:
             raise osv.except_osv(
-                _(u"Error"),
-                _(u"No revaluation journal found!"))
+                _("Error"),
+                _("No revaluation journal found!"))
         res['journal_id'] = journal_ids and journal_ids[0] or False
         # Book revaluation account check
         revaluation_account = cp.revaluation_default_account
@@ -606,7 +606,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         created_ids = []
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         form = self.browse(cr, uid, ids[0], context=context)
         period_check_id = False
@@ -787,17 +787,17 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 if form.revaluation_method == 'liquidity_month':
                     period_name = period_obj.browse(cr, uid, period_id,
                                                     context=context).name
-                    msg = _(u"%s has already been revaluated") % (period_name, )
+                    msg = _("%s has already been revaluated") % (period_name, )
                 else:
-                    msg = _(u"End year revaluation already performed")
-                raise osv.except_osv(_(u"Error"), msg)
+                    msg = _("End year revaluation already performed")
+                raise osv.except_osv(_("Error"), msg)
 
         # Get balance sums and entries included in the reval
         account_sums, entries_included = account_obj.compute_revaluations(
             cr, uid, account_ids, period_ids, form.fiscalyear_id.id,
             revaluation_date, form.revaluation_method, context=context)
-        for account_id, account_tree in account_sums.iteritems():
-            for currency_id, sums in account_tree.iteritems():
+        for account_id, account_tree in account_sums.items():
+            for currency_id, sums in account_tree.items():
                 new_currency_id = currency_id
                 # If the method is 'other_bs' or 'liquidity_year', check if the
                 # account move currency is declared in the currency table and
@@ -818,8 +818,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 account_sums[account_id][currency_id].update(diff_balances)
         # Create entries only after all computation have been done
         current_dt = datetime.datetime.now()
-        for account_id, account_tree in account_sums.iteritems():
-            for currency_id, sums in account_tree.iteritems():
+        for account_id, account_tree in account_sums.items():
+            for currency_id, sums in account_tree.items():
                 # (US-1682) The adj_balance is rounded, otherwise the booking amount of the first reval entry would be
                 # computed from a non-rounded functional amount, whereas its reversal is based on a rounded amount
                 adj_balance = round(sums.get('unrealized_gain_loss', 0.0), 2)

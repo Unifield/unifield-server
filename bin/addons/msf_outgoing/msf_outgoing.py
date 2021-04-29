@@ -287,7 +287,7 @@ class shipment(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -357,7 +357,7 @@ class shipment(osv.osv):
         'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
         'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
-        'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
+        'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[dm³]', multi='get_vals',),
         'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
                                                                                       ('shipped', 'Ready to ship'),
                                                                                       ('done', 'Dispatched'),
@@ -713,7 +713,7 @@ class shipment(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         assert len(ids) == 1, 'do_create_shipment_bg can only process 1 object'
@@ -747,7 +747,7 @@ class shipment(osv.osv):
         today = time.strftime(db_datetime_format)
 
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         cp_fields = [
@@ -830,7 +830,7 @@ class shipment(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -868,7 +868,7 @@ class shipment(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
+        if isinstance(wizard_ids, int):
             wizard_ids = [wizard_ids]
 
         if not wizard_ids:
@@ -1025,7 +1025,7 @@ class shipment(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -1064,7 +1064,7 @@ class shipment(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
+        if isinstance(wizard_ids, int):
             wizard_ids = [wizard_ids]
 
         if not wizard_ids:
@@ -1192,7 +1192,7 @@ class shipment(osv.osv):
                     }
                     move_obj.write(cr, uid, [move.id], move_values, context=context)
 
-                for move_vals in move_data.values():
+                for move_vals in list(move_data.values()):
                     if move_vals['return_pck_nb'] != move_vals['inital_pck_nb']:
                         raise osv.except_osv(
                             _('Processing Error'),
@@ -1322,7 +1322,7 @@ class shipment(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for shipment in self.browse(cr, uid, ids, context=context):
@@ -1488,7 +1488,7 @@ class shipment(osv.osv):
                     if shipment.partner_id2:
                         tax_ids = self.pool.get('account.fiscal.position').map_tax(cr, uid, shipment.partner_id2.property_account_position, taxes)
                     else:
-                        tax_ids = map(lambda x: x.id, taxes)
+                        tax_ids = [x.id for x in taxes]
 
                     distrib_id = False
                     if move.sale_line_id:
@@ -1533,7 +1533,7 @@ class shipment(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         assert len(ids) == 1, 'validate_bg can only process 1 object'
@@ -1690,7 +1690,7 @@ class shipment_additionalitems(osv.osv):
         'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
         'nb_parcels': fields.integer('Nb Parcels'),
         'comment': fields.char(string='Comment', size=1024),
-        'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
+        'volume': fields.float(digits=(16, 2), string='Volume[dm³]'),
         'weight': fields.float(digits=(16, 2), string='Weight[kg]'),
         'value': fields.float('Value', help='Total Value of the additional item. The value is to be defined in the currency selected for the partner.'),  # The string is modified in the fields_view_get
         'kc': fields.boolean('CC', help='Defines whether the additional item must respect the cold chain.'),
@@ -1915,7 +1915,7 @@ class stock_picking(osv.osv):
         ids_picking_draft = [data['id'] for data in datas if data['subtype'] == 'picking' and data['type'] == 'out' and data['state'] == 'draft']
         if ids_picking_draft:
             data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
-            if [x for x in data.values() if x]:
+            if [x for x in list(data.values()) if x]:
                 raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
 
         return super(stock_picking, self).unlink(cr, uid, ids, context=context)
@@ -2024,7 +2024,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = []
         res = {}
         for obj in self.browse(cr, uid, ids, context=context):
@@ -2081,7 +2081,7 @@ class stock_picking(osv.osv):
         result = {}
         if not ids:
             return result
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         cr.execute('''select p.id, sum(m.product_qty)
             from stock_picking p, stock_move m
@@ -2127,7 +2127,7 @@ class stock_picking(osv.osv):
         # pack.family.memory are long to read, read all in on time is much faster
         picking_to_families = dict((x['id'], x['pack_family_memory_ids']) for x in self.read(cr, uid, ids, ['pack_family_memory_ids'], context=context))
         family_set = set()
-        for val in picking_to_families.values():
+        for val in list(picking_to_families.values()):
             family_set.update(val)
 
         family_read_result = pack_fam_obj.read(cr, uid,
@@ -2137,7 +2137,7 @@ class stock_picking(osv.osv):
 
         family_dict = dict((x['id'], x) for x in family_read_result)
         parent_id_ship = {}
-        for current_id, family_ids in picking_to_families.items():
+        for current_id, family_ids in list(picking_to_families.items()):
             default_values = {
                 'num_of_packs': 0,
                 'total_weight': 0.0,
@@ -2229,7 +2229,7 @@ class stock_picking(osv.osv):
         op = args[0][1]
         if op == '=':
             op = '=='
-        ids = [('id', 'in', [x for x in result.keys() if eval("%s %s %s" % (result[x], op, args[0][2]))])]
+        ids = [('id', 'in', [x for x in list(result.keys()) if eval("%s %s %s" % (result[x], op, args[0][2]))])]
         return ids
 
     def _get_picking_ids(self, cr, uid, ids, context=None):
@@ -2328,7 +2328,7 @@ class stock_picking(osv.osv):
         # functions
         'num_of_packs': fields.function(_vals_get, method=True,
                                         type='integer', string='#Packs', multi='get_vals_integer'),
-        'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
+        'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[dm³]', multi='get_vals'),
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
         'currency_id': fields.function(_get_currency, method=True, type='many2one', relation='res.currency', string='Currency', multi=False),
         'is_dangerous_good': fields.function(_is_one_of_the_move_lines, method=True,
@@ -2460,12 +2460,12 @@ class stock_picking(osv.osv):
 
             # all moves have been treated
             # complete the lot lists for each product
-            for sale_line in values.values():
-                for product in sale_line['products'].values():
-                    for uom in product['uoms'].values():
+            for sale_line in list(values.values()):
+                for product in list(sale_line['products'].values()):
+                    for uom in list(product['uoms'].values()):
                         # loop through all existing production lot for this product - all are taken into account, internal and external
                         for lot in product['obj'].prodlot_ids:
-                            if lot.id not in uom['lots'].keys():
+                            if lot.id not in list(uom['lots'].keys()):
                                 # the lot is not present, we add it
                                 uom['lots'][lot.id] = {}
                                 uom['lots'][lot.id]['obj'] = lot
@@ -2916,7 +2916,7 @@ class stock_picking(osv.osv):
             # check availability
             self.action_assign(cr, uid, [new_pick_id or obj.id], context=context)
 
-            if 'assigned' in moves_states.values():
+            if 'assigned' in list(moves_states.values()):
                 # Add an empty write to display the 'Process' button on OUT
                 self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
 
@@ -3053,7 +3053,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
+        if isinstance(wizard_ids, int):
             wizard_ids = [wizard_ids]
 
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
@@ -3278,7 +3278,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         assert len(ids) == 1, 'do_create_picking_bg can only process 1 object'
@@ -3305,7 +3305,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for picking in self.browse(cr, uid, ids, context=context):
@@ -3506,7 +3506,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         assert len(ids) == 1, 'do_validate_picking_bg can only process 1 object'
@@ -3532,7 +3532,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -3693,7 +3693,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if not isinstance(ids, (int, long)):
+        if not isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -3719,7 +3719,7 @@ class stock_picking(osv.osv):
         return True
 
     def ppl_step2(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self.check_ppl_integrity(cr, uid, [ids[0]], context=context)
         issue_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', ids[0]), ('integrity_error', '!=', 'empty'), ('state', '!=', 'done')], context=context)
@@ -3769,7 +3769,7 @@ class stock_picking(osv.osv):
         family_obj = self.pool.get('ppl.family.processor')
         ppl_processor = self.pool.get('ppl.processor')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -3822,7 +3822,7 @@ class stock_picking(osv.osv):
 
             families_data[key]['move_ids'][0][2].append(line.id)
 
-        for family_data in sorted(families_data.values(), key=lambda move_id: families_data.values()[0]):
+        for family_data in sorted(list(families_data.values()), key=lambda move_id: list(families_data.values())[0]):
             if 'id' in family_data:
                 fam_id = family_data['id']
                 del family_data['id']
@@ -3831,7 +3831,7 @@ class stock_picking(osv.osv):
                 family_obj.create(cr, uid, family_data)
 
         if existing_data:
-            family_obj.unlink(cr, uid, [x['id'] for x in existing_data.values()], context=context)
+            family_obj.unlink(cr, uid, [x['id'] for x in list(existing_data.values())], context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step2_form_view')[1]
 
@@ -3850,7 +3850,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
+        if isinstance(wizard_ids, int):
             wizard_ids, = [wizard_ids]
 
         proc = self.pool.get('ppl.processor').browse(cr, uid, wizard_ids, fields_to_fetch=['picking_id'], context=context)
@@ -3884,7 +3884,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
+        if isinstance(wizard_ids, int):
             wizard_ids = [wizard_ids]
 
         if not wizard_ids:
@@ -3996,10 +3996,10 @@ class stock_picking(osv.osv):
                 shipment_id = obj.shipment_id.id
                 shipment_name = obj.shipment_id.name
             else:
-                raise Exception, "For some reason, there is no shipment created for the Packing list: " + obj.name
+                raise Exception("For some reason, there is no shipment created for the Packing list: " + obj.name)
 
 
-        for pid, pname in pickings.iteritems():
+        for pid, pname in pickings.items():
             self.infolog(cr, uid, "Products of Pre-Packing List id:%s (%s) have been packed in Shipment id:%s (%s)" % (
                 pid, pname, shipment_id, shipment_name,
             ))
@@ -4020,7 +4020,7 @@ class stock_picking(osv.osv):
         # Objects
         proc_obj = self.pool.get('return.ppl.processor')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         data = self.read(cr, uid, ids[0], ['state', 'name', 'type', 'subtype'], context=context)
@@ -4060,7 +4060,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
+        if isinstance(wizard_ids, int):
             wizard_ids = [wizard_ids]
 
         counter = 0
@@ -4285,7 +4285,7 @@ class stock_picking(osv.osv):
     def import_pick(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No PICK selected'))
@@ -4500,7 +4500,7 @@ class pack_family_memory(osv.osv):
             result[pf_memory['id']] = values
 
         if compute_moves and ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
 
             cr.execute('select id, move_lines from ' + self._table + ' where id in %s', (tuple(ids),))  # not_a_user_entry
@@ -4541,7 +4541,7 @@ class pack_family_memory(osv.osv):
         'num_of_packs': fields.integer('Nb. Parcels'),
         'selected_number': fields.integer('Nb. Parcels to Ship'),
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
-        'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
+        'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[dm³]', multi='get_vals',),
         'description_ppl': fields.char('Description', size=256),
         'not_shipped': fields.boolean(string='Not shipped'),
         'comment': fields.char(string='Comment', size=1024),
@@ -4556,7 +4556,7 @@ class pack_family_memory(osv.osv):
     }
 
     def write(self, cr, uid, ids, vals, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sql_data = {
@@ -4594,7 +4594,7 @@ class pack_family_memory(osv.osv):
 
     def change_description(self, cr, uid, ids, context=None):
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         mod_obj = self.pool.get('ir.model.data')

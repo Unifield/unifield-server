@@ -94,7 +94,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         Returns the list of the ids of the Cheque Journals to display sorted in alphabetical order of code
         """
         journal_obj = self.pool.get('account.journal')
-        journals = journal_obj.browse(self.cr, self.uid, self.getPendingCheques()['registers'].keys(), fields_to_fetch=['code'])
+        journals = journal_obj.browse(self.cr, self.uid, list(self.getPendingCheques()['registers'].keys()), fields_to_fetch=['code'])
         return [journal.id for journal in sorted(journals, key=lambda j: j.code)]
 
     def getRegistersByType(self):

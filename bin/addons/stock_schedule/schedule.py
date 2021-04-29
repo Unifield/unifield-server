@@ -137,7 +137,7 @@ class stock_frequence(osv.osv):
         '''
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         data_bis = data.copy()
@@ -154,7 +154,7 @@ class stock_frequence(osv.osv):
         '''
         Compute the end date of the frequence according to the field of the object
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -180,7 +180,7 @@ class stock_frequence(osv.osv):
         '''
         Compute the next date when the frequence is a daily frequence
         '''
-        if not isinstance(frequence_id, (int, long)):
+        if not isinstance(frequence_id, int):
             raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_daily_date'))
 
         frequence = self.browse(cr, uid, frequence_id)
@@ -202,7 +202,7 @@ class stock_frequence(osv.osv):
         '''
         Compute the next date when the frequence is a weekly frequence
         '''
-        if not isinstance(frequence_id, (int, long)):
+        if not isinstance(frequence_id, int):
             raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_weekly_date'))
 
         frequence = self.browse(cr, uid, frequence_id)
@@ -240,7 +240,7 @@ class stock_frequence(osv.osv):
         '''
         Compute the next date when the frequence is a monthly frequence
         '''
-        if not isinstance(frequence_id, (int, long)):
+        if not isinstance(frequence_id, int):
             raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_weekly_date'))
 
         frequence = self.browse(cr, uid, frequence_id)
@@ -292,7 +292,7 @@ class stock_frequence(osv.osv):
                         from_date += DateTime.RelativeDate(day=days_ok[0], months=1)
                         return from_date
 
-                days = filter(lambda a: a>=from_date.day , days_ok)
+                days = [a for a in days_ok if a>=from_date.day]
                 from_date += DateTime.RelativeDate(day=days[0])
                 if force:
                     return max(DateTime.today(), from_date)
@@ -304,7 +304,7 @@ class stock_frequence(osv.osv):
         '''
         Compute the next date when the frequence is a yearly frequence
         '''
-        if not isinstance(frequence_id, (int, long)):
+        if not isinstance(frequence_id, int):
             raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_weekly_date'))
 
         frequence = self.browse(cr, uid, frequence_id)
@@ -341,7 +341,7 @@ class stock_frequence(osv.osv):
         '''
         Compute the next date matching with the parameter of the frequency
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}

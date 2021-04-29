@@ -26,8 +26,8 @@ import reportlab
 import re
 from reportlab.pdfgen import canvas
 from reportlab import platypus
-import utils
-import color
+from . import utils
+from . import color
 import os
 import logging
 from lxml import etree
@@ -39,10 +39,10 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.textsplit import wordSplit
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
     _hush_pyflakes = [ StringIO ]
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 encoding = 'utf-8'
 
@@ -452,7 +452,7 @@ class _rml_canvas(object):
                 flow.drawOn(self.canvas,infos['x'],infos['y'])
                 infos['height']-=h
             else:
-                raise ValueError, "Not enough space"
+                raise ValueError("Not enough space")
 
     def _line_mode(self, node):
         ljoin = {'round':1, 'mitered':0, 'bevelled':2}
@@ -473,8 +473,8 @@ class _rml_canvas(object):
             self.canvas.setDash(node.get('dash').split(','))
 
     def _image(self, node):
-        import urllib
-        import urlparse
+        import urllib.request, urllib.parse, urllib.error
+        import urllib.parse
         from reportlab.lib.utils import ImageReader
         nfile = node.get('file')
         if not nfile:
@@ -501,14 +501,14 @@ class _rml_canvas(object):
                 s = StringIO(self.images[nfile])
             else:
                 try:
-                    up = urlparse.urlparse(str(nfile))
+                    up = urllib.parse.urlparse(str(nfile))
                 except ValueError:
                     up = False
                 if up and up.scheme:
                     # RFC: do we really want to open external URLs?
                     # Are we safe from cross-site scripting or attacks?
                     self._logger.debug("Retrieve image from %s", nfile)
-                    u = urllib.urlopen(str(nfile))
+                    u = urllib.request.urlopen(str(nfile))
                     s = StringIO(u.read())
                 else:
                     self._logger.debug("Open image file %s ", nfile)
@@ -643,7 +643,7 @@ class _rml_flowable(object):
         rc1 = utils._process_text(self, node.text or '')
         for n in utils._child_get(node,self):
             txt_n = copy.deepcopy(n)
-            for key in txt_n.attrib.keys():
+            for key in list(txt_n.attrib.keys()):
                 if key in ('rml_except', 'rml_loop', 'rml_tag'):
                     del txt_n.attrib[key]
             if True or not self._textual(n).isspace():
@@ -957,7 +957,7 @@ class _rml_template(object):
         if not node.get('pageSize'):
             pageSize = (utils.unit_get('21cm'), utils.unit_get('29.7cm'))
         else:
-            ps = map(lambda x:x.strip(), node.get('pageSize').replace(')', '').replace('(', '').split(','))
+            ps = [x.strip() for x in node.get('pageSize').replace(')', '').replace('(', '').split(',')]
             pageSize = ( utils.unit_get(ps[0]),utils.unit_get(ps[1]) )
 
         self.doc_tmpl = TinyDocTemplate(out, pagesize=pageSize, **utils.attr_get(node, ['leftMargin','rightMargin','topMargin','bottomMargin'], {'allowSplitting':'int','showBoundary':'bool','rotation':'int','title':'str','author':'str'}))
@@ -1015,7 +1015,7 @@ def parseNode(rml, localcontext=None,fout=None, images=None, path='.',title=None
     r = _rml_doc(node, localcontext, images, path, title=title)
     #try to override some font mappings
     try:
-        from customfonts import SetCustomFonts
+        from .customfonts import SetCustomFonts
         SetCustomFonts(r)
     except ImportError:
         # means there is no custom fonts mapping in this system.
@@ -1033,7 +1033,7 @@ def parseString(rml, localcontext = {},fout=None, images={}, path='.',title=None
 
     #try to override some font mappings
     try:
-        from customfonts import SetCustomFonts
+        from .customfonts import SetCustomFonts
         SetCustomFonts(r)
     except Exception:
         pass
@@ -1049,16 +1049,16 @@ def parseString(rml, localcontext = {},fout=None, images={}, path='.',title=None
         return fp.getvalue()
 
 def trml2pdf_help():
-    print 'Usage: trml2pdf input.rml >output.pdf'
-    print 'Render the standard input (RML) and output a PDF file'
+    print('Usage: trml2pdf input.rml >output.pdf')
+    print('Render the standard input (RML) and output a PDF file')
     sys.exit(0)
 
 if __name__=="__main__":
     if len(sys.argv)>1:
         if sys.argv[1]=='--help':
             trml2pdf_help()
-        print parseString(file(sys.argv[1], 'r').read()),
+        print(parseString(file(sys.argv[1], 'r').read()), end=' ')
     else:
-        print 'Usage: trml2pdf input.rml >output.pdf'
-        print 'Try \'trml2pdf --help\' for more information.'
+        print('Usage: trml2pdf input.rml >output.pdf')
+        print('Try \'trml2pdf --help\' for more information.')
 

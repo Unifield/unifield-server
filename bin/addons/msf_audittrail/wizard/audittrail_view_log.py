@@ -52,7 +52,7 @@ class audittrail_view_log(osv.osv_memory):
         #start Loop
         for datas in self.read(cr, uid, ids, context=context):
             if not datas.get('from', None):
-                if  datas.get('to') <> time.strftime("%Y-%m-%d %H:%M:%S"):
+                if  datas.get('to') != time.strftime("%Y-%m-%d %H:%M:%S"):
                     result['domain'] = str([('timestamp', '<', datas.get('to'))])
                 else:
                     pass

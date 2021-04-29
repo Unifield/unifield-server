@@ -110,7 +110,7 @@ class report_open_invoices2(report_sxw.rml_parse):
                            ('is_inkind_donation', '=', False),
                            ('is_intermission', '=', True)]
             type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='move_name')
-            if isinstance(type_ids, (int, long)):
+            if isinstance(type_ids, int):
                 type_ids = [type_ids]
             self.nb_lines += len(type_ids)
             res.update({type: inv_obj.browse(self.cr, self.uid, type_ids, context)})

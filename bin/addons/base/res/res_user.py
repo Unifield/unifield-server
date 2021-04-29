@@ -145,7 +145,7 @@ class groups(osv.osv):
         if 'level' in vals:
             # if the new level is lower level, touch the related users
             user_to_touch_ids = []
-            for group_id, group_level in old_level_dict.items():
+            for group_id, group_level in list(old_level_dict.items()):
                 if self.is_higher_level(cr, uid,
                                         from_level=group_level,
                                         to_level=vals.get('level', 'project')):  # no level is same as 'project' level
@@ -166,7 +166,8 @@ class groups(osv.osv):
             diff_users = set(old_users).symmetric_difference(new_users)
             if diff_users:
                 clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=ids)
-                map(clear, list(diff_users))
+                for _user in list(diff_users):
+                    clear(_user)
         if 'menu_access' in vals or 'users' in vals:
             self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         return res
@@ -241,8 +242,8 @@ class users(osv.osv):
     _order = 'name'
     _trace = True
 
-    WELCOME_MAIL_SUBJECT = u"Welcome to OpenERP"
-    WELCOME_MAIL_BODY = u"An OpenERP account has been created for you, "\
+    WELCOME_MAIL_SUBJECT = "Welcome to OpenERP"
+    WELCOME_MAIL_BODY = "An OpenERP account has been created for you, "\
         "\"%(name)s\".\n\nYour login is %(login)s, "\
         "you should ask your supervisor or system administrator if you "\
         "haven't been given your password yet.\n\n"\
@@ -343,7 +344,7 @@ class users(osv.osv):
         return True if the user is member of the group_erp_manager (usually,
         admin of the site).
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         manager_group_id = None
         result = dict.fromkeys(ids, False)
@@ -400,7 +401,7 @@ class users(osv.osv):
         '''
         return True if the user is member of the Sync_Config
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         result = dict.fromkeys(ids, False)
         res_group_obj = self.pool.get('res.groups')
@@ -419,7 +420,7 @@ class users(osv.osv):
         '''
         return the level of the instance related to the company of the user
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         level = _get_instance_level(self, cr, uid)
@@ -518,7 +519,7 @@ class users(osv.osv):
                 if isinstance(ids, (int, float)):
                     result = override_password(result)
                 else:
-                    result = map(override_password, result)
+                    result = list(map(override_password, result))
         return result
 
 
@@ -620,7 +621,7 @@ class users(osv.osv):
         check the groups of the given user ids and remove those which have
         higher level than the current instance one.
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # if the groups change, check all this groups are allowed on this level
         # instance. If not remove the unauthorised ones
@@ -671,7 +672,7 @@ class users(osv.osv):
         if not hasattr(ids, '__iter__'):
             ids = [ids]
         if ids == [uid]:
-            for key in values.keys():
+            for key in list(values.keys()):
                 if not (key in self.SELF_WRITEABLE_FIELDS or key.startswith('context_')):
                     break
             else:
@@ -706,7 +707,7 @@ class users(osv.osv):
                 erp_manager_res = self._is_erp_manager(cr, uid, ids,
                                                        context=context)
                 if any(erp_manager_res.values()):
-                    for user_id, is_erp_manager in erp_manager_res.items():
+                    for user_id, is_erp_manager in list(erp_manager_res.items()):
                         if is_erp_manager:
                             super(users, self).write(cr, uid, user_id, vals_sync, context=context)
             self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
@@ -715,7 +716,8 @@ class users(osv.osv):
         self.company_get.clear_cache(cr.dbname)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=old_groups)
-        map(clear, ids)
+        for _id in ids:
+            clear(_id)
         db = cr.dbname
         if db in self._uid_cache:
             for id in ids:
@@ -761,7 +763,7 @@ class users(osv.osv):
     def context_get(self, cr, uid, context=None):
         user = self.browse(cr, uid, uid, context)
         result = {}
-        for k in self._columns.keys():
+        for k in list(self._columns.keys()):
             if k.startswith('context_'):
                 res = getattr(user,k) or False
                 if isinstance(res, browse_record):
@@ -872,7 +874,7 @@ class users(osv.osv):
             elif passwd != database_password:
                 raise security.ExceptionNoTb('AccessDenied')
 
-            if self._uid_cache.has_key(db):
+            if db in self._uid_cache:
                 ulist = self._uid_cache[db]
                 ulist[uid] = passwd
             else:
@@ -959,7 +961,7 @@ class wizard_add_users_synchronized(osv.osv_memory):
         Set users as synchronizable
         '''
         context = context is None and {} or context
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
         user_obj = self.pool.get('res.users')
         for wiz in self.read(cr, uid, ids, ['user_ids'], context=context):
             user_obj.write(cr, uid, wiz['user_ids'], {'is_synchronizable': True}, context=context)
@@ -1036,7 +1038,7 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         audit_obj = self.pool.get('audittrail.rule')
         if context is None:
             context = {}
-        if isinstance(user_ids, (int, long)):
+        if isinstance(user_ids, int):
             user_ids = [user_ids]
         if 'users' in vals:
             if vals['users'] and len(vals['users'][0]) > 2:
@@ -1091,7 +1093,7 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         user_ids = []
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if 'users' in vals:
             new_user_ids = []

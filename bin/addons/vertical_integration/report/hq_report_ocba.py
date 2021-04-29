@@ -2,7 +2,7 @@
 
 import datetime
 import csv
-import StringIO
+import io
 import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
@@ -385,7 +385,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         """
         :return zip buffer
         """
-        zip_buffer = StringIO.StringIO()
+        zip_buffer = io.StringIO()
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
         tmp_fds = []
 
@@ -396,7 +396,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             writer = csv.writer(tmp_fd, quoting=csv.QUOTE_ALL)
 
             for line in file_data[f]['data']:
-                writer.writerow(map(self._enc, line))
+                writer.writerow(list(map(self._enc, line)))
             tmp_fd.close()
 
             out_zipfile.write(tmp_fd.name, target_filename + ".csv",
@@ -461,7 +461,7 @@ class hq_report_ocba(report_sxw.report_sxw):
     def _enc(self, st):
         if not st:
             return ''
-        if isinstance(st, unicode):
+        if isinstance(st, str):
             return st.encode('utf8')
         return st
 

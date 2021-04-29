@@ -129,22 +129,22 @@ class account_invoice(osv.osv):
                     ids_line = line.reconcile_id.line_id
                 elif line.reconcile_partial_id:
                     ids_line = line.reconcile_partial_id.line_partial_ids
-                l = map(lambda x: x.id, ids_line)
+                l = [x.id for x in ids_line]
                 partial_ids.append(line.id)
-                res[id] =[x for x in l if x <> line.id and x not in partial_ids]
+                res[id] =[x for x in l if x != line.id and x not in partial_ids]
         return res
 
     def _get_invoice_line(self, cr, uid, ids, context=None):
         result = {}
         for line in self.pool.get('account.invoice.line').browse(cr, uid, ids, context=context):
             result[line.invoice_id.id] = True
-        return result.keys()
+        return list(result.keys())
 
     def _get_invoice_tax(self, cr, uid, ids, context=None):
         result = {}
         for tax in self.pool.get('account.invoice.tax').browse(cr, uid, ids, context=context):
             result[tax.invoice_id.id] = True
-        return result.keys()
+        return list(result.keys())
 
     def _compute_lines_generic(self, cr, uid, ids, name, args, context=None, temp_post_included=False):
         """
@@ -173,10 +173,10 @@ class account_invoice(osv.osv):
                 for m in invoice_amls:
                     temp_lines = set()
                     if m.reconcile_id:
-                        temp_lines = set(map(lambda x: x.id, m.reconcile_id.line_id))
+                        temp_lines = set([x.id for x in m.reconcile_id.line_id])
                     else:
                         if m.reconcile_partial_id:
-                            temp_lines = set(map(lambda x: x.id, m.reconcile_partial_id.line_partial_ids))
+                            temp_lines = set([x.id for x in m.reconcile_partial_id.line_partial_ids])
                         if temp_post_included:  # don't use 'elif' otherwise only hard-posted lines would be returned for a single doc
                             reg_line_ids = reg_line_obj.search(cr, uid,
                                                                [('imported_invoice_line_ids', '=', m.id)],
@@ -206,7 +206,7 @@ class account_invoice(osv.osv):
                     lines += [x for x in temp_lines if x not in lines]
                     src.append(m.id)
 
-            lines = filter(lambda x: x not in src, lines)
+            lines = [x for x in lines if x not in src]
             result[invoice.id] = lines
         return result
 
@@ -237,7 +237,7 @@ class account_invoice(osv.osv):
                     move[line2.move_id.id] = True
         invoice_ids = []
         if move:
-            invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id','in',move.keys())], context=context)
+            invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id','in',list(move.keys()))], context=context)
         return invoice_ids
 
     def _get_invoice_from_reconcile(self, cr, uid, ids, context=None):
@@ -250,7 +250,7 @@ class account_invoice(osv.osv):
 
         invoice_ids = []
         if move:
-            invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id','in',move.keys())], context=context)
+            invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id','in',list(move.keys()))], context=context)
         return invoice_ids
 
     def _get_journal_type(self, cr, uid, context=None):
@@ -466,7 +466,7 @@ class account_invoice(osv.osv):
                 message = _("Invoice '%s' is waiting for validation.") % name
                 self.log(cr, uid, inv_id, message, context=ctx)
             return res
-        except Exception, e:
+        except Exception as e:
             if '"journal_id" viol' in e.args[0]:
                 raise orm.except_orm(_('Configuration Error!'),
                                      _('There is no Accounting Journal of type Sale/Purchase defined!'))
@@ -821,7 +821,7 @@ class account_invoice(osv.osv):
             partner = self.browse(cr, uid, id, context=ctx).partner_id
             if partner.lang:
                 ctx.update({'lang': partner.lang})
-            for taxe in ait_obj.compute(cr, uid, id, context=ctx).values():
+            for taxe in list(ait_obj.compute(cr, uid, id, context=ctx).values()):
                 ait_obj.create(cr, uid, taxe)
         # Update the stored value (fields.function), so we write to trigger recompute
         self.pool.get('account.invoice').write(cr, uid, ids, {'invoice_line':[]}, context=ctx)
@@ -874,7 +874,7 @@ class account_invoice(osv.osv):
 
     def check_tax_lines(self, cr, uid, inv, compute_taxes, ait_obj):
         if not inv.tax_line:
-            for tax in compute_taxes.values():
+            for tax in list(compute_taxes.values()):
                 ait_obj.create(cr, uid, tax)
         else:
             tax_key = []
@@ -936,7 +936,7 @@ class account_invoice(osv.osv):
                 else:
                     line2[tmp] = l
             line = []
-            for key, val in line2.items():
+            for key, val in list(line2.items()):
                 line.append((0,0,val))
         return line
 
@@ -1081,7 +1081,7 @@ class account_invoice(osv.osv):
             date = inv.date_invoice or time.strftime('%Y-%m-%d')
             part = inv.partner_id.id
 
-            line = map(lambda x:(0,0,self.line_get_convert(cr, uid, x, part, date, context={})),iml)
+            line = [(0,0,self.line_get_convert(cr, uid, x, part, date, context={})) for x in iml]
 
             line = self.group_lines(cr, uid, iml, line, inv)
 
@@ -1282,7 +1282,7 @@ class account_invoice(osv.osv):
             for tax in inv.tax_line:
                 if not tax['name'] in taxes:
                     taxes[tax['name']] = {'name': tax['name']}
-        return taxes.values()
+        return list(taxes.values())
 
     def _log_event(self, cr, uid, ids, factor=1.0, name='Open Invoice'):
         #TODO: implement messages system
@@ -1355,7 +1355,7 @@ class account_invoice(osv.osv):
                 else:
                     line['analytic_distribution_id'] = False
 
-        return map(lambda x: (0,0,x), lines)
+        return [(0,0,x) for x in lines]
 
 
     def _hook_fields_for_refund(self, cr, uid, *args):
@@ -1397,7 +1397,7 @@ class account_invoice(osv.osv):
     def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if date or document_date:
@@ -1556,7 +1556,7 @@ class account_invoice(osv.osv):
         cr.execute('SELECT id FROM account_move_line '\
                    'WHERE move_id IN %s',
                    ((move_id, invoice.move_id.id),))
-        lines = line.browse(cr, uid, map(lambda x: x[0], cr.fetchall()) )
+        lines = line.browse(cr, uid, [x[0] for x in cr.fetchall()] )
         for l in lines+invoice.payment_ids:
             if l.account_id.id == src_account_id:
                 line_ids.append(l.id)
@@ -1930,11 +1930,11 @@ class account_invoice_tax(osv.osv):
                 'factor_base': 1.0,
                 'factor_tax': 1.0,
             }
-            if invoice_tax.amount <> 0.0:
+            if invoice_tax.amount != 0.0:
                 factor_tax = invoice_tax.tax_amount / invoice_tax.amount
                 res[invoice_tax.id]['factor_tax'] = factor_tax
 
-            if invoice_tax.base <> 0.0:
+            if invoice_tax.base != 0.0:
                 factor_base = invoice_tax.base_amount / invoice_tax.base
                 res[invoice_tax.id]['factor_base'] = factor_base
 
@@ -2078,7 +2078,7 @@ class account_invoice_tax(osv.osv):
                     tax_grouped[key]['base_amount'] += val['base_amount']
                     tax_grouped[key]['tax_amount'] += val['tax_amount']
 
-        for t in tax_grouped.values():
+        for t in list(tax_grouped.values()):
             t['base'] = cur_obj.round(cr, uid, cur.rounding, t['base'])
             t['amount'] = cur_obj.round(cr, uid, cur.rounding, t['amount'])
             t['base_amount'] = cur_obj.round(cr, uid, cur.rounding, t['base_amount'])

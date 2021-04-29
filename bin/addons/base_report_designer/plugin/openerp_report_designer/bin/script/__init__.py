@@ -44,18 +44,18 @@
 #
 #
 ##############################################################################
-import Expression
-import lib
-import Fields
-import modify
-import Repeatln
-import ServerParameter
-import NewReport
-import LoginTest
-import Change
-import About
-import AddAttachment
-import ConvertBracesToField
-import ConvertFieldsToBraces
-import ExportToRML
+from . import Expression
+from . import lib
+from . import Fields
+from . import modify
+from . import Repeatln
+from . import ServerParameter
+from . import NewReport
+from . import LoginTest
+from . import Change
+from . import About
+from . import AddAttachment
+from . import ConvertBracesToField
+from . import ConvertFieldsToBraces
+from . import ExportToRML
 import SendtoServer

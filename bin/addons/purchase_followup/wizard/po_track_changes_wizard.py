@@ -71,7 +71,7 @@ class po_track_changes_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
@@ -106,7 +106,7 @@ class po_track_changes_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.get_values(cr, uid, ids, context=context)

@@ -30,7 +30,7 @@ GNU Public Licence.
 (c) 2003-TODAY, Fabien Pinckaers - OpenERP s.a.
 """
 
-import updater
+from . import updater
 updater.do_update()
 
 #----------------------------------------------------------
@@ -43,7 +43,7 @@ import sys
 import threading
 import traceback
 
-import release
+from . import release
 __author__ = release.author
 __version__ = release.version
 
@@ -58,7 +58,7 @@ if os.name == 'posix':
 #----------------------------------------------------------
 # get logger
 #----------------------------------------------------------
-import netsvc
+from . import netsvc
 logger = logging.getLogger('server')
 
 # Log an operations.event. In the contexts we are called, we don't
@@ -67,7 +67,7 @@ logger = logging.getLogger('server')
 # We ignore all errors because logging events is best
 # effort.
 def ops_event(what, dbname=None):
-    for db in pooler.pool_dic.keys():
+    for db in list(pooler.pool_dic.keys()):
         cr = None
         if dbname is not None and db != dbname:
             continue
@@ -87,7 +87,7 @@ def ops_event(what, dbname=None):
 #-----------------------------------------------------------------------
 # import the tools module so that the commandline parameters are parsed
 #-----------------------------------------------------------------------
-import tools
+from . import tools
 updater.update_path()
 logger.info("OpenERP version - %s", release.version)
 logger.info("sys.path %s", ' '.join(sys.path))
@@ -113,28 +113,28 @@ logger.info('initialising distributed objects services')
 #---------------------------------------------------------------
 # connect to the database and initialize it with base if needed
 #---------------------------------------------------------------
-import pooler
+from . import pooler
 
 #----------------------------------------------------------
 # import basic modules
 # (the asserts are to silence pyflakes warnings)
 #----------------------------------------------------------
-import osv; assert osv
-import workflow; assert workflow
-import report; assert report
-import service; assert service
+from . import osv; assert osv
+from . import workflow; assert workflow
+from . import report; assert report
+from . import service; assert service
 
 #----------------------------------------------------------
 # import addons
 #----------------------------------------------------------
-import addons; assert addons
+from . import addons; assert addons
 
 #----------------------------------------------------------
 # Load and update databases if requested
 #----------------------------------------------------------
 
-import service.http_server
-import updater
+from . import service.http_server
+from . import updater
 
 if not ( tools.config["stop_after_init"] or \
          tools.config["translate_in"] or \
@@ -143,7 +143,7 @@ if not ( tools.config["stop_after_init"] or \
     service.http_server.init_xmlrpc()
     service.http_server.init_static_http()
 
-    import service.netrpc_server
+    from . import service.netrpc_server
     service.netrpc_server.init_servers()
 
 if tools.config['db_name']:
@@ -231,9 +231,9 @@ def dumpstacks(signum, frame):
     # code from http://stackoverflow.com/questions/132058/getting-stack-trace-from-a-running-python-application#answer-2569696
     # modified for python 2.5 compatibility
     thread_map = dict(threading._active, **threading._limbo)
-    id2name = dict([(threadId, thread.getName()) for threadId, thread in thread_map.items()])
+    id2name = dict([(threadId, thread.getName()) for threadId, thread in list(thread_map.items())])
     code = []
-    for threadId, stack in sys._current_frames().items():
+    for threadId, stack in list(sys._current_frames().items()):
         code.append("\n# Thread: %s(%d)" % (id2name[threadId], threadId))
         for filename, lineno, name, line in traceback.extract_stack(stack):
             code.append('File: "%s", line %d, in %s' % (filename, lineno, name))

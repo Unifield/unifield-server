@@ -55,7 +55,7 @@ class order_nomenclature_select_product(osv.osv_memory):
         
         Override this method to do specific things when a view on the object is opened.
         '''
-        print 'view_init'
+        print('view_init')
         
         
         if False:
@@ -68,7 +68,7 @@ class order_nomenclature_select_product(osv.osv_memory):
                 pass
 
     def selectNomenclature(self, cr, uid, ids, context=None):
-        print 'selectNomenclature'
+        print('selectNomenclature')
 #        obj_inv = self.pool.get('account.invoice')
 #        obj_inv_line = self.pool.get('account.invoice.line')
 #        obj_currency = self.pool.get('res.currency')
@@ -105,7 +105,7 @@ class order_nomenclature_select_product(osv.osv_memory):
         return {'test':'voila le test'}
     
     def selectProduct(self, cr, uid, ids, context=None):
-        print 'selectProduct'
+        print('selectProduct')
         pass
 
 order_nomenclature_select_product()

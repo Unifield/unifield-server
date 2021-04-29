@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
-from __future__ import print_function
+
 import unittest
-import HTMLTestRunner
+from . import HTMLTestRunner
 from os import walk
 from os import path
 import sys

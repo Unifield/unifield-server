@@ -105,7 +105,7 @@ class register_entity(osv.osv_memory):
     }
 
     def previous(self, cr, uid, ids, state, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         maping = {'parents' : 'register',
                   'groups' : 'parents',
@@ -117,7 +117,7 @@ class register_entity(osv.osv_memory):
         return True
 
     def _get_default_entity(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         if entity.parent:
@@ -127,7 +127,7 @@ class register_entity(osv.osv_memory):
         return False
 
     def next(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         res = proxy.get_entity(
@@ -141,7 +141,7 @@ class register_entity(osv.osv_memory):
         return True
 
     def group_state(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity_group")
         res = proxy.get_group_name(context)
@@ -151,7 +151,7 @@ class register_entity(osv.osv_memory):
         return True
 
     def validate(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         for entity in self.browse(cr, uid, ids, context=context):
@@ -173,7 +173,7 @@ class register_entity(osv.osv_memory):
         return True
 
     def save_value(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         cur = self.browse(cr, uid, ids, context=context)[0]
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)

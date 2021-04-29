@@ -97,7 +97,7 @@ class account_analytic_line(osv.osv):
             aals = self.browse(cr, uid, aal_ids, fields_to_fetch=['account_id'], context=context)
             categories = [aal.account_id.category or '' for aal in aals]
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             selected_aals = self.browse(cr, uid, ids, fields_to_fetch=['entry_sequence', 'account_id'], context=context)
             for selected_aal in selected_aals:
@@ -145,7 +145,7 @@ class account_analytic_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         active_ids = context.get('active_ids', [])  # to detect if the user has selected several lines
         if len(ids) != 1 or len(active_ids) > 1:

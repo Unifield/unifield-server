@@ -49,7 +49,7 @@ class finance_query_method(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         ir_data_to_del = []
@@ -100,10 +100,10 @@ class wizard_template(osv.osv):
             for k in data:
                 if data[k] and obj._columns.get(k) and obj._columns.get(k)._type in ('one2many', 'many2one', 'many2many'):
                     sdref = self.pool.get(obj._columns.get(k)._obj).get_sd_ref(cr, uid, data[k])
-                    if isinstance(sdref, basestring):
+                    if isinstance(sdref, str):
                         ret[wizard['id']][k] = sdref
                     else:
-                        ret[wizard['id']][k] = ','.join(sdref.values())
+                        ret[wizard['id']][k] = ','.join(list(sdref.values()))
                 else:
                     ret[wizard['id']][k] = data[k]
         return ret
@@ -122,7 +122,7 @@ class wizard_template(osv.osv):
                 if obj._columns.get(k)._type == 'many2one':
                     new_data[k] = data[k] and self.pool.get(obj._columns.get(k)._obj).find_sd_ref(cr, uid, data[k])
                 else:
-                    new_data[k] = data[k] and self.pool.get(obj._columns.get(k)._obj).find_sd_ref(cr, uid, data[k].split(',')).values()
+                    new_data[k] = data[k] and list(self.pool.get(obj._columns.get(k)._obj).find_sd_ref(cr, uid, data[k].split(',')).values())
             else:
                 new_data[k] = data[k]
 

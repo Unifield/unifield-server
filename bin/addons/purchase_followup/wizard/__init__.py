@@ -19,4 +19,4 @@
 # 
 ##############################################################################
 
-import po_track_changes_wizard
+from . import po_track_changes_wizard

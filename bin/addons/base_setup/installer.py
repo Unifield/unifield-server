@@ -97,7 +97,7 @@ class base_setup_installer(osv.osv_memory):
         value = {}
         # Calculate progress
         closed, total = self.get_current_progress(cr, uid)
-        progress = round(100. * closed / (total + len(filter(None, args))))
+        progress = round(100. * closed / (total + len([_f for _f in args if _f])))
         value.update({'progress':progress})
         if progress < 10.:
             progress = 10.

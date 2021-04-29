@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import report_rates_table
-import report_currency_table
+from . import report_rates_table
+from . import report_currency_table
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -91,7 +91,7 @@ class account_journal(osv.osv):
         if not ids:
             return res
         am_obj = self.pool.get('account.move')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             res[id] = bool(count_entries(id))
@@ -374,7 +374,7 @@ class account_journal(osv.osv):
         """
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -403,7 +403,7 @@ class account_journal(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if not ids:
             return False
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
 
         is_system = [ rec.type == 'system' \

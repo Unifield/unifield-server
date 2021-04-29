@@ -114,15 +114,15 @@ class stock_fill_inventory(osv.osv_memory):
         if not flag:
             raise osv.except_osv(_('Warning !'), _('No product in this location.'))
 
-        for stock_move in res.values():
-            for stock_move_details in stock_move.values():
+        for stock_move in list(res.values()):
+            for stock_move_details in list(stock_move.values()):
                 stock_move_details.update({'inventory_id': context['active_ids'][0]})
                 domain = []
                 
                 if fill_inventory.set_stock_zero:
                     stock_move_details.update({'product_qty': 0})
 
-                for field, value in stock_move_details.items():
+                for field, value in list(stock_move_details.items()):
                     domain.append((field, '=', value))
 
                 line_ids = inventory_line_obj.search(cr, uid, domain, context=context)

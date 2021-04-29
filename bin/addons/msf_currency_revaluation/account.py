@@ -54,10 +54,10 @@ class account_account(osv.osv):
             string=_("Included in revaluation?")),
         'user_type_code': fields.related(
             'user_type', 'code',
-            type='char', string=_(u"Type (code)")),
+            type='char', string=_("Type (code)")),
         'instance_level': fields.related(
             'company_id', 'instance_id', 'level',
-            type='char', string=_(u"Instance level")),
+            type='char', string=_("Instance level")),
     }
 
     _defaults = {'currency_revaluation': False}
@@ -73,7 +73,7 @@ class account_account(osv.osv):
     def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
         query = ("SELECT l.account_id as id, l.currency_id, l.reconcile_id, "
                  " l.id AS aml_id, " +
-                 ', '.join(self._sql_mapping.values()) +
+                 ', '.join(list(self._sql_mapping.values())) +
                  " FROM account_move_line l"
                  " inner join account_period p on p.id = l.period_id"
                  " WHERE l.account_id IN %(account_ids)s AND"

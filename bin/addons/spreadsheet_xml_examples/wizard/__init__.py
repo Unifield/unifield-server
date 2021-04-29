@@ -1,1 +1,1 @@
-import catalogue_import_lines
+from . import catalogue_import_lines

@@ -206,7 +206,7 @@ class product_product(osv.osv):
         if context.get('location', False):
             if type(context['location']) == type(1):
                 location_ids = [context['location']]
-            elif type(context['location']) in (type(''), type(u'')):
+            elif type(context['location']) in (type(''), type('')):
                 location_ids = stock_location_obj.search(cr, uid,
                                                          [('name','ilike',context['location'])],
                                                          order='NO_ORDER', context=context)
@@ -431,7 +431,7 @@ class product_product(osv.osv):
         query = ''
         if location_ids:
             query += ' and location_dest_id in %s '
-            if isinstance(location_ids, (int, long)):
+            if isinstance(location_ids, int):
                 params.append((location_ids, ))
             else:
                 params.append(tuple(location_ids))

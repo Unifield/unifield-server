@@ -53,9 +53,9 @@ class stock_graph(object):
             self.val_max = max(self.val_max,dt)
 
     def draw(self):
-        colors = choice_colors(len(self._datas.keys()))
+        colors = choice_colors(len(list(self._datas.keys())))
         user_color = {}
-        for user in self._datas.keys():
+        for user in list(self._datas.keys()):
             user_color[user] = colors.pop()
 
         val_min = int(time.mktime(time.strptime(self.val_min,'%Y-%m-%d')))
@@ -65,8 +65,8 @@ class stock_graph(object):
         for product_id in self._datas:
             f = fill_style.Plain()
             f.bgcolor = user_color[user]
-            datas = self._datas[product_id].items()
-            datas = map(lambda x: (int(time.mktime(time.strptime(x[0],'%Y-%m-%d'))),x[1]), datas)
+            datas = list(self._datas[product_id].items())
+            datas = [(int(time.mktime(time.strptime(x[0],'%Y-%m-%d'))),x[1]) for x in datas]
             datas.sort()
             datas2 = []
             val = 0

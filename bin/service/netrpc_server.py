@@ -73,7 +73,7 @@ class TinySocketClientThread(threading.Thread, netsvc.OpenERPDispatcher):
             except socket.timeout:
                 #terminate this channel because other endpoint is gone
                 break
-            except netsvc.OpenERPDispatcherException, e:
+            except netsvc.OpenERPDispatcherException as e:
                 try:
                     new_e = Exception(tools.exception_to_unicode(e.exception)) # avoid problems of pickeling
                     logging.getLogger('web-services').debug("netrpc: rpc-dispatching exception", exc_info=True)
@@ -82,7 +82,7 @@ class TinySocketClientThread(threading.Thread, netsvc.OpenERPDispatcher):
                     #terminate this channel if we can't properly send back the error
                     logging.getLogger('web-services').exception("netrpc: cannot deliver exception message to client")
                     break
-            except Exception, e:
+            except Exception as e:
                 try:
                     tb = getattr(e, 'traceback', sys.exc_info())
                     tb_s = "".join(traceback.format_exception(*tb))
@@ -136,7 +136,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
                     netsvc.Logger().notifyChannel("web-services", netsvc.LOG_DEBUG,
                                                   "Netrpc: %d threads" % len(self.threads))
             self.socket.close()
-        except Exception, e:
+        except Exception as e:
             logging.getLogger('web-services').warning("Netrpc: closing because of exception %s" % str(e))
             self.socket.close()
             return False

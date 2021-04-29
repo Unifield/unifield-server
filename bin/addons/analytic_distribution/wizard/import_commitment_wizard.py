@@ -23,7 +23,7 @@ from tools.translate import _
 from base import currency_date
 
 import base64
-import StringIO
+import io
 import csv
 import time
 import threading
@@ -161,7 +161,7 @@ class import_commitment_wizard(osv.osv_memory):
                 if not wizard.import_file:
                     raise osv.except_osv(_('Error'), _('Nothing to import.'))
                 import_file = base64.decodestring(wizard.import_file)
-                import_string = StringIO.StringIO(import_file)
+                import_string = io.StringIO(import_file)
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
                 total_line = len(import_data) - 1
                 nb = 0
@@ -182,7 +182,7 @@ class import_commitment_wizard(osv.osv_memory):
                     try:
                         description, reference, document_date, date, account_code, destination, \
                             cost_center, funding_pool, third_party,  booking_amount, booking_currency = line
-                    except ValueError, e:
+                    except ValueError as e:
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('Unknown format.'))
 
                     # Dates
@@ -196,7 +196,7 @@ class import_commitment_wizard(osv.osv_memory):
                     else:
                         try:
                             line_date = time.strftime('%Y-%m-%d', time.strptime(date, '%d/%m/%Y'))
-                        except ValueError, e:
+                        except ValueError as e:
                             raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Posting date wrong format for date: %s: %s') % (date, e)))
                     period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
                     if not period_ids:
@@ -212,7 +212,7 @@ class import_commitment_wizard(osv.osv_memory):
                     else:
                         try:
                             line_document_date = time.strftime('%Y-%m-%d', time.strptime(document_date, '%d/%m/%Y'))
-                        except ValueError, e:
+                        except ValueError as e:
                             raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Document date wrong format for date: %s: %s') % (document_date, e)))
                     vals['document_date'] = line_document_date
 
@@ -337,7 +337,7 @@ class import_commitment_wizard(osv.osv_memory):
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_ERROR',  '%d lines imported.' % (nb,))
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_DATE', time.strftime('%Y-%m-%d %H:%M:%S'))
 
-        except Exception, e:
+        except Exception as e:
             msg = hasattr(e, 'value') and e.value or e.message
             self.write(cr, 1, ids, {'in_progress': False, 'error': tools.ustr(msg)})
             cr.rollback()
@@ -421,7 +421,7 @@ class int_commitment_export_wizard(osv.osv_memory):
         file_name = self._csv_filename_pattern % (instance_name, )
 
         # csv prepare and header
-        csv_buffer = StringIO.StringIO()
+        csv_buffer = io.StringIO()
         csv_writer = csv.writer(csv_buffer, delimiter=self._csv_delimiter,
                                 quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerow(self._csv_header)
@@ -434,7 +434,7 @@ class int_commitment_export_wizard(osv.osv_memory):
         export_ids = aal_obj.search(cr, uid, domain, context=context)
         for export_br in aal_obj.browse(cr, uid, export_ids, context=context):
             line_data = self._export_entry(export_br)
-            csv_writer.writerow(map(lambda x: isinstance(x, unicode) and x.encode('utf8') or x, line_data))
+            csv_writer.writerow([isinstance(x, str) and x.encode('utf8') or x for x in line_data])
 
         # download csv
         vals = {

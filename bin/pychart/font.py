@@ -12,12 +12,12 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-import color
+from . import color
 import string
-import pychart_util
+from . import pychart_util
 import re
-import theme
-import afm.dir
+from . import theme
+from . import afm.dir
 
 
 __doc__ = """The module for manipulating texts and their attributes.
@@ -85,17 +85,17 @@ _undefined_font_warned = {}
 
 def _intern_afm(font, text):
     global _undefined_font_warned
-    font2 = _font_aliases.has_key(font) and _font_aliases[font]
-    if afm.dir.afm.has_key(font):
+    font2 = font in _font_aliases and _font_aliases[font]
+    if font in afm.dir.afm:
         return afm.dir.afm[font]
-    if afm.dir.afm.has_key(font2):
+    if font2 in afm.dir.afm:
         return afm.dir.afm[font2]
 
     try:        
         exec("import pychart.afm.%s" % re.sub("-", "_", font))
         return afm.dir.afm[font]
     except:
-        if not font2 and not _undefined_font_warned.has_key(font):
+        if not font2 and font not in _undefined_font_warned:
             pychart_util.warn("Warning: unknown font '%s' while parsing '%s'" % (font, text))
             _undefined_font_warned[font] = 1
     
@@ -104,7 +104,7 @@ def _intern_afm(font, text):
             exec("import pychart.afm.%s" % re.sub("-", "_", font2))
             return afm.dir.afm[font2]
         except:
-            if not _undefined_font_warned.has_key(font):
+            if font not in _undefined_font_warned:
                 pychart_util.warn("Warning: unknown font '%s' while parsing '%s'" % (font, text))
                 _undefined_font_warned[font] = 1
     return None    
@@ -248,7 +248,7 @@ class text_iterator:
                self.str[self.i] == '-'):
             self.i += 1
         return int(self.str[istart:self.i])
-    def next(self):
+    def __next__(self):
         "Get the next text segment. Return an 8-element array: (FONTNAME, SIZE, LINEHEIGHT, COLOR, H_ALIGN, V_ALIGN, ANGLE, STR."
         l = []
         changed = 0
@@ -262,19 +262,19 @@ class text_iterator:
 		self.old_state = self.ts.copy()
                 if ch == '/' or ch == '{' or ch == '}':
                     l.append(ch)
-                elif _font_family_map.has_key(ch):
+                elif ch in _font_family_map:
                     self.ts.family = _font_family_map[ch]
                     changed = 1
                 elif ch == 'F':
                     # /F{font-family}
                     if self.str[self.i] != '{':
-                        raise Exception, "'{' must follow /F in \"%s\"" % self.str
+                        raise Exception("'{' must follow /F in \"%s\"" % self.str)
                     self.i += 1
                     istart = self.i
                     while self.str[self.i] != '}':
                         self.i += 1
                         if self.i >= len(self.str):
-                            raise Exception, "Expecting /F{...}. in \"%s\"" % self.str
+                            raise Exception("Expecting /F{...}. in \"%s\"" % self.str)
                     self.ts.family = self.str[istart:self.i]
                     self.i += 1
                     changed = 1
@@ -300,13 +300,13 @@ class text_iterator:
                     self.ts.color = color.gray_scale(self.__parse_float())
                 elif ch == 'v':
                     if self.str[self.i] not in "BTM":
-                        raise Exception, "Undefined escape sequence: /v%c (%s)" % (self.str[self.i], self.str)
+                        raise Exception("Undefined escape sequence: /v%c (%s)" % (self.str[self.i], self.str))
                     self.ts.valign = self.str[self.i]
                     self.i += 1
                     changed = 1
                 elif ch == 'h':
                     if self.str[self.i] not in "LRC":
-                        raise Exception, "Undefined escape sequence: /h%c (%s)" % (self.str[self.i], self.str)
+                        raise Exception("Undefined escape sequence: /h%c (%s)" % (self.str[self.i], self.str))
                     self.ts.halign = self.str[self.i]
                     self.i += 1
                     changed = 1
@@ -314,13 +314,13 @@ class text_iterator:
                     self.ts.angle = self.__parse_int()
                     changed = 1
                 else:
-                    raise Exception, "Undefined escape sequence: /%c (%s)" % (ch, self.str)
+                    raise Exception("Undefined escape sequence: /%c (%s)" % (ch, self.str))
             elif self.str[self.i] == '{':
                 self.stack.append(self.ts.copy())
                 self.i += 1
             elif self.str[self.i] == '}':
                 if len(self.stack) == 0:
-                    raise ValueError, "unmatched '}' in \"%s\"" % (self.str)
+                    raise ValueError("unmatched '}' in \"%s\"" % (self.str))
                 self.ts = self.stack[-1]
                 del self.stack[-1]
                 self.i += 1
@@ -363,16 +363,16 @@ def unaligned_get_dimension(text):
         cur_width = 0
 	itr.reset(line)
         while 1:
-            elem = itr.next()
+            elem = next(itr)
             if not elem:
                 break
             (font, size, line_height, color, new_h, new_v, new_a, chunk) = elem
             if halign != None and new_h != halign:
-                raise Exception, "Only one /h can appear in string '%s'." % str(text)
+                raise Exception("Only one /h can appear in string '%s'." % str(text))
             if valign != None and new_v != valign:
-                raise Exception, "Only one /v can appear in string '%s'." % str(text)
+                raise Exception("Only one /v can appear in string '%s'." % str(text))
             if angle != None and new_a != angle:
-                raise Exception, "Only one /a can appear in string '%s'." % str(text)
+                raise Exception("Only one /a can appear in string '%s'." % str(text))
             halign = new_h
             valign = new_v
             angle = new_a

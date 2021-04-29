@@ -221,7 +221,7 @@ class account_mcdb(osv.osv):
         Delete all currency and amount fields (to not disturb normal mechanism)
         """
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not choice:
             return {}
@@ -347,7 +347,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         domain = []
         wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
@@ -638,7 +638,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         domain = self._get_domain(cr, uid, ids, context)
         wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
@@ -694,7 +694,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some value
         res_id = ids[0]
@@ -702,7 +702,7 @@ class account_mcdb(osv.osv):
         # Search model
         wiz = self.browse(cr, uid, res_id)
         res_model = wiz and wiz.model or False
-        if field and field in (self._columns and self._columns.keys()):
+        if field and field in (self._columns and list(self._columns.keys())):
             if self._columns[field]._type == 'many2many':
                 # Don't clear all other fields
                 all_fields = False
@@ -723,7 +723,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         context.update({
@@ -745,7 +745,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'journal_ids' field
         return self.button_clear(cr, uid, ids, field='journal_ids', context=context)
@@ -757,7 +757,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.journal'
@@ -772,7 +772,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'period_ids' field
         return self.button_clear(cr, uid, ids, field='period_ids', context=context)
@@ -784,7 +784,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.period'
@@ -799,7 +799,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'analytic_journal_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_journal_ids', context=context)
@@ -811,7 +811,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.analytic.journal'
@@ -826,7 +826,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'account_ids' field
         return self.button_clear(cr, uid, ids, field='account_ids', context=context)
@@ -838,7 +838,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.account'
@@ -853,7 +853,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'account_type_ids' field
         return self.button_clear(cr, uid, ids, field='account_type_ids', context=context)
@@ -865,7 +865,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.account.type'
@@ -880,7 +880,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'analytic_account_fp_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_fp_ids', context=context)
@@ -892,7 +892,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.analytic.account'
@@ -907,7 +907,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'analytic_account_cc_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_cc_ids', context=context)
@@ -919,7 +919,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.analytic.account'
@@ -934,7 +934,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'analytic_account_f1_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_f1_ids', context=context)
@@ -946,7 +946,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.analytic.account'
@@ -961,7 +961,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'analytic_account_f2_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_f2_ids', context=context)
@@ -973,7 +973,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.analytic.account'
@@ -988,7 +988,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Return default behaviour with 'analytic_account_dest_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_dest_ids', context=context)
@@ -1000,7 +1000,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'account.analytic.account'
@@ -1015,7 +1015,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.button_clear(cr, uid, ids, field='instance_ids', context=context)
 
@@ -1026,7 +1026,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.button_clear(cr, uid, ids, field='top_prop_instance_ids', context=context)
 
@@ -1037,7 +1037,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'msf.instance'
@@ -1052,7 +1052,7 @@ class account_mcdb(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         obj = 'msf.instance'
@@ -1066,7 +1066,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj = 'res.partner'
         args = [('active', '=', 't')]
@@ -1079,7 +1079,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj = 'hr.employee'
         args = [('active', '=', 't')]
@@ -1092,7 +1092,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj = 'account.journal'
         args = [('type', 'in', ['cash', 'bank', 'cheque'])]
@@ -1105,7 +1105,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.button_clear(cr, uid, ids, field='partner_ids', context=context)
 
@@ -1115,7 +1115,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.button_clear(cr, uid, ids, field='employee_ids', context=context)
 
@@ -1125,7 +1125,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.button_clear(cr, uid, ids, field='transfer_journal_ids', context=context)
 
@@ -1188,7 +1188,7 @@ class account_mcdb(osv.osv):
                     value = _('True')
             else:
                 rel_obj = self.pool.get(field['relation'])
-                if isinstance(value, (int, long)):
+                if isinstance(value, int):
                     value = [value]
                 elif isinstance(value, tuple):
                     value = list(value)
@@ -1381,7 +1381,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         # get a dictionary containing ALL fields values of the selector
@@ -1403,7 +1403,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         # get a dictionary containing ALL fields values of the selector
@@ -1428,7 +1428,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         # get the id of the template to delete
@@ -1465,7 +1465,7 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         bg_obj = self.pool.get('memory.background.report')
         if format == 'xls':

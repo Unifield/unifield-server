@@ -32,11 +32,11 @@ import socket
 import sys
 import threading
 import time
-import release
+from . import release
 from pprint import pformat
 import warnings
 import heapq
-import pooler
+from . import pooler
 
 # Try to log the traceback in operations.event, but on a best-effort
 # basis: catch all errors and give up
@@ -113,9 +113,9 @@ class LocalService(object):
         self.__name = name
         try:
             self._service = Service._services[name]
-            for method_name, method_definition in self._service._methods.items():
+            for method_name, method_definition in list(self._service._methods.items()):
                 setattr(self, method_name, method_definition)
-        except KeyError, keyError:
+        except KeyError as keyError:
             self.__logger.error('This service does not exist: %s' % (str(keyError),) )
             raise
 
@@ -182,7 +182,7 @@ logging.addLevelName(logging.DEBUG_SQL, 'DEBUG_SQL')
 logging.TEST = logging.INFO - 5
 logging.addLevelName(logging.TEST, 'TEST')
 
-BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, _NOTHING, DEFAULT = range(10)
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, _NOTHING, DEFAULT = list(range(10))
 #The background is set with 40 plus the number of the color, and the foreground with 30
 #These are the sequences need to get colored ouput
 RESET_SEQ = "\033[0m"
@@ -231,7 +231,7 @@ class OpsEventsHandler(logging.Handler):
             self._logging = False
 
 def init_logger():
-    from tools.translate import resetlocale
+    from .tools.translate import resetlocale
     resetlocale()
 
     # create a format for log messages and dates
@@ -313,7 +313,7 @@ class Logger(object):
         warnings.warn("notifyChannel API shouldn't be used anymore, please use "
                       "the standard `logging` module instead",
                       PendingDeprecationWarning, stacklevel=2)
-        from service.web_services import common
+        from .service.web_services import common
 
         log = logging.getLogger(tools.ustr(name))
 
@@ -361,7 +361,7 @@ class Logger(object):
     def shutdown(self):
         logging.shutdown()
 
-import tools
+from . import tools
 init_logger()
 
 class Agent(object):
@@ -419,7 +419,7 @@ class Agent(object):
                     # null timestamp -> cancelled task
                     continue
                 current_thread.dbname = dbname   # hack hack
-                cls._logger.debug("Run %s.%s(*%s, **%s)", function.im_class.__name__, function.func_name, args, kwargs)
+                cls._logger.debug("Run %s.%s(*%s, **%s)", function.__self__.__class__.__name__, function.__name__, args, kwargs)
                 delattr(current_thread, 'dbname')
                 task_thread = threading.Thread(target=function, name='netsvc.Agent.task', args=args, kwargs=kwargs)
                 # force non-daemon task threads (the runner thread must be daemon, and this property is inherited by default)
@@ -520,7 +520,7 @@ class Server:
         if os.name != 'nt':
             try:
                 self.socket.shutdown(getattr(socket, 'SHUT_RDWR', 2))
-            except socket.error, e:
+            except socket.error as e:
                 if e.errno != errno.ENOTCONN: raise
                 # OSX, socket shutdowns both sides if any side closes it
                 # causing an error 57 'Socket is not connected' on shutdown
@@ -572,7 +572,7 @@ class OpenERPDispatcher:
             if service_name != 'db':
                 ops_count(params[0], 'dispatch', '.'.join([service_name, method]))
             return result
-        except Exception, e:
+        except Exception as e:
             self.log('exception', tools.exception_to_unicode(e))
             tb = getattr(e, 'traceback', sys.exc_info())
             tb_s = "".join(traceback.format_exception(*tb))

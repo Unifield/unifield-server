@@ -48,8 +48,8 @@
 import uno
 from com.sun.star.task import XJobExecutor
 
-if __name__<>'package':
-    from lib.gui import *
+if __name__!='package':
+    from .lib.gui import *
 
 class About(unohelper.Base, XJobExecutor):
     def __init__(self,ctx):
@@ -104,7 +104,7 @@ class About(unohelper.Base, XJobExecutor):
 
         self.win.doModalDialog("",None)
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     About(None)
 elif __name__=="package":
     g_ImplementationHelper.addImplementation( About, "org.openoffice.openerp.report.about", ("com.sun.star.task.Job",),)

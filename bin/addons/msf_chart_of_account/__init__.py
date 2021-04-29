@@ -20,5 +20,5 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import msf_chart_of_account_installer
+from . import msf_chart_of_account_installer
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

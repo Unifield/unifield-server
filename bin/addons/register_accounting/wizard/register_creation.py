@@ -40,7 +40,7 @@ class register_creation_lines(osv.osv_memory):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for el in self.browse(cr, uid, ids, context=context):
@@ -54,7 +54,7 @@ class register_creation_lines(osv.osv_memory):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for el in self.browse(cr, uid, ids, context=context):
@@ -99,7 +99,7 @@ class register_creation(osv.osv_memory):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         lines_obj = self.pool.get('wizard.register.creation.lines')
         lines_ids = lines_obj.search(cr, uid, [], context=context)
@@ -136,7 +136,7 @@ class register_creation(osv.osv_memory):
         for rtype in reg_type:
             # Search all register from previous period
             abs_ids = abs_obj.search(cr, uid, [('journal_id.type', '=', rtype), ('period_id', '=', prev_period_id),('instance_id','=', instance_id)], context=context)
-            if isinstance(abs_ids, (int, long)):
+            if isinstance(abs_ids, int):
                 abs_ids = [abs_ids]
             # Browse all registers in order to filter those which doesn't have an active currency
             for register in abs_obj.browse(cr, uid, abs_ids, context=context):
@@ -185,7 +185,7 @@ class register_creation(osv.osv_memory):
         """
         Create all selected registers.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not context:
             context = {}

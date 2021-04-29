@@ -57,7 +57,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         invl_obj = self.pool.get('account.invoice.line')
@@ -119,7 +119,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Browse invoices
@@ -210,7 +210,7 @@ class account_invoice(osv.osv):
         cv_to_close = {}
 
         # deduce amount on oldest cv lines
-        for account in account_amount_dic.keys():
+        for account in list(account_amount_dic.keys()):
             if account not in cv_info:
                 continue
             for cv_line in cv_info[account]:
@@ -295,7 +295,7 @@ class account_invoice(osv.osv):
                     return True
 
         if cv_to_close:
-            for cv in self.pool.get('account.commitment').read(cr, uid, cv_to_close.keys(), ['total'], context=context):
+            for cv in self.pool.get('account.commitment').read(cr, uid, list(cv_to_close.keys()), ['total'], context=context):
                 if abs(cv['total']) < 0.001:
                     self.pool.get('account.commitment').action_commitment_done(cr, uid, [cv['id']], context=context)
         return True
@@ -307,7 +307,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         to_process = []

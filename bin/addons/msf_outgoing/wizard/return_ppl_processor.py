@@ -52,7 +52,7 @@ class return_ppl_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:

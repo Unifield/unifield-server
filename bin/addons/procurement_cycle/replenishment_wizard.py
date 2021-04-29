@@ -75,7 +75,7 @@ class replenishment_consolidated_oc_import(osv.osv_memory):
                 error.append(_('Line %d: product %s not found in %s') % (idx+1, prod_code, oc_by_ref[oc_ref]))
                 continue
 
-            if row.cells[qty_col].data and not isinstance(row.cells[qty_col].data, (int, long, float)):
+            if row.cells[qty_col].data and not isinstance(row.cells[qty_col].data, (int, float)):
                 error.append(_('Line %d: product %s %s : Agreed Order Qty  must be a number, found %s') % (idx+1, prod_code, oc_by_ref[oc_ref], row.cells[qty_col].data))
                 continue
 

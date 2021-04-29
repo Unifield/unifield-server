@@ -19,10 +19,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import actions
-import error
-import functions
-import gui
-import logreport
-import rpc
-import tiny_socket
+from . import actions
+from . import error
+from . import functions
+from . import gui
+from . import logreport
+from . import rpc
+from . import tiny_socket

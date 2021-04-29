@@ -8,22 +8,22 @@ OpenObject Client Library
 import sys
 import socket
 import zlib
-import xmlrpclib
-from timeout_transport import TimeoutTransport, TimeoutSafeTransport
+import xmlrpc.client
+from .timeout_transport import TimeoutTransport, TimeoutSafeTransport
 from osv import osv
 from tools.translate import _
 import tools
 import ssl
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except:
     import pickle
 
 try:
-    import cStringIO as StringIO
+    import io as StringIO
 except:
-    import StringIO
+    import io
 
 import logging
 
@@ -54,7 +54,7 @@ class SafeUnpickler(object):
 
     @classmethod
     def loads(cls, pickle_string):
-        pickle_obj = pickle.Unpickler(StringIO.StringIO(pickle_string))
+        pickle_obj = pickle.Unpickler(io.StringIO(pickle_string))
         pickle_obj.find_global = cls.find_class
         return pickle_obj.load()
 
@@ -92,7 +92,7 @@ class XmlRPCConnector(Connector):
         transport = TimeoutTransport(timeout=self.timeout)
         # Enable gzip on all payloads
         transport.encode_threshold = 0
-        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=transport)
+        service = xmlrpc.client.ServerProxy(url, allow_none=1, transport=transport)
         return self._send(service, method, *args)
 
     def _send(self, service, method, *args):
@@ -102,7 +102,7 @@ class XmlRPCConnector(Connector):
             try:
                 retry = False
                 return getattr(service, method)(*args)
-            except Exception, e:
+            except Exception as e:
                 error = e
                 if i < self.retry:
                     retry = True
@@ -133,7 +133,7 @@ class SecuredXmlRPCConnector(XmlRPCConnector):
         if not tools.config.get('secure_verify', True):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
-        service = xmlrpclib.ServerProxy(url, allow_none=1, context=ctx, transport=transport)
+        service = xmlrpc.client.ServerProxy(url, allow_none=1, context=ctx, transport=transport)
 
         return self._send(service, method, *args)
 
@@ -160,7 +160,7 @@ class NetRPC:
             host, port = buf.split(':')
         try:
             self.sock.connect((host, int(port)))
-        except Exception, e:
+        except Exception as e:
             raise NetRPC_Exception(tools.ustr(e), "Could not connect to %s:%s" % (host, port))
 
     def disconnect(self):
@@ -179,7 +179,7 @@ class NetRPC:
         while totalsent < size:
             sent = self.sock.send(msg[totalsent:])
             if sent == 0:
-                raise RuntimeError, "socket connection broken"
+                raise RuntimeError("socket connection broken")
             totalsent = totalsent + sent
 
     def myreceive(self):
@@ -187,7 +187,7 @@ class NetRPC:
         while len(buf) < 8:
             chunk = self.sock.recv(8 - len(buf))
             if chunk == '':
-                raise RuntimeError, "socket connection broken"
+                raise RuntimeError("socket connection broken")
             buf += chunk
         size = int(buf)
         buf = self.sock.recv(1)
@@ -199,7 +199,7 @@ class NetRPC:
         while len(msg) < size:
             chunk = self.sock.recv(size-len(msg))
             if chunk == '':
-                raise RuntimeError, "socket connection broken"
+                raise RuntimeError("socket connection broken")
             msg = msg + chunk
         if msg.startswith(GZIP_MAGIC):
             msg = zlib.decompress(msg)
@@ -207,7 +207,7 @@ class NetRPC:
 
         if isinstance(res[0],Exception):
             if exception:
-                raise NetRPC_Exception(unicode(res[0]), str(res[1]))
+                raise NetRPC_Exception(str(res[0]), str(res[1]))
             raise res[0]
         else:
             return res[0]
@@ -235,7 +235,7 @@ class NetRPCConnector(Connector):
                 socket.connect(self.hostname, self.port)
                 socket.mysend((service_name, method, )+args)
                 result = socket.myreceive()
-            except Exception, e:
+            except Exception as e:
                 error = e
                 if i < self.retry:
                     retry = True
@@ -413,7 +413,7 @@ class Object(object):
 
         records = self.__send__('read', *arguments)
 
-        if isinstance(ids, (list, tuple,)):
+        if isinstance(ids, (list, tuple)):
             records.sort(lambda x, y: cmp(ids.index(x['id']),
                                           ids.index(y['id'])))
 

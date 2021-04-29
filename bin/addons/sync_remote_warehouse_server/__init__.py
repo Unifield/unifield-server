@@ -1,1 +1,1 @@
-import server_rules
+from . import server_rules

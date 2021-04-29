@@ -217,18 +217,18 @@ ACCOUNT_RESTRICTED_AREA = {
     ],
 }
 
-import res_company
-import res_currency
-import res_partner
-import period
-import account
-import invoice
-import product
-import account_move_line
-import account_analytic_line
-import account_bank_statement
-import report
-import wizard
-import finance_export
-import account_invoice_sync
+from . import res_company
+from . import res_currency
+from . import res_partner
+from . import period
+from . import account
+from . import invoice
+from . import product
+from . import account_move_line
+from . import account_analytic_line
+from . import account_bank_statement
+from . import report
+from . import wizard
+from . import finance_export
+from . import account_invoice_sync
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

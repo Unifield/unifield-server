@@ -78,11 +78,11 @@ class real_average_consumption(osv.osv):
                 raise osv.except_osv(_('Error'), _('This report is closed. You cannot delete it !'))
             if report.created_ok and report.picking_id:
                 if report.picking_id.state != 'cancel':
-                    raise osv.except_osv(_('Error'), _(u'You cannot delete this report because stock moves has been generated and validated from this report !'))
+                    raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
                 else:
                     for move in report.picking_id.move_lines:
                         if move.state != 'cancel':
-                            raise osv.except_osv(_('Error'), _(u'You cannot delete this report because stock moves has been generated and validated from this report !'))
+                            raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
 
         return super(real_average_consumption, self).unlink(cr, uid, ids, context=context)
 
@@ -119,7 +119,7 @@ class real_average_consumption(osv.osv):
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -144,7 +144,7 @@ class real_average_consumption(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -240,7 +240,7 @@ class real_average_consumption(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         message = {}
@@ -304,7 +304,7 @@ class real_average_consumption(osv.osv):
                 'target': 'new'}
 
     def button_update_stock(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         to_update = []
         for line in self.read(cr, uid, ids, ['created_ok','line_ids']):
@@ -335,7 +335,7 @@ class real_average_consumption(osv.osv):
                 }
 
     def draft_button(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -357,7 +357,7 @@ class real_average_consumption(osv.osv):
                 }
 
     def cancel_button(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -382,7 +382,7 @@ class real_average_consumption(osv.osv):
         '''
         Creates all stock moves according to the report lines
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -661,7 +661,7 @@ class real_average_consumption(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         vals = {}
         vals['line_ids'] = []
@@ -676,7 +676,7 @@ class real_average_consumption(osv.osv):
         """
         Check the lines that need to be corrected
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for var in self.browse(cr, uid, ids, context=context):
@@ -728,7 +728,7 @@ class real_average_consumption_line(osv.osv):
             context = {}
         noraise = context.get('noraise')
         context.update({'error_message': ''})
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         error_message = []
         for obj in self.browse(cr, uid, ids):
@@ -908,7 +908,7 @@ class real_average_consumption_line(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
@@ -1132,7 +1132,7 @@ class real_consumption_change_location(osv.osv_memory):
         '''
         Change location of the report and reload the report
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)
@@ -1174,7 +1174,7 @@ class monthly_review_consumption(osv.osv):
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -1366,7 +1366,7 @@ class monthly_review_consumption(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         vals = {}
         vals['line_ids'] = []
@@ -1381,7 +1381,7 @@ class monthly_review_consumption(osv.osv):
         """
         Check the lines that need to be corrected.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for var in self.browse(cr, uid, ids, context=context):
             # we check the lines that need to be fixed
@@ -1430,7 +1430,7 @@ class monthly_review_consumption_line(osv.osv):
             data_mrc_id[line.mrc_id.id]['prod_line'].setdefault(line.name.id, []).append(line.id)
 
         for mrc_id in data_mrc_id:
-            amc = prod_obj.compute_amc(cr, uid, data_mrc_id[mrc_id]['prod_line'].keys(), data_mrc_id[mrc_id]['context'])
+            amc = prod_obj.compute_amc(cr, uid, list(data_mrc_id[mrc_id]['prod_line'].keys()), data_mrc_id[mrc_id]['context'])
             for prod_id in amc:
                 for line_id in data_mrc_id[mrc_id]['prod_line'][prod_id]:
                     res[line_id] = amc[prod_id]
@@ -1469,7 +1469,7 @@ class monthly_review_consumption_line(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
@@ -1500,7 +1500,7 @@ class monthly_review_consumption_line(osv.osv):
             for line in mrc.line_ids:
                 result[line.id] = True
 
-        return result.keys()
+        return list(result.keys())
 
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('monthly.review.consumption.line').search(cr, uid, [('name', 'in', ids)], context=context)
@@ -1523,7 +1523,7 @@ class monthly_review_consumption_line(osv.osv):
         """
         res = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for _id in ids:
             res[_id] = 0
@@ -1542,7 +1542,7 @@ class monthly_review_consumption_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = []
@@ -1592,7 +1592,7 @@ class monthly_review_consumption_line(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -1638,7 +1638,7 @@ class monthly_review_consumption_line(osv.osv):
         '''
         Fill data in the line
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not context:
@@ -1725,7 +1725,7 @@ class product_product(osv.osv):
         '''
         Compute the Real Average Consumption
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1753,7 +1753,7 @@ class product_product(osv.osv):
         if context.get('location_id', False):
             if type(context['location_id']) == type(1):
                 location_ids = [context['location_id']]
-            elif type(context['location_id']) in (type(''), type(u'')):
+            elif type(context['location_id']) in (type(''), type('')):
                 location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
             else:
                 location_ids = context.get('location_id', [])
@@ -1854,7 +1854,7 @@ class product_product(osv.osv):
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         move_obj = self.pool.get('stock.move')
@@ -2000,7 +2000,7 @@ class product_product(osv.osv):
                 from_over = max(from_date, x[1])
                 to_over = min(to_date, x[2])
                 overlap_days = (strptime(to_over, '%Y-%m-%d') - strptime(from_over, '%Y-%m-%d')).days
-                if x[0] in res.keys():
+                if x[0] in list(res.keys()):
                     if  x[3] is None:
                         # qty no set
                         adjusted_day.setdefault(x[0], 0)
@@ -2009,7 +2009,7 @@ class product_product(osv.osv):
                         adjusted_qty.setdefault(x[0], 0)
                         adjusted_qty[x[0]] += (x[3]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
                 for idx in [4, 6, 8]:
-                    if x[idx] in res.keys() and x[idx+1]:
+                    if x[idx] in list(res.keys()) and x[idx+1]:
                         adjusted_qty.setdefault(x[idx], 0)
                         adjusted_qty[x[idx]] -= (x[idx+1]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
 

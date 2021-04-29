@@ -38,7 +38,7 @@ class account_fiscal_position(osv.osv):
         if not taxes:
             return []
         if not fposition_id:
-            return map(lambda x: x.id, taxes)
+            return [x.id for x in taxes]
         result = []
         for t in taxes:
             ok = False
@@ -117,8 +117,8 @@ class res_partner(osv.osv):
             return []
         having_values = tuple(map(itemgetter(2), args))
         where = ' AND '.join(
-            map(lambda x: '(SUM(debit-credit) %(operator)s %%s)' % {
-                'operator':x[1]},args))
+            ['(SUM(debit-credit) %(operator)s %%s)' % {
+                'operator':x[1]} for x in args])
         query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
         cr.execute(('''
             SELECT partner_id FROM account_move_line l
@@ -133,7 +133,7 @@ class res_partner(osv.osv):
         res = cr.fetchall()
         if not res:
             return [('id','=','0')]
-        return [('id','in',map(itemgetter(0), res))]
+        return [('id','in',list(map(itemgetter(0), res)))]
 
     def _credit_search(self, cr, uid, obj, name, args, context=None):
         return self._asset_difference_search(cr, uid, obj, name, 'receivable', args, context=context)

@@ -23,8 +23,8 @@
 PARTNER_TYPE = [('internal', 'Internal'), ('section', 'Inter-section'),
                 ('external', 'External'), ('esc', 'ESC'), ('intermission', 'Intermission'),]
 
-import partner
-import product
+from . import partner
+from . import product
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

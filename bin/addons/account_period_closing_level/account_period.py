@@ -63,7 +63,7 @@ class account_period(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Prepare some elements
@@ -262,7 +262,7 @@ class account_period(osv.osv):
 ###################################################
 
                 # Write changes
-                if isinstance(ids, (int, long)):
+                if isinstance(ids, int):
                     ids = [ids]
                 self.write(cr, uid, ids, {'state':'field-closed', 'field_process': False}, context=context)
                 return True
@@ -307,7 +307,7 @@ class account_period(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
 
         for rec in self.browse(cr, uid, ids, context=context):
@@ -394,7 +394,7 @@ class account_period(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if not ids:
             return False
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
 
         is_system = [ rec.is_system \
@@ -462,7 +462,7 @@ class account_period(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = self.pool.get('account.bank.statement').get_statement(cr, uid, [], register_type, context=None)
         # Only display registers from given period
@@ -508,7 +508,7 @@ class account_period(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # to get action_xmlid:
@@ -612,7 +612,7 @@ class account_period(osv.osv):
     def button_close_field_period(self, cr, uid, ids, context=None):
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.write(cr, uid, ids, {'field_process': True}, context)
 
@@ -642,7 +642,7 @@ class account_period(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Update context to set "To validate" button by default
         context.update({'search_default_non_validated': 1})
@@ -684,7 +684,7 @@ class account_period(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         period_ids = []
@@ -724,7 +724,7 @@ class account_period(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         period_ids = []
@@ -751,7 +751,7 @@ class account_period(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         period = self.browse(cr, uid, ids, context=context)[0]
         vals = {
@@ -779,7 +779,7 @@ class account_period(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context.update({'search_default_partially_posted': 1,
                         'search_default_draft': 0})

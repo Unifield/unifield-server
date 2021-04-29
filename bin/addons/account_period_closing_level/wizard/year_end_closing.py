@@ -44,7 +44,7 @@ class wizard_account_year_end_closing(osv.osv_memory):
         return res
 
     def btn_close_fy(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
         rec = self.browse(cr, uid, ids[0], context=context)
         company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id

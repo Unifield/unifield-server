@@ -122,12 +122,12 @@ class wizard_hq_report_oca(osv.osv_memory):
                     nb_ok += 1
                     msg.append('[%s] %s done' % (time.strftime('%Y-%m-%d %H:%M:%S'), period_state.instance_id.code))
                     cr.commit()
-                except Exception, e:
+                except Exception as e:
                     cr.rollback()
                     msg.append('ERROR %s %s' % (period_state.instance_id.code,misc.get_traceback(e)))
                     nb_error += 1
 
-            for period_state_ids in instance_seen.items():
+            for period_state_ids in list(instance_seen.items()):
                 # overkill ? just in case of duplicates period_id / coordo_id
                 p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True}, context=context)
 
@@ -146,7 +146,7 @@ class wizard_hq_report_oca(osv.osv_memory):
                         export_job_obj.send_file(cr, uid, export_wiz, remote_con, fullfilename, export_wiz.dest_path, delete=True, context=context)
                         if disable_generation:
                             nb_ok += 1
-                except Exception, e:
+                except Exception as e:
                     nb_error += 1
                     msg.append('ERROR %s %s' % (filename,  misc.get_traceback(e)))
 
@@ -162,7 +162,7 @@ class wizard_hq_report_oca(osv.osv_memory):
                         export_job_obj.send_file(cr, uid, export_wiz, remote_con, fullfilename, export_wiz.report_path, delete=True, context=context)
                         if disable_generation:
                             nb_ok += 1
-                except Exception, e:
+                except Exception as e:
                     nb_error += 1
                     msg.append('ERROR %s %s' % (filename,  misc.get_traceback(e)))
 
@@ -175,7 +175,7 @@ class wizard_hq_report_oca(osv.osv_memory):
                 msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), current_report, export_wiz.report_path))
                 try:
                     export_job_obj.send_file(cr, uid, export_wiz, remote_con, current_report, export_wiz.report_path, delete=True, context=context)
-                except Exception, e:
+                except Exception as e:
                     nb_error += 1
                     msg.append('ERROR %s %s' % (current_report,  misc.get_traceback(e)))
 
@@ -195,7 +195,7 @@ class wizard_hq_report_oca(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wizard = self.browse(cr, uid, ids[0], context=context)

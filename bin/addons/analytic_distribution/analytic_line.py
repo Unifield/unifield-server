@@ -161,7 +161,7 @@ class analytic_line(osv.osv):
         for arg in args:
             if len(arg) == 3 and arg[1] in ['=', 'in', 'not in']:
                 periods = arg[2]
-                if isinstance(periods, (int, long)):
+                if isinstance(periods, int):
                     periods = [periods]
                 if len(periods) > 1:
                     for null in range(len(periods) - 1):
@@ -271,7 +271,7 @@ class analytic_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not account_id:
             return False
@@ -387,9 +387,9 @@ class analytic_line(osv.osv):
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
 
-                    if isinstance(rev_ids, (int, long, )):
+                    if isinstance(rev_ids, int):
                         rev_ids = [rev_ids]
-                    if isinstance(cor_ids, (int, long, )):
+                    if isinstance(cor_ids, int):
                         cor_ids = [cor_ids]
                     for rev_cor_id in rev_ids + cor_ids:
                         cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, rev_cor_id))
@@ -409,7 +409,7 @@ class analytic_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some value
         ad_obj = self.pool.get('analytic.distribution')
@@ -564,7 +564,7 @@ class analytic_line(osv.osv):
                 return [(False, '', '')]  # tripplet required at import
         elif not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not dest_id and not cc_id and not fp_id:
             return [(id, '', '') for id in ids]  # all uncompatible

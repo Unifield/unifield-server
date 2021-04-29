@@ -38,7 +38,7 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pol_obj = self.pool.get('purchase.order.line')

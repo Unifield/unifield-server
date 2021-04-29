@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import multiple_sourcing
+from . import multiple_sourcing
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

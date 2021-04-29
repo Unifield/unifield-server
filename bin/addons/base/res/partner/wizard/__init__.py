@@ -19,10 +19,10 @@
 #
 ##############################################################################
 
-import partner_sms_send
-import partner_wizard_spam
-import partner_clear_ids
-import partner_wizard_ean_check
+from . import partner_sms_send
+from . import partner_wizard_spam
+from . import partner_clear_ids
+from . import partner_wizard_ean_check
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import supplier_catalogue_lines_xls
+from . import supplier_catalogue_lines_xls
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

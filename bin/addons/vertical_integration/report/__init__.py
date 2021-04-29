@@ -1,7 +1,7 @@
-import hq_report_ocg
-import hq_report_oca
-import hq_report_ocb
-import hq_report_ocb_matching
-import hq_report_ocba
-import hq_report_ocp
-import hq_report_ocp_matching
+from . import hq_report_ocg
+from . import hq_report_oca
+from . import hq_report_ocb
+from . import hq_report_ocb_matching
+from . import hq_report_ocba
+from . import hq_report_ocp
+from . import hq_report_ocp_matching

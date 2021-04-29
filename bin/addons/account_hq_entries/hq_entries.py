@@ -37,7 +37,7 @@ class hq_entries(osv.osv):
          - if compatible with the line, then "valid"
          - all other case are "invalid"
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -354,7 +354,7 @@ class hq_entries(osv.osv):
         # Prepare some values
         vals = {}
         ids = context.get('active_ids')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if len(ids) > 1:
             raise osv.except_osv(_('Warning'), _('You can only split HQ Entries one by one!'))
@@ -397,7 +397,7 @@ class hq_entries(osv.osv):
         if context is None:
             context = {}
         ids = context.get('active_ids')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Update vals
         vals.update({'line_ids': [(6, 0, ids)], 'process_ids': [(6, 0, self.unsplit_allowed_lines(cr, uid, ids, context=context))]})
@@ -430,7 +430,7 @@ class hq_entries(osv.osv):
         if context is None:
             context = {}
         ids = context.get('active_ids')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Search lines that should be processed
         # - exclude validated lines (user_validated = False)
@@ -485,7 +485,7 @@ class hq_entries(osv.osv):
         """
         At synchro time sets HQ entry to Not Run if the Cost Center used in the line doesn't exist or is inactive
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -514,7 +514,7 @@ class hq_entries(osv.osv):
         """
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context={}
@@ -549,7 +549,7 @@ class hq_entries(osv.osv):
          - split entries
          - original entries
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -576,7 +576,7 @@ class hq_entries(osv.osv):
         if context is None:
             context = {}
         domain = [
-            ('number', 'in', range(12, 16)),
+            ('number', 'in', list(range(12, 16))),
             ('state', 'in', ['draft', 'field-closed', ]),
         ]
         if self.pool.get('account.period').search(cr, uid, domain, context=context, count=True):

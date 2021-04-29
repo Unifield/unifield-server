@@ -89,7 +89,7 @@ class stock_inventory(osv.osv):
                 product_id = product['id']
                 product_dict[product_id] = {}
                 product_dict[product_id]['p_tmpl_id'] = product['product_tmpl_id'][0]
-            tmpl_ids = [x['p_tmpl_id'] for x in product_dict.values()]
+            tmpl_ids = [x['p_tmpl_id'] for x in list(product_dict.values())]
 
             product_tmpl_id_list = [x for x in tmpl_ids if x not in
                                     product_tmpl_dict]

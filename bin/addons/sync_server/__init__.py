@@ -1,6 +1,6 @@
-import sync_server
-import rules
-import update
-import message
-import sync_disabled
-import survey
+from . import sync_server
+from . import rules
+from . import update
+from . import message
+from . import sync_disabled
+from . import survey

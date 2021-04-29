@@ -37,6 +37,7 @@ from . import SALE_ORDER_SPLIT_SELECTION
 from . import SALE_ORDER_LINE_STATE_SELECTION
 from . import SALE_ORDER_LINE_DISPLAY_STATE_SELECTION
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from functools import reduce
 
 
 
@@ -266,7 +267,7 @@ class sale_order(osv.osv):
         result = {}
         for line in self.pool.get('sale.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
             result[line.order_id.id] = True
-        return result.keys()
+        return list(result.keys())
 
     def _get_order_state(self, cr, uid, ids, context=None):
         # recompute FO amount total only if state switches to cancel(_r)
@@ -274,7 +275,7 @@ class sale_order(osv.osv):
         for line in self.pool.get('sale.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'],context=context):
             if line.state in ('cancel', 'cancel_r'):
                 result[line.order_id.id] = True
-        return result.keys()
+        return list(result.keys())
 
     def _check_browse_param(self, param, method):
         """
@@ -460,7 +461,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         sols_obj = self.pool.get('sale.order.line.state')
         sos_obj = self.pool.get('sale.order.state')
@@ -530,7 +531,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -550,7 +551,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Return a shortened version of Customer Reference, with only the Order Reference
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         ref_by_order = {}
@@ -730,7 +731,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Do not prevent modification during synchro
@@ -769,7 +770,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not len(ids):
             return False
         cr.execute('select id from sale_order_line where order_id IN %s and state=%s', (tuple(ids), 'cancel'))
-        line_ids = map(lambda x: x[0], cr.fetchall())
+        line_ids = [x[0] for x in cr.fetchall()]
         self.write(cr, uid, ids, {'state': 'draft', 'invoice_ids': [], 'shipped': 0})
         self.pool.get('sale.order.line').write(cr, uid, line_ids, {'invoiced': False, 'state': 'draft', 'invoice_lines': [(6, 0, [])]})
         wf_service = netsvc.LocalService("workflow")
@@ -869,7 +870,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1059,7 +1060,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 for i in o.invoice_ids:
                     if i.state == 'draft':
                         return i.id
-        for val in invoices.values():
+        for val in list(invoices.values()):
             if grouped:
                 res = self._make_invoice(cr, uid, val[0][0], reduce(lambda x, y: x + y, [l for o, l in val], []), context=context)
                 invoice_ref = ''
@@ -1067,7 +1068,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     invoice_ref += o.name + '|'
                     self.write(cr, uid, [o.id], {'state': 'progress'})
                     if o.order_policy == 'picking':
-                        picking_obj.write(cr, uid, map(lambda x: x.id, o.picking_ids), {'invoice_state': 'invoiced'})
+                        picking_obj.write(cr, uid, [x.id for x in o.picking_ids], {'invoice_state': 'invoiced'})
                     cr.execute('insert into sale_order_invoice_rel (order_id,invoice_id) values (%s,%s)', (o.id, res))
                 invoice.write(cr, uid, [res], {'origin': invoice_ref, 'name': invoice_ref})
             else:
@@ -1076,7 +1077,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     invoice_ids.append(res)
                     self.write(cr, uid, [order.id], {'state': 'progress'})
                     if order.order_policy == 'picking':
-                        picking_obj.write(cr, uid, map(lambda x: x.id, order.picking_ids), {'invoice_state': 'invoiced'})
+                        picking_obj.write(cr, uid, [x.id for x in order.picking_ids], {'invoice_state': 'invoiced'})
                     cr.execute('insert into sale_order_invoice_rel (order_id,invoice_id) values (%s,%s)', (order.id, res))
         return res
 
@@ -1192,7 +1193,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Check restriction on products
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         line_obj = self.pool.get('sale.order.line')
@@ -1218,7 +1219,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         message = {}
@@ -1274,7 +1275,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sale_order = self.browse(cr, uid, ids[0], context=context)
@@ -1294,7 +1295,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for order in self.browse(cr, uid, ids, context=context):
@@ -1363,7 +1364,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         po_ids = set()
@@ -1416,7 +1417,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # as it might be needed to update the read-only view...
         raw_display_strings_state = dict(SALE_ORDER_STATE_SELECTION)
         display_strings_state = dict([(k, _(v)) \
-                                      for k,v in raw_display_strings_state.items()])
+                                      for k,v in list(raw_display_strings_state.items())])
 
         display_strings = {}
         display_strings["state"] = display_strings_state
@@ -1655,7 +1656,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         wf_service = netsvc.LocalService("workflow")
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -1716,10 +1717,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
 
         res = {}
@@ -1764,7 +1765,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz_id = wiz_obj.create(cr, uid, {}, context=context)
@@ -1831,7 +1832,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if use_new_cursor:
@@ -1871,7 +1872,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     to_update.setdefault(good_quantity, [])
                     to_update[good_quantity].append(sol.id)
 
-            for qty, line_ids in to_update.iteritems():
+            for qty, line_ids in to_update.items():
                 sol_obj.write(cr, uid, line_ids, {
                     'product_uom_qty': qty,
                     'soq_updated': True,
@@ -1939,7 +1940,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         def get_linked_pol(sol_id):
@@ -1982,7 +1983,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -2189,7 +2190,7 @@ class sale_order_line(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Do not prevent modification during synchro
@@ -2265,7 +2266,7 @@ class sale_order_line(osv.osv):
                 create_ids.append(inv_id)
         # Trigger workflow events
         wf_service = netsvc.LocalService("workflow")
-        for sid in sales.keys():
+        for sid in list(sales.keys()):
             wf_service.trg_write(uid, 'sale.order', sid, cr)
         return create_ids
 
@@ -2572,7 +2573,7 @@ class sale_order_line(osv.osv):
         When delete a FO/IR line, check if the FO/IR must be confirmed
         """
         lines_to_check = []
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -2620,7 +2621,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
@@ -2633,7 +2634,7 @@ class sale_order_line(osv.osv):
         '''
         cancel partially a SO line: create a split and cancel the split
         '''
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -2667,7 +2668,7 @@ class sale_order_line(osv.osv):
         '''
         Check if there is restriction on lines
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -2702,7 +2703,7 @@ class sale_order_line(osv.osv):
         elif context.get('sol_done_instead_of_cancel'):
             signal = 'done'
 
-        if isinstance(line, (int, long)):
+        if isinstance(line, int):
             line = self.browse(cr, uid, line, context=context)
 
         order = line.order_id and line.order_id.id
@@ -2739,7 +2740,7 @@ class sale_order_line(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(line, (int, long)):
+        if isinstance(line, int):
             line = self.browse(cr, uid, line, context=context)
 
         if not order_id:
@@ -2798,7 +2799,7 @@ class sale_order_line(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -2833,7 +2834,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'sale', 'view_order_line_to_correct_form')[1]
@@ -3109,7 +3110,7 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # UTP-392: fixed from the previous code: check if the sale order line contains the product, and not only from vals!
@@ -3424,7 +3425,7 @@ class sale_order_sourcing_progress(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         f_to_read = [
@@ -3740,7 +3741,7 @@ class sale_order_unlink_wizard(osv.osv_memory):
         '''
         context = context or {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -3786,7 +3787,7 @@ class sale_order_cancelation_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -3810,7 +3811,7 @@ class sale_order_cancelation_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [id]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -3829,7 +3830,7 @@ class sale_order_cancelation_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")

@@ -90,9 +90,9 @@ class sale_order_line_make_invoice(osv.osv_memory):
                     invoices[line.order_id.id].append((line, lid))
                 sales_order_line_obj.write(cr, uid, [line.id],
                         {'invoiced': True})
-        for result in invoices.values():
+        for result in list(invoices.values()):
             order = result[0][0].order_id
-            il = map(lambda x: x[1], result)
+            il = [x[1] for x in result]
             res = make_invoice(order, il)
             cr.execute('INSERT INTO sale_order_invoice_rel \
                     (order_id,invoice_id) values (%s,%s)', (order.id, res))

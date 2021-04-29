@@ -12,12 +12,12 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-import pychart_util
+from . import pychart_util
 import types
 AnyType = 9998
 
 def CoordType(val):
-    if type(val) != types.TupleType and type(val) != types.ListType:
+    if type(val) != tuple and type(val) != list:
         return (" not a valid coordinate.")
     if len(val) != 2:
         return "Coordinate must be a pair of numbers.\n"
@@ -30,13 +30,13 @@ def CoordType(val):
     return None    
 
 def IntervalType(val):
-    if type(val) in (types.IntType, types.LongType,
-                     types.FloatType, types.FunctionType):
+    if type(val) in (int, int,
+                     float, types.FunctionType):
 	return None
     return "Expecting a number or a function"
 
 def CoordOrNoneType(val):
-    if type(val) not in (types.TupleType, types.ListType):
+    if type(val) not in (tuple, list):
         return "Expecting a tuple or a list."
     if len(val) != 2:
         return "Coordinate must be a pair of numbers.\n"
@@ -46,26 +46,26 @@ def CoordOrNoneType(val):
     return None    
     
 def NumType(val):
-    if type(val) in (types.IntType, types.LongType, types.FloatType):
+    if type(val) in (int, int, float):
         return None
     else:
         return "Expecting a number, found \"" + str(val) + "\""
 
 def UnitType(val):
-    if type(val) in (types.IntType, types.LongType, types.FloatType):
+    if type(val) in (int, int, float):
         return None
     else:
         return "Expecting a unit, found \"" + str(val) + "\""
     
 def ShadowType(val):
-    if type(val) not in (types.TupleType, types.ListType):
+    if type(val) not in (tuple, list):
 	return "Expecting tuple or list."
     if len(val) != 3:
 	return "Expecting (xoff, yoff, fill)."
     return None
 
 def FormatType(val):
-    if type(val) in (types.StringType, types.FunctionType):
+    if type(val) in (bytes, types.FunctionType):
         return None
     return "Format must be a string or a function"
 

@@ -231,7 +231,7 @@ class product_nomenclature(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -297,14 +297,14 @@ class product_nomenclature(osv.osv):
         if args[0][1] not in ('=', '!=', 'ilike'):
             raise osv.except_osv(_('Error'), _('Bad operator : You can only use \'=\', \'!=\' or \'ilike\' as operator'))
 
-        if args[0][2] != False and not isinstance(args[0][2], (int, long)):
+        if args[0][2] != False and not isinstance(args[0][2], int):
             raise osv.except_osv(_('Error'), _('Bad operand : You can only give False or the id of a category'))
 
         if args[0][2] == False:
             res.append(('category_ids', args[0][1], False))
             return res
 
-        if isinstance(args[0][2], (int, long)):
+        if isinstance(args[0][2], int):
             categ = self.pool.get('product.category').browse(cr, uid, args[0][2])
             return [('id', args[0][1], categ.family_id.id)]
 
@@ -430,7 +430,7 @@ class product_nomenclature(osv.osv):
         '''
         return false for each id
         '''
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         result = {}
         for id in ids:
@@ -508,7 +508,7 @@ class product_nomenclature(osv.osv):
         level = 100
         while len(ids):
             cr.execute('select distinct parent_id from product_nomenclature where id IN %s', (tuple(ids),))
-            ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            ids = [_f for _f in [x[0] for x in cr.fetchall()] if _f]
             if not level:
                 return False
             level -= 1
@@ -567,14 +567,14 @@ class product_nomenclature(osv.osv):
     def get_sub_nomen(self, cr, uid, obj, id, field):
         parent = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']
         level = {'nomen_sub_0': '0', 'nomen_sub_1': '1', 'nomen_sub_2': '2', 'nomen_sub_3': '3', 'nomen_sub_4': '4', 'nomen_sub_5': '5'}
-        read = parent + level.keys()
+        read = parent + list(level.keys())
         nom = obj.read(cr, uid, id, read)
         parent_id = [False]
         for p in parent:
             if nom[p]:
                 parent_id.append(nom[p][0])
         sub = []
-        for p in level.keys():
+        for p in list(level.keys()):
             if p != field and nom[p]:
                 sub.append(nom[p][0])
         dom = [('type', '=', 'optional'), ('parent_id', 'in', parent_id), ('sub_level', '=', level.get(field)), ('id', 'not in', sub)]
@@ -844,7 +844,7 @@ class product_product(osv.osv):
         # The first 2 cases: dup of default_code/xmlid_code not allow
         if context.get('sync_update_execution', False):
             if not default_code or not vals.get('xmlid_code', False):
-                raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
+                raise Exception("Problem creating product: Missing xmlid_code/default_code in the data")
         if not vals.get('xmlid_code'):
             vals['xmlid_code'] = RANDOM_XMLID_CODE_PREFIX + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(14))
 
@@ -1029,7 +1029,7 @@ class product_product(osv.osv):
         possible improvement:
 
         '''
-        levels = range(_LEVELS)
+        levels = list(range(_LEVELS))
 
         # level not of interest
         if level not in levels:

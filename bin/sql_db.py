@@ -30,9 +30,9 @@ from psycopg2.pool import PoolError
 
 import psycopg2.extensions
 import warnings
-import pooler
-from tools import cache
-from tools import misc
+from . import pooler
+from .tools import cache
+from .tools import misc
 import time
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
@@ -51,14 +51,14 @@ def undecimalize(symb, cr):
     if symb is None: return None
     return float(symb)
 
-for name, typeoid in types_mapping.items():
+for name, typeoid in list(types_mapping.items()):
     psycopg2.extensions.register_type(psycopg2.extensions.new_type(typeoid, name, lambda x, cr: x))
 psycopg2.extensions.register_type(psycopg2.extensions.new_type((700, 701, 1700,), 'float', undecimalize))
 
 
-import tools
-from tools.func import wraps, frame_codeinfo
-from netsvc import Agent
+from . import tools
+from .tools.func import wraps, frame_codeinfo
+from .netsvc import Agent
 from datetime import datetime as mdt
 from datetime import timedelta
 import threading
@@ -164,15 +164,15 @@ class Cursor(object):
                 self._oc.histogram['sql'].add(delta)
                 if self._oe and delta > self._oe.SLOW_QUERY:
                     self._oe.remember_slow_query(query, delta)
-        except psycopg2.ProgrammingError, pe:
+        except psycopg2.ProgrammingError as pe:
             if log_exceptions:
                 self.__logger.error("Programming error: %s, in query %s", pe, query)
             raise
-        except psycopg2.IntegrityError, ie:
+        except psycopg2.IntegrityError as ie:
             if log_exceptions:
                 osv_pool = pooler.pool_dic.get(self.dbname)
                 if osv_pool:
-                    for key in osv_pool._sql_error.keys():
+                    for key in list(osv_pool._sql_error.keys()):
                         if key in ie[0]:
                             self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, tools.misc.ustr(ie[0]))
                             #US-88: if error occurred for account analytic then just clear the cache
@@ -228,7 +228,7 @@ class Cursor(object):
             sqllogs = {'from':self.sql_from_log, 'into':self.sql_into_log}
             sum = 0
             if sqllogs[type]:
-                sqllogitems = sqllogs[type].items()
+                sqllogitems = list(sqllogs[type].items())
                 sqllogitems.sort(key=lambda k: k[1][1])
                 self.__logger.log(logging.DEBUG_SQL, "SQL LOG %s:", type)
                 sqllogitems.sort(lambda x,y: cmp(x[1][0], y[1][0]))
@@ -456,7 +456,7 @@ class Connection(object):
     def serialized_cursor(self):
         return self.cursor(True)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Check if connection is possible"""
         try:
             warnings.warn("You use an expensive function to test a connection.",

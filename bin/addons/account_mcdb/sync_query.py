@@ -18,7 +18,7 @@ class finance_sync_query(osv.osv):
 
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'finance_sync_query')
-        CASE_QUERY = ' '.join(["WHEN model='%s' THEN '%s'" % (y,x) for x,y in self._map_mcdb_model.iteritems()])
+        CASE_QUERY = ' '.join(["WHEN model='%s' THEN '%s'" % (y,x) for x,y in self._map_mcdb_model.items()])
 
         cr.execute("""CREATE OR REPLACE VIEW finance_sync_query AS (
         SELECT 2*id as id,
@@ -74,7 +74,7 @@ class finance_sync_query(osv.osv):
         return self.search(cr, uid, [('template_id', '=', template_id), ('model', '=', values['model'])], context=context)[0]
 
     def write(self, cr, uid, ids, values, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if values.get('name'):
             for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
@@ -93,7 +93,7 @@ class finance_sync_query(osv.osv):
 
 
     def unlink(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
             if x['template_id']:
@@ -102,7 +102,7 @@ class finance_sync_query(osv.osv):
         return True
 
     def _set_sync_status(self, cr, uid, ids, status, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
             if x['template_id']:
@@ -131,7 +131,7 @@ class finance_sync_query(osv.osv):
     def open_template(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         query = self.read(cr, uid, ids[0], context=context)

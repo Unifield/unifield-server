@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import move_tracking
+from . import move_tracking
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -42,7 +42,7 @@ class hq_analytic_reallocation(osv.osv_memory):
     def default_get(self, cr, uid, fields, context=None):
         # BKLG-77: check transation before showing wizard
         line_ids = context and context.get('active_ids', []) or []
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
                                                                line_ids, self._name, context=context)
@@ -90,9 +90,9 @@ class hq_analytic_reallocation(osv.osv_memory):
         if not model:
             raise osv.except_osv(_('Error'), _('Unknown error. Please contact an administrator to resolve this problem. This is probably due to Web server error.'))
         line_ids = context.get('active_ids', [])
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
         vals = {
@@ -123,7 +123,7 @@ class hq_reallocation(osv.osv_memory):
     def default_get(self, cr, uid, fields, context=None):
         # BKLG-77: check transation before showing wizard
         line_ids = context and context.get('active_ids', []) or []
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
                                                                line_ids, self._name, context=context)
@@ -140,9 +140,9 @@ class hq_reallocation(osv.osv_memory):
         if not model:
             raise osv.except_osv(_('Error'), _('Unknown error. Please contact an administrator to resolve this problem. This is probably due to Web server error.'))
         line_ids = context.get('active_ids', [])
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
         self.pool.get(model).write(cr, uid, line_ids, {'account_id': wiz.account_id and wiz.account_id.id or False,})

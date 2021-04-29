@@ -1,5 +1,5 @@
-import account_chart
-import split_invoice
-import import_invoice
-import report_paid_invoices
-import integrity_finance_wizard
+from . import account_chart
+from . import split_invoice
+from . import import_invoice
+from . import report_paid_invoices
+from . import integrity_finance_wizard

@@ -46,7 +46,7 @@ class account_analytic_line(osv.osv):
                 limit, order, context=context, count=count)
 
     def _get_fake(self, cr, uid, ids, *a, **b):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return {}.fromkeys(ids, False)
 

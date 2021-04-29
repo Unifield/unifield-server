@@ -36,7 +36,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}
@@ -70,7 +70,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService('workflow')

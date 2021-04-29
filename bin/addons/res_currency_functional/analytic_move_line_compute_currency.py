@@ -32,7 +32,7 @@ class account_analytic_line_compute_currency(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for analytic_line in self.browse(cr, uid, ids):
             amount = None

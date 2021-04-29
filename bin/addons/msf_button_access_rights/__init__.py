@@ -18,10 +18,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import wizards
-import res_log
-import osv_override
-import ir_ui_view
-import ir_model_data
-import button_access_rule
+from . import wizards
+from . import res_log
+from . import osv_override
+from . import ir_ui_view
+from . import ir_model_data
+from . import button_access_rule
 

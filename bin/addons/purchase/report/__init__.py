@@ -19,9 +19,9 @@
 #
 ##############################################################################
 
-import order
-import request_quotation
-import purchase_report
+from . import order
+from . import request_quotation
+from . import purchase_report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

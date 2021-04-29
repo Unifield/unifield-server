@@ -19,12 +19,12 @@
 #
 ##############################################################################
 
-import msf_tools
-import automated_import_function
-import automated_import
-import automated_import_job
-import automated_import_files_available
-import automated_export_function
-import automated_export
-import automated_export_job
-import report
+from . import msf_tools
+from . import automated_import_function
+from . import automated_import
+from . import automated_import_job
+from . import automated_import_files_available
+from . import automated_export_function
+from . import automated_export
+from . import automated_export_job
+from . import report

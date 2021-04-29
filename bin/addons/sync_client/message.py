@@ -31,7 +31,7 @@ class dict_to_obj(object):
     def __init__(self, values):
         assert isinstance(values, dict), "Must be a dictionary"
         self.values = values
-        for k, v in values.items():
+        for k, v in list(values.items()):
             if isinstance(v, dict):
                 v = dict_to_obj(v)
             elif hasattr(v, '__iter__'):
@@ -292,7 +292,7 @@ class message_to_send(osv.osv):
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         return dict( (id, "%s_%s" % (name, server_rule_id)) \
-                     for id, name in self.pool.get(model).get_sd_ref(cr, uid, ids, context=context).items() )
+                     for id, name in list(self.pool.get(model).get_sd_ref(cr, uid, ids, context=context).items()) )
 
     def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, sent=False, context=None):
         data = {
@@ -467,7 +467,7 @@ class message_received(osv.osv):
                     new_ctx = context.copy()
                     new_ctx.update({'identifier': message.identifier})
                     res = fn(cr, uid, message.source, *arg, context=new_ctx)
-                except BaseException, e:
+                except BaseException as e:
                     error = e # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)
                     cr.rollback()
@@ -486,7 +486,7 @@ class message_received(osv.osv):
                         'run' : True,
                         'log' : tools.ustr(res),
                     }, context=context)
-            except BaseException, e1:
+            except BaseException as e1:
                 ### This should never be reachable, but nobody knows!
                 self._logger.exception("Message execution %d failed!" % message.id)
 

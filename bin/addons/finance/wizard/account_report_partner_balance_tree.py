@@ -209,7 +209,7 @@ class account_partner_balance_tree(osv.osv):
         ]
         ids = self.search(cr, uid, domain, context=context)
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             self.unlink(cr, uid, ids, context=context)
 
@@ -297,7 +297,7 @@ class account_partner_balance_tree(osv.osv):
         if context is None:
             context = {}
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             r = self.read(cr, uid, ids, ['partner_id'], context=context)
             if r and r[0] and r[0]['partner_id']:
@@ -341,7 +341,7 @@ class account_partner_balance_tree(osv.osv):
         ]
         ids = self.search(cr, uid, domain, context=context, order='name, id')
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             return self.browse(cr, uid, ids, context=context)
         return []
@@ -349,7 +349,7 @@ class account_partner_balance_tree(osv.osv):
     def get_partner_account_move_lines_data(self, cr, uid, partner_id, data, context=None):
         ids = self._execute_query_selected_partner_move_line_ids(cr, uid, partner_id, data)
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             sql = """SELECT a.code as account, SUM(aml.debit) as deb, SUM(aml.credit) as cred, SUM(debit) - SUM(credit) as total
                     FROM account_move_line as aml, account_account as a

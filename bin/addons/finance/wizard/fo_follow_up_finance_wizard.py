@@ -53,7 +53,7 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         fo_obj = self.pool.get('sale.order')
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wizard in self.browse(cr, uid, ids, context=context):
             fo_ids = []
@@ -101,7 +101,7 @@ class fo_follow_up_finance_wizard(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self.get_values(cr, uid, ids, context=context)
         background_id = self.pool.get('memory.background.report').create(cr, uid, {

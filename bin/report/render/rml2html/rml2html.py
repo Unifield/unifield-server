@@ -36,10 +36,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import sys
-import cStringIO
+import io
 from lxml import etree
 import copy
-import utils
+from . import utils
 from report.render.rml2pdf import utils
 
 class _flowable(object):
@@ -102,7 +102,7 @@ class _flowable(object):
                         pass
         process(node,new_node)
         if new_node.get('colWidths',False):
-            sizes = map(lambda x: utils.unit_get(x), new_node.get('colWidths').split(','))
+            sizes = [utils.unit_get(x) for x in new_node.get('colWidths').split(',')]
             tr = etree.SubElement(new_node, 'tr')
             for s in sizes:
                 etree.SubElement(tr, 'td', width=str(s))
@@ -231,7 +231,7 @@ class _rml_stylesheet(object):
         for ps in stylesheet.findall('paraStyle'):
             attr = {}
             attrs = ps.attrib
-            for key, val in attrs.items():
+            for key, val in list(attrs.items()):
                  attr[key] = val
             attrs = []
             for a in attr:
@@ -267,7 +267,7 @@ class _rml_draw_style(object):
     def get(self,tag):
         if not tag in self.style:
             return ""
-        return ';'.join(['%s:%s' % (x[0],x[1]) for x in self.style[tag].items()])
+        return ';'.join(['%s:%s' % (x[0],x[1]) for x in list(self.style[tag].items())])
 
 class _rml_template(object):
     def __init__(self, template, localcontext=None):
@@ -303,7 +303,7 @@ class _rml_template(object):
                             frames[(t.posy,t.posx,n.tag)] = t
                         else:
                             self.style.update(n)
-            keys = frames.keys()
+            keys = list(frames.keys())
             keys.sort()
             keys.reverse()
             self.page_template[id] = []
@@ -437,22 +437,22 @@ def parseString(data,localcontext = {}, fout=None):
         fp.close()
         return fout
     else:
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         r.render(fp)
         return fp.getvalue()
 
 def rml2html_help():
-    print 'Usage: rml2html input.rml >output.html'
-    print 'Render the standard input (RML) and output an HTML file'
+    print('Usage: rml2html input.rml >output.html')
+    print('Render the standard input (RML) and output an HTML file')
     sys.exit(0)
 
 if __name__=="__main__":
     if len(sys.argv)>1:
         if sys.argv[1]=='--help':
             rml2html_help()
-        print parseString(file(sys.argv[1], 'r').read()),
+        print(parseString(file(sys.argv[1], 'r').read()), end=' ')
     else:
-        print 'Usage: rml2html input.rml >output.html'
-        print 'Try \'rml2html --help\' for more information.'
+        print('Usage: rml2html input.rml >output.html')
+        print('Try \'rml2html --help\' for more information.')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -124,7 +124,7 @@ class ir_values(osv.osv):
             cr.execute('CREATE INDEX ir_values_key_model_key2_res_id_user_id_idx ON ir_values (key, model, key2, res_id, user_id)')
 
     def set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=False, preserve_user=False, company=False, view_ids=False):
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = value.encode('utf8')
         if not isobject:
             value = pickle.dumps(value)
@@ -233,9 +233,9 @@ class ir_values(osv.osv):
             obj_model = models[0][0]
             if self.pool.get('sync.client.rule').search_exist(cr, uid, [('model', '=', obj_model), ('type', '!=', 'USB')]):
                 act_sent_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'action_open_updates_sent')[1]
-                result.append((act_sent_id, 'Updates_Sent', u'ir.actions.server,%d' % act_sent_id, True, None, u'action'))
+                result.append((act_sent_id, 'Updates_Sent', 'ir.actions.server,%d' % act_sent_id, True, None, 'action'))
                 act_rcv_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'action_open_updates_received')[1]
-                result.append((act_rcv_id, 'Updates_Received', u'ir.actions.server,%d' % act_rcv_id, True, None, u'action'))
+                result.append((act_rcv_id, 'Updates_Received', 'ir.actions.server,%d' % act_rcv_id, True, None, 'action'))
 
         if not result:
             return []
@@ -266,7 +266,7 @@ class ir_values(osv.osv):
                 return (x[0], x[1], datas, pickle.loads(x[4]))
             return (x[0], x[1], datas)
         keys = []
-        res = filter(None, map(lambda x: _result_get(x, keys), result))
+        res = [_f for _f in [_result_get(x, keys) for x in result] if _f]
         res2 = res[:]
         for r in res:
             if isinstance(r[2], dict) and r[2].get('type') in ('ir.actions.report.xml','ir.actions.act_window','ir.actions.wizard'):

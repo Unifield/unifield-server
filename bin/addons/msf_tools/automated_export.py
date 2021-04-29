@@ -157,7 +157,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
     def ftp_test_connection(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -188,7 +188,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
     def sftp_test_connection(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
 
@@ -224,7 +224,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Use uid=1 to avoid return of only osv.memory that belongs to the current user
@@ -251,7 +251,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if params is None:
@@ -307,7 +307,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if params is None:
@@ -398,7 +398,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if 'ftp_ok' in vals:
@@ -439,7 +439,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if job_obj.search(cr, uid, [('export_id', 'in', ids)], limit=1, order='NO_ORDER', context=context):
@@ -473,7 +473,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for job in self.browse(cr, uid, ids, context=context):
             if not job.dest_path:
@@ -535,7 +535,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return self.write(cr, uid, ids, {'active': False}, context=context)

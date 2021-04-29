@@ -19,10 +19,10 @@
 #
 ##############################################################################
 
-import sale_order
-import report_reception
-import consumption_report
-import product_list
-import report_product_labels
+from . import sale_order
+from . import report_reception
+from . import consumption_report
+from . import product_list
+from . import report_product_labels
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -109,7 +109,7 @@ class financing_contract_format_line(osv.osv):
         # Verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
             #account_quadruplet_domain = ['&',('funding_pool_id', 'in', (36,40))]
@@ -135,7 +135,7 @@ class financing_contract_format_line(osv.osv):
             total_costs = self._get_budget_amount(cr, uid, total_line_ids, field_name, context=context)
         else:
             total_costs = self._get_actual_amount(cr, uid, total_line_ids, field_name, context=context)
-        for total_cost in total_costs.values():
+        for total_cost in list(total_costs.values()):
             result += total_cost
         return result
 
@@ -588,7 +588,7 @@ class financing_contract_format_line(osv.osv):
             if context.get('sync_update_execution') and vals.get('quadruplet_update', False) and 'quadruplet_sync_list' not in vals:
                 # old sync update received
                 quadrup_str = vals['quadruplet_update']
-                quads_list = map(int, quadrup_str.split(','))
+                quads_list = list(map(int, quadrup_str.split(',')))
                 vals['account_quadruplet_ids'] = [(6, 0, self.pool.get('financing.contract.account.quadruplet').migrate_old_quad(cr, uid, quads_list))]
         # "Select Accounts Only" = only G/L accounts selected: reset the acc/dest and quadruplets
         elif vals.get('reporting_select_accounts_only'):
@@ -616,7 +616,7 @@ class financing_contract_format_line(osv.osv):
             return True
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # US-180: Check if it comes from the sync update

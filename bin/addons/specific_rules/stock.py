@@ -63,7 +63,7 @@ class initial_stock_inventory(osv.osv):
         '''
         Override the action_confirm method to check the batch mgmt/perishable data
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         product_dict = {}
@@ -141,7 +141,7 @@ class initial_stock_inventory(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.check_integrity(cr, uid, ids, context=context)
@@ -183,7 +183,7 @@ class initial_stock_inventory(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         location_id = False
@@ -555,7 +555,7 @@ class stock_cost_reevaluation(osv.osv):
         '''
         Confirm the cost reevaluation (don't change the price at this time)
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -579,7 +579,7 @@ class stock_cost_reevaluation(osv.osv):
         '''
         sptc_obj = self.pool.get('standard.price.track.changes')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -600,7 +600,7 @@ class stock_cost_reevaluation(osv.osv):
         '''
         Change the state of the document to cancel
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -609,7 +609,7 @@ class stock_cost_reevaluation(osv.osv):
         '''
         Change the state of the document to draft
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
@@ -621,7 +621,7 @@ class stock_cost_reevaluation(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for inventory in self.browse(cr, uid, ids, context=context):

@@ -21,6 +21,6 @@
 #
 ##############################################################################
 
-import output_currency_for_export
+from . import output_currency_for_export
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

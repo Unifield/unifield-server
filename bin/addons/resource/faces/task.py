@@ -32,8 +32,8 @@ This module contains all classes for project plan objects
 """
 #@<< Imports >>
 #@+node:<< Imports >>
-import pcalendar
-import resource
+from . import pcalendar
+from . import resource
 import types
 import sys
 import datetime
@@ -43,6 +43,7 @@ import locale
 import weakref
 import opcode
 import new
+from functools import reduce
 try:
     set
 except NameError:
@@ -87,7 +88,7 @@ class _IncompleteError(Exception):
     #@	@+others
     #@+node:__init__
     def __init__(self, *args):
-        if isinstance(args[0], (basestring)):
+        if isinstance(args[0], (str)):
             Exception.__init__(self, *args)
         else:
             Exception.__init__(self,
@@ -175,7 +176,7 @@ class _MeProxyRecalc(_MeProxy):
     #@	@+others
     #@+node:__setattr__
     def __setattr__(self, name, value):
-        if self.task._properties.has_key(name):
+        if name in self.task._properties:
             self.task._set_attrib(name, value)
     #@-node:__setattr__
     #@-others
@@ -284,7 +285,7 @@ def _correct_labels(old_code, new_code):
                 #@-node:<< add label if necessary >>
                 #@nl
 
-    for offset, label in labels.iteritems():
+    for offset, label in labels.items():
         new_offset = old_new_map[offset]
         new_label = old_new_map[label]
         op = new_code[new_offset - 3]
@@ -304,7 +305,7 @@ def _instrument(func):
     opmap = opcode.opmap
     jumps = opcode.hasjrel + opcode.hasjabs
     HAVE_ARGUMENT = opcode.HAVE_ARGUMENT
-    co = func.func_code
+    co = func.__code__
     local_names = co.co_varnames
     all_names = list(co.co_names)
     global_names = set()
@@ -327,22 +328,22 @@ def _instrument(func):
     # all_name_map maps names to the all_names index
     # (same like all_names.index())
     all_name_map = list_to_dict(all_names)
-    if not all_name_map.has_key("me"):
+    if "me" not in all_name_map:
         all_name_map["me"] = len(all_names)
         all_names.append("me")
 
     #<python 2.5>
     for ln in local_names:
-        if not all_name_map.has_key(ln):
+        if ln not in all_name_map:
             all_name_map[ln] = len(all_names)
             all_names.append(ln)
     #</python 2.5>
 
-    new_local_names = filter(is_local, local_names)
+    new_local_names = list(filter(is_local, local_names))
     new_local_name_map = list_to_dict(new_local_names)
 
     me_arg = _int_to_arg(all_name_map["me"])
-    old_lnotab = map(ord, co.co_lnotab)
+    old_lnotab = list(map(ord, co.co_lnotab))
     new_lnotab = []
     tab_pos = 0
     try:
@@ -351,7 +352,7 @@ def _instrument(func):
         next_tab_point = None
 
     last_tab_point = 0
-    code = map(ord, co.co_code)
+    code = list(map(ord, co.co_code))
     new_code = []
     has_labels = False
     n = len(code)
@@ -452,10 +453,10 @@ def _instrument(func):
 
 
     func =  new.function(new_co,
-                         func.func_globals,
-                         func.func_name,
-                         func.func_defaults,
-                         func.func_closure)
+                         func.__globals__,
+                         func.__name__,
+                         func.__defaults__,
+                         func.__closure__)
     func.global_names = tuple([all_names[index] for index in global_names])
     return func
     #@nonl
@@ -544,26 +545,27 @@ class _ValueWrapper(object):
         self._ref = ref
     #@-node:__init__
     #@+node:unicode
-    def unicode(self, *args):
+    def str(self, *args):
         if isinstance(self._value, str):
-            return unicode(self._value, *args)
+            return str(self._value, *args)
 
-        return unicode(self._value)
+        return str(self._value)
     #@nonl
     #@-node:unicode
     #@+node:_vw
     def _vw(self, operand, *args):
-        refs = _refsum(map(_ref, args))
-        vals = map(_val, args)
+        refs = _refsum(list(map(_ref, args)))
+        vals = list(map(_val, args))
         result = operand(*vals)
         return self.__class__(result, refs)
     #@-node:_vw
     #@+node:_cmp
     def _cmp(self, operand, *args):
-        refs = _refsum(map(_ref, args))
-        vals = map(_val, args)
+        refs = _refsum(list(map(_ref, args)))
+        vals = list(map(_val, args))
         result = operand(*vals)
-        map(lambda a: _sref(a, refs), args)
+        for arg in args:
+            _sref(arg, refs)
         return result
     #@-node:_cmp
     #@+node:__getattr__
@@ -578,14 +580,14 @@ class _ValueWrapper(object):
     def __str__(self): return str(self._value)
     #@-node:__str__
     #@+node:__unicode__
-    def __unicode__(self): return unicode(self._value)
+    def __unicode__(self): return str(self._value)
     #@nonl
     #@-node:__unicode__
     #@+node:__repr__
     def __repr__(self): return repr(self._value)
     #@-node:__repr__
     #@+node:__nonzero__
-    def __nonzero__(self): return bool(self._value)
+    def __bool__(self): return bool(self._value)
     #@-node:__nonzero__
     #@+node:__lt__
     def __lt__(self, other): return self._cmp(op.lt, self, other)
@@ -691,7 +693,7 @@ class _ValueWrapper(object):
     def __int__(self): return int(self._value)
     #@-node:__int__
     #@+node:__long__
-    def __long__(self): return long(self._value)
+    def __long__(self): return int(self._value)
     #@-node:__long__
     #@+node:__float__
     def __float__(self): return float(self._value)
@@ -816,7 +818,7 @@ def _get_tasks_of_sources(task, attrib_filter="end,start,effort,length,duration"
     dep_tasks = {}
 
     while task:
-        for dep in task._sources.values():
+        for dep in list(task._sources.values()):
             for d in dep:
                 path, attrib = _split_path(d)
                 if attrib and attrib_filter.find(attrib) >= 0:
@@ -824,7 +826,7 @@ def _get_tasks_of_sources(task, attrib_filter="end,start,effort,length,duration"
 
         task = task.up
 
-    return dep_tasks.keys()
+    return list(dep_tasks.keys())
 #@-node:_get_tasks_of_sources
 #@+node:_build_balancing_list
 def _build_balancing_list(tasks):
@@ -853,7 +855,7 @@ def _build_balancing_list(tasks):
     while len(done_map) < count:
         for i in range(count):
             to_inspect = balancing_list[i]
-            if done_map.has_key(to_inspect):
+            if to_inspect in done_map:
                 continue
 
             done_map[to_inspect] = True
@@ -890,7 +892,7 @@ def _build_balancing_list(tasks):
         #@nl
         for j in range(i + 1, count):
             check_task = balancing_list[j]
-            if done_map.has_key(check_task):
+            if check_task in done_map:
                 continue
 
             if inspect_depends_on(check_task):
@@ -903,7 +905,7 @@ def _build_balancing_list(tasks):
 #@-node:_build_balancing_list
 #@+node:_as_string
 def _as_string(val):
-    if isinstance(val, basestring):
+    if isinstance(val, str):
         return '"""%s"""' % val.replace("\n", "\\n")
 
     if isinstance(val, pcalendar._WorkingDateBase):
@@ -916,11 +918,11 @@ def _as_string(val):
         return '"%id %iM"' % (val.days, val.seconds / 60)
 
     if isinstance(val, tuple):
-        result = map(_as_string, val)
+        result = list(map(_as_string, val))
         return "(%s)" % ", ".join(result)
 
     if isinstance(val, list):
-        result = map(_as_string, val)
+        result = list(map(_as_string, val))
         return "[%s]" % ", ".join(result)
 
     if isinstance(val, resource.Resource):
@@ -1053,10 +1055,10 @@ class StrictAllocator(AllocationAlgorithm):
         # the load of this resource will be max_load(r), and the other
         # resources will have another (higher) norm_load
 
-        max_loads = map(lambda r: (_calc_maxload(task, r), r), resource)
+        max_loads = [(_calc_maxload(task, r), r) for r in resource]
         max_loads.sort()
 
-        efficiency_sum = sum(map(lambda r: r.efficiency, resource))
+        efficiency_sum = sum([r.efficiency for r in resource])
         norm_load = sum_load / efficiency_sum
 
         loads = {}
@@ -1091,7 +1093,7 @@ class StrictAllocator(AllocationAlgorithm):
 
         base_start = to_start(task.performed_start or task.start)
         calc_load = lambda r: _calc_load(task, r)
-        loads = map(lambda r: (r, calc_load(r)), resource)
+        loads = [(r, calc_load(r)) for r in resource]
 
         length = task.__dict__.get("length")
         duration = task.__dict__.get("duration")
@@ -1137,8 +1139,7 @@ class StrictAllocator(AllocationAlgorithm):
                     return loads[res]
             else:
                 #the length depends on the count of resources
-                factor = sum(map(lambda a: a[0].efficiency * a[1],
-                                 loads)) * task.efficiency
+                factor = sum([a[0].efficiency * a[1] for a in loads]) * task.efficiency
                 length = effort / factor
         #@nonl
         #@-node:<< correct effort and (re)calculate length >>
@@ -1166,7 +1167,7 @@ class StrictAllocator(AllocationAlgorithm):
 
         if effort is None:
             #length is frozen ==> a new effort will be calculated
-            factor = sum(map(lambda a: a[1], loads))
+            factor = sum([a[1] for a in loads])
             length = end - start
 
             effort = to_delta(length * factor\
@@ -1216,7 +1217,7 @@ class StrictAllocator(AllocationAlgorithm):
 
     def balance(self, task, start, delta, adjust_date,
                 calc_load, resource):
-        book_load = max(map(lambda r: r.get_load(task.start, task.scenario), resource))
+        book_load = max([r.get_load(task.start, task.scenario) for r in resource])
         return start, book_load
     #@-node:balance
     #@-others
@@ -1265,7 +1266,7 @@ class SloppyAllocator(AllocationAlgorithm):
     #@	@+others
     #@+node:test_allocation
     def test_allocation(self, task, resource):
-        if task.__dict__.has_key("effort"):
+        if "effort" in task.__dict__:
             return self.test_allocation_effort(task, resource)
 
         return self.test_allocation_length(task, resource)
@@ -1351,7 +1352,7 @@ class SloppyAllocator(AllocationAlgorithm):
             date = next_date
 
             interval_resource = []
-            interval_end = to_start(sys.maxint)
+            interval_end = to_start(sys.maxsize)
             factor = 0
 
             for r in resource:
@@ -1399,7 +1400,7 @@ class SloppyAllocator(AllocationAlgorithm):
     #@-node:test_allocation_effort
     #@+node:allocate
     def allocate(self, task, state):
-        if task.__dict__.has_key("effort"): self.allocate_effort(task, state)
+        if "effort" in task.__dict__: self.allocate_effort(task, state)
         else: self.allocate_length(task, state)
     #@-node:allocate
     #@+node:allocate_length
@@ -1930,7 +1931,7 @@ class Task(object):
 
         assert(type(func) == types.FunctionType)
 
-        func_key = (func.func_code, func.func_closure and id(func.func_closure))
+        func_key = (func.__code__, func.__closure__ and id(func.__closure__))
 
         try:
             instrumented = instrumentation_cache[func_key]
@@ -1955,7 +1956,7 @@ class Task(object):
         self.depth = len(self.path.split(".")) - 1
         self.index = parent and ("%s.%i" % (parent.index, index)) \
                      or str(index)
-        if self.formats.has_key(name):
+        if name in self.formats:
             raise AttributeError("Task name '%s' hides attribute of parent." \
                                  % name)
 
@@ -2051,12 +2052,10 @@ class Task(object):
 
         costs = 0
         if 'e' in mode:
-            costs += sum(map(lambda rl: getattr(rl[0], cost_name) * rl[1],
-                             self._resource_length))
+            costs += sum([getattr(rl[0], cost_name) * rl[1] for rl in self._resource_length])
 
         if 'p' in mode:
-            costs += sum(map(lambda rl: getattr(rl[0], cost_name) * rl[1],
-                             self._performed_resource_length))
+            costs += sum([getattr(rl[0], cost_name) * rl[1] for rl in self._performed_resource_length])
 
         costs /= (60.0 * self.root.calendar.working_hours_per_day)
         return round(costs, 2)
@@ -2069,7 +2068,7 @@ class Task(object):
         val = 0
 
         if self.children:
-            val += sum(map(lambda c: c.sum(attrib_name), self.children))
+            val += sum([c.sum(attrib_name) for c in self.children])
             if self.is_inherited(attrib_name):
                 return val
 
@@ -2085,7 +2084,7 @@ class Task(object):
     #@+node:min
     def min(self, attrib_name):
         if self.children:
-            return min(map(lambda c: c.min(attrib_name), self.children))
+            return min([c.min(attrib_name) for c in self.children])
 
         return getattr(self, attrib_name)
 
@@ -2096,7 +2095,7 @@ class Task(object):
     #@+node:max
     def max(self, attrib_name):
         if self.children:
-            return max(map(lambda c: c.max(attrib_name), self.children))
+            return max([c.max(attrib_name) for c in self.children])
 
         return getattr(self, attrib_name)
 
@@ -2107,7 +2106,7 @@ class Task(object):
     #@+node:all_resources
     def all_resources(self):
         result = self._all_resources_as_dict()
-        result = result.keys()
+        result = list(result.keys())
         result.sort()
         return result
     #@-node:all_resources
@@ -2173,7 +2172,7 @@ class Task(object):
             text += "\n".join(map(make_resource_booking, resources)) + "]"
 
 
-        child_text = map(lambda c: c.snapshot(indent), self.children)
+        child_text = [c.snapshot(indent) for c in self.children]
         text += "\n\n"
         text += "".join(child_text)
 
@@ -2181,7 +2180,7 @@ class Task(object):
     #@-node:snapshot
     #@+node:is_inherited
     def is_inherited(self, attrib_name):
-        return not self.__dict__.has_key(attrib_name)
+        return attrib_name not in self.__dict__
     #@-node:is_inherited
     #@+node:formatter
     def formatter(self, attrib_name, arg=None, format=None):
@@ -2239,7 +2238,7 @@ class Task(object):
             return result
 
         if self.resource:
-            return dict(map(lambda r: (r, 1), self.resource.all_members()))
+            return dict([(r, 1) for r in self.resource.all_members()])
 
         return {}
     #@-node:_all_resources_as_dict
@@ -2266,9 +2265,8 @@ class Task(object):
         for r in self.performed_resource:
             r.correct_bookings(self)
 
-        self._resource_length = map(lambda r: (weakref.proxy(r), \
-                                               r.length_of(self)),
-                                    self._iter_booked_resources())
+        self._resource_length = [(weakref.proxy(r), \
+                                               r.length_of(self)) for r in self._iter_booked_resources()]
     #@-node:_allocate
     #@+node:_convert_performed
     def _convert_performed(self, all_resources):
@@ -2289,7 +2287,7 @@ class Task(object):
             item = performed[index]
             res, start, end = item[:3]
             if isinstance(res, str):
-                found = filter(lambda r: r.name == res, all_resources)
+                found = [r for r in all_resources if r.name == res]
                 if found: res = found[0]
 
             try:
@@ -2306,13 +2304,13 @@ class Task(object):
                     working_time = self._to_delta(end - start, True)
 
                 return ((res, start, end, working_time), index)
-            except Exception, exc:
+            except Exception as exc:
                 self._raise(exc.__class__("Item %i: %s" \
                                           % (index + 1, str(exc))),
                             "performed")
 
-        converted = dict(map(convert_item, range(len(performed))))
-        converted = converted.items()
+        converted = dict(list(map(convert_item, list(range(len(performed))))))
+        converted = list(converted.items())
         converted.sort()
 
         #check for overlapping items
@@ -2330,7 +2328,7 @@ class Task(object):
             last_end = end
             last_index = index
 
-        self._performed = map(lambda x: x[0], converted)
+        self._performed = [x[0] for x in converted]
         return True
     #@-node:_convert_performed
     #@+node:_allocate_performed
@@ -2360,7 +2358,7 @@ class Task(object):
                                             zero_minutes))
             summary[res] = (min(ss, start), max(es, end), wts + work_time)
 
-        for r, v in summary.iteritems():
+        for r, v in summary.items():
             start, end, work_time = v
             assert(start.__class__ is datetime.datetime)
             assert(end.__class__ is datetime.datetime)
@@ -2386,7 +2384,7 @@ class Task(object):
             last = max(end, last)
             first = min(start, first)
 
-        self._performed_resource_length = tuple([ (r, v[2]) for r, v in summary.iteritems() ])
+        self._performed_resource_length = tuple([ (r, v[2]) for r, v in summary.items() ])
         self.performed_resource = tuple(summary.keys())
         self.performed_end = last
         self.performed_start = first
@@ -2396,9 +2394,9 @@ class Task(object):
     #@-node:_allocate_performed
     #@+node:_iter_booked_resources
     def _iter_booked_resources(self):
-        result = dict(map(lambda r: (r, 1), self.performed_resource))
-        result.update(dict(map(lambda r: (r, 1), self.booked_resource)))
-        return result.iterkeys()
+        result = dict([(r, 1) for r in self.performed_resource])
+        result.update(dict([(r, 1) for r in self.booked_resource]))
+        return iter(result.keys())
     #@-node:_iter_booked_resources
     #@-node:Resource allocation Methods
     #@+node:Compile Methods
@@ -2450,7 +2448,7 @@ class Task(object):
         if self._is_compiled:
             self.__check_milestone()
             self.__check_task()
-            self.root.has_actual_data |= self.__dict__.has_key("performed")
+            self.root.has_actual_data |= "performed" in self.__dict__
 
     #@-node:_compile
     #@+node:__compile_function
@@ -2458,7 +2456,7 @@ class Task(object):
         self._is_compiled = self._is_frozen
 
         restore_globals = []
-        globals_ = self._function.func_globals
+        globals_ = self._function.__globals__
 
         #@    << set function global values >>
         #@+node:<< set function global values >>
@@ -2469,10 +2467,10 @@ class Task(object):
             return _ValueWrapper(a, [(None, None)])
 
         def my_max(*args):
-            return max(map(to_value_wrapper, args))
+            return max(list(map(to_value_wrapper, args)))
 
         def my_min(*args):
-            return min(map(to_value_wrapper, args))
+            return min(list(map(to_value_wrapper, args)))
 
         globals_["me"] = me_instance
 
@@ -2501,8 +2499,8 @@ class Task(object):
             try:
                 obj = globals_[name]
                 if isinstance(obj, types.FunctionType):
-                    fg = obj.func_globals
-                    if not fg.has_key("me") and "me" in obj.func_code.co_names:
+                    fg = obj.__globals__
+                    if "me" not in fg and "me" in obj.__code__.co_names:
                         restore_globals.append(fg)
                         fg["me"] = me_instance
             except KeyError: continue
@@ -2516,7 +2514,7 @@ class Task(object):
                 try:
                     self._function()
                     self._is_compiled = True
-                except _IncompleteError, e:
+                except _IncompleteError as e:
                     src = e.args[1]
                     if src is not self:
                         self.__at_compile = e.args[1:]
@@ -2527,7 +2525,7 @@ class Task(object):
                 try:
                     self._function()
                     self._is_compiled = True
-                except AttributeError, e:
+                except AttributeError as e:
                     #print "AttributeError:", e, self.name, e.is_frozen, do_raise
                     deferred.append(self)
                 except _IncompleteError:
@@ -2559,15 +2557,15 @@ class Task(object):
             return
 
         if type(value) == types.FunctionType:
-            if value.func_code.co_argcount == 0:
+            if value.__code__.co_argcount == 0:
                 #@            << add child task >>
                 #@+node:<< add child task >>
                 try:
-                    task = self.__dict__[value.func_name]
+                    task = self.__dict__[value.__name__]
                 except KeyError:
-                    task = Task(value, value.func_name, self, len(self.children) + 1)
+                    task = Task(value, value.__name__, self, len(self.children) + 1)
                     self.children.append(task)
-                    setattr(self, value.func_name, task)
+                    setattr(self, value.__name__, task)
                 return
                 #@nonl
                 #@-node:<< add child task >>
@@ -2584,8 +2582,8 @@ class Task(object):
         if set_method:
             #@        << set standard attribute >>
             #@+node:<< set standard attribute >>
-            if type(value) == types.DictionaryType:
-                self.root.all_scenarios.update(value.keys())
+            if type(value) == dict:
+                self.root.all_scenarios.update(list(value.keys()))
                 value = value.get(self.scenario, value["_default"])
 
             self.__set_sources(name, value)
@@ -2740,7 +2738,7 @@ class Task(object):
 
         self.copy_src = value
         self._properties.update(value._properties)
-        for k in value._properties.iterkeys():
+        for k in value._properties.keys():
             setattr(self, k, getattr(value, k))
     #@-node:_set_copy_src
     #@+node:__set_sources
@@ -2757,7 +2755,7 @@ class Task(object):
             return []
 
         if isinstance(value, (list, tuple)):
-            sources = _refsum(map(make_ref, value))
+            sources = _refsum(list(map(make_ref, value)))
         else:
             sources = make_ref(value)
         #@nonl
@@ -2915,7 +2913,7 @@ class Task(object):
     #@+node:Freezer Methods
     #@+node:_unfreeze
     def _unfreeze(self, attrib_name):
-        if self.__dict__.has_key(attrib_name):
+        if attrib_name in self.__dict__:
             del self.__dict__[attrib_name]
     #@-node:_unfreeze
     #@+node:_wrap_attrib
@@ -3101,11 +3099,11 @@ class Task(object):
     #@+node:__calc_done
     def __calc_done(self):
         if self.children:
-            dones = map(lambda t: t.done, self.children)
+            dones = [t.done for t in self.children]
             return self._to_delta(sum(dones))
 
         res = self._iter_booked_resources()
-        done = sum(map(lambda r: r.done_of(self), res))
+        done = sum([r.done_of(self) for r in res])
 
         complete = self.__dict__.get("complete")
         todo = self.__dict__.get("todo")
@@ -3121,7 +3119,7 @@ class Task(object):
     #@+node:__calc_buffer
     def __calc_buffer(self):
         if self.children:
-            return self._to_delta(min(map(lambda t: t.buffer, self.children)))
+            return self._to_delta(min([t.buffer for t in self.children]))
 
         scenario = self.scenario
         end = self.end
@@ -3150,7 +3148,7 @@ class Task(object):
         #@nl
 
         buffers = [ ]
-        for d in deps.keys():
+        for d in list(deps.keys()):
             path, attrib = _split_path(d)
             if attrib != "start":
                 continue
@@ -3189,7 +3187,7 @@ class Task(object):
             real_delay = current_delay - simulated_delay
             try:
                 buffer_ = real_delay + succ_task.buffer
-            except RecursionError, err:
+            except RecursionError as err:
                 self._raise(err)
             #@nonl
             #@-node:<< calculate buffer to descendant 'd' >>
@@ -3232,10 +3230,10 @@ class Task(object):
             return self._to_delta(self.effort * complete / 100.0)
 
         if self.children:
-            todos = map(lambda t: t.todo, self.children)
+            todos = [t.todo for t in self.children]
             return self._to_delta(sum(todos))
 
-        todo = sum(map(lambda r: r.todo_of(self), self.booked_resource))
+        todo = sum([r.todo_of(self) for r in self.booked_resource])
         return self._to_delta(max(todo, self.effort - self.done))
 
     todo = _TaskProperty(__calc_todo)
@@ -3313,7 +3311,7 @@ class Task(object):
     #@+node:check
     def check(self):
         if self._constraint and self._is_compiled:
-            globals_ = self._function.func_globals
+            globals_ = self._function.__globals__
             globals_["me"] = self
             globals_["up"] = self.up
             globals_["root"] = self.root
@@ -3369,12 +3367,12 @@ class _ProjectBase(Task):
     #@+node:__init__
     def __init__(self, top_task, scenario="_default", id=""):
         self.calendar = pcalendar.Calendar()
-        Task.__init__(self, top_task, top_task.func_name)
+        Task.__init__(self, top_task, top_task.__name__)
         self.id = id or self.name
         self.scenario = scenario
         self.all_scenarios = set(("_default",))
         self.path = "root"
-        self._globals = top_task.func_globals.copy()
+        self._globals = top_task.__globals__.copy()
         self._generate()
 
     #@-node:__init__
@@ -3383,8 +3381,8 @@ class _ProjectBase(Task):
     #@-node:_idendity_
     #@+node:_restore_globals
     def _restore_globals(self):
-        self._function.func_globals.clear()
-        self._function.func_globals.update(self._globals)
+        self._function.__globals__.clear()
+        self._function.__globals__.update(self._globals)
         del self._globals
     #@-node:_restore_globals
     #@+node:free
@@ -3427,7 +3425,7 @@ class _ProjectBase(Task):
                    % (indent, r.name, r.title)
 
         now = datetime.datetime.now().strftime("%x %H:%M")
-        resource_text = map(lambda r: make_resource(r), self.all_resources())
+        resource_text = [make_resource(r) for r in self.all_resources()]
         lines.insert(1, "%sfrom faces import Resource\n" % indent)
         lines.insert(2, "".join(resource_text) + "\n")
         lines.insert(3, '%snow = "%s"\n' % (indent, now))
@@ -3477,9 +3475,9 @@ class _AllocationPoject(_ProjectBase):
     #@+node:unfreeze_parents
     def unfreeze_parents(self):
         if self.has_actual_data:
-            for t in filter(lambda t: t.children, self):
-                if not t._original_values.has_key("start"): t._unfreeze("start")
-                if not t._original_values.has_key("end"): t._unfreeze("end")
+            for t in [t for t in self if t.children]:
+                if "start" not in t._original_values: t._unfreeze("start")
+                if "end" not in t._original_values: t._unfreeze("end")
     #@-node:unfreeze_parents
     #@-others
 #@-node:class _AllocationPoject
@@ -3583,8 +3581,7 @@ class BalancedProject(_AllocationPoject):
         project_id = self._idendity_()
         plen = len(project_id)
 
-        performed = filter(lambda item: item[0].startswith(project_id),
-                           performed)
+        performed = [item for item in performed if item[0].startswith(project_id)]
         performed.sort()
 
         task = None
@@ -3756,7 +3753,7 @@ class AdjustedProject(_AllocationPoject):
             else:
                 #@            << allocate tasks, that are allready at work >>
                 #@+node:<< allocate tasks, that are allready at work >>
-                if t.__dict__.has_key("effort"):
+                if "effort" in t.__dict__:
                     t.effort = t._to_delta(src.done + src.todo).round()
 
                 resource = src.booked_resource or src.performed_resource

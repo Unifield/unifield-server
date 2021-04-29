@@ -35,7 +35,7 @@ class mass_reallocation_search(osv.osv_memory):
         # Some verification
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         analytic_acc_obj = self.pool.get('account.analytic.account')
         # Only process first id

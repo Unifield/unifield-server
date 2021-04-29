@@ -39,7 +39,7 @@ class hr_payment_order(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         bg_obj = self.pool.get('memory.background.report')
         wiz = self.browse(cr, uid, ids[0], context=context)

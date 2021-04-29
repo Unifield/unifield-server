@@ -46,7 +46,7 @@ class account_analytic_chart(osv.osv_memory):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for rec in self.browse(cr, uid, ids, context=context):
             res[rec.id] = ', '.join(get_codes(rec.instance_ids))
@@ -151,7 +151,7 @@ class account_analytic_chart(osv.osv_memory):
             context['output_currency_id'] = wiz.output_currency_id.id
         # Display FP on result
         context['display_fp'] = True
-        result['context'] = unicode(context)
+        result['context'] = str(context)
         xmlid = 'balance_analytic_tree'
         if wiz.granularity and wiz.granularity == 'account':
             # flat version, not drillable, only final accounts
@@ -285,7 +285,7 @@ class account_analytic_coa(osv.osv_memory):
         context['filter_inactive'] = not data['show_inactive']
         # Display FP on result
         context['display_fp'] = True
-        result['context'] = unicode(context)
+        result['context'] = str(context)
         # UF-1718: Add a link on each account to display linked analytic items
         tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'view_account_analytic_account_tree_coa')
         tree_view_id = tree_view_id and tree_view_id[1] or False

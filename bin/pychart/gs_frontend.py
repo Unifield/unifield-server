@@ -12,34 +12,34 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-import pychart_util
-import theme
+from . import pychart_util
+from . import theme
 import sys
 import os
 import os.path
-import pscanvas
+from . import pscanvas
 import tempfile
 import string
-import basecanvas
-from scaling import *
+from . import basecanvas
+from .scaling import *
 
 def get_gs_path():
     """Guess where the Ghostscript executable is
     and return its absolute path name."""
     path = os.defpath
-    if os.environ.has_key("PATH"):
+    if "PATH" in os.environ:
         path = os.environ["PATH"]
     for dir in path.split(os.pathsep):
         for name in ("gs", "gs.exe", "gswin32c.exe"):
             g = os.path.join(dir, name)
             if os.path.exists(g):
                 return g
-    raise Exception, "Ghostscript not found."
+    raise Exception("Ghostscript not found.")
 
 class T(pscanvas.T):
     def __write_contents(self, fp):
         fp.write(pscanvas.preamble_text)
-        for name, id in self.__font_ids.items():
+        for name, id in list(self.__font_ids.items()):
             fp.write("/%s {/%s findfont SF} def\n" % (id, name))
         fp.write("%d %d translate\n" % (-self.bbox[0], -self.bbox[1]))
         fp.writelines(self.__output_lines)

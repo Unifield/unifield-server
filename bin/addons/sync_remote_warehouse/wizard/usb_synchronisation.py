@@ -3,7 +3,7 @@ import datetime
 import time
 import dateutil.parser
 import base64
-from cStringIO import StringIO
+from io import StringIO
 import pooler
 import threading
 import tools
@@ -258,10 +258,10 @@ class usb_synchronisation(osv.osv_memory):
             }
 
             self.write(cr, uid, ids, vals, context=context)
-        except osv.except_osv, e:
+        except osv.except_osv as e:
             self.write(cr, uid, ids, {'pull_result': "Error: %s" % e.value})
             _logger.error("%s : %s" % (tools.ustr(e.value), tools.ustr(traceback.format_exc())))
-        except BaseException, e:
+        except BaseException as e:
             _logger.error("%s : %s" % (tools.ustr(e), tools.ustr(traceback.format_exc())))
             self.write(cr, uid, ids, {'pull_result': "Error: %s" % tools.ustr(e)})
         finally:

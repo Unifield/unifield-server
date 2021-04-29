@@ -19,19 +19,19 @@
 #
 ##############################################################################
 
-import product_stock
-import ups
-import picking
-import lot_overview_all
-import report_stock
-import report_stock_move
-import stock_inventory_move_report
-import lot_overview
-import physical_inventory_counting_sheet
-import physical_inventory_discrepancies_report
-import reserved_products_report
-import unreserved_stock_report
-import stock_reception_report
-import stock_expired_damaged_report
-import products_situation_report
-import stock_delivery_report
+from . import product_stock
+from . import ups
+from . import picking
+from . import lot_overview_all
+from . import report_stock
+from . import report_stock_move
+from . import stock_inventory_move_report
+from . import lot_overview
+from . import physical_inventory_counting_sheet
+from . import physical_inventory_discrepancies_report
+from . import reserved_products_report
+from . import unreserved_stock_report
+from . import stock_reception_report
+from . import stock_expired_damaged_report
+from . import products_situation_report
+from . import stock_delivery_report

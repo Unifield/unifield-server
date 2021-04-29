@@ -133,7 +133,7 @@ class msf_budget_summary(osv.osv_memory):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -325,7 +325,7 @@ class msf_budget_summary_line(osv.osv_memory):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

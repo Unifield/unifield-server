@@ -64,7 +64,7 @@ def connect(ip, dbname, protocol='xmlrpc', port='8069', timeout=3600):
     """
     o = oerplib.OERP(ip, database=dbname, protocol=protocol, port=port, timeout=timeout)
     u = o.login(login, pwd, dbname)
-    print('CONNECTED: %s' % (o.database or 'Unknown'))
+    print(('CONNECTED: %s' % (o.database or 'Unknown')))
     return o, u
 
 def generate_file_from(db_connection):
@@ -78,9 +78,9 @@ def generate_file_from(db_connection):
     wiz_id = usb_wizard.create({})
     try:
       usb_wizard.push([wiz_id])
-    except Exception, e:
+    except Exception as e:
       handleError(e)
-    print("%s: File generated." % (db_connection.database or 'Unknown'))
+    print(("%s: File generated." % (db_connection.database or 'Unknown')))
     return True
 
 def get_file_from(db_connection):
@@ -97,7 +97,7 @@ def get_file_from(db_connection):
     attachment = att_obj.read(last_attachment_ids[0], ['datas', 'name'])
     zipfile = attachment.get('datas', False)
     zipfilename = attachment.get('name', 'noname')
-    print("%s: File retrieved (%s)." % (db_connection.database or 'Unknown', zipfilename))
+    print(("%s: File retrieved (%s)." % (db_connection.database or 'Unknown', zipfilename)))
     return zipfile, zipfilename
 
 def put_file_into(db_connection, content, filename='noname'):
@@ -111,9 +111,9 @@ def put_file_into(db_connection, content, filename='noname'):
     rw_wiz_id = rw_usb_wizard.create({'pull_data': decodestring(content)})
     try:
         rw_usb_wizard.pull([rw_wiz_id])
-    except Exception, e:
+    except Exception as e:
         handleError(e)
-    print("%s: File uploaded into (%s)." % (db_connection.database or 'Unknown', filename))
+    print(("%s: File uploaded into (%s)." % (db_connection.database or 'Unknown', filename)))
     return True
 
 #####

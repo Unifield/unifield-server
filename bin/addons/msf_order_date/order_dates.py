@@ -483,12 +483,12 @@ class sale_order(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for order in self.browse(cr, uid, ids, context=context):
             # Fill partner type
-            if data.get('partner_id') and isinstance(data.get('partner_id'), basestring):
+            if data.get('partner_id') and isinstance(data.get('partner_id'), str):
                 data['partner_id'] = int(data.get('partner_id'))
             partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id', order.partner_id.id), context=context)
             # partner type - always set
@@ -651,7 +651,7 @@ class sale_order(osv.osv):
 
         SPRINT3 validated - YAML ok
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -663,7 +663,7 @@ class sale_order(osv.osv):
 
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:
-                if isinstance(ids, (int, long)):
+                if isinstance(ids, int):
                     ids = [ids]
 
                 order = self.pool.get('sale.order').browse(cr, uid, ids[0])
@@ -866,7 +866,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         cr.execute("update stock_picking set manual_min_date_stock_picking=%s where id in %s", (value, tuple(ids)))

@@ -29,13 +29,13 @@ import os
 import logging
 from threading import Lock
 import time
-import xmlrpclib
+import xmlrpc.client
 import netsvc
 import traceback
 #import re
 
 from msf_field_access_rights.osv_override import _get_instance_level
-import cStringIO
+import io
 import csv
 
 class patch_scripts(osv.osv):
@@ -1139,7 +1139,7 @@ class patch_scripts(osv.osv):
             ship['name'] = '%s-s' % ship['name']
             columns = []
             values = []
-            columns = ship.keys()
+            columns = list(ship.keys())
             values = ['%%(%s)s' % x for x in columns]
             cr.execute('''insert into stock_picking (''' +','.join(columns)+ ''') VALUES (''' + ','.join(values) + ''') RETURNING ID''', ship) # not_a_user_entry
             new_ship_id = cr.fetchone()[0]
@@ -1155,7 +1155,7 @@ class patch_scripts(osv.osv):
                 move['date'] = move['create_date']
                 columns = []
                 values = []
-                columns = move.keys()
+                columns = list(move.keys())
                 values = ['%%(%s)s' % x for x in columns]
                 cr.execute('''insert into stock_move (''' +','.join(columns)+ ''') VALUES (''' + ','.join(values) + ''') ''', move) # not_a_user_entry
 
@@ -2726,7 +2726,7 @@ class patch_scripts(osv.osv):
             from sync_client.timeout_transport import TimeoutTransport
             transport = TimeoutTransport(timeout=10.0)
             try:
-                sock = xmlrpclib.ServerProxy('http://%s:%s/xmlrpc/db'%(connection['host'], 443), transport=transport)
+                sock = xmlrpc.client.ServerProxy('http://%s:%s/xmlrpc/db'%(connection['host'], 443), transport=transport)
                 sock.server_version()
             except Exception:
                 vals = {
@@ -4425,7 +4425,7 @@ class communication_config(osv.osv):
     def display_banner(self, cr, uid, ids=None, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sync_disabled = self.pool.get('sync.server.disabled')
@@ -4462,7 +4462,7 @@ class communication_config(osv.osv):
     def get_message(self, cr, uid, ids=None, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sync_disabled = self.pool.get('sync.server.disabled')
@@ -4645,9 +4645,9 @@ class sync_tigger_something(osv.osv):
                 hq_info =  msf_instance_obj.browse(cr, uid, hq_id[0])
 
                 crypt_o = tools.misc.crypt(hq_info.instance_identifier)
-                clear_data = cStringIO.StringIO(crypt_o.decrypt(data))
+                clear_data = io.StringIO(crypt_o.decrypt(data))
                 csv_reader = csv.reader(clear_data, delimiter=',')
-                csv_reader.next()
+                next(csv_reader)
                 xmlid_price = {}
                 xmlid_code = {}
                 prod_id_price = {}
@@ -4657,18 +4657,18 @@ class sync_tigger_something(osv.osv):
                     xmlid_code[line[1]] = line[0]
 
 
-                all_xmlid = xmlid_price.keys()
+                all_xmlid = list(xmlid_price.keys())
 
-                for sdref, p_id in prod_obj.find_sd_ref(cr, uid, all_xmlid).iteritems():
+                for sdref, p_id in prod_obj.find_sd_ref(cr, uid, all_xmlid).items():
                     prod_id_price[p_id] = xmlid_price[sdref]
                     del xmlid_code[sdref]
 
                 if xmlid_code:
-                    _logger.warn('OCG Prod price update, %d products not found: %s' % (len(xmlid_code), ', '.join(xmlid_code.values())))
+                    _logger.warn('OCG Prod price update, %d products not found: %s' % (len(xmlid_code), ', '.join(list(xmlid_code.values()))))
 
                 nb_updated= 0
                 nb_ignored = 0
-                for prod in prod_obj.read(cr, uid, prod_id_price.keys(), ['standard_price', 'product_tmpl_id']):
+                for prod in prod_obj.read(cr, uid, list(prod_id_price.keys()), ['standard_price', 'product_tmpl_id']):
                     if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.000001:
                         list_price = round(prod_id_price[prod['id']] * (1 + (percent/100.00)), 5)
                         nb_updated += 1

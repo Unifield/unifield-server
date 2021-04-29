@@ -19,23 +19,23 @@
 #
 ##############################################################################
 
-import ir_model
-import ir_sequence
-import ir_ui_menu
-import ir_ui_view
-import ir_default
-import ir_actions
-import ir_attachment
-import ir_cron
-import ir_filters
-import ir_values
-import ir_translation
-import ir_exports
-import workflow
-import ir_rule
-import wizard
-import ir_config_parameter
-import osv_memory_autovacuum
+from . import ir_model
+from . import ir_sequence
+from . import ir_ui_menu
+from . import ir_ui_view
+from . import ir_default
+from . import ir_actions
+from . import ir_attachment
+from . import ir_cron
+from . import ir_filters
+from . import ir_values
+from . import ir_translation
+from . import ir_exports
+from . import workflow
+from . import ir_rule
+from . import wizard
+from . import ir_config_parameter
+from . import osv_memory_autovacuum
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

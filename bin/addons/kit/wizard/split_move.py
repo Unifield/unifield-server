@@ -38,7 +38,7 @@ class split_move(osv.osv_memory):
     def split(self, cr, uid, ids, context=None):
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         
         # objects

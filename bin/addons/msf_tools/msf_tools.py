@@ -33,7 +33,7 @@ import math
 
 import netsvc
 from zipfile import ZipFile
-from cStringIO import StringIO
+from io import StringIO
 from base64 import encodestring
 from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import logging
@@ -151,7 +151,7 @@ class date_tools(osv.osv):
             return time.strftime(d_format, date_to_format)
 
     def orm2date(self, dt):
-        if isinstance(dt, basestring):
+        if isinstance(dt, str):
             st = time.strptime(dt, DEFAULT_SERVER_DATE_FORMAT)
             dt = date(st[0], st[1], st[2])
         return dt
@@ -163,7 +163,7 @@ class date_tools(osv.osv):
         return dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
 
     def orm2datetime(self, dt):
-        if isinstance(dt, basestring):
+        if isinstance(dt, str):
             st = time.strptime(dt, DEFAULT_SERVER_DATETIME_FORMAT)
             dt = datetime(st[0], st[1], st[2], st[3], st[4], st[5])
         return dt
@@ -253,7 +253,7 @@ class fields_tools(osv.osv):
         :type field_names: str/list/tuple
         :return: new domain
         """
-        if not isinstance(field_names, (list, tuple, )):
+        if not isinstance(field_names, (list, tuple )):
             field_names = [ field_names, ]
         res = []
         for t in domain:
@@ -390,7 +390,7 @@ class sequence_tools(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(foreign_ids, (int, long)):
+        if isinstance(foreign_ids, int):
             foreign_ids = [foreign_ids]
 
         # objects
@@ -488,7 +488,7 @@ class sequence_tools(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(seq_ids, (int, long)):
+        if isinstance(seq_ids, int):
             seq_ids = [seq_ids]
 
         # objects
@@ -534,7 +534,7 @@ class picking_tools(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -549,7 +549,7 @@ class picking_tools(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -564,7 +564,7 @@ class picking_tools(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -579,7 +579,7 @@ class picking_tools(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -692,12 +692,12 @@ class ir_translation(osv.osv):
                                           ('active', 'in', ('t', 'f'))], context=context)
                     model_name = 'product.product'
 
-                if isinstance(target_ids, (int, long)):
+                if isinstance(target_ids, int):
                     target_ids = [target_ids]
                 target = self.pool.get(model_name)
                 if target:
                     if hasattr(target, "get_sd_ref"):
-                        res = target.get_sd_ref(cr, uid, target_ids).values()[0]
+                        res = list(target.get_sd_ref(cr, uid, target_ids).values())[0]
         return res
 
     def _get_res_id(self, cr, uid, name, sdref, context=None):
@@ -842,9 +842,9 @@ class uom_tools(osv.osv_memory):
         if context is None:
             context = {}
         if product_id and uom_id:
-            if isinstance(product_id, (int, long)):
+            if isinstance(product_id, int):
                 product_id = [product_id]
-            if isinstance(uom_id, (int, long)):
+            if isinstance(uom_id, int):
                 uom_id = [uom_id]
             cr.execute(
                 """
@@ -1169,7 +1169,7 @@ class job_in_progress(osv.osv_memory):
             res = False
             process_error = False
             res = method(new_cr, uid, src_ids, context, job_id=job_id)
-        except osv.except_osv, er:
+        except osv.except_osv as er:
             new_cr.rollback()
             if job_id:
                 process_error = True

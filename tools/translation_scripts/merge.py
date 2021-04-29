@@ -40,7 +40,7 @@ def sort_po(po):
 
 def save():
     master_po.save(output_po)
-    print "Merge output : %s" % output_po
+    print("Merge output : %s" % output_po)
 
 
 def get_modules(entry):
@@ -48,7 +48,7 @@ def get_modules(entry):
 
 def display_existing_translations():
     master_ids = [ m.msgid for m in master_po ]
-    print "The following entries are already translated in master PO file:"
+    print("The following entries are already translated in master PO file:")
     for entry in my_po:
 
         if entry.msgid in master_ids:
@@ -56,10 +56,10 @@ def display_existing_translations():
             if entry.msgstr in master_translations:
                 continue
 
-            print "----"
-            print "[  Original string  ] %s" % entry.msgid
-            print "[ Your  translation ] %s" % entry.msgstr
-            print "[Master translations] %s" % " | ".join(master_translations)
+            print("----")
+            print("[  Original string  ] %s" % entry.msgid)
+            print("[ Your  translation ] %s" % entry.msgstr)
+            print("[Master translations] %s" % " | ".join(master_translations))
             ret = ""
             if option.y:
                 ret = 'y'
@@ -67,7 +67,7 @@ def display_existing_translations():
                 ret = 'm'
 
             while ret not in ('y', 'm'):
-                ret = raw_input("keep Yours [y] or use fisrt Master [m] ?")
+                ret = input("keep Yours [y] or use fisrt Master [m] ?")
                 ret = ret.lower()
             if ret == 'm':
                 entry.msgstr = master_translations[0]

@@ -200,7 +200,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
         # Create a dict with analytics result
         result = {}
         # Prepare default values
-        for x in xrange(1, end_month + 1, 1):
+        for x in range(1, end_month + 1, 1):
             result.update({
                 x: {
                     'budget': line.get('month' + str(x), 0.0),
@@ -235,7 +235,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
                     key: line_amount or 0.0
                 }
         # Transformation/conversion of 'result' to be a list (advantage: keep the sort/order)
-        for month in result.keys():
+        for month in list(result.keys()):
             amounts = result[month]
             budget = amounts.get('budget', 0.0)
             commitment = amounts.get('commitment', 0.0)

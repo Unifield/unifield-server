@@ -19,16 +19,16 @@
 #
 ##############################################################################
 
-import analytic_distribution
-import account
-import account_bank_statement
-import account_move_line
-import analytic_account
-import account_commitment
-import analytic_line
-import invoice
-import account_invoice_refund
-import wizard
-import report
+from . import analytic_distribution
+from . import account
+from . import account_bank_statement
+from . import account_move_line
+from . import analytic_account
+from . import account_commitment
+from . import analytic_line
+from . import invoice
+from . import account_invoice_refund
+from . import wizard
+from . import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

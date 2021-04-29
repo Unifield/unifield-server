@@ -84,7 +84,7 @@ class msf_budget_line(osv.osv):
         # Do not permit to give a number superior to 12!
         if number > 12:
             number = 12
-        for x in xrange(1, number+1, 1):
+        for x in range(1, number+1, 1):
             res.append('month' + str(x))
         return res
 
@@ -93,7 +93,7 @@ class msf_budget_line(osv.osv):
         Create a domain regarding budget line elements (to be used in a search()).
         Return a list.
         """
-        if isinstance(cost_center_ids, (int, long)):
+        if isinstance(cost_center_ids, int):
             cost_center_ids = [cost_center_ids]
         res = [
             ('cost_center_id', 'in', cost_center_ids),
@@ -134,7 +134,7 @@ class msf_budget_line(osv.osv):
     def _get_account_order(self, cr, uid, ids, field_names=None, arg=None, context=None):
         ret = {}
         account_obj = self.pool.get('account.account')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         seen = {}
         for line in self.read(cr, uid, ids, ['account_id'], context=context):
@@ -166,7 +166,7 @@ class msf_budget_line(osv.osv):
         # Some checks
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -355,7 +355,7 @@ class msf_budget_line(osv.osv):
         If period_id in context, just display months from the first one to the given period month (included)
         """
         # Some checks
-        if isinstance(ids,(int, long)):
+        if isinstance(ids,int):
             ids = [ids]
         month_number = 12
         if 'period_id' in context:

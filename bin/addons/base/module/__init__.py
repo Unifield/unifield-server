@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import module
-import wizard
-import report
-import instance_auto_creation
+from . import module
+from . import wizard
+from . import report
+from . import instance_auto_creation

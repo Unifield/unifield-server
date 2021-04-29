@@ -101,7 +101,7 @@ class sale_order(osv.osv):
         '''
         display message if contains short shelf life
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         can_break = False
@@ -164,7 +164,7 @@ class purchase_order(osv.osv):
         '''
         display message if contains short shelf life
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         can_break = False
@@ -192,7 +192,7 @@ class product_uom(osv.osv):
         '''
         return false for each id
         '''
-        if isinstance(ids,(long, int)):
+        if isinstance(ids,int):
             ids = [ids]
 
         result = {}
@@ -208,7 +208,7 @@ class product_uom(osv.osv):
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
             elif arg[0] == 'uom_by_product':
                 product_id = arg[2]
-                if product_id and isinstance(product_id, (int, long)):
+                if product_id and isinstance(product_id, int):
                     product_id = [product_id]
 
                 if product_id:
@@ -221,7 +221,7 @@ class product_uom(osv.osv):
         '''
         return false for each id
         '''
-        if isinstance(ids,(long, int)):
+        if isinstance(ids,int):
             ids = [ids]
 
         result = {}
@@ -237,7 +237,7 @@ class product_uom(osv.osv):
             elif arg[0] == 'uom_by_parent':
                 product_uom = arg[2]
                 if product_uom:
-                    if isinstance(product_uom, (int, long)):
+                    if isinstance(product_uom, int):
                         product_uom = [product_uom]
                     product_uom_obj = self.browse(cr, uid, product_uom[0], context=context)
                     dom.append(('category_id', '=', product_uom_obj.category_id.id))
@@ -252,7 +252,7 @@ class product_uom(osv.osv):
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
             elif arg[0] == 'uom_by_stock_product':
                 product_id = arg[2]
-                if product_id and isinstance(product_id, (int, long)):
+                if product_id and isinstance(product_id, int):
                     product_id = [product_id]
                     if product_id:
                         product = self.pool.get('product.product').read(cr, uid, product_id[0], ['uom_id'], context=context)
@@ -316,7 +316,7 @@ class stock_location(osv.osv):
 
         and return a new dictionary
         '''
-        return dict((replace if key == search else key, (self.replace_field_key(value, search, replace) if isinstance(value, dict) else value)) for key, value in fieldsDic.items())
+        return dict((replace if key == search else key, (self.replace_field_key(value, search, replace) if isinstance(value, dict) else value)) for key, value in list(fieldsDic.items()))
 
     def _product_value_specific_rules(self, cr, uid, ids, field_names, arg, context=None):
         '''
@@ -473,7 +473,7 @@ class stock_inventory(osv.osv):
         """
         Check if there is only one line with couple location/product
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sql_req = """

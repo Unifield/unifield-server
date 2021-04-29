@@ -19,5 +19,5 @@
 #
 ##############################################################################
 
-import return_claim
-import wizard
+from . import return_claim
+from . import wizard

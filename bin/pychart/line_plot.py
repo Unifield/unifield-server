@@ -12,16 +12,16 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-import tick_mark
-import line_style
-import pychart_util
-import error_bar
-import chart_object
-import legend
-import object_set
-import line_plot_doc
-import theme
-from pychart_types import *
+from . import tick_mark
+from . import line_style
+from . import pychart_util
+from . import error_bar
+from . import chart_object
+from . import legend
+from . import object_set
+from . import line_plot_doc
+from . import theme
+from .pychart_types import *
 from types import *
 
 default_width = 1.2
@@ -49,7 +49,7 @@ _keys = {
     "y_qerror_minus_col":  (IntType, -1, "<<error_bar>>"),
     "y_qerror_plus_col":  (IntType, -1, "<<error_bar>>"),
 
-    "line_style": (line_style.T, lambda: line_style_itr.next(), pychart_util.line_desc,
+    "line_style": (line_style.T, lambda: next(line_style_itr), pychart_util.line_desc,
                    "By default, a style is picked from standard styles round-robin. <<line_style>>"),
 
     "tick_mark": (tick_mark.T, None, pychart_util.tick_mark_desc),

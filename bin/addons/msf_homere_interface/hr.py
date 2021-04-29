@@ -55,7 +55,7 @@ class hr_payment_method(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if 'name' in vals and not context.get('sync_update_execution'):
@@ -102,7 +102,7 @@ class hr_employee(osv.osv):
 
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for self_br in self.browse(cr, uid, ids, context=context):
             can_edit = True
@@ -262,7 +262,7 @@ class hr_employee(osv.osv):
         """
         if not ids:
             return True
-        elif isinstance(ids, (int, long)):
+        elif isinstance(ids, int):
             ids = [ids]
         # Some verifications
         if not context:

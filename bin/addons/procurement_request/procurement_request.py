@@ -155,7 +155,7 @@ class procurement_request(osv.osv):
         if not ids:
             return True
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for req in self.browse(cr, uid, ids, context=context):
@@ -433,7 +433,7 @@ class procurement_request(osv.osv):
         get export file name
         :return IR_14_OC_MW101_IR00060_YYYY_MM_DD.xls
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
             return False
@@ -452,7 +452,7 @@ class procurement_request(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         data = {'ids': ids}
@@ -524,7 +524,7 @@ class procurement_request_line(osv.osv):
         return res
 
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for pol in self.read(cr, uid, ids, ['state']):
@@ -532,7 +532,7 @@ class procurement_request_line(osv.osv):
         return ret
 
     def _get_product_id_ok(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for pol in self.read(cr, uid, ids, ['product_id']):
@@ -548,7 +548,7 @@ class procurement_request_line(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz_obj = self.pool.get('procurement.request.line.wizard')

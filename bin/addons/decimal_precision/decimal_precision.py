@@ -59,7 +59,7 @@ class decimal_precision(osv.osv):
         self.precision_get.clear_cache(cr.dbname)
         self.computation_get.clear_cache(cr.dbname)
         for obj in self.pool.obj_list():
-            for colname, col in self.pool.get(obj)._columns.items():
+            for colname, col in list(self.pool.get(obj)._columns.items()):
                 if isinstance(col, (fields.float, fields.function)):
                     col.digits_change(cr)
         return res
@@ -71,7 +71,7 @@ class decimal_precision(osv.osv):
         self.precision_get.clear_cache(cr.dbname)
         self.computation_get.clear_cache(cr.dbname)
         for obj in self.pool.obj_list():
-            for colname, col in self.pool.get(obj)._columns.items():
+            for colname, col in list(self.pool.get(obj)._columns.items()):
                 if isinstance(col, (fields.float, fields.function)):
                     col.digits_change(cr)
         return res

@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import log_line
+from . import log_line
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

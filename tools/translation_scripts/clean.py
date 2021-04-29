@@ -12,7 +12,7 @@ new_term = True
 def main():
 
     if len(sys.argv) != 2 or not sys.argv[1]:
-        print "Usage: clean.py file.po"
+        print("Usage: clean.py file.po")
         sys.exit(-1)
 
     # Load the PO file
@@ -36,7 +36,7 @@ def main():
 
     # Display kept entries
     for entry in keep:
-        print entry
+        print(entry)
 
 # Sort a list of PO entries according to msgid
 def sort_po(po):

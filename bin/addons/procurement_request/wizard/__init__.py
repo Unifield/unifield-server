@@ -20,9 +20,9 @@
 #
 ##############################################################################
 
-import wizard_list_to_order
-import wizard_list_to_rfq
-import procurement_request_line_wizard
+from . import wizard_list_to_order
+from . import wizard_list_to_rfq
+from . import procurement_request_line_wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

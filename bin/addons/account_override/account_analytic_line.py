@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 import decimal_precision as dp
-import finance_export
+from . import finance_export
 
 
 class account_analytic_line(osv.osv):
@@ -53,7 +53,7 @@ class account_analytic_line(osv.osv):
         """
         Returns a dict. with key containing the AJI id, and value containing its DB id used for Vertical Integration
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for i in ids:

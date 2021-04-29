@@ -39,7 +39,7 @@ class account_analytic_journal(report_sxw.rml_parse):
 
     def _lines(self, journal_id, date1, date2):
         self.cr.execute('SELECT DISTINCT move_id FROM account_analytic_line WHERE (date>=%s) AND (date<=%s) AND (journal_id=%s) AND (move_id is not null)', (date1, date2, journal_id,))
-        ids = map(lambda x: x[0], self.cr.fetchall())
+        ids = [x[0] for x in self.cr.fetchall()]
         return self.pool.get('account.move.line').browse(self.cr, self.uid, ids)
 
     def _lines_a(self, move_id, journal_id, date1, date2):

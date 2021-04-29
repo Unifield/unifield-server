@@ -102,7 +102,7 @@ class unifield_setup_configuration(osv.osv):
         '''
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if vals.get('sale_price', 0.0) or vals.get('sale_price') == 0.0:
             percentage = vals.get('sale_price', 0.0)

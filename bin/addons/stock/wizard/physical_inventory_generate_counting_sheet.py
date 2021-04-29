@@ -87,7 +87,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         else:
             bn_and_eds = self.get_BN_and_ED_for_products_at_location(cr, uid, location_id, product_ids, context=context)
 
-            for key in sorted(bn_and_eds.keys(), key=lambda x: x[1]):
+            for key in sorted(list(bn_and_eds.keys()), key=lambda x: x[1]):
                 product_id = key[0]
                 bn_and_eds_for_this_product = bn_and_eds[key]
                 # If no bn / ed related to this product, create a single inventory
@@ -177,7 +177,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                   ('location_id', 'in', [location_id]),
                   ('location_dest_id', 'in', [location_id]),
                   ('state', '=', 'done'),
-                  ('product_id', 'in', prod_info.keys()),
+                  ('product_id', 'in', list(prod_info.keys())),
                   ('prodlot_id', '!=', False),
                   ('product_qty', '!=', 0),
                   ]

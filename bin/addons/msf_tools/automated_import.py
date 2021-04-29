@@ -46,7 +46,7 @@ class automated_import(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for imp_brw in self.browse(cr, uid, ids, context=context):
@@ -193,7 +193,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
     def ftp_test_connection(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -222,7 +222,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
     def sftp_test_connection(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -258,7 +258,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Use uid=1 to avoid return of only osv.memory that belongs to the current user
@@ -285,7 +285,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         return True
 
     def local_autoconfig(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         main_path = os.path.join(config.get('root_path'), 'vi_auto_import')
@@ -320,7 +320,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if params is None:
@@ -365,7 +365,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if params is None:
@@ -455,7 +455,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if 'ftp_ok' in vals:
@@ -494,7 +494,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if job_obj.search(cr, uid, [('import_id', 'in', ids)], limit=1, order='NO_ORDER', context=context):
@@ -536,7 +536,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return self.write(cr, uid, ids, {'active': True}, context=context)
@@ -553,7 +553,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return self.write(cr, uid, ids, {'active': False}, context=context)

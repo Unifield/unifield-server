@@ -58,7 +58,7 @@ class product_status(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid,
                                                         [('state','in',ids)], limit=1, order='NO_ORDER')
@@ -82,7 +82,7 @@ class product_international_status(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Raise an error if the status is used in a product
         ids_p = self.pool.get('product.product').search(cr, uid,
@@ -132,7 +132,7 @@ class product_heat_sensitive(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid, [
             ('heat_sensitive_item', 'in', ids),
@@ -189,7 +189,7 @@ class product_cold_chain(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid,
                                                         [('cold_chain','in',ids)],
@@ -234,7 +234,7 @@ class product_cold_chain(osv.osv):
                 tools.ustr('17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag'): 'cold_13',
             }
 
-            if name in match_dict.keys():
+            if name in list(match_dict.keys()):
                 item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', match_dict[name])
                 if item_id:
                     ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
@@ -613,7 +613,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not isinstance(field_names, list):
@@ -1186,7 +1186,7 @@ class product_attributes(osv.osv):
         '''
         Builds and returns an error message according to the constraints
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if vals is None:
@@ -1635,7 +1635,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.clean_standard(cr, uid, vals, context)
@@ -1654,7 +1654,7 @@ class product_attributes(osv.osv):
             intstat_code = ''
             if vals['international_status']:
                 intstat_id = vals['international_status']
-                if isinstance(intstat_id, (int,long)):
+                if isinstance(intstat_id, int):
                     intstat_id = [intstat_id]
                 intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
                 unidata_product = intstat_code == 'unidata'
@@ -1739,14 +1739,14 @@ class product_attributes(osv.osv):
         if not prod_state and 'state' in vals:
             if vals['state']:
                 state_id = vals['state']
-                if isinstance(state_id, (int, long)):
+                if isinstance(state_id, int):
                     state_id = [state_id]
                 prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
 
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 to_browse = [ids]
             else:
                 to_browse = ids
@@ -1896,7 +1896,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         location_obj = self.pool.get('stock.location')
@@ -2744,7 +2744,7 @@ class product_attributes(osv.osv):
         if not ids:
             return False
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         cr.execute('''
@@ -2940,7 +2940,7 @@ class product_deactivation_error(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return {
@@ -2974,7 +2974,7 @@ class product_deactivation_error_line(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -3098,7 +3098,7 @@ class product_uom(osv.osv):
             if arg[0] == 'compatible_product_id':
                 if not arg[2]:
                     return []
-                elif isinstance(arg[2], (int, long)):
+                elif isinstance(arg[2], int):
                     product = self.pool.get('product.product').browse(cr, uid, arg[2], context=context)
                     return [('category_id', '=', product.uom_id.category_id.id)]
 

@@ -31,7 +31,7 @@ class account_chart(osv.osv_memory):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             res[id] = False
@@ -56,7 +56,7 @@ class account_chart(osv.osv_memory):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for rec in self.browse(cr, uid, ids, context=context):
             res[rec.id] = ', '.join(get_codes(rec.instance_ids))
@@ -146,7 +146,7 @@ class account_chart(osv.osv_memory):
         return res
 
     def _update_context(self, cr, uid, rec, context=None):
-        if isinstance(rec, (list, tuple, )):
+        if isinstance(rec, (list, tuple )):
             rec = self.browse(cr, uid, rec[0], context=context)
 
         if context is None:
@@ -223,7 +223,7 @@ class account_chart(osv.osv_memory):
 
         # xls/view common context properties
         self._update_context(cr, uid, ids, context=context)
-        result['context'] = unicode(context)
+        result['context'] = str(context)
 
         domain_tuples_str = []
         account_type_ids = self._get_account_type_ids(cr, uid,
@@ -375,7 +375,7 @@ class account_coa(osv.osv_memory):
             result['name'] += ': ' + fy_obj.read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
         # Set context regarding show_inactive field
         context['filter_inactive_accounts'] = not data['show_inactive']
-        result['context'] = unicode(context)
+        result['context'] = str(context)
         # UF-1718: Add a link on each account to display linked journal items
         tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_tree')
         tree_view_id = tree_view_id and tree_view_id[1] or False

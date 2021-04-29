@@ -24,7 +24,7 @@ import time
 import pooler
 from report import report_sxw
 from account.report import account_profit_loss
-from common_report_header import common_report_header
+from .common_report_header import common_report_header
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
@@ -206,9 +206,9 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                         'balance':account.balance,
                     } # US-227/1 ends here
                     currency = account.currency_id and account.currency_id or account.company_id.currency_id
-                    if typ == 'liability' and account.type <> 'view' and (account.debit <> account.credit):
+                    if typ == 'liability' and account.type != 'view' and (account.debit != account.credit):
                         self.result_sum_dr += account.balance
-                    if typ == 'asset' and account.type <> 'view' and (account.debit <> account.credit):
+                    if typ == 'asset' and account.type != 'view' and (account.debit != account.credit):
                         self.result_sum_cr += account.balance
                     if data['form']['display_account'] == 'bal_movement':
                         if (not currency_pool.is_zero(self.cr, self.uid, currency, account.credit)) or (not currency_pool.is_zero(self.cr, self.uid, currency, account.debit)) or (not currency_pool.is_zero(self.cr, self.uid, currency, account.balance)):

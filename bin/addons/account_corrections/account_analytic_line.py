@@ -56,7 +56,7 @@ class account_analytic_line(osv.osv):
         # Verification
         if not context:
             context={}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Retrieve some values
         wiz_obj = self.pool.get('wizard.journal.items.corrections')
@@ -99,7 +99,7 @@ class account_analytic_line(osv.osv):
         # Verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         upstream_line_ids = []
@@ -134,7 +134,7 @@ class account_analytic_line(osv.osv):
         # Verification
         if not context:
             context={}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Search ids to be open

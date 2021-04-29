@@ -101,7 +101,7 @@ class account_analytic_quantity_cost_ledger(report_sxw.rml_parse):
         return self.cr.fetchone()[0] or 0.0
 
     def _sum_quantity(self, accounts, date1, date2, journals):
-        ids = map(lambda x: x.id, accounts)
+        ids = [x.id for x in accounts]
         if not ids:
             return 0.0
         if not journals:

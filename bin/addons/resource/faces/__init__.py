@@ -19,12 +19,12 @@
 #
 ##############################################################################
 
-from pcalendar import Calendar, WorkingDate, StartDate, EndDate, Minutes
+from .pcalendar import Calendar, WorkingDate, StartDate, EndDate, Minutes
 
-from task import Project, BalancedProject, AdjustedProject, Task, \
+from .task import Project, BalancedProject, AdjustedProject, Task, \
     STRICT, SLOPPY, SMART, Multi, YearlyMax, WeeklyMax, MonthlyMax, \
     DailyMax, VariableLoad
 
-from resource import Resource
+from .resource import Resource
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

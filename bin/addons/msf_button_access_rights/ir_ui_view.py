@@ -42,7 +42,7 @@ class ir_ui_view(osv.osv):
                 buttons = self.parse_view(view.arch, model_id[0], view_id)
             except (ValueError, etree.XMLSyntaxError) as e:
                 logging.getLogger(self._name).warn('Error when parsing view %s' % view_id)
-                print e
+                print(e)
             self._write_button_objects(cr, 1, buttons)
         return buttons
     
@@ -149,7 +149,7 @@ class ir_ui_view(osv.osv):
         button_object_list = []
         
         if view_xml_text:
-            view_xml = etree.fromstring(isinstance(view_xml_text, unicode) and view_xml_text.encode('utf8') or view_xml_text)
+            view_xml = etree.fromstring(isinstance(view_xml_text, str) and view_xml_text.encode('utf8') or view_xml_text)
             buttons = view_xml.xpath("//button[ @name and (@type != 'special' or not (@type)) and not (@position) ]")
             
             for button in buttons:

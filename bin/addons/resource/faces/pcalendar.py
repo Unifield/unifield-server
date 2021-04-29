@@ -122,7 +122,7 @@ def to_datetime(src):
             conv = time.strptime(src, f)
 
             return datetime.datetime(*conv[0:-3])
-        except Exception, e:
+        except Exception as e:
             pass
 
     raise TypeError("'%s' (%s) is not a datetime" % (src, str(type(src))))
@@ -228,10 +228,10 @@ def to_timedelta(src, cal=None, is_duration=False):
     if isinstance(src, datetime.timedelta):
         return datetime.timedelta(src.days, seconds=src.seconds, calendar=cal)
 
-    if isinstance(src, (long, int, float)):
+    if isinstance(src, (int, float)):
         src = "%sM" % str(src)
 
-    if not isinstance(src, basestring):
+    if not isinstance(src, str):
         raise ValueError("%s is not a duration" % (repr(src)))
 
     src = src.strip()
@@ -513,7 +513,7 @@ class _CalendarItem(int):
         try:
             return int.__new__(cls, val)
         except OverflowError:
-            return int.__new__(cls, sys.maxint)
+            return int.__new__(cls, sys.maxsize)
     #@-node:__new__
     #@+node:round
     def round(self, round_up=True):
@@ -647,7 +647,7 @@ class _WorkingDateBase(_CalendarItem):
     def __add__(self, other):
         try:
             return self.__class__(int(self) + int(self._minutes(other)))
-        except ValueError, e:
+        except ValueError as e:
             raise e
         except:
             return NotImplemented
@@ -732,10 +732,10 @@ class Calendar(object):
         '8:00-10:00'
         """
         time_ranges = [ trange ] + list(further_tranges)
-        time_ranges = filter(bool, map(to_time_range, time_ranges))
+        time_ranges = list(filter(bool, list(map(to_time_range, time_ranges))))
         days = _to_days(day_range)
 
-        for k in days.keys():
+        for k in list(days.keys()):
             self.working_times[k] = time_ranges
 
         self._recalc_working_time()
@@ -812,7 +812,7 @@ class Calendar(object):
     def split_time(self, value):
         #map exceptional timespans
         num_dt_can = self._num_dt_can
-        pos = bisect.bisect(num_dt_can, (value, sys.maxint)) - 1
+        pos = bisect.bisect(num_dt_can, (value, sys.maxsize)) - 1
         if pos >= 0:
             nstart, nend, start, end, cend = num_dt_can[pos]
             if value < nend:
@@ -895,9 +895,9 @@ class Calendar(object):
     def _recalc_working_time(self):
         def slot_sum_time(day):
             slots = self.working_times.get(day, DEFAULT_WORKING_DAYS[day])
-            return sum(map(lambda slot: slot[1] - slot[0], slots))
+            return sum([slot[1] - slot[0] for slot in slots])
 
-        self.day_times = map(slot_sum_time, range(0, 7))
+        self.day_times = list(map(slot_sum_time, list(range(0, 7))))
         self.week_time = sum(self.day_times)
 
     #@-node:_recalc_working_time

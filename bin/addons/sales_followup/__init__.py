@@ -19,6 +19,6 @@
 # 
 ##############################################################################
 
-import sale_followup
-import report
-import wizard
+from . import sale_followup
+from . import report
+from . import wizard

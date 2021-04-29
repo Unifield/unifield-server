@@ -41,7 +41,7 @@ class sale_order(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         so = self.browse(cr, uid, ids[0], context=context)
@@ -90,7 +90,7 @@ class sale_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         sale_obj = self.pool.get(self._name + '.line')
@@ -220,7 +220,7 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for line in self.read(cr, uid, ids, ['analytic_distribution_id']):
@@ -243,7 +243,7 @@ class sale_order_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -262,7 +262,7 @@ class sale_order_line(osv.osv):
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         get_sel = self.pool.get('ir.model.fields').get_selection
@@ -279,7 +279,7 @@ class sale_order_line(osv.osv):
         - product category expense account if no product_id (come from family's product category link)
         """
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -319,7 +319,7 @@ class sale_order_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         sol = self.browse(cr, uid, ids[0], context=context)

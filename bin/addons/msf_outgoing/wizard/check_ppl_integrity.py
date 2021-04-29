@@ -38,7 +38,7 @@ class check_ppl_integrity(osv.osv_memory):
     def next(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)
@@ -52,7 +52,7 @@ class check_ppl_integrity(osv.osv_memory):
 
 
     def return_to_wizard(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

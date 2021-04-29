@@ -162,7 +162,7 @@ class purchase_order(osv.osv):
 
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:
-                if isinstance(ids, (int, long)):
+                if isinstance(ids, int):
                     ids = [ids]
 
                 order = self.pool.get('purchase.order').browse(cr, uid, ids[0])

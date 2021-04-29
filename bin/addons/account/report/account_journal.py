@@ -20,7 +20,7 @@
 ##############################################################################
 
 import time
-from common_report_header import common_report_header
+from .common_report_header import common_report_header
 from report import report_sxw
 
 class journal_print(report_sxw.rml_parse, common_report_header):
@@ -63,7 +63,7 @@ class journal_print(report_sxw.rml_parse, common_report_header):
         if new_ids:
             self.cr.execute('SELECT period_id, journal_id FROM account_journal_period WHERE id IN %s', (tuple(new_ids),))
             res = self.cr.fetchall()
-            self.period_ids, self.journal_ids = zip(*res)
+            self.period_ids, self.journal_ids = list(zip(*res))
         res = super(journal_print, self).set_context(objects, data, ids, report_type=report_type)
         common_report_header._set_context(self, data)
         return res
@@ -121,7 +121,7 @@ class journal_print(report_sxw.rml_parse, common_report_header):
             move_state = ['posted']
 
         self.cr.execute('SELECT l.id FROM account_move_line l, account_move am WHERE l.move_id=am.id AND am.state IN %s AND l.period_id=%s AND l.journal_id IN %s ' + self.query_get_clause + ' ORDER BY l.'+ self.sort_selection + ', l.move_id',(tuple(move_state), period_id, tuple(journal_id) ))
-        ids = map(lambda x: x[0], self.cr.fetchall())
+        ids = [x[0] for x in self.cr.fetchall()]
         return obj_mline.browse(self.cr, self.uid, ids)
 
     def _set_get_account_currency_code(self, account_id):

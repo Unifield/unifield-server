@@ -23,7 +23,7 @@
 # OSV: Objects Services
 #
 
-import orm
+from . import orm
 import netsvc
 import pooler
 import copy
@@ -113,7 +113,7 @@ class object_proxy(netsvc.Service):
                     ctx = kwargs.get('context', {})
 
                 uid = 1
-                if args and isinstance(args[0], (long, int)):
+                if args and isinstance(args[0], int):
                     uid = args[0]
 
                 lang = ctx and ctx.get('lang')
@@ -132,7 +132,7 @@ class object_proxy(netsvc.Service):
                     try:
                         if args and len(args) > 1:
                             obj = self.get(args[1])
-                            if len(args) > 3 and isinstance(args[3], (long, int, list)):
+                            if len(args) > 3 and isinstance(args[3], (int, list)):
                                 ids = args[3]
                             else:
                                 ids = []
@@ -166,7 +166,7 @@ class object_proxy(netsvc.Service):
                     if not pooler.get_pool(dbname)._ready:
                         raise except_osv('Database not ready', 'Currently, this database is not fully loaded and can not be used.')
                     return f(self, dbname, *args, **kwargs)
-                except OperationalError, e:
+                except OperationalError as e:
                     # Automatically retry the typical transaction serialization errors
                     if e.pgcode not in PG_CONCURRENCY_ERRORS_TO_RETRY:
                         raise
@@ -177,15 +177,15 @@ class object_proxy(netsvc.Service):
                     tries += 1
                     self.logger.info("%s, retrying %d/%d in %.04f sec..." % (e.pgcode, tries, MAX_TRIES_ON_CONCURRENCY_FAILURE, wait_time))
                     time.sleep(wait_time)
-                except orm.except_orm, inst:
+                except orm.except_orm as inst:
                     if inst.name == 'AccessError':
                         self.logger.debug("AccessError", exc_info=True)
                     self.abortResponse(1, inst.name, 'warning', inst.value)
-                except except_osv, inst:
+                except except_osv as inst:
                     self.abortResponse(1, inst.name, inst.exc_type, inst.value)
-                except IntegrityError, inst:
+                except IntegrityError as inst:
                     osv_pool = pooler.get_pool(dbname)
-                    for key in osv_pool._sql_error.keys():
+                    for key in list(osv_pool._sql_error.keys()):
                         if key in inst[0]:
                             self.abortResponse(1, _('Constraint Error'), 'warning',
                                                tr(osv_pool._sql_error[key], 'sql_constraint') or inst[0])
@@ -308,7 +308,7 @@ class osv_pool(object):
 
 
     def obj_list(self):
-        return self.obj_pool.keys()
+        return list(self.obj_pool.keys())
 
     # adds a new object instance to the object pool.
     # if it already existed, the instance is replaced
@@ -361,7 +361,7 @@ class osv_memory(osv_base, orm.orm_memory):
     def createInstance(cls, pool, module, cr):
         parent_names = getattr(cls, '_inherit', None)
         if parent_names:
-            if isinstance(parent_names, (str, unicode)):
+            if isinstance(parent_names, str):
                 name = cls._name or parent_names
                 parent_names = [parent_names]
             else:
@@ -377,7 +377,7 @@ class osv_memory(osv_base, orm.orm_memory):
                     new = copy.copy(getattr(pool.get(parent_name), s))
                     if s == '_columns':
                         # Don't _inherit custom fields.
-                        for c in new.keys():
+                        for c in list(new.keys()):
                             if new[c].manual:
                                 del new[c]
                     if hasattr(new, 'update'):
@@ -400,7 +400,7 @@ class osv(osv_base, orm.orm):
     def createInstance(cls, pool, module, cr):
         parent_names = getattr(cls, '_inherit', None)
         if parent_names:
-            if isinstance(parent_names, (str, unicode)):
+            if isinstance(parent_names, str):
                 name = cls._name or parent_names
                 parent_names = [parent_names]
             else:
@@ -416,7 +416,7 @@ class osv(osv_base, orm.orm):
                     new = copy.copy(getattr(pool.get(parent_name), s))
                     if s == '_columns':
                         # Don't _inherit custom fields.
-                        for c in new.keys():
+                        for c in list(new.keys()):
                             if new[c].manual:
                                 del new[c]
                     if hasattr(new, 'update'):

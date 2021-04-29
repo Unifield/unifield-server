@@ -19,4 +19,4 @@
 #
 ##############################################################################
 
-import service_purchasing
+from . import service_purchasing

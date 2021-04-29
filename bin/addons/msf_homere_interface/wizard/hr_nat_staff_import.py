@@ -86,7 +86,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids):
             # Prepare some values
@@ -103,7 +103,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
             # Read file
             fileobj = SpreadsheetXML(xmlstring=decodestring(wiz.file))
             reader = fileobj.getRows()
-            reader.next()
+            next(reader)
             start = 1
             column_list = ['name', 'identification_id'] #, 'job', 'dest', 'cc', 'fp', 'f1', 'f2']
             for num, line in enumerate(reader):
@@ -120,7 +120,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
                 employee_id = False
                 try:
                     vals, employee_id = self.update_or_create_employee(cr, uid, vals, context)
-                except osv.except_osv, e:
+                except osv.except_osv as e:
                     errors.append('Line %s, %s' % (start+num, e.value))
                     continue
                 # Do creation/update

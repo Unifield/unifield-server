@@ -81,7 +81,7 @@ class products_situation_report(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         prod_obj = self.pool.get('product.product')
@@ -158,7 +158,7 @@ class products_situation_report(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.get_values(cr, uid, ids, context=context)

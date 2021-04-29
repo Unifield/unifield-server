@@ -77,7 +77,7 @@ class kit_creation(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         wf_service = netsvc.LocalService("workflow")
@@ -476,7 +476,7 @@ class kit_creation(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -493,9 +493,9 @@ class kit_creation(osv.osv):
             # default location
             default_location_id = obj.default_location_src_id_kit_creation.id
             # create consolidated stock moves
-            for product_id in data.keys():
-                for to_consume_id in data[product_id]['qty'].keys():
-                    for uom_id in data[product_id]['qty'][to_consume_id].keys():
+            for product_id in list(data.keys()):
+                for to_consume_id in list(data[product_id]['qty'].keys()):
+                    for uom_id in list(data[product_id]['qty'][to_consume_id].keys()):
                         # total qty needed for this product/uom
                         needed_qty = data[product_id]['qty'][to_consume_id][uom_id]
                         # the consolidated data contains a move which was original
@@ -555,7 +555,7 @@ class kit_creation(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -574,9 +574,9 @@ class kit_creation(osv.osv):
             # delete stock moves
             move_obj.unlink(cr, uid, move_list, context=dict(context, call_unlink=True))
             # create consolidated stock moves
-            for product_id in data.keys():
-                for to_consume_id in data[product_id]['qty'].keys():
-                    for uom_id in data[product_id]['qty'][to_consume_id].keys():
+            for product_id in list(data.keys()):
+                for to_consume_id in list(data[product_id]['qty'].keys()):
+                    for uom_id in list(data[product_id]['qty'][to_consume_id].keys()):
                         # we check the availability - we use default location from kitting order object
                         needed_qty = data[product_id]['qty'][to_consume_id][uom_id]
                         values = {
@@ -614,7 +614,7 @@ class kit_creation(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # data
         name = _("Process Components to Consume")
@@ -744,7 +744,7 @@ class kit_creation(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
 
@@ -797,7 +797,7 @@ class kit_creation(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -856,7 +856,7 @@ class kit_creation_to_consume(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         kit_creation_obj = self.pool.get('kit.creation')
@@ -876,7 +876,7 @@ class kit_creation_to_consume(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         kit_creation_obj = self.pool.get('kit.creation')
@@ -896,7 +896,7 @@ class kit_creation_to_consume(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         loc_obj = self.pool.get('stock.location')
@@ -936,7 +936,7 @@ class kit_creation_to_consume(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         loc_obj = self.pool.get('stock.location')
@@ -973,7 +973,7 @@ class kit_creation_to_consume(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}
@@ -988,7 +988,7 @@ class kit_creation_to_consume(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         loc_obj = self.pool.get('stock.location')
@@ -1020,7 +1020,7 @@ class kit_creation_to_consume(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         to_consume_obj = self.pool.get('kit.creation.to.consume')
@@ -1065,7 +1065,7 @@ class kit_creation_to_consume(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):

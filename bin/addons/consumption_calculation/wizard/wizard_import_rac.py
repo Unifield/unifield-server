@@ -89,7 +89,7 @@ class wizard_import_rac(osv.osv_memory):
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(import_rac.file))
         # iterator on rows
         reader = fileobj.getRows()
-        reader.next()
+        next(reader)
 
         for row in reader:
             line_num += 1
@@ -259,7 +259,7 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                     if consumed_qty or product_id == product_tbd:
                         lines_to_correct += 1
                 cr.commit()
-            except IndexError, e:
+            except IndexError as e:
                 # the IndexError is often happening when we open Excel file into LibreOffice because the latter adds empty lines
                 error_log += _("Line %s ignored: the system reference an object that doesn't exist in the Excel file. Details: %s\n") % (line_num, e)
                 ignore_lines += 1
@@ -272,7 +272,7 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                 ignore_lines += 1
                 cr.rollback()
                 continue
-            except Exception, e:
+            except Exception as e:
                 error_log += _("Line %s ignored: an error appeared in the Excel file. Details: %s\n") % (line_num, e)
                 ignore_lines += 1
                 cr.rollback()
@@ -302,7 +302,7 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                     'view_id': [view_id],
                     'context': context,
                     }
-        except Exception, e:
+        except Exception as e:
             raise osv.except_osv(_('Error !'), _('%s !') % e)
 
     def close_import(self, cr, uid, ids, context=None):

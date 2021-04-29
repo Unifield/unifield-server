@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-import account_move_line
-import account_model
-import account_use_model
+from . import account_move_line
+from . import account_model
+from . import account_use_model
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -103,7 +103,7 @@ class report_local_expenses(WebKitParser):
                                                                         domain,
                                                                         context=context)
             # we only save the main accounts, not the destinations (new key: account id only)
-            expenses = dict([(item[0], expenses[item]) for item in expenses.keys() if item[1] is False])
+            expenses = dict([(item[0], expenses[item]) for item in list(expenses.keys()) if item[1] is False])
 
             # make the total row
             if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
@@ -114,7 +114,7 @@ class report_local_expenses(WebKitParser):
             # Search the chart of account account (those that have no parent_id
             parent_view_id = pool.get('account.account').search(cr, uid, [('parent_id', '=', False)])
 
-            account_list = pool.get('account.account').browse(cr, uid, expenses.keys(), context=context)
+            account_list = pool.get('account.account').browse(cr, uid, list(expenses.keys()), context=context)
 
             # sorting by account code in ALPHABETICAL order, i.e. 60, 600, 60000, 60010, (...) 601, 60100, 60110, etc.
             for expense_account in sorted(account_list, key=lambda x: x.code):

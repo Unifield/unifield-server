@@ -18,6 +18,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
-import product_nomenclature
+from . import product_nomenclature
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

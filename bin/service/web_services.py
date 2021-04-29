@@ -21,8 +21,8 @@
 
 import base64
 import os
-import security
-import thread
+from . import security
+import _thread
 import threading
 import time
 import sys
@@ -41,7 +41,7 @@ import csv
 import re
 from osv import osv
 from tools.translate import _
-from cStringIO import StringIO
+from io import StringIO
 from tempfile import NamedTemporaryFile
 from updater import get_server_version
 from tools.misc import file_open
@@ -51,11 +51,12 @@ from mako.runtime import Context
 import codecs
 from passlib.hash import bcrypt
 from report import report_sxw
+from functools import reduce
 
 def _check_db_name(name):
     '''Raise if the name is composed with unauthorized characters
     '''
-    if name and isinstance(name, basestring):
+    if name and isinstance(name, str):
         # allow char, number, _ and -
         if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', name):
             raise Exception(_("You must avoid all accents, space or special characters."))
@@ -68,7 +69,7 @@ def export_csv(fields, result, result_file_path):
             for data in result:
                 row = []
                 for d in data:
-                    if isinstance(d, basestring):
+                    if isinstance(d, str):
                         d = d.replace('\n',' ').replace('\t',' ')
                         try:
                             d = d.encode('utf-8')
@@ -78,7 +79,8 @@ def export_csv(fields, result, result_file_path):
                         d = None
                     row.append(d)
                 writer.writerow(row)
-    except IOError, (errno, strerror):
+    except IOError as xxx_todo_changeme:
+        (errno, strerror) = xxx_todo_changeme.args
         raise Exception(_("Operation failed\nI/O error")+"(%s)" % (errno,))
 
 def check_tz():
@@ -196,7 +198,7 @@ class db(netsvc.ExportService):
                         res_users_obj.write(cr, uid, uid, {'groups_id': [(4, group_extended_id)]})
                     serv.actions[id]['clean'] = True
                     cr.commit()
-                except Exception, e:
+                except Exception as e:
                     serv.actions[id]['clean'] = False
                     serv.actions[id]['exception'] = e
                     import traceback
@@ -292,7 +294,7 @@ class db(netsvc.ExportService):
             else:
                 e = self.actions[id]['exception']
                 self.actions.pop(id)
-                raise Exception, e
+                raise Exception(e)
 
     def exp_drop(self, db_name):
         _check_db_name(db_name)
@@ -307,7 +309,7 @@ class db(netsvc.ExportService):
             try:
                 cr.execute('DROP DATABASE "%s"' % db_name)  # ignore_sql_check
                 drop_db = True
-            except Exception, e:
+            except Exception as e:
                 logger.notifyChannel("web-services", netsvc.LOG_ERROR,
                                      'DROP DB: %s failed:\n%s' % (db_name, e))
                 raise Exception("Couldn't drop database %s: %s" % (db_name, e))
@@ -336,7 +338,7 @@ class db(netsvc.ExportService):
         f.close()
         res = tools.pg_dump(db_name, f_name)
         if res:
-            raise Exception, "Couldn't dump database"
+            raise Exception("Couldn't dump database")
         return f_name
 
 
@@ -347,7 +349,7 @@ class db(netsvc.ExportService):
         if res:
             logger.notifyChannel("web-services", netsvc.LOG_ERROR,
                                  'DUMP DB: %s failed\n%s' % (db_name, data))
-            raise Exception, "Couldn't dump database"
+            raise Exception("Couldn't dump database")
         return base64.encodestring(data)
 
     def exp_restore_file(self, db_name, filename):
@@ -360,7 +362,7 @@ class db(netsvc.ExportService):
             if self.exp_db_exist(db_name):
                 logger.notifyChannel("web-services", netsvc.LOG_WARNING,
                                      'RESTORE DB: %s already exists' % (db_name,))
-                raise Exception, "Database already exists"
+                raise Exception("Database already exists")
 
             self._create_empty_database(db_name)
 
@@ -376,7 +378,7 @@ class db(netsvc.ExportService):
             res = tools.exec_pg_command(*cmd)
             os.remove(filename)
             if res:
-                raise Exception, "Couldn't restore database"
+                raise Exception("Couldn't restore database")
 
             logger.notifyChannel("web-services", netsvc.LOG_INFO,
                                  'RESTORE DB: %s' % (db_name))
@@ -409,7 +411,7 @@ class db(netsvc.ExportService):
         try:
             try:
                 cr.execute('ALTER DATABASE "%s" RENAME TO "%s"' % (old_name, new_name))  # ignore_sql_check
-            except Exception, e:
+            except Exception as e:
                 logger.notifyChannel("web-services", netsvc.LOG_ERROR,
                                      'RENAME DB: %s -> %s failed:\n%s' % (old_name, new_name, e))
                 raise Exception("Couldn't rename database %s to %s: %s" % (old_name, new_name, e))
@@ -532,13 +534,13 @@ class db(netsvc.ExportService):
                 l.notifyChannel('migration', netsvc.LOG_INFO, 'migrate database %s' % (db,))
                 tools.config['update']['base'] = True
                 pooler.restart_pool(db, force_demo=False, update_module=True)
-            except except_orm, inst:
+            except except_orm as inst:
                 self.abortResponse(1, inst.name, 'warning', inst.value)
-            except except_osv, inst:
+            except except_osv as inst:
                 self.abortResponse(1, inst.name, inst.exc_type, inst.value)
             except Exception:
                 import traceback
-                tb_s = reduce(lambda x, y: x+y, traceback.format_exception( sys.exc_type, sys.exc_value, sys.exc_traceback))
+                tb_s = reduce(lambda x, y: x+y, traceback.format_exception( sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                 l.notifyChannel('web-services', netsvc.LOG_ERROR, tb_s)
                 raise
         return True
@@ -661,7 +663,7 @@ GNU Public Licence.
 
             return rc.get_available_updates(rc.id, addons.get_modules_with_version())
 
-        except tm.RemoteContractException, e:
+        except tm.RemoteContractException as e:
             self.abortResponse(1, 'Migration Error', 'warning', str(e))
 
 
@@ -729,11 +731,11 @@ GNU Public Licence.
                     raise
 
             return True
-        except tm.RemoteContractException, e:
+        except tm.RemoteContractException as e:
             self.abortResponse(1, 'Migration Error', 'warning', str(e))
-        except Exception, e:
+        except Exception as e:
             import traceback
-            tb_s = reduce(lambda x, y: x+y, traceback.format_exception( sys.exc_type, sys.exc_value, sys.exc_traceback))
+            tb_s = reduce(lambda x, y: x+y, traceback.format_exception( sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             l.notifyChannel('migration', netsvc.LOG_ERROR, tb_s)
             raise
 
@@ -874,9 +876,9 @@ class wizard(netsvc.ExportService):
             if self.wiz_uid[wiz_id] == uid:
                 return self._execute(db, uid, wiz_id, datas, action, context)
             else:
-                raise Exception, 'AccessDenied'
+                raise Exception('AccessDenied')
         else:
-            raise Exception, 'WizardNotFound'
+            raise Exception('WizardNotFound')
 wizard()
 
 #
@@ -1030,7 +1032,7 @@ class report_spool(netsvc.ExportService):
                 bg_obj.update_percent(cr, uid, bg_id, progression, context=context)
 
             if result.get('warning'):
-                common.warning(unicode(result.get('warning', False)), _('Export Error'))
+                common.warning(str(result.get('warning', False)), _('Export Error'))
                 res['result'] = False
                 return False
             result = result.get('datas',[])
@@ -1107,7 +1109,7 @@ class report_spool(netsvc.ExportService):
                     self._reports[id]['result'] = result
                 self._reports[id]['format'] = format
                 self._reports[id]['state'] = True
-            except Exception, exception:
+            except Exception as exception:
                 if not self._reports[id].get('killed'):
                     tb = sys.exc_info()
                     tb_s = "".join(traceback.format_exception(*tb))
@@ -1124,7 +1126,7 @@ class report_spool(netsvc.ExportService):
                 cr.close()
             return True
 
-        thread.start_new_thread(go, (id, uid, ids, datas, context))
+        _thread.start_new_thread(go, (id, uid, ids, datas, context))
         return id
 
     def _check_report(self, report_id):
@@ -1142,7 +1144,7 @@ class report_spool(netsvc.ExportService):
                 res['code'] = 'zlib'
             else:
                 #CHECKME: why is this needed???
-                if isinstance(result['result'], unicode):
+                if isinstance(result['result'], str):
                     res2 = result['result'].encode('latin1', 'replace')
                 else:
                     res2 = result['result']
@@ -1161,18 +1163,18 @@ class report_spool(netsvc.ExportService):
                 result = self._reports[report_id]
                 return result['state']
             else:
-                raise Exception, 'AccessDenied'
+                raise Exception('AccessDenied')
         else:
-            raise Exception, 'ReportNotFound'
+            raise Exception('ReportNotFound')
 
     def exp_report_get(self, db, uid, report_id):
         if report_id in self._reports:
             if self._reports[report_id]['uid'] == uid:
                 return self._check_report(report_id)
             else:
-                raise Exception, 'AccessDenied'
+                raise Exception('AccessDenied')
         else:
-            raise Exception, 'ReportNotFound'
+            raise Exception('ReportNotFound')
 
 report_spool()
 

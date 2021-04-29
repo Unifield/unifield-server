@@ -77,7 +77,7 @@ class hr_department(osv.osv):
         for m in self.browse(cr, uid, mids, context=context):
             for user in m.member_ids:
                 result[user.id] = 1
-        return result.keys()
+        return list(result.keys())
 
     def _check_recursion(self, cr, uid, ids, context=None):
         if context is None:
@@ -85,7 +85,7 @@ class hr_department(osv.osv):
         level = 100
         while len(ids):
             cr.execute('select distinct parent_id from hr_department where id IN %s',(tuple(ids),))
-            ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            ids = [_f for _f in [x[0] for x in cr.fetchall()] if _f]
             if not level:
                 return False
             level -= 1
@@ -105,14 +105,14 @@ class ir_action_window(osv.osv):
             context = {}
         obj_dept = self.pool.get('hr.department')
         select = ids
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             select = [ids]
         res = super(ir_action_window, self).read(cr, uid, select, fields=fields, context=context, load=load)
         for r in res:
             mystring = 'department_users_get()'
             if mystring in (r.get('domain', '[]') or ''):
                 r['domain'] = r['domain'].replace(mystring, str(obj_dept._get_members(cr, uid)))
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             if res:
                 return res[0]
             else:

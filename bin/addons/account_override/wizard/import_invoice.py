@@ -41,7 +41,7 @@ class debit_note_import_invoice(osv.osv_memory):
         Check elements and write them to the given invoice (invoice_id field)
         """
         # some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # browse all wizard
         for w in self.browse(cr, uid, ids):

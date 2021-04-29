@@ -1,3 +1,3 @@
-import merged_order
-import purchase_order
-import rfq
+from . import merged_order
+from . import purchase_order
+from . import rfq

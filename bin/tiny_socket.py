@@ -20,8 +20,8 @@
 ##############################################################################
 
 import socket
-import cPickle
-import cStringIO
+import pickle
+import io
 
 import zlib
 GZIP_MAGIC = '\x78\xda' # magic when max compression used
@@ -63,7 +63,7 @@ class mysocket:
         self.sock.close()
 
     def mysend(self, msg, exception=False, traceback=None):
-        msg = cPickle.dumps([msg,traceback])
+        msg = pickle.dumps([msg,traceback])
         if self.is_gzip:
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
         if len(msg) <= 10**8-1:
@@ -101,8 +101,8 @@ class mysocket:
             msg = msg + chunk
         if msg.startswith(GZIP_MAGIC):
             msg = zlib.decompress(msg)
-        msgio = cStringIO.StringIO(msg)
-        unpickler = cPickle.Unpickler(msgio)
+        msgio = io.StringIO(msg)
+        unpickler = pickle.Unpickler(msgio)
         unpickler.find_global = None
         res = unpickler.load()
 

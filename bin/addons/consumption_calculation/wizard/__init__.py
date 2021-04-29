@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-import wizard_import_fmc
-import wizard_import_rac
-import wizard_export_fmc_rac
-import wizard_valid_lines
+from . import wizard_import_fmc
+from . import wizard_import_rac
+from . import wizard_export_fmc_rac
+from . import wizard_valid_lines
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

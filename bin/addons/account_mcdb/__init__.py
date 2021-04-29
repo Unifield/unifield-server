@@ -21,13 +21,13 @@
 #
 ##############################################################################
 
-import account_period_state
-import account_mcdb
-import report
-import account_move_line
-import account_analytic_line
-import account_bank_statement
-import wizard
-import mass_reallocation_search
-import sync_query
+from . import account_period_state
+from . import account_mcdb
+from . import report
+from . import account_move_line
+from . import account_analytic_line
+from . import account_bank_statement
+from . import wizard
+from . import mass_reallocation_search
+from . import sync_query
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

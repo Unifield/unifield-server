@@ -46,7 +46,7 @@ class account_invoice(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context.update({'active_id': ids[0]})
         columns = columns_for_account_line_import

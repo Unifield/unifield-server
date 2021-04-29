@@ -36,7 +36,7 @@ class purchase_order_line_manually_confirmed_wizard(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
@@ -59,7 +59,7 @@ class purchase_order_line_manually_confirmed_wizard(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
         return {'type': 'ir.actions.act_window_close'}
 

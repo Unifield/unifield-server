@@ -19,9 +19,9 @@
 #
 ##############################################################################
 
-import hr_department
-import hr
-import installer
+from . import hr_department
+from . import hr
+from . import installer
 
 import report
 import wizard

@@ -41,7 +41,7 @@ class account_partner_reconcile_process(osv.osv_memory):
                               AND credit > 0
                 """,(time.strftime('%Y-%m-%d'),)
         )
-        return len(map(lambda x: x[0], cr.fetchall())) - 1
+        return len([x[0] for x in cr.fetchall()]) - 1
 
     def _get_today_reconciled(self, cr, uid, context=None):
         cr.execute(
@@ -52,7 +52,7 @@ class account_partner_reconcile_process(osv.osv_memory):
                 "AND l.state <> 'draft' " \
                 "GROUP BY l.partner_id ",(time.strftime('%Y-%m-%d'),)
         )
-        return len(map(lambda x: x[0], cr.fetchall())) + 1
+        return len([x[0] for x in cr.fetchall()]) + 1
 
     def _get_partner(self, cr, uid, context=None):
         move_line_obj = self.pool.get('account.move.line')

@@ -39,7 +39,7 @@ class account_analytic_line(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         aaj_obj = self.pool.get('account.analytic.journal')
 
@@ -60,7 +60,7 @@ class account_analytic_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
@@ -142,7 +142,7 @@ class account_analytic_line(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         # store_set_value is not called on unlink if target and source are the same obj
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             cr.execute("update account_analytic_line set reversal_origin_txt='' where reversal_origin in %s", (tuple(ids),))
         return super(account_analytic_line, self).unlink(cr, uid, ids, context=context)
@@ -312,7 +312,7 @@ class account_analytic_line(osv.osv):
             return True
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self._round_amounts(vals)
         for l in self.browse(cr, uid, ids):
@@ -334,7 +334,7 @@ class account_analytic_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         period_obj = self.pool.get('account.period')
         if posting_date is None:

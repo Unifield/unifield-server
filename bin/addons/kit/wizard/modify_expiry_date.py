@@ -57,7 +57,7 @@ class modify_expiry_date(osv.osv_memory):
         '''
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         kit_obj = self.pool.get('composition.kit')

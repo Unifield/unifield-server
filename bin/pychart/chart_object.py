@@ -12,13 +12,13 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-import pychart_types
+from . import pychart_types
 import types
 
 def _check_attr_types(obj, keys):
-    for attr in obj.__dict__.keys():
-        if not keys.has_key(attr):
-            raise Exception, "%s: unknown attribute '%s'" % (obj, attr)
+    for attr in list(obj.__dict__.keys()):
+        if attr not in keys:
+            raise Exception("%s: unknown attribute '%s'" % (obj, attr))
         
         typeval, default_value, docstring = keys[attr][0:3]
         val = getattr(obj, attr)
@@ -26,24 +26,24 @@ def _check_attr_types(obj, keys):
             pass
         elif isinstance(typeval, types.FunctionType):
             # user-defined check procedure
-            error = apply(typeval, (val,))
+            error = typeval(*(val,))
             if error != None:
-                raise Exception, "%s: %s for attribute '%s', but got '%s'" % (obj, error, attr, val)
+                raise Exception("%s: %s for attribute '%s', but got '%s'" % (obj, error, attr, val))
         elif 1:
             try:
                 if isinstance(val, typeval):
                     pass
             except:
-                raise Exception, "%s: Expecting type %s, but got %s (attr=%s, %s)"  % (obj, typeval, val, attr, keys[attr])
+                raise Exception("%s: Expecting type %s, but got %s (attr=%s, %s)"  % (obj, typeval, val, attr, keys[attr]))
 
         else:
-            raise Exception, "%s: attribute '%s' expects type %s but found %s" % (obj, attr, typeval, val)
+            raise Exception("%s: attribute '%s' expects type %s but found %s" % (obj, attr, typeval, val))
 
 def set_defaults(cls, **dict):
     validAttrs = getattr(cls, "keys")
-    for attr, val in dict.items():
-        if not validAttrs.has_key(attr):
-            raise Exception, "%s: unknown attribute %s." % (cls, attr)
+    for attr, val in list(dict.items()):
+        if attr not in validAttrs:
+            raise Exception("%s: unknown attribute %s." % (cls, attr))
         tuple = list(validAttrs[attr])
         # 0 : type
         # 1: defaultValue
@@ -55,15 +55,15 @@ def set_defaults(cls, **dict):
 class T(object):
     def init(self, args):
         keys = self.keys
-        for attr, tuple in keys.items():
+        for attr, tuple in list(keys.items()):
             defaultVal = tuple[1]
             if isinstance(defaultVal, types.FunctionType):
                 # if the value is procedure, use the result of the proc call
                 # as the default value
-                defaultVal = apply(defaultVal, ())
+                defaultVal = defaultVal(*())
             setattr(self, attr, defaultVal)
             
-        for key, val in args.items():
+        for key, val in list(args.items()):
             setattr(self, key, val)
         _check_attr_types(self, keys)
         

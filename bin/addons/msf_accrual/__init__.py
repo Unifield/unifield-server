@@ -18,9 +18,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import account
-import account_move_line
-import msf_accrual_line
-import wizard
+from . import account
+from . import account_move_line
+from . import msf_accrual_line
+from . import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -202,7 +202,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -268,7 +268,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -294,7 +294,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Verification
         if not context:
             context={}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Retrieve some values
         wiz_obj = self.pool.get('wizard.journal.items.corrections')
@@ -334,7 +334,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Verification
         if not context:
             context={}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # if JI was marked as corrected manually: display the Reverse Manual Corr. wizard instead of the History wizard
         # except if it's a project line that was marked as Corrected in a upper level
@@ -437,7 +437,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not date:
             date = strftime('%Y-%m-%d')
@@ -599,7 +599,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Update lines
         for ml in self.browse(cr, uid, ids, context=context):
@@ -633,7 +633,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Verification
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not date:
             date = strftime('%Y-%m-%d')
@@ -846,7 +846,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Some check
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
@@ -866,7 +866,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         """
         if context is None:
             context = {}
-        if isinstance(ji_ids, (int, long)):
+        if isinstance(ji_ids, int):
             ji_ids = [ji_ids]
         aal_obj = self.pool.get('account.analytic.line')
         for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id', 'account_id'], context=context):
@@ -908,7 +908,7 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         reversed_move = []
         for m in self.browse(cr, uid, ids):

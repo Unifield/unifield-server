@@ -31,7 +31,7 @@ import re
 import copy
 import os
 from xml import dom
-from report.report_sxw import report_sxw, report_rml
+from .report.report_sxw import report_sxw, report_rml
 
 class actions(osv.osv):
     _name = 'ir.actions.actions'
@@ -90,7 +90,7 @@ class report_xml(osv.osv):
         result = cr.dictfetchall()
         svcs = netsvc.Service._services
         for r in result:
-            if svcs.has_key('report.'+r['report_name']):
+            if 'report.'+r['report_name'] in svcs:
                 continue
             if r['report_rml'] or r['report_rml_content_data']:
                 report_sxw('report.'+r['report_name'], r['model'],
@@ -204,7 +204,7 @@ class act_window(osv.osv):
     def _search_view(self, cr, uid, ids, name, arg, context=None):
         res = {}
         def encode(s):
-            if isinstance(s, unicode):
+            if isinstance(s, str):
                 return s.encode('utf8')
             return s
         for act in self.browse(cr, uid, ids, context=context):
@@ -231,7 +231,7 @@ class act_window(osv.osv):
                                 and child.getAttribute('select')=='1':
                             if child.childNodes:
                                 fld = doc.createElement('field')
-                                for attr in child.attributes.keys():
+                                for attr in list(child.attributes.keys()):
                                     fld.setAttribute(attr, child.getAttribute(attr))
                                 new_node.appendChild(fld)
                             else:
@@ -270,7 +270,7 @@ class act_window(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}

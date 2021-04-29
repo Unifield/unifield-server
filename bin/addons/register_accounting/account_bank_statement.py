@@ -25,10 +25,10 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from register_tools import _get_third_parties
-from register_tools import _set_third_parties
-from register_tools import create_cashbox_lines
-from register_tools import open_register_view
+from .register_tools import _get_third_parties
+from .register_tools import _set_third_parties
+from .register_tools import create_cashbox_lines
+from .register_tools import open_register_view
 from base import currency_date
 import time
 import datetime
@@ -273,7 +273,7 @@ class account_bank_statement(osv.osv):
                     st_number = obj_seq.get(cr, uid, 'account.bank.statement')
 
             for line in st.move_line_ids:
-                if line.state <> 'valid':
+                if line.state != 'valid':
                     raise osv.except_osv(_('Error !'),
                                          _('The account entries lines are not in valid state.'))
             for st_line in st.line_ids:
@@ -408,7 +408,7 @@ class account_bank_statement(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = []
 
@@ -464,7 +464,7 @@ class account_bank_statement(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for reg in self.browse(cr, uid, ids):
             # Verify that the closing balance (balance_end_real) correspond to the calculated balance (balance_end)
@@ -481,7 +481,7 @@ class account_bank_statement(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
 
@@ -532,7 +532,7 @@ class account_bank_statement(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         domain = [('statement_id', '=', ids[0])]
@@ -562,7 +562,7 @@ class account_bank_statement(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
@@ -652,7 +652,7 @@ The starting balance will be proposed automatically and the closing balance is t
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
@@ -676,7 +676,7 @@ The starting balance will be proposed automatically and the closing balance is t
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
@@ -753,7 +753,7 @@ The starting balance will be proposed automatically and the closing balance is t
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = False
         wiz_reg_opening_obj = self.pool.get('wizard.register.opening.confirmation')
@@ -1012,7 +1012,7 @@ class account_bank_statement_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -1036,7 +1036,7 @@ class account_bank_statement_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -1059,7 +1059,7 @@ class account_bank_statement_line(osv.osv):
         Get default sequence number: "" (no char).
         If moves, get first one's name.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for line in self.browse(cr, uid, ids):
@@ -1085,7 +1085,7 @@ class account_bank_statement_line(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = []
@@ -1283,7 +1283,7 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No line selected!'))
         # Use right register line IDS
         ids = context.get('active_ids')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Fetch move_ids linked to these register lines
         move_ids = self._get_move_ids(cr, uid, ids, context=context)
@@ -1462,12 +1462,12 @@ class account_bank_statement_line(osv.osv):
             val.update({'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid,
                                                                                                 st_line.analytic_distribution_id.id, {}, context=context) or False})
 
-        if st.currency.id <> company_currency_id:
+        if st.currency.id != company_currency_id:
             amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
                                                   st.currency.id, amount, context=context)
             val['amount_currency'] = -st_line.amount
 
-        if st_line.account_id and st_line.account_id.currency_id and st_line.account_id.currency_id.id <> company_currency_id:
+        if st_line.account_id and st_line.account_id.currency_id and st_line.account_id.currency_id.id != company_currency_id:
             val['currency_id'] = st_line.account_id.currency_id.id
             amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
                                                   st_line.account_id.currency_id.id, amount, context=context)
@@ -1481,7 +1481,7 @@ class account_bank_statement_line(osv.osv):
         # if currency is not the same than the company
         amount_currency = False
         currency_id = False
-        if st.currency.id <> company_currency_id:
+        if st.currency.id != company_currency_id:
             amount_currency = st_line.amount
             currency_id = st.currency.id
         # Add register_line_id variable
@@ -1513,7 +1513,7 @@ class account_bank_statement_line(osv.osv):
         # Optimization: do not browse the move to browse move lines. Just read content of created move lines.
         #+ This is because no other move lines should be created in this method for the given account_move object.
         for line in account_move_line_obj.read(cr, uid, torec, ['state', 'name']):
-            if line.get('state') <> 'valid':
+            if line.get('state') != 'valid':
                 raise osv.except_osv(_('Error !'),
                                      _('Journal Item "%s" is not valid') % line.get('name'))
         # @@@end
@@ -1776,7 +1776,7 @@ class account_bank_statement_line(osv.osv):
                 try:
                     # Optimization: Do not check line because of account_move.write() method at the end of this method
                     acc_move_line_obj.write(cr, uid, [other_line.get('id')], move_line_values, context=context, check=False, update_check=False)
-                except osv.except_osv, e:
+                except osv.except_osv as e:
                     msg = e.value
                     if 'account_id' in values and st_line.state == 'temp' and other_line.get('analytic_distribution_state') == 'invalid':
                         msg = _('The account modification required makes the analytic distribution previously defined invalid; please perform the account modification through the analytic distribution wizard')
@@ -2070,7 +2070,7 @@ class account_bank_statement_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         too_big_amount = 10**10
         for regline in self.browse(cr, uid, ids, fields_to_fetch=['amount', 'name'], context=context):
@@ -2122,7 +2122,7 @@ class account_bank_statement_line(osv.osv):
         if not ids:
             return True
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -2132,7 +2132,7 @@ class account_bank_statement_line(osv.osv):
         #+ We prepare some boolean to test what permit to skip some checks.
         #+ SKIP_WRITE_CHECK is a param in context that permit to directly write thing without any check or changes. Use it with caution.
         one_field = len(values) == 1
-        field_match = values.keys()[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference', 'imported_invoice_line_ids']
+        field_match = list(values.keys())[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference', 'imported_invoice_line_ids']
         skip_check = context.get('skip_write_check', False) and context.get('skip_write_check') == True or False
         if values.get('cheque_number'):
             for line in self.read(cr, uid, ids, ['statement_id', 'cheque_number'], context=context):
@@ -2144,12 +2144,12 @@ class account_bank_statement_line(osv.osv):
         if (one_field and field_match) or skip_check:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values
-        state = self._get_state(cr, uid, ids, context=context).values()[0]
+        state = list(self._get_state(cr, uid, ids, context=context).values())[0]
         # Verify that the statement line isn't in hard state
         if state == 'hard':
             if values.get('partner_move_ids') or values.get('partner_move_line_ids') or \
                     values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or \
-                    (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or \
+                    (values.get('invoice_id', False) and len(list(values.keys())) == 2 and values.get('from_cash_return')) or \
                     'from_correction' in context or context.get('sync_update_execution', False):
                 res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
                 self._check_account_partner_compat(cr, uid, ids, context=context)
@@ -2172,7 +2172,7 @@ class account_bank_statement_line(osv.osv):
         to_update_ids = []
         if state == 'temp' and not context.get('sync_update_execution'):
             to_remove= ['from_import_cheque_id', 'down_payment_id', 'imported_invoice_line_ids', 'move_ids']
-            keys_to_read = [x for x in values.keys() if x not in to_remove]
+            keys_to_read = [x for x in list(values.keys()) if x not in to_remove]
             if keys_to_read:
                 for x in self.read(cr, uid, ids, keys_to_read, context=context):
                     for k in keys_to_read:
@@ -2218,7 +2218,7 @@ class account_bank_statement_line(osv.osv):
                 if new_distrib and old_distrib != new_distrib and line.get('first_move_line_id', False) and line.get('move_ids', False):
                     first_move_line_id = line.get('first_move_line_id')[0]
                     move_ids = line.get('move_ids')[0]
-                    if isinstance(move_ids, (int, long)):
+                    if isinstance(move_ids, int):
                         move_ids = [move_ids]
 
                     # US-289: If there is a change in the DA, then populate it to the move line (and thus analytic lines)
@@ -2764,7 +2764,7 @@ class account_bank_statement_line(osv.osv):
         # Checks
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         l = self.read(cr, uid, ids, ['imported_invoice_line_ids'])[0]
         if not l['imported_invoice_line_ids']:
@@ -2801,7 +2801,7 @@ class account_bank_statement_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # special processing for cash_return
@@ -2941,7 +2941,7 @@ class account_bank_statement_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse lines
         for line in self.browse(cr, uid, ids, context=context):
@@ -2961,7 +2961,7 @@ class account_bank_statement_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         vals = {}
@@ -3071,7 +3071,7 @@ class account_bank_statement_line(osv.osv):
         """
         if not ids:
             return False
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         return self.unlink(cr, real_uid, ids, context=context)
@@ -3079,7 +3079,7 @@ class account_bank_statement_line(osv.osv):
     def _check_account_partner_compat(self, cr, uid, absl_ids, context=None):
         # US-672/2
         if not context.get('sync_update_execution', False):
-            if isinstance(absl_ids, (int, long)):
+            if isinstance(absl_ids, int):
                 absl_ids = [absl_ids]
             # get the values of the register line fields related to the partner and the account
             fields_to_read = ['partner_type', 'employee_id', 'transfer_journal_id', 'partner_id', 'account_id']

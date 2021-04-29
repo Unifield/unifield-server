@@ -35,7 +35,7 @@ def check(fn):
             self._logger.warn(
                 "Unable to call %s on model %s if "
                 "log_sale_purchase is not set in the context!"
-                % (fn.func_name, self._name) )
+                % (fn.__name__, self._name) )
             return True
 
     return wrapper
@@ -148,7 +148,7 @@ class SalePurchaseLogger(object):
 
     def __getattr__(self, symbol):
         if not symbol.startswith('_') \
-           and symbol in self._model._all_columns.keys():
+           and symbol in list(self._model._all_columns.keys()):
             return self._values.get(symbol,
                                     (False if symbol.startswith('is_') else None))
         return self.__dict__[symbol]
@@ -166,7 +166,7 @@ class SalePurchaseLogger(object):
 
     def __setattr__(self, symbol, value):
         if not symbol.startswith('_') \
-           and symbol in self._model._all_columns.keys():
+           and symbol in list(self._model._all_columns.keys()):
             if getattr(self, symbol) != value:
                 self._values[symbol] = value
                 self.write()

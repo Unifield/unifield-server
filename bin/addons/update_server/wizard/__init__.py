@@ -1,1 +1,1 @@
-import manage_version
+from . import manage_version

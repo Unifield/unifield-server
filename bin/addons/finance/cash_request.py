@@ -576,7 +576,7 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
             if cash_req.state != 'draft':
@@ -589,7 +589,7 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if regtype in ['cash', 'bank', 'cheque']:
             if regtype == 'cash':

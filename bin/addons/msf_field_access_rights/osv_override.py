@@ -28,6 +28,7 @@ import copy
 from datetime import datetime
 import netsvc
 from tools import misc
+from functools import reduce
 
 def _get_instance_level(self, cr, uid):
     """
@@ -56,7 +57,7 @@ def _record_matches_domain(self, cr, record_id, domain):
     Make a search with domain + id = id. If we get the ID in the result, the domain matches the record
     """
     # convert domain from string to list
-    if isinstance(domain, (str, unicode)):
+    if isinstance(domain, str):
         domain = eval(domain)
 
     # if domain is True or False or empty list, no domain specified, therefore record matches all domains
@@ -140,7 +141,7 @@ def _values_equate(field_type, current_value, new_value):
                 model, id = current_value.split(',', 1)
                 if new_value[0] == id and new_value[1] == model:
                     return True
-        if isinstance(new_value, (str, unicode)):
+        if isinstance(new_value, str):
             if ',' in new_value:
                 new_model, new_id = new_value.split(',', 1)
                 model, id = current_value.split(',', 1)
@@ -150,7 +151,7 @@ def _values_equate(field_type, current_value, new_value):
         if isinstance(new_value, (list, tuple)):
             if new_value:
                 if isinstance(new_value[0], (list, tuple)):
-                    if isinstance(new_value[0][0], (int, long, float, complex)):
+                    if isinstance(new_value[0][0], (int, float, complex)):
                         if not new_value[0][2]:
                             return True
     if field_type == 'many2one':
@@ -227,9 +228,9 @@ def write(self, cr, uid, ids, vals, context=None):
 
     # if have rules
     if rules_search:
-        old_values_list = self.read(cr, 1, ids, vals.keys(), context=context)
+        old_values_list = self.read(cr, 1, ids, list(vals.keys()), context=context)
         family = _get_family_names(self, cr, rules_pool, instance_level, groups)
-        columns = reduce(lambda x, y: dict(x.items() + y.items()), [self.pool.get(model)._columns for model in family])
+        columns = reduce(lambda x, y: dict(list(x.items()) + list(y.items())), [self.pool.get(model)._columns for model in family])
         fields_blacklist = [
             'nomenclature_description',
         ]
@@ -240,8 +241,8 @@ def write(self, cr, uid, ids, vals, context=None):
         )
         for old_values in old_values_list:
             # keep only the property that changes between old an new values
-            dict_diff = dict([(key, value) for key, value in vals.items() if old_values[key] != value])
-            diff_properties = dict_diff.keys()
+            dict_diff = dict([(key, value) for key, value in list(vals.items()) if old_values[key] != value])
+            diff_properties = list(dict_diff.keys())
 
             # remove the blacklisted fields
             diff_properties = list(set(diff_properties).difference(fields_blacklist))

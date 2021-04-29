@@ -91,7 +91,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -194,7 +194,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         picking_id = self.browse(cr, uid, ids[0], context=context).picking_id.id
@@ -209,7 +209,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         data =  {'type': 'ir.actions.act_window',
@@ -231,7 +231,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         datas = {}
@@ -251,7 +251,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return self._import(cr, uid, ids, context=context, with_ppl=with_ppl)
@@ -291,7 +291,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -515,7 +515,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 except DateTime.mxDateTime.RangeError as e:
                     raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
 the date has a wrong format: %s') % (index+1, str(e)))
-                except IndexError, e:
+                except IndexError as e:
                     raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s") % (index+1, len(row), tools.ustr(traceback.format_exc())))
 
         return values, nb_line, error
@@ -564,7 +564,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
 
         if already_process:
             details = []
-            for sol in self.pool.get('sale.order.line').browse(cr, uid, already_process.keys(), fields_to_fetch=['product_id'], context=context):
+            for sol in self.pool.get('sale.order.line').browse(cr, uid, list(already_process.keys()), fields_to_fetch=['product_id'], context=context):
                 details.append(_('Line number: %s, [%s] %s, qty already processed: %s, qty imported: %s') % (sol_id_to_wiz_line.get(sol.id),sol.product_id.default_code, sol.product_id.name, '{:g}'.format(round(already_process.get(sol.id, 0),2)), '{:g}'.format(round(sol_id_sum.get(sol.id,0),2))))
             return _('Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines or adjust quantity before trying to processs the movement\n%s') % ("\n".join(details))
         return ''
@@ -594,7 +594,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
             if context is None:
                 context = {}
 
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
 
             for wiz in self.browse(cr, uid, ids, context=context):
@@ -893,7 +893,7 @@ Nothing has been imported because of %s. See below:
 
 
                 to_del = []
-                for x, fl in file_lines.iteritems():
+                for x, fl in file_lines.items():
                     # Search lines with same product, same UoM and same qty
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get(fl[3], [])
@@ -914,7 +914,7 @@ Nothing has been imported because of %s. See below:
                 to_del = []
 
 
-                for x, fl in file_lines.iteritems():
+                for x, fl in file_lines.items():
                     # Search lines with same product, same UoM
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get('line_ids', [])
@@ -933,7 +933,7 @@ Nothing has been imported because of %s. See below:
                     del file_lines[x]
                 to_del = []
 
-                for x, fl in file_lines.iteritems():
+                for x, fl in file_lines.items():
                     # Search lines with same product
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get(fl[1], {}).get('line_ids', [])
@@ -952,7 +952,7 @@ Nothing has been imported because of %s. See below:
                     del file_lines[x]
                 to_del = []
 
-                for x, fl in file_lines.iteritems():
+                for x, fl in file_lines.items():
                     # Search lines with same line number
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get('line_ids', [])
@@ -973,11 +973,11 @@ Nothing has been imported because of %s. See below:
 
                 # For file lines with no simu. screen lines with same line number,
                 # create a new simu. screen line
-                for x in file_lines.keys():
+                for x in list(file_lines.keys()):
                     new_in_lines.append(x)
                 # Split the simu. screen line or/and update the values according
                 # to linked file line.
-                for in_line, file_lines in file_in_lines.iteritems():
+                for in_line, file_lines in file_in_lines.items():
                     if in_line in SIMU_LINES[wiz.id]['line_ids']:
                         index_in_line = SIMU_LINES[wiz.id]['line_ids'].index(in_line)
                         SIMU_LINES[wiz.id]['line_ids'].pop(index_in_line)
@@ -1106,7 +1106,7 @@ Nothing has been imported because of %s. See below:
             cr.commit()
             cr.close(True)
 
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
@@ -1137,10 +1137,10 @@ Nothing has been imported because of %s. See below:
                         in_proc_obj.write(new_cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
 
             new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context, with_ppl=with_ppl)
-            if isinstance(new_picking, (int,long)):
+            if isinstance(new_picking, int):
                 context['new_picking'] = new_picking
             new_cr.commit()
-        except Exception, e:
+        except Exception as e:
             new_cr.rollback()
             logging.getLogger('stock.picking').warn('Exception do_incoming_shipment', exc_info=True)
             for wiz in inc_proc_obj.read(new_cr, uid, partial_id, ['picking_id'], context=context):
@@ -1170,7 +1170,7 @@ Nothing has been imported because of %s. See below:
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         simu_id = self.browse(cr, uid, ids[0], context=context)
@@ -1281,7 +1281,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -1322,7 +1322,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         '''
         Compute the line number
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -1338,7 +1338,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         '''
         Compute some field with imported values
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -1466,12 +1466,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         res = False
         if exp_value and type(exp_value) == type(DateTime.now()):
-            if not datetime.strptime(exp_value.strftime('%Y-%m-%d'), '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+            if not datetime.strptime(exp_value.strftime('%Y-%m-%d'), '%Y-%m-%d') < datetime(1900, 0o1, 0o1, 0, 0, 0):
                 res = exp_value.strftime('%Y-%m-%d')
         elif exp_value and isinstance(exp_value, str):
             try:
                 time.strptime(exp_value, '%Y-%m-%d')
-                if not datetime.strptime(exp_value, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                if not datetime.strptime(exp_value, '%Y-%m-%d') < datetime(1900, 0o1, 0o1, 0, 0, 0):
                     res = exp_value
             except ValueError:
                 res = False
@@ -1487,7 +1487,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         uom_obj = self.pool.get('product.uom')
         prodlot_obj = self.pool.get('stock.production.lot')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -1728,7 +1728,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         '''
         Display the error message
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -1822,7 +1822,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         '''
         move_obj = self.pool.get('stock.move.in.processor')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         move_ids = []

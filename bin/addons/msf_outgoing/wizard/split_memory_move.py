@@ -77,7 +77,7 @@ class split_memory_move(osv.osv_memory):
         class_name = context['class_name']
 
         wiz_obj = self.pool.get('wizard')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # memory moves selected

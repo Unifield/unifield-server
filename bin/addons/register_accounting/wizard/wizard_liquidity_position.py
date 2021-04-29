@@ -32,7 +32,7 @@ class wizard_liquidity_position(osv.osv_memory):
     _name = 'wizard.liquidity.position'
 
     def _get_default_period(self, cr, uid, context=None):
-        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '!=', 'created'), ('number', 'not in', range(13, 17)), ('date_start','<=', time.strftime('%Y-%m-%d'))], limit=1, order='date_start desc', context=context)
+        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '!=', 'created'), ('number', 'not in', list(range(13, 17))), ('date_start','<=', time.strftime('%Y-%m-%d'))], limit=1, order='date_start desc', context=context)
         return period_ids and period_ids[0] or False
 
     _columns = {

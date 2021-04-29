@@ -186,7 +186,7 @@ class replenishment_location_config(osv.osv):
         Open a wizard to define a frequency for the automatic supply
         or open a wizard to modify the frequency if frequency already exists
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -302,10 +302,10 @@ class replenishment_location_config(osv.osv):
                 try:
                     segment_obj.generate_order_cacl_inv_data(cr, uid, [segment.id], review_id=review_id, context=context, review_date=config.next_scheduler, inv_unit=config.time_unit)
                     logger.info('Inventory Review for config %s, segment %s ok' % (config.name, segment.name_seg))
-                except osv.except_osv, o:
+                except osv.except_osv as o:
                     error.append('%s %s' % (segment.name_seg, misc.ustr(o.value)))
                     cr.rollback()
-                except Exception, e:
+                except Exception as e:
                     error.append('%s %s' % (segment.name_seg, misc.get_traceback(e)))
                     cr.rollback()
             if not error:
@@ -326,7 +326,7 @@ class replenishment_location_config(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         loc_config_obj = self.pool.get('replenishment.location.config')
         segment_obj = self.pool.get('replenishment.segment')
@@ -1668,7 +1668,7 @@ class replenishment_segment(osv.osv):
         Open the wizard to open multiple lines
         '''
         context = context is None and {} or context
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
         return self.pool.get('wizard.common.import.line').\
             open_wizard(cr, uid, ids[0], 'replenishment.segment', 'replenishment.segment.line', context=context)
 
@@ -1778,7 +1778,7 @@ class replenishment_segment(osv.osv):
 
 
                 if cells_nb > col_buffer_min_qty and seg.rule == 'cycle':
-                    if row.cells[col_buffer_min_qty].data and not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                    if row.cells[col_buffer_min_qty].data and not isinstance(row.cells[col_buffer_min_qty].data, (int, float)):
                         line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
                     else:
                         data_towrite['buffer_qty'] = row.cells[col_buffer_min_qty].data
@@ -1802,7 +1802,7 @@ class replenishment_segment(osv.osv):
                             if not row.cells[col_first_fmc+1].data or row.cells[col_first_fmc+1].type != 'datetime':
                                 line_error.append(_('Line %d: FMC TO %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+1].data))
                                 continue
-                            if not isinstance(fmc_data, (int, long, float)):
+                            if not isinstance(fmc_data, (int, float)):
                                 line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, fmc_data))
                                 continue
                             data_towrite.update({
@@ -1812,9 +1812,9 @@ class replenishment_segment(osv.osv):
                             })
                         col_first_fmc += 2
                 elif cells_nb > col_buffer_min_qty and seg.rule == 'minmax':
-                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float, type(None))):
+                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, float, type(None))):
                         line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
-                    elif not row.cells[col_buffer_min_qty+1] or not isinstance(row.cells[col_buffer_min_qty+1].data, (int, long, float, type(None))):
+                    elif not row.cells[col_buffer_min_qty+1] or not isinstance(row.cells[col_buffer_min_qty+1].data, (int, float, type(None))):
                         line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty+1].data))
                     elif row.cells[col_buffer_min_qty+1].data < row.cells[col_buffer_min_qty].data:
                         line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[col_buffer_min_qty+1].data, row.cells[col_buffer_min_qty].data))
@@ -1824,7 +1824,7 @@ class replenishment_segment(osv.osv):
                             'max_qty': row.cells[col_buffer_min_qty+1].data,
                         })
                 elif cells_nb > col_buffer_min_qty:
-                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float, type(None))):
+                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, float, type(None))):
                         line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
                     else:
                         data_towrite['auto_qty'] = row.cells[col_buffer_min_qty].data
@@ -1854,7 +1854,7 @@ class replenishment_segment(osv.osv):
                     seg_line_obj.write(cr, uid, line_id, data_towrite, context=context)
                     updated += 1
 
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message=_("Unexpected error during import:\n%s") % (misc.get_traceback(e), ))
 
@@ -1992,7 +1992,7 @@ class replenishment_segment(osv.osv):
 
 
     def open_history(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         seg = self.browse(cr, uid, ids[0], fields_to_fetch=['rule', 'name_seg'], context=context)
@@ -2135,11 +2135,11 @@ class replenishment_segment_line(osv.osv):
                     ret[x[0]]['real_stock'] = x[2]
             else:
                 # AMC is fully local
-                amc = prod_obj.compute_amc(cr, uid, segment[seg_id]['prod_seg_line'].keys(), segment[seg_id]['context'])
+                amc = prod_obj.compute_amc(cr, uid, list(segment[seg_id]['prod_seg_line'].keys()), segment[seg_id]['context'])
                 for prod_id in amc:
                     ret[segment[seg_id]['prod_seg_line'][prod_id]]['rr_amc'] = amc[prod_id]
 
-                for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location': segment[seg_id]['context']['amc_location_ids']}):
+                for prod in prod_obj.browse(cr, uid, list(segment[seg_id]['prod_seg_line'].keys()), fields_to_fetch=['qty_available'], context={'location': segment[seg_id]['context']['amc_location_ids']}):
                     ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock'] = prod.qty_available
 
         return ret
@@ -2176,16 +2176,16 @@ class replenishment_segment_line(osv.osv):
         for seg_id in segment:
             # compute_child ?
             if 'pipeline_before_rdd' in field_name:
-                for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'to_date': segment[seg_id]['to_date_rdd'], 'location': segment[seg_id]['location_ids']}):
+                for prod_id in prod_obj.browse(cr, uid, list(segment[seg_id]['prod_seg_line'].keys()), fields_to_fetch=['incoming_qty'], context={'to_date': segment[seg_id]['to_date_rdd'], 'location': segment[seg_id]['location_ids']}):
                     ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_before_rdd'] =  prod_id.incoming_qty
 
-                for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, segment[seg_id]['prod_seg_line'].keys(), to_date=segment[seg_id]['to_date_rdd'], location_ids=segment[seg_id]['location_ids']).iteritems():
+                for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, list(segment[seg_id]['prod_seg_line'].keys()), to_date=segment[seg_id]['to_date_rdd'], location_ids=segment[seg_id]['location_ids']).items():
                     ret[segment[seg_id]['prod_seg_line'][prod_id]]['pipeline_before_rdd'] += qty
 
             if not inv_review and 'pipeline_between_rdd_oc' in field_name:
-                for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'from_strict_date': segment[seg_id]['to_date_rdd'], 'to_date': segment[seg_id]['to_date_oc'], 'location': segment[seg_id]['location_ids']}):
+                for prod_id in prod_obj.browse(cr, uid, list(segment[seg_id]['prod_seg_line'].keys()), fields_to_fetch=['incoming_qty'], context={'from_strict_date': segment[seg_id]['to_date_rdd'], 'to_date': segment[seg_id]['to_date_oc'], 'location': segment[seg_id]['location_ids']}):
                     ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_between_rdd_oc'] = prod_id.incoming_qty
-                    for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, segment[seg_id]['prod_seg_line'].keys(), from_date=segment[seg_id]['to_date_rdd'], to_date=segment[seg_id]['to_date_oc'], location_ids=segment[seg_id]['location_ids']).iteritems():
+                    for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, list(segment[seg_id]['prod_seg_line'].keys()), from_date=segment[seg_id]['to_date_rdd'], to_date=segment[seg_id]['to_date_oc'], location_ids=segment[seg_id]['location_ids']).items():
                         ret[segment[seg_id]['prod_seg_line'][prod_id]]['pipeline_between_rdd_oc'] += qty
 
         return ret
@@ -2456,7 +2456,7 @@ class replenishment_segment_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self._clean_data(cr, uid, vals, context=context)
@@ -2629,7 +2629,7 @@ class replenishment_segment_line_amc(osv.osv):
 
         if not seg_ids:
             seg_ids = segment_obj.search(cr, uid, [('state', 'in', ['draft', 'complete']), ('state_parent', 'in', ['draft', 'complete'])], context=context)
-        elif isinstance(seg_ids, (int, long)):
+        elif isinstance(seg_ids, int):
             seg_ids = [seg_ids]
 
         for segment in segment_obj.browse(cr, uid, seg_ids, context=context):
@@ -2670,7 +2670,7 @@ class replenishment_segment_line_amc(osv.osv):
 
             prod_with_stock = []
 
-            line_amc_ids = self.search(cr, uid, [('instance_id', '=', instance_id), ('segment_line_id', 'in', lines.values())], context=context)
+            line_amc_ids = self.search(cr, uid, [('instance_id', '=', instance_id), ('segment_line_id', 'in', list(lines.values()))], context=context)
             for line_amc in self.browse(cr, uid, line_amc_ids, fields_to_fetch=['segment_line_id'], context=context):
                 cache_line_amc[line_amc.segment_line_id.id] = line_amc.id
                 seg_line[line_amc.id] = line_amc.segment_line_id
@@ -2679,7 +2679,7 @@ class replenishment_segment_line_amc(osv.osv):
             qty_fields = ['qty_available']
             if full_data:
                 qty_fields += ['qty_reserved']
-            for prod_alloc in prod_obj.browse(cr, uid, lines.keys(), fields_to_fetch=qty_fields, context={'location': seg_context['amc_location_ids']}):
+            for prod_alloc in prod_obj.browse(cr, uid, list(lines.keys()), fields_to_fetch=qty_fields, context={'location': seg_context['amc_location_ids']}):
                 stock_qties[prod_alloc['id']] = {'qty_available': prod_alloc.qty_available}
                 if full_data:
                     stock_qties[prod_alloc['id']]['qty_reserved'] = -1 * prod_alloc.qty_reserved
@@ -2746,12 +2746,12 @@ class replenishment_segment_line_amc(osv.osv):
                         delete from replenishment_segment_line_amc_detailed_amc where segment_line_id in
                             (select seg_line.id from replenishment_segment_line seg_line where seg_line.segment_id = %s) ''', (segment.id, )
                                )
-                    amc, amc_by_month = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context, compute_amc_by_month=True)
+                    amc, amc_by_month = prod_obj.compute_amc(cr, uid, list(lines.keys()), context=seg_context, compute_amc_by_month=True)
                 else:
-                    amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
+                    amc = prod_obj.compute_amc(cr, uid, list(lines.keys()), context=seg_context)
             else:
                 amc = {}
-            for prod_id in lines.keys():
+            for prod_id in list(lines.keys()):
                 data = {'amc': amc.get(prod_id, 0), 'name': to_date, 'real_stock': stock_qties.get(prod_id, {}).get('qty_available')}
                 if segment.state == 'complete' or gen_inv_review:
                     data.update({
@@ -3087,7 +3087,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
                 error.append(_('Line %d: product %s not found.') % (idx+1, prod_code))
                 continue
 
-            if row.cells[qty_col].data and not isinstance(row.cells[qty_col].data, (int, long, float)):
+            if row.cells[qty_col].data and not isinstance(row.cells[qty_col].data, (int, float)):
                 error.append(_('Line %d: Agreed Order Qty  must be a number, found %s') % (idx+1, row.cells[qty_col].data))
 
             calc_line_obj.write(cr, uid, existing_line[prod_code], {
@@ -3213,7 +3213,7 @@ class replenishment_order_calc_line(osv.osv):
         return ret
 
     def write(self, cr, uid, ids, vals, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if vals is None:
             vals = {}
@@ -3486,7 +3486,7 @@ class replenishment_inventory_review_line_stock(osv.osv):
                 if x[1]:
                     res[x[0]][x[1]] = x[2]
                     res[x[0]]['total_exp'] += x[2]
-            return res.values()
+            return list(res.values())
 
         return super(replenishment_inventory_review_line_stock, self).read(cr, uid, ids, vals, context=context, load=load)
 
@@ -3704,7 +3704,7 @@ class product_stock_out(osv.osv):
                 line_error.append(_('XLS Line %d: %s') % (idx, error_date['warning']['message']))
 
 
-            if cells_nb > 6 and row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
+            if cells_nb > 6 and row.cells[6].data and not isinstance(row.cells[6].data, (int, float)):
                 line_error.append(_('XLS Line %d: Missing Qty must be a number, found %s') % (idx, row.cells[6].data))
             else:
                 data_towrite['qty_missed'] = row.cells[6].data
@@ -3720,7 +3720,7 @@ class product_stock_out(osv.osv):
                         data_towrite['substitute_%d_product_id' % sub] = sub_prod_ids[0]
 
                     if cells_nb > replace_prod_col+2 and row.cells[replace_prod_col+2].data:
-                        if not isinstance(row.cells[replace_prod_col+2].data, (int, long, float)):
+                        if not isinstance(row.cells[replace_prod_col+2].data, (int, float)):
                             line_error.append(_('XLS Line %d: Substitution Qty %d must be a number, found %s') % (idx, sub, row.cells[replace_prod_col+2].data))
                         else:
                             data_towrite['substitute_%d_qty' % sub] = row.cells[replace_prod_col+2].data

@@ -93,7 +93,7 @@ class merged_order(report_sxw.rml_parse):
                 if line.comment:
                     all_prod[key]['comment'] += ' %s' % line.comment
 
-        return sorted(all_prod.values(), key=lambda x: x['default_code'] or x['name'])
+        return sorted(list(all_prod.values()), key=lambda x: x['default_code'] or x['name'])
 
     def str_to_time(self, time):
         if isinstance(time, str):

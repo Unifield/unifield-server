@@ -115,7 +115,7 @@ class stock_card_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         card = self.browse(cr, uid, ids[0], context=context)
@@ -205,7 +205,7 @@ class stock_card_wizard(osv.osv_memory):
                 'notes': '',
             })
 
-        inv_line_dates = inv_line_to_add.keys()
+        inv_line_dates = list(inv_line_to_add.keys())
         inv_line_dates.sort()
 
         pi_counting_line_ids = pi_line_obj.search(cr, uid, pi_counting_dom, context=context)
@@ -223,7 +223,7 @@ class stock_card_wizard(osv.osv_memory):
                 'notes': '',
             })
 
-        pi_counting_line_dates = pi_counting_line_to_add.keys()
+        pi_counting_line_dates = list(pi_counting_line_to_add.keys())
         pi_counting_line_dates.sort()
 
 
@@ -352,7 +352,7 @@ class stock_card_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         raise NotImplementedError
@@ -364,7 +364,7 @@ class stock_card_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         raise NotImplementedError

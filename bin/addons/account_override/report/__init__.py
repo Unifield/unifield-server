@@ -1,5 +1,5 @@
-import account_chart_export
-import account_print_invoice
-import report_open_invoices
-import report_allocation_synthesis_invoices
-import report_allocation_invoices
+from . import account_chart_export
+from . import account_print_invoice
+from . import report_open_invoices
+from . import report_allocation_synthesis_invoices
+from . import report_allocation_invoices

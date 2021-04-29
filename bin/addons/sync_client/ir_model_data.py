@@ -63,7 +63,7 @@ class ir_model_data_sync(osv.osv):
         for data in self.read(cr, uid, ids, ['model','res_id'], context=context):
             datas.setdefault(data['model'], set()).add(data['res_id'])
         res = dict.fromkeys(ids, False)
-        for model, res_ids in datas.items():
+        for model, res_ids in list(datas.items()):
             if self.pool.get(model) is None: continue
             cr.execute("""
 SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
@@ -131,14 +131,14 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                     LEFT JOIN ir_model_data data ON data.module = 'sd' AND
                         data.model = %%s AND r.id = data.res_id
                 WHERE data.res_id IS NULL;""" % obj._table, [obj._name])  # not_a_user_entry
-            record_ids = map(lambda x: x[0], cr.fetchall())
+            record_ids = [x[0] for x in cr.fetchall()]
 
             # if we have some records that doesn't have an sdref
             if record_ids:
                 # call get_sd_ref with their ids, therefore creating sdref's
                 # that don't exist
                 sdref = obj.get_sd_ref(cr, 1, record_ids)
-                result.update( map(lambda sdref: (obj._name, sdref), sdref.values()) )
+                result.update( [(obj._name, sdref) for sdref in list(sdref.values())] )
 
         return result
 
@@ -185,7 +185,7 @@ GROUP BY module, model, res_id
                     sdrefs = sorted(zip(ids, names))
                     taken_id, taken_sdref = sdrefs.pop(-1)
                     sdrefs = dict(sdrefs)
-                    to_delete.extend(sdrefs.keys())
+                    to_delete.extend(list(sdrefs.keys()))
                     to_write.append((taken_id, {
                         'sync_date' : sync_date,
                         'last_modification' : last_modification,
@@ -197,7 +197,7 @@ GROUP BY module, model, res_id
 DELETE FROM ir_model_data WHERE id IN %s""", [tuple(to_delete)])
                 for id, rec in to_write:
                     cr.execute("""\
-UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" WHERE id = %s""", rec.values() + [id])  # not_a_user_entry
+UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in list(rec.keys()))+""" WHERE id = %s""", list(rec.values()) + [id])  # not_a_user_entry
                 cr.execute("""CREATE UNIQUE INDEX unique_sdref_constraint ON ir_model_data (model, res_id) WHERE module = 'sd'""")
                 cr.commit()
                 self._logger.info("%d sdref(s) deleted, %d kept." % (len(to_delete), len(to_write)))

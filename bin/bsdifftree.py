@@ -19,10 +19,10 @@
 #
 ##############################################################################
 
-from __future__ import print_function
+
 import bsdiff4
-import cPickle
-import cStringIO
+import pickle
+import io
 import bz2
 import os
 import shutil
@@ -105,7 +105,7 @@ def mkPatch(old, new, log=_defaultLog):
             log("add %s" % dest)
             patch['add'][dest] = _read_file(newf)
 
-    return bz2.compress(cPickle.dumps(patch))
+    return bz2.compress(pickle.dumps(patch))
 
 # todir is expected to exist, because it should have any base
 # files in it that will be needed for patching.
@@ -114,7 +114,7 @@ def mkPatch(old, new, log=_defaultLog):
 # TODO: Figure out if this is dangerous, fix it?
 def applyPatch(patchdata, todir, doIt=True, log=_defaultLog):
     patchdata = bz2.decompress(patchdata)
-    unpickler = cPickle.Unpickler(cStringIO.StringIO(patchdata))
+    unpickler = pickle.Unpickler(io.StringIO(patchdata))
     unpickler.find_global = None
     patch = unpickler.load()
     for fn in patch.get('delete', []):
@@ -129,7 +129,7 @@ def applyPatch(patchdata, todir, doIt=True, log=_defaultLog):
             log("delete", x)
             if doIt:
                 os.remove(x)
-    for fn,sumpatch in patch.get('patch', {}).items():
+    for fn,sumpatch in list(patch.get('patch', {}).items()):
         (sumBefore, filepatch, sumAfter) = sumpatch
         fn = os.path.join(todir, fn)
         origData = _read_file(fn)
@@ -151,7 +151,7 @@ def applyPatch(patchdata, todir, doIt=True, log=_defaultLog):
                 outf.write(outData)
         log('patched', fn)
 
-    for fn,outData in patch.get('add', {}).items():
+    for fn,outData in list(patch.get('add', {}).items()):
         fn = os.path.join(todir, fn)
         dirname = os.path.dirname(fn)
         if doIt:

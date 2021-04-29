@@ -88,7 +88,7 @@ class wizard_import_batch(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         expected_headers = get_import_batch_headers(context=context)
@@ -96,7 +96,7 @@ class wizard_import_batch(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)
 
-            head = rows.next()
+            head = next(rows)
             self.check_headers(head, expected_headers, context=context)
 
             self.write(cr, uid, [wiz.id], {
@@ -205,11 +205,11 @@ class wizard_import_batch(osv.osv_memory):
                     life_date = str(life_date)
                     # now we have 2018-12-31 00:00:00.00, remove the .00
                     life_date = life_date[:-3]
-                if life_date and datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S') < datetime(1900, 01, 01, 0, 0, 0):
+                if life_date and datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S') < datetime(1900, 0o1, 0o1, 0, 0, 0):
                     date_format = date_tools.get_date_format(cr, uid, context=context)
                     save_error(
                         _('You cannot create a batch number with an expiry date before %s') % (
-                            datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                            datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),
                         ),
                     )
                     continue
@@ -281,13 +281,13 @@ class wizard_import_batch(osv.osv_memory):
             self.write(cr, uid, [import_brw.id], {'total_lines_imported': nb_imported_lines}, context=context)
 
         warn_msg = ''
-        for lnum, warnings in import_warnings.iteritems():
+        for lnum, warnings in import_warnings.items():
             for warn in warnings:
                 warn_msg += _('Line %s: %s') % (lnum, warn)
                 warn_msg += '\n'
 
         err_msg = ''
-        for lnum, errors in import_errors.iteritems():
+        for lnum, errors in import_errors.items():
             for err in errors:
                 err_msg += _('Line %s: %s') % (lnum, err)
                 err_msg += '\n'
@@ -306,9 +306,9 @@ class wizard_import_batch(osv.osv_memory):
             err_msg and _('without errors') or _('imported'),
             nb_lines_ok,
             warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
-                len(import_warnings.keys()) or '',
+                len(list(import_warnings.keys())) or '',
             ),
-            err_msg and len(import_errors.keys()) or 0,
+            err_msg and len(list(import_errors.keys())) or 0,
             err_msg and _('(see error messages below)'),
             err_msg and _("no data will be imported until all the error messages are corrected") or '',
         )

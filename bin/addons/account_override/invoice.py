@@ -205,7 +205,7 @@ class account_invoice(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
 
         for inv_br in self.browse(cr, uid, ids, context=context):
@@ -227,7 +227,7 @@ class account_invoice(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for inv in self.browse(cr, uid, ids, fields_to_fetch=['invoice_line'], context=context):
@@ -496,7 +496,7 @@ class account_invoice(osv.osv):
         """
         Check that document's date is done BEFORE posting date
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for i in self.browse(cr, uid, ids):
             self.pool.get('finance.tools').check_document_date(cr, uid,
@@ -526,7 +526,7 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'is_intermission', 'state']):
             if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
@@ -716,7 +716,7 @@ class account_invoice(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # US_286: Forbit possibility to add include price tax
@@ -746,7 +746,7 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Check register lines
         for inv in self.browse(cr, uid, ids):
@@ -849,7 +849,7 @@ class account_invoice(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         warning_msg = _('Taxes are forbidden with Intermission and Intersection partners.')
         for inv in self.browse(cr, uid, ids, fields_to_fetch=['partner_id', 'tax_line', 'invoice_line'], context=context):
@@ -866,7 +866,7 @@ class account_invoice(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for inv in self.browse(cr, uid, ids, fields_to_fetch=['partner_id', 'synced'], context=context):
             if inv.partner_id.partner_type not in ('intermission', 'section') and inv.synced:
@@ -948,7 +948,7 @@ class account_invoice(osv.osv):
         Reconcile each imported invoice with its attached invoice line
         """
         # some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # browse all given invoices
         for inv in self.browse(cr, uid, ids):
@@ -1188,7 +1188,7 @@ class account_invoice(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         inv_fields = ['type', 'is_debit_note', 'synced', 'partner_type', 'counterpart_inv_status']
         for inv in self.browse(cr, uid, ids, fields_to_fetch=inv_fields, context=context):
@@ -1202,7 +1202,7 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not self.action_date_assign(cr, uid, ids, context, args):
             return False
@@ -1224,7 +1224,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse all given invoices
         for inv in self.browse(cr, uid, ids):
@@ -1254,7 +1254,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context={}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
 
@@ -1552,7 +1552,7 @@ class account_invoice(osv.osv):
             context = {}
         if not ids:
             return False
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
 
         ail_obj = self.pool.get('account.invoice.line')
@@ -1634,7 +1634,7 @@ class account_invoice(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(account_inv_ids, (int, long, )):
+        if isinstance(account_inv_ids, int):
             account_inv_ids = [account_inv_ids]
         aml_obj = self.pool.get('account.move.line')
         aml_ids = aml_obj.search(cr, uid, [('invoice', 'in', account_inv_ids)], order='NO_ORDER', context=context)
@@ -1656,7 +1656,7 @@ class account_invoice(osv.osv):
         """
         Opens the Import Invoice wizard
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz_id = self.pool.get('account.invoice.import').create(cr, uid, {'invoice_id': ids[0]}, context=context)
         return {
@@ -1680,7 +1680,7 @@ class account_invoice(osv.osv):
         if not inv_ids:
             raise osv.except_osv(_('Error'),
                                  _('Please select at least one record!'))
-        if isinstance(inv_ids, (int, long)):
+        if isinstance(inv_ids, int):
             inv_ids = [inv_ids]
         context.update({
             'selected_inv_ids': inv_ids,
@@ -1815,7 +1815,7 @@ class account_invoice_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         too_big_amount = 10**10
         inv_line_fields = ['quantity', 'price_unit', 'discount', 'name']
@@ -1888,7 +1888,7 @@ class account_invoice_line(osv.osv):
             return True
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if vals.get('invoice_id') and self._name in ['account.invoice.line']:
             for il in self.browse(cr, uid, ids):
@@ -1972,7 +1972,7 @@ class account_invoice_line(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Fetch all invoice_id to check
         direct_invoice_ids = []
@@ -2077,7 +2077,7 @@ class res_partner(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             res[id] = False

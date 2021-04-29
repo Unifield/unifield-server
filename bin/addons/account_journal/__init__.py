@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import account_journal
-import project # this is for account_analytic_journal
+from . import account_journal
+from . import project # this is for account_analytic_journal
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

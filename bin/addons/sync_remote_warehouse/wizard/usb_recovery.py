@@ -28,7 +28,7 @@ class usb_recovery(osv.osv_memory):
 
     def _get_usb_instance_type(self, cr, uid, ids=None, field_name=None, arg=None, context=None):
         usb_instance_type = self._get_entity(cr, uid, context).usb_instance_type
-        if isinstance(ids, (int, long, list)):
+        if isinstance(ids, (int, list)):
             return dict.fromkeys(ids, usb_instance_type)
         else:
             return usb_instance_type

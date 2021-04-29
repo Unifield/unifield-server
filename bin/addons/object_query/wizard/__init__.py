@@ -1,1 +1,1 @@
-import query_value
+from . import query_value

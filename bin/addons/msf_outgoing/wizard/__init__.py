@@ -19,17 +19,17 @@
 #
 ##############################################################################
 
-import picking_processor
-import incoming_shipment_processor
-import change_product_move_processor
-import split_move_processor
-import internal_move_processor
-import outgoing_delivery_processor
-import ppl_processor
-import return_ppl_processor
-import return_shipment_processor
-import return_pack_shipment_processor
-import shipment_processor
-import split_memory_move
-import check_ppl_integrity
-import ppl_set_pack_on_lines
+from . import picking_processor
+from . import incoming_shipment_processor
+from . import change_product_move_processor
+from . import split_move_processor
+from . import internal_move_processor
+from . import outgoing_delivery_processor
+from . import ppl_processor
+from . import return_ppl_processor
+from . import return_shipment_processor
+from . import return_pack_shipment_processor
+from . import shipment_processor
+from . import split_memory_move
+from . import check_ppl_integrity
+from . import ppl_set_pack_on_lines

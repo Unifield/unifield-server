@@ -21,7 +21,8 @@
 ##############################################################################
 
 from tools import flatten, reverse_enumerate
-import fields
+from . import fields
+from functools import reduce
 
 
 class expression(object):
@@ -33,7 +34,7 @@ class expression(object):
     """
 
     def _is_operator(self, element):
-        return isinstance(element, (str, unicode)) and element in ['&', '|', '!']
+        return isinstance(element, str) and element in ['&', '|', '!']
 
     def _is_leaf(self, element, internal=False):
         OPS = ('=', '!=', '<>', '<=', '<', '>', '>=', '=?', '=like', '=ilike', 'like', 'not like', 'ilike', 'not ilike', 'in', 'not in', 'child_of')
@@ -186,7 +187,7 @@ class expression(object):
             elif field._type == 'one2many':
                 # Applying recursivity on field(one2many)
                 if operator == 'child_of':
-                    if isinstance(right, basestring):
+                    if isinstance(right, str):
                         ids2 = [x[0] for x in field_obj.name_search(cr, uid, right, [], 'like', context=context, limit=None)]
                     else:
                         ids2 = list(right)
@@ -200,7 +201,7 @@ class expression(object):
                     call_null = True
 
                     if right is not False:
-                        if isinstance(right, basestring):
+                        if isinstance(right, str):
                             ids2 = [x[0] for x in field_obj.name_search(cr, uid, right, [], operator, context=context, limit=None)]
                             if ids2:
                                 operator = 'in'
@@ -233,7 +234,7 @@ class expression(object):
             elif field._type == 'many2many':
                 #FIXME
                 if operator == 'child_of':
-                    if isinstance(right, basestring):
+                    if isinstance(right, str):
                         ids2 = [x[0] for x in field_obj.name_search(cr, uid, right, [], 'like', context=context, limit=None)]
                     else:
                         ids2 = list(right)
@@ -249,7 +250,7 @@ class expression(object):
                 else:
                     call_null_m2m = True
                     if right is not False:
-                        if isinstance(right, basestring):
+                        if isinstance(right, str):
                             res_ids = [x[0] for x in field_obj.name_search(cr, uid, right, [], operator, context=context)]
                             if res_ids:
                                 operator = 'in'
@@ -281,9 +282,9 @@ class expression(object):
 
             elif field._type == 'many2one':
                 if operator == 'child_of':
-                    if isinstance(right, basestring):
+                    if isinstance(right, str):
                         ids2 = [x[0] for x in field_obj.name_search(cr, uid, right, [], 'like', limit=None)]
-                    elif isinstance(right, (int, long)):
+                    elif isinstance(right, int):
                         ids2 = list([right])
                     else:
                         ids2 = list(right)
@@ -314,17 +315,17 @@ class expression(object):
                         if not res_ids:
                             return ('id','=',0)
                         else:
-                            right = map(lambda x: x[0], res_ids)
+                            right = [x[0] for x in res_ids]
                             return (left, 'in', right)
 
                     m2o_str = False
                     if right:
-                        if isinstance(right, basestring): # and not isinstance(field, fields.related):
+                        if isinstance(right, str): # and not isinstance(field, fields.related):
                             m2o_str = True
                         elif isinstance(right,(list,tuple)):
                             m2o_str = True
                             for ele in right:
-                                if not isinstance(ele, basestring):
+                                if not isinstance(ele, str):
                                     m2o_str = False
                                     break
                     elif right == []:
@@ -475,7 +476,7 @@ class expression(object):
                     if like:
                         if isinstance(right, str):
                             str_utf8 = right
-                        elif isinstance(right, unicode):
+                        elif isinstance(right, str):
                             str_utf8 = right.encode('utf-8')
                         else:
                             str_utf8 = str(right)
@@ -489,7 +490,7 @@ class expression(object):
                     if add_null:
                         query = '(%s OR %s IS NULL)' % (query, left)
 
-        if isinstance(params, basestring):
+        if isinstance(params, str):
             params = [params]
         return (query, params)
 

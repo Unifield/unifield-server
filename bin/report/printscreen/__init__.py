@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-import ps_list
-import ps_form
+from . import ps_list
+from . import ps_form
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

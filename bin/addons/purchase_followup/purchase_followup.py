@@ -204,7 +204,7 @@ class purchase_order_followup(osv.osv_memory):
         return res
 
     def export_get_file_name(self, cr, uid, ids, prefix='PO_Follow_Up', context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
             return False
@@ -221,7 +221,7 @@ class purchase_order_followup(osv.osv_memory):
         """
         Print the report (Excel)
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         datas = {'ids': ids}
         file_name = self.export_get_file_name(cr, uid, ids, context=context)
@@ -239,7 +239,7 @@ class purchase_order_followup(osv.osv_memory):
         """
         Print the report (PDF)
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         datas = {'ids': ids}
         file_name = self.export_get_file_name(cr, uid, ids, context=context)

@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-from stock import *
-import wizard
-import report
+from .stock import *
+from . import wizard
+from . import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -69,7 +69,7 @@ class wizard_import_fmc(osv.osv_memory):
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         import_mrc = self.browse(cr, uid, ids[0], context)
         mrc_id = import_mrc.rmc_id.id
@@ -91,11 +91,11 @@ class wizard_import_fmc(osv.osv_memory):
 
         # check import template:
         for i in range(3):
-            row = rows.next()
+            row = next(rows)
             if any([cell.data for cell in row.cells[2:]]): # if cells #2 to end are not empty
                 raise osv.except_osv(_('Error'), _('Import template not recognized, please use the same as exports'))
 
-        header = rows.next() # skip main table header
+        header = next(rows) # skip main table header
 
         doc_headers = self.pool.get('wizard.export.fmc').get_headers(context=context)
         if len(header) != len(doc_headers):
@@ -138,7 +138,7 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
             if row.cells[4] and row.cells[4].data:
                 if row.cells[3].type in ('int', 'float'):
                     fmc = row.cells[4].data
-                elif isinstance(row.cells[4].data, (int, long, float)):
+                elif isinstance(row.cells[4].data, (int, float)):
                     fmc = row.cells[4].data
                 else:
                     error += _("Line %s in your Excel file ignored: FMC should be a number and not %s \n") % (line_num, row.cells[4].data)

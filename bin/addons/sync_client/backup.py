@@ -31,6 +31,7 @@ import time
 import logging
 import pooler
 import threading
+from functools import reduce
 
 class BackupConfig(osv.osv):
     """ Backup configurations """
@@ -152,7 +153,7 @@ class BackupConfig(osv.osv):
             tools.misc.pg_basebackup(cr.dbname, bk.wal_directory)
             self.write(cr, uid, [bk.id], {'basebackup_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'basebackup_error': False}, context=ctx_no_write)
             return True
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             import traceback, sys
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
@@ -231,7 +232,7 @@ class BackupConfig(osv.osv):
             tools.misc.sent_to_remote(bk.wal_directory, config_dir=bk.ssh_config_dir, remote_user=bk.remote_user, remote_host=bk.remote_host, remote_dir=dbname)
             self.write(cr, uid, [bk.id], {'rsync_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'rsync_error': False}, context=ctx_no_write)
             return True
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             import traceback, sys
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
@@ -248,7 +249,7 @@ class BackupConfig(osv.osv):
         new_cr = pooler.get_db(cr.dbname).cursor()
         try:
             self.pool.get('msf.instance.cloud').send_backup(new_cr, uid, progress=wiz_id, context=context)
-        except Exception, e:
+        except Exception as e:
             self._error = e
         finally:
             new_cr.commit()
@@ -360,7 +361,7 @@ class BackupConfig(osv.osv):
                                         suffix, version))
                 bkpfile = open(outfile,"wb")
                 bkpfile.close()
-            except Exception, e:
+            except Exception as e:
                 # If there is exception with the opening of the file
                 if isinstance(e, IOError):
                     error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(e.strerror, e.filename)
@@ -423,7 +424,7 @@ class ir_cron(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         toret = super(ir_cron, self).write(cr, uid, ids, vals, context=context)
         crons = self.browse(cr, uid, ids, context=context)
@@ -482,7 +483,7 @@ class backup_download(osv.osv):
                                 data.update({'name': f, 'path': full_name})
                                 self.create(cr, uid, data, context=context)
         if all_bck:
-            self.unlink(cr, uid, all_bck.values(), context=context)
+            self.unlink(cr, uid, list(all_bck.values()), context=context)
         return True
 
     def open_wiz(self, cr, uid, ids, context=None):

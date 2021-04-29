@@ -584,7 +584,7 @@ class PhysicalInventory(osv.osv):
 
             # Init the quantity to 0 if batch is not present in dict yet
             # (NB: batch_id can be None, but that's not an issue for dicts ;))
-            if not product_batch_expirydate in stocks.keys():
+            if not product_batch_expirydate in list(stocks.keys()):
                 stocks[product_batch_expirydate] = 0.0
 
             move_out = (move.location_id.id == location_id)
@@ -1138,7 +1138,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 product_dict[product_id] = {}
                 product_dict[product_id]['p_tmpl_id'] = product['product_tmpl_id'][0]
 
-            tmpl_ids = [x['p_tmpl_id'] for x in product_dict.values()]
+            tmpl_ids = [x['p_tmpl_id'] for x in list(product_dict.values())]
 
             product_tmpl_id_list = [x for x in tmpl_ids if x not in product_tmpl_dict]
             product_tmpl_id_list = list(set(product_tmpl_id_list))
@@ -1244,7 +1244,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 'move_ids': [(6, 0, move_ids)],
                 'date_confirmed': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
             })
-            for line_id, move_id in discrepancy_to_move.items():
+            for line_id, move_id in list(discrepancy_to_move.items()):
                 inv_line_obj.write(cr, uid, [line_id], {'move_id': move_id}, context=context)
 
             # Close the moves

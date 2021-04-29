@@ -96,7 +96,7 @@ class res_company(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         instance_obj = self.pool.get('msf.instance')

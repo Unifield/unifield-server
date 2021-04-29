@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import publisher_warranty
-import stock_picking
-import consumption_calculation
-import sale
+from . import publisher_warranty
+from . import stock_picking
+from . import consumption_calculation
+from . import sale

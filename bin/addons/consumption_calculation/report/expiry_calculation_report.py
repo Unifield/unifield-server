@@ -187,7 +187,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         if not res or res < 1:
             res = 1
         res_list = []
-        for i in xrange(res):
+        for i in range(res):
             res_list.append(i)
         return res_list
 
@@ -225,7 +225,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         ]
         items_ids = item_obj.search(self.cr, self.uid, domain,
                                     order='period_start')  # items ordered by date
-        if isinstance(items_ids, (int, long)):
+        if isinstance(items_ids, int):
             items_ids = [items_ids]
         res = ''
         if line.in_stock != line.total_expired:

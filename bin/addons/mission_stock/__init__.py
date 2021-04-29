@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import mission_stock
-import wizard
-import report
+from . import mission_stock
+from . import wizard
+from . import report

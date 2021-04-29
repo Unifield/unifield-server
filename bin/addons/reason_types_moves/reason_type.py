@@ -387,7 +387,7 @@ class stock_location(osv.osv):
             if arg[0] == 'is_replenishment':
                 if arg[1] != '=':
                     raise osv.except_osv(_('Error !'), _('Bad operator !'))
-                elif arg[2] and isinstance(arg[2], (int, long)):
+                elif arg[2] and isinstance(arg[2], int):
                     warehouse_id = arg[2]
                     stock_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
                     res.append(('location_id', 'child_of', stock_id))

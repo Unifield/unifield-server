@@ -25,7 +25,7 @@ class CountingSheetParser(report_sxw.rml_parse):
 
     def display_product_attributes(self, item):
         attributes = {'is_kc': _('CC'), 'is_dg': _('DG'), 'is_cs': _('CS')}
-        return ','.join([name for attribute, name in attributes.items() if getattr(item, attribute, False)])
+        return ','.join([name for attribute, name in list(attributes.items()) if getattr(item, attribute, False)])
 
     @staticmethod
     def yesno(value):

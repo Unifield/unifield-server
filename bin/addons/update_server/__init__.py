@@ -1,3 +1,3 @@
-import version
-import wizard
-import report
+from . import version
+from . import wizard
+from . import report

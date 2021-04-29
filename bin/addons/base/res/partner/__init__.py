@@ -21,11 +21,11 @@
 
 import tools
 
-from partner import *
-from crm import *
+from .partner import *
+from .crm import *
 
-import wizard
-import report
+from . import wizard
+from . import report
 
 
 

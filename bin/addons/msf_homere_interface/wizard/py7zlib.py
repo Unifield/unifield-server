@@ -42,7 +42,7 @@ import os
 try:
     from io import BytesIO
 except ImportError:
-    from cStringIO import StringIO as BytesIO
+    from io import StringIO as BytesIO
 try:
     from functools import reduce
 except ImportError:
@@ -76,17 +76,17 @@ except ImportError:
     UTC = UTC()
 
 try:
-    unicode
+    str
 except NameError:
     # Python 3.x
-    def unicode(s, encoding):
+    def str(s, encoding):
         return s
 else:
     def bytes(s, encoding):
         return s
 
 try:
-    long
+    int
 except NameError:
     # Python 3.x
     long = int
@@ -537,7 +537,7 @@ class ArchiveFile(Base):
         self.size = size
         # maxsize is only valid for solid archives
         self._maxsize = maxsize
-        for k, v in info.items():
+        for k, v in list(info.items()):
             setattr(self, k, v)
         if not hasattr(self, 'filename'):
             # compressed file is stored without a name, generate one
@@ -815,13 +815,13 @@ class Archive7z(Base):
                 fidx += 1
         
         self.numfiles = len(self.files)
-        self.filenames = list(map(lambda x: x.filename, self.files))
+        self.filenames = list([x.filename for x in self.files])
         self.files_map.update([(x.filename, x) for x in self.files])
         
     # interface like TarFile
         
     def getmember(self, name):
-        if isinstance(name, (int, long)):
+        if isinstance(name, int):
             try:
                 return self.files[name]
             except IndexError:
@@ -836,14 +836,14 @@ class Archive7z(Base):
         return self.filenames
 
     def list(self, verbose=True):
-        print ('total %d files in %sarchive' % (self.numfiles, (self.solid and 'solid ') or ''))
+        print(('total %d files in %sarchive' % (self.numfiles, (self.solid and 'solid ') or '')))
         if not verbose:
-            print ('\n'.join(self.filenames))
+            print(('\n'.join(self.filenames)))
             return
             
         for f in self.files:
             extra = (f.compressed and '%10d ' % (f.compressed)) or ' '
-            print ('%10d%s%.8x %s' % (f.size, extra, f.digest, f.filename))
+            print(('%10d%s%.8x %s' % (f.size, extra, f.digest, f.filename)))
             
 if __name__ == '__main__':
     f = Archive7z(open('test.7z', 'rb'))

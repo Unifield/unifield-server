@@ -24,11 +24,11 @@ from tools.translate import _
 from tools import misc
 from tools import config
 import os
-import StringIO
+import io
 from tools import webdav
 import zipfile
 from tempfile import NamedTemporaryFile
-from urlparse import urlparse
+from urllib.parse import urlparse
 from mx import DateTime
 import logging
 import requests
@@ -57,7 +57,7 @@ class msf_instance(osv.osv):
         # Some checks
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Default values
         res = dict.fromkeys(ids, False)
@@ -78,7 +78,7 @@ class msf_instance(osv.osv):
     def _get_po_fo_cost_center(self, cr, uid, ids, fields, arg, context=None):
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = dict.fromkeys(ids, False)
@@ -209,7 +209,7 @@ class msf_instance(osv.osv):
     def button_cost_center_wizard(self, cr, uid, ids, context=None):
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         context.update({
@@ -264,7 +264,7 @@ class msf_instance(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if 'code' in vals:  # US-972: If the user clicks on Save button, then perform this check
             self.check_cc_not_target(cr, uid, ids, context)
@@ -288,7 +288,7 @@ class msf_instance(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if parent_id and level == 'project':
             parent_instance = self.browse(cr, uid, parent_id, context=context)
@@ -632,7 +632,7 @@ class msf_instance_cloud(osv.osv):
         data = self.get_backup_connection_data(cr, uid, ids, context=context)
         try:
             dav = webdav.Client(**data)
-        except webdav.ConnectionFailed, e:
+        except webdav.ConnectionFailed as e:
             raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % (e.message))
 
         return dav
@@ -641,22 +641,22 @@ class msf_instance_cloud(osv.osv):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         dav = self.get_backup_connection(cr, uid, ids, context=None)
         test_file_name = 'test-file-%s.txt' % (local_instance.instance, )
-        locale_file = StringIO.StringIO()
+        locale_file = io.StringIO()
         locale_file.write('TEST UF')
         locale_file.seek(0)
         try:
             dav.upload(locale_file, test_file_name)
-        except webdav.ConnectionFailed, e:
+        except webdav.ConnectionFailed as e:
             raise osv.except_osv(_('Warning !'), _('Unable to upload a test file: %s') % (e.message))
 
         try:
             dav.delete(test_file_name)
-        except webdav.ConnectionFailed, e:
+        except webdav.ConnectionFailed as e:
             raise osv.except_osv(_('Warning !'), _('Unable to delete a test file: %s') % (e.message))
 
         try:
             dav.create_folder(self._temp_folder)
-        except webdav.ConnectionFailed, e:
+        except webdav.ConnectionFailed as e:
             raise osv.except_osv(_('Warning !'), _('Unable to create temp folder: %s') % (e.message))
 
         raise osv.except_osv(_('OK'), _('Connection to remote storage is OK'))
@@ -825,7 +825,7 @@ class msf_instance_cloud(osv.osv):
                             self._logger.info('OneDrive: session time out')
                             dav.login()
 
-                except requests.exceptions.RequestException, e:
+                except requests.exceptions.RequestException as e:
                     if not self._is_in_time_range(range_data['cloud_retry_from'], range_data['cloud_retry_to']):
                         raise
                     self._get_backoff(dav, 'OneDrive: retry except %s' % e)
@@ -842,7 +842,7 @@ class msf_instance_cloud(osv.osv):
             self._logger.info('OneDrive: upload backup ended')
             return True
 
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             if monitor_ids:
                 monitor.write(cr, uid, monitor_ids, {'cloud_error': '%s'%e})

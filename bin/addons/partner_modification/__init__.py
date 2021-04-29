@@ -19,4 +19,4 @@
 #
 ##############################################################################
 
-import partner_modification
+from . import partner_modification

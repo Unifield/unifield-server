@@ -39,10 +39,10 @@ ACCOUNT_FY_STATE_SELECTION = [
 ]
 
 import account
-import account_period
-import account_fiscalyear
-import account_journal_period
-import account_year_end_closing
-import wizard
+from . import account_period
+from . import account_fiscalyear
+from . import account_journal_period
+from . import account_year_end_closing
+from . import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

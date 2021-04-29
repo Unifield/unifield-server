@@ -27,7 +27,7 @@ from osv import fields
 def _join_dictionary(dict, key_prefix, value_prefix, seperator):
     s = ''
     if dict:
-        for k, v in dict.items():
+        for k, v in list(dict.items()):
             s += key_prefix + str(k) + value_prefix + str(v) + seperator
     return s
 

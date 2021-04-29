@@ -19,17 +19,17 @@
 #
 ##############################################################################
 
-import interface
-import print_xml
-import print_fnc
-import custom
-import render
+from . import interface
+from . import print_xml
+from . import print_fnc
+from . import custom
+from . import render
 import pychart
-import int_to_text
+from . import int_to_text
 
-import report_sxw
+from . import report_sxw
 
-import printscreen
+from . import printscreen
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

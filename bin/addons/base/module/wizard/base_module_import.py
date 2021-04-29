@@ -23,7 +23,7 @@ import os
 import tools
 
 import zipfile
-from StringIO import StringIO
+from io import StringIO
 import base64
 from tools.translate import _
 from osv import osv, fields

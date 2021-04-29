@@ -50,7 +50,7 @@ class assign_to_kit(osv.osv_memory):
                     errors.update(greater_than_available=True)
                     mem.write({'integrity_status': 'greater_than_available'}, context=context)
         # check the encountered errors
-        return all([not x for x in errors.values()])
+        return all([not x for x in list(errors.values())])
 
     def automatic_assignment(self, cr, uid, ids, context=None):
         '''
@@ -71,7 +71,7 @@ class assign_to_kit(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
@@ -172,7 +172,7 @@ class assign_to_kit(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -287,7 +287,7 @@ class assign_to_kit_line(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         item_obj = self.pool.get('composition.item')

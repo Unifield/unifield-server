@@ -1,9 +1,9 @@
-from __future__ import with_statement
+
 import os
 import logging
 import socket
 from base64 import b64decode
-from StringIO import StringIO
+from io import StringIO
 import tarfile
 
 from osv import osv, fields
@@ -12,7 +12,7 @@ import base64
 from tools import config
 import updater
 
-from version import IMPORT_PATCH_SUCCESS, IMPORT_PATCH_INVALID, IMPORT_PATCH_UNKNOWN, IMPORT_PATCH_IGNORED
+from .version import IMPORT_PATCH_SUCCESS, IMPORT_PATCH_INVALID, IMPORT_PATCH_UNKNOWN, IMPORT_PATCH_IGNORED
 
 class upgrade(osv.osv_memory):
     _name = 'sync_client.upgrade'
@@ -89,7 +89,7 @@ class upgrade(osv.osv_memory):
         automatic_patching = sync_type=='automatic' and\
             connection_module.is_automatic_patching_allowed(cr, uid)
         if automatic_patching:
-            password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
+            password = list(connection_module._get_password(cr, uid, [proxy], None, None, None).values())[0]
             password = base64.encodestring(password)
             db_name = base64.encodestring(cr.dbname)
             credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')

@@ -146,7 +146,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         vals = {}
@@ -169,7 +169,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
             percent_completed = 0
             ignore_lines, complete_lines = 0, 0
 
-            reader.next()
+            next(reader)
             line_num = 1
             for row in reader:
                 error_list_line = []
@@ -285,7 +285,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
 
                     if error_list_line:
                         error_list_line.insert(0, _('Line %s of the file was exported in the file of the lines not imported:') % (line_num,))
-                        data = file_values[line_num].items()
+                        data = list(file_values[line_num].items())
                         line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                         ignore_lines += 1
                         line_num += 1
@@ -302,7 +302,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                     qty_check = {}
                     soq_check = {}
                     if catalog_line_id:
-                        if isinstance(catalog_line_id, (int, long)):
+                        if isinstance(catalog_line_id, int):
                             catalog_line_id = [catalog_line_id]
                         # update product in catalog only if any modification
                         # and only modified fields (for sync)
@@ -378,7 +378,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
 
                     percent_completed = float(line_num-1)/float(total_line_num-1)*100.0
                     complete_lines += 1
-                except IndexError, e:
+                except IndexError as e:
                     error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num-1, '', e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
@@ -435,7 +435,7 @@ Importation completed in %s!
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.read(cr, uid, ids, ['file', 'catalogue_id']):
@@ -478,7 +478,7 @@ Otherwise, you can continue to use Unifield.""")
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -508,7 +508,7 @@ Otherwise, you can continue to use Unifield.""")
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:

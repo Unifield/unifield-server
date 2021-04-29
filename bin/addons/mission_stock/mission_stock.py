@@ -32,7 +32,7 @@ import logging
 import os
 import csv
 import codecs
-import cStringIO
+import io
 import base64
 from msf_field_access_rights.osv_override import _get_instance_level
 from datetime import datetime
@@ -142,7 +142,7 @@ class msr_in_progress(osv.osv_memory):
     }
 
     def create(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             super(msr_in_progress, self).create(cr, 1, {'report_id': id}, context=None)
@@ -177,7 +177,7 @@ class stock_mission_report(osv.osv):
         '''
         Check if the mission stock report is a local report or not
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -301,7 +301,7 @@ class stock_mission_report(osv.osv):
         if not write_attachment_in_db:
             export_file = open(os.path.join(attachments_path, file_name), 'wb')
         else:
-            export_file = cStringIO.StringIO()
+            export_file = io.StringIO()
 
         header_row = [_(column_name) for column_name, colum_property in header]
         instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
@@ -400,7 +400,7 @@ class stock_mission_report(osv.osv):
                 else:
                     writer.writerow(data_list)
                 row_count += 1
-            except Exception, e:
+            except Exception as e:
                 logging.getLogger('MSR').warning("""An error is occurred when generate the mission stock report %s file : %s\n""" % (file_type, e), exc_info=True)
 
         if file_type == 'xls':
@@ -439,7 +439,7 @@ class stock_mission_report(osv.osv):
         for x in cr.fetchall():
             instance_loc.setdefault(x[1], []).append(x[0])
 
-        all_instances = instance_loc.keys()
+        all_instances = list(instance_loc.keys())
         all_instances.insert(0, local_instance.id)
         cr.execute("""
             select distinct location.name
@@ -698,7 +698,7 @@ class stock_mission_report(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # delete all previous reports
@@ -808,7 +808,7 @@ class stock_mission_report(osv.osv):
                                             context=None):
         if context is None:
             context = {}
-        if isinstance(report_ids, (int, long)):
+        if isinstance(report_ids, int):
             report_ids = [report_ids]
 
         logger = logging.getLogger('MSR')
@@ -1113,14 +1113,14 @@ class stock_mission_report(osv.osv):
         generation failure, no report are available (instead of a not updated
         report that could mixup things)
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ir_attachment_obj = self.pool.get('ir.attachment')
         logger = logging.getLogger('MSR')
         logger.info('___ Delete all previous generated reports...')
         for report_id in ids:
             # delete previously generated reports
-            for report_type in HEADER_DICT.keys():
+            for report_type in list(HEADER_DICT.keys()):
                 csv_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.csv')
                 xml_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
                 csv_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.csv')
@@ -1152,7 +1152,7 @@ class stock_mission_report(osv.osv):
             * 1 file with split of WH and valuation
         '''
         context = context or {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         logger = logging.getLogger('MSR')
 
@@ -1161,7 +1161,7 @@ class stock_mission_report(osv.osv):
         attachment_obj = self.pool.get('ir.attachment')
         try:
             attachments_path = attachment_obj.get_root_path(cr, uid)
-        except osv.except_osv, e:
+        except osv.except_osv as e:
             logger.warning("___ %s The report will be stored in the database." % e.value)
 
 
@@ -1232,13 +1232,13 @@ class UnicodeWriter:
     # https://docs.python.org/2/library/codecs.html#encodings-and-unicode
     def __init__(self, f, dialect=csv.excel, encoding="utf-8-sig", **kwds):
         # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
+        self.queue = io.StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([not isinstance(s, (int, long, float, type(None), type(mxdt(10)))) and s.encode("utf-8") or s for s in row])
+        self.writer.writerow([not isinstance(s, (int, float, type(None), type(mxdt(10)))) and s.encode("utf-8") or s for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")

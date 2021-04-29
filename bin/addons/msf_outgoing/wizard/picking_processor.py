@@ -47,7 +47,7 @@ class stock_picking_processor(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -160,7 +160,7 @@ class stock_picking_processor(osv.osv):
         """
         Fill all lines with the original quantity as quantity
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -207,7 +207,7 @@ class stock_picking_processor(osv.osv):
         """
         Fill all lines with 0.00 as quantity
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -256,7 +256,7 @@ class stock_picking_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
@@ -315,7 +315,7 @@ class stock_move_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -364,7 +364,7 @@ class stock_move_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -375,7 +375,7 @@ class stock_move_processor(osv.osv):
                                                                            context=context)])
         product_module = self.pool.get('product.product')
         product_list_dict = product_module.read(cr, uid,
-                                                move_dict.values(),
+                                                list(move_dict.values()),
                                                 ['batch_management',
                                                  'perishable',
                                                  'type',
@@ -387,8 +387,8 @@ class stock_move_processor(osv.osv):
                                                 context=context)
         procuct_dict = dict([(x['id'], x) for x in product_list_dict])
 
-        for move_id, product_id in move_dict.items():
-            if product_id in procuct_dict.keys():
+        for move_id, product_id in list(move_dict.items()):
+            if product_id in list(procuct_dict.keys()):
                 product = procuct_dict[product_id]
                 res[move_id] = {
                     'lot_check': product['batch_management'],
@@ -474,7 +474,7 @@ class stock_move_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -877,7 +877,7 @@ class stock_move_processor(osv.osv):
         """
         Split the line according to new parameters
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -933,7 +933,7 @@ class stock_move_processor(osv.osv):
         """
         Change the product of the move processor
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -970,7 +970,7 @@ class stock_move_processor(osv.osv):
         # Objects
         uom_obj = self.pool.get('product.uom')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         new_qty = uom_obj._change_round_up_qty(cr, uid, uom_id, quantity, 'quantity')
@@ -1079,7 +1079,7 @@ class stock_move_processor(osv.osv):
         # Objects
         wiz_obj = self.pool.get('change.product.move.processor')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         move_proc = self.browse(cr, uid, ids[0], context=context)
@@ -1108,7 +1108,7 @@ class stock_move_processor(osv.osv):
         # Objects
         wiz_obj = self.pool.get('split.move.processor')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         split_wiz_id = wiz_obj.create(cr, uid, {

@@ -148,7 +148,7 @@ class account_invoice(osv.osv):
         Create down payments for given invoices
         """
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = []
         for inv in self.browse(cr, uid, ids):
@@ -252,7 +252,7 @@ class account_invoice(osv.osv):
         # Some verification
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse all invoice and check PO
         for inv in self.browse(cr, uid, ids):
@@ -365,7 +365,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse invoice and all invoice lines to detect a non-valid line
         self._check_analytic_distribution_state(cr, uid, ids)
@@ -385,7 +385,7 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context['direct_invoice_view'] = 1
         self._check_analytic_distribution_state(cr, uid, ids, context)
@@ -403,7 +403,7 @@ class account_invoice(osv.osv):
             return True
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         # UFTP-312: Update register line after any changes on the direct invoice

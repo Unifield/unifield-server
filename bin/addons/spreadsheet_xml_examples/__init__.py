@@ -1,3 +1,3 @@
-import report
-import wizard
-import supplier_catalogue
+from . import report
+from . import wizard
+from . import supplier_catalogue

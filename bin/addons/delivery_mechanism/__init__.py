@@ -19,5 +19,5 @@
 #
 ##############################################################################
 
-import delivery_mechanism
-import wizard
+from . import delivery_mechanism
+from . import wizard

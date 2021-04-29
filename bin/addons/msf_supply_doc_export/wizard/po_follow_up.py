@@ -58,7 +58,7 @@ class po_follow_up(osv.osv_memory):
     def excel_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Create background report
@@ -74,7 +74,7 @@ class po_follow_up(osv.osv_memory):
     def pdf_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         report_name = 'po.follow.up_rml'

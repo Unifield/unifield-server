@@ -60,7 +60,7 @@ def orm_delete_method_overload(method):
     """
     Wrapper method to override orm.orm classic methods
     """
-    original_method = getattr(orm.orm, method.func_name)
+    original_method = getattr(orm.orm, method.__name__)
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         if self.pool.get(extended_delete_orm._name) is not None:
@@ -88,7 +88,7 @@ class extended_orm_delete_method:
                                                   # orm.orm_memory class
             return original_unlink(self, cr, uid, ids, context=context)
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         deletion_date = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -113,7 +113,5 @@ class extended_orm_delete_method:
                 deleted_obj_module.create(cr, uid, vals)
         return res
 
-for symbol in filter(lambda sym: isinstance(sym, types.MethodType),
-                     map(lambda label: getattr(extended_orm_delete_method, label),
-                         dir(extended_orm_delete_method))):
-    setattr(orm.orm, symbol.func_name, symbol.im_func)
+for symbol in [sym for sym in [getattr(extended_orm_delete_method, label) for label in dir(extended_orm_delete_method)] if isinstance(sym, types.MethodType)]:
+    setattr(orm.orm, symbol.__name__, symbol.__func__)

@@ -177,7 +177,7 @@ class product_supplier(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         ir_model = self.pool.get('ir.model')
@@ -297,7 +297,7 @@ class account_bank_statement_line(osv.osv):
         (audittrail does not process field function reference for now)
         """
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for st_line in self.browse(cr, uid, ids, context=context):
             if st_line.employee_id:
@@ -472,7 +472,7 @@ class audittrail_rule(osv.osv):
         """
         Check that if you select cross docking, you do not have an other location than cross docking
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -500,7 +500,7 @@ class audittrail_rule(osv.osv):
     def write(self, cr, uid, ids, value, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for rule in self.browse(cr, uid, ids):
             self.get_functionnal_fields.clear_cache(cr.dbname, objname=rule.object_id.model, ids=[rule.id])
@@ -519,7 +519,7 @@ class audittrail_rule(osv.osv):
         @param ids: List of Auddittrail Rule’s IDs.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         obj_action = self.pool.get('ir.actions.act_window')
@@ -655,7 +655,7 @@ class audittrail_rule(osv.osv):
         uid = 1
         log_line_obj = self.pool.get('audittrail.log.line')
 
-        if isinstance(objids, (int, long)):
+        if isinstance(objids, int):
             obj_ids = [objids]
             previous = [previous_value]
         else:
@@ -693,11 +693,11 @@ class audittrail_rule(osv.osv):
 
             inherits = self.pool.get(model_name_tolog)._inherits
             if inherits:
-                model_name_tolog = inherits.keys()[-1]
+                model_name_tolog = list(inherits.keys())[-1]
                 model_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
 
             if method in ('write', 'create'):
-                original_fields = current.values()[0].keys()
+                original_fields = list(current.values())[0].keys()
                 fields_to_trace = {}
 
                 for field in rule.field_ids:
@@ -720,7 +720,7 @@ class audittrail_rule(osv.osv):
 
                 inherit_field_id = False
                 if inherits:
-                    inherits_field = inherits.values()[-1]
+                    inherits_field = list(inherits.values())[-1]
                     inherit_field_id = self.pool.get(rule.object_id.model).read(cr, uid, res_id, [inherits_field])[inherits_field][0]
 
                 vals = {
@@ -768,7 +768,7 @@ class audittrail_rule(osv.osv):
                     else:
                         record = {}
 
-                    for field in fields_to_trace.keys():
+                    for field in list(fields_to_trace.keys()):
                         old_value = record.get(field, False)
                         new_value = current[res_id].get(field, False)
 
@@ -885,7 +885,7 @@ class audittrail_log_line(osv.osv):
         Return the value of the field according to his type
         '''
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -1057,7 +1057,7 @@ class audittrail_log_line(osv.osv):
         'timestamp': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
     def _get_report_name(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self_info = self.browse(cr, uid, ids[0], context)
@@ -1103,7 +1103,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         # If the field is not in the current object,
         # search if it's in an inherited object
         if obj_pool._inherits:
-            inherits_ids = model_pool.search(cr, uid, [('model', '=', obj_pool._inherits.keys()[0])])
+            inherits_ids = model_pool.search(cr, uid, [('model', '=', list(obj_pool._inherits.keys())[0])])
             field_ids = field_pool.search(cr, uid, [('name', '=', field_name), ('model_id', 'in', (model.id, inherits_ids[0]))])
         else:
             field_ids = field_pool.search(cr, uid, [('name', '=', field_name), ('model_id', '=', model.id)])
@@ -1128,7 +1128,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 if len(values) and values[0] != '' and relation_model_pool:
                     # int() failed if value '167L'
                     res = relation_model_pool.name_get(cr, uid,
-                                                       [long(values[0])], context={'from_track_changes': True})[0][1]
+                                                       [int(values[0])], context={'from_track_changes': True})[0][1]
             return res
 
         elif field['ttype'] in ('many2many', 'one2many'):

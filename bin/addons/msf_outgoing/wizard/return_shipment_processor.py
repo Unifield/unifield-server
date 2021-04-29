@@ -93,7 +93,7 @@ class return_shipment_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -140,7 +140,7 @@ class return_shipment_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -168,7 +168,7 @@ class return_shipment_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         family_ids = []
@@ -201,7 +201,7 @@ class return_shipment_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -268,7 +268,7 @@ class return_shipment_family_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -311,7 +311,7 @@ class return_shipment_family_processor(osv.osv):
         'volume': fields.function(
             _get_pack_info,
             method=True,
-            string=u'Volume [dm³]',
+            string='Volume [dm³]',
             type='float',
             store=False,
             readonly=True,

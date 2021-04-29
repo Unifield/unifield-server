@@ -80,7 +80,7 @@ class shipment(osv.osv):
                     message = _("The Shipment %s is already in closed state!") % (ship_name)
                 else:
                     message = _("Sorry, no Shipment with the name %s in state %s found !") % (ship_name, state)
-                    raise Exception, message # keep this message to not run, because other previous messages in the flow are also not run
+                    raise Exception(message) # keep this message to not run, because other previous messages in the flow are also not run
         else:
             if state == 'done':
                 self.set_delivered(cr, uid, ship_ids, context=context)
@@ -267,7 +267,7 @@ class shipment(osv.osv):
             else:
                 message = "Cannot generate the Shipment: " + shipment_name + " because no relevant document found at " + cr.dbname
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
 
         elif rw_type == self.REMOTE_WAREHOUSE:
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
@@ -292,7 +292,7 @@ class shipment(osv.osv):
         }
         pack_families = ship_dict.get('pack_family_memory_ids', False)
         if not pack_families:
-            raise Exception, "This Ship " + ship.name + " is empty!"
+            raise Exception("This Ship " + ship.name + " is empty!")
 
         # US-803: point 9: If the ship contains description, add it to the context and will be added while creating the ship
         # description is "cloned" to all ship lines, so just only get once
@@ -459,7 +459,7 @@ class stock_picking(osv.osv):
         if pick_dict['reason_type_id'] and pick_dict['reason_type_id']['id']:
             header_result['reason_type_id'] = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(pick_dict['reason_type_id']['id']), context=context)
         else:
-            raise Exception, "Reason Type at picking header cannot be empty"
+            raise Exception("Reason Type at picking header cannot be empty")
 
         if 'overall_qty' in pick_dict:
             header_result['overall_qty'] = pick_dict.get('overall_qty')
@@ -531,7 +531,7 @@ class stock_picking(osv.osv):
             product_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
 
         if not product_id:
-            raise Exception, "Product id not found for the given line %s " % data['product_id']
+            raise Exception("Product id not found for the given line %s " % data['product_id'])
 
         asset_id = False
         if data['asset_id'] and data['asset_id']['id']:
@@ -546,13 +546,13 @@ class stock_picking(osv.osv):
             location = data['location_dest_id']['id']
             location_dest_id = location_obj.find_sd_ref(cr, uid, xmlid_to_sdref(location), context=context)
         else:
-            raise Exception, "Destination Location cannot be empty"
+            raise Exception("Destination Location cannot be empty")
 
         if data['location_id'] and data['location_id']['id']:
             location = data['location_id']['id']
             location_id = location_obj.find_sd_ref(cr, uid, xmlid_to_sdref(location), context=context)
         else:
-            raise Exception, "Location cannot be empty"
+            raise Exception("Location cannot be empty")
 
         # US-803: point 20. Added the price currency for IN line
         if data['price_currency_id'] and data['price_currency_id']['id']:
@@ -561,12 +561,12 @@ class stock_picking(osv.osv):
         if data['reason_type_id'] and data['reason_type_id']['id']:
             reason_type_id = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(data['reason_type_id']['id']), context=context)
         else:
-            raise Exception, "Reason Type at line cannot be empty"
+            raise Exception("Reason Type at line cannot be empty")
 
         uom_name = data['product_uom']['name']
         uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
         if not uom_ids:
-            raise Exception, "The corresponding uom does not exist here. Uom name: %s" % uom_name
+            raise Exception("The corresponding uom does not exist here. Uom name: %s" % uom_name)
         uom_id = uom_ids[0]
 
         # US-838: RW, need to check the new mechanism of the BN and ED object!!!!!!!
@@ -574,7 +574,7 @@ class stock_picking(osv.osv):
         if data['prodlot_id']:
             batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)
             if not batch_id:
-                raise Exception, "Batch Number %s not found for this sync data record" % data['prodlot_id']
+                raise Exception("Batch Number %s not found for this sync data record" % data['prodlot_id'])
 
         expired_date = data['expired_date']
         state = data['state']
@@ -729,7 +729,7 @@ class stock_picking(osv.osv):
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
         elif rw_type == self.CENTRAL_PLATFORM  and not origin and 'OUT' in pick_name and 'RW' in pick_name: #US-702: sync also the OUT from scratch, no link to IR/FO
             existing_pick = self.search(cr, uid, [('name', '=', pick_name),
                                                   ('subtype', '=', 'picking'), ('type', '=', 'out'),
@@ -760,7 +760,7 @@ class stock_picking(osv.osv):
         else:
             message = "Sorry, this case is not available!"
             self._logger.info(message)
-            raise Exception, message
+            raise Exception(message)
 
         self._logger.info(message)
         return message
@@ -769,7 +769,7 @@ class stock_picking(osv.osv):
     def _hook_create_rw_out_sync_messages(self, cr, uid, ids, context=None, out=True):
         if self._get_usb_entity_type(cr, uid) != self.REMOTE_WAREHOUSE:
             return
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context = context or {}
 
@@ -896,7 +896,7 @@ class stock_picking(osv.osv):
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
         elif rw_type == self.REMOTE_WAREHOUSE:
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
 
@@ -940,11 +940,11 @@ class stock_picking(osv.osv):
                     else:
                         message = "The relevant PICK/OUT for the FO: " + origin + " not found for converting."
                         self._logger.info(message)
-                        raise Exception, message
+                        raise Exception(message)
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
 
             if pick_ids:
                 # Should update the lines again? will there be new updates from the OUT converted to PICK? --- TO CHECK, if not do not call the stmt below
@@ -1020,7 +1020,7 @@ class stock_picking(osv.osv):
             else:
                 message = "The OUT: " + pick_name + " not found in " + cr.dbname
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
 
         elif rw_type == self.REMOTE_WAREHOUSE:
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
@@ -1103,14 +1103,14 @@ class stock_picking(osv.osv):
                 if not existing_pick:
                     message = "Sorry, the IN: " + pick_name + " does not exist in " + cr.dbname
                     self._logger.info(message)
-                    raise Exception, message
+                    raise Exception(message)
 
                 self.action_cancel(cr, uid, existing_pick, context=context)
                 message = "Cancelled successfully the Picking/OUT: " + pick_name
             else:
                 message = "Sorry, the case without the origin PO is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
         else:
             message = "Sorry, the given operation is only available for Remote Warehouse instance!"
 
@@ -1180,11 +1180,11 @@ class stock_picking(osv.osv):
                 else:
                     message = "The Picking: " + pick_name + " not found in " + cr.dbname
                     self._logger.info(message)
-                    raise Exception, message
+                    raise Exception(message)
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
 
         elif rw_type == self.REMOTE_WAREHOUSE:
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
@@ -1360,16 +1360,16 @@ class stock_picking(osv.osv):
                     else:
                         message = "Cannot replicate the packing " + pick_name + " because no relevant document found at " + cr.dbname
                         self._logger.info(message)
-                        raise Exception, message
+                        raise Exception(message)
 
                 else:
                     message = "Cannot replicate the PPL " + pick_name + " because no relevant document found at " + cr.dbname
                     self._logger.info(message)
-                    raise Exception, message
+                    raise Exception(message)
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
 
         elif rw_type == self.REMOTE_WAREHOUSE:
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
@@ -1443,11 +1443,11 @@ class stock_picking(osv.osv):
                 else:
                     message = "Cannot replicate the packing " + pick_name + " because no relevant document found at " + cr.dbname
                     self._logger.info(message)
-                    raise Exception, message
+                    raise Exception(message)
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
                 self._logger.info(message)
-                raise Exception, message
+                raise Exception(message)
 
         elif rw_type == self.REMOTE_WAREHOUSE:
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"

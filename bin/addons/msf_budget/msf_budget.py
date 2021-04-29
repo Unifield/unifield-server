@@ -94,7 +94,7 @@ class msf_budget(osv.osv):
             target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('is_top_cost_center', '=', True), ('instance_id.level', '=', 'coordo')])
             coordo_ids = [x and x.cost_center_id and x.cost_center_id.id for x in self.pool.get('account.target.costcenter').browse(cr, uid, target_ids)]
             hq_ids = self.pool.get('account.analytic.account').search(cr, uid, [('parent_id', '=', False)])
-            if isinstance(hq_ids, (int, long)):
+            if isinstance(hq_ids, int):
                 hq_ids = [hq_ids]
             if args[0][2] == 'section':
                 return [('cost_center_id', 'in', hq_ids)]
@@ -267,7 +267,7 @@ class msf_budget(osv.osv):
         # Some checks
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         ana_obj = self.pool.get('account.analytic.account')
@@ -336,7 +336,7 @@ class msf_budget(osv.osv):
                         tmp_res = cr.fetchall()
                         res = tmp_res and tmp_res[0]
                         if res:
-                            for x in xrange(1, 13, 1):
+                            for x in range(1, 13, 1):
                                 try:
                                     line_vals.update({'month'+str(x): res[x - 1]})
                                 except IndexError:
@@ -351,7 +351,7 @@ class msf_budget(osv.osv):
         # Some checks
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # We only need to update parent budgets.
         # So we search all parent cost center (but only them, so we don't care about cost center that are linked to given budgets)
@@ -363,7 +363,7 @@ class msf_budget(osv.osv):
         fiscal_years = {}
         for budg in self.read(cr, uid, ids, ['fiscalyear_id'], context=context):
             fiscal_years[budg.get('fiscalyear_id')[0]] = True
-        for fy in fiscal_years.keys():
+        for fy in list(fiscal_years.keys()):
             to_update = self.search(cr, uid, [('cost_center_id', 'in', parent_ids), ('fiscalyear_id', '=', fy)])
             # Update budgets
             self.update(cr, uid, to_update, context=context)
@@ -375,7 +375,7 @@ class msf_budget(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # do not erase the previous context!
         context.update({
@@ -409,7 +409,7 @@ class msf_budget(osv.osv):
                     # A budget was found
                     budget_id = cr.fetchall()[0][0]
         else:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             budget_id = ids[0]
 
@@ -437,7 +437,7 @@ class msf_budget(osv.osv):
         # Some checks
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Only validate budget that are draft!
         to_validate = []

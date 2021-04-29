@@ -64,7 +64,7 @@ class analytic_distribution1(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not amount:
             return False
@@ -90,7 +90,7 @@ class analytic_distribution1(osv.osv):
         # Return False if no line_ids
         if not account_id or not line_ids: # fix bug on UF-2205 with analytic lines that comes from INTL Engagement journal without any distribution
             return False
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
         # Prepare some values
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context=context)[0]
@@ -118,7 +118,7 @@ class analytic_distribution1(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -178,7 +178,7 @@ class analytic_distribution1(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not name or not date or not amount or not journal_id or not currency_id:
             return False
@@ -268,7 +268,7 @@ class distribution_line(osv.osv):
         '''
         Creates an analytic lines from a distribution line and an account.move.line
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         ret = {}
@@ -346,7 +346,7 @@ class funding_pool_distribution_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for distrib_line in self.browse(cr, uid, ids, fields_to_fetch=['analytic_id'], context=context):
             if not distrib_line.analytic_id:
@@ -401,7 +401,7 @@ class analytic_distribution(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse given invoices
         for distrib in self.browse(cr, uid, ids, context=context):

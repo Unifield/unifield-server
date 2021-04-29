@@ -401,7 +401,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
         }
 
     def action_stop(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self.confirm_creation(cr, uid, ids, context=context)
         return self.action_next(cr, uid, ids, context=context)
@@ -454,7 +454,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
     def confirm_creation(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         #US-702: This action can only be done in RW instances
@@ -913,7 +913,7 @@ class stock_remove_location_wizard(osv.osv_memory):
     def related_ir(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wizard = self.browse(cr, uid, ids[0], context=context)

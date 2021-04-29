@@ -1,20 +1,20 @@
-import httplib
-import xmlrpclib
+import http.client
+import xmlrpc.client
 
-class TimeoutHTTPConnection(httplib.HTTPConnection):
+class TimeoutHTTPConnection(http.client.HTTPConnection):
 
     def connect(self):
-        httplib.HTTPConnection.connect(self)
+        http.client.HTTPConnection.connect(self)
         if self.timeout is not None:
             self.sock.settimeout(self.timeout)
 
     def set_timeout(self, timeout):
         self.timeout = timeout
 
-class TimeoutTransport(xmlrpclib.Transport):
+class TimeoutTransport(xmlrpc.client.Transport):
 
     def __init__(self, timeout=None, *args, **kwargs):
-        xmlrpclib.Transport.__init__(self, *args, **kwargs)
+        xmlrpc.client.Transport.__init__(self, *args, **kwargs)
         self.timeout = timeout
 
     def make_connection(self, host):
@@ -23,20 +23,20 @@ class TimeoutTransport(xmlrpclib.Transport):
         self._connection[1].set_timeout(self.timeout)
         return self._connection[1]
 
-class TimeoutHTTPSConnection(httplib.HTTPSConnection):
+class TimeoutHTTPSConnection(http.client.HTTPSConnection):
 
     def connect(self):
-        httplib.HTTPSConnection.connect(self)
+        http.client.HTTPSConnection.connect(self)
         if self.timeout is not None:
             self.sock.settimeout(self.timeout)
 
     def set_timeout(self, timeout):
         self.timeout = timeout
 
-class TimeoutSafeTransport(xmlrpclib.SafeTransport):
+class TimeoutSafeTransport(xmlrpc.client.SafeTransport):
 
     def __init__(self, timeout=None, *args, **kwargs):
-        xmlrpclib.SafeTransport.__init__(self, *args, **kwargs)
+        xmlrpc.client.SafeTransport.__init__(self, *args, **kwargs)
         self.timeout = timeout
 
     def make_connection(self, host):

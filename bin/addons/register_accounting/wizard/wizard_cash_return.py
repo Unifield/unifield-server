@@ -78,7 +78,7 @@ class wizard_advance_line(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -96,7 +96,7 @@ class wizard_advance_line(osv.osv_memory):
         """
         Get a recap from analytic distribution state and if it come from header or not.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
@@ -116,7 +116,7 @@ class wizard_advance_line(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
@@ -234,7 +234,7 @@ class wizard_advance_line(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         absl = self.browse(cr, uid, ids[0], context=context)
@@ -316,7 +316,7 @@ class wizard_cash_return(osv.osv_memory):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         fields = ['advance_linked_po_auto_invoice', 'invoice_line_ids', 'advance_line_ids']
         for r in self.read(cr, uid, ids, fields, context=context):
@@ -410,7 +410,7 @@ class wizard_cash_return(osv.osv_memory):
         return w_id
 
     def onchange_addl_amount(self, cr, uid, returned_amount, context=None):
-        if returned_amount <> 0:
+        if returned_amount != 0:
             return {'value': {'returned_amount': 0}}
         return {}
 
@@ -439,7 +439,7 @@ class wizard_cash_return(osv.osv_memory):
                 total_amount += advance[2].get('amount', 0.0)
             values.update({'total_amount': total_amount})
         # clear the additional amount if returned amount is updated
-        if additional_amount <> 0:
+        if additional_amount != 0:
             values.update({'additional_amount': 0})
         return {'value': values}
 
@@ -1078,7 +1078,7 @@ class wizard_cash_return(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         cash_return = self.browse(cr, uid, ids[0], context=context)

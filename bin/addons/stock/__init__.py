@@ -19,14 +19,14 @@
 #
 ##############################################################################
 
-import stock
-import stock_production_lot
-import stock_move
-import stock_inventory
-import partner
-import product
-import physical_inventory
-import report
-import wizard
+from . import stock
+from . import stock_production_lot
+from . import stock_move
+from . import stock_inventory
+from . import partner
+from . import product
+from . import physical_inventory
+from . import report
+from . import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

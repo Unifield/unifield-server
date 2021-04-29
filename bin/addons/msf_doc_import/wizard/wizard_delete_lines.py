@@ -65,7 +65,7 @@ def brl(self, cr, uid, ids, context=None):
     '''
     context = context is None and {} or context
 
-    if isinstance(ids, (int, long)):
+    if isinstance(ids, int):
         ids = [ids]
 
     # If there is no line to remove.
@@ -495,7 +495,7 @@ class wizard_delete_lines(osv.osv_memory):
         Remove only the selected lines
         '''
         context = context is None and {} or context
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # only for FO
@@ -550,7 +550,7 @@ class wizard_delete_lines(osv.osv_memory):
         Select all lines of the initial document
         '''
         context = context is None and {} or context
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):

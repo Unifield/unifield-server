@@ -65,7 +65,7 @@ class account_analytic_journal(osv.osv):
             return res
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         aal_obj = self.pool.get('account.analytic.line')
         for journal_id in ids:
@@ -144,7 +144,7 @@ class account_analytic_journal(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

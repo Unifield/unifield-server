@@ -52,7 +52,7 @@ class wizard_local_expenses(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wizard = self.browse(cr, uid, ids[0], context=context)

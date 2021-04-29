@@ -42,6 +42,7 @@ import netsvc
 from tools.misc import UpdateableStr
 from tools.misc import SKIPPED_ELEMENT_TYPES
 from tools.safe_eval import safe_eval
+from functools import reduce
 
 _LOCALE2WIN32 = {
     'af_ZA': 'Afrikaans_South Africa',
@@ -266,21 +267,21 @@ class CompactCsv(object):
 
     def __iter__(self):
         self.csv = csv.reader(self.buffer, quotechar='"', delimiter=',')
-        self.csv.next()
+        next(self.csv)
         self.lines = False
         self.elems = []
         return self
 
-    def next(self):
+    def __next__(self):
         if not self.lines or not self.elems:
-            nextline = self.csv.next()
+            nextline = next(self.csv)
             self.lines = nextline[0:-1]
             self.elems = nextline[-1].split("\n")
 
             if not self.lines or not self.elems:
-                return self.next()
+                return next(self)
         if not self.elems:
-            return self.next()
+            return next(self)
         elem = self.elems.pop()
         splitted_elem = elem.split(':')
         return [self.lines[0], self.lines[1]] + splitted_elem
@@ -308,7 +309,7 @@ class TinyPoFile(object):
         lines = self.buffer.readlines()
         # remove the BOM (Byte Order Mark):
         if len(lines):
-            lines[0] = unicode(lines[0], 'utf8').lstrip(unicode( codecs.BOM_UTF8, "utf8"))
+            lines[0] = str(lines[0], 'utf8').lstrip(str( codecs.BOM_UTF8, "utf8"))
 
         lines.append('') # ensure that the file ends with at least an empty line
         return lines
@@ -316,7 +317,7 @@ class TinyPoFile(object):
     def cur_line(self):
         return (self.lines_count - len(self.lines))
 
-    def next(self):
+    def __next__(self):
         type = name = res_id = source = trad = None
 
         if self.tnrs:
@@ -352,7 +353,7 @@ class TinyPoFile(object):
                         raise StopIteration()
                     line = self.lines.pop(0)
                 # This has been a deprecated entry, don't return anything
-                return self.next()
+                return next(self)
 
             if not line.startswith('msgid'):
                 raise Exception("malformed file: bad line: %s" % line)
@@ -365,7 +366,7 @@ class TinyPoFile(object):
                 self.tnrs = []
                 while line:
                     line = self.lines.pop(0).strip()
-                return self.next()
+                return next(self)
 
             while not line.startswith('msgstr'):
                 if not line:
@@ -394,7 +395,7 @@ class TinyPoFile(object):
             if not fuzzy:
                 self.warn('Missing "#:" formated comment at line %d for the following source:\n\t%s',
                           self.cur_line(), source[:30])
-            return self.next()
+            return next(self)
         return type, name, res_id, source, trad
 
     def write_infos(self, modules):
@@ -441,10 +442,10 @@ class TinyPoFile(object):
             # only strings in python code are python formated
             self.buffer.write("#, python-format\n")
 
-        if not isinstance(trad, unicode):
-            trad = unicode(trad, 'utf8')
-        if not isinstance(source, unicode):
-            source = unicode(source, 'utf8')
+        if not isinstance(trad, str):
+            trad = str(trad, 'utf8')
+        if not isinstance(source, str):
+            source = str(source, 'utf8')
 
         msg = "msgid %s\n"      \
               "msgstr %s\n\n"   \
@@ -475,7 +476,7 @@ def trans_export(lang, modules, buffer, format, cr, ignore_name=None, only_trans
                     row['translation'] = trad
                 row.setdefault('tnrs', []).append((type, name, res_id))
 
-            for (src, trad), row in grouped_rows.items():
+            for (src, trad), row in list(grouped_rows.items()):
                 writer.write(row['modules'], row['tnrs'], src, row['translation'])
 
         elif format == 'tgz':
@@ -488,7 +489,7 @@ def trans_export(lang, modules, buffer, format, cr, ignore_name=None, only_trans
                 rows_by_module[module].append(row)
 
             tmpdir = tempfile.mkdtemp()
-            for mod, modrows in rows_by_module.items():
+            for mod, modrows in list(rows_by_module.items()):
                 tmpmoddir = join(tmpdir, mod, 'i18n')
                 os.makedirs(tmpmoddir)
                 pofilename = (newlang and mod or lang) + ".po" + (newlang and 't' or '')
@@ -613,7 +614,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
     pool = pooler.get_pool(dbname)
     trans_obj = pool.get('ir.translation')
     uid = 1
-    l = pool.obj_pool.items()
+    l = list(pool.obj_pool.items())
     l.sort()
 
     query = 'SELECT name, model, res_id, module'    \
@@ -657,7 +658,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
             _to_translate.append(tuple)
 
     def encode(s):
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             return s.encode('utf8')
         return s
 
@@ -684,7 +685,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
             service_name = 'wizard.'+encode(obj.wiz_name)
             if netsvc.Service._services.get(service_name):
                 obj2 = netsvc.Service._services[service_name]
-                for state_name, state_def in obj2.states.iteritems():
+                for state_name, state_def in obj2.states.items():
                     if 'result' in state_def:
                         result = state_def['result']
                         if result['type'] != 'form':
@@ -698,10 +699,10 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                         }
 
                         # export fields
-                        if not result.has_key('fields'):
+                        if 'fields' not in result:
                             logger.warning("res has no fields: %r", result)
                             continue
-                        for field_name, field_def in result['fields'].iteritems():
+                        for field_name, field_def in result['fields'].items():
                             res_name = name + ',' + field_name
 
                             for fn in def_params:
@@ -727,7 +728,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
         elif model=='ir.model.fields':
             try:
                 field_name = encode(obj.name)
-            except AttributeError, exc:
+            except AttributeError as exc:
                 logger.error("name error in %s: %s", xml_name, str(exc))
                 continue
             objmodel = pool.get(obj.model)
@@ -774,7 +775,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                 except (IOError, etree.XMLSyntaxError):
                     logger.exception("couldn't export translation for report %s %s %s", name, report_type, fname)
 
-        for field_name,field_def in obj._table._columns.items():
+        for field_name,field_def in list(obj._table._columns.items()):
             if field_def.translate:
                 name = model + "," + field_name
                 try:
@@ -813,7 +814,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
         if not mod_paths:
             # First, construct a list of possible paths
             def_path = os.path.abspath(os.path.join(tools.config['root_path'], 'addons'))     # default addons path (base)
-            ad_paths= map(lambda m: os.path.abspath(m.strip()),tools.config['addons_path'].split(','))
+            ad_paths= [os.path.abspath(m.strip()) for m in tools.config['addons_path'].split(',')]
             mod_paths=[def_path]
             for adp in ad_paths:
                 mod_paths.append(adp)
@@ -829,11 +830,11 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
 
     modobj = pool.get('ir.module.module')
     installed_modids = modobj.search(cr, uid, [('state', '=', 'installed')])
-    installed_modules = map(lambda m: m['name'], modobj.read(cr, uid, installed_modids, ['name']))
+    installed_modules = [m['name'] for m in modobj.read(cr, uid, installed_modids, ['name'])]
 
     root_path = os.path.join(tools.config['root_path'], 'addons')
 
-    apaths = map(os.path.abspath, map(str.strip, tools.config['addons_path'].split(',')))
+    apaths = list(map(os.path.abspath, list(map(str.strip, tools.config['addons_path'].split(',')))))
     if root_path in apaths:
         path_list = apaths
     else :

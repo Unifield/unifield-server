@@ -50,7 +50,7 @@ class sale_order(osv.osv):
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -92,7 +92,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context.update({'active_id': ids[0]})
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_ir_line_import]
@@ -119,7 +119,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context.update({'active_id': ids[0]})
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_fo_line_import]
@@ -141,7 +141,7 @@ class sale_order(osv.osv):
                 }
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         message = ''
         plural = ''
@@ -213,7 +213,7 @@ class sale_order_line(osv.osv):
         context = kwargs['context']
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         # we take the values that we are going to write in SO line in "to_write"
@@ -272,7 +272,7 @@ class sale_order_line(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
@@ -333,7 +333,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'internal_request_line_error_message_view')[1]

@@ -123,7 +123,7 @@ class account_move_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         amls = self.browse(cr, uid, ids, fields_to_fetch=['account_id', 'currency_id'], context=context)
         rec_account = amls and amls[0].account_id or False
@@ -151,7 +151,7 @@ class account_move_line(osv.osv):
         reconcile_partial_browsed = False
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for line in self.browse(cr, uid, ids, context=context):
             if company_list and not line.company_id.id in company_list:
@@ -196,7 +196,7 @@ class account_move_line(osv.osv):
 
         r_id = move_rec_obj.create(cr, uid, {
             'type': type,
-            'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge),
+            'line_partial_ids': [(4,x,False) for x in merges+unmerge],
             'is_multi_instance': different_level,
             'nb_partial_legs': len(set(merges+unmerge)),
         })
@@ -225,7 +225,7 @@ class account_move_line(osv.osv):
         move_rec_obj = self.pool.get('account.move.reconcile')
         partner_obj = self.pool.get('res.partner')
         lines = self.browse(cr, uid, ids, context=context)
-        unrec_lines = filter(lambda x: not x['reconcile_id'], lines)
+        unrec_lines = [x for x in lines if not x['reconcile_id']]
         credit = debit = func_debit = func_credit = currency = 0.0
         account_id = partner_id = False
         current_company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
@@ -260,7 +260,7 @@ class account_move_line(osv.osv):
             multi_instance_level_creation = 'coordo'
         partial_reconcile_ids = set()
         for line in unrec_lines:
-            if line.state <> 'valid':
+            if line.state != 'valid':
                 raise osv.except_osv(_('Error'),
                                      _('Entry "%s" is not valid !') % line.name)
             credit += line['credit_currency']
@@ -310,8 +310,8 @@ class account_move_line(osv.osv):
 
         r_id = move_rec_obj.create(cr, uid, {
             'type': type,
-            'line_id': map(lambda x: (4, x, False), ids),
-            'line_partial_ids': map(lambda x: (3, x, False), ids),
+            'line_id': [(4, x, False) for x in ids],
+            'line_partial_ids': [(3, x, False) for x in ids],
             'is_multi_instance': different_level,
             'multi_instance_level_creation': multi_instance_level_creation,
         })
@@ -461,7 +461,7 @@ class account_move_line(osv.osv):
             move_ids = []
         if not context:
             context = {}
-        if isinstance(move_ids, (int, long)):
+        if isinstance(move_ids, int):
             move_ids = [move_ids]
         reconcile_ids = set(x['reconcile_id'][0] for x in self.read(cr, uid, move_ids, ['reconcile_id'], context=context) if x['reconcile_id'])
         fxa_set = set()
@@ -668,7 +668,7 @@ class account_move_reconcile(osv.osv):
         res = super(account_move_reconcile, self).create(cr, uid, vals, context)
         if res:
             tmp_res = res
-            if isinstance(res, (int, long)):
+            if isinstance(res, int):
                 tmp_res = [tmp_res]
             self.common_create_write(cr, uid, tmp_res, vals.get('action_date'), prev=prev, context=context)
 
@@ -684,7 +684,7 @@ class account_move_reconcile(osv.osv):
             return True
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
         self.common_create_write(cr, uid,  ids, vals.get('action_date'), context=context)
@@ -701,13 +701,13 @@ class account_move_reconcile(osv.osv):
                     # full reconcile deleted
                     lines = rec.line_id or rec.line_partial_ids
                     sdrefs = move_obj.get_sd_ref(cr, uid, [x.id for x in lines], context=context)
-                    self.pool.get('account.move.unreconcile').create(cr, 1, {'delete_reconcile_txt': rec.name, 'move_sdref_txt': ','.join(sdrefs.values())}, context=context)
+                    self.pool.get('account.move.unreconcile').create(cr, 1, {'delete_reconcile_txt': rec.name, 'move_sdref_txt': ','.join(list(sdrefs.values()))}, context=context)
         return True
 
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         move_obj = self.pool.get('account.move.line')
@@ -748,7 +748,7 @@ class account_move_unreconcile(osv.osv):
             move_ids = move_line_obj.find_sd_ref(cr, uid, vals['move_sdref_txt'].split(","), context=context)
             if move_ids:
                 move_lines = []
-                for move_line in move_line_obj.browse(cr, uid, move_ids.values(), fields_to_fetch=['invoice', 'reconcile_id', 'reconcile_partial_id'], context=context):
+                for move_line in move_line_obj.browse(cr, uid, list(move_ids.values()), fields_to_fetch=['invoice', 'reconcile_id', 'reconcile_partial_id'], context=context):
                     if not move_line.reconcile_id and not move_line.reconcile_partial_id or \
                             move_line.reconcile_id and move_line.reconcile_id.name == vals.get('delete_reconcile_txt') or \
                             move_line.reconcile_partial_id and move_line.reconcile_partial_id.name == vals.get('delete_reconcile_txt'):

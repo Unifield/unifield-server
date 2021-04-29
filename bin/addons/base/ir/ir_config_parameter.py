@@ -57,7 +57,7 @@ class ir_config_parameter(osv.osv):
         """
         Initializes the parameters listed in _default_parameters.
         """
-        for key, func in _default_parameters.iteritems():
+        for key, func in _default_parameters.items():
             ids = self.search(cr, 1, [('key','=',key)])
             if not ids:
                 self.set_param(cr, 1, key, func())

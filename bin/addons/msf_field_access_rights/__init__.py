@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import osv_override
-import ir_model_fields
-import field_access_rule
-import field_access_rule_line
+from . import osv_override
+from . import ir_model_fields
+from . import field_access_rule
+from . import field_access_rule_line

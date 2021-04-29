@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-import installer
-import todo
+from . import installer
+from . import todo
 import wizard
 import os
 import base64

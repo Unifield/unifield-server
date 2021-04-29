@@ -285,7 +285,7 @@ class export_report_stock_move(osv.osv):
         '''
         Return True if the report has a location
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -399,7 +399,7 @@ product will be shown.""",
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         loc_usage = ['supplier', 'customer', 'internal', 'inventory', 'procurement', 'production']
@@ -715,7 +715,7 @@ product will be shown.""",
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         new_cr = pooler.get_db(cr.dbname).cursor()
@@ -867,7 +867,7 @@ product will be shown.""",
                 'datas': base64.encodestring(open(file_name, 'rb').read()),
             })
             self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
-        except Exception, e:
+        except Exception as e:
             new_cr.rollback()
             if context.get('report_id'):
                 msg = hasattr(e, 'value') and e.value or e.message

@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import order_line_allocation
+from . import order_line_allocation
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

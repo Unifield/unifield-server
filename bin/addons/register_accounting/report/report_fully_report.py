@@ -176,7 +176,7 @@ class report_fully_report(report_sxw.rml_parse):
         if not analytic_ids:
             return res
 
-        if isinstance(analytic_ids, (int, long)):
+        if isinstance(analytic_ids, int):
             analytic_ids = [analytic_ids]
 
         key = tuple(analytic_ids)

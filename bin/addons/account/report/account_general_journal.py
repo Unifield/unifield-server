@@ -20,7 +20,7 @@
 ##############################################################################
 
 import time
-from common_report_header import common_report_header
+from .common_report_header import common_report_header
 from report import report_sxw
 
 class journal_print(report_sxw.rml_parse, common_report_header):
@@ -65,7 +65,7 @@ class journal_print(report_sxw.rml_parse, common_report_header):
         if new_ids:
             self.cr.execute('SELECT period_id, journal_id FROM account_journal_period WHERE id IN %s', (tuple(new_ids),))
             res = self.cr.fetchall()
-            self.period_ids, self.journal_ids = zip(*res)
+            self.period_ids, self.journal_ids = list(zip(*res))
         res = super(journal_print, self).set_context(objects, data, ids, report_type=report_type)
         common_report_header._set_context(self, data)
         return res
@@ -79,8 +79,8 @@ class journal_print(report_sxw.rml_parse, common_report_header):
             if not res:
                 dic[key] = True
             return not res
-        filtered_objs = filter(filter_unique, journal_period_objs)
-        return map(lambda x: x.period_id, filtered_objs)
+        filtered_objs = list(filter(filter_unique, journal_period_objs))
+        return [x.period_id for x in filtered_objs]
 
     def lines(self, period_id):
         if not self.journal_ids:

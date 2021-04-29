@@ -19,5 +19,5 @@
 #
 ##############################################################################
 
-import stock_location
-import cross_docking
+from . import stock_location
+from . import cross_docking

@@ -49,7 +49,7 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
         return dt_str
 
     def _upper(self, s):
-        if not isinstance(s, (str, unicode)):
+        if not isinstance(s, str):
             return s
         if s:
             return s.upper()

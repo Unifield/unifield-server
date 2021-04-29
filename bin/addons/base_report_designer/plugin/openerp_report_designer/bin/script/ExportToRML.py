@@ -51,17 +51,18 @@ import string
 import tempfile
 import base64
 import sys
+from functools import reduce
 
 reload(sys)
 sys.setdefaultencoding("utf8")
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from LoginTest import *
-    from lib.error import *
-    from lib.tools import *
-    from lib.logreport import *
-    from lib.rpc import *
+if __name__!="package":
+    from .lib.gui import *
+    from .LoginTest import *
+    from .lib.error import *
+    from .lib.tools import *
+    from .lib.logreport import *
+    from .lib.rpc import *
     database="test"
     uid = 3
 
@@ -102,9 +103,9 @@ class ExportToRML( unohelper.Base, XJobExecutor ):
             res = self.sock.execute(database, uid, self.password, 'ir.actions.report.xml', 'sxwtorml',base64.encodestring(data),file_type)
             if res['report_rml_content']:
                 write_data_to_file( get_absolute_file_path( filename[7:] ), res['report_rml_content'] )
-        except Exception,e:
+        except Exception as e:
             import traceback,sys
-            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             self.logobj.log_write('ExportToRML',LOG_ERROR, info)
             ErrorDialog("Can't save the file to the hard drive.", "Exception: %s" % e, "Error" )
 
@@ -126,7 +127,7 @@ class ExportToRML( unohelper.Base, XJobExecutor ):
         oFileDialog.dispose()
         return sPath
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     ExportToRML(None)
 elif __name__=="package":
     g_ImplementationHelper.addImplementation( ExportToRML, "org.openoffice.openerp.report.exporttorml", ("com.sun.star.task.Job",),)

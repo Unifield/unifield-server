@@ -189,7 +189,7 @@ class entity(osv.osv):
                 cr.execute("SAVEPOINT update_entity_last_activity")
                 cr.execute('select id from sync_server_entity_activity where entity_id=%s for update nowait', (entity.id,), log_exceptions=False)
             cr.execute('update sync_server_entity_activity set datetime=%s, activity=%s where entity_id=%s', (now, activity, entity.id))
-        except psycopg2.OperationalError, e:
+        except psycopg2.OperationalError as e:
             if not wait and e.pgcode == '55P03':
                 # can't acquire lock: ok the show must go on
                 cr.execute("ROLLBACK TO update_entity_last_activity")
@@ -996,11 +996,11 @@ class sync_server_monitor_email(osv.osv):
                 to_retrieve = []
                 if rules[update.rule_id.id]['direction'] == 'up':
                     for x in ancestor:
-                        if x in tools.misc.flatten(instances.values()):
+                        if x in tools.misc.flatten(list(instances.values())):
                             to_retrieve.append(x)
                 elif rules[update.rule_id.id]['direction'] == 'down':
                     for x in children:
-                        if x in tools.misc.flatten(instances.values()):
+                        if x in tools.misc.flatten(list(instances.values())):
                             to_retrieve.append(x)
                 elif rules[update.rule_id.id]['direction'] == 'bidirectional':
                     for x in instances:
@@ -1032,9 +1032,9 @@ class sync_server_monitor_email(osv.osv):
                     not_pulled.append(need_pull)
                 for x in puller_ids:
                     if x not in to_retrieve:
-                        print 'ERROR pulled by', x, to_retrieve, update.rule_id.id, update.id, update.sdref, update.rule_id.direction, update.owner
+                        print('ERROR pulled by', x, to_retrieve, update.rule_id.id, update.id, update.sdref, update.rule_id.direction, update.owner)
                 if not_pulled:
-                    print update.id, update.sdref, not_pulled, update.rule_id.direction, update.owner
+                    print(update.id, update.sdref, not_pulled, update.rule_id.direction, update.owner)
             self._logger.info("1000 lines of data analyzed in %lf seconds, %d left" % (time.time() - init_time, len(update_ids) - PACK*i))
             i += 1
         return True

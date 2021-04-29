@@ -99,7 +99,7 @@ class kit_selection_sale(osv.osv_memory):
                     errors.update(price_must_be_greater_than_0=True)
                     item.write({'integrity_status': 'price_must_be_greater_than_0'}, context=context)
         # check the encountered errors
-        return all([not x for x in errors.values()])
+        return all([not x for x in list(errors.values())])
 
     def do_de_kitting(self, cr, uid, ids, context=None):
         '''
@@ -107,7 +107,7 @@ class kit_selection_sale(osv.osv_memory):
         '''
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         sol_obj = self.pool.get('sale.order.line')
@@ -225,7 +225,7 @@ class kit_selection_sale_line(osv.osv_memory):
         '''
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -267,7 +267,7 @@ class kit_selection_sale_line(osv.osv_memory):
         '''
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # product change, we reset everything
@@ -298,7 +298,7 @@ class kit_selection_sale_line(osv.osv_memory):
         '''
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # uom change - we reset the qty and price
@@ -323,7 +323,7 @@ class kit_selection_sale_line(osv.osv_memory):
         '''
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # qty changed - we do not reset anything

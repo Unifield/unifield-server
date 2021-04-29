@@ -18,8 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
-import wizard_menu
-import wizard_screen
-import create_action
+from . import wizard_menu
+from . import wizard_screen
+from . import create_action
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

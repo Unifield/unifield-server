@@ -7,7 +7,7 @@ def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
     entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
 
     # state checks
-    if 'usb_instance_type' in entity._columns.keys() and entity.usb_instance_type == 'remote_warehouse':
+    if 'usb_instance_type' in list(entity._columns.keys()) and entity.usb_instance_type == 'remote_warehouse':
         sd_ref += "/RW"
     return sd_ref
 

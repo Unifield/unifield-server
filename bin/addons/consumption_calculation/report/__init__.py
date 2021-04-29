@@ -19,9 +19,9 @@
 #
 ##############################################################################
 
-import expiry_report
-import consumption_report
-import expiry_calculation_report
-import weekly_forecast_report
+from . import expiry_report
+from . import consumption_report
+from . import expiry_calculation_report
+from . import weekly_forecast_report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

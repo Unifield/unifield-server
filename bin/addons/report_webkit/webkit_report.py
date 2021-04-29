@@ -39,7 +39,7 @@ from mako import exceptions
 import netsvc
 import pooler
 import logging
-from report_helper import WebKitHelper
+from .report_helper import WebKitHelper
 from report.report_sxw import report_sxw, report_rml, _int_format, \
     _float_format, _date_format, _dttime_format, browse_record_list, \
     rml_parse
@@ -248,7 +248,7 @@ class WebKitParser(report_sxw):
             )
         if not report_xml.header :
             #I know it could be cleaner ...
-            header = u"""
+            header = """
 <html>
     <head>
         <meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
@@ -373,7 +373,7 @@ class WebKitParser(report_sxw):
         result = self.create_source_pdf(cursor, uid, ids, data, report_xml, context)
         if not result:
             return (False,False)
-        if result and isinstance(result[0], basestring) and\
+        if result and isinstance(result[0], str) and\
                 result[0].startswith('<?xml'):
             new_result = self.check_malformed_xml_spreadsheet(xml_string=result[0],
                                                               report_name=report_xml.report_name)
@@ -474,9 +474,9 @@ class WebKitParser(report_sxw):
                                       namespaces=namespaces)
         for cell in number_cells:
             # if space in the in Numbers, remove them
-            forbidden_chars = [' ', u'\xc2\xa0', u'\xa0']
+            forbidden_chars = [' ', '\xc2\xa0', '\xa0']
             for char in forbidden_chars:
-                if isinstance(cell.text, basestring) and char in cell.text:
+                if isinstance(cell.text, str) and char in cell.text:
                     error_message = 'Line %s of document %s is corrupted, a '\
                         'Number cannot contain characters or spaces: %r' % \
                         (cell.sourceline, report_name, cell.text)

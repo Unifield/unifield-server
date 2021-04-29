@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import msf_supply_doc_export
-import wizard
-import report
+from . import msf_supply_doc_export
+from . import wizard
+from . import report
 

@@ -39,7 +39,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -141,7 +141,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         """
         Change amount regarding percentage
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         no_total_amount = not total_amount and total_amount not in (0, 0.0)
         if not percentage or no_total_amount:
@@ -153,7 +153,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         """
         Change percentage regarding amount
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not amount or not total_amount:
             return {}
@@ -365,7 +365,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             return True
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Launch verifications on given analytic_account
         if not self.verify_analytic_account(cr, uid, vals, self._name, context=context):
@@ -526,7 +526,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -648,7 +648,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not distrib_id:
             raise osv.except_osv(_('Error'), _('No analytic distribution'))
@@ -779,7 +779,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             # Verify that purchase is in good state if necessary
@@ -885,7 +885,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not distrib_ids:
             return False
-        if isinstance(distrib_ids, (int, long)):
+        if isinstance(distrib_ids, int):
             distrib_ids = [distrib_ids]
         if not line_type:
             return False
@@ -915,7 +915,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not ids:
             return False
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not line_type:
             return False
@@ -1003,7 +1003,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         distrib_obj = self.pool.get('analytic.distribution')
         for w in self.browse(cr, uid, ids):
@@ -1050,7 +1050,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if not context:
             context = {}
         uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz2 = self.browse(cr, uid, ids, context=context)[0]
         line_totals = 0.0
@@ -1339,7 +1339,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         distrib = None
@@ -1398,7 +1398,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         o2m_toreload = {}
@@ -1484,7 +1484,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Process all given wizards
         for wizard in self.browse(cr, uid, ids, context=context):

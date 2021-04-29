@@ -24,7 +24,7 @@ from tools.translate import _
 
 import datetime
 import base64
-import StringIO
+import io
 import csv
 
 
@@ -93,7 +93,7 @@ class import_currencies(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Prepare some values
@@ -112,7 +112,7 @@ class import_currencies(osv.osv_memory):
             if not wizard.import_file:
                 raise osv.except_osv(_('Warning'), _('Please browse a csv file.'))
             import_file = base64.decodestring(wizard.import_file)
-            import_string = StringIO.StringIO(import_file)
+            import_string = io.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
 
             if not import_data:

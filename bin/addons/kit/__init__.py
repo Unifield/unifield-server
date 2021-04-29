@@ -34,7 +34,7 @@ KIT_TO_CONSUME_AVAILABILITY = [
     ('available', 'Available'),
 ]
 
-import kit
-import wizard
-import kit_creation
-import report
+from . import kit
+from . import wizard
+from . import kit_creation
+from . import report

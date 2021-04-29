@@ -40,15 +40,16 @@ import release
 import re
 import base64
 from zipfile import PyZipFile, ZIP_DEFLATED
-from cStringIO import StringIO
+from io import StringIO
 
 import logging
+from functools import reduce
 
 
 logger = netsvc.Logger()
 
-_ad = os.path.abspath(opj(tools.ustr(tools.config['root_path']), u'addons'))     # default addons path (base)
-ad_paths= map(lambda m: os.path.abspath(tools.ustr(m.strip())), tools.config['addons_path'].split(','))
+_ad = os.path.abspath(opj(tools.ustr(tools.config['root_path']), 'addons'))     # default addons path (base)
+ad_paths= [os.path.abspath(tools.ustr(m.strip())) for m in tools.config['addons_path'].split(',')]
 
 sys.path.insert(1, _ad)
 
@@ -81,7 +82,7 @@ class Graph(dict):
             return
         # update the graph with values from the database (if exist)
         ## First, we set the default values for each package in graph
-        additional_data = dict.fromkeys(self.keys(), {'id': 0, 'state': 'uninstalled', 'dbdemo': False, 'installed_version': None})
+        additional_data = dict.fromkeys(list(self.keys()), {'id': 0, 'state': 'uninstalled', 'dbdemo': False, 'installed_version': None})
         ## Then we get the values from the database
         cr.execute('SELECT name, id, state, demo AS dbdemo, latest_version AS installed_version'
                    '  FROM ir_module_module'
@@ -91,15 +92,15 @@ class Graph(dict):
         ## and we update the default values with values from the database
         additional_data.update(dict([(x.pop('name'), x) for x in cr.dictfetchall()]))
 
-        for package in self.values():
-            for k, v in additional_data[package.name].items():
+        for package in list(self.values()):
+            for k, v in list(additional_data[package.name].items()):
                 setattr(package, k, v)
 
     def __iter__(self):
         level = 0
         done = set(self.keys())
         while done:
-            level_modules = [(name, module) for name, module in self.items() if module.depth==level]
+            level_modules = [(name, module) for name, module in list(self.items()) if module.depth==level]
             for name, module in level_modules:
                 done.remove(name)
                 yield module
@@ -146,7 +147,7 @@ class Node(Singleton):
                 setattr(child, name, value + 1)
 
     def __iter__(self):
-        return itertools.chain(iter(self.children), *map(iter, self.children))
+        return itertools.chain(iter(self.children), *list(map(iter, self.children)))
 
     def __str__(self):
         return self._pprint()
@@ -299,7 +300,7 @@ def get_modules():
         def is_really_module(name):
             name = opj(dir, name)
             return os.path.isdir(name) or zipfile.is_zipfile(name)
-        return map(clean, filter(is_really_module, os.listdir(dir)))
+        return list(map(clean, list(filter(is_really_module, os.listdir(dir)))))
 
     plist = []
     for ad in ad_paths:
@@ -397,7 +398,7 @@ def upgrade_graph(graph, cr, module_list, force=None):
     graph.update_from_db(cr)
 
     for package in later:
-        unmet_deps = filter(lambda p: p not in graph, dependencies[package])
+        unmet_deps = [p for p in dependencies[package] if p not in graph]
         logger.notifyChannel('init', netsvc.LOG_ERROR, 'module %s: Unmet dependencies: %s' % (package, ', '.join(unmet_deps)))
 
     result = len(graph) - len_graph
@@ -417,10 +418,10 @@ def init_module_objects(cr, module_name, obj_list):
             result = None
             if auto_init:
                 result, fk, m2m = auto_init
-                for obj, missing in fk.iteritems():
+                for obj, missing in fk.items():
                     missing_fk.setdefault(obj, [])
                     missing_fk[obj] += missing
-                for obj, missing in m2m.iteritems():
+                for obj, missing in m2m.items():
                     missing_m2m.setdefault(obj, [])
                     missing_m2m[obj] += missing
         except Exception:
@@ -465,7 +466,7 @@ def register_class(m):
         else:
             zimp = zipimport.zipimporter(zip_mod_path)
             zimp.load_module(m)
-    except Exception, e:
+    except Exception as e:
         log(e)
         raise
     else:
@@ -554,7 +555,7 @@ class MigrationManager(object):
                        'maintenance': opj('base', 'maintenance', 'migrations', pkg.name),
                        }
 
-            for x in mapping.keys():
+            for x in list(mapping.keys()):
                 if version in m[x]:
                     for f in m[x][version]:
                         if m[x][version][f] is not None:
@@ -744,18 +745,18 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
         modules = pool.instanciate(package.name, cr)
         if hasattr(package, 'init') or hasattr(package, 'update') or package.state in ('to install', 'to upgrade'):
             fk, m2m = init_module_objects(cr, package.name, modules)
-            for obj, missing in fk.iteritems():
+            for obj, missing in fk.items():
                 missing_fk.setdefault(obj, [])
                 missing_fk[obj] += missing
-            for obj, missing in m2m.iteritems():
+            for obj, missing in m2m.items():
                 missing_m2m.setdefault(obj, [])
                 missing_m2m[obj] += missing
         cr.commit()
 
-    for related_obj, to_create in missing_fk.iteritems():
+    for related_obj, to_create in missing_fk.items():
         for x in to_create:
             x[0]._create_fk(cr, x[1], x[2], x[3])
-    for related_obj, to_create in missing_m2m.iteritems():
+    for related_obj, to_create in missing_m2m.items():
         for x in to_create:
             x[0]._create_m2m_table(cr, x[1])
 
@@ -901,7 +902,7 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
             if ('base' in tools.config['init']) or ('base' in tools.config['update']):
                 modobj.update_list(cr, 1)
 
-            _check_module_names(cr, itertools.chain(tools.config['init'].keys(), tools.config['update'].keys()))
+            _check_module_names(cr, itertools.chain(list(tools.config['init'].keys()), list(tools.config['update'].keys())))
 
             mods = [k for k in tools.config['init'] if tools.config['init'][k]]
             if mods:

@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import instance
+from . import instance
 
 import netsvc
 
@@ -47,7 +47,7 @@ class workflow_service(netsvc.Service):
 
     def trg_trigger(self, uid, res_type, res_id, cr):
         # If an unique ID is passed on parameter
-        if isinstance(res_id, (int, long)):
+        if isinstance(res_id, int):
             res_id = [res_id]
         cr.execute('select instance_id from wkf_triggers where res_id in %s and model=%s', (tuple(res_id),res_type))
         res = cr.fetchall()
@@ -74,7 +74,7 @@ class workflow_service(netsvc.Service):
 
     def trg_validate(self, uid, res_type, res_id, signal, cr):
 
-        if isinstance(res_id, (int, long)):
+        if isinstance(res_id, int):
             res_id = [res_id]
 
         result = False

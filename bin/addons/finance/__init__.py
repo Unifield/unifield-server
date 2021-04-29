@@ -19,13 +19,13 @@
 #
 ##############################################################################
 
-import stock
-import account
-import invoice
-import purchase
-import report
-import wizard
-import account_drill
-import cash_request
+from . import stock
+from . import account
+from . import invoice
+from . import purchase
+from . import report
+from . import wizard
+from . import account_drill
+from . import cash_request
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -19,12 +19,12 @@
 #
 ##############################################################################
 
-import report_budget_criteria
-import report_budget_actual
-import monthly_budget
-import report_pdf_budget_summary
-import report_pdf_engagement
-import msf_budget_summary
-import report_local_expenses
+from . import report_budget_criteria
+from . import report_budget_actual
+from . import monthly_budget
+from . import report_pdf_budget_summary
+from . import report_pdf_engagement
+from . import msf_budget_summary
+from . import report_local_expenses
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

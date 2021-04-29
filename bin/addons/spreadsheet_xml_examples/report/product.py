@@ -47,9 +47,9 @@ class product_custom(report_sxw.rml_parse):
 
             self.categ.setdefault(prod.categ_id.name, 0)
             self.categ[prod.categ_id.name] += prod.qty_available*prod.standard_price
-        return uom.iteritems()
+        return iter(uom.items())
 
     def get_categ_avg(self, o):
-        return self.categ.iteritems()
+        return iter(self.categ.items())
 
 SpreadsheetReport('report.spreadsheet.custom_xls', 'product.product', 'spreadsheet_xml_examples/report/custom.mako', parser=product_custom)

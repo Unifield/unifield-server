@@ -46,16 +46,17 @@
 ##############################################################################
 
 import uno
-import xmlrpclib
+import xmlrpc.client
 import re
 import socket
-import cPickle
+import pickle
 import marshal
 import tempfile
-if __name__<>"package":
-    from gui import *
-    from logreport import *
-    from rpc import *
+from functools import reduce
+if __name__!="package":
+    from .gui import *
+    from .logreport import *
+    from .rpc import *
     database="test"
     uid = 1
 
@@ -65,7 +66,7 @@ def genTree(object,aList,insField,host,level=3, ending=[], ending_excl=[], recur
         sock=RPCSession(url)
         global passwd
         res = sock.execute(database, uid, passwd, object , 'fields_get')
-        key = res.keys()
+        key = list(res.keys())
         key.sort()
         for k in key:
             if (not ending or res[k]['type'] in ending) and ((not ending_excl) or not (res[k]['type'] in ending_excl)):
@@ -76,7 +77,7 @@ def genTree(object,aList,insField,host,level=3, ending=[], ending_excl=[], recur
     except:
         obj=Logger()
         import traceback,sys
-        info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+        info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
         obj.log_write('Function', LOG_ERROR, info)
 
 def VariableScope(oTcur,insVariable,aObjectList,aComponentAdd,aItemList,sTableName=""):
@@ -133,7 +134,7 @@ def getRelation(sRelName, sItem, sObjName, aObjectList, host ):
         sock=RPCSession(url)
         global passwd
         res = sock.execute(database, uid, passwd, sRelName , 'fields_get')
-        key = res.keys()
+        key = list(res.keys())
         for k in key:
             if sItem.find(".") == -1:
                 if k == sItem:
@@ -155,7 +156,7 @@ def getPath(sPath,sMain):
                 break;
             else:
                 res = re.findall('\\[\\[ *([a-zA-Z0-9_\.]+) *\\]\\]',sPath)
-                if len(res) <> 0:
+                if len(res) != 0:
 		    if sItem[sItem.find(",'")+2:sItem.find("')")] == sPath[:sPath.find(".")]:
 			sPath =  sItem[sItem.find("(")+1:sItem.find(",")] + sPath[sPath.find("."):]
                         getPath(sPath, sMain)
@@ -217,10 +218,10 @@ def getChildTable(oPar,aItemList,aComponentAdd,sTableName=""):
             except:
                 obj=Logger()
                 import traceback,sys
-                info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                 obj.log_write('Function', LOG_ERROR, info)
     if bEmptyTableFlag==True:
-        aItemList.append((u'',u''))
+        aItemList.append(('',''))
         if sTableName=="":
             if  aComponentAdd.__contains__(oPar.Name)==False:
                 aComponentAdd.append(oPar.Name)

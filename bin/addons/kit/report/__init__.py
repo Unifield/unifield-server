@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import kit_report
-import kit_mass_impor_export
-import kitting_order_report
+from . import kit_report
+from . import kit_mass_impor_export
+from . import kitting_order_report

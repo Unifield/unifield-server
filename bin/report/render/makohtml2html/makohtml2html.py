@@ -24,6 +24,7 @@ from mako.template import Template
 from mako.lookup import TemplateLookup
 import netsvc
 import traceback, sys, os
+from functools import reduce
 
 class makohtml2html(object):
     def __init__(self, html, localcontext):
@@ -123,8 +124,8 @@ class makohtml2html(object):
             final_html += self.format_header(etree_obj)
             final_html += self.format_body(etree_obj)
             return final_html
-        except Exception,e:
-            tb_s = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+        except Exception as e:
+            tb_s = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             netsvc.Logger().notifyChannel('report', netsvc.LOG_ERROR,
                                 'report :\n%s\n%s\n' % (tb_s, str(e)))
 

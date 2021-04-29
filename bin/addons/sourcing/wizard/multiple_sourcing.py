@@ -40,7 +40,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -243,7 +243,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -274,7 +274,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                             'related_sourcing_id': self._get_related_sourcing_id(wiz),
                             'location_id': wiz.location_id.id and wiz.location_id.id or False,
                         }, context=context)
-                    except osv.except_osv, e:
+                    except osv.except_osv as e:
                         errors.setdefault(e.value, [])
                         errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))
 
@@ -310,7 +310,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         lines_to_confirm = []

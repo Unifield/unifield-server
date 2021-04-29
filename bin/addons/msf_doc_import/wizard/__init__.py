@@ -146,21 +146,21 @@ PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT = [
 ]
 PPL_COLUMNS_LINES_FOR_IMPORT = [x for (x,y) in PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT]
 
-import wizard_import_po
-import wizard_import_po_line
-import wizard_import_invoice_line
-import wizard_import_fo_line
-import wizard_import_ir_line
-import wizard_import_picking_line
-import wiz_common_import
-import wizard_import_tender_line
-import wizard_delete_lines
-import wizard_import_product_list
-import wizard_import_product_line
-import wizard_import_supplier_catalogue
-import wizard_po_simulation_screen
-import wizard_in_simulation_screen
-import wizard_import_ppl_to_create_ship
+from . import wizard_import_po
+from . import wizard_import_po_line
+from . import wizard_import_invoice_line
+from . import wizard_import_fo_line
+from . import wizard_import_ir_line
+from . import wizard_import_picking_line
+from . import wiz_common_import
+from . import wizard_import_tender_line
+from . import wizard_delete_lines
+from . import wizard_import_product_list
+from . import wizard_import_product_line
+from . import wizard_import_supplier_catalogue
+from . import wizard_po_simulation_screen
+from . import wizard_in_simulation_screen
+from . import wizard_import_ppl_to_create_ship
 
-import abstract_wizard_import
-import wizard_import_batch
+from . import abstract_wizard_import
+from . import wizard_import_batch

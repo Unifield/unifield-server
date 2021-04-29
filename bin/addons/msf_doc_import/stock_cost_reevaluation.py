@@ -69,7 +69,7 @@ class stock_cost_reevaluation(osv.osv):
         reader = fileobj.getRows()
 
         # ignore the first row
-        reader.next()
+        next(reader)
         line_num = 1
         for row in reader:
             line_num += 1
@@ -150,7 +150,7 @@ Product Code*, Product Description*, Product Cost*, Currency*"""))
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         vals = {}
         vals['reevaluation_line_ids'] = []

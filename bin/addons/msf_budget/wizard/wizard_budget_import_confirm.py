@@ -32,7 +32,7 @@ class wizard_budget_import_confirm(osv.osv_memory):
             context = {}
         budget_obj = self.pool.get('msf.budget')
         if 'budgets' in context:
-            for budget in context['budgets'].values():
+            for budget in list(context['budgets'].values()):
                 # Delete old budget
                 budget_obj.unlink(cr, uid, [budget['latest_budget_id']], context=context)
         # we open a wizard
@@ -50,7 +50,7 @@ class wizard_budget_import_confirm(osv.osv_memory):
             context = {}
         budget_obj = self.pool.get('msf.budget')
         if 'budgets' in context:
-            for budget in context['budgets'].values():
+            for budget in list(context['budgets'].values()):
                 # Delete new budget
                 budget_obj.unlink(cr, uid, [budget['created_budget_id']], context=context)
         return {'type' : 'ir.actions.act_window_close'}

@@ -65,13 +65,13 @@ SALE_ORDER_SPLIT_SELECTION = [
     ('local_purchase_split_sale_order', '3'), # Local Purchase
 ]
 
-import sale_order
-import stock
-import sale_installer
-import wizard
-import report
-import company
-import res_partner
-import sale_workflow
+from . import sale_order
+from . import stock
+from . import sale_installer
+from . import wizard
+from . import report
+from . import company
+from . import res_partner
+from . import sale_workflow
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

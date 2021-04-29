@@ -50,7 +50,7 @@ class sale_order(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for so in self.browse(cr, uid, ids, fields_to_fetch=['order_line'], context=context):

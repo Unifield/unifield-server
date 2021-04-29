@@ -24,9 +24,9 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from register_tools import _get_third_parties
-from register_tools import _set_third_parties
-from register_tools import _get_third_parties_name
+from .register_tools import _get_third_parties
+from .register_tools import _set_third_parties
+from .register_tools import _get_third_parties_name
 from lxml import etree
 
 class account_move_line(osv.osv):
@@ -199,7 +199,7 @@ class account_move_line(osv.osv):
                 else:
                     standard_method.append(line.id)
             if bypass_standard:
-                return self.search(cr, uid, [('reconcile_partial_id', 'in', partial_to_compute.keys())], context=context) + standard_method
+                return self.search(cr, uid, [('reconcile_partial_id', 'in', list(partial_to_compute.keys()))], context=context) + standard_method
 
         return ids
 
@@ -228,13 +228,13 @@ class account_move_line(osv.osv):
                     r_move[m] = True
             new_move = False
             if move:
-                reg_ids = self.search(cr, uid, [('imported_invoice_line_ids', 'in', move.keys())])
-                ids = self.pool.get('account.move.line').search(cr, uid, [('imported_invoice_line_ids', 'in', reg_ids), ('id', 'not in', r_move.keys())])
+                reg_ids = self.search(cr, uid, [('imported_invoice_line_ids', 'in', list(move.keys()))])
+                ids = self.pool.get('account.move.line').search(cr, uid, [('imported_invoice_line_ids', 'in', reg_ids), ('id', 'not in', list(r_move.keys()))])
                 if ids:
                     new_move = True
                     for i in ids:
                         r_move[i] = True
-        return r_move.keys()
+        return list(r_move.keys())
 
     _columns = {
         'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict"),
@@ -408,7 +408,7 @@ class account_move_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Get third_parties_name
         res = _get_third_parties_name(self, cr, uid, vals, context=context)

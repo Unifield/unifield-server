@@ -19,17 +19,17 @@
 #
 ##############################################################################
 
-import project_addresses
-import project_leadtime
-import delivery_process
-import allocation_setup
-import sales_price
-import restrictive_country
-import field_orders
-import lang_setup
-import currency_setup
-import fixed_asset
-import payroll
-import commitment_import
-import vat_setup
-import previous_fy_dates_setup
+from . import project_addresses
+from . import project_leadtime
+from . import delivery_process
+from . import allocation_setup
+from . import sales_price
+from . import restrictive_country
+from . import field_orders
+from . import lang_setup
+from . import currency_setup
+from . import fixed_asset
+from . import payroll
+from . import commitment_import
+from . import vat_setup
+from . import previous_fy_dates_setup

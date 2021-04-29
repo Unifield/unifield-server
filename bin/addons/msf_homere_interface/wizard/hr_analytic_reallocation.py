@@ -74,9 +74,9 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
         if not model:
             raise osv.except_osv(_('Error'), _('Unknown error. Please contact an administrator to resolve this problem. This is probably due to Web server error.'))
         line_ids = context.get('active_ids', [])
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
         # US-364:

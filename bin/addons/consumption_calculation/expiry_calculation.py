@@ -326,7 +326,7 @@ class product_likely_expire_report(osv.osv):
         if context is None:
             context = {}
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             report = self.browse(cr, uid, ids[0], context=context)
             if report:
@@ -371,7 +371,7 @@ class product_likely_expire_report(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # background cursor
@@ -408,7 +408,7 @@ class product_likely_expire_report(osv.osv):
                 if report.segment_id.rule != 'cycle':
                     segment_product_amc[segment_line.product_id.id] = local_amc.get(segment_line.id, 0)
                 else:
-                    for x in xrange(1, 13):
+                    for x in range(1, 13):
                         fmc_from = getattr(segment_line, 'rr_fmc_from_%d'%x)
                         fmc_to = getattr(segment_line, 'rr_fmc_to_%d'%x)
                         fmc_value = getattr(segment_line, 'rr_fmc_%d'%x)
@@ -676,7 +676,7 @@ class product_likely_expire_report(osv.osv):
             context = {}
         if not ids:
             return {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         report = self.browse(cr, uid, ids[0], context=context)
         if not report:
@@ -720,7 +720,7 @@ class product_likely_expire_report(osv.osv):
     def _has_expiry(self, cr, uid, ids, context=None):
         if not ids:
             return False
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         pler = self.browse(cr, uid, ids[0], context=context)
         if pler and pler.line_ids:
@@ -770,7 +770,7 @@ class product_likely_expire_report_line(osv.osv):
         res = { }
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for o in self.browse(cr, uid, ids, context=context):
             if o.product_id:

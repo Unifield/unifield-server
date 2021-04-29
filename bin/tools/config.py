@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import ConfigParser
+import configparser
 import optparse
 import os
 import sys
@@ -175,8 +175,8 @@ class configmanager(object):
         parser.add_option("--stop-after-init", action="store_true", dest="stop_after_init", default=False,
                           help="stop the server after it initializes")
         parser.add_option('--debug', dest='debug_mode', action='store_true', default=False, help='enable debug mode')
-        parser.add_option("--assert-exit-level", dest='assert_exit_level', type="choice", choices=self._LOGLEVELS.keys(),
-                          help="specify the level at which a failed assertion will stop the server. Accepted values: %s" % (self._LOGLEVELS.keys(),))
+        parser.add_option("--assert-exit-level", dest='assert_exit_level', type="choice", choices=list(self._LOGLEVELS.keys()),
+                          help="specify the level at which a failed assertion will stop the server. Accepted values: %s" % (list(self._LOGLEVELS.keys()),))
 
         # Testing Group
         group = optparse.OptionGroup(parser, "Testing Configuration")
@@ -195,8 +195,8 @@ class configmanager(object):
                          help="do not rotate the logfile")
         group.add_option("--syslog", action="store_true", dest="syslog",
                          default=False, help="Send the log to the syslog server")
-        group.add_option('--log-level', dest='log_level', type='choice', choices=self._LOGLEVELS.keys(),
-                         help='specify the level of the logging. Accepted values: ' + str(self._LOGLEVELS.keys()))
+        group.add_option('--log-level', dest='log_level', type='choice', choices=list(self._LOGLEVELS.keys()),
+                         help='specify the level of the logging. Accepted values: ' + str(list(self._LOGLEVELS.keys())))
         parser.add_option_group(group)
 
         # SMTP Group
@@ -263,7 +263,7 @@ class configmanager(object):
 
         def die(cond, msg):
             if cond:
-                print msg
+                print(msg)
                 sys.exit(1)
 
         die(bool(opt.syslog) and bool(opt.logfile),
@@ -359,7 +359,7 @@ class configmanager(object):
         self.options['init'] = opt.init and dict.fromkeys(opt.init.split(','), 1) or {}
         self.options["demo"] = not opt.without_demo and self.options['init'] or {}
         self.options['update'] = opt.update and dict.fromkeys(opt.update.split(','), 1) or {}
-        self.options['translate_modules'] = opt.translate_modules and map(lambda m: m.strip(), opt.translate_modules.split(',')) or ['all']
+        self.options['translate_modules'] = opt.translate_modules and [m.strip() for m in opt.translate_modules.split(',')] or ['all']
         self.options['translate_modules'].sort()
 
         if self.options['timezone']:
@@ -424,14 +424,14 @@ class configmanager(object):
 
         if is_win32:
             try:
-                import _winreg
+                import winreg
             except ImportError:
                 _winreg = None
-            x=_winreg.ConnectRegistry(None,_winreg.HKEY_LOCAL_MACHINE)
-            y = _winreg.OpenKey(x, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment", 0,_winreg.KEY_ALL_ACCESS)
-            _winreg.SetValueEx(y,"PGPASSFILE", 0, _winreg.REG_EXPAND_SZ, filename )
-            _winreg.CloseKey(y)
-            _winreg.CloseKey(x)
+            x=winreg.ConnectRegistry(None,winreg.HKEY_LOCAL_MACHINE)
+            y = winreg.OpenKey(x, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment", 0,winreg.KEY_ALL_ACCESS)
+            winreg.SetValueEx(y,"PGPASSFILE", 0, winreg.REG_EXPAND_SZ, filename )
+            winreg.CloseKey(y)
+            winreg.CloseKey(x)
         else:
             import stat
             os.chmod(filename, stat.S_IRUSR + stat.S_IWUSR)
@@ -462,7 +462,7 @@ class configmanager(object):
         setattr(parser.values, option.dest, ','.join(result))
 
     def load(self):
-        p = ConfigParser.ConfigParser()
+        p = configparser.ConfigParser()
         try:
             p.read([self.rcfile])
             for (name,value) in p.items('options'):
@@ -483,7 +483,7 @@ class configmanager(object):
             for sec in p.sections():
                 if sec == 'options':
                     continue
-                if not self.misc.has_key(sec):
+                if sec not in self.misc:
                     self.misc[sec]= {}
                 for (name, value) in p.items(sec):
                     if value=='True' or value=='true':
@@ -493,12 +493,12 @@ class configmanager(object):
                     self.misc[sec][name] = value
         except IOError:
             pass
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             pass
 
     def save(self):
-        p = ConfigParser.ConfigParser()
-        loglevelnames = dict(zip(self._LOGLEVELS.values(), self._LOGLEVELS.keys()))
+        p = configparser.ConfigParser()
+        loglevelnames = dict(list(zip(list(self._LOGLEVELS.values()), list(self._LOGLEVELS.keys()))))
         p.add_section('options')
         for opt in sorted(self.options.keys()):
             if opt in ('version', 'language', 'translate_out', 'translate_in', 'overwrite_existing_translations', 'init', 'update'):
@@ -507,7 +507,7 @@ class configmanager(object):
                 continue
             if opt in ('log_level', 'assert_exit_level'):
                 p.set('options', opt, loglevelnames.get(self.options[opt], self.options[opt]))
-            elif 'pass' in opt and isinstance(self.options[opt], (str, unicode)):
+            elif 'pass' in opt and isinstance(self.options[opt], str):
                 p.set('options', opt, b64encode(self.options[opt]))
             else:
                 p.set('options', opt, self.options[opt])
@@ -524,7 +524,7 @@ class configmanager(object):
             try:
                 p.write(file(self.rcfile, 'w'))
                 if not rc_exists:
-                    os.chmod(self.rcfile, 0600)
+                    os.chmod(self.rcfile, 0o600)
             except IOError:
                 sys.stderr.write("ERROR: couldn't write the config file\n")
 

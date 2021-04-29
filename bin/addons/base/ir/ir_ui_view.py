@@ -149,13 +149,13 @@ class view(osv.osv):
         _Node_Obj=self.pool.get(node_obj)
         _Arrow_Obj=self.pool.get(conn_obj)
 
-        for model_key,model_value in _Model_Obj._columns.items():
+        for model_key,model_value in list(_Model_Obj._columns.items()):
             if model_value._type=='one2many':
                 if model_value._obj==node_obj:
                     _Node_Field=model_key
                     _Model_Field=model_value._fields_id
                 flag=False
-                for node_key,node_value in _Node_Obj._columns.items():
+                for node_key,node_value in list(_Node_Obj._columns.items()):
                     if node_value._type=='one2many':
                         if node_value._obj==conn_obj:
                             if src_node in _Arrow_Obj._columns and flag:
@@ -172,7 +172,7 @@ class view(osv.osv):
             else:
                 blank_nodes.append({'id': a['id'],'name':a['name']})
 
-            if a.has_key('flow_start') and a['flow_start']:
+            if 'flow_start' in a and a['flow_start']:
                 start.append(a['id'])
             else:
                 if not a[_Source_Field]:
@@ -183,7 +183,7 @@ class view(osv.osv):
                 label_string = ""
                 if label:
                     for lbl in eval(label):
-                        if t.has_key(str(lbl)) and str(t[lbl])=='False':
+                        if str(lbl) in t and str(t[lbl])=='False':
                             label_string = label_string + ' '
                         else:
                             label_string = label_string + " " + t[lbl]
@@ -224,7 +224,7 @@ class view_sc(osv.osv):
         results = self.read(cr, uid, ids, ['res_id'], context=context)
         name_map = dict(self.pool.get(model).name_get(cr, uid, [x['res_id'] for x in results], context=context))
         # Make sure to return only shortcuts pointing to exisintg menu items.
-        filtered_results = filter(lambda result: result['res_id'] in name_map, results)
+        filtered_results = [result for result in results if result['res_id'] in name_map]
         for result in filtered_results:
             result.update(name=name_map[result['res_id']])
         return filtered_results

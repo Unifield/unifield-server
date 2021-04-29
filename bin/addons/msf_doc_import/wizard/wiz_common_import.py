@@ -44,7 +44,7 @@ class wiz_common_import(osv.osv_memory):
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
         lines_not_imported = []
         header_index = kwargs.get('header_index')
-        data = header_index.items()
+        data = list(header_index.items())
         columns_header = []
         for k,v in sorted(data, key=lambda tup: tup[1]):
             columns_header.append((k, type(k)))
@@ -92,7 +92,7 @@ class wiz_common_import(osv.osv_memory):
         upper_translated_headers = translated_headers
         if origin == 'FO' or ignore_case:
             upper_translated_headers = [_(f).upper() for f in real_columns]
-        for k,v in header_index.items():
+        for k,v in list(header_index.items()):
             upper_k = k
             if k and (origin == 'FO' or ignore_case):
                 upper_k = k.upper()
@@ -191,7 +191,7 @@ class wizard_common_import_line(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not product_ids:
@@ -235,7 +235,7 @@ class wizard_common_import_line(osv.osv_memory):
         Fill the line of attached document
         '''
         context = context is None and {} or context
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
 
         fields_to_read = ['parent_id',
                           'parent_model',
@@ -320,7 +320,7 @@ class product_product(osv.osv):
         Create a product.product.import.line.qty for each product/wizard and put the 
         quantity.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -376,7 +376,7 @@ class purchase_order_line(osv.osv):
         po_obj = self.pool.get('purchase.order')
 
         context = context is None and {} or context
-        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+        product_ids = isinstance(product_ids, int) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price', 'import_product_qty'], context=context):
             po_data = po_obj.read(cr, uid, parent_id, ['pricelist_id', 'partner_id', 'date_order',
@@ -429,7 +429,7 @@ class purchase_order(osv.osv):
         Open the wizard to open multiple lines
         '''
         context = context is None and {} or context
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
 
         order_id = self.browse(cr, uid, ids[0], context=context)
         context.update({'partner_id': order_id.partner_id.id,
@@ -465,7 +465,7 @@ class tender_line(osv.osv):
         p_obj = self.pool.get('product.product')
 
         context = context is None and {} or context
-        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+        product_ids = isinstance(product_ids, int) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty', 'categ_id'], context=context):
             values = {
@@ -496,7 +496,7 @@ class tender(osv.osv):
         '''
         if context is None:
             context = {}
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
 
         context.update({
             'product_ids_domain': [],
@@ -523,7 +523,7 @@ class sale_order_line(osv.osv):
         order_obj = self.pool.get('sale.order')
 
         context = context is None and {} or context
-        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+        product_ids = isinstance(product_ids, int) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
             order_data = order_obj.read(cr, uid, parent_id, ['pricelist_id',
@@ -577,7 +577,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
 
         order = self.browse(cr, uid, ids[0], context=context)
         if order.procurement_request:
@@ -623,7 +623,7 @@ class composition_item(osv.osv):
         p_obj  = self.pool.get('product.product')
 
         context = context is None and {} or context
-        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+        product_ids = isinstance(product_ids, int) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price', 'import_product_qty'], context=context):
             values = {'item_kit_id': parent_id,
@@ -666,7 +666,7 @@ class supplier_catalogue_line(osv.osv):
         p_obj = self.pool.get('product.product')
 
         context = context is None and {} or context
-        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+        product_ids = isinstance(product_ids, int) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price', 'import_product_qty'], context=context):
             values = {'product_id': p_data['id'],
@@ -715,7 +715,7 @@ class stock_move(osv.osv):
         get_ref = data_obj.get_object_reference
 
         context = context is None and {} or context
-        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+        product_ids = isinstance(product_ids, int) and [product_ids] or product_ids
 
         picking = pick_obj.browse(cr, uid, parent_id, context=context)
 
@@ -770,7 +770,7 @@ class stock_picking(osv.osv):
         Open the wizard to open multiple lines
         '''
         context = context is None and {} or context
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
         data_obj = self.pool.get('ir.model.data')
         get_ref = data_obj.get_object_reference
 

@@ -24,7 +24,7 @@ from osv import fields
 from tools.translate import _
 
 import socket
-import rpc
+from . import rpc
 import uuid
 import tools
 import sys
@@ -65,7 +65,7 @@ def check_patch_scripts(cr, uid, context=None):
         return ''
 
 
-class SkipStep(StandardError):
+class SkipStep(Exception):
     pass
 
 
@@ -121,7 +121,7 @@ class BackgroundProcess(Thread):
                     if not automatic_patching:
                         cr.commit()
                         raise osv.except_osv(_('Error!'), _(up_to_date[1]))
-        except BaseException, e:
+        except BaseException as e:
             logger = pool.get('sync.monitor').get_logger(cr, uid, context=context)
             logger.switch('status', 'failed')
             if not connected:
@@ -131,7 +131,7 @@ class BackgroundProcess(Thread):
                 context['logger'] = logger
                 try:
                     pool.get('backup.config').exp_dump_for_state(cr, uid, keyword, context=context)
-                except osv.except_osv, f:
+                except osv.except_osv as f:
                     logger.append(f.value)
                 del context['logger']
             if isinstance(e, osv.except_osv):
@@ -171,10 +171,10 @@ def sync_subprocess(step='status', defaults_logger={}):
                     raise BaseException(patch_failed)
 
                 res = fn(self, self.sync_cursor, uid, *args, **kwargs)
-            except osv.except_osv, e:
+            except osv.except_osv as e:
                 logger.switch(step, 'failed')
                 raise
-            except BaseException, e:
+            except BaseException as e:
                 # Handle aborting of synchronization
                 if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
                     logger.switch(step, 'aborted')
@@ -187,7 +187,7 @@ def sync_subprocess(step='status', defaults_logger={}):
                 raise
             else:
                 logger.switch(step, 'ok')
-                if isinstance(res, (str, unicode)) and res:
+                if isinstance(res, str) and res:
                     logger.append(res, step)
             finally:
                 # gotcha!
@@ -314,13 +314,13 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 logger.append(_("ok, skipped."), step)
                 if make_log:
                     raise osv.except_osv(_('Error!'), _("You cannot perform this action now."))
-            except osv.except_osv, e:
+            except osv.except_osv as e:
                 logger.switch(step, 'failed')
                 if make_log:
                     logger.append( e.value )
                     add_information(logger)
                 raise
-            except BaseException, e:
+            except BaseException as e:
                 # Handle aborting of synchronization
                 if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
                     if make_log:
@@ -344,18 +344,18 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 raise
             else:
                 logger.switch(step, 'ok')
-                if isinstance(res, (str, unicode)) and res:
+                if isinstance(res, str) and res:
                     logger.append(res, step)
             finally:
                 # gotcha!
                 try:
                     if make_log:
-                        all_status = logger.info.values()
+                        all_status = list(logger.info.values())
                         if 'ok' in all_status and step == 'status' and logger.info.get(step) in ('failed', 'aborted') and not logger.ok_before_last_dump:
                             # ok_before_last_dump: if backup after sync fails do not generate a new backup
                             try:
                                 self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
-                            except Exception, e:
+                            except Exception as e:
                                 logger.append("Cannot create backup")
                                 self._logger.exception("Can't create backup %s" % tools.ustr(e))
                 finally:
@@ -387,7 +387,7 @@ def generate_new_hwid():
             if line.find('Ether') > -1:
                 mac_list.append(line.split()[4])
         if not mac_list:
-            raise Exception, '/sbin/ifconfig give no result, please check it is correctly installed'
+            raise Exception('/sbin/ifconfig give no result, please check it is correctly installed')
         mac_list.sort()
         logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
         hw_hash = hashlib.md5(''.join(mac_list)).hexdigest()
@@ -401,14 +401,14 @@ def get_hardware_id():
             # to avoid hwid change with new network interface (wifi adtapters,
             # vpn, ...)
 
-        import _winreg
+        import winreg
         sub_key = 'SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0'
 
         try:
                 # check if there is hwid stored in the registry
-            with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, sub_key,
-                                 0, _winreg.KEY_READ) as registry_key:
-                hw_hash, regtype = _winreg.QueryValueEx(registry_key, "HardwareId")
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key,
+                                 0, winreg.KEY_READ) as registry_key:
+                hw_hash, regtype = winreg.QueryValueEx(registry_key, "HardwareId")
                 logger.info("HardwareId registry key found: %s" % hw_hash)
         except WindowsError:
             logger.info("HardwareId registry key not found, create it.")
@@ -418,9 +418,9 @@ def get_hardware_id():
 
             # write the new hwid in the registry
             try:
-                with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, sub_key,
-                                     0, _winreg.KEY_ALL_ACCESS) as registry_key:
-                    _winreg.SetValueEx(registry_key, "HardwareId", 0, _winreg.REG_SZ, hw_hash)
+                with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key,
+                                     0, winreg.KEY_ALL_ACCESS) as registry_key:
+                    winreg.SetValueEx(registry_key, "HardwareId", 0, winreg.REG_SZ, hw_hash)
             except WindowsError as e:
                 logger.error('Error on write of HardwareId in the registry: %s' % e)
     else:
@@ -536,7 +536,7 @@ class Entity(osv.osv):
 
     def _renew_sync_lock(self):
         if not self.renew_lock.acquire(False):
-            raise StandardError("Can't acquire renew lock!")
+            raise Exception("Can't acquire renew lock!")
         try:
             self.sync_lock = RLock()
         finally:
@@ -590,7 +590,7 @@ class Entity(osv.osv):
         # for each field corresponding to each model, check if it is a m2m m2o or o2m
         # if yes, add the model of the relation to the model set
 
-        for model, field_list in model_field_dict.items():
+        for model, field_list in list(model_field_dict.items()):
             field_list_to_parse = [x for x in field_list if '/id' in x]
             if not field_list_to_parse:
                 continue
@@ -714,7 +714,7 @@ class Entity(osv.osv):
             context={'md5': get_md5(packet)}
             res = proxy.receive_package(entity.identifier, self._hardware_id, packet, context)
             if not res[0]:
-                raise Exception, res[1]
+                raise Exception(res[1])
             updates.write(cr, uid, ids, {'sent' : True}, context=context)
             return (len(packet['load']), len(packet['unload']))
 
@@ -752,7 +752,7 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.confirm_update(entity.identifier, self._hardware_id, session_id, {'md5': get_md5(session_id)})
         if not res[0]:
-            raise Exception, res[1]
+            raise Exception(res[1])
         updates.sync_finished(cr, uid, session_id, context=context)
         self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         #state update validate => init
@@ -763,7 +763,7 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_model_to_sync(entity.identifier, self._hardware_id)
         if not res[0]:
-            raise Exception, res[1]
+            raise Exception(res[1])
 
         entity.write({'previous_hw': self._hardware_id}, context=context)
         check_md5(res[2], res[1], _('method set_rules'))
@@ -807,7 +807,7 @@ class Entity(osv.osv):
             ur_data = decodestring(ur_data_encoded)
             computed_hash = hashlib.md5(ur_data).hexdigest()
             if computed_hash != res.get('sum'):
-                raise Exception, 'User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum'))
+                raise Exception('User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum')))
             entity.write({'user_rights_name': res.get('name'), 'user_rights_sum': computed_hash, 'user_rights_state': 'to_install', 'user_rights_data': ur_data_encoded})
             to_install = True
 
@@ -862,11 +862,11 @@ class Entity(osv.osv):
                         survey_obj.create(cr, uid, survey_data, context=context)
                         results_log['created'] = results_log.setdefault('created', 0) + 1
             if logger and results_log:
-                logger.append(_("Survey: %s") % ', '.join(['%d %s' % (x[1], x[0]) for x in results_log.iteritems()]))
+                logger.append(_("Survey: %s") % ', '.join(['%d %s' % (x[1], x[0]) for x in results_log.items()]))
                 logger.write()
 
             return True
-        except Exception, e:
+        except Exception as e:
             cr.execute("ROLLBACK TO SAVEPOINT import_surveys")
             if logger:
                 logger.append("Survey error: unable to get surveys")
@@ -895,7 +895,7 @@ class Entity(osv.osv):
         # UTP-1177: Retrieve the message ids and save into the entity at the Server side
         proxy = sync_server_obj.get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_message_ids(entity.identifier, self._hardware_id)
-        if not res[0]: raise Exception, res[1]
+        if not res[0]: raise Exception(res[1])
 
         updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, context=context)
         self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")
@@ -917,7 +917,7 @@ class Entity(osv.osv):
             self._logger.info("Pull data :: Last sequence: %s" % res[1])
             return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
-            raise Exception, res[1]
+            raise Exception(res[1])
         return True
 
     @sync_subprocess('data_pull_receive')
@@ -963,7 +963,7 @@ class Entity(osv.osv):
                     self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
                     last = res[2]
                 elif res and not res[0]:
-                    raise Exception, res[1]
+                    raise Exception(res[1])
                 cr.commit()
 
             self.write(cr, uid, entity.id, {'update_offset' : 0,
@@ -1081,7 +1081,7 @@ class Entity(osv.osv):
             messages_count += len(generated_ids)
             to_update.setdefault(rule.model, []).extend(generated_ids + ignored_ids)
 
-        for model, ids in to_update.iteritems():
+        for model, ids in to_update.items():
             if ids:
                 cr.execute('update ir_model_data set sync_date=NOW() where model=%s and res_id in %s', (model, tuple(ids)))
         return messages_count
@@ -1106,7 +1106,7 @@ class Entity(osv.osv):
             messages_count += len(packet)
             res = proxy.send_message(uuid, self._hardware_id, packet, {'md5': get_md5(packet)})
             if not res[0]:
-                raise Exception, res[1]
+                raise Exception(res[1])
             messages.packet_sent(cr, uid, msg_ids, context=context)
             if logger and messages_count:
                 if logger_index is None: logger_index = logger.append()
@@ -1131,7 +1131,7 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid, context=context)
 
         res = proxy.get_message_rule(entity.identifier, self._hardware_id)
-        if res and not res[0]: raise Exception, res[1]
+        if res and not res[0]: raise Exception(res[1])
         check_md5(res[2], res[1], _('method get_message_rule'))
         self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
 
@@ -1168,7 +1168,7 @@ class Entity(osv.osv):
         while True:
             res = proxy.get_message(instance_uuid, self._hardware_id,
                                     max_packet_size, last_seq)
-            if not res[0]: raise Exception, res[1]
+            if not res[0]: raise Exception(res[1])
 
             packet = res[1]
             if not packet: break
@@ -1179,7 +1179,7 @@ class Entity(osv.osv):
             cr.commit()
             data_ids = [data['sync_id'] for data in packet]
             res = proxy.message_received_by_sync_id(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
-            if not res[0]: raise Exception, res[1]
+            if not res[0]: raise Exception(res[1])
 
             if logger and messages_count:
                 if logger_index is None: logger_index = logger.append()
@@ -1619,7 +1619,7 @@ class Connection(osv.osv):
             'automatic_patching_hour_from':automatic_patching_hour_from,
             'automatic_patching_hour_to':automatic_patching_hour_to
         }
-        for name, value in values_dict.items():
+        for name, value in list(values_dict.items()):
             if value < 0:
                 result.setdefault('value', {}).update({name: 0})
             if value >= 24:
@@ -1641,7 +1641,7 @@ class Connection(osv.osv):
 
         if date is None:
             date = datetime.today()
-        if isinstance(date, basestring):
+        if isinstance(date, str):
             date = datetime.strptime(date, '%Y-%m-%d %H:%M')
 
         if not hour_from:
@@ -1755,12 +1755,12 @@ class Connection(osv.osv):
                 self._uid = cnx.user_id
             else:
                 raise osv.except_osv('Not Connected', "Not connected to server. Please check password and connection status in the Connection Manager")
-        except socket.error, e:
+        except socket.error as e:
             raise osv.except_osv(_("Error"), _(e.strerror))
         except osv.except_osv:
             raise
-        except BaseException, e:
-            raise osv.except_osv(_("Error"), _(unicode(e)))
+        except BaseException as e:
+            raise osv.except_osv(_("Error"), _(str(e)))
 
         self._logger.info('Client \'%(client_name)s\' succesfully connected to sync. server \'%(server_name)s\'' % sync_args)
         return True
@@ -1812,8 +1812,8 @@ class Connection(osv.osv):
         ]
 
         new_values = vals
-        current_values = self.read(cr, uid, ids, vals.keys())[0]
-        for key, value in new_values.items():
+        current_values = self.read(cr, uid, ids, list(vals.keys()))[0]
+        for key, value in list(new_values.items()):
             if current_values[key] != value and \
                     key in connection_property_list:
                 self._uid = False
@@ -1821,7 +1821,7 @@ class Connection(osv.osv):
 
         # check the new properties match the automatic sync task
         if set(('automatic_patching', 'automatic_patching_hour_from',
-                'automatic_patching_hour_to')).issubset(vals.keys()) and\
+                'automatic_patching_hour_to')).issubset(list(vals.keys())) and\
                 vals['automatic_patching']:
 
             try:

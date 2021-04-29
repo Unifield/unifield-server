@@ -5,5 +5,5 @@
 # To handle the characters only valid in XML 1.1 we use the following arbitrary string.
 SPECIAL_CHAR = '78hHYBWZnwnPWOXGa6Du3Y28BmwSCVu4PlYDM'
 
-import spreadsheet_xml
-import spreadsheet_xml_write
+from . import spreadsheet_xml
+from . import spreadsheet_xml_write

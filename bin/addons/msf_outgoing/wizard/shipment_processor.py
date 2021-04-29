@@ -53,8 +53,8 @@ class shipment_add_pack_processor_line(osv.osv):
     _columns = {
         'wizard_id': fields.many2one('shipment.add.pack.processor', 'Processor'),
         'num_of_packs': fields.integer('Nb. Parcels'),
-        'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
-        'weight': fields.float(digits=(16, 2), string=u'Weight P.P [Kg]'),
+        'volume': fields.float(digits=(16, 2), string='Volume[dm³]'),
+        'weight': fields.float(digits=(16, 2), string='Weight P.P [Kg]'),
     }
 
 shipment_add_pack_processor_line()

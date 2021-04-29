@@ -42,7 +42,7 @@ class account_subscription_generate(osv.osv_memory):
         moves_created=[]
         for data in  self.read(cr, uid, ids, context=context):
             cr.execute('select id from account_subscription_line where date<=%s and move_id is null;', (data['date'],))
-            line_ids = map(lambda x: x[0], cr.fetchall())
+            line_ids = [x[0] for x in cr.fetchall()]
             # check that the entry is valid before creating it
             for sub_line in sub_line_obj.browse(cr, uid, line_ids, context=context):
                 acc_model = sub_line.subscription_id.model_id

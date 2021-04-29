@@ -65,12 +65,12 @@ SELECT column_name
                     id, fields, values = row
                     cr.execute("SAVEPOINT make_sdref")
                     try:
-                        data = dict(zip(eval(fields), eval(values)))
+                        data = dict(list(zip(eval(fields), eval(values))))
                         assert 'id' in data, "Cannot find column 'id' on model=%s id=%d" % (self._name, id)
                         raise Exception('Wrong Way')
                         #sdref = xmlid_to_sdref(data['id'])
                         #cr.execute("UPDATE %s SET sdref = %%s WHERE id = %%s" % self._table, [sdref, id])  # not_a_user_entry
-                    except AssertionError, e:
+                    except AssertionError as e:
                         _logger.error("Cannot find SD ref on model=%s id=%d: %s" % (self._name, id, e.message))
                         cr.execute("ROLLBACK TO SAVEPOINT make_sdref")
                     except:

@@ -29,4 +29,4 @@
 #
 ##############################################################################
 
-import report_webkit_actions
+from . import report_webkit_actions

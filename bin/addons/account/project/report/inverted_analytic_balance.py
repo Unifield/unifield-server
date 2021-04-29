@@ -37,7 +37,7 @@ class account_inverted_analytic_balance(report_sxw.rml_parse):
         })
 
     def _lines_g(self, accounts, date1, date2):
-        ids = map(lambda x: x.id, accounts)
+        ids = [x.id for x in accounts]
         self.cr.execute("SELECT aa.name AS name, aa.code AS code, "
                         "sum(aal.amount) AS balance, "
                         "sum(aal.unit_amount) AS quantity, aa.id AS id \
@@ -62,7 +62,7 @@ class account_inverted_analytic_balance(report_sxw.rml_parse):
         return res
 
     def _lines_a(self, accounts, general_account_id, date1, date2):
-        ids = map(lambda x: x.id, accounts)
+        ids = [x.id for x in accounts]
         self.cr.execute("SELECT sum(aal.amount) AS balance, "
                         "sum(aal.unit_amount) AS quantity, "
                         "aaa.code AS code, aaa.name AS name, account_id \
@@ -95,14 +95,14 @@ class account_inverted_analytic_balance(report_sxw.rml_parse):
         return res
 
     def _sum_debit(self, accounts, date1, date2):
-        ids = map(lambda x: x.id, accounts)
+        ids = [x.id for x in accounts]
         self.cr.execute("SELECT sum(amount) \
                 FROM account_analytic_line \
                 WHERE account_id IN %s AND date>=%s AND date<=%s AND amount>0", (tuple(ids),date1, date2,))
         return self.cr.fetchone()[0] or 0.0
 
     def _sum_credit(self, accounts, date1, date2):
-        ids = map(lambda x: x.id, accounts)
+        ids = [x.id for x in accounts]
         self.cr.execute("SELECT -sum(amount) \
                 FROM account_analytic_line \
                 WHERE account_id IN %s AND date>=%s AND date<=%s AND amount<0", (tuple(ids),date1, date2,))
@@ -114,7 +114,7 @@ class account_inverted_analytic_balance(report_sxw.rml_parse):
         return (debit-credit)
 
     def _sum_quantity(self, accounts, date1, date2):
-        ids = map(lambda x: x.id, accounts)
+        ids = [x.id for x in accounts]
         self.cr.execute("SELECT sum(unit_amount) \
                 FROM account_analytic_line \
                 WHERE account_id IN %s AND date>=%s AND date<=%s", (tuple(ids),date1, date2,))

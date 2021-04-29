@@ -1,1 +1,1 @@
-import compare_rfq
+from . import compare_rfq

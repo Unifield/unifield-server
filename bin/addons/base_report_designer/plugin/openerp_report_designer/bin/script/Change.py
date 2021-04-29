@@ -47,15 +47,16 @@
 import uno
 import string
 import unohelper
-import xmlrpclib
+import xmlrpc.client
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from lib.error import ErrorDialog
-    from lib.functions import *
-    from lib.logreport import *
-    from lib.rpc import *
-    from ServerParameter import *
+from functools import reduce
+if __name__!="package":
+    from .lib.gui import *
+    from .lib.error import ErrorDialog
+    from .lib.functions import *
+    from .lib.logreport import *
+    from .lib.rpc import *
+    from .ServerParameter import *
     database="test"
 
 class Change( unohelper.Base, XJobExecutor ):
@@ -80,7 +81,7 @@ class Change( unohelper.Base, XJobExecutor ):
             port = m.group(3)
             protocol = m.group(1)
         if  protocol:
-            for (key, value) in self.protocol.iteritems(): 
+            for (key, value) in self.protocol.items(): 
                 if value==protocol:
                     protocol=key
                     break
@@ -103,7 +104,7 @@ class Change( unohelper.Base, XJobExecutor ):
 
         self.win.addButton( 'btnCancel', -2 - 30 - 5 ,-5, 30, 15, 'Cancel', actionListenerProc = self.btnCancel_clicked )
        
-        for i in self.protocol.keys():
+        for i in list(self.protocol.keys()):
             self.lstProtocol.addItem(i,self.lstProtocol.getItemCount() )
         self.win.doModalDialog( "lstProtocol",  protocol)
 
@@ -123,7 +124,7 @@ class Change( unohelper.Base, XJobExecutor ):
             ServerParameter(aVal,url)
         except :
             import traceback,sys 
-            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             self.logobj.log_write('ServerParameter', LOG_ERROR, info)     
             ErrorDialog("Connection to server fail. please check your Server Parameter", "", "Error")
             self.win.endExecute()
@@ -132,7 +133,7 @@ class Change( unohelper.Base, XJobExecutor ):
         self.win.endExecute()
         
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     Change(None)
 elif __name__=="package":
     g_ImplementationHelper.addImplementation( Change, "org.openoffice.openerp.report.change", ("com.sun.star.task.Job",),)

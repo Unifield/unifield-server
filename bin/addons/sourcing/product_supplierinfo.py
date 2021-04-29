@@ -38,7 +38,7 @@ class product_supplierinfo(osv.osv):
         '''
         return false for each id
         '''
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}

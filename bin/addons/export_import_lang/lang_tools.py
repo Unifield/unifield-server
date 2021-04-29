@@ -6,7 +6,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from tempfile import TemporaryFile
 import zipfile
 import base64
-import cStringIO
+import io
 
 def open_requests(self, cr, uid, ids, filter=False, context=None):
     view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'export_import_lang', 'res_request_trans-act')
@@ -17,7 +17,7 @@ def open_requests(self, cr, uid, ids, filter=False, context=None):
 
 def get_data_file(cr, uid, data):
     filedata = base64.decodestring(data)
-    buf = cStringIO.StringIO(filedata)
+    buf = io.StringIO(filedata)
 
     try:
         zipf = zipfile.ZipFile(buf, 'r')

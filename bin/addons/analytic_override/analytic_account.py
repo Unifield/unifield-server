@@ -170,7 +170,7 @@ class analytic_account(osv.osv):
                 where_clause_args += [context['to_date']]
             if context.get('instance_ids', False):
                 instance_ids = context.get('instance_ids')
-                if isinstance(instance_ids, (int, long)):
+                if isinstance(instance_ids, int):
                     instance_ids = [instance_ids]
                 if len(instance_ids) == 1:
                     where_date += " AND l.instance_id = %s"
@@ -218,7 +218,7 @@ class analytic_account(osv.osv):
             context = {}
         if not ids:
             return []
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if limit < 1 or limit > 10:
             raise osv.except_osv(_('Error'), _("You're only allowed to use a limit between 1 and 10."))
@@ -280,7 +280,7 @@ class analytic_account(osv.osv):
             if arg[0] == 'dest_compatible_with_cc_ids':
                 operator = arg[1]
                 cc = arg[2]
-                if operator != '=' or not isinstance(cc, (int, long)):
+                if operator != '=' or not isinstance(cc, int):
                     raise osv.except_osv(_('Error'), _('Filter not implemented on Destinations.'))
                 all_dest_ids = self.search(cr, uid, [('category', '=', 'DEST')], context=context)
                 compatible_dest_ids = []
@@ -306,7 +306,7 @@ class analytic_account(osv.osv):
                 if operator != '=':
                     raise osv.except_osv(_('Error'), _('Filter not implemented on Funding Pools.'))
                 cc = False
-                if cc_id and isinstance(cc_id, (int, long)):
+                if cc_id and isinstance(cc_id, int):
                     cc = self.browse(cr, uid, cc_id, fields_to_fetch=['category', 'type', 'cc_instance_ids'], context=context)
                     if cc.category != 'OC' or cc.type == 'view':
                         raise osv.except_osv(_('Error'), _('Filter only compatible with a normal-type Cost Center.'))
@@ -406,7 +406,7 @@ class analytic_account(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         acc_target_cc_obj = self.pool.get('account.target.costcenter')
@@ -544,7 +544,7 @@ class analytic_account(osv.osv):
         return True
 
     def _check_default_destination(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             return True
@@ -654,7 +654,7 @@ class analytic_account(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some value
         res = []
@@ -738,7 +738,7 @@ class analytic_account(osv.osv):
         lang_obj = self.pool.get('res.lang')
         # no check at sync time (note that there may be some accounts with duplicated names created before US-5224)
         if not context.get('sync_update_execution', False):
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
             for analytic_acc in self.read(cr, uid, ids, ['category', 'name'], context=context):
@@ -817,7 +817,7 @@ class analytic_account(osv.osv):
         if context is None:
             context = {}
         # US-166: Ids needs to always be a list
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
@@ -841,7 +841,7 @@ class analytic_account(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         default_field = 'account_id'
         for aaa in self.browse(cr, uid, ids):

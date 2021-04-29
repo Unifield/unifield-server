@@ -32,7 +32,7 @@ def choice_colors(n):
     return []
 
 if __name__=='__main__':
-    print choice_colors(10)
+    print(choice_colors(10))
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

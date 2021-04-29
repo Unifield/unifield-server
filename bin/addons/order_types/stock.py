@@ -25,7 +25,7 @@ from tools.translate import _
 # US-28: Refactored the method decoration to be reused for both RW and CP
 def cp_rw_warning(func, rw_flag, *args, **kwargs):
     self = args[0]
-    kw_keys = kwargs.keys()
+    kw_keys = list(kwargs.keys())
 
     from_button = False
     if kwargs.get('context'):
@@ -201,7 +201,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context.get('out', False):

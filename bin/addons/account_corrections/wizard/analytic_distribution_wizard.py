@@ -386,7 +386,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').\
                 create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date,
                                       source_date=curr_date, name=name, context=context)
-            new_line_ids.extend(created_analytic_line_ids.values())
+            new_line_ids.extend(list(created_analytic_line_ids.values()))
             working_period_id = working_period_id or \
                 self.pool.get('account.period').get_period_from_date(cr, uid, date=create_date, context=context)
             # Set right analytic correction journal to these lines
@@ -450,7 +450,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Create the new ana line
             ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date,
                                                        document_date=orig_document_date, source_date=curr_date, name=name, context=context)
-            new_line_ids.extend(ret.values())
+            new_line_ids.extend(list(ret.values()))
             working_period_id = working_period_id or period_ids
             # Add link to first analytic lines
             for ret_id in ret:
@@ -670,7 +670,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Change wizard state if current is 'correction'
         for wiz in self.browse(cr, uid, ids, context=context):

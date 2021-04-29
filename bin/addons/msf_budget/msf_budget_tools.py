@@ -216,7 +216,7 @@ class msf_budget_tools(osv.osv):
                 tmp_res = cr.fetchall()
                 # If result, write on the given budget line the result
                 if tmp_res:
-                    budget_line_vals = dict(zip(vals_headers, tmp_res[0]))
+                    budget_line_vals = dict(list(zip(vals_headers, tmp_res[0])))
                     budget_line_obj.write(cr, uid, budget_line_id, budget_line_vals, context=context)
         return True
 
@@ -224,7 +224,7 @@ class msf_budget_tools(osv.osv):
         # Some checks
         if context is None:
             context = {}
-        if isinstance(account_ids, (int, long)):
+        if isinstance(account_ids, int):
             account_ids = [account_ids]
         a_obj = self.pool.get('account.account')
         # Browse accounts
@@ -241,7 +241,7 @@ class msf_budget_tools(osv.osv):
                 else:
                     # children are account, destination tuples (already in actual_amounts)
                     # get all tuples starting with (account_id)
-                    for account_destination in [tuple_acc_dest for tuple_acc_dest in actual_amounts.keys() if tuple_acc_dest[0] == account_id and tuple_acc_dest[1] is not False]:
+                    for account_destination in [tuple_acc_dest for tuple_acc_dest in list(actual_amounts.keys()) if tuple_acc_dest[0] == account_id and tuple_acc_dest[1] is not False]:
                         result = [sum(pair) for pair in zip(result, actual_amounts[account_destination])]
                 actual_amounts[account_id, False] = result
         return
@@ -325,7 +325,7 @@ class msf_budget_tools(osv.osv):
                 bg_report_obj.update_percent(cr, uid, [bg_id], percent)
 
         # after all lines are parsed, absolute of every column
-        for line in res.keys():
+        for line in list(res.keys()):
             res[line] = [-x for x in res[line]]
 
         # do the view lines

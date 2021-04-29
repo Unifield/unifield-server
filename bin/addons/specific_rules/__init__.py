@@ -18,10 +18,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import specific_rules
-import unconsistent_stock_report
-import stock
-import report
+from . import specific_rules
+from . import unconsistent_stock_report
+from . import stock
+from . import report
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

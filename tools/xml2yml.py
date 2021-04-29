@@ -57,7 +57,7 @@ class YamlTag(object):
     def __getattr__(self, attr):
         return None
     def __repr__(self):
-        for k,v in self.attrib.iteritems():
+        for k,v in self.attrib.items():
             if str(v) and str(v)[0] in ['[', '{', '#', '*', '(']:
                 self.attrib[k] = toString(self.attrib[k]).replace("'", '')
         st = self.yaml_tag + ' ' + str(self.attrib)
@@ -65,14 +65,14 @@ class YamlTag(object):
 
 # attrib tags
 class ref(YamlTag):
-    yaml_tag = u'!ref'
+    yaml_tag = '!ref'
     def __init__(self, expr="False"):
         self.expr = expr
     def __repr__(self):
         return "'%s'"%str(self.expr)
 
 class Eval(YamlTag):
-    yaml_tag = u'!eval'
+    yaml_tag = '!eval'
     def __init__(self, expr="False"):
         self.expr = expr
     def __repr__(self):
@@ -96,7 +96,7 @@ class Eval(YamlTag):
         return value
 
 class Search(YamlTag):
-    yaml_tag = u'!ref'
+    yaml_tag = '!ref'
 
 # test tag
 class xml_test(XmlTag):
@@ -135,7 +135,7 @@ class xml_value(etree.ElementBase):
         val=val.replace("'",'""')
         self.attrib.pop(key)
         d={}
-        for k,v in self.attrib.iteritems():
+        for k,v in self.attrib.items():
             if k == 'search':
                 v = '"' + v + '"'
             k='--' + k
@@ -149,7 +149,7 @@ class xml_value(etree.ElementBase):
 
 # data tag
 class data(YamlTag):
-    yaml_tag = u'!context'
+    yaml_tag = '!context'
     def __init__(self, noupdate="0"):
         self.child_tags = {'    noupdate':noupdate}
     def __repr__(self):
@@ -157,7 +157,7 @@ class data(YamlTag):
 
 # Record tag
 class Record(YamlTag):
-    yaml_tag = u'!record'
+    yaml_tag = '!record'
 class xml_record(XmlTag):
     tag=Record
     def _to_yaml(self):
@@ -169,7 +169,7 @@ class xml_record(XmlTag):
 
 # ir_set tag
 class Ir_Set(YamlTag):
-    yaml_tag = u'!ir_set'
+    yaml_tag = '!ir_set'
     def __repr__(self):
         st = self.yaml_tag
         return st
@@ -184,72 +184,72 @@ class xml_ir_set(XmlTag):
 
 # workflow tag
 class Workflow(YamlTag):
-    yaml_tag = u'!workflow'
+    yaml_tag = '!workflow'
 class xml_workflow(XmlTag):
     tag=Workflow
 
 # function tag
 class Function(YamlTag):
-    yaml_tag = u'!function'
+    yaml_tag = '!function'
 class xml_function(XmlTag):
     tag=Function
 
 # function tag
 class Assert(YamlTag):
-    yaml_tag = u'!assert'
+    yaml_tag = '!assert'
 class xml_assert(XmlTag):
     tag=Assert
 
 # menuitem tagresult.append(yaml.safe_dump(obj, default_flow_style=False, allow_unicode=True).replace("'",''))
 class MenuItem(YamlTag):
-    yaml_tag = u'!menuitem'
+    yaml_tag = '!menuitem'
 class xml_menuitem(XmlTag):
     tag=MenuItem
 
 # act_window tag
 class ActWindow(YamlTag):
-    yaml_tag = u'!act_window'
+    yaml_tag = '!act_window'
 class xml_act_window(XmlTag):
     tag=ActWindow
 
 # report tag
 class Report(YamlTag):
-    yaml_tag = u'!report'
+    yaml_tag = '!report'
 class xml_report(XmlTag):
     tag=Report
 
 # deletes tag
 class Delete(YamlTag):
-    yaml_tag = u'!delete'
+    yaml_tag = '!delete'
 class xml_delete(XmlTag):
     tag=Delete
 
 # python tag
 class Python(YamlTag):
-    yaml_tag = u'!python'
+    yaml_tag = '!python'
 class xml_python(XmlTag):
     tag=Python
 
 # context tag
 class Context(YamlTag):
-    yaml_tag = u'!context'
+    yaml_tag = '!context'
 class xml_context(XmlTag):
     tag=Context
 
 # url tag
 class Url(YamlTag):
-    yaml_tag = u'!url'
+    yaml_tag = '!url'
 class xml_url(XmlTag):
     tag=Url
 
 # delete tag
 class Delete(YamlTag):
-    yaml_tag = u'!delete'
+    yaml_tag = '!delete'
 class xml_delete(XmlTag):
     tag=Delete
 
 def represent_data(dumper, data):
-        return dumper.represent_mapping(u'tag:yaml.org,2002:map', [('!'+str(data), data.child_tags)])
+        return dumper.represent_mapping('tag:yaml.org,2002:map', [('!'+str(data), data.child_tags)])
 
 yaml.SafeDumper.add_representer(Record, represent_data)
 yaml.SafeDumper.add_representer(data, represent_data)
@@ -313,15 +313,15 @@ class xml_parse(object):
                             result.append(yaml.dump('!'+str(obj), default_flow_style=False, allow_unicode=True, width=999).replace("'",''))
                         else:
                             result.append(yaml.safe_dump(obj, default_flow_style=False, allow_unicode=True, width=999).replace('\n:', ':\n').replace("'",''))
-        print "# Experimental OpenERP xml-to-yml conversion! (v%s)"%__VERSION__
-        print "# Please use this as a first conversion/preprocessing step,"
-        print "# not as a production-ready tool!"
+        print("# Experimental OpenERP xml-to-yml conversion! (v%s)"%__VERSION__)
+        print("# Please use this as a first conversion/preprocessing step,")
+        print("# not as a production-ready tool!")
         for record in result:
             if type(record) != type(''):
                 record=str(record)
                 l= record.split("\n")
                 for line in l:
-                    print '#' + str(line)
+                    print('#' + str(line))
                 continue
             record=str(record)
             record = record.replace('- --','  ')        #for value tag
@@ -329,7 +329,7 @@ class xml_parse(object):
             record = record.replace('- - -', '    -')   #for many2many fields
             record = record.replace('? ', '')           #for long expressions
             record = record.replace('""', "'")          #for string-value under value tag
-            print record
+            print(record)
 
 if __name__=='__main__':
     import optparse

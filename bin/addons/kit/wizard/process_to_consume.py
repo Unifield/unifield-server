@@ -160,7 +160,7 @@ class process_to_consume_line(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         loc_obj = self.pool.get('stock.location')

@@ -14,7 +14,7 @@ UNIFIELD_ADMIN = ''
 UNIFIELD_PASSWORD = ''
 
 if os.path.exists('credentials.py'):
-    execfile('credentials.py')
+    exec(compile(open('credentials.py').read(), 'credentials.py', 'exec'))
 
 def reset_po(oerp):
     po_o = oerp.get('purchase.order')
@@ -41,7 +41,7 @@ open_period(oerp, 2018)
 
 prod_o = oerp.get('product.product')
 if not prod_o.search([('default_code', '=', 'AZAZA')]):
-    print 'Create Prod AZAZA'
+    print('Create Prod AZAZA')
     sync_needed = True
     oerp.get('product.product').create({
         'default_code': 'AZAZA',
@@ -56,7 +56,7 @@ if not prod_o.search([('default_code', '=', 'AZAZA')]):
 reset_po(oerp)
 p_ids = oerp.get('res.partner').search([('name', '=', 'ESC'), ('active', 'in', ['t', 'f'])])
 if p_ids:
-    print 'Update Partner'
+    print('Update Partner')
     sync_needed = True
     oerp.get('res.partner').write(p_ids, {'active': True})
 
@@ -78,7 +78,7 @@ if sync_needed:
 ext_name = 'OFFICE'
 loc_o = oerp.get('stock.location')
 if not loc_o.search([('name', '=', ext_name)]):
-    print 'Create Loc'
+    print('Create Loc')
     stock_wiz = oerp.get('stock.location.configuration.wizard')
     w_id = stock_wiz.create({'location_usage': 'consumption_unit', 'location_type': 'customer', 'location_name': ext_name})
     stock_wiz.confirm_creation(w_id)
@@ -106,7 +106,7 @@ reset_po(oerp)
 ext_name = 'Ext CU Sara'
 loc_o = oerp.get('stock.location')
 if not loc_o.search([('name', '=', ext_name)]):
-    print 'Create Loc'
+    print('Create Loc')
     stock_wiz = oerp.get('stock.location.configuration.wizard')
     w_id = stock_wiz.create({'location_usage': 'consumption_unit', 'location_type': 'customer', 'location_name': ext_name})
     stock_wiz.confirm_creation(w_id)

@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import cStringIO
+import io
 import csv
 import logging
 import os.path
@@ -29,6 +29,7 @@ import re
 # for eval context:
 import time
 import release
+from functools import reduce
 try:
     import pytz
 except:
@@ -41,11 +42,11 @@ except:
 from datetime import datetime, timedelta
 from dateutil import relativedelta
 from lxml import etree
-import misc
+from . import misc
 import netsvc
 import osv
 import pooler
-from config import config
+from .config import config
 from tools.translate import _
 
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
@@ -119,7 +120,7 @@ def _eval_xml(self, node, pool, cr, uid, idref, context=None):
             q = unsafe_eval(f_search, idref2)
             ids = pool.get(f_model).search(cr, uid, q)
             if f_use != 'id':
-                ids = map(lambda x: x[f_use], pool.get(f_model).read(cr, uid, ids, [f_use]))
+                ids = [x[f_use] for x in pool.get(f_model).read(cr, uid, ids, [f_use])]
             _cols = pool.get(f_model)._columns
             if (f_name in _cols) and _cols[f_name]._type=='many2many':
                 return ids
@@ -572,7 +573,7 @@ form: module.record_id""" % (xml_id,)
     def _tag_menuitem(self, cr, rec, data_node=None):
         rec_id = rec.get("id",'').encode('ascii')
         self._test_xml_id(rec_id)
-        m_l = map(escape, escape_re.split(rec.get("name",'').encode('utf8')))
+        m_l = list(map(escape, escape_re.split(rec.get("name",'').encode('utf8'))))
 
         values = {'parent_id': False}
         if rec.get('parent', False) is False and len(m_l) > 1:
@@ -822,7 +823,7 @@ form: module.record_id""" % (xml_id,)
                 _cols = self.pool.get(rec_model)._columns
                 # if the current field is many2many
                 if (f_name in _cols) and _cols[f_name]._type=='many2many':
-                    f_val = [(6, 0, map(lambda x: x[f_use], s))]
+                    f_val = [(6, 0, [x[f_use] for x in s])]
                 elif len(s):
                     # otherwise (we are probably in a many2one field),
                     # take the first element of the search
@@ -844,7 +845,7 @@ form: module.record_id""" % (xml_id,)
                         f_val = self.id_get(cr, f_ref)
             else:
                 f_val = _eval_xml(self,field, self.pool, cr, self.uid, self.idref)
-                if model._columns.has_key(f_name):
+                if f_name in model._columns:
                     if isinstance(model._columns[f_name], osv.fields.integer):
                         f_val = int(f_val)
             res[f_name] = f_val
@@ -934,9 +935,9 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
 
     pool = pooler.get_pool(cr.dbname)
 
-    input = cStringIO.StringIO(csvcontent) #FIXME
+    input = io.StringIO(csvcontent) #FIXME
     reader = csv.reader(input, quotechar='"', delimiter=',')
-    fields = reader.next()
+    fields = next(reader)
     fname_partial = ""
     if config.get('import_partial'):
         fname_partial = module + '/'+ fname
@@ -949,7 +950,7 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
                     return
                 else:
                     for i in range(data[fname_partial]):
-                        reader.next()
+                        next(reader)
 
     if not (mode == 'init' or 'id' in fields):
         logger.error("Import specification does not contain 'id' and we are in init mode, Cannot continue.")
@@ -961,7 +962,7 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
         if (not line) or not reduce(lambda x,y: x or y, line) :
             continue
         try:
-            datas.append(map(lambda x: misc.ustr(x), line))
+            datas.append([misc.ustr(x) for x in line])
         except:
             logger.error("Cannot import the line: %s", line)
     result, rows, warning_msg, dummy = pool.get(model).import_data(cr, uid, fields, datas,mode, module, noupdate, filename=fname_partial, context={'from_system': True})
@@ -1016,7 +1017,7 @@ def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=Fa
     relaxng = etree.RelaxNG(
         etree.parse(os.path.join(config['root_path'],'import_xml.rng' )))
     try:
-        relaxng.assert_(doc)
+        relaxng.assertTrue(doc)
     except Exception:
         logger = netsvc.Logger()
         logger.notifyChannel('init', netsvc.LOG_ERROR, 'The XML file does not fit the required schema !')

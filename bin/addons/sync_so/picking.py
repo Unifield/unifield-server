@@ -36,7 +36,7 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
 
     def _get_sent_ok(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -111,7 +111,7 @@ class stock_picking(osv.osv):
         if not product_id:
             product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
             if not product_ids:
-                raise Exception, "The corresponding product does not exist here. Product name: %s" % product_name
+                raise Exception("The corresponding product does not exist here. Product name: %s" % product_name)
             product_id = product_ids[0]
 
         # UF-1617: asset form
@@ -122,7 +122,7 @@ class stock_picking(osv.osv):
         # uom
         uom_id = uom_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_uom']['id']), context=context)
         if not uom_id:
-            raise Exception, "The corresponding uom does not exist here. Uom name: %s" % uom_id
+            raise Exception("The corresponding uom does not exist here. Uom name: %s" % uom_id)
 
         # UF-1617: Handle batch and asset object
         batch_id = False
@@ -218,7 +218,7 @@ class stock_picking(osv.osv):
         for data in pick_info:
             out_info = data.to_dict()
             res = {}
-            for key in out_info.keys():
+            for key in list(out_info.keys()):
                 if key != 'move_lines':
                     res[key] = out_info.get(key)
 
@@ -318,7 +318,7 @@ class stock_picking(osv.osv):
                 so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)
                 return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
 
-            raise Exception, "The PO is not found for the given FO Ref: " + so_ref
+            raise Exception("The PO is not found for the given FO Ref: " + so_ref)
 
         if shipment_ref:
             shipment_ref = source + "." + shipment_ref
@@ -907,7 +907,7 @@ class stock_picking(osv.osv):
 
     # UF-1617: Override the hook method to create sync messages manually for some extra objects once the OUT/Partial is done
     def _hook_create_sync_messages(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         so_po_common = self.pool.get('so.po.common')
 
@@ -983,22 +983,22 @@ class stock_picking(osv.osv):
         if 'stock.move' in context['changes']:
             for rec_line in self.pool.get('stock.move').browse(
                     cr, uid,
-                    context['changes']['stock.move'].keys(),
+                    list(context['changes']['stock.move'].keys()),
                     context=context):
                 if self.pool.get('stock.move').exists(cr, uid, rec_line.id, context):  # check the line exists
                     lines.setdefault(rec_line.picking_id.id, {})[rec_line.id] = context['changes']['stock.move'][rec_line.id]
         # monitor changes on purchase.order
-        for id, changes in changes.items():
+        for id, changes in list(changes.items()):
             logger = get_sale_purchase_logger(cr, uid, self, id, \
                                               context=context)
             if 'move_lines' in changes:
-                old_lines, new_lines = map(set, changes['move_lines'])
+                old_lines, new_lines = list(map(set, changes['move_lines']))
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
                 logger.is_product_removed |= (len(old_lines - new_lines) > 0)
             logger.is_date_modified |= ('date' in changes)
             logger.is_status_modified |= ('state' in changes) | ('delivered' in changes)
             # handle line's changes
-            for line_id, line_changes in lines.get(id, {}).items():
+            for line_id, line_changes in list(lines.get(id, {}).items()):
                 logger.is_quantity_modified |= ('product_qty' in line_changes)
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
@@ -1254,12 +1254,12 @@ class shipment(osv.osv):
         if 'shipment' in context['changes']:
             for rec_line in self.pool.get('shipment').browse(
                     cr, uid,
-                    context['changes']['shipment'].keys(),
+                    list(context['changes']['shipment'].keys()),
                     context=context):
                 lines.setdefault(rec_line.id, {})[rec_line.id] = \
                     context['changes']['shipment'][rec_line.id]
         # monitor changes on purchase.order
-        for id, changes in changes.items():
+        for id, changes in list(changes.items()):
             logger = get_sale_purchase_logger(cr, uid, self, id, \
                                               context=context)
             logger.is_status_modified |= True

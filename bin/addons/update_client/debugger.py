@@ -38,11 +38,7 @@ class debugger(osv.osv):
                 path, filename = baseFilename.rsplit(os.sep, 1)
             else:
                 path, filename = os.curdir, baseFilename
-            for filepath, filename in map(
-                    lambda f: (os.path.join(path, f), f),
-                    [filename] + filter(
-                        lambda f: f.startswith(filename+'.'),
-                        os.listdir(path))):
+            for filepath, filename in [(os.path.join(path, f), f) for f in [filename] + [f for f in os.listdir(path) if f.startswith(filename+'.')]]:
                 if os.path.isfile(filepath):
                     stat = os.stat(filepath)
                     data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)), 'type': 'server'}
@@ -71,7 +67,7 @@ class debugger(osv.osv):
                 del(all_file[full_path])
 
         if all_file:
-            self.unlink(cr, user, all_file.values(), context=context)
+            self.unlink(cr, user, list(all_file.values()), context=context)
         return True
 
     def get_content(self, cr, uid, ids, context=None):

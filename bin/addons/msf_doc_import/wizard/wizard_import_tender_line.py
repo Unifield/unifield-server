@@ -35,7 +35,7 @@ class wizard_import_tender_line(osv.osv_memory):
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -62,7 +62,7 @@ class wizard_import_tender_line(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not context.get('yml_test', False):
             cr = pooler.get_db(dbname).cursor()
@@ -93,7 +93,7 @@ class wizard_import_tender_line(osv.osv_memory):
             # iterator on rows
             rows = file_obj.getRows()
             # ignore the first row
-            rows.next()
+            next(rows)
             line_num = 0
             to_write = {}
             total_line_num = len([row for row in file_obj.getRows()])
@@ -110,7 +110,7 @@ class wizard_import_tender_line(osv.osv_memory):
                 }
                 line_num += 1
                 col_count = len(row)
-                template_col_count = len(header_index.items())
+                template_col_count = len(list(header_index.items()))
                 if col_count != template_col_count:
                     message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join([_(f) for f in columns_for_tender_line_import]))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -182,7 +182,7 @@ class wizard_import_tender_line(osv.osv_memory):
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     complete_lines += 1
 
-                except IndexError, e:
+                except IndexError as e:
                     error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
@@ -240,7 +240,7 @@ Importation completed in %s!
         """
         Launch a thread for importing lines.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         tender_obj = self.pool.get('tender')
@@ -280,7 +280,7 @@ Otherwise, you can continue to use Unifield.""")
         """
         This button is only for updating the view.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         tender_obj = self.pool.get('tender')
         for wiz_read in self.read(cr, uid, ids, ['tender_id', 'state', 'file']):
@@ -295,7 +295,7 @@ Otherwise, you can continue to use Unifield.""")
         Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
         I come back on the home page. Here, I come back on the object on which I opened the wizard.
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids=[ids]
         for wiz_obj in self.read(cr, uid, ids, ['tender_id']):
             tender_id = wiz_obj['tender_id']
@@ -312,7 +312,7 @@ Otherwise, you can continue to use Unifield.""")
         '''
         Return to the initial view
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids=[ids]
         for wiz_obj in self.read(cr, uid, ids, ['tender_id']):
             tender_id = wiz_obj['tender_id']

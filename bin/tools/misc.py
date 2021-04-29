@@ -44,11 +44,12 @@ from email.MIMEMultipart import MIMEMultipart
 from email.Header import Header
 from email.Utils import formatdate, COMMASPACE
 from email import Encoders
-from itertools import islice, izip
+from itertools import islice
 from lxml import etree
-from which import which
+from .which import which
 from threading import local
 import math
+from functools import reduce
 
 try:
     from html2text import html2text
@@ -56,8 +57,8 @@ except ImportError:
     html2text = None
 
 import netsvc
-from config import config
-from lru import LRU
+from .config import config
+from .lru import LRU
 from xml.sax.saxutils import escape
 
 from cryptography.fernet import Fernet
@@ -217,10 +218,10 @@ def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=
             subprocess.check_output(command, stderr=subprocess.STDOUT)
             _logger.info('Rsync ends')
             return True
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError as e:
         _logger.error('rsync %s' % e.output)
         raise Exception(e.output)
-    except Exception, e:
+    except Exception as e:
         raise e
 
 def pg_basebackup(db_name, wal_dir):
@@ -257,10 +258,10 @@ def pg_basebackup(db_name, wal_dir):
         subprocess.check_output(command_7z, stderr=subprocess.STDOUT)
         _logger.info('7z done')
         return True
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError as e:
         _logger.error('pg_base %s' % e.output)
         raise Exception(e.output)
-    except Exception, e:
+    except Exception as e:
         raise e
     finally:
         _set_env_pg(remove=True)
@@ -412,7 +413,7 @@ def file_open(name, mode="r", subdir='addons', pathinfo=False):
         else:
             zipname = tail
         if zipfile.is_zipfile(head+'.zip'):
-            from cStringIO import StringIO
+            from io import StringIO
             zfile = zipfile.ZipFile(head+'.zip')
             try:
                 fo = StringIO()
@@ -433,8 +434,8 @@ def file_open(name, mode="r", subdir='addons', pathinfo=False):
                 return fo, i
             return fo
     if os.path.splitext(name)[1] == '.rml':
-        raise IOError, 'Report %s doesn\'t exist or deleted : ' %str(name)
-    raise IOError, 'File not found : %s' % name
+        raise IOError('Report %s doesn\'t exist or deleted : ' %str(name))
+    raise IOError('File not found : %s' % name)
 
 
 #----------------------------------------------------------
@@ -466,7 +467,8 @@ def flatten(list):
     r = []
     for e in list:
         if isiterable(e):
-            map(r.append, flatten(e))
+            for _e in flattern(e):
+                r.append(_e)
         else:
             r.append(e)
     return r
@@ -486,7 +488,7 @@ def reverse_enumerate(l):
       File "<stdin>", line 1, in <module>
     StopIteration
     """
-    return izip(xrange(len(l)-1, -1, -1), reversed(l))
+    return zip(range(len(l)-1, -1, -1), reversed(l))
 
 #----------------------------------------------------------
 # Emails
@@ -675,7 +677,7 @@ def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=Non
 
     if not email_cc: email_cc = []
     if not email_bcc: email_bcc = []
-    if not body: body = u''
+    if not body: body = ''
 
     email_body = ustr(body).encode('utf-8')
     email_text = MIMEText(email_body or '',_subtype=subtype,_charset='utf-8')
@@ -699,7 +701,7 @@ def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=Non
     msg['X-Priority'] = priorities.get(priority, '3 (Normal)')
 
     # Add dynamic X Header
-    for key, value in x_headers.iteritems():
+    for key, value in x_headers.items():
         msg['%s' % key] = str(value)
 
     if html2text and subtype == 'html':
@@ -726,11 +728,11 @@ def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=Non
 #----------------------------------------------------------
 # text must be latin-1 encoded
 def sms_send(user, password, api_id, text, to):
-    import urllib
+    import urllib.request, urllib.parse, urllib.error
     url = "http://api.urlsms.com/SendSMS.aspx"
     #url = "http://196.7.150.220/http/sendmsg"
-    params = urllib.urlencode({'UserID': user, 'Password': password, 'SenderID': api_id, 'MsgText': text, 'RecipientMobileNo':to})
-    urllib.urlopen(url+"?"+params)
+    params = urllib.parse.urlencode({'UserID': user, 'Password': password, 'SenderID': api_id, 'MsgText': text, 'RecipientMobileNo':to})
+    urllib.request.urlopen(url+"?"+params)
     # FIXME: Use the logger if there is an error
     return True
 
@@ -748,7 +750,7 @@ class UpdateableStr(local):
     def __repr__(self):
         return str(self.string)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.string)
 
 
@@ -770,7 +772,7 @@ class UpdateableDict(local):
         return self.dict.clear()
 
     def keys(self):
-        return self.dict.keys()
+        return list(self.dict.keys())
 
     def __setitem__(self, i, y):
         self.dict.__setitem__(i, y)
@@ -782,13 +784,13 @@ class UpdateableDict(local):
         return self.dict.copy()
 
     def iteritems(self):
-        return self.dict.iteritems()
+        return iter(self.dict.items())
 
     def iterkeys(self):
-        return self.dict.iterkeys()
+        return iter(self.dict.keys())
 
     def itervalues(self):
-        return self.dict.itervalues()
+        return iter(self.dict.values())
 
     def pop(self, k, d=None):
         return self.dict.pop(k, d)
@@ -803,16 +805,16 @@ class UpdateableDict(local):
         return self.dict.update(E, F)
 
     def values(self):
-        return self.dict.values()
+        return list(self.dict.values())
 
     def get(self, k, d=None):
         return self.dict.get(k, d)
 
     def has_key(self, k):
-        return self.dict.has_key(k)
+        return k in self.dict
 
     def items(self):
-        return self.dict.items()
+        return list(self.dict.items())
 
     def __cmp__(self, y):
         return self.dict.__cmp__(y)
@@ -883,8 +885,8 @@ def _generate_keys(multi, dbname, kwargs2, reset_fields=None):
     if reset_fields is None:
         reset_fields = []
     def to_tuple(d):
-        pairs = d.items()
-        pairs.sort(key=lambda (k,v): k)
+        pairs = list(d.items())
+        pairs.sort(key=lambda k_v: k_v[0])
         for i, (k, v) in enumerate(pairs):
             if isinstance(v, dict):
                 pairs[i] = (k, to_tuple(v))
@@ -931,7 +933,7 @@ class cache(object):
         # Update named arguments with positional argument values (without self and cr)
         kwargs2 = self.fun_default_values.copy()
         kwargs2.update(kwargs)
-        kwargs2.update(dict(zip(self.fun_arg_names, args[self.skiparg-2:])))
+        kwargs2.update(dict(list(zip(self.fun_arg_names, args[self.skiparg-2:]))))
         return kwargs2
 
     def clear(self, dbname, *args, **kwargs):
@@ -959,7 +961,7 @@ class cache(object):
         self.fun_arg_names = argspec[0][self.skiparg:]
         self.fun_default_values = {}
         if argspec[3]:
-            self.fun_default_values = dict(zip(self.fun_arg_names[-len(argspec[3]):], argspec[3]))
+            self.fun_default_values = dict(list(zip(self.fun_arg_names[-len(argspec[3]):], argspec[3])))
 
         def cached_result(self2, cr, *args, **kwargs):
             if time.time()-int(self.timeout) > self.lasttime:
@@ -980,7 +982,7 @@ class cache(object):
 
             if notincache:
                 if self.multi:
-                    kwargs2[self.multi] = notincache.keys()
+                    kwargs2[self.multi] = list(notincache.keys())
 
                 result2 = fn(self2, cr, *args[:self.skiparg-2], **kwargs2)
                 if not self.multi:
@@ -1032,7 +1034,7 @@ class read_cache(object):
         # Update named arguments with positional argument values (without self and cr)
         kwargs2 = self.fun_default_values.copy()
         kwargs2.update(kwargs)
-        kwargs2.update(dict(zip(self.fun_arg_names, args)))
+        kwargs2.update(dict(list(zip(self.fun_arg_names, args))))
         return kwargs2
 
     def clear(self, dbname):
@@ -1091,7 +1093,7 @@ class read_cache(object):
         self.fun_arg_names = argspec[0][2:]
         self.fun_default_values = {}
         if argspec[3]:
-            self.fun_default_values = dict(zip(self.fun_arg_names[-len(argspec[3]):], argspec[3]))
+            self.fun_default_values = dict(list(zip(self.fun_arg_names[-len(argspec[3]):], argspec[3])))
 
         self._sort = None
 
@@ -1114,13 +1116,13 @@ class read_cache(object):
             if kwargs2['fields_to_read']:
                 fields_to_read = kwargs2['fields_to_read']
             else:
-                fields_to_read = self2._columns.keys()
+                fields_to_read = list(self2._columns.keys())
 
             # if no field is required => we return all the fields
             fields_pre = [f for f in fields_to_read if
                           f == self2.CONCURRENCY_CHECK_FIELD
                           or (f in self2._columns and getattr(self2._columns[f], '_classic_write'))
-                          ] + self2._inherits.values()
+                          ] + list(self2._inherits.values())
 
             include_sort = False
             fields_to_query = set(fields_to_read)
@@ -1131,7 +1133,7 @@ class read_cache(object):
             if fields_pre:
                 include_sort = True
 
-                fields_to_add = map(lambda x : x[1], order_by_clauses)
+                fields_to_add = [x[1] for x in order_by_clauses]
 
                 for field_to_add in fields_to_add:
                     if field_to_add not in fields_to_query:
@@ -1146,7 +1148,7 @@ class read_cache(object):
 
             # we have to check if we discard some values from the context
             simplified_context = {}
-            for key, value in previous_context.iteritems():
+            for key, value in previous_context.items():
                 if key in self._context:
                     simplified_context[key] = value
 
@@ -1159,7 +1161,7 @@ class read_cache(object):
                 cache_value = self.cache.get(key)
                 if cache_value is not None:
                     # we have to find if we have all the required fields in the cache
-                    fields_already_in_the_cache = cache_value[0].keys()
+                    fields_already_in_the_cache = list(cache_value[0].keys())
                     if set(fields_to_query).issubset(set(fields_already_in_the_cache)):
                         # all the values are already in the cache, we don't
                         #  have to ask the DB for more information
@@ -1176,7 +1178,7 @@ class read_cache(object):
                     notincache[int(id)] = key
 
             if notincache:
-                kwargs2['ids'] = notincache.keys()
+                kwargs2['ids'] = list(notincache.keys())
 
                 kwargs2['fields_to_read'] = fields_to_query
                 kwargs2['context'] = previous_context
@@ -1184,7 +1186,7 @@ class read_cache(object):
                 result2 = fn(self2, cr, **kwargs2)
 
                 # we have to add the new rows in the resultset
-                for id, value in map(lambda x : (x['id'], x), result2):
+                for id, value in [(x['id'], x) for x in result2]:
                     key = notincache[int(id)]
                     cache_value = self.cache.get(key)
                     if cache_value is not None:
@@ -1258,18 +1260,18 @@ def ustr(value, hint_encoding='utf-8'):
     if isinstance(value, Exception):
         return exception_to_unicode(value)
 
-    if isinstance(value, unicode):
+    if isinstance(value, str):
         return value
 
-    if not isinstance(value, basestring):
+    if not isinstance(value, str):
         try:
-            return unicode(value)
+            return str(value)
         except Exception:
             raise UnicodeError('unable to convert %r' % (value,))
 
     for ln in get_encodings(hint_encoding):
         try:
-            return unicode(value, ln)
+            return str(value, ln)
         except Exception:
             pass
     raise UnicodeError('unable to convert %r' % (value,))
@@ -1281,11 +1283,11 @@ def exception_to_unicode(e):
     try:
         return ustr(e)
     except Exception:
-        return u"Unknown message"
+        return "Unknown message"
 
 
 # to be compatible with python 2.4
-import __builtin__
+import builtins
 if not hasattr(__builtin__, 'all'):
     def all(iterable):
         for element in iterable:
@@ -1293,7 +1295,7 @@ if not hasattr(__builtin__, 'all'):
                 return False
         return True
 
-    __builtin__.all = all
+    builtins.all = all
     del all
 
 if not hasattr(__builtin__, 'any'):
@@ -1303,7 +1305,7 @@ if not hasattr(__builtin__, 'any'):
                 return True
         return False
 
-    __builtin__.any = any
+    builtins.any = any
     del any
 
 def get_iso_codes(lang):
@@ -1316,85 +1318,85 @@ def get_languages():
     # The codes below are those from Launchpad's Rosetta, with the exception
     # of some trivial codes where the Launchpad code is xx and we have xx_XX.
     languages={
-        'ab_RU': u'Abkhazian / аҧсуа',
-        'ar_AR': u'Arabic / الْعَرَبيّة',
-        'bg_BG': u'Bulgarian / български език',
-        'bs_BS': u'Bosnian / bosanski jezik',
-        'ca_ES': u'Catalan / Català',
-        'cs_CZ': u'Czech / Čeština',
-        'da_DK': u'Danish / Dansk',
-        'de_DE': u'German / Deutsch',
-        'el_GR': u'Greek / Ελληνικά',
-        'en_CA': u'English (CA)',
-        'en_GB': u'English (UK)',
-        'en_US': u'English (US)',
-        'es_AR': u'Spanish (AR) / Español (AR)',
-        'es_BO': u'Spanish (BO) / Español (BO)',
-        'es_CL': u'Spanish (CL) / Español (CL)',
-        'es_CO': u'Spanish (CO) / Español (CO)',
-        'es_CR': u'Spanish (CR) / Español (CR)',
-        'es_DO': u'Spanish (DO) / Español (DO)',
-        'es_EC': u'Spanish (EC) / Español (EC)',
-        'es_ES': u'Spanish / Español',
-        'es_GT': u'Spanish (GT) / Español (GT)',
-        'es_HN': u'Spanish (HN) / Español (HN)',
-        'es_MX': u'Spanish (MX) / Español (MX)',
-        'es_NI': u'Spanish (NI) / Español (NI)',
-        'es_PA': u'Spanish (PA) / Español (PA)',
-        'es_PE': u'Spanish (PE) / Español (PE)',
-        'es_PR': u'Spanish (PR) / Español (PR)',
-        'es_PY': u'Spanish (PY) / Español (PY)',
-        'es_SV': u'Spanish (SV) / Español (SV)',
-        'es_UY': u'Spanish (UY) / Español (UY)',
-        'es_VE': u'Spanish (VE) / Español (VE)',
-        'et_EE': u'Estonian / Eesti keel',
-        'fa_IR': u'Persian / فارس',
-        'fi_FI': u'Finnish / Suomi',
-        'fr_BE': u'French (BE) / Français (BE)',
-        'fr_CH': u'French (CH) / Français (CH)',
-        'fr_FR': u'French / Français',
-        'gl_ES': u'Galician / Galego',
-        'gu_IN': u'Gujarati / ગુજરાતી',
-        'he_IL': u'Hebrew / עִבְרִי',
-        'hi_IN': u'Hindi / हिंदी',
-        'hr_HR': u'Croatian / hrvatski jezik',
-        'hu_HU': u'Hungarian / Magyar',
-        'id_ID': u'Indonesian / Bahasa Indonesia',
-        'it_IT': u'Italian / Italiano',
-        'iu_CA': u'Inuktitut / ᐃᓄᒃᑎᑐᑦ',
-        'ja_JP': u'Japanese / 日本語',
-        'ko_KP': u'Korean (KP) / 한국어 (KP)',
-        'ko_KR': u'Korean (KR) / 한국어 (KR)',
-        'lt_LT': u'Lithuanian / Lietuvių kalba',
-        'lv_LV': u'Latvian / latviešu valoda',
-        'ml_IN': u'Malayalam / മലയാളം',
-        'mn_MN': u'Mongolian / монгол',
-        'nb_NO': u'Norwegian Bokmål / Norsk bokmål',
-        'nl_NL': u'Dutch / Nederlands',
-        'nl_BE': u'Flemish (BE) / Vlaams (BE)',
-        'oc_FR': u'Occitan (FR, post 1500) / Occitan',
-        'pl_PL': u'Polish / Język polski',
-        'pt_BR': u'Portugese (BR) / Português (BR)',
-        'pt_PT': u'Portugese / Português',
-        'ro_RO': u'Romanian / română',
-        'ru_RU': u'Russian / русский язык',
-        'si_LK': u'Sinhalese / සිංහල',
-        'sl_SI': u'Slovenian / slovenščina',
-        'sk_SK': u'Slovak / Slovenský jazyk',
-        'sq_AL': u'Albanian / Shqip',
-        'sr_RS': u'Serbian (Cyrillic) / српски',
-        'sr@latin': u'Serbian (Latin) / srpski',
-        'sv_SE': u'Swedish / svenska',
-        'te_IN': u'Telugu / తెలుగు',
-        'tr_TR': u'Turkish / Türkçe',
-        'vi_VN': u'Vietnamese / Tiếng Việt',
-        'uk_UA': u'Ukrainian / українська',
-        'ur_PK': u'Urdu / اردو',
-        'zh_CN': u'Chinese (CN) / 简体中文',
-        'zh_HK': u'Chinese (HK)',
-        'zh_TW': u'Chinese (TW) / 正體字',
-        'th_TH': u'Thai / ภาษาไทย',
-        'tlh_TLH': u'Klingon',
+        'ab_RU': 'Abkhazian / аҧсуа',
+        'ar_AR': 'Arabic / الْعَرَبيّة',
+        'bg_BG': 'Bulgarian / български език',
+        'bs_BS': 'Bosnian / bosanski jezik',
+        'ca_ES': 'Catalan / Català',
+        'cs_CZ': 'Czech / Čeština',
+        'da_DK': 'Danish / Dansk',
+        'de_DE': 'German / Deutsch',
+        'el_GR': 'Greek / Ελληνικά',
+        'en_CA': 'English (CA)',
+        'en_GB': 'English (UK)',
+        'en_US': 'English (US)',
+        'es_AR': 'Spanish (AR) / Español (AR)',
+        'es_BO': 'Spanish (BO) / Español (BO)',
+        'es_CL': 'Spanish (CL) / Español (CL)',
+        'es_CO': 'Spanish (CO) / Español (CO)',
+        'es_CR': 'Spanish (CR) / Español (CR)',
+        'es_DO': 'Spanish (DO) / Español (DO)',
+        'es_EC': 'Spanish (EC) / Español (EC)',
+        'es_ES': 'Spanish / Español',
+        'es_GT': 'Spanish (GT) / Español (GT)',
+        'es_HN': 'Spanish (HN) / Español (HN)',
+        'es_MX': 'Spanish (MX) / Español (MX)',
+        'es_NI': 'Spanish (NI) / Español (NI)',
+        'es_PA': 'Spanish (PA) / Español (PA)',
+        'es_PE': 'Spanish (PE) / Español (PE)',
+        'es_PR': 'Spanish (PR) / Español (PR)',
+        'es_PY': 'Spanish (PY) / Español (PY)',
+        'es_SV': 'Spanish (SV) / Español (SV)',
+        'es_UY': 'Spanish (UY) / Español (UY)',
+        'es_VE': 'Spanish (VE) / Español (VE)',
+        'et_EE': 'Estonian / Eesti keel',
+        'fa_IR': 'Persian / فارس',
+        'fi_FI': 'Finnish / Suomi',
+        'fr_BE': 'French (BE) / Français (BE)',
+        'fr_CH': 'French (CH) / Français (CH)',
+        'fr_FR': 'French / Français',
+        'gl_ES': 'Galician / Galego',
+        'gu_IN': 'Gujarati / ગુજરાતી',
+        'he_IL': 'Hebrew / עִבְרִי',
+        'hi_IN': 'Hindi / हिंदी',
+        'hr_HR': 'Croatian / hrvatski jezik',
+        'hu_HU': 'Hungarian / Magyar',
+        'id_ID': 'Indonesian / Bahasa Indonesia',
+        'it_IT': 'Italian / Italiano',
+        'iu_CA': 'Inuktitut / ᐃᓄᒃᑎᑐᑦ',
+        'ja_JP': 'Japanese / 日本語',
+        'ko_KP': 'Korean (KP) / 한국어 (KP)',
+        'ko_KR': 'Korean (KR) / 한국어 (KR)',
+        'lt_LT': 'Lithuanian / Lietuvių kalba',
+        'lv_LV': 'Latvian / latviešu valoda',
+        'ml_IN': 'Malayalam / മലയാളം',
+        'mn_MN': 'Mongolian / монгол',
+        'nb_NO': 'Norwegian Bokmål / Norsk bokmål',
+        'nl_NL': 'Dutch / Nederlands',
+        'nl_BE': 'Flemish (BE) / Vlaams (BE)',
+        'oc_FR': 'Occitan (FR, post 1500) / Occitan',
+        'pl_PL': 'Polish / Język polski',
+        'pt_BR': 'Portugese (BR) / Português (BR)',
+        'pt_PT': 'Portugese / Português',
+        'ro_RO': 'Romanian / română',
+        'ru_RU': 'Russian / русский язык',
+        'si_LK': 'Sinhalese / සිංහල',
+        'sl_SI': 'Slovenian / slovenščina',
+        'sk_SK': 'Slovak / Slovenský jazyk',
+        'sq_AL': 'Albanian / Shqip',
+        'sr_RS': 'Serbian (Cyrillic) / српски',
+        'sr@latin': 'Serbian (Latin) / srpski',
+        'sv_SE': 'Swedish / svenska',
+        'te_IN': 'Telugu / తెలుగు',
+        'tr_TR': 'Turkish / Türkçe',
+        'vi_VN': 'Vietnamese / Tiếng Việt',
+        'uk_UA': 'Ukrainian / українська',
+        'ur_PK': 'Urdu / اردو',
+        'zh_CN': 'Chinese (CN) / 简体中文',
+        'zh_HK': 'Chinese (HK)',
+        'zh_TW': 'Chinese (TW) / 正體字',
+        'th_TH': 'Thai / ภาษาไทย',
+        'tlh_TLH': 'Klingon',
     }
     return languages
 
@@ -1440,9 +1442,9 @@ def human_size(data):
     Return the size in a human readable format
     """
     units = ('Bytes', 'KB', 'MB', 'GB', 'TB')
-    if isinstance(data, basestring):
+    if isinstance(data, str):
         size = float(len(data))
-    elif isinstance(data, (int, long)):
+    elif isinstance(data, int):
         size = float(data)
     elif isinstance(data, float):
         size = data
@@ -1464,7 +1466,7 @@ def logged(f):
         vector = ['Call -> function: %r' % f]
         for i, arg in enumerate(args):
             vector.append('  arg %02d: %s' % (i, pformat(arg)))
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             vector.append('  kwarg %10s: %s' % (key, pformat(value)))
 
         timeb4 = time.time()
@@ -1493,7 +1495,7 @@ class profile(object):
                     self.result = f(*args, **kwargs)
             pw = profile_wrapper()
             import cProfile
-            fname = self.fname or ("%s.cprof" % (f.func_name,))
+            fname = self.fname or ("%s.cprof" % (f.__name__,))
             cProfile.runctx('pw()', globals(), locals(), filename=fname)
             return pw.result
 
@@ -1628,7 +1630,7 @@ def detect_ip_addr():
 
             # try 32 bit kernel:
             if ip_addr is None:
-                ifaces = filter(None, [namestr[i:i+32].split('\0', 1)[0] for i in range(0, outbytes, 32)])
+                ifaces = [_f for _f in [namestr[i:i+32].split('\0', 1)[0] for i in range(0, outbytes, 32)] if _f]
 
                 for ifname in [iface for iface in ifaces if iface != 'lo']:
                     ip_addr = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, pack('256s', ifname[:15]))[20:24])
@@ -1660,12 +1662,12 @@ def get_win32_timezone():
     res = False
     if (sys.platform == "win32"):
         try:
-            import _winreg
-            hklm = _winreg.ConnectRegistry(None,_winreg.HKEY_LOCAL_MACHINE)
-            current_tz_key = _winreg.OpenKey(hklm, r"SYSTEM\CurrentControlSet\Control\TimeZoneInformation", 0,_winreg.KEY_ALL_ACCESS)
-            res = str(_winreg.QueryValueEx(current_tz_key,"StandardName")[0])  # [0] is value, [1] is type code
-            _winreg.CloseKey(current_tz_key)
-            _winreg.CloseKey(hklm)
+            import winreg
+            hklm = winreg.ConnectRegistry(None,winreg.HKEY_LOCAL_MACHINE)
+            current_tz_key = winreg.OpenKey(hklm, r"SYSTEM\CurrentControlSet\Control\TimeZoneInformation", 0,winreg.KEY_ALL_ACCESS)
+            res = str(winreg.QueryValueEx(current_tz_key,"StandardName")[0])  # [0] is value, [1] is type code
+            winreg.CloseKey(current_tz_key)
+            winreg.CloseKey(hklm)
         except Exception:
             pass
     return res
@@ -1851,9 +1853,9 @@ class upload_data_thread(threading.Thread):
         super(upload_data_thread,self).__init__()
     def run(self):
         try:
-            import urllib
-            args = urllib.urlencode(self.args)
-            fp = urllib.urlopen('http://www.openerp.com/scripts/survey.php', args)
+            import urllib.request, urllib.parse, urllib.error
+            args = urllib.parse.urlencode(self.args)
+            fp = urllib.request.urlopen('http://www.openerp.com/scripts/survey.php', args)
             fp.read()
             fp.close()
         except Exception:
@@ -1921,7 +1923,7 @@ def float_uom_to_str(value, uom_obj):
     """
         round the value according to uom rounding attribute
     """
-    if not isinstance(value, (int, long, float)):
+    if not isinstance(value, (int, float)):
         return value
     digit = int(abs(math.log10(uom_obj.rounding)))
     return '%.*f' % (digit, value)

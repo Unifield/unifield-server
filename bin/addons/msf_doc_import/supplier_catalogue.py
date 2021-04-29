@@ -51,7 +51,7 @@ class supplier_catalogue(osv.osv):
                 return False
             elif type(content) == type(mx.DateTime.DateTime(1)):
                 return content.strftime('%Y-%m-%d')
-            elif isinstance(content, (str,unicode)):
+            elif isinstance(content, str):
                 return content.strip()
             return False
 
@@ -119,7 +119,7 @@ class supplier_catalogue(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         context['active_id'] = ids[0]

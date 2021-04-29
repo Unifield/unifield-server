@@ -35,7 +35,7 @@ class wizard_import_ir_line(osv.osv_memory):
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -64,7 +64,7 @@ class wizard_import_ir_line(osv.osv_memory):
             context = {}
         cr = pooler.get_db(dbname).cursor()
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         context.update({'import_in_progress': True, 'noraise': True})
@@ -107,7 +107,7 @@ class wizard_import_ir_line(osv.osv_memory):
             order_currency_code = fo_browse.functional_currency_id.name
             currency_index = 5
             rows = file_obj.getRows()
-            rows.next()  # skip header line
+            next(rows)  # skip header line
             try:
                 lines_to_correct = check_line.check_lines_currency(rows,
                                                                    currency_index, order_currency_code)
@@ -124,7 +124,7 @@ class wizard_import_ir_line(osv.osv_memory):
                 # iterator on rows
                 rows = file_obj.getRows()
                 # ignore the first row
-                rows.next()
+                next(rows)
                 for row in rows:
                     # default values
                     to_write = {
@@ -145,7 +145,7 @@ class wizard_import_ir_line(osv.osv_memory):
 
                     line_num += 1
                     col_count = len(row)
-                    template_col_count = len(header_index.items())
+                    template_col_count = len(list(header_index.items()))
                     if col_count != template_col_count and col_count != mandatory_col_count:
                         message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count, ','.join([_(f) for f in columns_for_ir_line_import]))
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -232,7 +232,7 @@ class wizard_import_ir_line(osv.osv_memory):
                             lines_to_correct += 1
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         complete_lines += 1
-                    except IndexError, e:
+                    except IndexError as e:
                         error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                         ignore_lines += 1
@@ -271,7 +271,7 @@ Importation completed in %s!
                 file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
                 wizard_vals.update(file_to_export)
             self.write(cr, uid, ids, wizard_vals, context=context)
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             if isinstance(e, osv.except_osv):
                 error = e.value
@@ -325,7 +325,7 @@ Otherwise, you can continue to use Unifield.""")
         """
         This button is only for updating the view.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         sale_obj = self.pool.get('sale.order')
         for wiz_read in self.read(cr, uid, ids, ['fo_id', 'state', 'file']):
@@ -340,7 +340,7 @@ Otherwise, you can continue to use Unifield.""")
         Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
         I come back on the home page. Here, I come back on the object on which I opened the wizard.
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['fo_id']):
             fo_id = wiz_obj['fo_id']
@@ -357,7 +357,7 @@ Otherwise, you can continue to use Unifield.""")
         '''
         Return to the initial view
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['fo_id']):
             fo_id = wiz_obj['fo_id']

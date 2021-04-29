@@ -28,9 +28,9 @@ import pooler
 
 import tools
 import addons
-import print_xml
-import render
-import urllib
+from . import print_xml
+from . import render
+import urllib.request, urllib.parse, urllib.error
 
 #
 # coerce any type to a unicode string (to preserve non-ascii characters)
@@ -44,8 +44,8 @@ class report_int(netsvc.Service):
     def __init__(self, name, audience='*'):
         assert not self.exists(name), 'The report "%s" already exists!' % name
         super(report_int, self).__init__(name, audience)
-        if name[0:7]<>'report.':
-            raise Exception, 'ConceptionError, bad report name, should start with "report."'
+        if name[0:7]!='report.':
+            raise Exception('ConceptionError, bad report name, should start with "report."')
         self.name = name
         self.id = 0
         self.name2 = '.'.join(name.split('.')[1:])
@@ -113,8 +113,8 @@ class report_rml(report_int):
         # find the position of the 3rd tag
         # (skip the <?xml ...?> and the "root" tag)
         iter = re.finditer('<[^>]*>', xml)
-        i = iter.next()
-        i = iter.next()
+        i = next(iter)
+        i = next(iter)
         pos_xml = i.end()
 
         doc = print_xml.document(cr, uid, {}, {})
@@ -125,7 +125,7 @@ class report_rml(report_int):
 
         # find the position of the tag after the <?xml ...?> tag
         iter = re.finditer('<[^>]*>', corporate_header)
-        i = iter.next()
+        i = next(iter)
         pos_header = i.end()
 
         return xml[:pos_xml] + corporate_header[pos_header:] + xml[pos_xml:]
@@ -153,7 +153,7 @@ class report_rml(report_int):
                 if 'href' in import_child.attrib:
                     imp_file = import_child.get('href')
                     _, imp_file = tools.file_open(imp_file, subdir=xsl_path, pathinfo=True)
-                    import_child.set('href', urllib.quote(str(imp_file)))
+                    import_child.set('href', urllib.parse.quote(str(imp_file)))
                     imp_file.close()
         finally:
             stylesheet_file.close()

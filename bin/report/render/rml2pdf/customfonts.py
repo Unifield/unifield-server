@@ -101,7 +101,7 @@ def FindCustomFonts():
     searchpath = []
 
     if config.get('fonts_search_path'):
-        searchpath += map(str.strip, config.get('fonts_search_path').split(','))
+        searchpath += list(map(str.strip, config.get('fonts_search_path').split(',')))
     elif config.get('root_path'):
         searchpath += '%s/fonts' % config.get('root_path').strip()
 

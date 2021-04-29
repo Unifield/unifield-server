@@ -97,14 +97,14 @@ class so_po_common(osv.osv_memory):
         In case FO is a split FO, then remove the suffix -x at the end
         '''
         if not original_fo_name:
-            raise Exception, "The FO name of in the data is empty --> Cannot retrieve the original PO!"
+            raise Exception("The FO name of in the data is empty --> Cannot retrieve the original PO!")
 
         if original_fo_name[-2] == '-' and original_fo_name[-1] in ['1', '2', '3']:
             original_fo_name = original_fo_name[:-2] # remove the suffix (-2/-3 at the end)
 
         ref = source + '.' + original_fo_name
         if not ref:
-            raise Exception, "PO reference format/value is invalid! (correct format: instance_name.po_name) " + ref
+            raise Exception("PO reference format/value is invalid! (correct format: instance_name.po_name) " + ref)
         return ref
 
     def get_original_po_id(self, cr, uid, source, so_info, context):
@@ -118,7 +118,7 @@ class so_po_common(osv.osv_memory):
         if ref:
             po_split = ref.split('.')
             if len(po_split) != 2:
-                raise Exception, "PO reference format/value is invalid! (correct format: instance_name.po_name) " + ref
+                raise Exception("PO reference format/value is invalid! (correct format: instance_name.po_name) " + ref)
             po_ids = po_object.search(cr, uid, [('name', '=', po_split[1])], context=context)
         else: # if not found, then retrieve it via the FO Name as reference
             ref = self.get_full_original_fo_ref(source, so_info.name)
@@ -185,7 +185,7 @@ class so_po_common(osv.osv_memory):
             return False
         so_split = so_ref.split('.')
         if len(so_split) != 2:
-            raise Exception, "The original sub-FO reference format/value is invalid! (correct format: instance_name.so_name) " + so_ref
+            raise Exception("The original sub-FO reference format/value is invalid! (correct format: instance_name.so_name) " + so_ref)
 
         if not context:
             context = {}
@@ -195,7 +195,7 @@ class so_po_common(osv.osv_memory):
             if context.get('restore_flag'): # UF-1830
                 return False # If it is a restore case, then just return False, and the system will search for the new replacement FO
             else:
-                raise Exception, "The original sub-FO does not exist! " + so_split[1]
+                raise Exception("The original sub-FO does not exist! " + so_split[1])
 
         return so_ids[0]
 
@@ -287,7 +287,7 @@ class so_po_common(osv.osv_memory):
             if ana_id:
                 return ana_id
             # UTP-1177: If the AD is given but not valid, stop the process of the message and set the message not run
-            raise Exception, "Sorry the given analytic distribution " + analytic_id['id'] + " is not available. Cannot proceed this message!"
+            raise Exception("Sorry the given analytic distribution " + analytic_id['id'] + " is not available. Cannot proceed this message!")
         return False
 
     def create_sync_order_label(self, cr, uid, data_dict, context=None):
@@ -695,7 +695,7 @@ class so_po_common(osv.osv_memory):
                     continue
 
             if (po_id or so_id) and not sync_order_line_db_id: # this updates the PO or SO -> the sync_order_line_db_id must exist
-                raise Exception, "The field sync_order_line_db_id is missing - please check the relevant message rule!"
+                raise Exception("The field sync_order_line_db_id is missing - please check the relevant message rule!")
             if not po_id and line_dict.get('cancel_split_ok'):
                 continue
 
@@ -723,7 +723,7 @@ class so_po_common(osv.osv_memory):
         if msg_err_not_found:
             raise Exception(msg_err_not_found.strip())
 
-        for sync_order_line_db_id, line_values in split_bypass_lines.iteritems():
+        for sync_order_line_db_id, line_values in split_bypass_lines.items():
             for line_vals in line_values:
                 for polts in self.pool.get('purchase.order.line.to.split').browse(cr, uid, line_vals[0], context=context):
                     if polts.sync_order_line_db_id not in update_lines_sync_order_ids:
@@ -785,7 +785,7 @@ class so_po_common(osv.osv_memory):
         warehouse_obj = self.pool.get('stock.warehouse')
         warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
         if not warehouse_ids:
-            raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
+            raise Exception("No valid warehouse location found for the PO! The PO cannot be created.")
         return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
 
     def create_message_with_object_and_partner(self, cr, real_uid, rule_sequence, object_id, partner, context,usb=False):

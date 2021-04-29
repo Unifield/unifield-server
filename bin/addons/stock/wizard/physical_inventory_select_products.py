@@ -256,7 +256,7 @@ class physical_inventory_select_products(osv.osv_memory):
 
         # Keep only products for which stock != 0 (including negative ones)
         products_in_stock = set([p_id
-                                 for p_id, stock in stocks.items()
+                                 for p_id, stock in list(stocks.items())
                                  if stock != 0.0])
 
         return products_in_stock
@@ -264,7 +264,7 @@ class physical_inventory_select_products(osv.osv_memory):
     def get_products_with_recent_moves_at_location(self, cr, uid, location_id, recent_moves_months, context=None):
         context = context if context else {}
 
-        if isinstance(recent_moves_months, (str,unicode)):
+        if isinstance(recent_moves_months, str):
             recent_moves_months = int(recent_moves_months)
         assert isinstance(location_id, int)
         assert isinstance(recent_moves_months, int)
@@ -322,7 +322,7 @@ class physical_inventory_select_products(osv.osv_memory):
         domain_filter = [('id', 'in', list(product_ids))]
 
         # Add nomenclature to the domain
-        for name, value in nomenclature.items():
+        for name, value in list(nomenclature.items()):
             domain_filter = ['&'] + domain_filter + [(name, '=', value)]
 
         # Perform the search/fitlering

@@ -63,8 +63,8 @@ INTEGRITY_STATUS_SELECTION = [
     ('not_exist_in_picking', _('Does not exist in selected IN/OUT')),
 ] + PACK_INTEGRITY_STATUS_SELECTION
 
-import msf_outgoing
-import wizard
-import report
+from . import msf_outgoing
+from . import wizard
+from . import report
 
 

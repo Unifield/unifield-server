@@ -19,10 +19,10 @@
 #
 ##############################################################################
 
-import change_dest_location
-import stock_analyze_view
-import stock_card_wizard
-import stock_invoice_onshipping
+from . import change_dest_location
+from . import stock_analyze_view
+from . import stock_card_wizard
+from . import stock_invoice_onshipping
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

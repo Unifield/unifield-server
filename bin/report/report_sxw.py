@@ -19,20 +19,20 @@
 #
 ##############################################################################
 from lxml import etree
-import StringIO
-import cStringIO
+import io
+import io
 import base64
 from datetime import datetime
 import os
 import re
 import time
-from interface import report_rml
-import preprocess
+from .interface import report_rml
+from . import preprocess
 import logging
 import pooler
 import tools
 import zipfile
-import common
+from . import common
 import math
 from osv.fields import float as float_class, function as function_class
 
@@ -387,7 +387,7 @@ class rml_parse(object):
         """format using the know cursor, language from localcontext"""
         if digits is None:
             digits = self.get_digits(value)
-        if isinstance(value, (str, unicode)) and not value:
+        if isinstance(value, str) and not value:
             return ''
         pool_lang = self.pool.get('res.lang')
         lang = self.localcontext['lang']
@@ -434,7 +434,7 @@ class rml_parse(object):
             else:
                 digits = self.get_digits(value)
 
-        if isinstance(value, (str, unicode)) and not value:
+        if isinstance(value, str) and not value:
             return ''
 
         if not self.lang_dict_called:
@@ -575,7 +575,7 @@ class report_sxw(report_rml, preprocess.report):
                 report_type= data.get('report_type', 'pdf')
                 class a(object):
                     def __init__(self, *args, **argv):
-                        for key,arg in argv.items():
+                        for key,arg in list(argv.items()):
                             setattr(self, key, arg)
                 report_xml = a(title=title, report_type=report_type, report_rml_content=rml, name=title, attachment=False, header=self.header)
             finally:
@@ -592,7 +592,7 @@ class report_sxw(report_rml, preprocess.report):
         elif report_type=='mako2html':
             fnct = self.create_source_mako2html
         else:
-            raise 'Unknown Report Type'
+            raise Exception('Unknown Report Type')
         fnct_ret = fnct(cr, uid, ids, data, report_xml, context)
         if not fnct_ret:
             return (False,False)
@@ -647,13 +647,13 @@ class report_sxw(report_rml, preprocess.report):
                 results.append(result)
             if results:
                 if results[0][1]=='pdf':
-                    from pyPdf import PdfFileWriter, PdfFileReader
+                    from .pyPdf import PdfFileWriter, PdfFileReader
                     output = PdfFileWriter()
                     for r in results:
-                        reader = PdfFileReader(cStringIO.StringIO(r[0]))
+                        reader = PdfFileReader(io.StringIO(r[0]))
                         for page in range(reader.getNumPages()):
                             output.addPage(reader.getPage(page))
-                    s = cStringIO.StringIO()
+                    s = io.StringIO()
                     output.write(s)
                     return s.getvalue(), results[0][1]
         return self.create_single_pdf(cr, uid, ids, data, report_xml, context)
@@ -701,7 +701,7 @@ class report_sxw(report_rml, preprocess.report):
         # See also osv.fields.sanitize_binary_value()
         binary_report_content = report_xml.report_sxw_content.encode("latin1")
 
-        sxw_io = StringIO.StringIO(binary_report_content)
+        sxw_io = io.StringIO(binary_report_content)
         sxw_z = zipfile.ZipFile(sxw_io, mode='r')
         rml = sxw_z.read('content.xml')
         meta = sxw_z.read('meta.xml')

@@ -86,7 +86,7 @@ instance_level = _get_instance_level()
 
 def create_rules():
     # create rules to benchmark against
-    print '... creating %s rules' % options.rules
+    print('... creating %s rules' % options.rules)
     field_access_rule_ids = field_access_rule_pool.search([('name','like','benchmark_users_')])
     
     if field_access_rule_ids:
@@ -130,15 +130,15 @@ def create_rules():
         field_access_rule_pool.unlink(field_access_rule_ids)
         raise
     
-    print '... done'
+    print('... done')
     return field_access_rule_ids
 
 # init create
 def create():
     # save timestamp
     start = datetime.datetime.now()
-    print '========================================================'
-    print 'STARTING %s CREATES AS %s' % (options.iterations, options.username)
+    print('========================================================')
+    print('STARTING %s CREATES AS %s' % (options.iterations, options.username))
     
     created_user_ids = []
     
@@ -154,10 +154,10 @@ def create():
     # print time taken
     end = datetime.datetime.now()
     time_taken = end - start
-    print 'TIME TAKEN TO PERFORM %s CREATES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
+    print('TIME TAKEN TO PERFORM %s CREATES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds))
     per_create_time_taken = time_taken / options.iterations
-    print '1 CREATE = %s.%06d (seconds)' % (per_create_time_taken.seconds, per_create_time_taken.microseconds)
-    print '========================================================'
+    print('1 CREATE = %s.%06d (seconds)' % (per_create_time_taken.seconds, per_create_time_taken.microseconds))
+    print('========================================================')
     
     # delete created users
     user_pool.unlink(created_user_ids)
@@ -183,8 +183,8 @@ def write():
     
     # save timestamp
     start = datetime.datetime.now()
-    print '========================================================'
-    print 'STARTING %s WRITES AS %s' % (options.iterations, options.username)
+    print('========================================================')
+    print('STARTING %s WRITES AS %s' % (options.iterations, options.username))
     
     # loop write
     even_data = {'user_email':'benchmark1@test.com'}
@@ -199,10 +199,10 @@ def write():
     # print time taken
     end = datetime.datetime.now()
     time_taken = end - start
-    print 'TIME TAKEN TO PERFORM %s WRITES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
+    print('TIME TAKEN TO PERFORM %s WRITES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds))
     per_write_time_taken = time_taken / options.iterations
-    print '1 WRITE = %s.%06d (seconds)' % (per_write_time_taken.seconds, per_write_time_taken.microseconds)
-    print '========================================================'
+    print('1 WRITE = %s.%06d (seconds)' % (per_write_time_taken.seconds, per_write_time_taken.microseconds))
+    print('========================================================')
     
     # delete test user
     user_pool.unlink([user_id])
@@ -213,8 +213,8 @@ def write():
 def fvg():
     # save timestamp
     start = datetime.datetime.now()
-    print '========================================================'
-    print 'STARTING %s FIELDS_VIEW_GET AS %s' % (options.iterations, options.username)
+    print('========================================================')
+    print('STARTING %s FIELDS_VIEW_GET AS %s' % (options.iterations, options.username))
     
     # make requests in loop
     for i in range(0, options.iterations):
@@ -223,10 +223,10 @@ def fvg():
     # print time taken
     end = datetime.datetime.now()
     time_taken = end - start
-    print 'TIME TAKEN TO PERFORM %s FIELDS_VIEW_GET: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
+    print('TIME TAKEN TO PERFORM %s FIELDS_VIEW_GET: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds))
     per_fvg_time_taken = time_taken / options.iterations
-    print '1 FVG = %s.%06d (seconds)' % (per_fvg_time_taken.seconds, per_fvg_time_taken.microseconds)
-    print '========================================================'
+    print('1 FVG = %s.%06d (seconds)' % (per_fvg_time_taken.seconds, per_fvg_time_taken.microseconds))
+    print('========================================================')
     
     return per_fvg_time_taken
     
@@ -271,9 +271,9 @@ if options.fvg:
     
 # cleanup
 if field_access_rule_ids:
-    print '... deleting %s rules' % options.rules
+    print('... deleting %s rules' % options.rules)
     field_access_rule_pool.unlink(field_access_rule_ids)
-    print '... done'
+    print('... done')
 
 # display graphs
 x = [0,1]

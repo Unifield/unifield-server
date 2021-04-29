@@ -200,8 +200,8 @@ class ir_translation(osv.osv):
         # FIXME: should assert that `source` is unicode and fix all callers to always pass unicode
         # so we can remove the string encoding/decoding.
         if not lang:
-            return u''
-        if isinstance(types, basestring):
+            return ''
+        if isinstance(types, str):
             types = (types,)
 
         if source:
@@ -223,7 +223,7 @@ class ir_translation(osv.osv):
                            AND name=%s""",
                        (lang or '', types, tools.ustr(name)))
         res = cr.fetchone()
-        trad = res and res[0] or u''
+        trad = res and res[0] or ''
         if source and not trad:
             if false_if_no_trad:
                 return False
@@ -283,7 +283,7 @@ class ir_translation(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # US-145 : translation must limited to object limitation
@@ -315,7 +315,7 @@ class ir_translation(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for trans_obj in self.read(cr, uid, ids, ['name','type','res_id','src','lang'], context=context):
@@ -327,7 +327,7 @@ class ir_translation(osv.osv):
     def unlink(self, cursor, user, ids, clear=True, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if clear:
             for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):

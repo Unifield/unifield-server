@@ -80,7 +80,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         '''
         Return the number of lines in the PO
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -95,7 +95,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         '''
         Return the number of lines after the import
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -113,7 +113,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -278,7 +278,7 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         try:
             return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
-        except Exception, e:
+        except Exception as e:
             if e[0] == 'ConcurrencyException':
                 return True
             else:
@@ -294,7 +294,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         datas = {}
@@ -312,7 +312,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         '''
         Go back to PO
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
@@ -330,7 +330,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         '''
         Display the simulation screen
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if ids and self.browse(cr, uid, ids, context=context)[0].state == 'done':
@@ -366,7 +366,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         '''
         Launch the simulation routine in background
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
@@ -693,7 +693,7 @@ class wizard_import_po_simulation_screen(osv.osv):
             if context is None:
                 context = {}
 
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
 
             for wiz in self.browse(cr, uid, ids, context=context):
@@ -760,7 +760,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                 '''
                 # Check number of columns on lines
 
-                for x in xrange(1, nb_file_header_lines+1):
+                for x in range(1, nb_file_header_lines+1):
                     nb_to_check = 2
                     if x > NB_OF_HEADER_LINES and x <= nb_file_header_lines:
                         continue
@@ -777,7 +777,7 @@ mandatory and must have at least %s columns. The values on this line must be the
 of the field for PO lines.') % (first_line_index, nb_file_lines_columns)
                     file_format_errors.append(error_msg)
 
-                for x in xrange(first_line_index, len(values)+1):
+                for x in range(first_line_index, len(values)+1):
                     if len(values.get(x, [])) < nb_file_lines_columns:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The line \
@@ -939,7 +939,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
 
                 found_wiz_lines = {}
                 # Loop on lines
-                for x in xrange(first_line_index+1, len(values)+1):
+                for x in range(first_line_index+1, len(values)+1):
 
                     nb_treated_lines += 1
                     percent_completed = int(float(nb_treated_lines) / float(nb_file_lines) * 100)
@@ -1081,7 +1081,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                         values_line_errors.append(_('Line %s of the PO: %s') % (line_number, err1))
                         continue
 
-                    if isinstance(wiz_line_ids, (int, long)):
+                    if isinstance(wiz_line_ids, int):
                         found_wiz_lines[wiz_line_ids] = True
                     else:
                         for line_id in wiz_line_ids:
@@ -1141,7 +1141,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
             cr.commit()
             cr.close(True)
 
-        except Exception, e:
+        except Exception as e:
             logging.getLogger('po.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'state': 'error', 'message': "Unknown error:\n%s\n---\n%s" % (e, tools.misc.get_traceback(e))}, context=context)
             cr.commit()
@@ -1163,7 +1163,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
         '''
         Launch the simulation routine in background
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         active_wiz = self.browse(cr, uid, ids, fields_to_fetch=['state', 'order_id'], context=context)[0]
@@ -1215,7 +1215,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         cr = pooler.get_db(dbname).cursor()
@@ -1247,7 +1247,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
 
             cr.commit()
             cr.close(True)
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             logging.getLogger('po.simulation.run').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
@@ -1269,7 +1269,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         '''
         Get values for each lines
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
 
@@ -1355,7 +1355,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         Return the str of the line according to the line number or nothing
         if the line number is 0
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -1457,7 +1457,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         '''
         Display the error message
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -1478,7 +1478,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         sale_obj = self.pool.get('sale.order')
         sync_order_obj = self.pool.get('sync.order.label')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         errors = []
@@ -1786,7 +1786,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         nb_lines = float(len(ids))
         line_treated = 0.00
@@ -1925,7 +1925,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
                 cr.commit()
 
-            except Exception, e:
+            except Exception as e:
                 cr.rollback()
                 job_comment = context.get('job_comment', [])
                 error_msg = hasattr(e, 'value') and e.value or e.message

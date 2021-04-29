@@ -147,7 +147,7 @@ class stock_move(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         item_obj = self.pool.get('composition.item')
@@ -308,7 +308,7 @@ class stock_move(osv.osv):
         """
         Link the shipment where a stock move is to this stock move
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -326,7 +326,7 @@ class stock_move(osv.osv):
         """
         Return the list of stock.move to update
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -345,10 +345,10 @@ class stock_move(osv.osv):
             result[d['id']] = d['product_id'][0]
 
         # get the virtual stock identified by product ids
-        virtual = self.pool.get('product.product')._product_available(cr, uid, result.values(), field_names, arg, context)
+        virtual = self.pool.get('product.product')._product_available(cr, uid, list(result.values()), field_names, arg, context)
 
         # replace product ids by corresponding stock move id
-        result = dict([move_id, virtual[result[move_id]]] for move_id in result.keys())
+        result = dict([move_id, virtual[result[move_id]]] for move_id in list(result.keys()))
         return result
 
     def _get_qty_per_pack(self, cr, uid, ids, field, arg, context=None):
@@ -870,7 +870,7 @@ class stock_move(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context= {}
@@ -1260,7 +1260,7 @@ class stock_move(osv.osv):
         if return_goods:
             return []
 
-        for picking, todo in self._chain_compute(cr, uid, moves, context=context).items():
+        for picking, todo in list(self._chain_compute(cr, uid, moves, context=context).items()):
             ptype = todo[0][1][5] and todo[0][1][5] or location_obj.picking_type_get(cr, uid, todo[0][0].location_dest_id, todo[0][1][0])
             if picking:
                 # name of new picking according to its type
@@ -1326,7 +1326,7 @@ class stock_move(osv.osv):
             context = {}
         if vals is None:
             vals = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # check qty > 0 or raise
@@ -1364,7 +1364,7 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         ir_data = self.pool.get('ir.model.data')
@@ -1398,7 +1398,7 @@ class stock_move(osv.osv):
         """ Changes the state to confirmed.
         @return: True
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1732,7 +1732,7 @@ class stock_move(osv.osv):
 
         if not context.get('call_unlink',False):
             picking_to_write = []
-            for pick in pick_obj.read(cr, uid, pickings.keys(), ['move_lines']):
+            for pick in pick_obj.read(cr, uid, list(pickings.keys()), ['move_lines']):
                 # if all movement are in cancel state:
                 if not self.search_exist(cr, uid, [('id', 'in', pick['move_lines']), ('state', '!=', 'cancel'),]):
                     picking_to_write.append(pick['id'])
@@ -1743,7 +1743,7 @@ class stock_move(osv.osv):
             wf_service.trg_trigger(uid, 'stock.move', id, cr)
 
         # cancel remaining qty on OUT must close the IR/FO line
-        for sol_id in  sol_ids_to_check.keys():
+        for sol_id in  list(sol_ids_to_check.keys()):
             wf_service.trg_write(uid, 'sale.order.line', sol_id, cr)
 
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
@@ -1877,7 +1877,7 @@ class stock_move(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         todo = self.search(cr, uid,
@@ -1941,7 +1941,7 @@ class stock_move(osv.osv):
     def unlink(self, cr, uid, ids, context=None, force=False):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         tools_obj = self.pool.get('sequence.tools')
@@ -2011,7 +2011,7 @@ class stock_move(osv.osv):
         """
         wiz_obj = self.pool.get('split.move.processor')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         line = self.browse(cr, uid, ids[0], fields_to_fetch=['product_uom', 'product_qty'], context=context)
@@ -2072,7 +2072,7 @@ class stock_move(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # objects
@@ -2158,7 +2158,7 @@ class stock_move(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Check the allocation setup
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
@@ -2189,7 +2189,7 @@ class stock_move(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         todo = []
@@ -2268,7 +2268,7 @@ class stock_move(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # create corresponding wizard object (containing processing logic)
@@ -2287,7 +2287,7 @@ class stock_move(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         kit_creation_id = False
@@ -2348,7 +2348,7 @@ class stock_move(osv.osv):
     def is_out_move_linked_to_dpo(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
         move = self.browse(cr, uid, ids[0], context=context)
         if move.sale_line_id:
@@ -2399,7 +2399,7 @@ class stock_move(osv.osv):
         Update the linked documents of a stock move to another one
         '''
         context = context or {}
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        ids = isinstance(ids, int) and [ids] or ids
 
         for move_id in ids:
             pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('move_dest_id', '=', move_id)], context=context)

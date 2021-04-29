@@ -21,13 +21,13 @@ if not tools.config.options['logfile'] and tools.config.options['log_level'] <= 
         logger.debug("beware that the current transaction will be aborted.")
         logger.debug("if you really want to commit, call cr.commit()")
         try:
-            import urllib2
-            import HTMLParser
+            import urllib.request, urllib.error, urllib.parse
+            import html.parser
             import json
             
-            logger.debug( '>> ' + HTMLParser.HTMLParser().unescape(
+            logger.debug( '>> ' + html.parser.HTMLParser().unescape(
                 json.loads(
-                        urllib2.urlopen('http://api.icndb.com/jokes/random?limitTo=[nerdy]').read().decode('utf-8')
+                        urllib.request.urlopen('http://api.icndb.com/jokes/random?limitTo=[nerdy]').read().decode('utf-8')
                     )['value']['joke']) )
         except:
             logger.exception()

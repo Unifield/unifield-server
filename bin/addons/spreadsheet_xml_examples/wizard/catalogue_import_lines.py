@@ -68,7 +68,7 @@ class catalogue_import_lines_xls(osv.osv_memory):
         reader = fileobj.getRows()
 
         # ingore the first row
-        reader.next()
+        next(reader)
         line_num = 1
         for row in reader:
             line_num += 1

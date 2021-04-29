@@ -28,7 +28,7 @@ from time import strftime
 from time import strptime
 
 from account_override import finance_export
-import hq_report_ocb_matching
+from . import hq_report_ocb_matching
 
 from report import report_sxw
 

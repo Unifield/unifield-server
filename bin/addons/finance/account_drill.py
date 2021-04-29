@@ -54,14 +54,14 @@ class AccountDrillNode(object):
     def get_currencies(self):
         if not self.data:
             return []
-        return sorted([ c for c in self.data.keys() if c != '*' ])
+        return sorted([ c for c in list(self.data.keys()) if c != '*' ])
 
     def output(self):
         """
         output node infos for debug purposes
         """
         indent = ' ' * self.level if self.level > 2 else ''
-        print "%s%d\n" % (indent, self.account_id, )
+        print("%s%d\n" % (indent, self.account_id, ))
         for c in self.childs:
             c.output()
 

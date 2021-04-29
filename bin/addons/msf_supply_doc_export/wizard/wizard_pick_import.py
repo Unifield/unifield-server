@@ -74,7 +74,7 @@ class wizard_pick_import(osv.osv_memory):
         if 'qty_to_process' in data:  # set to float
             if not data['qty_to_process']:
                 data['qty_to_process'] = 0.0
-            if isinstance(data['qty_to_process'], (str,unicode)):
+            if isinstance(data['qty_to_process'], str):
                 try:
                     data['qty_to_process'] = float(data['qty_to_process'])
                 except:
@@ -85,7 +85,7 @@ class wizard_pick_import(osv.osv_memory):
         if 'qty' in data:  # set to float
             if not data['qty']:
                 data['qty'] = 0.0
-            if isinstance(data['qty'], (str,unicode)):
+            if isinstance(data['qty'], str):
                 try:
                     data['qty'] = float(data['qty'])
                 except:

@@ -47,15 +47,15 @@
 import os
 import uno
 import unohelper
-import xmlrpclib
+import xmlrpc.client
 import base64
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from lib.error import ErrorDialog
-    from lib.tools import *
-    from LoginTest import *
-    from lib.rpc import *
+if __name__!="package":
+    from .lib.gui import *
+    from .lib.error import ErrorDialog
+    from .lib.tools import *
+    from .LoginTest import *
+    from .lib.rpc import *
     database="test"
     uid = 3
 
@@ -81,7 +81,7 @@ class AddAttachment(unohelper.Base, XJobExecutor ):
         self.password = passwd
         global url
         self.sock=RPCSession(url)
-        if docinfo.getUserFieldValue(2) <> "" and docinfo.getUserFieldValue(3) <> "":
+        if docinfo.getUserFieldValue(2) != "" and docinfo.getUserFieldValue(3) != "":
             self.win = DBModalDialog(60, 50, 180, 70, "Add Attachment to Server")
             self.win.addFixedText("lblResourceType", 2 , 5, 100, 10, "Select Appropriate Resource Type:")
             self.win.addComboListBox("lstResourceType", -2, 25, 176, 15,True)
@@ -105,11 +105,11 @@ class AddAttachment(unohelper.Base, XJobExecutor ):
 
                 ids =self.sock.execute(database, uid, self.password, 'base.report.model' , 'search', [])
                 res = self.sock.execute(database, uid, self.password, 'base.report.model' , 'read', ids, ['name','model_id'])
-                models = self.sock.execute(database, uid, self.password, 'ir.model' , 'read', map(lambda x:x['model_id'][0], res), ['model'])
-                models = dict(map(lambda x:(x['id'],x['model']), models))
-                self.dModel = dict(map(lambda x: (x['name'],models[x['model_id'][0]]), res))
+                models = self.sock.execute(database, uid, self.password, 'ir.model' , 'read', [x['model_id'][0] for x in res], ['model'])
+                models = dict([(x['id'],x['model']) for x in models])
+                self.dModel = dict([(x['name'],models[x['model_id'][0]]) for x in res])
 
-            for item in self.dModel.keys():
+            for item in list(self.dModel.keys()):
                 self.lstModel.addItem(item, self.lstModel.getItemCount())
 
             self.win.addFixedText("lblSearchName",2 , 25, 60, 10, "Enter Search String:")
@@ -126,11 +126,11 @@ class AddAttachment(unohelper.Base, XJobExecutor ):
             self.win.addButton('btnOkWithInformation', -2 , -5, 25 , 15,'OK' ,actionListenerProc = self.btnOkWithInformation_clicked )
 
         self.lstResourceType = self.win.getControl( "lstResourceType" )
-        for kind in self.Kind.keys():
+        for kind in list(self.Kind.keys()):
             self.lstResourceType.addItem( kind, self.lstResourceType.getItemCount() )
 
         self.win.addButton('btnCancel', -2 - 27 , -5 , 30 , 15, 'Cancel' ,actionListenerProc = self.btnCancel_clicked )
-        self.win.doModalDialog("lstResourceType", self.Kind.keys()[0])
+        self.win.doModalDialog("lstResourceType", list(self.Kind.keys())[0])
 
     def btnSearch_clicked( self, oActionEvent ):
         modelSelectedItem = self.win.getListBoxSelectedItem("lstmodel")
@@ -262,7 +262,7 @@ class AddAttachment(unohelper.Base, XJobExecutor ):
             # Can be None if len(strFilterSubName) <= 0
             return filename
 
-    def _MakePropertyValue(self, cName = "", uValue = u"" ):
+    def _MakePropertyValue(self, cName = "", uValue = "" ):
        oPropertyValue = createUnoStruct( "com.sun.star.beans.PropertyValue" )
        if cName:
           oPropertyValue.Name = cName
@@ -271,7 +271,7 @@ class AddAttachment(unohelper.Base, XJobExecutor ):
        return oPropertyValue
 
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     AddAttachment(None)
 elif __name__=="package":
     g_ImplementationHelper.addImplementation( AddAttachment, "org.openoffice.openerp.report.addattachment", ("com.sun.star.task.Job",),)

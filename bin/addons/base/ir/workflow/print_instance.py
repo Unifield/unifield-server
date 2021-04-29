@@ -24,6 +24,7 @@ import os
 import netsvc
 import report,tools
 from operator import itemgetter
+from functools import reduce
 
 def graph_get(cr, graph, wkf_ids, nested, workitem, processed_subflows):
     import pydot
@@ -128,7 +129,7 @@ class report_graph_instance(object):
         logger = netsvc.Logger()
         try:
             import pydot
-        except Exception,e:
+        except Exception as e:
             logger.notifyChannel('workflow', netsvc.LOG_WARNING,
                                  'Import Error for pydot, you will not be able to render workflows\n'
                                  'Consider Installing PyDot or dependencies: http://dkbza.org/pydot.html')
@@ -166,9 +167,9 @@ showpage'''
                         inst_id = inst_id[0]
                         graph_instance_get(cr, graph, inst_id, data.get('nested', False))
                     ps_string = graph.create(prog='dot', format='ps')
-        except Exception, e:
+        except Exception as e:
             import traceback, sys
-            tb_s = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            tb_s = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             logger.notifyChannel('workflow', netsvc.LOG_ERROR, 'Exception in call: ' + tb_s)
             # string is in PS, like the success message would have been
             ps_string = '''%PS-Adobe-3.0

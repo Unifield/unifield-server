@@ -31,7 +31,7 @@
 
 from osv import osv, fields
 import netsvc
-from webkit_report import WebKitParser
+from .webkit_report import WebKitParser
 from report.report_sxw import rml_parse
 
 def register_report(name, model, tmpl_path, parser=rml_parse):
@@ -99,7 +99,7 @@ class ReportXML(osv.osv):
         "Edit report and manage it registration"
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids,]
         for rep in self.browse(cr, uid, ids, context=context):
             if rep.report_type != 'webkit':

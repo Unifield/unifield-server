@@ -54,10 +54,10 @@ class stock_production_lot(osv.osv):
         else:
             locations = context['location_id'] or []
 
-        if isinstance(locations, (int, long)):
+        if isinstance(locations, int):
             locations = [locations]
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}.fromkeys(ids, 0.0)
@@ -87,7 +87,7 @@ class stock_production_lot(osv.osv):
         else:
             locations = context['location_id'] or []
 
-        if isinstance(locations, (int, long)):
+        if isinstance(locations, int):
             locations = [locations]
 
         ids = [('id', 'in', [])]
@@ -101,7 +101,7 @@ class stock_production_lot(osv.osv):
                     location_id IN %s group by prodlot_id
                 having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))  # not_a_user_entry
             res = cr.fetchall()
-            ids = [('id', 'in', map(lambda x: x[0], res))]
+            ids = [('id', 'in', [x[0] for x in res])]
         return ids
 
     def remove_flag(self, flag, _list):
@@ -148,7 +148,7 @@ class stock_production_lot(osv.osv):
         '''
         return false for each id
         '''
-        if isinstance(ids,(long, int)):
+        if isinstance(ids,int):
             ids = [ids]
 
         result = {}
@@ -180,14 +180,14 @@ class stock_production_lot(osv.osv):
                     location_id IN %s group by prodlot_id
                 having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))  # not_a_user_entry
             res = cr.fetchall()
-            ids = [('id', 'in', map(lambda x: x[0], res))]
+            ids = [('id', 'in', [x[0] for x in res])]
         return ids
 
     def _parse_context_location_id(self, cr, uid, context=None):
         if context:
             location_id = context.get('location_id', False)
             if location_id:
-                if isinstance(location_id, (str, unicode)):
+                if isinstance(location_id, str):
                     location_id = [int(id) for id in location_id.split(',')]
 
                 if context.get('location_dive', False):
@@ -215,7 +215,7 @@ class stock_production_lot(osv.osv):
             context = {}
         self._parse_context_location_id(cr, uid, context=context)
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # when the location_id = False results now in showing stock for all internal locations
@@ -225,7 +225,7 @@ class stock_production_lot(osv.osv):
         else:
             locations = context['location_id'] or []
 
-        if isinstance(locations, (int, long)):
+        if isinstance(locations, int):
             locations = [locations]
 
         res = {}.fromkeys(ids, 0.0)
@@ -290,7 +290,7 @@ class stock_production_lot(osv.osv):
         res = {}
         context = context is None and {} or context
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for batch in self.read(cr, uid, ids, ['life_date'], context=context):
@@ -301,7 +301,7 @@ class stock_production_lot(osv.osv):
         return res
 
     def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for id in ids:
@@ -320,7 +320,7 @@ class stock_production_lot(osv.osv):
         return res
 
     def _get_has_stock_move(self, cr, uid, ids, field_name, arg, context=None):
-        if isinstance(ids,(long, int)):
+        if isinstance(ids,int):
             ids = [ids]
         if context is None:
             context = {}
@@ -339,7 +339,7 @@ class stock_production_lot(osv.osv):
         if context.get('full'):  # Prevent to display the location's complete_name
             context.pop('full')
         for _id in ids:
-            res[_id] = context['location_id'] if isinstance(context.get('location_id'), (int, long)) else False
+            res[_id] = context['location_id'] if isinstance(context.get('location_id'), int) else False
 
         return res
 
@@ -615,7 +615,7 @@ class stock_production_lot(osv.osv):
         '''
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         revision_obj = self.pool.get('stock.production.lot.revision')
@@ -646,7 +646,7 @@ class stock_production_lot(osv.osv):
                 view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
                 if view:
                     view_id = view[1]
-            if context.get('location_id') and isinstance(context['location_id'], (int, long)):
+            if context.get('location_id') and isinstance(context['location_id'], int):
                 has_location = True
 
         result = super(stock_production_lot, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)

@@ -46,20 +46,20 @@ must have these values: Shipper, Consignee.
 There should also be a blank line between the main header and the lines header.
 The lines columns at the line 10 should be in this values:""")
 
-import tender
-import purchase_order
-import sale_order
-import initial_stock_inventory
-import stock_cost_reevaluation
-import product_list
-import composition_kit
-import check_line
-import wizard
-import import_tools
-import composition_kit
-import account
-import stock_picking
-import product_list
-import supplier_catalogue
-import report
-import msf_import_export
+from . import tender
+from . import purchase_order
+from . import sale_order
+from . import initial_stock_inventory
+from . import stock_cost_reevaluation
+from . import product_list
+from . import composition_kit
+from . import check_line
+from . import wizard
+from . import import_tools
+from . import composition_kit
+from . import account
+from . import stock_picking
+from . import product_list
+from . import supplier_catalogue
+from . import report
+from . import msf_import_export

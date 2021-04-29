@@ -78,7 +78,7 @@ class msf_accrual_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         distrib_obj = self.pool.get('analytic.distribution')
@@ -201,7 +201,7 @@ class msf_accrual_line(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
         self._create_write_set_vals(cr, uid, vals, context=context)
         # US-192 check doc date regarding post date
@@ -215,7 +215,7 @@ class msf_accrual_line(osv.osv):
     def button_cancel(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         period_obj = self.pool.get('account.period')
         move_obj = self.pool.get('account.move')
@@ -354,7 +354,7 @@ class msf_accrual_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse lines
         for line in self.browse(cr, uid, ids, context=context):
@@ -376,7 +376,7 @@ class msf_accrual_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         accrual_line = self.browse(cr, uid, ids[0], context=context)

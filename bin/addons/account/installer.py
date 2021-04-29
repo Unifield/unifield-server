@@ -369,7 +369,7 @@ class account_installer(osv.osv_memory):
         #reactivate the parent_store functionality on account_account
         obj_acc._parent_store_compute(cr)
 
-        for key, value in todo_dict.items():
+        for key, value in list(todo_dict.items()):
             if value['account_collected_id'] or value['account_paid_id']:
                 obj_acc_tax.write(cr, uid, [key], {
                     'account_collected_id': acc_template_ref[value['account_collected_id']],

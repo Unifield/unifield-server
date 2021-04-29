@@ -115,9 +115,9 @@ class account_bank_statement(osv.osv):
             res[statement.id] = currency.id
         currency_names = {}
         for currency_id, currency_name in res_currency_obj.name_get(cursor,
-                                                                    user, [x for x in res.values()], context=context):
+                                                                    user, [x for x in list(res.values())], context=context):
             currency_names[currency_id] = currency_name
-        for statement_id in res.keys():
+        for statement_id in list(res.keys()):
             currency_id = res[statement_id]
             res[statement_id] = (currency_id, currency_names[currency_id])
         return res

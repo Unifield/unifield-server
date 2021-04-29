@@ -33,6 +33,6 @@ RFQ_LINE_STATE_DISPLAY_SELECTION = RFQ_STATE_SELECTION + [
     ('cancel_r', 'Cancelled-r'),
 ]
 
-import tender_flow
-import wizard
-import report
+from . import tender_flow
+from . import wizard
+from . import report

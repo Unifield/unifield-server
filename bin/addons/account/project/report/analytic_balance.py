@@ -120,7 +120,7 @@ class account_analytic_balance(report_sxw.rml_parse):
 
     def _sum_all(self, accounts, date1, date2, option):
         account_analytic_obj = self.pool.get('account.analytic.account')
-        ids = map(lambda x: x['id'], accounts)
+        ids = [x['id'] for x in accounts]
         if not ids:
             return 0.0
 

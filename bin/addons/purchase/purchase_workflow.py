@@ -13,7 +13,7 @@ class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
 
     def validated(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -84,7 +84,7 @@ class purchase_order_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
@@ -103,7 +103,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return True
 
@@ -114,7 +114,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
@@ -135,7 +135,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, fields_to_fetch=['price_unit'], context=context):
@@ -150,7 +150,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context['from_back_sync'] = True
         for pol in self.browse(cr, uid, ids, context=context):
@@ -339,10 +339,10 @@ class purchase_order_line(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not fo_id:
-            raise Exception, "No parent Sale Order given for the new Sale Order line"
+            raise Exception("No parent Sale Order given for the new Sale Order line")
         if isinstance(fo_id, list):
             fo_id = fo_id[0]
 
@@ -436,10 +436,10 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
-            raise Exception, "No PO line given"
+            raise Exception("No PO line given")
 
         # load common data into context:
         self.pool.get('data.tools').load_common_data(cr, uid, ids, context=context)
@@ -514,7 +514,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -569,7 +569,7 @@ class purchase_order_line(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self.write(cr, uid, ids, {'state': 'validated_n'}, context=context)
 
@@ -593,7 +593,7 @@ class purchase_order_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for po_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'taxes_id'], context=context):
             if po_line.taxes_id and po_line.order_id.partner_type in ('intermission', 'section'):
@@ -603,7 +603,7 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         to_complete_ids = self.search(cr, uid, [('id', 'in', ids), ('from_fo', '=', True), ('origin', '=', False), ('sync_linked_sol', '=', False)])
@@ -624,7 +624,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         # checks before validating the line:
@@ -673,7 +673,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -694,7 +694,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -714,7 +714,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
@@ -728,7 +728,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
@@ -830,7 +830,7 @@ class purchase_order_line(osv.osv):
         # create or update the linked commitment voucher:
         self.create_or_update_commitment_voucher(cr, uid, ids, context=context)
         if pol_to_invoice:
-            self.generate_invoice(cr, uid, pol_to_invoice.keys(), context=context)
+            self.generate_invoice(cr, uid, list(pol_to_invoice.keys()), context=context)
 
         return True
 
@@ -841,7 +841,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -872,7 +872,7 @@ class purchase_order_line(osv.osv):
                 wf_service.trg_write(uid, 'sale.order.line', sol_id_to_check, cr)
 
         if pol_to_invoice:
-            self.generate_invoice(cr, uid, pol_to_invoice.keys(), context=context)
+            self.generate_invoice(cr, uid, list(pol_to_invoice.keys()), context=context)
         return True
 
 
@@ -882,7 +882,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         sol_obj = self.pool.get('sale.order.line')
@@ -906,7 +906,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         sol_obj = self.pool.get('sale.order.line')
@@ -940,7 +940,7 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         po = self.browse(cr, uid, ids[0], context=context)
@@ -955,7 +955,7 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pol_obj = self.pool.get('purchase.order.line')
@@ -989,7 +989,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 

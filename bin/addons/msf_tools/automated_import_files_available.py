@@ -52,7 +52,7 @@ class automated_import_files_available(osv.osv_memory):
     def on_change_display_info(self, cr, uid, ids, import_id, po_id, in_id, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not import_id:

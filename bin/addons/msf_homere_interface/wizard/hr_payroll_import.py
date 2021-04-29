@@ -153,10 +153,10 @@ class hr_payroll_import(osv.osv_memory):
             data[i] = data[i].strip()
         if len(data) == 13:
             accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
-                financing_contract, date, currency, project, analytic_line = zip(data)
+                financing_contract, date, currency, project, analytic_line = list(zip(data))
         else:
             accounting_code, description, second_description, third,  expense, receipt, project, financing_line, \
-                financing_contract, date, currency, axis1, analytic_line, axis2, analytic_line2 = zip(data)
+                financing_contract, date, currency, axis1, analytic_line, axis2, analytic_line2 = list(zip(data))
 
             # get active cc and dest args before searching
             aaa_obj = self.pool.get('account.analytic.account')
@@ -539,8 +539,8 @@ class hr_payroll_import(osv.osv_memory):
                 # Read information from 'envoi.ini' file
                 field = False
                 try:
-                    import ConfigParser
-                    Config = ConfigParser.SafeConfigParser()
+                    import configparser
+                    Config = configparser.SafeConfigParser()
                     ini_desc = zipobj.open('envoi.ini', 'r', xyargv)
                     is_bom = ini_desc.read(3)
                     if is_bom != codecs.BOM_UTF8:
@@ -556,7 +556,7 @@ class hr_payroll_import(osv.osv_memory):
                 for csvfile in csvfiles:
                     try:
                         reader = csv.reader(zipobj.open(csvfile, 'r', xyargv), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
-                        reader.next()
+                        next(reader)
                     except:
                         fileobj.close()
                         raise osv.except_osv(_('Error'), _('Problem to read given file.'))

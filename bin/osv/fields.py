@@ -33,7 +33,7 @@
 #
 import datetime as DT
 import warnings
-import xmlrpclib
+import xmlrpc.client
 from psycopg2 import Binary
 
 import tools
@@ -42,7 +42,7 @@ from tools.translate import _
 def _symbol_set(symb):
     if symb == None or symb == False:
         return None
-    elif isinstance(symb, unicode):
+    elif isinstance(symb, str):
         return symb.encode('utf-8')
     return str(symb)
 
@@ -184,12 +184,12 @@ class char(_column):
 class text(_column):
     _type = 'text'
 
-import __builtin__
+import builtins
 
 class float(_column):
     _type = 'float'
     _symbol_c = '%s'
-    _symbol_f = lambda x: __builtin__.float(x or 0.0)
+    _symbol_f = lambda x: builtins.float(x or 0.0)
     _symbol_set = (_symbol_c, _symbol_f)
     _symbol_get = lambda self,x: x or 0.0
 
@@ -205,7 +205,7 @@ class float(_column):
     def digits_change(self, cr):
         if self.digits_compute:
             t = self.digits_compute(cr)
-            self._symbol_set=('%s', lambda x: ('%.'+str(t[1])+'f') % (__builtin__.float(x or 0.0),))
+            self._symbol_set=('%s', lambda x: ('%.'+str(t[1])+'f') % (builtins.float(x or 0.0),))
             self.digits = t
 
             # new customized fields
@@ -216,7 +216,7 @@ class float_null(float):
     _type = 'float'
     _with_null = True
     _symbol_c = '%s'
-    _symbol_f = lambda x: None if x is False or x is None else __builtin__.float(x or  0.0)
+    _symbol_f = lambda x: None if x is False or x is None else builtins.float(x or  0.0)
     _symbol_set = (_symbol_c, _symbol_f)
     _symbol_get = lambda self,x: None if x is False or x is None else x or 0.0
 
@@ -303,11 +303,11 @@ class binary(_column):
             if val and context.get('bin_size_%s' % name,
                                    context.get('bin_size')):
                 size = val
-                if not isinstance(size, long):
+                if not isinstance(size, int):
                     if isinstance(size, str):
-                        size = long(__builtin__.float(val))
-                    elif isinstance(size, (int, __builtin__.float)):
-                        size = long(size)
+                        size = int(builtins.float(val))
+                    elif isinstance(size, (int, builtins.float)):
+                        size = int(size)
                 res[i] = tools.human_size(size)
             else:
                 res[i] = val
@@ -402,7 +402,7 @@ class many2one(_column):
         # we use uid=1 because the visibility of a many2one field value (just id and name)
         # must be the access right of the parent form and not the linked object itself.
         records = dict(obj.name_get(cr, 1,
-                                    list(set([x for x in res.values() if isinstance(x, (int,long))])),
+                                    list(set([x for x in list(res.values()) if isinstance(x, int)])),
                                     context=context))
         for id in res:
             if res[id] in records:
@@ -492,7 +492,7 @@ class one2many(_column):
             elif act[0] == 4:
                 obj.datas[act[1]][self._fields_id] = id
             elif act[0] == 5:
-                for o in obj.datas.values():
+                for o in list(obj.datas.values()):
                     if o[self._fields_id] == id:
                         o[self._fields_id] = False
             elif act[0] == 6:
@@ -542,7 +542,7 @@ class one2many(_column):
                 context['no_store_function'] = True
                 act[2][self._fields_id] = id
                 id_new = obj.create(cr, user, act[2], context=context)
-                result += obj._store_get_values(cr, user, [id_new], act[2].keys(), context)
+                result += obj._store_get_values(cr, user, [id_new], list(act[2].keys()), context)
             elif act[0] == 1:
                 obj.write(cr, user, [act[1]], act[2], context=context)
             elif act[0] == 2:
@@ -557,11 +557,11 @@ class one2many(_column):
                 obj.write(cr, user, act[2], {self._fields_id:id}, context=context or {})
                 ids2 = act[2] or [0]
                 cr.execute('select id from '+_table+' where '+self._fields_id+'=%s and id <> ALL (%s)', (id,ids2))  # not_a_user_entry
-                ids3 = map(lambda x:x[0], cr.fetchall())
+                ids3 = [x[0] for x in cr.fetchall()]
                 obj.write(cr, user, ids3, {self._fields_id:False}, context=context or {})
             elif act[0] == 7:
                 # same a (4, id1), (4, id2), (4, id3) ... but with a single SQL query
-                if isinstance(act[1], (int, long)):
+                if isinstance(act[1], int):
                     act[1] = [act[1]]
                 cr.execute('update '+_table+' set '+self._fields_id+'=%s where id in %s', (id, tuple(act[1])))  # not_a_user_entry
 
@@ -734,7 +734,7 @@ class many2many(_column):
 
 def get_nice_size(a):
     (x,y) = a
-    if isinstance(y, (int,long)):
+    if isinstance(y, int):
         size = y
     elif y:
         size = len(y)
@@ -747,7 +747,7 @@ def sanitize_binary_value(dict_item):
     # but we do additional sanity checks to make sure the values
     # are not something else that won't pass via xmlrpc
     index, value = dict_item
-    if isinstance(value, (xmlrpclib.Binary, tuple, list, dict)):
+    if isinstance(value, (xmlrpc.client.Binary, tuple, list, dict)):
         # these builtin types are meant to pass untouched
         return index, value
 
@@ -846,7 +846,7 @@ class function(_column):
     def digits_change(self, cr):
         if self.digits_compute:
             t = self.digits_compute(cr)
-            self._symbol_set=('%s', lambda x: ('%.'+str(t[1])+'f') % (__builtin__.float(x or 0.0),))
+            self._symbol_set=('%s', lambda x: ('%.'+str(t[1])+'f') % (builtins.float(x or 0.0),))
             self.digits = t
 
             # new customized fields
@@ -881,27 +881,27 @@ class function(_column):
 
         if self._type == "many2one" :
             # Filtering only integer/long values if passed
-            res_ids = [x for x in res.values() if x and isinstance(x, (int,long))]
+            res_ids = [x for x in list(res.values()) if x and isinstance(x, int)]
 
             if res_ids:
                 obj_model = obj.pool.get(self._obj)
                 dict_names = dict(obj_model.name_get(cr, user, res_ids, context))
-                for r in res.keys():
+                for r in list(res.keys()):
                     if res[r] and res[r] in dict_names:
                         res[r] = (res[r], dict_names[res[r]])
 
         elif self._type == 'binary':
             if context.get('bin_size', False):
                 # client requests only the size of binary fields
-                res = dict(map(get_nice_size, res.items()))
+                res = dict(list(map(get_nice_size, list(res.items()))))
             else:
-                res = dict(map(sanitize_binary_value, res.items()))
+                res = dict(list(map(sanitize_binary_value, list(res.items()))))
 
         elif self._type == "integer":
-            for r in res.keys():
+            for r in list(res.keys()):
                 # Converting value into string so that it does not affect XML-RPC Limits
                 if isinstance(res[r],dict): # To treat integer values with _multi attribute
-                    for record in res[r].keys():
+                    for record in list(res[r].keys()):
                         res[r][record] = str(res[r][record])
                 else:
                     res[r] = str(res[r])
@@ -931,7 +931,7 @@ class related(function):
             else:
                 where = [(self._arg[i], '=', sarg)]
             if domain:
-                where = map(lambda x: (self._arg[i],x[1], x[2]), domain)
+                where = [(self._arg[i],x[1], x[2]) for x in domain]
                 domain = []
             sarg = obj.pool.get(self._relations[i]['object']).search(cr, uid, where, context=context)
             i -= 1
@@ -997,7 +997,7 @@ class related(function):
             elif t_data:
                 res[data.id] = t_data
         if self._type=='many2one':
-            ids = filter(None, res.values())
+            ids = [_f for _f in list(res.values()) if _f]
             if ids:
                 ng = dict(obj.pool.get(self._obj).name_get(cr, 1, ids, context=context))
                 for r in res:
@@ -1154,7 +1154,7 @@ class property(function):
                     res[prop.res_id.id][prop.fields_id.name] = False
 
         for rep in replaces:
-            nids = obj.pool.get(rep).search(cr, uid, [('id','in',replaces[rep].keys())], context=context)
+            nids = obj.pool.get(rep).search(cr, uid, [('id','in',list(replaces[rep].keys()))], context=context)
             replaces[rep] = dict(obj.pool.get(rep).name_get(cr, uid, nids, context=context))
 
         for prop in prop_name:

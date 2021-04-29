@@ -174,7 +174,7 @@ class kit_mass_import(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         tkc_values = {}
@@ -210,7 +210,7 @@ class kit_mass_import(osv.osv):
                   #9: Product UoM (if not set, take the Product Default UoM)
                   #10: Product Comments
                 """
-                for line, val in values.iteritems():
+                for line, val in values.items():
                     vval = val[3]
                     if isinstance(val[3], str):
                         vval = val[3].strip()
@@ -265,7 +265,7 @@ class kit_mass_import(osv.osv):
         warning_index = set()
         error_msg = {}
         error_index = set()
-        for line, val in values.iteritems():
+        for line, val in values.items():
             if not val or len(val) < 8:
                 error_index.add(line)
                 error_msg.setdefault(line, [])
@@ -416,7 +416,7 @@ class kit_mass_import(osv.osv):
         error_msg = {}
         log_msg = []
 
-        for values in kit_values.itervalues():
+        for values in kit_values.values():
             warning = False
             # Create the Theoretical Kit
             kit_product_id = self._get_product(

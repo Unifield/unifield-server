@@ -263,7 +263,7 @@ class hq_entries_split(osv.osv_memory):
     def create(self, cr, uid, vals, context=None):
         # BKLG-77: check transation at wiz creation (done by hq.entries model)
         line_ids = context and context.get('active_ids', []) or []
-        if isinstance(line_ids, (int, long)):
+        if isinstance(line_ids, int):
             line_ids = [line_ids]
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
                                                                line_ids, self._name, context=context)

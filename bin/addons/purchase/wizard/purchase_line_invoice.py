@@ -145,9 +145,9 @@ class purchase_line_invoice(osv.osv_memory):
                     invoices[line.partner_id.id].append((line,inv_id))
 
             res = []
-            for result in invoices.values():
-                il = map(lambda x: x[1], result)
-                orders = list(set(map(lambda x : x[0].order_id, result)))
+            for result in list(invoices.values()):
+                il = [x[1] for x in result]
+                orders = list(set([x[0].order_id for x in result]))
 
                 res.append(make_invoice_by_partner(orders[0].partner_id, orders, il))
 

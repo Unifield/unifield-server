@@ -32,7 +32,7 @@ class TranslationToolsTestCase(unittest.TestCase):
             #print "2:", repr(quoted)
             unquoted = unquote("".join(quoted.split('"\n"')))
             #print "3:", repr(unquoted)
-            self.assertEquals(str, unquoted)
+            self.assertEqual(str, unquoted)
 
         test_string("""test \nall kinds\n \n o\r
          \\\\ nope\n\n"

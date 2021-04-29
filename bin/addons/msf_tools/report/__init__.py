@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import report_stopped_products
-import report_inconsistencies
-import report_stock_pipe_per_product_instance
+from . import report_stopped_products
+from . import report_inconsistencies
+from . import report_stock_pipe_per_product_instance

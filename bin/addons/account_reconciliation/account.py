@@ -23,6 +23,7 @@
 
 from osv import osv
 import time
+from functools import reduce
 
 class account_move_reconcile(osv.osv):
     _name = "account.move.reconcile"
@@ -38,7 +39,7 @@ class account_move_reconcile(osv.osv):
                 total += (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
         if not total:
             self.pool.get('account.move.line').write(cr, uid,
-                                                     map(lambda x: x.id, rec.line_partial_ids), {
+                                                     [x.id for x in rec.line_partial_ids], {
                                                          'reconcile_id': rec.id,
                                                          'reconcile_date': time.strftime('%Y-%m-%d'),  # US-533 date of JI reconciliation
                                                          # US-1868 reset unreconcilation date and unreconcile_txt

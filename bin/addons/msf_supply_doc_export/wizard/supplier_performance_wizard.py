@@ -132,7 +132,7 @@ class supplier_performance_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pol_obj = self.pool.get('purchase.order.line')
@@ -184,7 +184,7 @@ class supplier_performance_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.get_values(cr, uid, ids, context=context)

@@ -5,7 +5,7 @@ from tools.misc import file_open
 from tools.misc import Path
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
-from report import report_sxw
+from .report import report_sxw
 import os
 import netsvc
 import pooler

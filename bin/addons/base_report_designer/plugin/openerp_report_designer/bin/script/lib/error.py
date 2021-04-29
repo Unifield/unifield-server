@@ -45,8 +45,8 @@
 #
 ##############################################################################
 
-if __name__<>"package":
-    from gui import *
+if __name__!="package":
+    from .gui import *
 class ErrorDialog:
     def __init__(self,sErrorMsg, sErrorHelpMsg="",sTitle="Error Message"):
         self.win = DBModalDialog(50, 50, 150, 90, sTitle)

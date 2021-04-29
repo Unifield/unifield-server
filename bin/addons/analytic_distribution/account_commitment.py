@@ -44,7 +44,7 @@ class account_commitment(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -164,7 +164,7 @@ class account_commitment(osv.osv):
             return True
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         aal_obj = self.pool.get('account.analytic.line')
         curr_obj = self.pool.get('res.currency')
@@ -238,7 +238,7 @@ class account_commitment(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         new_ids = []
         # Check that elements are in done state
@@ -257,7 +257,7 @@ class account_commitment(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         commitment = self.browse(cr, uid, ids[0], context=context)
@@ -305,7 +305,7 @@ class account_commitment(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         commit_obj = self.pool.get(self._name + '.line')
@@ -330,7 +330,7 @@ class account_commitment(osv.osv):
             context = {}
         if context.get('active_ids', False):
             ids = context.get('active_ids')
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         valid_ids = []
@@ -377,7 +377,7 @@ class account_commitment(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse commitments
         for c in self.browse(cr, uid, ids, context=context):
@@ -409,7 +409,7 @@ class account_commitment(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse commitments and create analytic lines
         self.create_analytic_lines(cr, uid, ids, context=context)
@@ -423,7 +423,7 @@ class account_commitment(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse commitments
         for c in self.browse(cr, uid, ids, context=context):
@@ -458,7 +458,7 @@ class account_commitment_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -474,7 +474,7 @@ class account_commitment_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for co in self.browse(cr, uid, ids, context=context):
@@ -526,7 +526,7 @@ class account_commitment_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         for cl in self.browse(cr, uid, ids, context=context):
@@ -649,7 +649,7 @@ class account_commitment_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No invoice line given. Please save your commitment voucher line before.'))

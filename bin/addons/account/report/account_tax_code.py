@@ -53,9 +53,9 @@ class account_tax_code_report(report_sxw.rml_parse):
         line_ids = self.pool.get('account.move.line').search(self.cr, self.uid, [('tax_code_id','=',obj.id)])
         if not line_ids: return []
 
-        return map(_record_to_report_line,
+        return list(map(_record_to_report_line,
                    self.pool.get('account.move.line')\
-                       .browse(self.cr, self.uid, line_ids))
+                       .browse(self.cr, self.uid, line_ids)))
 
 report_sxw.report_sxw('report.account.tax.code.entries', 'account.tax.code',
     'addons/account/report/account_tax_code.rml', parser=account_tax_code_report, header="internal")

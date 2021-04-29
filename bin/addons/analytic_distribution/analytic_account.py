@@ -23,8 +23,8 @@ import datetime
 from osv import fields
 from osv import osv
 from tools.translate import _
-from destination_tools import many2many_sorted
-from destination_tools import many2many_notlazy
+from .destination_tools import many2many_sorted
+from .destination_tools import many2many_notlazy
 from tools.misc import flatten
 
 class analytic_account(osv.osv):
@@ -71,7 +71,7 @@ class analytic_account(osv.osv):
         Return ids (analytic accounts) that are blocked by a contract (just FP1)
         """
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = []
@@ -109,7 +109,7 @@ class analytic_account(osv.osv):
             if sql_res:
                 aa_ids = self.is_blocked_by_a_contract(cr, uid, [x and x[0] for x in sql_res])
                 if aa_ids:
-                    if isinstance(aa_ids, (int, long)):
+                    if isinstance(aa_ids, int):
                         aa_ids = [aa_ids]
                     res = [('id', 'not in', aa_ids)]
         return res

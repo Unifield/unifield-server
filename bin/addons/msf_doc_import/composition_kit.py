@@ -24,7 +24,7 @@ from osv import fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-import check_line
+from . import check_line
 
 
 class composition_kit(osv.osv):
@@ -32,7 +32,7 @@ class composition_kit(osv.osv):
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -68,7 +68,7 @@ class composition_kit(osv.osv):
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         item_kit_id = ids[0]
 
@@ -91,7 +91,7 @@ class composition_kit(osv.osv):
         rows = fileobj.getRows()
 
         # ignore the first row
-        rows.next()
+        next(rows)
         line_num = 1
         to_write = {}
         for row in rows:
@@ -165,7 +165,7 @@ Module, Product Code*, Product Description, Quantity, Product UOM, Comment, B.Nu
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         item_kit_id = ids[0]
 
@@ -190,7 +190,7 @@ Module, Product Code*, Product Description, Quantity, Product UOM, Comment, B.Nu
         rows = fileobj.getRows()
 
         # ignore the first row
-        rows.next()
+        next(rows)
         line_num = 1
         to_write = {}
         for row in rows:
@@ -304,7 +304,7 @@ class composition_item(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

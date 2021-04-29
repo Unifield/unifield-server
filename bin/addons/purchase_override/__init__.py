@@ -1,5 +1,5 @@
 
 
-import purchase
-import report
-import wizard
+from . import purchase
+from . import report
+from . import wizard

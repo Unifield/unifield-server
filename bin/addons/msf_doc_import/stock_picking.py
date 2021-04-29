@@ -111,7 +111,7 @@ class stock_picking(osv.osv):
             for index, row in enumerate(file_obj.getRows()):
                 if row.cells[0].data == 'Origin':
                     po_name = row.cells[1].data or ''
-                    if isinstance(po_name, (str,unicode)):
+                    if isinstance(po_name, str):
                         po_name = po_name.strip()
                     if not po_name:
                         raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
@@ -290,7 +290,7 @@ class stock_picking(osv.osv):
                 'datas': base64.encodestring(file_content),
             })
             import_success = True
-        except Exception, e:
+        except Exception as e:
             raise e
 
 
@@ -302,7 +302,7 @@ class stock_picking(osv.osv):
         '''
         Export the template file in Excel or Pure XML format
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pick = self.browse(cr, uid, ids[0], context=context)
@@ -329,7 +329,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         context.update({'active_id': ids[0]})
@@ -367,7 +367,7 @@ class stock_picking(osv.osv):
     def export_ppl(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids,(int,long)):
+        if isinstance(ids,int):
             ids = [ids]
 
         return {
@@ -386,7 +386,7 @@ class stock_picking(osv.osv):
 
         context = context is None and {} or context
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         context.update({'active_id': ids[0]})
@@ -416,7 +416,7 @@ class stock_picking(osv.osv):
                 }
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         message = ''

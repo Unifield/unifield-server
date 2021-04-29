@@ -21,7 +21,7 @@
 import time
 import pooler
 from report import report_sxw
-from common_report_header import common_report_header
+from .common_report_header import common_report_header
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
@@ -123,9 +123,9 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             for account in accounts:
                 if (account.user_type.report_type) and (account.user_type.report_type == typ):
                     currency = account.currency_id and account.currency_id or account.company_id.currency_id
-                    if typ == 'expense' and account.type <> 'view' and (account.debit <> account.credit):
+                    if typ == 'expense' and account.type != 'view' and (account.debit != account.credit):
                         self.result_sum_dr += account.debit - account.credit
-                    if typ == 'income' and account.type <> 'view' and (account.debit <> account.credit):
+                    if typ == 'income' and account.type != 'view' and (account.debit != account.credit):
                         self.result_sum_cr += account.debit - account.credit
                     if data['form']['display_account'] == 'bal_movement':
                         if (not currency_pool.is_zero(self.cr, self.uid, currency, account.credit)) or (not currency_pool.is_zero(self.cr, self.uid, currency, account.debit)) or (not currency_pool.is_zero(self.cr, self.uid, currency, account.balance)):

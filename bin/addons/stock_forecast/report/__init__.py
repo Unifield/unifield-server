@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import stock_forecast
+from . import stock_forecast
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

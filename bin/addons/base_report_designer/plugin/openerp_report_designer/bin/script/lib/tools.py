@@ -19,10 +19,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 def get_absolute_file_path( url ):
-	url_unquoted = urllib.unquote(url)
+	url_unquoted = urllib.parse.unquote(url)
 	return os.name == 'nt' and url_unquoted[1:] or url_unquoted 
 
 # This function reads the content of a file and return it to the caller

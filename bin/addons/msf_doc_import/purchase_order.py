@@ -107,7 +107,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -188,7 +188,7 @@ class purchase_order(osv.osv):
             for index, row in enumerate(file_obj.getRows()):
                 if row.cells[0].data == 'Order Reference*':
                     po_name = row.cells[1].data or ''
-                    if isinstance(po_name, (str,unicode)):
+                    if isinstance(po_name, str):
                         po_name = po_name.strip()
                     if not po_name:
                         raise osv.except_osv(_('Error'), _('Field "Order Reference*" shouldn\'t be empty'))
@@ -220,7 +220,7 @@ class purchase_order(osv.osv):
     def create_simu_screen_wizard(self, cr, uid, ids, file_content, filetype, file_path, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         simu_id = self.pool.get('wizard.import.po.simulation.screen').create(cr, uid, {
@@ -268,7 +268,7 @@ class purchase_order(osv.osv):
         if filetype == 'excel':
             values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_excel(cr, uid, base64.encodestring(file_content), context=context)
             header = values.get(23)
-            for key in sorted([k for k in values.keys() if k > 23]):
+            for key in sorted([k for k in list(values.keys()) if k > 23]):
                 if import_success:
                     processed.append( (key, values[key]) )
                 else:
@@ -276,7 +276,7 @@ class purchase_order(osv.osv):
         else:
             values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.encodestring(file_content), context=context)
             header = [x.replace('_', ' ').title() for x in values.get(23)]
-            for key in sorted([k for k in values.keys() if k > 23]):
+            for key in sorted([k for k in list(values.keys()) if k > 23]):
                 if import_success:
                     processed.append( (key, values[key]) )
                 else:
@@ -327,7 +327,7 @@ class purchase_order(osv.osv):
                 'datas': file_res.get('result'),
             })
             import_success = True
-        except Exception, e:
+        except Exception as e:
             raise e
 
         return self.get_processed_rejected_header(cr, uid, filetype, file_content, import_success, context=context)
@@ -534,7 +534,7 @@ class purchase_order(osv.osv):
         '''
         wiz_obj = self.pool.get('wizard.export.po.validated')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz_id = wiz_obj.create(cr, uid, {'order_id': ids[0]}, context=context)
@@ -553,7 +553,7 @@ class purchase_order(osv.osv):
         :param prefix: prefix of the file (POV for PO Validated, etc)
         :return POV_14_OC_MW101_PO00060_YYYY_MM_DD.xls or POV_14_OC_MW101_PO00060_YYYY_MM_DD.xml
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
             return False
@@ -573,7 +573,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         datas = {
@@ -600,7 +600,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         datas = {
@@ -626,7 +626,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         context.update({'active_id': ids[0]})
 
@@ -669,7 +669,7 @@ class purchase_order(osv.osv):
         """
         Check both the lines that need to be corrected and also that the supplier or the address is not 'To be defined'
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         message = ''
         plural = ''
@@ -690,7 +690,7 @@ class purchase_order(osv.osv):
         return True
 
     def check_condition(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for var in self.browse(cr, uid, ids, context=context):
             if not var.from_sync and var.partner_type not in ('external', 'esc'):
@@ -827,7 +827,7 @@ class purchase_order_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -891,7 +891,7 @@ class wizard_export_po_validated(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)

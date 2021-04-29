@@ -47,7 +47,7 @@ class ir_attachment(osv.osv):
         ima = self.pool.get('ir.model.access')
         res_ids = {}
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             cr.execute('SELECT DISTINCT res_model, res_id FROM ir_attachment WHERE id = ANY (%s)', (ids,))
             for rmod, rid in cr.fetchall():
@@ -58,7 +58,7 @@ class ir_attachment(osv.osv):
             if 'res_model' in values and 'res_id' in values:
                 res_ids.setdefault(values['res_model'],set()).add(values['res_id'])
 
-        for model, mids in res_ids.items():
+        for model, mids in list(res_ids.items()):
             # ignore attachments that are not attached to a resource anymore when checking access rights
             # (resource was deleted but attachment was not)
             model_obj = self.pool.get(model)
@@ -97,15 +97,15 @@ class ir_attachment(osv.osv):
         # To avoid multiple queries for each attachment found, checks are
         # performed in batch as much as possible.
         ima = self.pool.get('ir.model.access')
-        for model, targets in model_attachments.iteritems():
+        for model, targets in model_attachments.items():
             if not ima.check(cr, uid, model, 'read', raise_exception=False, context=context):
                 # remove all corresponding attachment ids
-                for attach_id in itertools.chain(*targets.values()):
+                for attach_id in itertools.chain(*list(targets.values())):
                     ids.remove(attach_id)
                 continue # skip ir.rule processing, these ones are out already
 
             # filter ids according to what access rules permit
-            target_ids = targets.keys()
+            target_ids = list(targets.keys())
             if 'active' in self.pool.get(model)._columns:
                 allowed_ids = self.pool.get(model).search(cr, uid, [
                     ('id', 'in', target_ids),
@@ -132,7 +132,7 @@ class ir_attachment(osv.osv):
             context = {}
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         self.check(cr, uid, ids, 'write', context=context, values=vals)
 
@@ -171,7 +171,7 @@ class ir_attachment(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         self.check(cr, uid, ids, 'unlink', context=context)
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # remove the corresponding file if any
@@ -596,7 +596,7 @@ class attachment_config(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if 'name' in vals:
 

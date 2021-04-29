@@ -75,7 +75,7 @@ class stock_inventory_merge(osv.osv_memory):
             'name': 'Merged inventory'
             }, context=context)
 
-        for key, quantity in invent_lines.items():
+        for key, quantity in list(invent_lines.items()):
             invent_line_obj.create(cr, uid, {
                     'inventory_id': new_invent,
                     'location_id': key[0],

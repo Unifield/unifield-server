@@ -175,7 +175,7 @@ location will be shown.""",
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         import pooler
@@ -406,13 +406,13 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             res[line[1]]['lines'][line[3]]['location_ids'][line[4]] += line[0]
 
         # fetch bn and product data
-        for bn in self.pool.get('stock.production.lot').read(self.cr, self.uid, all_bn_ids.keys(), ['name'], context=self.localcontext):
+        for bn in self.pool.get('stock.production.lot').read(self.cr, self.uid, list(all_bn_ids.keys()), ['name'], context=self.localcontext):
             bn_data[bn['id']] = bn['name']
 
         if full_prod_list:
-            product_ids_to_fetch = list(set(list(values.get('product_ids', []))+all_product_ids.keys()+full_prod_list))
+            product_ids_to_fetch = list(set(list(values.get('product_ids', []))+list(all_product_ids.keys())+full_prod_list))
         else:
-            product_ids_to_fetch = all_product_ids.keys()
+            product_ids_to_fetch = list(all_product_ids.keys())
 
         cost_price_at_date = {}
         if report.stock_level_date and product_ids_to_fetch:
@@ -468,7 +468,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                     'expiry_date': res[product_id]['lines'][batch_id]['expiry_date'],
                     'qty': rounded_batch_qty,
                     'value': cost_price * rounded_batch_qty,
-                    'location_ids': dict([(x, round(y, 6)) for x, y in res[product_id]['lines'][batch_id]['location_ids'].iteritems()]),
+                    'location_ids': dict([(x, round(y, 6)) for x, y in res[product_id]['lines'][batch_id]['location_ids'].items()]),
                 }
 
         fres = []

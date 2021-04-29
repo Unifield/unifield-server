@@ -24,7 +24,7 @@ from tools.translate import _
 
 import datetime
 import base64
-import StringIO
+import io
 import csv
 
 class import_table_currencies(osv.osv_memory):
@@ -61,7 +61,7 @@ class import_table_currencies(osv.osv_memory):
                     raise osv.except_osv(_('Warning'),
                         _('Please browse a csv file.'))
                 import_file = base64.decodestring(wizard.import_file)
-                import_string = StringIO.StringIO(import_file)
+                import_string = io.StringIO(import_file)
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
                 if not import_data:
                     raise osv.except_osv(_('Warning'), _('File is empty.'))

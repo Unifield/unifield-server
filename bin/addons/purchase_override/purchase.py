@@ -286,7 +286,7 @@ class purchase_order_cancel_wizard(osv.osv_memory):
     def _get_has_linked_line(self, cr, uid, ids, field_name, args, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -371,7 +371,7 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")

@@ -19,6 +19,6 @@
 #
 ##############################################################################
 
-import product_where_used
-import product_merged
+from . import product_where_used
+from . import product_merged
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

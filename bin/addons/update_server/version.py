@@ -17,7 +17,7 @@ import time
 import tools
 from zipfile import is_zipfile
 from base64 import decodestring
-from cStringIO import StringIO
+from io import StringIO
 import hashlib
 import threading
 
@@ -226,12 +226,12 @@ class sync_server_user_rights(osv.osv):
         }
 
     def get_md5_zip(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.read(cr, uid, ids[0], ['zip_file'], context=context)['zip_file']
 
     def get_plain_zip(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         zip_content = self.read(cr, uid, ids[0], ['zip_file'], context=context)['zip_file']
         return decodestring(zip_content)
@@ -269,7 +269,7 @@ class sync_server_user_rights_add_file(osv.osv_memory):
             wiz = self.browse(cr, uid, wiz_id, context=context)
             self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=True, logger=logger(wiz), context=context)
             wiz.write({'state': 'done', 'message': 'Import Done'})
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             if isinstance(e, osv.except_osv):
                 error = e.value

@@ -81,7 +81,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                                 st_number = obj_seq.get(cr, uid, 'account.bank.statement')
 
                         for line in st.move_line_ids:
-                            if line.state <> 'valid':
+                            if line.state != 'valid':
                                 raise osv.except_osv(_('Error !'),
                                                      _('The account entries lines are not in valid state.'))
                         for st_line in st.line_ids:

@@ -132,7 +132,7 @@ class message(osv.osv):
         if entity.msg_ids_tmp:
             # convert the string into list of ids, then get only those not sent
             msg_ids_tmp = entity.msg_ids_tmp[1:-1]
-            msg_ids_tmp = map(int, msg_ids_tmp.split(','))
+            msg_ids_tmp = list(map(int, msg_ids_tmp.split(',')))
             ids = self.search(cr, uid, [('id', 'in', msg_ids_tmp), ('sent', '=', False)], limit=size, context=context)
         else:
             return False

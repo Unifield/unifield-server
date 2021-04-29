@@ -52,10 +52,10 @@ class ppl_set_pack_on_lines(osv.osv_memory):
     def change_pack(self, cr, uid, ids, fp, to, context=None):
         value = {}
         warning = []
-        if not fp or not isinstance(fp, (int, long)):
+        if not fp or not isinstance(fp, int):
             value['from_pack'] = 1
             warning.append(_('From Pack: please enter an integer value'))
-        if not to or not isinstance(to, (int, long)):
+        if not to or not isinstance(to, int):
             value['to_pack'] = 1
             warning.append(_('To Pack: please enter an integer value'))
 

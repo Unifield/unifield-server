@@ -37,7 +37,7 @@ class wizard_import_po_line(osv.osv_memory):
 
     def _get_bool_values(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -52,20 +52,20 @@ class wizard_import_po_line(osv.osv_memory):
             states={'draft': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
         'po_id': fields.many2one(
-            'purchase.order', required=True, string=u"Purchase Order"),
+            'purchase.order', required=True, string="Purchase Order"),
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         'filename_template': fields.char('Templates', size=256),
         'import_error_ok': fields.function(
             _get_bool_values, method=True,
             type='boolean', store=False, readonly=True,
-            string=u"Error at import"),
+            string="Error at import"),
         'percent_completed': fields.integer('% completed', readonly=True),
         'state': fields.selection(
             [('draft', 'Draft'),
              ('in_progress', 'In Progress'),
              ('done', 'Done')],
-            string=u"State", required=True, readonly=True),
+            string="State", required=True, readonly=True),
     }
 
     def _import(self, dbname, uid, ids, context=None):
@@ -118,7 +118,7 @@ class wizard_import_po_line(osv.osv_memory):
             # don't use the original
             row_iterator, row_iterator_line_check = itertools.tee(row_iterator)
 
-            row_iterator_line_check.next()  # skip header line
+            next(row_iterator_line_check)  # skip header line
             try:
                 lines_to_correct = check_line.check_lines_currency(row_iterator_line_check, currency_index, order_currency_code)
             except Exception as e:
@@ -140,7 +140,7 @@ class wizard_import_po_line(osv.osv_memory):
                 to_write = {}
                 total_line_num = file_obj.getNbRows()
                 # ignore the header line
-                row_iterator.next()
+                next(row_iterator)
                 for line_num, row in enumerate(row_iterator, start=1):
                     percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
                     # default values
@@ -331,9 +331,9 @@ class wizard_import_po_line(osv.osv_memory):
                                     raise osv.except_osv(_('Error'), _("Price must be defined in the RfQ import file."))
 
                                 # in case of update we do not want to update qty and uom values :
-                                if to_write.has_key('product_qty'):
+                                if 'product_qty' in to_write:
                                     to_write.pop('product_qty')
-                                if to_write.has_key('product_uom'):
+                                if 'product_uom' in to_write:
                                     to_write.pop('product_uom')
 
                                 # update POL :
@@ -348,7 +348,7 @@ class wizard_import_po_line(osv.osv_memory):
                             lines_to_correct += 1
                         complete_lines += 1
 
-                    except IndexError, e:
+                    except IndexError as e:
                         message += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
                                      ) % (line_num, template_col_count, e)
                         line_with_error.append(
@@ -431,7 +431,7 @@ Importation completed in %s!
         """
         Launch a thread for importing lines.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         purchase_obj = self.pool.get('purchase.order')
@@ -484,7 +484,7 @@ Importation completed in %s!
         """
         This button is only for updating the view.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         purchase_obj = self.pool.get('purchase.order')
         for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file']):
@@ -499,7 +499,7 @@ Importation completed in %s!
         Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
         I come back on the home page. Here, I come back on the object on which I opened the wizard.
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['po_id']):
             po_id = wiz_obj['po_id']
@@ -516,7 +516,7 @@ Importation completed in %s!
         '''
         Return to the initial view
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['po_id']):
             po_id = wiz_obj['po_id']

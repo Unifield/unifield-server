@@ -39,7 +39,7 @@ class internal_picking_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -135,7 +135,7 @@ class internal_picking_processor(osv.osv):
     def check_destination_location(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
@@ -156,7 +156,7 @@ class internal_picking_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -195,7 +195,7 @@ class internal_picking_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -217,7 +217,7 @@ class internal_picking_processor(osv.osv):
         for wizard in self.browse(cr, uid, ids, context=context):
             if wizard.register_a_claim:
                 # id of treated picking (can change according to backorder or not)
-                pick_id = res.values()[0]['delivered_picking']
+                pick_id = list(res.values())[0]['delivered_picking']
                 pick = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context)
                 pick_type = pick.type
                 if pick_type == 'out' and pick.subtype == 'picking':
@@ -369,7 +369,7 @@ class internal_picking_processor(osv.osv):
     def do_reset(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(
@@ -388,7 +388,7 @@ class internal_picking_processor(osv.osv):
     def do_save_draft(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(
@@ -421,7 +421,7 @@ class internal_move_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = super(internal_move_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)

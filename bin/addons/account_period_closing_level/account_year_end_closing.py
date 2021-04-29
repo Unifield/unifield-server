@@ -228,7 +228,7 @@ class account_year_end_closing(osv.osv):
         """
         period_obj = self.pool.get('account.period')
         period_numbers = [ pn for pn in periods_to_create \
-                           if pn in self._period_month_map.keys() ]
+                           if pn in list(self._period_month_map.keys()) ]
         fy_rec = self._browse_fy(cr, uid, fy_id, context=context)
         fy_year = fy_rec.date_start[:4]
 
@@ -919,7 +919,7 @@ class account_year_end_closing(osv.osv):
 
         domain = [
             ('instance_id', '=', instance_rec.id),
-            ('code', 'in', self._journals.keys()),
+            ('code', 'in', list(self._journals.keys())),
         ]
         return self.pool.get('account.journal').search(cr, uid, domain,
                                                        context=context)

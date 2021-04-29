@@ -35,7 +35,7 @@ class account_common_report(osv.osv_memory):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             res[id] = context and context.get('report_cross_fy', False) or False
@@ -170,7 +170,7 @@ class account_common_report(osv.osv_memory):
         return result
 
     def _print_report(self, cr, uid, ids, data, context=None):
-        raise (_('Error'), _('not implemented'))
+        raise _('Error')
 
     def check_report(self, cr, uid, ids, context=None):
         if context is None:

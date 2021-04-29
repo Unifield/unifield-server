@@ -59,7 +59,7 @@ class output_currency_for_export(osv.osv_memory):
         if view_type == 'form' and context and context.get('active_ids', False) and context.get('from', False):
             if context.get('from') == 'account.analytic.line':
                 ids = context.get('active_ids')
-                if isinstance(ids, (int, long)):
+                if isinstance(ids, int):
                     ids = [ids]
                 first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
                 if first_line.account_id and first_line.account_id.category in ['FREE1', 'FREE2']:
@@ -80,7 +80,7 @@ class output_currency_for_export(osv.osv_memory):
         if context.get('active_ids', False) and context.get('from', False):
             if context.get('from') == 'account.analytic.line':
                 a_ids = context.get('active_ids')
-                if isinstance(a_ids, (int, long)):
+                if isinstance(a_ids, int):
                     a_ids = [a_ids]
                 first_line = self.pool.get('account.analytic.line').browse(cr, uid, a_ids)[0]
                 if first_line.account_id and first_line.account_id.category in ['FREE1', 'FREE2']:
@@ -162,7 +162,7 @@ class output_currency_for_export(osv.osv_memory):
         # Some verifications
         if (not context or not context.get('active_ids', False) or not context.get('active_model', False)) and not data_from_selector:
             raise osv.except_osv(_('Error'), _('An error has occurred. Please contact an administrator.'))
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         mcdb_obj = self.pool.get('account.mcdb')
@@ -303,7 +303,7 @@ class background_report(osv.osv_memory):
         return super(background_report, self).create(cr, uid, vals, context=context)
 
     def update_percent(self, cr, uid, ids, percent, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if percent > 1.00:
             percent = 1.00

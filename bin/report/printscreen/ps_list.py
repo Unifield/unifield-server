@@ -97,7 +97,7 @@ class report_printscreen_list(report_int):
                         if self.groupby_no_leaf:
                             continue
                         child_ids = model.search(cr, uid, inner_domain)
-                        res = model.read(cr, uid, child_ids, result['fields'].keys(), context)
+                        res = model.read(cr, uid, child_ids, list(result['fields'].keys()), context)
                         res.sort(lambda x,y: cmp(ids.index(x['id']), ids.index(y['id'])))
                         rows.extend(res)
             dom = [('id','in',ids)]
@@ -105,8 +105,8 @@ class report_printscreen_list(report_int):
                 dom = datas.get('_domain',[])
             get_groupby_data(self.groupby, dom)
         else:
-            rows = model.read(cr, uid, datas['ids'], result['fields'].keys(), context)
-            ids2 = map(itemgetter('id'), rows) # getting the ids from read result
+            rows = model.read(cr, uid, datas['ids'], list(result['fields'].keys()), context)
+            ids2 = list(map(itemgetter('id'), rows)) # getting the ids from read result
             if datas['ids'] != ids2: # sorted ids were not taken into consideration for print screen
                 rows_new = []
                 for id in datas['ids']:

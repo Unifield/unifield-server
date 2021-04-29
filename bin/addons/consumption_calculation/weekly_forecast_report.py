@@ -187,7 +187,7 @@ class weekly_forecast_report(osv.osv):
         if context is None:
             context = {}
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             report = self.browse(cr, uid, ids[0], context=context)
             if report:
@@ -337,7 +337,7 @@ class weekly_forecast_report(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # background cursor
@@ -574,7 +574,7 @@ class weekly_forecast_report(osv.osv):
                                 return date + RelativeDateTime(months=-1, day=st_day)
 
                     # Put expired quantity into the good interval
-                    for exp_key, exp_val in exp_vals[product_id].iteritems():
+                    for exp_key, exp_val in exp_vals[product_id].items():
                         if exp_key != 'total':
                             date_key = get_interval_by_date(exp_key).strftime('%Y-%m-%d')
                             int_name = dict_int_from.get(date_key, False)
@@ -582,7 +582,7 @@ class weekly_forecast_report(osv.osv):
                                 inter[int_name]['exp_qty'] += exp_val
 
                     # Put In-pipe quantity into the good interval
-                    for inp_key, inp_val in in_pipe_vals.get(product_id, {}).iteritems():
+                    for inp_key, inp_val in in_pipe_vals.get(product_id, {}).items():
                         if inp_key != 'total':
                             date_key = get_interval_by_date(inp_key).strftime('%Y-%m-%d')
                             int_name = dict_int_from.get(date_key, False)
@@ -591,7 +591,7 @@ class weekly_forecast_report(osv.osv):
 
                     # Sort the key of the dict, to have the values in good order
                     # TODO: Use OrderedDict instead of this sort of dict keys but only available on Python 2.7
-                    interval_keys = inter.keys()
+                    interval_keys = list(inter.keys())
                     interval_keys.sort(key=lambda x: int(x.split(' ')[-1]))
                     last_value = product['qty_available']
                     for interval_name in interval_keys:
@@ -727,7 +727,7 @@ class weekly_forecast_report(osv.osv):
         else:
             report_end_date = fixed_now + RelativeDateTime(months=report.interval)
 
-        for product, av_cons in product_cons.itervalues():
+        for product, av_cons in product_cons.values():
             res.setdefault(product['id'], {'total': 0.00})
             if not product['perishable'] and not product['batch_management']:
                 continue

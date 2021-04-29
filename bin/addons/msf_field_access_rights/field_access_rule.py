@@ -41,7 +41,7 @@ class field_access_rule(osv.osv):
         def recur_get_model(model, res):
             ids = self.pool.get('ir.model').search(cr, 1, [('model','=',model._name)])
             res.extend(ids)
-            for parent in model._inherits.keys():
+            for parent in list(model._inherits.keys()):
                 new_model = self.pool.get(parent)
                 recur_get_model(new_model, res)
             return res

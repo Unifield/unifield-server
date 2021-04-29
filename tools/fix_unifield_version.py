@@ -3,7 +3,7 @@
 import sys
 import os
 import psycopg2
-import ConfigParser
+import configparser
 import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -19,7 +19,7 @@ o = parser.parse_args()
 
 dsn = ''
 if o.config:
-    p = ConfigParser.ConfigParser()
+    p = configparser.ConfigParser()
     p.read([o.config])
     o.db_password = dict(p.items('options'))['db_password']
     o.db_user = dict(p.items('options'))['db_user']
@@ -45,10 +45,10 @@ ret = ''
 if o.y:
     ret = 'y'
 while ret.lower() not in ('y','n'):
-    ret = raw_input("This is a dev tool, DO NOT USE ON PRODUCTION, it will fix these dbs: %s [y/n] " % (o.dbs_name, ))
+    ret = input("This is a dev tool, DO NOT USE ON PRODUCTION, it will fix these dbs: %s [y/n] " % (o.dbs_name, ))
 
 if ret.lower() == 'n':
-    print "Nothing done"
+    print("Nothing done")
     sys.exit(0)
 
 exe_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -75,8 +75,8 @@ for db_name in o.dbs_name.split(','):
                     cr.execute("insert into sync_client_version (name, sum, state, date, applied) values (%s, %s, 'installed', %s, %s)", (version['name'], version['md5sum'], version['date'], version['date']))
 
         db.commit()
-        print "%s fixed" % (db_name, )
-    except Exception, e:
-        print "Can't fix %s, %s" % (db_name, e)
+        print("%s fixed" % (db_name, ))
+    except Exception as e:
+        print("Can't fix %s, %s" % (db_name, e))
 
 

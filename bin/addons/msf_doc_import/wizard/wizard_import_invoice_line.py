@@ -37,7 +37,7 @@ class wizard_import_invoice_line(osv.osv_memory):
 
     def _get_bool_values(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -52,18 +52,18 @@ class wizard_import_invoice_line(osv.osv_memory):
             states={'draft': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
         'invoice_id': fields.many2one(
-            'account.invoice', required=True, string=u"Account Invoice"),
+            'account.invoice', required=True, string="Account Invoice"),
         'filename_template': fields.char('Templates', size=256),
         'import_error_ok': fields.function(
             _get_bool_values, method=True,
             type='boolean', store=False, readonly=True,
-            string=u"Error at import"),
+            string="Error at import"),
         'percent_completed': fields.integer('% completed', readonly=True),
         'state': fields.selection(
             [('draft', 'Draft'),
              ('in_progress', 'In Progress'),
              ('done', 'Done')],
-            string=u"State", required=True, readonly=True),
+            string="State", required=True, readonly=True),
     }
 
     def _import(self, dbname, uid, ids, context=None):
@@ -106,7 +106,7 @@ class wizard_import_invoice_line(osv.osv_memory):
                 percent_completed = 100
                 break
             # ignore the header line
-            row_iterator.next()
+            next(row_iterator)
 
             def add_error(error):
                 self.error_list.append(error)
@@ -214,7 +214,7 @@ class wizard_import_invoice_line(osv.osv_memory):
                         r_cc = False  # US-3022 Cost Center is not mandatory
                         if cost_center:
                             # If necessary cast the CC into a string, otherwise the below search would crash
-                            if not isinstance(cost_center, basestring):
+                            if not isinstance(cost_center, str):
                                 cost_center = '%s' % (cost_center)
                             cc_ids = analytic_obj.search(cr, uid, [('category', '=', 'OC'),
                                                                    '|', ('name', '=', cost_center),
@@ -321,7 +321,7 @@ Importation completed in %s!
         """
         Launch a thread for importing lines.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         for wiz_read in self.read(cr, uid, ids, ['invoice_id', 'file']):
@@ -363,7 +363,7 @@ Importation completed in %s!
         """
         This button is only for updating the view.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         invoice_obj = self.pool.get('account.invoice')
         for wiz_read in self.read(cr, uid, ids, ['invoice_id', 'state', 'file']):
@@ -477,7 +477,7 @@ Importation completed in %s!
         Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
         I come back on the home page. Here, I come back on the object on which I opened the wizard.
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['invoice_id']):
             invoice_id = wiz_obj['invoice_id']

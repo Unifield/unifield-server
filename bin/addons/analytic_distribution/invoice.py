@@ -63,7 +63,7 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for inv in self.browse(cr, uid, ids, context=context):
             for invl in inv.invoice_line:
@@ -78,7 +78,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         invoice = self.browse(cr, uid, ids[0], context=context)
@@ -128,7 +128,7 @@ class account_invoice(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         invl_obj = self.pool.get(self._name + '.line') # PAY ATTENTION to wizard.account.invoice.line
@@ -154,7 +154,7 @@ class account_invoice_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -182,7 +182,7 @@ class account_invoice_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for inv in self.browse(cr, uid, ids, context=context):
@@ -195,7 +195,7 @@ class account_invoice_line(osv.osv):
         """
         If analytic-a-holic account, then this account is allocatable.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for invl in self.browse(cr, uid, ids):
@@ -208,7 +208,7 @@ class account_invoice_line(osv.osv):
         """
         Get a recap from analytic distribution state and if it come from header or not.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for invl in self.browse(cr, uid, ids):
@@ -309,7 +309,7 @@ class account_invoice_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No invoice line given. Please save your invoice line before.'))

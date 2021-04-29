@@ -51,7 +51,7 @@ class financing_contract_funding_pool_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for line in self.browse(cr, uid, ids):
             fp_id = line.funding_pool_id.id
@@ -137,7 +137,7 @@ class financing_contract_contract(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         for contract in self.read(cr, uid, ids, ['state'], context=context):
             if contract.get('state', '') == 'soft_closed':
@@ -190,7 +190,7 @@ class financing_contract_contract(osv.osv):
         Otherwise set contract as soft closed.
         """
         # Search draft/temp posted register lines
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         for cont in self.read(cr, uid, ids, ['funding_pool_ids']):
             if not cont['funding_pool_ids']:
@@ -542,7 +542,7 @@ class financing_contract_contract(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for contract in self.browse(cr, uid, ids, context=context):
             if not contract.format_id.funding_pool_ids:
@@ -591,7 +591,7 @@ class financing_contract_contract(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -690,7 +690,7 @@ class financing_contract_contract(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         for contract in self.read(cr, uid, ids, ['state'], context=context):
             state = contract.get('state', '')
@@ -702,7 +702,7 @@ class financing_contract_contract(osv.osv):
                 self.contract_hard_closed(cr, uid, contract['id'])
 
     def _check_grant_amount_proxy(self, cr, uid, ids, signal, context=None):
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         check_action = self._check_grant_amount(cr, uid, ids, signal,
                                                 context=context)
@@ -720,7 +720,7 @@ class financing_contract_contract(osv.osv):
         """
         if not ids:
             return False
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
             return False  # only warn from form (1 id)

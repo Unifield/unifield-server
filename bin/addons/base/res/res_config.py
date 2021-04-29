@@ -70,7 +70,7 @@ class res_config_configurable(osv.osv_memory):
                                     limit=1)
         if active_todos:
             todo_obj = todos.browse(cr, uid, active_todos[0], context=None)
-            todo_groups = map(lambda x:x.id, todo_obj.groups_id)
+            todo_groups = [x.id for x in todo_obj.groups_id]
             dont_skip_todo = True
             if todo_groups:
                 cr.execute("select 1 from res_groups_users_rel where uid=%s and gid IN %s",(uid, tuple(todo_groups),))
@@ -387,7 +387,7 @@ class res_config_installer(osv.osv_memory):
         """
         base = set(module_name
                    for installer in self.read(cr, uid, ids, context=context)
-                   for module_name, to_install in installer.iteritems()
+                   for module_name, to_install in installer.items()
                    if module_name != 'id'
                    if type(self._columns[module_name]) is fields.boolean
                    if to_install)
@@ -400,7 +400,7 @@ class res_config_installer(osv.osv_memory):
 
         additionals = set(
             module for requirements, consequences \
-            in self._install_if.iteritems()
+            in self._install_if.items()
             if base.issuperset(requirements)
             for module in consequences)
 
@@ -415,8 +415,8 @@ class res_config_installer(osv.osv_memory):
 
         return dict(defaults,
                     **dict.fromkeys(
-                        map(attrgetter('name'),
-                            self._already_installed(cr, uid, context=context)),
+                        list(map(attrgetter('name'),
+                            self._already_installed(cr, uid, context=context))),
                         True))
 
     def fields_get(self, cr, uid, fields=None, context=None, write_access=True, with_uom_rounding=False):

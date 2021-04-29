@@ -49,19 +49,20 @@ import uno
 import string
 import unohelper
 import random
-import xmlrpclib
+import xmlrpc.client
 import base64, tempfile
 from com.sun.star.task import XJobExecutor
 import os
 import sys
-if __name__<>'package':
-    from lib.gui import *
-    from lib.error import *
-    from lib.functions import *
-    from lib.logreport import *
-    from lib.tools import *
-    from LoginTest import *
-    from lib.rpc import *
+from functools import reduce
+if __name__!='package':
+    from .lib.gui import *
+    from .lib.error import *
+    from .lib.functions import *
+    from .lib.logreport import *
+    from .lib.tools import *
+    from .LoginTest import *
+    from .lib.rpc import *
     database="report"
     uid = 3
 
@@ -98,7 +99,7 @@ class SendtoServer(unohelper.Base, XJobExecutor):
 
         report_name = ""
         name=""
-        if docinfo.getUserFieldValue(2)<>"" :
+        if docinfo.getUserFieldValue(2)!="" :
             try:
                 fields=['name','report_name']
                 self.res_other = self.sock.execute(database, uid, self.password, 'ir.actions.report.xml', 'read', [int(docinfo.getUserFieldValue(2))],fields)
@@ -106,9 +107,9 @@ class SendtoServer(unohelper.Base, XJobExecutor):
                 report_name = self.res_other[0]['report_name']
             except:
                 import traceback,sys
-                info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                 self.logob.log_write('ServerParameter', LOG_ERROR, info)
-        elif docinfo.getUserFieldValue(3) <> "":
+        elif docinfo.getUserFieldValue(3) != "":
             name = ""
             result =  "rnd"
             for i in range(5):
@@ -130,13 +131,13 @@ class SendtoServer(unohelper.Base, XJobExecutor):
         self.lstResourceType = self.win.getControl( "lstResourceType" )
         self.txtReportName=self.win.getControl( "txtReportName" )
         self.txtReportName.Enable=False
-        for kind in self.Kind.keys():
+        for kind in list(self.Kind.keys()):
             self.lstResourceType.addItem( kind, self.lstResourceType.getItemCount() )
 
         self.win.addButton( "btnSend", -5, -5, 80, 15, "Send Report to Server", actionListenerProc = self.btnOk_clicked)
         self.win.addButton( "btnCancel", -5 - 80 -5, -5, 40, 15, "Cancel", actionListenerProc = self.btnCancel_clicked)
 
-        self.win.doModalDialog("lstResourceType", self.Kind.keys()[0])
+        self.win.doModalDialog("lstResourceType", list(self.Kind.keys())[0])
 
     def lstbox_selected(self,oItemEvent):
         pass
@@ -145,7 +146,7 @@ class SendtoServer(unohelper.Base, XJobExecutor):
         self.win.endExecute()
 
     def btnOk_clicked(self, oActionEvent):
-        if self.win.getEditText("txtName") <> "" and self.win.getEditText("txtReportName") <> "":
+        if self.win.getEditText("txtName") != "" and self.win.getEditText("txtReportName") != "":
             desktop=getDesktop()
             oDoc2 = desktop.getCurrentComponent()
             docinfo=oDoc2.getDocumentInfo()
@@ -175,9 +176,9 @@ class SendtoServer(unohelper.Base, XJobExecutor):
                         ErrorDialog(" Report Name is all ready given !!!\n\n\n Please specify other Name","","Report Name")
                         self.logobj.log_write('SendToServer',LOG_WARNING, ':Report name all ready given DB %s' % (database))
                         self.win.endExecute()
-                except Exception,e:
+                except Exception as e:
                     import traceback,sys
-                    info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                    info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                     self.logobj.log_write('ServerParameter', LOG_ERROR, info)
             else:
 
@@ -196,7 +197,7 @@ class SendtoServer(unohelper.Base, XJobExecutor):
                 'name': self.win.getEditText("txtName"),
                 'model': docinfo.getUserFieldValue(3),
                 'report_name': self.win.getEditText("txtReportName"),
-                'header': (self.win.getCheckBoxState("chkHeader") <> 0),
+                'header': (self.win.getCheckBoxState("chkHeader") != 0),
                 'report_type': self.Kind[self.win.getListBoxSelectedItem("lstResourceType")],
             }
             if self.win.getListBoxSelectedItem("lstResourceType")=='OpenOffice':
@@ -235,7 +236,7 @@ class SendtoServer(unohelper.Base, XJobExecutor):
                 if nVal==0:
                     oPar.update()
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     SendtoServer(None)
 elif __name__=="package":
     g_ImplementationHelper.addImplementation( SendtoServer, "org.openoffice.openerp.report.sendtoserver", ("com.sun.star.task.Job",),)

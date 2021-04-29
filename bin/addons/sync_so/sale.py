@@ -22,7 +22,7 @@
 import logging
 
 from osv import osv, fields
-import so_po_common
+from . import so_po_common
 assert so_po_common # needed by rw
 import time
 from sync_client import get_sale_purchase_logger
@@ -33,7 +33,7 @@ class sale_order_line_sync(osv.osv):
     _logger = logging.getLogger('------sync.sale.order.line')
 
     def _get_sync_local_id(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for sol in self.read(cr, uid, ids, ['order_id'], context=context):
@@ -56,7 +56,7 @@ class sale_order_line_sync(osv.osv):
         order_ref = '%s.%s' % (source, pol_dict['order_id']['name'])
         sale_order_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', order_ref)])
         if not sale_order_ids:
-            raise Exception, "Cannot find the parent FO with client order ref = %s" % order_ref
+            raise Exception("Cannot find the parent FO with client order ref = %s" % order_ref)
         so_name = self.pool.get('sale.order').read(cr, uid, sale_order_ids[0], ['name'], context=context)['name'] or ''
 
         # from purchase.order.line to sale.order.line:
@@ -115,7 +115,7 @@ class sale_order_sync(osv.osv):
     _logger = logging.getLogger('------sync.sale.order')
 
     def _get_sync_date(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -172,7 +172,7 @@ class sale_order_sync(osv.osv):
         if header_result.get('currency_id') and header_result.get('pricelist_id'):
             if not self.pool.get('product.pricelist').search_exist(cr, uid, [('id', '=', header_result['pricelist_id']), ('currency_id', '=', header_result['currency_id'])]):
                 po_cur = self.pool.get('res.currency').read(cr, uid, header_result['currency_id'], ['name'], context=context)
-                raise Exception, "Wrong FO/PO Currency on partner: please set FO/PO currency to %s on partner %s" % (po_cur['name'], source)
+                raise Exception("Wrong FO/PO Currency on partner: please set FO/PO currency to %s on partner %s" % (po_cur['name'], source))
 
         header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, False, False, True, context)
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
@@ -262,7 +262,7 @@ class sale_order_sync(osv.osv):
                 so_po_common_obj = self.pool.get('so.po.common')
                 so_po_common_obj.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
                 return "Recovery: the reference on " + po_info.name + " at " + source + " will be set to void."
-            raise Exception, "Cannot find the original FO with the given info."
+            raise Exception("Cannot find the original FO with the given info.")
 
         so_value = self.browse(cr, uid, so_id)
         client_order_ref = source + "." + po_info.name
@@ -354,16 +354,16 @@ class sale_order_sync(osv.osv):
         if 'sale.order.line' in context['changes']:
             for rec_line in self.pool.get('sale.order.line').browse(
                     cr, uid,
-                    context['changes']['sale.order.line'].keys(),
+                    list(context['changes']['sale.order.line'].keys()),
                     context=context):
                 if self.pool.get('sale.order.line').exists(cr, uid, rec_line.id, context): # check the line exists
                     lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = context['changes']['sale.order.line'][rec_line.id]
         # monitor changes on purchase.order
-        for id, changes in changes.items():
+        for id, changes in list(changes.items()):
             logger = get_sale_purchase_logger(cr, uid, self, id, \
                                               context=context)
             if 'order_line' in changes:
-                old_lines, new_lines = map(set, changes['order_line'])
+                old_lines, new_lines = list(map(set, changes['order_line']))
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
                 logger.is_product_removed |= (len(old_lines - new_lines) > 0)
 
@@ -375,7 +375,7 @@ class sale_order_sync(osv.osv):
             logger.is_date_modified |= ('date_order' in changes)
             logger.is_status_modified |= ('state' in changes)
             # handle line's changes
-            for line_id, line_changes in lines.get(id, {}).items():
+            for line_id, line_changes in list(lines.get(id, {}).items()):
                 logger.is_quantity_modified |= \
                     ('product_uom_qty' in line_changes)
                 logger.is_product_price_modified |= \

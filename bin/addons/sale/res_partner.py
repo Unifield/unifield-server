@@ -30,7 +30,7 @@ class res_partner(osv.osv):
         """
         Fake method for 'check_partner_so' field.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         result = {}
         for id in ids:
@@ -50,7 +50,7 @@ class res_partner(osv.osv):
             if arg[0] == 'check_partner_so':
                 if arg[1] != '=' \
                         or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
-                        or not isinstance(arg[2]['partner_id'], (int, long)):
+                        or not isinstance(arg[2]['partner_id'], int):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_so different than (arg[0], =, %s) not implemented.') % arg[2])
                 order_type = arg[2]['order_type']
                 p_list = []

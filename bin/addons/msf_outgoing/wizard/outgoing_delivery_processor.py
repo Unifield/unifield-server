@@ -54,7 +54,7 @@ class outgoing_delivery_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -86,7 +86,7 @@ class outgoing_delivery_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -103,7 +103,7 @@ class outgoing_delivery_processor(osv.osv):
                 view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
                 view_id = view_id and view_id[1] or False
                 # id of treated picking (can change according to backorder or not)
-                pick_id = res.values()[0]['delivered_picking']
+                pick_id = list(res.values())[0]['delivered_picking']
                 return {'name': _('Delivery Orders'),
                         'view_mode': 'form,tree',
                         'view_id': [view_id],
@@ -120,7 +120,7 @@ class outgoing_delivery_processor(osv.osv):
     def do_reset(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(
@@ -139,7 +139,7 @@ class outgoing_delivery_processor(osv.osv):
     def do_save_draft(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(
@@ -172,7 +172,7 @@ class outgoing_delivery_move_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = super(outgoing_delivery_move_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)

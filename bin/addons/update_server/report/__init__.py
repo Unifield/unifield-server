@@ -1,1 +1,1 @@
-import user_rights_download
+from . import user_rights_download

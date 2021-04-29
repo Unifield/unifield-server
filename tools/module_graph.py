@@ -55,8 +55,8 @@ if not opt.path:
 
 if not args:
     for path in opt.path:
-        modules += map(os.path.dirname, glob.glob(os.path.join(path, '*', '__openerp__.py')))
-        modules += map(os.path.dirname, glob.glob(os.path.join(path, '*', '__terp__.py')))
+        modules += list(map(os.path.dirname, glob.glob(os.path.join(path, '*', '__openerp__.py'))))
+        modules += list(map(os.path.dirname, glob.glob(os.path.join(path, '*', '__terp__.py'))))
 else:
     for module in args:
         valid_path = get_valid_path(opt.path, module)
@@ -64,7 +64,7 @@ else:
             modules.append(valid_path)
 
 all_modules = set(map(os.path.basename, modules))
-print 'digraph G {'
+print('digraph G {')
 while len(modules):
     f = modules.pop(0)
     module_name = os.path.basename(f)
@@ -78,9 +78,9 @@ while len(modules):
                     modules.append(valid_path)
                 else:
                     all_modules.add(name)
-                    print '\t%s [color=red]' % (name,)
-            print '\t%s -> %s;' % (module_name, name)
-print '}'
+                    print('\t%s [color=red]' % (name,))
+            print('\t%s -> %s;' % (module_name, name))
+print('}')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

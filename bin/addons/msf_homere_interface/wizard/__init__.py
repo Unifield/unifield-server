@@ -21,14 +21,14 @@
 #
 ##############################################################################
 
-import hr_analytic_reallocation
-import hr_payroll_import
-import hr_payroll_validation
-import hr_payroll_employee_import
-import hr_payroll_deletion
-import hr_expat_import
-import hr_nat_staff_import
-import hr_payment_order
-import hr_employee_activation
+from . import hr_analytic_reallocation
+from . import hr_payroll_import
+from . import hr_payroll_validation
+from . import hr_payroll_employee_import
+from . import hr_payroll_deletion
+from . import hr_expat_import
+from . import hr_nat_staff_import
+from . import hr_payment_order
+from . import hr_employee_activation
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

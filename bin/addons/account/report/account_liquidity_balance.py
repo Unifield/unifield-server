@@ -20,7 +20,7 @@
 ##############################################################################
 
 from report import report_sxw
-from common_report_header import common_report_header
+from .common_report_header import common_report_header
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from datetime import datetime
 from dateutil.relativedelta import relativedelta

@@ -35,7 +35,7 @@ class stock_inventory(osv.osv):
     def _get_import_error(self, cr, uid, ids, fields, arg, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for var in self.browse(cr, uid, ids, context=context):
@@ -103,7 +103,7 @@ class stock_inventory(osv.osv):
         reader = fileobj.getRows()
 
         # ignore the first row
-        reader.next()
+        next(reader)
         line_num = 1
         product_error = []
         no_product_error = []
@@ -200,9 +200,9 @@ Product Code, Product Description, Location, Batch, Expiry Date, Quantity"""))
                 if row.cells[4].type == 'datetime':
                     try:
                         expiry = row.cells[4].data.strftime('%Y-%m-%d')
-                        if datetime.strptime(expiry, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                        if datetime.strptime(expiry, '%Y-%m-%d') < datetime(1900, 0o1, 0o1, 0, 0, 0):
                             comment = _('You cannot set an expiry date before %s\n') % (
-                                datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),
                             )
                             bad_expiry = True
                             to_correct_ok = True
@@ -220,9 +220,9 @@ Product Code, Product Description, Location, Batch, Expiry Date, Quantity"""))
                 elif row.cells[4].type == 'str':
                     try:
                         expiry = DateTime.strptime(row.cells[4].data, '%d/%m/%Y')
-                        if expiry < datetime(1900, 01, 01, 0, 0, 0):
+                        if expiry < datetime(1900, 0o1, 0o1, 0, 0, 0):
                             comment += _('You cannot set an expiry date before %s\n') % (
-                                datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),
                             )
                             bad_expiry = True
                             to_correct_ok = True
@@ -375,7 +375,7 @@ Product Code, Product Description, Location, Batch, Expiry Date, Quantity"""))
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         message = ''
         plural= ''
@@ -586,7 +586,7 @@ class initial_stock_inventory(osv.osv):
     def _get_import_error(self, cr, uid, ids, fields, arg, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for var in self.browse(cr, uid, ids, context=context):
@@ -656,7 +656,7 @@ class initial_stock_inventory(osv.osv):
         reader = fileobj.getRows()
 
         # ignore the first row
-        reader.next()
+        next(reader)
         line_num = 1
         for row in reader:
             line_num += 1
@@ -770,9 +770,9 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
                 if row.cells[5].type == 'str':
                     try:
                         expiry = DateTime.strptime(row.cells[5].data, '%d/%m/%Y')
-                        if expiry < datetime(1900, 01, 01, 0, 0, 0):
+                        if expiry < datetime(1900, 0o1, 0o1, 0, 0, 0):
                             comment += _('You cannot set an expiry date before %s\n') % (
-                                datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),
                             )
                             bad_expiry = True
                             to_correct_ok = True
@@ -787,9 +787,9 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
                     expiry = row.cells[5].data
                     if expiry:
                         try:
-                            if expiry < datetime(1900, 01, 01, 0, 0, 0):
+                            if expiry < datetime(1900, 0o1, 0o1, 0, 0, 0):
                                 comment += _('You cannot set an expiry date before %s\n') % (
-                                    datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                    datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),
                                 )
                                 bad_expiry = True
                                 to_correct_ok = True
@@ -929,7 +929,7 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         message = ''
         plural= ''

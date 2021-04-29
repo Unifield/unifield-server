@@ -23,7 +23,7 @@ from osv import osv, fields
 import decimal_precision as dp
 
 import math
-from _common import rounding
+from ._common import rounding
 import re
 from tools.translate import _
 from tools import cache
@@ -34,7 +34,7 @@ def is_pair(x):
 def check_ean(eancode):
     if not eancode:
         return True
-    if len(eancode) <> 13:
+    if len(eancode) != 13:
         return False
     try:
         int(eancode)
@@ -101,7 +101,7 @@ class product_uom(osv.osv):
 
     def create(self, cr, uid, data, context=None):
         if 'factor_inv' in data:
-            if data['factor_inv'] <> 1:
+            if data['factor_inv'] != 1:
                 data['factor'] = self._compute_factor_inv(data['factor_inv'])
             del(data['factor_inv'])
         self.clear_caches(cr)
@@ -168,7 +168,7 @@ class product_uom(osv.osv):
     def _compute_qty_obj(self, cr, uid, from_unit, qty, to_unit, context=None):
         if context is None:
             context = {}
-        if from_unit.category_id.id <> to_unit.category_id.id:
+        if from_unit.category_id.id != to_unit.category_id.id:
             if context.get('raise-exception', True):
                 raise osv.except_osv(_('Error !'), _('Conversion from Product UoM m to Default UoM PCE is not possible as they both belong to different Category!.'))
             else:
@@ -186,7 +186,7 @@ class product_uom(osv.osv):
             from_unit, to_unit = uoms[0], uoms[-1]
         else:
             from_unit, to_unit = uoms[-1], uoms[0]
-        if from_unit.category_id.id <> to_unit.category_id.id:
+        if from_unit.category_id.id != to_unit.category_id.id:
             return price
         amount = price * from_unit.factor
         if to_uom_id:
@@ -253,7 +253,7 @@ class product_category(osv.osv):
         level = 100
         while len(ids):
             cr.execute('select distinct parent_id from product_category where id IN %s',(tuple(ids),))
-            ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            ids = [_f for _f in [x[0] for x in cr.fetchall()] if _f]
             if not level:
                 return False
             level -= 1
@@ -284,7 +284,7 @@ class product_template(osv.osv):
             if product.seller_ids:
                 partner_list = sorted([(partner_id.sequence, partner_id)
                                        for partner_id in  product.seller_ids
-                                       if partner_id and isinstance(partner_id.sequence, (int, long))])
+                                       if partner_id and isinstance(partner_id.sequence, int)])
                 main_supplier = partner_list and partner_list[0] and partner_list[0][1] or False
                 result[product.id]['seller_delay'] =  main_supplier and main_supplier.delay or 1
                 result[product.id]['seller_qty'] =  main_supplier and main_supplier.qty or 0.0
@@ -297,7 +297,7 @@ class product_template(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         setup_obj = self.pool.get('unifield.setup.configuration')
@@ -407,7 +407,7 @@ class product_template(osv.osv):
     def _check_uom(self, cursor, user, ids, context=None):
         for product in self.browse(cursor, user, ids, context=context,
                                    fields_to_fetch=['uom_id', 'uom_po_id']):
-            if product.uom_id.category_id.id <> product.uom_po_id.category_id.id:
+            if product.uom_id.category_id.id != product.uom_po_id.category_id.id:
                 return False
         return True
 
@@ -458,7 +458,7 @@ class product_product(osv.osv):
             if not location_id:
                 wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
                 location_id = stock_warehouse_obj.read(cr, uid, wids[0], ['lot_stock_id'], context=context)['lot_stock_id'][0]
-            if isinstance(location_id, basestring):
+            if isinstance(location_id, str):
                 location_id = stock_location_obj.search(cr, uid, [('name','ilike', location_id)], context=context)
 
             if not isinstance(location_id, list):
@@ -592,7 +592,7 @@ class product_product(osv.osv):
             context = {}
         partner_id = context.get('partner_id', None)
         code_names_dict = self._get_partner_code_name(cr, uid, ids, partner_id, context=context)
-        for product_id, data in code_names_dict.items():
+        for product_id, data in list(code_names_dict.items()):
             res[product_id] = (data['code'] and ('['+data['code']+'] ') or '') + \
                 (data['name'] or '') + (data['variants'] and (' - '+data['variants']) or '')
         return res
@@ -971,7 +971,7 @@ class product_supplierinfo(osv.osv):
         for supplier_info in self.browse(cr, uid, ids, context=context,
                                          fields_to_fetch=['product_uom',
                                                           'product_id']):
-            if supplier_info.product_uom and supplier_info.product_uom.category_id.id <> supplier_info.product_id.uom_id.category_id.id:
+            if supplier_info.product_uom and supplier_info.product_uom.category_id.id != supplier_info.product_id.uom_id.category_id.id:
                 return False
         return True
 

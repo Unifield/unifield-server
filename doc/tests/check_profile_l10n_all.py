@@ -26,7 +26,7 @@
 # may also have to change some data in the top of this file.
 #
 
-import xmlrpclib
+import xmlrpc.client
 import time
 import base64
 
@@ -47,13 +47,13 @@ admin_passwd = 'admin'
 lang = False          # List of langs of False for all
 
 
-sock = xmlrpclib.ServerProxy(url+'/object')
-sock2 = xmlrpclib.ServerProxy(url+'/db')
-sock3 = xmlrpclib.ServerProxy(url+'/common')
-sock4 = xmlrpclib.ServerProxy(url+'/wizard')
+sock = xmlrpc.client.ServerProxy(url+'/object')
+sock2 = xmlrpc.client.ServerProxy(url+'/db')
+sock3 = xmlrpc.client.ServerProxy(url+'/common')
+sock4 = xmlrpc.client.ServerProxy(url+'/wizard')
 demos =  [True]
 
-langs = lang or (map(lambda x: x[0], sock2.list_lang()) + ['en_US'])
+langs = lang or ([x[0] for x in sock2.list_lang()] + ['en_US'])
 
 def wait(id):
     progress=0.0
@@ -72,7 +72,7 @@ def wizard_run(wizname, fieldvalues={}, endstate='end'):
         if 'datas' in res:
             datas['form'].update( res['datas'] )
         if res['type']=='form':
-            for field in res['fields'].keys():
+            for field in list(res['fields'].keys()):
                 datas['form'][field] = res['fields'][field].get('value', False)
             state = res['state'][-1][0]
             datas['form'].update(fieldvalues)
@@ -82,9 +82,9 @@ def wizard_run(wizname, fieldvalues={}, endstate='end'):
 
 for demo in demos:
     for l10n in l10n_charts:
-        print 'Testing localisation', l10n, '...'
+        print('Testing localisation', l10n, '...')
         for prof in profiles:
-            print '\tTesting profile', prof, '...'
+            print('\tTesting profile', prof, '...')
             id = sock2.create(admin_passwd, dbname, demo, lang)
             wait(id)
             uid = sock3.login(dbname, 'admin','admin')
@@ -99,7 +99,7 @@ for demo in demos:
                 'charts': idl10n[0],
             }, 'menu')
             for lang in langs:
-                print '\t\tTesting Language', lang, '...'
+                print('\t\tTesting Language', lang, '...')
                 wizard_run('module.lang.install', {'lang': lang})
 
             ok = False

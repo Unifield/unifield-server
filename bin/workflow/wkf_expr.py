@@ -32,7 +32,7 @@ class Env(dict):
         self.model = model
         self.ids = ids
         self.obj = pooler.get_pool(cr.dbname).get(model)
-        self.columns = self.obj._columns.keys() + self.obj._inherit_fields.keys()
+        self.columns = list(self.obj._columns.keys()) + list(self.obj._inherit_fields.keys())
 
     def __getitem__(self, key):
         if (key in self.columns) or (key in dir(self.obj)):

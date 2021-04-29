@@ -50,7 +50,7 @@ class add_event(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # results
         result = {}
@@ -103,7 +103,7 @@ class add_event(osv.osv_memory):
         '''
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         event_obj = self.pool.get('claim.event')

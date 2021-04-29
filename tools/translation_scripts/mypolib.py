@@ -44,13 +44,13 @@ default_encoding = 'utf-8'
 
 if sys.version_info[:2] < (3, 0):
     PY3 = False
-    text_type = unicode
+    text_type = str
 
     def b(s):
         return s
 
     def u(s):
-        return unicode(s, "unicode_escape")
+        return str(s, "unicode_escape")
 
 else:
     PY3 = True
@@ -347,7 +347,7 @@ class _BaseFile(list):
             """
             Returns the string representation of the file.
             """
-            return unicode(self).encode(self.encoding)
+            return str(self).encode(self.encoding)
 
     def __contains__(self, entry):
         """
@@ -512,7 +512,7 @@ class _BaseFile(list):
                 pass
         # the rest of the metadata will be alphabetically ordered since there
         # are no specs for this AFAIK
-        for data in natural_sort(metadata.keys()):
+        for data in natural_sort(list(metadata.keys())):
             value = metadata[data]
             ordered_data.append((data, value))
         return ordered_data
@@ -876,7 +876,7 @@ class _BaseEntry(object):
             """
             Returns the string representation of the entry.
             """
-            return unicode(self).encode(self.encoding)
+            return str(self).encode(self.encoding)
 
     def __eq__(self, other):
         return str(self) == str(other)

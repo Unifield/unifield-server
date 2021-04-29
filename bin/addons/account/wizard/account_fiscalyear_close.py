@@ -94,7 +94,7 @@ class account_fiscalyear_close(osv.osv_memory):
         query_line = obj_acc_move_line._query_get(cr, uid,
                                                   obj='account_move_line', context={'fiscalyear': fy_ids})
         cr.execute('select id from account_account WHERE active AND company_id = %s', (old_fyear.company_id.id,))
-        ids = map(lambda x: x[0], cr.fetchall())
+        ids = [x[0] for x in cr.fetchall()]
         for account in obj_acc_account.browse(cr, uid, ids,
                                               context={'fiscalyear': fy_id}):
             accnt_type_data = account.user_type

@@ -54,7 +54,7 @@ class hr_employee_category(osv.osv):
         level = 100
         while len(ids):
             cr.execute('select distinct parent_id from hr_employee_category where id IN %s', (tuple(ids), ))
-            ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            ids = [_f for _f in [x[0] for x in cr.fetchall()] if _f]
             if not level:
                 return False
             level -= 1
@@ -199,7 +199,7 @@ class hr_employee(osv.osv):
         level = 100
         while len(ids):
             cr.execute('SELECT DISTINCT parent_id FROM hr_employee WHERE id IN %s AND parent_id!=id',(tuple(ids),))
-            ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            ids = [_f for _f in [x[0] for x in cr.fetchall()] if _f]
             if not level:
                 return False
             level -= 1

@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import intl_transport
-import local_transport
+from . import intl_transport
+from . import local_transport
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

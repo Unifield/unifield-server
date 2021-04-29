@@ -7,9 +7,9 @@ import logging
 
 import pooler
 import netsvc
-import misc
-from config import config
-import yaml_tag
+from . import misc
+from .config import config
+from . import yaml_tag
 import yaml
 
 # YAML import needs both safe and unsafe eval, but let's
@@ -26,13 +26,13 @@ class YamlImportAbortion(Exception):
     pass
 
 def _is_yaml_mapping(node, tag_constructor):
-    value = isinstance(node, types.DictionaryType) \
-        and len(node.keys()) == 1 \
-        and isinstance(node.keys()[0], tag_constructor)
+    value = isinstance(node, dict) \
+        and len(list(node.keys())) == 1 \
+        and isinstance(list(node.keys())[0], tag_constructor)
     return value
 
 def is_comment(node):
-    return isinstance(node, types.StringTypes)
+    return isinstance(node, (str,))
 
 def is_assert(node):
     return isinstance(node, yaml_tag.Assert) \
@@ -81,7 +81,7 @@ def is_ir_set(node):
     return _is_yaml_mapping(node, yaml_tag.IrSet)
 
 def is_string(node):
-    return isinstance(node, basestring)
+    return isinstance(node, str)
 
 class TestReport(object):
     def __init__(self):
@@ -167,7 +167,7 @@ class YamlInterpreter(object):
     def get_id(self, xml_id):
         if not xml_id:
             raise YamlImportException("The xml_id should be a non empty string.")
-        if isinstance(xml_id, types.IntType):
+        if isinstance(xml_id, int):
             id = xml_id
         elif xml_id in self.id_map:
             id = self.id_map[xml_id]
@@ -193,7 +193,7 @@ class YamlInterpreter(object):
     def _get_first_result(self, results, default=False):
         if len(results):
             value = results[0]
-            if isinstance(value, types.TupleType):
+            if isinstance(value, tuple):
                 value = value[0]
         else:
             value = default
@@ -203,7 +203,7 @@ class YamlInterpreter(object):
         return node
 
     def _log_assert_failure(self, severity, msg, *args):
-        if isinstance(severity, types.StringTypes):
+        if isinstance(severity, (str,)):
             levelname = severity.strip().upper()
             level = logging.getLevelName(levelname)
         else:
@@ -227,7 +227,7 @@ class YamlInterpreter(object):
 
     def process_assert(self, node):
         if isinstance(node, dict):
-            assertion, expressions = node.items()[0]
+            assertion, expressions = list(node.items())[0]
         else:
             assertion, expressions = node, []
 
@@ -250,7 +250,7 @@ class YamlInterpreter(object):
                 for test in expressions:
                     try:
                         success = unsafe_eval(test, self.eval_context, RecordDictWrapper(record))
-                    except Exception, e:
+                    except Exception as e:
                         self.logger.debug('Exception during evaluation of !assert block in yaml_file %s.', self.filename, exc_info=True)
                         raise YamlImportAbortion(e)
                     if not success:
@@ -263,12 +263,12 @@ class YamlInterpreter(object):
                                 rmsg = ''
                                 try:
                                     lmsg = unsafe_eval(left, self.eval_context, RecordDictWrapper(record))
-                                except Exception, e:
+                                except Exception as e:
                                     lmsg = '<exc>'
 
                                 try:
                                     rmsg = unsafe_eval(right, self.eval_context, RecordDictWrapper(record))
-                                except Exception, e:
+                                except Exception as e:
                                     rmsg = '<exc>'
 
                                 msg += 'values: ! %s %s %s'
@@ -281,11 +281,11 @@ class YamlInterpreter(object):
                 self.assert_report.record(True, assertion.severity)
 
     def _coerce_bool(self, value, default=False):
-        if isinstance(value, types.BooleanType):
+        if isinstance(value, bool):
             b = value
-        if isinstance(value, types.StringTypes):
+        if isinstance(value, (str,)):
             b = value.strip().lower() not in ('0', 'false', 'off', 'no')
-        elif isinstance(value, types.IntType):
+        elif isinstance(value, int):
             b = bool(value)
         else:
             b = default
@@ -300,7 +300,7 @@ class YamlInterpreter(object):
 
     def process_record(self, node):
         import osv
-        record, fields = node.items()[0]
+        record, fields = list(node.items())[0]
         model = self.get_model(record.model)
         if isinstance(model, osv.osv.osv_memory):
             record_dict=self.create_osv_memory_record(record, fields)
@@ -328,7 +328,7 @@ class YamlInterpreter(object):
 
     def _create_record(self, model, fields):
         record_dict = {}
-        for field_name, expression in fields.items():
+        for field_name, expression in list(fields.items()):
             field_value = self._eval_field(model, field_name, expression)
             record_dict[field_name] = field_value
         return record_dict
@@ -406,7 +406,7 @@ class YamlInterpreter(object):
     def process_python(self, node):
         def log(msg, *args):
             self.logger.log(logging.TEST, msg, *args)
-        python, statements = node.items()[0]
+        python, statements = list(node.items())[0]
         model = self.get_model(python.model)
         statements = statements.replace("\r\n", "\n")
         code_context = {'model': model, 'cr': self.cr, 'uid': self.uid, 'log': log, 'context': self.context}
@@ -414,17 +414,17 @@ class YamlInterpreter(object):
         try:
             code_obj = compile(statements, self.filename, 'exec')
             unsafe_eval(code_obj, {'ref': self.get_id}, code_context)
-        except AssertionError, e:
+        except AssertionError as e:
             self._log_assert_failure(python.severity, 'AssertionError in Python code %s: %s', python.name, e)
             return
-        except Exception, e:
+        except Exception as e:
             self.logger.debug('Exception during evaluation of !python block in yaml_file %s.', self.filename, exc_info=True)
             raise
         else:
             self.assert_report.record(True, python.severity)
 
     def process_workflow(self, node):
-        workflow, values = node.items()[0]
+        workflow, values = list(node.items())[0]
         if self.isnoupdate(workflow) and self.mode != 'init':
             return
         if workflow.ref:
@@ -456,13 +456,13 @@ class YamlInterpreter(object):
     def _eval_params(self, model, params):
         args = []
         for i, param in enumerate(params):
-            if isinstance(param, types.ListType):
+            if isinstance(param, list):
                 value = self._eval_params(model, param)
             elif is_ref(param):
                 value = self.process_ref(param)
             elif is_eval(param):
                 value = self.process_eval(param)
-            elif isinstance(param, types.DictionaryType): # supports XML syntax
+            elif isinstance(param, dict): # supports XML syntax
                 param_model = self.get_model(param.get('model', model))
                 if 'search' in param:
                     q = eval(param['search'], self.eval_context)
@@ -480,7 +480,7 @@ class YamlInterpreter(object):
         return args
 
     def process_function(self, node):
-        function, params = node.items()[0]
+        function, params = list(node.items())[0]
         if self.isnoupdate(function) and self.mode != 'init':
             return
         model = self.get_model(function.model)
@@ -663,9 +663,9 @@ class YamlInterpreter(object):
     def process_ir_set(self, node):
         if not self.mode == 'init':
             return False
-        _, fields = node.items()[0]
+        _, fields = list(node.items())[0]
         res = {}
-        for fieldname, expression in fields.items():
+        for fieldname, expression in list(fields.items()):
             if is_eval(expression):
                 value = eval(expression.expression, self.eval_context)
             else:
@@ -729,9 +729,9 @@ class YamlInterpreter(object):
             is_preceded_by_comment = self._log(node, is_preceded_by_comment)
             try:
                 self._process_node(node)
-            except YamlImportException, e:
+            except YamlImportException as e:
                 self.logger.exception(e)
-            except Exception, e:
+            except Exception as e:
                 self.logger.exception(e)
                 raise
 
@@ -759,12 +759,12 @@ class YamlInterpreter(object):
         elif is_report(node):
             self.process_report(node)
         elif is_workflow(node):
-            if isinstance(node, types.DictionaryType):
+            if isinstance(node, dict):
                 self.process_workflow(node)
             else:
                 self.process_workflow({node: []})
         elif is_function(node):
-            if isinstance(node, types.DictionaryType):
+            if isinstance(node, dict):
                 self.process_function(node)
             else:
                 self.process_function({node: []})
@@ -778,9 +778,9 @@ class YamlInterpreter(object):
             is_preceded_by_comment = True
             self.logger.log(logging.TEST, node)
         elif not is_preceded_by_comment:
-            if isinstance(node, types.DictionaryType):
+            if isinstance(node, dict):
                 msg = "Creating %s\n with %s"
-                args = node.items()[0]
+                args = list(node.items())[0]
                 self.logger.log(logging.TEST, msg, *args)
             else:
                 self.logger.log(logging.TEST, node)

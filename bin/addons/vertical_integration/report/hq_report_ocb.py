@@ -103,7 +103,7 @@ class finance_archive(finance_export.finance_archive):
                 # Search only if partner_name is not empty
                 if partner_name:
                     # UFT-8 encoding
-                    if isinstance(partner_name, unicode):
+                    if isinstance(partner_name, str):
                         partner_name = partner_name.encode('utf-8')
                     if not partner_name in partner_search_dict:
                         partner_search_dict[partner_name] = partner_obj.search(cr, uid,
@@ -271,7 +271,7 @@ class finance_archive(finance_export.finance_archive):
             tmp_l = list(line)  # convert from tuple to list
             if tmp_l[col_nbr]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
-                if type(journal_name) == unicode:
+                if type(journal_name) == str:
                     journal_name = journal_name.encode('utf-8')
                 tmp_l[col_nbr] = journal_name
             tmp_l = tuple(tmp_l)  # restore back the initial format
@@ -350,7 +350,7 @@ def postprocess_liquidity_balances(self, cr, uid, data, encode=True, context=Non
         if isinstance(tmp_l, list):
             if tmp_l[col_nbr]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
-                if encode and type(journal_name) == unicode:
+                if encode and type(journal_name) == str:
                     journal_name = journal_name.encode('utf-8')
                 tmp_l[col_nbr] = journal_name
         # tuple
@@ -358,7 +358,7 @@ def postprocess_liquidity_balances(self, cr, uid, data, encode=True, context=Non
             tmp_l = list(tmp_l)
             if tmp_l[col_nbr]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
-                if encode and type(journal_name) == unicode:
+                if encode and type(journal_name) == str:
                     journal_name = journal_name.encode('utf-8')
                 tmp_l[col_nbr] = journal_name
             tmp_l = tuple(tmp_l)  # restore back the initial format
@@ -366,7 +366,7 @@ def postprocess_liquidity_balances(self, cr, uid, data, encode=True, context=Non
         elif isinstance(tmp_l, dict):
             if tmp_l[col_name]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_name], ['name'], context=context)['name']
-                if encode and type(journal_name) == unicode:
+                if encode and type(journal_name) == str:
                     journal_name = journal_name.encode('utf-8')
                 tmp_l[col_new_name] = journal_name
                 del tmp_l[col_name]

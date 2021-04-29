@@ -20,11 +20,11 @@
 ##############################################################################
 
 #import analytic
-import msf_budget_decision_moment
-import msf_budget
-import msf_budget_tools
-import msf_budget_line
-import wizard
-import report
+from . import msf_budget_decision_moment
+from . import msf_budget
+from . import msf_budget_tools
+from . import msf_budget_line
+from . import wizard
+from . import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

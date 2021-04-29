@@ -30,7 +30,7 @@ import servicemanager
 import sys
 import subprocess
 import os
-import thread
+import _thread
 
 
 class OpenERPServerService(win32serviceutil.ServiceFramework):
@@ -75,7 +75,7 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         # start the loop waiting for the Service Manager's stop signal
-        thread.start_new_thread(self.StartControl, (self.hWaitStop,))
+        _thread.start_new_thread(self.StartControl, (self.hWaitStop,))
         while True:
             # Start OpenERP Server itself
             self.StartTERP()

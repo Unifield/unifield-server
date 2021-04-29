@@ -66,7 +66,7 @@ class wizard_import_invoice_lines(osv.osv_memory):
         """
         if not ids:
             return True
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -106,7 +106,7 @@ class wizard_import_invoice(osv.osv_memory):
         'date': fields.date('Payment posting date'),
         'document_date': fields.date('Document Date'),
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
-        'locked_ok': fields.boolean(u"Lock"),
+        'locked_ok': fields.boolean("Lock"),
     }
 
     _defaults = {
@@ -293,7 +293,7 @@ class wizard_import_invoice(osv.osv_memory):
             # Close Wizard
             # st_line_ids could be necessary for some tests
             return { 'type': 'ir.actions.act_window_close', 'st_line_ids': st_line_ids, 'o2m_refresh': 'line_ids'}
-        except Exception, exc:
+        except Exception as exc:
             # Release the lock if an error occurred during the process
             self.write(cr, uid, ids, {'locked_ok': False}, context=context)
             raise exc

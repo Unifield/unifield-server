@@ -77,7 +77,7 @@ class res_widget_wizard(osv.osv_memory):
 
     def res_widget_add(self, cr, uid, ids, context=None):
         widget_id = self.read(cr, uid, ids, context=context)[0]
-        if widget_id.has_key('widgets_list') and widget_id['widgets_list']:
+        if 'widgets_list' in widget_id and widget_id['widgets_list']:
             self.pool.get('res.widget.user').create(
                 cr, uid, {'user_id':uid, 'widget_id':widget_id['widgets_list']}, context=context)
         return {'type': 'ir.actions.act_window_close'}

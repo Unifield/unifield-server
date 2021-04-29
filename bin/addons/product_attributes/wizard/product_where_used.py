@@ -37,7 +37,7 @@ class product_where_used(osv.osv_memory):
         if not context:
             context= {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -83,7 +83,7 @@ class product_where_used(osv.osv_memory):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         return {'type': 'ir.actions.act_window',

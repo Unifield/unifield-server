@@ -77,7 +77,7 @@ class liquidity_balance_wizard(osv.osv_memory):
     def print_liquidity_balance_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0], context=context)
         self._check_wizard_data(wiz, context=context)

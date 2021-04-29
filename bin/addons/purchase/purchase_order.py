@@ -159,7 +159,7 @@ class purchase_order(osv.osv):
                 stock_pickings = sp_obj.search(cursor, user, [('purchase_id', '=', purchase.id), ('state', '=', 'done')])
                 if stock_pickings:
                     sp_ids = list(stock_pickings)
-                    if isinstance(stock_pickings, (int, long)):
+                    if isinstance(stock_pickings, int):
                         stock_pickings = [stock_pickings]
                     for sp in stock_pickings:
                         inv_ids = inv_obj.search_exist(cursor, user, [('picking_id', '=', sp)])
@@ -211,14 +211,14 @@ class purchase_order(osv.osv):
         result = {}
         for line in self.pool.get('purchase.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
             result[line.order_id.id] = True
-        return result.keys()
+        return list(result.keys())
 
     def _get_order_state_changed(self, cr, uid, ids, context=None):
         result = {}
         for line in self.pool.get('purchase.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'], context=context):
             if line.state in ('cancel', 'cancel_r'):
                 result[line.order_id.id] = True
-        return result.keys()
+        return list(result.keys())
 
     def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -250,7 +250,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -270,7 +270,7 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -310,7 +310,7 @@ class purchase_order(osv.osv):
         '''
         Get the name of the POs at project side
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -346,7 +346,7 @@ class purchase_order(osv.osv):
         return res
 
     def _get_requested_date_in_past(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -388,7 +388,7 @@ class purchase_order(osv.osv):
         '''
         Return a shortened version of Supplier Reference, with only the Order Reference
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         partner_ref = {}
@@ -418,7 +418,7 @@ class purchase_order(osv.osv):
         '''
         Return a concatenation of the PO's customer references from the project (case of procurement request)
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -439,7 +439,7 @@ class purchase_order(osv.osv):
         '''
         Return a concatenation of the PO's customer references from the project (case of procurement request)
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -463,7 +463,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -486,7 +486,7 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -565,7 +565,7 @@ class purchase_order(osv.osv):
         :param context: Context of the call
         :return: A dictionnary with ID of the purchase.order record as keys and True/Fales as values
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -979,7 +979,7 @@ class purchase_order(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Do not prevent modification during synchro
@@ -1122,7 +1122,7 @@ class purchase_order(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pol_obj = self.pool.get('purchase.order.line')
@@ -1523,7 +1523,7 @@ class purchase_order(osv.osv):
         ana_obj = self.pool.get('analytic.distribution')
 
         single = True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
             single = False
 
@@ -1577,7 +1577,7 @@ class purchase_order(osv.osv):
                 self.infolog(cr, uid, 'Invoice on order (id:%d) created for PO %s' % (po_to_inv[o.id], o.name))
             else:
                 self.infolog(cr, uid, 'Invoice on order (id:%d) already exists for PO %s' % (po_to_inv[o.id], o.name))
-        return single and po_to_inv.values()[0] or po_to_inv
+        return single and list(po_to_inv.values())[0] or po_to_inv
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -1586,7 +1586,7 @@ class purchase_order(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         purchase = self.browse(cr, uid, ids[0], context=context)
@@ -1635,7 +1635,7 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         purchase_obj = self.pool.get(self._name + '.line')
@@ -1804,7 +1804,7 @@ class purchase_order(osv.osv):
                 order_infos['order_line'].append((0, 0, self._copy_line_value(cr, uid, order_line=order_line)))
 
         return_info = {}
-        for order_key, (order_data, old_ids) in new_orders.iteritems():
+        for order_key, (order_data, old_ids) in new_orders.items():
             # skip merges with only one order
             if len(old_ids) < 2:
                 continue
@@ -1847,7 +1847,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context.get('rfq_ok', False):
@@ -1885,7 +1885,7 @@ class purchase_order(osv.osv):
         '''
         Check restriction on products
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         line_obj = self.pool.get('purchase.order.line')
@@ -2056,7 +2056,7 @@ class purchase_order(osv.osv):
         '''
         Fills the Requested and Confirmed delivery dates
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -2135,7 +2135,7 @@ class purchase_order(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for order in self.browse(cr, uid, ids, context=context):
@@ -2177,7 +2177,7 @@ class purchase_order(osv.osv):
         # as it might be needed to update the read-only view...
         raw_display_strings_state = dict(PURCHASE_ORDER_STATE_SELECTION)
         display_strings_state = dict([(k, _(v)) \
-                                      for k, v in raw_display_strings_state.items()])
+                                      for k, v in list(raw_display_strings_state.items())])
 
         display_strings = {}
         display_strings["state"] = display_strings_state
@@ -2206,7 +2206,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         po_line_ids = pol_obj.search(cr, uid, [('oder_id', 'in', id), ('state', '!=', 'cancelled')], context=context)
@@ -2221,7 +2221,7 @@ class purchase_order(osv.osv):
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         so_ids = set()
@@ -2240,7 +2240,7 @@ class purchase_order(osv.osv):
         '''
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sol_ids = set()
@@ -2284,7 +2284,7 @@ class purchase_order(osv.osv):
         return False
 
     def ensure_object(self, cr, uid, model, value):
-        if isinstance(value, (int, long)):
+        if isinstance(value, int):
             value = self.pool.get(model).browse(cr, uid, value)
         return value
 
@@ -2467,7 +2467,7 @@ class purchase_order(osv.osv):
         if not warehouse_id:
             warehouse_id = stock_warehouse_obj.search(cr, uid, [], context=context)[0]
 
-        if isinstance(warehouse_id, (str, unicode)):
+        if isinstance(warehouse_id, str):
             try:
                 warehouse_id = int(warehouse_id)
             except ValueError:
@@ -2492,7 +2492,7 @@ class purchase_order(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         order_lines = []
@@ -2585,7 +2585,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if use_new_cursor:
@@ -2665,7 +2665,7 @@ class purchase_order(osv.osv):
                         elif pol.product_qty % soq_rounding:
                             good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
 
-                        if good_quantity in t_min_qty_price.keys():
+                        if good_quantity in list(t_min_qty_price.keys()):
                             good_price = t_min_qty_price[good_quantity][0]
 
                         if pl.currency_id != po.currency_id:
@@ -2758,7 +2758,7 @@ class purchase_order(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # update price lists
@@ -2830,7 +2830,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         commit_id = False
@@ -2886,7 +2886,7 @@ class purchase_order(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Browse PO
         for po in self.browse(cr, uid, ids, context=context):
@@ -2904,7 +2904,7 @@ class purchase_order(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Change commitments state
         # Sidestep UF-1183
@@ -2927,7 +2927,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.generate_po_from_rfq(cr, uid, ids, context=context)

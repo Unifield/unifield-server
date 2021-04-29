@@ -54,14 +54,14 @@ class report_custom(report_rml):
 
             prod_info = pooler.get_pool(cr.dbname).get('stock.location')._product_get(cr, uid, location_id)
             xml += "<col>"
-            for prod_id in prod_info.keys():
+            for prod_id in list(prod_info.keys()):
                 if prod_info[prod_id] != 0.0:
                     prod_name = pooler.get_pool(cr.dbname).get('product.product').read(cr, uid, [prod_id], ['name'])
                     xml +=  prod_name[0]['name'] + '\n'
             xml += '</col>'
 
             xml += "<col>"
-            for prod_id in prod_info.keys():
+            for prod_id in list(prod_info.keys()):
                 if prod_info[prod_id] != 0.0:
                     xml +=  str(prod_info[prod_id]) + '\n'
             xml += '</col></row>'

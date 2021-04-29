@@ -163,7 +163,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         Replaces back the arbitrary strings used for the special characters with their corresponding hexadecimal codes
         """
         for i in range(len(line)):
-            if line[i] and isinstance(line[i], basestring) and SPECIAL_CHAR in line[i]:
+            if line[i] and isinstance(line[i], str) and SPECIAL_CHAR in line[i]:
                 line[i] = re.sub('%s_([0-9][0-9]{0,1})' % SPECIAL_CHAR, lambda a: chr(int(a.group(1))), line[i])
         return line
 
@@ -317,8 +317,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                                 errors.append(_('Line %s. %s at 0, %s empty, please change.') % (current_line_num,
                                                                                                  amount_zero_str, amount_empty_str))
                                 continue
-                        if (book_debit and not isinstance(book_debit, (int, long, float))) or \
-                                (book_credit and not isinstance(book_credit, (int, long, float))):
+                        if (book_debit and not isinstance(book_debit, (int, float))) or \
+                                (book_credit and not isinstance(book_credit, (int, float))):
                             errors.append(_('Line %s. The Booking Debit or Credit amount is invalid and should be a number.') % (current_line_num,))
                             continue
                         if (book_debit and book_debit < 0) or (book_credit and book_credit < 0):
@@ -346,7 +346,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s. Period is missing.') % (current_line_num))
                         continue
                     period_name = line[cols['Period']]
-                    if not isinstance(period_name, basestring):
+                    if not isinstance(period_name, str):
                         period_name = '%s' % period_name
                     if not period_obj.search_exist(cr, uid, [('name', '=', period_name)], context=context):
                         errors.append(_("Line %s. The period %s doesn't exist.") % (current_line_num, period_name,))
@@ -483,7 +483,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. No cost center specified!') % (current_line_num,))
                             continue
                         # If necessary cast the CC into a string, otherwise the below search would crash
-                        if not isinstance(line[cols['Cost Centre']], basestring):
+                        if not isinstance(line[cols['Cost Centre']], str):
                             line[cols['Cost Centre']] = '%s' % (line[cols['Cost Centre']])
                         cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['Cost Centre']]), ('code', '=', line[cols['Cost Centre']])])
                         if not cc_ids:

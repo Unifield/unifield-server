@@ -47,16 +47,17 @@
 import uno
 import string
 import unohelper
-import xmlrpclib
+import xmlrpc.client
 from com.sun.star.task import XJobExecutor
-if __name__<>"package":
-    from lib.gui import *
-    from lib.error import ErrorDialog
-    from lib.functions import *
-    from ServerParameter import *
-    from lib.logreport import *
-    from lib.rpc import *
-    from LoginTest import *
+from functools import reduce
+if __name__!="package":
+    from .lib.gui import *
+    from .lib.error import ErrorDialog
+    from .lib.functions import *
+    from .ServerParameter import *
+    from .lib.logreport import *
+    from .lib.rpc import *
+    from .LoginTest import *
 
     database="test_db1"
     uid = 3
@@ -130,7 +131,7 @@ class RepeatIn( unohelper.Base, XJobExecutor ):
             text = cursor.getText()
             tcur = text.createTextCursorByRange(cursor)
 
-            self.aVariableList.extend( filter( lambda obj: obj[:obj.find(" ")] == "List", self.aObjectList ) )
+            self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find(" ")] == "List"] )
 
             for i in range(len(self.aItemList)):
                 try:
@@ -139,20 +140,20 @@ class RepeatIn( unohelper.Base, XJobExecutor ):
 
                     if component == "Document":
                         sLVal = anItem[anItem.find(",'") + 2:anItem.find("')")]
-                        self.aVariableList.extend( filter( lambda obj: obj[:obj.find("(")] == sLVal, self.aObjectList ) )
+                        self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find("(")] == sLVal] )
 
                     if tcur.TextSection:
                         getRecersiveSection(tcur.TextSection,self.aSectionList)
                         if component in self.aSectionList:
                             sLVal = anItem[anItem.find(",'") + 2:anItem.find("')")]
-                            self.aVariableList.extend( filter( lambda obj: obj[:obj.find("(")] == sLVal, self.aObjectList ) )
+                            self.aVariableList.extend( [obj for obj in self.aObjectList if obj[:obj.find("(")] == sLVal] )
 
                     if tcur.TextTable:
                         if not component == "Document" and component[component.rfind(".") + 1:] == tcur.TextTable.Name:
                             VariableScope( tcur, self.aVariableList, self.aObjectList, self.aComponentAdd, self.aItemList, component )
                 except :
                     import traceback,sys
-                    info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+                    info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
                     self.logobj.log_write('RepeatIn', LOG_ERROR, info)
             self.bModify=bFromModify
 
@@ -185,14 +186,14 @@ class RepeatIn( unohelper.Base, XJobExecutor ):
 
             for var in self.aVariableList:
 
-		if var[:8] <> 'List of ':
+		if var[:8] != 'List of ':
 		    self.model_ids = self.sock.execute(database, uid, self.password, 'ir.model' ,  'search', [('model','=',var[var.find("(")+1:var.find(")")])])
                 else:
 		    self.model_ids = self.sock.execute(database, uid, self.password, 'ir.model' ,  'search', [('model','=',var[8:])])
                 fields=['name','model']
                 self.model_res = self.sock.execute(database, uid, self.password, 'ir.model', 'read', self.model_ids,fields)
-                if self.model_res <> []:
-		    if var[:8]<>'List of ':
+                if self.model_res != []:
+		    if var[:8]!='List of ':
                         self.insVariable.addItem(var[:var.find("(")+1] + self.model_res[0]['name'] + ")" ,self.insVariable.getItemCount())
                     else:
                         self.insVariable.addItem('List of ' + self.model_res[0]['name'] ,self.insVariable.getItemCount())
@@ -260,13 +261,13 @@ class RepeatIn( unohelper.Base, XJobExecutor ):
         txtName = self.win.getEditText( "txtName" )
         txtUName = self.win.getEditText( "txtUName" )
         if selectedItem != "" and txtName != "" and txtUName != "":
-            sKey=u""+ txtUName
+            sKey=""+ txtUName
             if selectedItem == "objects":
-                sValue=u"[[ repeatIn(" + selectedItem + ",'" + txtName + "') ]]"
+                sValue="[[ repeatIn(" + selectedItem + ",'" + txtName + "') ]]"
             else:
                 sObjName=self.win.getComboBoxText("cmbVariable")
                 sObjName=sObjName[:sObjName.find("(")]
-                sValue=u"[[ repeatIn(" + sObjName + self.aListRepeatIn[selectedItemPos].replace("/",".") + ",'" + txtName +"') ]]"
+                sValue="[[ repeatIn(" + sObjName + self.aListRepeatIn[selectedItemPos].replace("/",".") + ",'" + txtName +"') ]]"
 
             if self.bModify == True:
                 oCurObj = cursor.TextField
@@ -278,13 +279,13 @@ class RepeatIn( unohelper.Base, XJobExecutor ):
                     oInputList.Items = (sKey,sValue)
                     doc.Text.insertTextContent(cursor,oInputList,False)
                 else:
-                    sValue=u"[[ repeatIn(" + sObjName + self.aListRepeatIn[selectedItemPos].replace("/",".") + ",'" + txtName +"') ]]"
+                    sValue="[[ repeatIn(" + sObjName + self.aListRepeatIn[selectedItemPos].replace("/",".") + ",'" + txtName +"') ]]"
                     if cursor.TextTable==None:
                         oInputList.Items = (sKey,sValue)
                         doc.Text.insertTextContent(cursor,oInputList,False)
                     else:
                         oInputList.Items = (sKey,sValue)
-                        widget = ( cursor.TextTable or selectedItem <> 'objects' ) and cursor.TextTable.getCellByName( cursor.Cell.CellName ) or doc.Text
+                        widget = ( cursor.TextTable or selectedItem != 'objects' ) and cursor.TextTable.getCellByName( cursor.Cell.CellName ) or doc.Text
                         widget.insertTextContent(cursor,oInputList,False)
                 self.win.endExecute()
         else:
@@ -293,7 +294,7 @@ class RepeatIn( unohelper.Base, XJobExecutor ):
     def btnCancel_clicked( self, oActionEvent ):
         self.win.endExecute()
 
-if __name__<>"package" and __name__=="__main__":
+if __name__!="package" and __name__=="__main__":
     RepeatIn()
 elif __name__=="package":
     g_ImplementationHelper = unohelper.ImplementationHelper()

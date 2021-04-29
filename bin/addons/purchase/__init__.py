@@ -80,13 +80,13 @@ ORDER_TYPES_SELECTION = [
 ]
 
 
-import purchase_order
-import purchase_order_line
-import purchase_workflow
-import partner
-import stock
-import wizard
-import report
-import company
+from . import purchase_order
+from . import purchase_order_line
+from . import purchase_workflow
+from . import partner
+from . import stock
+from . import wizard
+from . import report
+from . import company
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

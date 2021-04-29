@@ -29,12 +29,13 @@
 #@nl
 #@<< Imports >>
 #@+node:<< Imports >>
-import pcalendar
+from . import pcalendar
 import datetime
-import utils
+from . import utils
 import string
 import bisect
-import plocale
+from . import plocale
+from functools import reduce
 #@-node:<< Imports >>
 #@nl
 
@@ -327,7 +328,7 @@ class _MetaResource(type):
         else:
             end_date = _to_datetime(end)
 
-        for cal in self._calendar.itervalues():
+        for cal in self._calendar.values():
             cal.add_load(start_date, end_date, 1)
 
         tp = Booking()
@@ -418,10 +419,9 @@ class ResourceList(list):
     #@-others
 #@-node:class ResourceList
 #@+node:class Resource
-class Resource(_ResourceBase):
+class Resource(_ResourceBase, metaclass=_MetaResource):
     #@	<< declarations >>
     #@+node:<< declarations >>
-    __metaclass__ = _MetaResource
     __attrib_completions__ = {\
         "max_load": 'max_load = ',
         "title":  'title = "|"',
@@ -440,7 +440,7 @@ class Resource(_ResourceBase):
     #@	@+others
     #@+node:__init__
     def __init__(self, **kwargs):
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             setattr(self, k, v)
     #@-node:__init__
     #@+node:_idendity_
@@ -525,7 +525,7 @@ class Resource(_ResourceBase):
             return
 
         add_load = cls.calendar(scenario).add_load
-        for task_id, bookings in task_list.items():
+        for task_id, bookings in list(task_list.items()):
             if task_id.startswith(project_id):
                 for item in bookings:
                     add_load(item.book_start, item.book_end, -item.load)
@@ -605,7 +605,7 @@ class Resource(_ResourceBase):
     def length_of(cls, task):
         cal = task.root.calendar
         bookings = cls.get_bookings(task)
-        return sum(map(lambda b: task._to_delta(b.work_time).round(), bookings))
+        return sum([task._to_delta(b.work_time).round() for b in bookings])
 
     length_of = classmethod(length_of)
     #@-node:length_of
@@ -615,7 +615,7 @@ class Resource(_ResourceBase):
         now = cal.now
         bookings = self.get_bookings(task)
 
-        if task.__dict__.has_key("effort"):
+        if "effort" in task.__dict__:
             efficiency = self.efficiency * task.efficiency
         else:
             efficiency = 1
@@ -641,7 +641,7 @@ class Resource(_ResourceBase):
         now = cal.now
 
         bookings = self.get_bookings(task)
-        if task.__dict__.has_key("effort"):
+        if "effort" in task.__dict__:
             efficiency = self.efficiency * task.efficiency
         else:
             efficiency = 1
@@ -672,7 +672,7 @@ class Resource(_ResourceBase):
         result = []
 
         try:
-            items = cls._tasks[scenario].iteritems()
+            items = iter(cls._tasks[scenario].items())
         except KeyError:
             return ()
 
@@ -710,15 +710,14 @@ class Resource(_ResourceBase):
     #@-node:end_of_booking_interval
     #@+node:snapshot
     def snapshot(self):
-        from task import _as_string
+        from .task import _as_string
         def isattrib(a):
             if a == "max_load" and self.max_load is None: return False
             if a in ("name", "title", "vacation"): return False
             return _isattrib(self, a)
 
-        attribs = filter(isattrib, dir(self))
-        attribs = map(lambda a: "%s=%s" % (a, _as_string(getattr(self, a))),
-                      attribs)
+        attribs = list(filter(isattrib, dir(self)))
+        attribs = ["%s=%s" % (a, _as_string(getattr(self, a))) for a in attribs]
 
         return self.name + "(%s)" % ", ".join(attribs)
     #@-node:snapshot
@@ -739,9 +738,9 @@ class _ResourceGroup(object):
     def all_members(self):
         group = reduce(lambda a, b: a + b.all_members(),
                        self.resources, [])
-        group = map(lambda r: (r, True), group)
+        group = [(r, True) for r in group]
         group = dict(group)
-        group = group.keys()
+        group = list(group.keys())
         return group
     #@-node:all_members
     #@+node:_permutation_count
@@ -840,7 +839,7 @@ class _AndResourceGroup(_ResourceGroup):
         result = ResourceList(*list(utils.flatten(result)))
         dupl_test = { }
         for r in result:
-            if dupl_test.has_key(r):
+            if r in dupl_test:
                 return None
             else:
                 dupl_test[r] = 1
@@ -852,7 +851,7 @@ class _AndResourceGroup(_ResourceGroup):
         resources = self._get_resources(state)
         tmp = { }
         for r in resources:
-            if tmp.has_key(r):
+            if r in tmp:
                 return True
 
             tmp[r] = 1

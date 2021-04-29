@@ -108,7 +108,7 @@ class res_partner(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
 
         for id in ids:
@@ -149,7 +149,7 @@ class res_partner(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
 
         vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid,).vat_ok
@@ -163,7 +163,7 @@ class res_partner(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long, )):
+        if isinstance(ids, int):
             ids = [ids]
 
         partner_id = False
@@ -191,7 +191,7 @@ class res_partner(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long,)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for id in ids:
@@ -383,7 +383,7 @@ class res_partner(osv.osv):
     def _check_main_partner(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
 
@@ -458,7 +458,7 @@ class res_partner(osv.osv):
         return the most important objects linked to him that are not closed or opened
         """
         # some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -673,7 +673,7 @@ class res_partner(osv.osv):
         if not ids:
             return True
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not context:
             context = {}
@@ -723,7 +723,7 @@ class res_partner(osv.osv):
         return super(res_partner, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
 
     def create(self, cr, uid, vals, context=None):
-        fields_to_create = vals.keys()
+        fields_to_create = list(vals.keys())
 
         if context is None:
             context = {}
@@ -778,7 +778,7 @@ class res_partner(osv.osv):
                     rules_to_check = []
                     for rule in rules_pool.read(cr, uid, rules_search, ['domain_text']):
                         dom = rule['domain_text']
-                        if isinstance(dom, (str, unicode)):
+                        if isinstance(dom, str):
                             dom = eval(rule['domain_text'])
                             if not isinstance(dom, bool) and dom:
                                 dom = ['&', ('active','in', ['t', 'f'])] + dom
@@ -835,7 +835,7 @@ class res_partner(osv.osv):
         # some verifications
         if not ids:
             return {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # UF-2463: If the partner is not saved into the system yet, just ignore this check
         if not active:
@@ -1027,7 +1027,7 @@ class res_partner_address(osv.osv):
                 'type': False,
                 'email': False,
             }
-            domain = [(k, '=', v) for k, v in domain_dict.iteritems()]
+            domain = [(k, '=', v) for k, v in domain_dict.items()]
             addr_ids = self.search(cr, uid, domain, context=context)
             if addr_ids:
                 if not self.is_linked(cr, uid, addr_ids):

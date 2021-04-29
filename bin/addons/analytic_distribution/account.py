@@ -21,7 +21,7 @@
 
 from osv import fields, osv
 from tools import drop_view_if_exists
-from destination_tools import many2many_notlazy
+from .destination_tools import many2many_notlazy
 from tools.translate import _
 
 # here was destination_m2m, replaced by the generic many2many_notlazy
@@ -39,7 +39,7 @@ class account_destination_link(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             return {}
@@ -54,12 +54,12 @@ class account_destination_link(osv.osv):
         return res
 
     def _get_account_ids(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.pool.get('account.destination.link').search(cr, uid, [('account_id', 'in', ids)], limit=0)
 
     def _get_analytic_account_ids(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return self.pool.get('account.destination.link').search(cr, uid, [('destination_id', 'in', ids)], limit=0)
 
@@ -73,7 +73,7 @@ class account_destination_link(osv.osv):
                 used = context['dest_in_use'][0][2]
             except ValueError:
                 pass
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         ret = {}
         for i in ids:
@@ -183,7 +183,7 @@ class account_account(osv.osv):
         # Prepare some values
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -243,7 +243,7 @@ class account_move(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         move = self.browse(cr, uid, ids[0], context=context)
@@ -266,7 +266,7 @@ class account_move(osv.osv):
             amount = total_debit
         elif total_credit > total_debit:
             amount = total_credit
-        elif total_credit == total_debit and total_debit <> 0.0:
+        elif total_credit == total_debit and total_debit != 0.0:
             amount = total_debit
         # Get analytic_distribution_id
         distrib_id = move.analytic_distribution_id and move.analytic_distribution_id.id
@@ -308,7 +308,7 @@ class account_move(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         # Prepare some values

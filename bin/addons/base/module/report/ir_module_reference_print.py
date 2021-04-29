@@ -72,7 +72,7 @@ class ir_module_reference_print(report_sxw.rml_parse):
 
     def _fields_find(self, obj):
         modobj = self.pool.get(obj)
-        res = modobj.fields_get(self.cr, self.uid).items()
+        res = list(modobj.fields_get(self.cr, self.uid).items())
         res.sort()
         return res
 

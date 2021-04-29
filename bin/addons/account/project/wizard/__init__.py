@@ -19,12 +19,12 @@
 #
 ##############################################################################
 
-import account_analytic_journal_report
-import account_analytic_balance_report
-import account_analytic_inverted_balance_report
-import account_analytic_cost_ledger_report
-import account_analytic_cost_ledger_for_journal_report
-import project_account_analytic_line
-import account_analytic_chart
+from . import account_analytic_journal_report
+from . import account_analytic_balance_report
+from . import account_analytic_inverted_balance_report
+from . import account_analytic_cost_ledger_report
+from . import account_analytic_cost_ledger_for_journal_report
+from . import project_account_analytic_line
+from . import account_analytic_chart
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

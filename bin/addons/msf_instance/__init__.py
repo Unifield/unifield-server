@@ -18,11 +18,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import msf_instance
-import account_target_costcenter
-import res_company
-import add_instance
-import msf_instance_installer
-import wizard
-import account
+from . import msf_instance
+from . import account_target_costcenter
+from . import res_company
+from . import add_instance
+from . import msf_instance_installer
+from . import wizard
+from . import account
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -118,7 +118,7 @@ class ir_rule(osv.osv):
                 AND (r.id IN (SELECT rule_group_id FROM rule_group_rel g_rel
                             JOIN res_groups_users_rel u_rel ON (g_rel.group_id = u_rel.gid)
                             WHERE u_rel.uid = %s) OR r.global)""", (model_name, uid)) # not_a_user_entry
-        ids = map(lambda x: x[0], cr.fetchall())
+        ids = [x[0] for x in cr.fetchall()]
         if ids:
             for rule in self.browse(cr, uid, ids):
                 for group in rule.groups:
@@ -129,7 +129,7 @@ class ir_rule(osv.osv):
             global_domain = self.domain_create(cr, uid, global_rules)
             count = 0
             group_domains = []
-            for value in group_rule.values():
+            for value in list(group_rule.values()):
                 group_domain = self.domain_create(cr, uid, value)
                 if group_domain:
                     group_domains += group_domain
@@ -156,7 +156,7 @@ class ir_rule(osv.osv):
                                       WHERE g_rel.rule_group_id = r.id
                                         AND (u_rel.uid = %s OR u_rel.gid in %s))
                     """, (uid, tuple(old_groups)))
-        models = map(itemgetter(0), cr.fetchall())
+        models = list(map(itemgetter(0), cr.fetchall()))
         clear = partial(self._compute_domain.clear_cache, cr.dbname, uid)
         [clear(model, mode) for model in models for mode in self._MODES]
 

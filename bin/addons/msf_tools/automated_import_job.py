@@ -37,7 +37,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-from StringIO import StringIO
+from io import StringIO
 from mission_stock.mission_stock import UnicodeWriter
 
 from threading import RLock
@@ -179,7 +179,7 @@ class automated_import_job(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -311,7 +311,7 @@ class automated_import_job(osv.osv):
         return False
 
     def manual_process_import(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['import_id', 'file_to_import', 'file_sum'], context=context)
         if wiz.file_to_import:
@@ -351,7 +351,7 @@ class automated_import_job(osv.osv):
             cr = pooler.get_db(dbname).cursor()
             self.process_import(cr, uid, import_id, started_job_id=started_job_id, context=context)
             cr.commit()
-        except Exception, e:
+        except Exception as e:
             cr.rollback()
             self.write(cr, uid, [started_job_id], {
                 'filename': False,
@@ -382,7 +382,7 @@ class automated_import_job(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(import_id, (int, long)):
+        if isinstance(import_id, int):
             import_id = [import_id]
 
         import_data = import_obj.browse(cr, uid, import_id[0], context=context)
@@ -415,7 +415,7 @@ class automated_import_job(osv.osv):
                     ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, import_data.id, context=context)
                 elif import_data.ftp_ok and import_data.ftp_protocol == 'sftp':
                     sftp = self.pool.get('automated.import').sftp_test_connection(cr, uid, import_data.id, context=context)
-            except Exception, e:
+            except Exception as e:
                 if job.id:
                     if isinstance(e, osv.except_osv):
                         msg = e.value

@@ -19,11 +19,11 @@
 #
 ##############################################################################
 
-import import_currencies
-import warning_import_currencies
-import confirm_import_currencies
-import import_table_currencies
-import wizard_report_rates_table
-import wizard_report_currency_table
+from . import import_currencies
+from . import warning_import_currencies
+from . import confirm_import_currencies
+from . import import_table_currencies
+from . import wizard_report_rates_table
+from . import wizard_report_currency_table
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -21,12 +21,12 @@
 #
 ##############################################################################
 
-import res_company
-import hr
-import hr_payroll
-import hr_job_msf
-import hr_contract_msf
-import wizard
-import report
+from . import res_company
+from . import hr
+from . import hr_payroll
+from . import hr_job_msf
+from . import hr_contract_msf
+from . import wizard
+from . import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

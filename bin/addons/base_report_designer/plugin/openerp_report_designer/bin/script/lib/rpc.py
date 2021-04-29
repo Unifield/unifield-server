@@ -21,9 +21,10 @@
 ##############################################################################
 import time
 import socket
-import xmlrpclib
+import xmlrpc.client
 #import tiny_socket
 import re
+from functools import reduce
 
 class RPCGateway(object):
     def __init__(self, host, port, protocol):
@@ -91,17 +92,17 @@ class RPCSession(object):
         try:
             result = self.gateway.execute(obj, method, *args)
             return self.__convert(result)
-        except Exception,e:
+        except Exception as e:
           import traceback,sys
-          info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+          info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
 
     def __convert(self, result):
 
-        if isinstance(result, basestring):
+        if isinstance(result, str):
             # try to convert into unicode string
             try:
                 return ustr(result)
-            except Exception, e:
+            except Exception as e:
                 return result
 
         elif isinstance(result, list):
@@ -112,7 +113,7 @@ class RPCSession(object):
 
         elif isinstance(result, dict):
             newres = {}
-            for key, val in result.items():
+            for key, val in list(result.items()):
                 newres[key] = self.__convert(val)
 
             return newres
@@ -131,23 +132,23 @@ class XMLRPCGateway(RPCGateway):
 
     def listdb(self):
         global rpc_url
-        sock = xmlrpclib.ServerProxy(rpc_url + 'db')
+        sock = xmlrpc.client.ServerProxy(rpc_url + 'db')
         try:
             return sock.list()
-        except Exception, e:
+        except Exception as e:
             return -1
 
     def login(self, db, user, password):
 
         global rpc_url
 
-        sock = xmlrpclib.ServerProxy(rpc_url + 'common')
+        sock = xmlrpc.client.ServerProxy(rpc_url + 'common')
 
         try:
             res = sock.login(db, user, password)
-        except Exception, e:
+        except Exception as e:
             import traceback,sys
-            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             return -1
 
         return res
@@ -155,7 +156,7 @@ class XMLRPCGateway(RPCGateway):
     def execute(self, sDatabase,UID,sPassword,obj, method, *args):
         global rpc_url
 
-        sock = xmlrpclib.ServerProxy(rpc_url + 'object')
+        sock = xmlrpc.client.ServerProxy(rpc_url + 'object')
 
         return sock.execute(sDatabase,UID,sPassword, obj ,method,*args)
 
@@ -174,7 +175,7 @@ class NETRPCGateway(RPCGateway):
             res = sock.myreceive()
             sock.disconnect()
             return res
-        except Exception, e:
+        except Exception as e:
             return -1
 
     def login(self, db, user, password):
@@ -184,7 +185,7 @@ class NETRPCGateway(RPCGateway):
             sock.mysend(('common', 'login', db, user, password))
             res = sock.myreceive()
             sock.disconnect()
-        except Exception, e:
+        except Exception as e:
             return -1
         return res
     def execute(self,obj, method, *args):
@@ -197,8 +198,8 @@ class NETRPCGateway(RPCGateway):
             sock.disconnect()
             return res
 
-        except Exception,e:
+        except Exception as e:
             import traceback,sys
-            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            info = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
 
 

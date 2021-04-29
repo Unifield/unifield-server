@@ -39,7 +39,7 @@ class product_supplierinfo(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(info_ids, (int, long)):
+        if isinstance(info_ids, int):
             info_ids = [info_ids]
 
         for info in self.browse(cr, uid, info_ids, context=context):
@@ -60,7 +60,7 @@ class product_supplierinfo(osv.osv):
         if count:
             return res
 
-        if isinstance(res, (int, long)):
+        if isinstance(res, int):
             res = [res]
 
         for r in self.browse(cr, uid, res, context=context):
@@ -121,11 +121,11 @@ class pricelist_partnerinfo(osv.osv):
 
         res = super(pricelist_partnerinfo, self).default_get(cr, uid, fields, context=context)
 
-        if context.get('partner_id', False) and isinstance(context['partner_id'], (int, long)):
+        if context.get('partner_id', False) and isinstance(context['partner_id'], int):
             partner = self.pool.get('res.partner').browse(cr, uid, context.get('partner_id'), context=context)
             res['currency_id'] = partner.property_product_pricelist_purchase.currency_id.id
             res['partner_id'] = partner.id
-        if context.get('active_model', False) == 'product.supplierinfo' and context.get('active_id', False) and isinstance(context['active_id'], (int, long)):
+        if context.get('active_model', False) == 'product.supplierinfo' and context.get('active_id', False) and isinstance(context['active_id'], int):
             read_partnerinfo = self.pool.get('product.supplierinfo').read(cr, uid, context['active_id'])
             res['uom_id'] = read_partnerinfo['product_uom'][0]
 
@@ -142,7 +142,7 @@ class pricelist_partnerinfo(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(info_id, (int, long)):
+        if isinstance(info_id, int):
             info_id = [info_id]
 
         for info in self.browse(cr, uid, info_id, context=context):
@@ -175,7 +175,7 @@ class pricelist_partnerinfo(osv.osv):
         '''
         Check if the min_qty field is set
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context is None:
@@ -192,7 +192,7 @@ class pricelist_partnerinfo(osv.osv):
         return True
 
     def _get_supplierinfo(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         result = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', ids)], context=context)
         return result
@@ -290,7 +290,7 @@ class product_product(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(product_ids, (int, long)):
+        if isinstance(product_ids, int):
             one_product = product_ids
             product_ids = [product_ids]
 
@@ -315,7 +315,7 @@ class product_product(osv.osv):
 
         context = context is None and {} or context
 
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}

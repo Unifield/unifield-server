@@ -215,7 +215,7 @@ class mission_stock_wizard(osv.osv_memory):
 
     def go_previous(self, cr, uid, ids, context=None):
         context = context or {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         return {'type': 'ir.actions.act_window',
                 'res_model': self._name,

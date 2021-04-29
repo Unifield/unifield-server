@@ -49,7 +49,7 @@ class automated_export_job(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -128,7 +128,7 @@ class automated_export_job(osv.osv):
         if context is None:
             context = []
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for job in self.browse(cr, uid, ids, context=context):

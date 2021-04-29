@@ -85,7 +85,7 @@ class wizard_import_cheque(osv.osv_memory):
         Import some cheque statement line into wizard.import.cheque.lines before process.
         """
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -143,7 +143,7 @@ class wizard_import_cheque(osv.osv_memory):
         # Some verifications
         if not ids:
             return False
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

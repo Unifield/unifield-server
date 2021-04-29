@@ -39,7 +39,7 @@ class report_printscreen_list(report_int):
                 attrsa = node.attrib
                 attrs = {}
                 if not attrsa is None:
-                    for key,val in attrsa.items():
+                    for key,val in list(attrsa.items()):
                         attrs[key] = val
                 result.append(attrs['name'])
             else:
@@ -61,7 +61,7 @@ class report_printscreen_list(report_int):
         result = model.fields_view_get(cr, uid, view_type='form', context=context)
 
         fields_order = self._parse_string(result['arch'])
-        rows = model.read(cr, uid, datas['ids'], result['fields'].keys() )
+        rows = model.read(cr, uid, datas['ids'], list(result['fields'].keys()) )
         self._create_table(uid, datas['ids'], result['fields'], fields_order, rows, context, model._description)
         return (self.obj.get(), 'pdf')
 

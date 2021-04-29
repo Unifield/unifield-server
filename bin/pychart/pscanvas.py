@@ -14,10 +14,10 @@
 #
 import sys
 import re
-import theme
-import version
-import basecanvas
-from scaling import *
+from . import theme
+from . import version
+from . import basecanvas
+from .scaling import *
 
 comment_p = 0
 
@@ -40,7 +40,7 @@ class T(basecanvas.T):
         self.__txtmtx_pushed = 0
 
     def __intern_font(self, name):
-        if self.__font_ids.has_key(name):
+        if name in self.__font_ids:
             return self.__font_ids[name]
         id = "F%d" % self.__nr_fonts
         self.__nr_fonts += 1
@@ -112,7 +112,7 @@ class T(basecanvas.T):
             self.__write("%g %g scale\n" % (scale[0], scale[1]))
     def pop_transformation(self, in_text=0):
         if self.__mtx_pushed == 0:
-            raise ValueError, "mtx not pushed"
+            raise ValueError("mtx not pushed")
         self.__mtx_pushed -= 1
         self.__write("GE\n")
     def text_begin(self):
@@ -174,7 +174,7 @@ class T(basecanvas.T):
         fp, need_close = self.open_output(self.__out_fname)
             
         if self.__nr_gsave != 0:
-            raise Exception, "gsave misnest (%d)" % (self.__nr_gsave)
+            raise Exception("gsave misnest (%d)" % (self.__nr_gsave))
         self.write_preamble(fp)
         
         fp.writelines(self.__output_lines)
@@ -198,7 +198,7 @@ class T(basecanvas.T):
         if self.author:
             fp.write("%%Author: " + self.author + "\n")
         fp.write("%%CreationDate: " + self.creation_date + "\n")
-        fp.write("%%DocumentFonts: " + " ".join(self.__font_ids.keys()) + "\n")
+        fp.write("%%DocumentFonts: " + " ".join(list(self.__font_ids.keys())) + "\n")
         fp.write("%%Pages: 1\n")
 
         bbox = theme.adjust_bounding_box(bbox)
@@ -214,7 +214,7 @@ class T(basecanvas.T):
                 fp.write("% " + line + "\n")
 
         fp.write(preamble_text)
-        for name, id in self.__font_ids.items():
+        for name, id in list(self.__font_ids.items()):
             fp.write("/%s {/%s findfont SF} def\n" % (id, name))
         fp.write("%%EndProlog\n%%Page: 1 1\n")
 

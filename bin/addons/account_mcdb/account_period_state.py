@@ -96,7 +96,7 @@ class account_period_state(osv.osv):
         return view
 
     def update_state(self, cr, uid, period_ids, context=None):
-        if isinstance(period_ids, (int, long)):
+        if isinstance(period_ids, int):
             period_ids = [period_ids]
 
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
@@ -175,7 +175,7 @@ class account_fiscalyear_state(osv.osv):
         """
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -215,7 +215,7 @@ class account_fiscalyear_state(osv.osv):
                                                    fields_to_fetch=['account_id', 'currency_id'], context=context):
                     cr.execute(sql, (tuple(instance_ids), fy.date_start, fy.date_stop, period_id,
                                      balance_line.account_id.id,  balance_line.currency_id.id,))
-                    aml_ids = map(lambda x: x[0], cr.fetchall())
+                    aml_ids = [x[0] for x in cr.fetchall()]
                     aml_ids.append(balance_line.id)
                     # with 'fy_hq_closing' in context we don't check if the account is reconcilable
                     # (but the check that no entry is already reconciled is kept)
@@ -249,7 +249,7 @@ class account_fiscalyear_state(osv.osv):
         return view
 
     def update_state(self, cr, uid, fy_ids, context=None):
-        if isinstance(fy_ids, (int, long)):
+        if isinstance(fy_ids, int):
             fy_ids = [fy_ids]
 
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)

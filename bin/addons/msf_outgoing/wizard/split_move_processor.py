@@ -65,7 +65,7 @@ class split_move_processor(osv.osv_memory):
         # Objects
         data_obj = self.pool.get('ir.model.data')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:
@@ -118,7 +118,7 @@ class split_move_processor(osv.osv_memory):
         """
         Switch from old product to new product or from old UoM to new UoM
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if not ids:

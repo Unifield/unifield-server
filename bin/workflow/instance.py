@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-import wkf_logs
-import workitem
+from . import wkf_logs
+from . import workitem
 
 import netsvc
 import pooler
@@ -61,7 +61,7 @@ def _update_end(cr, inst_id, ident):
     cr.execute('select state,flow_stop from wkf_workitem w left join wkf_activity a on (a.id=w.act_id) where w.inst_id=%s', (inst_id,))
     ok=True
     for r in cr.fetchall():
-        if (r[0]<>'complete') or not r[1]:
+        if (r[0]!='complete') or not r[1]:
             ok=False
             break
     if ok:

@@ -62,7 +62,7 @@ class tender(osv.osv):
 
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -165,7 +165,7 @@ class tender(osv.osv):
         '''
         Check if there is no restrictive products in lines
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         line_obj = self.pool.get('tender.line')
@@ -225,7 +225,7 @@ class tender(osv.osv):
         if not ids:
             return True
         # UFTP-317: Make sure ids is a list
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         exp_sol_obj = self.pool.get('expected.sale.order.line')
 
@@ -261,7 +261,7 @@ class tender(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         message = {}
@@ -439,7 +439,7 @@ class tender(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.create_po(cr, uid, ids, context=context)
@@ -456,7 +456,7 @@ class tender(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for tender in self.browse(cr, uid, ids, fields_to_fetch=['supplier_info_updated'], context=context):
@@ -480,7 +480,7 @@ class tender(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for tender in self.browse(cr, uid, ids, context=context):
@@ -618,7 +618,7 @@ class tender(osv.osv):
         '''
         create a po from the updated RfQs
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -681,7 +681,7 @@ class tender(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for tender_id in ids:
@@ -737,7 +737,7 @@ class tender(osv.osv):
         '''
         Set the tender and all related documents to done state
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
@@ -807,7 +807,7 @@ class tender(osv.osv):
         if not context:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         sol_obj = self.pool.get('sale.order.line')
@@ -973,7 +973,7 @@ class tender_line(osv.osv):
         '''
         Check if there is no restrictive products in lines
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -1120,7 +1120,7 @@ class tender_line(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # Check if the line has been already deleted
@@ -1194,7 +1194,7 @@ class tender_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res_id = False
@@ -1222,7 +1222,7 @@ class tender_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for tender_line in self.browse(cr, uid, ids, context=context):
@@ -1376,7 +1376,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         tend_l_obj = self.pool.get('tender.line')
@@ -1472,7 +1472,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {
@@ -1485,7 +1485,7 @@ class purchase_order(osv.osv):
     def rfq_sent(self, cr, uid, ids, context=None):
         if not ids:
             return {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1512,7 +1512,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'rfq_state': 'updated'}, context=context)
@@ -1523,7 +1523,7 @@ class purchase_order(osv.osv):
         tl_obj = self.pool.get('tender.line')
         line_obj = self.pool.get('purchase.order.line')
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for rfq in self.browse(cr, uid, ids, context=context):
@@ -1612,7 +1612,7 @@ price. Please set unit price on these lines or cancel them'''),
         '''
         close the Request for Quotation
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -1637,7 +1637,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -1742,7 +1742,7 @@ class tender_line_cancel_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         pol_obj = self.pool.get('purchase.order.line')
@@ -1777,7 +1777,7 @@ class tender_line_cancel_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         line_ids = []
@@ -1842,7 +1842,7 @@ class tender_cancel_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}
@@ -1871,7 +1871,7 @@ class tender_cancel_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
@@ -2029,7 +2029,7 @@ class procurement_request_sourcing_document(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         source_doc = self.browse(cr, uid, ids[0], fields_to_fetch=['linked_id', 'linked_model'], context=context)

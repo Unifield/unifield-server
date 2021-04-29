@@ -130,9 +130,9 @@ class ir_ui_menu(osv.osv):
             result = self._filter_visible_menus(cr, uid, ids, context=context)
 
         if offset:
-            result = result[long(offset):]
+            result = result[int(offset):]
         if limit:
-            result = result[:long(limit)]
+            result = result[:int(limit)]
 
         if count:
             return len(result)

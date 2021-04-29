@@ -42,7 +42,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         # Prepare some value
         res = {}
         # Some verifications
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not context:
             context = {}
@@ -123,7 +123,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # US_366: Check if a wizard is already in progress
@@ -191,7 +191,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             ids = context.get('active_ids')
 
         if ids:
-            if isinstance(ids, (int, long)):
+            if isinstance(ids, int):
                 ids = [ids]
             first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
             if _get_instance_level(self, cr, uid) == 'hq':
@@ -319,7 +319,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # US_366: Check if a wizard is already in progress

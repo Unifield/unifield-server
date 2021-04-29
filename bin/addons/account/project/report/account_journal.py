@@ -29,7 +29,7 @@ from report import report_sxw
 class journal_print(report_sxw.rml_parse):
     def lines(self, journal_id, *args):
         self.cr.execute('select id from account_analytic_line where journal_id=%s order by date,id', (journal_id,))
-        ids = map(lambda x: x[0], self.cr.fetchall())
+        ids = [x[0] for x in self.cr.fetchall()]
         res = self.pool.get('account.analytic.line').browse(self.cr, self.uid, ids)
         return res
     def _sum_lines(self, journal_id):

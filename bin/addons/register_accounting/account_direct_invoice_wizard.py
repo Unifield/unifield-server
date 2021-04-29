@@ -27,8 +27,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import decimal_precision as dp
-from register_tools import _get_date_in_period
-from register_tools import open_register_view
+from .register_tools import _get_date_in_period
+from .register_tools import open_register_view
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -170,7 +170,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         """
         Check that all line have a valid analytic distribution state
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for w in self.browse(cr, uid, ids):
             for l in w.invoice_wizard_line:
@@ -377,7 +377,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         invoice = self.browse(cr, uid, ids[0], context=context)
@@ -428,7 +428,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         invl_obj = self.pool.get(self._name + '.line')
@@ -466,7 +466,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # Prepare some values
         res = {}
@@ -491,7 +491,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         """
         Get a recap from analytic distribution state and if it come from header or not.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for invl in self.browse(cr, uid, ids):
@@ -511,7 +511,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for inv in self.browse(cr, uid, ids, context=context):
@@ -524,7 +524,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         """
         If analytic-a-holic account, then this account is allocatable.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = {}
         for invl in self.browse(cr, uid, ids):
@@ -663,7 +663,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No invoice line given. '

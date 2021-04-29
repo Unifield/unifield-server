@@ -21,7 +21,7 @@
 
 import datetime
 import csv
-import StringIO
+import io
 import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
@@ -39,7 +39,7 @@ class hq_report_oca(report_sxw.report_sxw):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def _enc(self, st):
-        if isinstance(st, unicode):
+        if isinstance(st, str):
             return st.encode('utf8')
         return st
 
@@ -468,10 +468,10 @@ class hq_report_oca(report_sxw.report_sxw):
             datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or ""
 
         # regroup second report lines
-        for key in sorted(main_lines.iterkeys(), key=lambda tuple: tuple[0]):
+        for key in sorted(iter(main_lines.keys()), key=lambda tuple: tuple[0]):
             second_result_lines += sorted(main_lines[key], key=lambda line: line[2])
 
-        for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
+        for key in sorted(iter(account_lines_debit.keys()), key=lambda tuple: tuple[0]):
             # for entries "shrunk for HQ export"
             subtotal_lines = self.create_subtotal(cr, uid, key, account_lines_debit[key], counterpart_date, period,
                                                   department_info, field_activity, context=context)
@@ -500,19 +500,19 @@ class hq_report_oca(report_sxw.report_sxw):
             out = ''
         else:
             # manual export
-            zip_buffer = StringIO.StringIO()
+            zip_buffer = io.StringIO()
             in_memory = True
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
         # for Raw data file: use double quotes for all entries
         writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL, delimiter=",")
         for line in first_report:
-            writer.writerow(map(self._enc, line))
+            writer.writerow(list(map(self._enc, line)))
         first_fileobj.close()
         # for formatted data file: use double quotes only for entries containing double quote or comma
         writer = csv.writer(second_fileobj, quoting=csv.QUOTE_MINIMAL, delimiter=",")
         for line in second_report:
-            writer.writerow(map(self._enc, line))
+            writer.writerow(list(map(self._enc, line)))
         second_fileobj.close()
 
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")

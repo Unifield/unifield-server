@@ -50,7 +50,7 @@ class composition_kit(osv.osv):
         '''
         action cancel set the state of the composition kit to 'cancel'
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # all specified kits must be in draft state
@@ -118,7 +118,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -140,7 +140,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -157,7 +157,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -174,7 +174,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
@@ -187,7 +187,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for kit in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
@@ -398,7 +398,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}
@@ -471,7 +471,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -547,7 +547,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # date tools object
@@ -569,7 +569,7 @@ class composition_kit(osv.osv):
         return res
 
     def _get_report_name(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         obj = self.browse(cr, uid, ids[0], context)
         db_date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
@@ -636,7 +636,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         kit_obj = self.pool.get('composition.kit')
@@ -654,7 +654,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         kit_obj = self.pool.get('composition.kit')
@@ -682,7 +682,7 @@ class composition_kit(osv.osv):
             return False
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         lot_obj = self.pool.get('stock.production.lot')
@@ -794,7 +794,7 @@ class composition_kit(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -1046,7 +1046,7 @@ class composition_item(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}
@@ -1076,7 +1076,7 @@ class composition_item(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # date tools object
@@ -1099,7 +1099,7 @@ class composition_item(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         item_obj = self.pool.get('composition.item')
@@ -1170,7 +1170,7 @@ class composition_item(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
@@ -1210,7 +1210,7 @@ class product_product(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.read(cr, uid, ids, ['type', 'subtype', 'perishable', 'batch_management', 'default_code'], context=context):
@@ -1228,7 +1228,7 @@ class product_product(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         result = {}
@@ -1296,7 +1296,7 @@ class product_nomenclature(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         if context.get('composition_type', False):
@@ -1336,7 +1336,7 @@ class stock_move(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         obj = self.browse(cr, uid, ids[0], context=context)
@@ -1405,7 +1405,7 @@ class stock_location(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         # do we want the child location
@@ -1596,7 +1596,7 @@ class purchase_order_line(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
@@ -1650,7 +1650,7 @@ class sale_order_line(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # objects
         result = {}

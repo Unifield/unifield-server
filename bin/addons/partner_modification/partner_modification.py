@@ -100,7 +100,7 @@ class res_partner(osv.osv):
         '''
         if not ids:
             return 0.0
-        if ids and isinstance(ids, (int, long)):
+        if ids and isinstance(ids, int):
             ids = [ids]
         # result values
         result = {}

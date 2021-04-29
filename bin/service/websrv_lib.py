@@ -31,9 +31,9 @@
 import socket
 import base64
 import errno
-import SocketServer
-import BaseHTTPServer
-from SimpleHTTPServer import SimpleHTTPRequestHandler
+import socketserver
+import http.server
+from http.server import SimpleHTTPRequestHandler
 
 class AuthRequiredExc(Exception):
     def __init__(self,atype,realm):
@@ -57,11 +57,11 @@ class AuthProvider:
         return False
 
     def log(self, msg):
-        print msg
+        print(msg)
 
 class BasicAuthProvider(AuthProvider):
     def setupAuth(self, multi, handler):
-        if not multi.sec_realms.has_key(self.realm):
+        if self.realm not in multi.sec_realms:
             multi.sec_realms[self.realm] = BasicAuthProxy(self)
 
 
@@ -167,12 +167,12 @@ class FixSendError:
     def send_error(self, code, message=None):
         #overriden from BaseHTTPRequestHandler, we also send the content-length
         try:
-            short, long = self.responses[code]
+            short, int = self.responses[code]
         except KeyError:
-            short, long = '???', '???'
+            short, int = '???', '???'
         if message is None:
             message = short
-        explain = long
+        explain = int
         self.log_error("code %d, message %s", code, message)
         # using _quote_html to prevent Cross Site Scripting attacks (see bug #1100201)
         content = (self.error_message_format %
@@ -208,8 +208,8 @@ class HttpOptions:
             # header that we are not an elephant.
             # http://www.ibm.com/developerworks/rational/library/2089.html
 
-        for key, value in opts.items():
-            if isinstance(value, basestring):
+        for key, value in list(opts.items()):
+            if isinstance(value, str):
                 self.send_header(key, value)
             elif isinstance(value, (tuple, list)):
                 self.send_header(key, ', '.join(value))
@@ -226,7 +226,7 @@ class HttpOptions:
         """
         return opts
 
-class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequestHandler):
+class MultiHTTPHandler(FixSendError, HttpOptions, http.server.BaseHTTPRequestHandler):
     """ this is a multiple handler, that will dispatch each request
         to a nested handler, iff it matches
 
@@ -243,7 +243,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequest
     def __init__(self, request, client_address, server):
         self.in_handlers = {}
         self.sec_realms = {}
-        SocketServer.StreamRequestHandler.__init__(self,request,client_address,server)
+        socketserver.StreamRequestHandler.__init__(self,request,client_address,server)
         self.log_message("MultiHttpHandler init for %s" %(str(client_address)))
 
     def _handle_one_foreign(self,fore, path, auth_provider):
@@ -265,7 +265,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequest
         if auth_provider and auth_provider.realm:
             try:
                 self.sec_realms[auth_provider.realm].checkRequest(fore,path)
-            except AuthRequiredExc,ae:
+            except AuthRequiredExc as ae:
                 # Darwin 9.x.x webdav clients will report "HTTP/1.0" to us, while they support (and need) the
                 # authorisation features of HTTP/1.1 
                 if self.request_version != 'HTTP/1.1' and ('Darwin/9.' not in fore.headers.get('User-Agent', '')):
@@ -281,7 +281,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequest
                 self.end_headers()
                 self.wfile.write(self.auth_required_msg)
                 return
-            except AuthRejectedExc,e:
+            except AuthRejectedExc as e:
                 self.log_error("Rejected auth: %s" % e.args[0])
                 self.send_error(403,e.args[0])
                 self.close_connection = 1
@@ -299,7 +299,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequest
             method()
         except (AuthRejectedExc, AuthRequiredExc):
             raise
-        except Exception, e:
+        except Exception as e:
             if hasattr(self, 'log_exception'):
                 self.log_exception("Could not run %s", mname)
             else:
@@ -413,7 +413,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequest
             if not npath.startswith('/'):
                 npath = '/' + npath
 
-            if not self.in_handlers.has_key(p):
+            if p not in self.in_handlers:
                 self.in_handlers[p] = vdir.handler(noconnection(self.request),self.client_address,self.server)
                 if vdir.auth_provider:
                     vdir.auth_provider.setupAuth(self, self.in_handlers[p])
@@ -423,7 +423,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequest
             self.rlpath = self.raw_requestline
             try:
                 self._handle_one_foreign(hnd,npath, vdir.auth_provider)
-            except IOError, e:
+            except IOError as e:
                 if e.errno == errno.EPIPE:
                     self.log_message("Could not complete request %s," \
                                      "client closed connection", self.rlpath.rstrip())
@@ -435,7 +435,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequest
         return
 
     def _get_ignore_body(self,fore):
-        if not fore.headers.has_key("content-length"):
+        if "content-length" not in fore.headers:
             return
         max_chunk_size = 10*1024*1024
         size_remaining = int(fore.headers["content-length"])

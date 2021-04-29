@@ -301,7 +301,7 @@ class account_analytic_line(osv.osv):
             context = {}
         if context.get('instance_ids'):
             instance_ids = context.get('instance_ids')
-            if isinstance(instance_ids, (int, long)):
+            if isinstance(instance_ids, int):
                 instance_ids = [instance_ids]
             args.append(('instance_id', 'in', instance_ids))
         return super(account_analytic_line, self).search(cr, uid, args, offset,
@@ -395,7 +395,7 @@ class account_move_line(osv.osv):
             context = {}
         if context.get('instance_ids'):
             instance_ids = context.get('instance_ids')
-            if isinstance(instance_ids, (int, long)):
+            if isinstance(instance_ids, int):
                 instance_ids = [instance_ids]
             args.append(('instance_id', 'in', instance_ids))
         return super(account_move_line, self).search(cr, uid, args, offset,
@@ -533,7 +533,7 @@ class account_cashbox_line(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         res = True
         from_synchro = context.get('sync_update_execution', False)

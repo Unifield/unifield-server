@@ -42,7 +42,7 @@ class wizard_report_paid_invoice(osv.osv_memory):
         """
         Generates the Paid Invoices Report
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}

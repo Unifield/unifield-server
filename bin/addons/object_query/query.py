@@ -90,7 +90,7 @@ class object_query(osv.osv):
         return True
 
     def reset_search_values(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         sel_date = self.pool.get('object.query.selection_data')
         r1 = sel_date.search(cr, uid, [('query_id', 'in', ids)])
@@ -99,7 +99,7 @@ class object_query(osv.osv):
         return True
 
     def change_object(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         result = self.pool.get('object.query.result.fields')
         r1 = result.search(cr, uid, [('object_id', 'in', ids)])
@@ -126,7 +126,7 @@ class object_query(osv.osv):
         model = self.pool.get(model_name)
 
         if model._inherits:
-            for table in model._inherits.keys():
+            for table in list(model._inherits.keys()):
                 for name in self._get_inherits_model(cr, uid, table):
                     res.append(name)
         else:
@@ -325,7 +325,7 @@ class object_query(osv.osv):
         }
 
     def unlink(self, cr, uid, ids, context=None):
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
 
         todel = []
@@ -339,7 +339,7 @@ class object_query(osv.osv):
         return super(object_query, self).unlink(cr, uid, ids, context)
 
     def _coherence_search_value(self, cr, uid, ids, context=None):
-        if isinstance(id, (int, long)):
+        if isinstance(id, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids):
             if obj.selection_ids:
@@ -379,7 +379,7 @@ class object_query_selection_data(osv.osv):
         from_format = {'date': '%Y-%m-%d', 'datetime': '%Y-%m-%d %H:%M:%S'}
         to_format = {'date': date_format, 'datetime': '%s %s'%(date_format, time_format)}
 
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids):
             ret[obj.id] = ''
@@ -531,7 +531,7 @@ class ir_fields(osv.osv):
 
     def _get_help(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
-        if isinstance(ids, (long, int)):
+        if isinstance(ids, int):
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids):

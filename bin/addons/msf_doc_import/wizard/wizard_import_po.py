@@ -146,7 +146,7 @@ class wizard_import_po(osv.osv_memory):
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
@@ -184,7 +184,7 @@ The columns should be in this values:
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
         lines_not_imported = []
         header_index = kwargs.get('header_index')
-        data = header_index.items()
+        data = list(header_index.items())
         columns_header = []
         for k,v in sorted(data, key=lambda tup: tup[1]):
             columns_header.append((k, type(k)))
@@ -217,7 +217,7 @@ The columns should be in this values:
         """
         Check that the columns in the header will be taken into account.
         """
-        for k,v in header_index.items():
+        for k,v in list(header_index.items()):
             if k not in columns_for_po_integration:
                 if k == 'Delivery requested date':
                     continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
@@ -226,7 +226,7 @@ The columns should be in this values:
                 return self.write(cr, uid, ids, vals, context), False
         list_of_required_values = ['Line', 'Product Code']
         for required_value in list_of_required_values:
-            if required_value not in header_index.keys():
+            if required_value not in list(header_index.keys()):
                 vals = {'message': _('The following columns are required for the import (case sensitive): %s.\n Please add the missing one.'
                                      ) % (', '.join(list_of_required_values))}
                 return self.write(cr, uid, ids, vals, context), False
@@ -268,7 +268,7 @@ The columns should be in this values:
             try:
                 est_transport_lead_time = float(cell_data)
                 to_write_po.update({'est_transport_lead_time': est_transport_lead_time})
-            except ValueError, e:
+            except ValueError as e:
                 to_write_po['error_list'].append(_('The Est. Transport Lead Time %s has a wrong value. Details: %s.') % (cell_data, e))
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
 
@@ -388,7 +388,7 @@ The columns should be in this values:
             try:
                 line_number = int(cell_data)
                 to_write.update({'line_number': line_number})
-            except ValueError, e:
+            except ValueError as e:
                 to_write['error_list'].append(_('The Line %s has a wrong value. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
         else:
@@ -413,7 +413,7 @@ The columns should be in this values:
             try:
                 product_qty = float(cell_data)
                 to_write.update({'product_qty': product_qty})
-            except ValueError, e:
+            except ValueError as e:
                 to_write['error_list'].append(_('The Quantity %s has a wrong format. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
@@ -449,7 +449,7 @@ The columns should be in this values:
             try:
                 price_unit = float(cell_data)
                 to_write.update({'price_unit': price_unit, 'price_unit_defined': True})
-            except ValueError, e:
+            except ValueError as e:
                 to_write['error_list'].append(_('The Price %s has a wrong format. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
@@ -518,7 +518,7 @@ The columns should be in this values:
 
 
         rows = fileobj.getRows()
-        rows.next()
+        next(rows)
         file_line_number = 0 # we begin at 0 for referencing the first line of the file_values with this index
         total_line_num = len([row for row in fileobj.getRows()])
         first_row = True
@@ -526,7 +526,7 @@ The columns should be in this values:
         wrong_format = False
         for row in rows:
             file_line_number += 1
-            if len(row) < len(header_index.keys()):
+            if len(row) < len(list(header_index.keys())):
                 import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True}, context=context)
                 error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it got elements that do not fit the template. Then, none of the lines are updated. \n Please make sure that all the lines are within the template. \n'
                                ) % (file_line_number+1,)
@@ -551,7 +551,7 @@ The columns should be in this values:
                         vals_po = import_po_obj.read(cr, uid, po_import_id) # we take the whole dict of values because we don't specify the list of values
                         # We take only the not Null Value
                         filtered_vals = {}
-                        for k, v in vals_po.iteritems():
+                        for k, v in vals_po.items():
                             if v:
                                 filtered_vals.update({k: v})
                         po_obj.write(cr, uid, po_id, filtered_vals, context)
@@ -642,7 +642,7 @@ The columns should be in this values:
                             file_line_number = vals.get('file_line_number', False)
                             # We take only the not Null Value
                             filtered_vals = {}
-                            for k, v in vals.iteritems():
+                            for k, v in vals.items():
                                 if v:
                                     filtered_vals.update({k: v})
                             pol_obj.write(cr, uid, pol_line.id, filtered_vals)
@@ -664,7 +664,7 @@ The columns should be in this values:
                                 file_line_number = import_values.get('file_line_number', False)
                                 # We take only the not Null Value
                                 filtered_vals = {}
-                                for k, v in import_values.iteritems():
+                                for k, v in import_values.items():
                                     if v:
                                         filtered_vals.update({k: v})
                                 pol_obj.write(cr, uid, pol_line.id, filtered_vals, context)
@@ -682,7 +682,7 @@ The columns should be in this values:
                                     line['file_line_number']+1,
                                     count_same_pol_line_nb, line_number,
                                     file_values[line.get('file_line_number', False)] and file_values[line.get('file_line_number', False)][header_index['Product Code']])
-                                data = file_values[line['file_line_number']].items()
+                                data = list(file_values[line['file_line_number']].items())
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
                                 processed_lines += 1
@@ -707,7 +707,7 @@ The columns should be in this values:
                             import_values.update({'product_qty': product_qty})
                             # We take only the not Null Value
                             filtered_vals = {}
-                            for k, v in import_values.iteritems():
+                            for k, v in import_values.items():
                                 if v:
                                     filtered_vals.update({k: v})
                             pol_obj.write(cr, uid, same_pol_line_nb, filtered_vals, context)
@@ -738,7 +738,7 @@ The columns should be in this values:
                                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
                                 except osv.except_osv as osv_error:
                                     error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : %s") % (file_line.file_line_number+1, osv_error.value))
-                                    data = file_values[file_line.file_line_number].items()
+                                    data = list(file_values[file_line.file_line_number].items())
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
                                     processed_lines += 1
@@ -758,7 +758,7 @@ The columns should be in this values:
                                     file_line_number = import_values.get('file_line_number', False)
                                     # We take only the not Null Value
                                     filtered_vals = {}
-                                    for k, v in import_values.iteritems():
+                                    for k, v in import_values.items():
                                         if v:
                                             filtered_vals.update({k: v})
                                     pol_obj.write(cr, uid, pol_line.id, filtered_vals, context=context)
@@ -776,7 +776,7 @@ The columns should be in this values:
                                         line['file_line_number']+1,
                                         count_same_pol_line_nb, line_number,
                                         file_values[line['file_line_number']][header_index['Product Code']])
-                                    data = file_values[line.get('file_line_number', False)].items()
+                                    data = list(file_values[line.get('file_line_number', False)].items())
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
                                     processed_lines += 1
@@ -857,7 +857,7 @@ The columns should be in this values:
         """
         This button is only for updating the view.
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         purchase_obj = self.pool.get('purchase.order')
         for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file']):
@@ -871,7 +871,7 @@ The columns should be in this values:
         '''
         Open the PO in a new window, just to check it after an import
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids=[ids]
         for wiz_obj in self.read(cr, uid, ids, ['po_id'], context=context):
             po_id = wiz_obj['po_id']
@@ -890,7 +890,7 @@ The columns should be in this values:
         Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
         I come back on the home page. Here, I come back on the PO on which I opened the wizard.
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids=[ids]
         for wiz_obj in self.read(cr, uid, ids, ['po_id'], context=context):
             po_id = wiz_obj['po_id']
@@ -907,7 +907,7 @@ The columns should be in this values:
         '''
         Return to the initial view
         '''
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids=[ids]
         for wiz_obj in self.read(cr, uid, ids, ['po_id'], context=context):
             po_id = wiz_obj['po_id']
@@ -933,7 +933,7 @@ class wizard_simu_import_po_line(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         res = {}

@@ -93,7 +93,7 @@ author_email = None
 classifiers = None
 version = None
 
-execfile(join('bin', 'release.py'))
+exec(compile(open(join('bin', 'release.py')).read(), join('bin', 'release.py'), 'exec'))
 
 def find_addons():
     for root, _, names in os.walk(join('bin', 'addons'), followlinks=True):
@@ -114,7 +114,7 @@ def find_addons():
             if os.path.exists(terp):
                 yield mname, join(empath, mname)
             else:
-                print "Module %s specified, but no valid path." % mname
+                print("Module %s specified, but no valid path." % mname)
     except Exception:
         pass
 
@@ -127,11 +127,11 @@ def data_files():
         files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
         files.append(('tools', [join('bin', 'tools', 'validators.py')]))
         files.append(('tools', [join('bin', 'tools', 'webdav.py')]))
-        files.append(('fonts', filter(isfile, glob.glob('bin/fonts/*'))))
-        files.append(('rsync', filter(isfile, glob.glob('bin/rsync/*'))))
+        files.append(('fonts', list(filter(isfile, glob.glob('bin/fonts/*')))))
+        files.append(('rsync', list(filter(isfile, glob.glob('bin/rsync/*')))))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
-            files.append((dp, map(lambda x: join('bin', dp, x), names)))
+            files.append((dp, [join('bin', dp, x) for x in names]))
         os.chdir('..')
         # for root, _, names in os.walk(join('bin','addons')):
         #    files.append((root, [join(root, name) for name in names]))
@@ -148,11 +148,11 @@ def data_files():
         files.append((join(man_directory, 'man5'), ['man/openerp_serverrc.5']))
 
         doc_directory = join('share', 'doc', 'openerp-server-%s' % version)
-        files.append((doc_directory, filter(isfile, glob.glob('doc/*'))))
+        files.append((doc_directory, list(filter(isfile, glob.glob('doc/*')))))
         files.append((join(doc_directory, 'migrate', '3.3.0-3.4.0'),
-                      filter(isfile, glob.glob('doc/migrate/3.3.0-3.4.0/*'))))
+                      list(filter(isfile, glob.glob('doc/migrate/3.3.0-3.4.0/*')))))
         files.append((join(doc_directory, 'migrate', '3.4.0-4.0.0'),
-                      filter(isfile, glob.glob('doc/migrate/3.4.0-4.0.0/*'))))
+                      list(filter(isfile, glob.glob('doc/migrate/3.4.0-4.0.0/*')))))
 
         openerp_site_packages = join(get_python_lib(prefix=''), 'openerp-server')
 
@@ -161,11 +161,10 @@ def data_files():
         for addonname, add_path in find_addons():
             addon_path = join(get_python_lib(prefix=''), 'openerp-server', 'addons', addonname)
             for root, dirs, innerfiles in os.walk(add_path):
-                innerfiles = filter(lambda fil: os.path.splitext(fil)[1] not in ('.pyc', '.pyd', '.pyo'), innerfiles)
+                innerfiles = [fil for fil in innerfiles if os.path.splitext(fil)[1] not in ('.pyc', '.pyd', '.pyo')]
                 if innerfiles:
                     res = os.path.normpath(join(addon_path, root.replace(join(add_path), '.')))
-                    files.extend(((res, map(lambda fil: join(root, fil),
-                                            innerfiles)),))
+                    files.extend(((res, [join(root, fil) for fil in innerfiles]),))
 
     return files
 
@@ -202,7 +201,7 @@ setup(name=name,
       url=url,
       author=author,
       author_email=author_email,
-      classifiers=filter(None, classifiers.split("\n")),
+      classifiers=[_f for _f in classifiers.split("\n") if _f],
       license=license,
       data_files=data_files(),
       cmdclass={

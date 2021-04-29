@@ -3,7 +3,7 @@
 Unifield module to upgrade the instance to a next version of Unifield
 Beware that we expect to be in the bin/ directory to proceed!!
 """
-from __future__ import with_statement
+
 import re
 import os
 import ctypes
@@ -15,12 +15,12 @@ from hashlib import md5
 from datetime import datetime
 import time
 from base64 import b64decode
-from StringIO import StringIO
+from io import StringIO
 import logging
 import subprocess
 import base64
 from zipfile import ZipFile
-import bsdifftree
+from . import bsdifftree
 
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
@@ -57,7 +57,7 @@ def set_lock(file=None):
     """Set the lock file to make OpenERP run into do_update method against normal execution"""
     if file is None: file = lock_file
     with open(file, "w") as f:
-        f.write(unicode({'path':os.getcwd()}))
+        f.write(str({'path':os.getcwd()}))
 
 def unset_lock(file=None):
     """Remove the lock"""
@@ -102,7 +102,7 @@ def add_versions(versions, filepath=server_version_file):
         return
     with open(filepath, 'a') as f:
         for ver in versions:
-            f.write((" ".join([unicode(x) for x in ver]) if hasattr(ver, '__iter__') else ver)+os.linesep)
+            f.write((" ".join([str(x) for x in ver]) if hasattr(ver, '__iter__') else ver)+os.linesep)
 
 def find(path):
     """Unix-like find"""
@@ -110,14 +110,14 @@ def find(path):
     for name in iter(files):
         abspath = path+os.path.sep+name
         if os.path.isdir( abspath ) and not os.path.islink( abspath ):
-            files.extend( map(lambda x:name+os.path.sep+x, os.listdir(abspath)) )
+            files.extend( [name+os.path.sep+x for x in os.listdir(abspath)] )
     return files
 
 def rmtree(files, path=None, verbose=False):
     """Python free rmtree"""
     #  OpenERPServerService.exe can't be deleted if Windows Service MAnager uses it
     backup_trash = 'backup-trash'
-    if path is None and isinstance(files, basestring):
+    if path is None and isinstance(files, str):
         path, files = files, find(files)
     for f in reversed(files):
         target = os.path.join(path, f) if path is not None else f
@@ -151,10 +151,10 @@ def warn(*args):
     """Define way to forward logs"""
     global log
     try:
-        log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+os.linesep)
+        log.write(("[%s] UPDATER: " % now())+" ".join([str(x) for x in args])+os.linesep)
     except:
         try:
-            log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x.decode('utf-8', errors='ignore')), args))+os.linesep)
+            log.write(("[%s] UPDATER: " % now())+" ".join([str(x.decode('utf-8', errors='ignore')) for x in args])+os.linesep)
         except:
             log.write("[%s] UPDATER: unknown error" % now())
     log.flush()
@@ -164,8 +164,8 @@ def Try(command):
     """Try...Resume..."""
     try:
         command()
-    except BaseException, e:
-        warn(unicode(e))
+    except BaseException as e:
+        warn(str(e))
         return False
     else:
         return True
@@ -247,8 +247,8 @@ def do_update():
         ## Move logs log file
         try:
             log = open(log_file, 'a')
-        except BaseException, e:
-            warn("Cannot write into `%s': %s" % (log, unicode(e)))
+        except BaseException as e:
+            warn("Cannot write into `%s': %s" % (log, str(e)))
         else:
             warn(lock_file, 'removed')
         ## Now, update
@@ -268,18 +268,18 @@ def do_update():
                 rmtree('backup')
 
             if os.name == "nt":
-                import _winreg
+                import winreg
 
                 try:
-                    registry_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0", 0,
-                                                   _winreg.KEY_READ)
-                    value, regtype = _winreg.QueryValueEx(registry_key, "EventMessageFile")
-                    _winreg.CloseKey(registry_key)
+                    registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0", 0,
+                                                   winreg.KEY_READ)
+                    value, regtype = winreg.QueryValueEx(registry_key, "EventMessageFile")
+                    winreg.CloseKey(registry_key)
                     regval = value
                     warn("webmode registry key : %s" % regval)
                 except WindowsError:
                     warn("webmode registry key not found")
-                    regval = "c:\Program Files (x86)\msf\Unifield\Web\service\libs\servicemanager.pyd"
+                    regval = "c:\Program Files (x86)\msf\\Unifield\Web\service\libs\servicemanager.pyd"
 
                 res = re.match("^(.*)\\\\service\\\\libs\\\\servicemanager.pyd", regval)
                 if res:
@@ -372,14 +372,14 @@ def do_update():
                 try:
                     subprocess.call('net stop "OpenERP Web 6.0"')
                     subprocess.call('net start "OpenERP Web 6.0"')
-                except OSError, e:
+                except OSError as e:
                     warn("Exception in Web server restart :")
-                    warn(unicode(e))
+                    warn(str(e))
 
-        except BaseException, e:
+        except BaseException as e:
             warn("Update failure!")
             try:
-                warn(unicode(e))
+                warn(str(e))
             except:
                 warn("Unknown error")
             ## Restore backup and purge .update
@@ -416,7 +416,7 @@ def do_update():
 
 def update_path():
     """If server starts normally, this step will fix the paths with the configured path in config rc"""
-    from tools import config
+    from .tools import config
     for v in ('log_file', 'lock_file', 'update_dir', 'server_version_file', 'new_version_file'):
         globals()[v] = os.path.join(config['root_path'], globals()[v])
     global server_version
@@ -427,7 +427,7 @@ def do_prepare(cr, revision_ids):
     """Prepare patches for an upgrade of the server and set the lock file"""
     if not revision_ids:
         return ('failure', 'Nothing to do.', {})
-    import pooler
+    from . import pooler
     pool = pooler.get_pool(cr.dbname)
     version = pool.get('sync_client.version')
 
@@ -543,7 +543,7 @@ def do_upgrade(cr, pool):
         return True
 
     db_versions = versions.read(cr, 1, versions.search(cr, 1, [('state','=','installed')]), ['sum'])
-    db_versions = map(lambda x:x['sum'], db_versions)
+    db_versions = [x['sum'] for x in db_versions]
     server_lack_versions = set(db_versions) - set([x['md5sum'] for x in server_version])
     db_lack_versions = set([x['md5sum'] for x in server_version]) - set(db_versions) - set([base_version])
 
@@ -551,7 +551,7 @@ def do_upgrade(cr, pool):
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
         res = do_prepare(cr, revision_ids)
         if res[0] == 'success':
-            import tools
+            from . import tools
             os.chdir( tools.config['root_path'] )
             restart_server()
         else:
@@ -567,10 +567,10 @@ def reconnect_sync_server():
     """Reconnect the connection manager to the SYNC_SERVER if password file
     exists
     """
-    import tools
+    from . import tools
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
     if os.path.isfile(credential_filepath):
-        import pooler
+        from . import pooler
         f = open(credential_filepath, 'r')
         lines = f.readlines()
         f.close()
@@ -599,7 +599,7 @@ def reconnect_sync_server():
                     cr.close()
             except Exception as e:
                 message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
-                logger.error(message % (unicode(e)))
+                logger.error(message % (str(e)))
 
 
 def check_mako_xml():
@@ -608,7 +608,7 @@ def check_mako_xml():
     not present in it. This tag is useless and can lead to regression if the
     count change.
     """
-    import tools
+    from . import tools
     logger.info("Check mako and xml files don't contain ExpandedColumnCount tag...")
     path_to_exclude = [os.path.join(tools.config['root_path'], 'backup')]
     for file_path in find(tools.config['root_path']):
@@ -781,7 +781,7 @@ def do_pg_update():
     # MAJOR ONLY: 9. Alter tables again to back out workaround
 
     warn("Postgres major update from %s to %s" % (oldVer, newVer))
-    import tools
+    from . import tools
 
     stopped = False
     pg_new_db = None
@@ -990,7 +990,7 @@ def do_pg_update():
     except Exception as e:
         failed = True
         s = str(e) or type(e)
-        warn(u'Failed to update Postgres', s)
+        warn('Failed to update Postgres', s)
     finally:
         try:
             if pg_new_db is not None and os.path.exists(pg_new_db):

@@ -95,7 +95,7 @@ class ir_cron(osv.osv, netsvc.Agent):
             f = getattr(m, func)
             try:
                 f(cr, uid, *args)
-            except Exception, e:
+            except Exception as e:
                 cr.rollback()
                 self._logger.exception("Job call of self.pool.get('%s').%s(cr, uid, *%r) failed" % (model, func, args))
                 try:
@@ -253,7 +253,7 @@ class ir_cron(osv.osv, netsvc.Agent):
     def write(self, cr, user, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         # check if auto synchronisation is modified
@@ -262,7 +262,7 @@ class ir_cron(osv.osv, netsvc.Agent):
                                                                                       'sync_client', 'ir_cron_automaticsynchronization0')
 
             if auto_sync_id in ids \
-                    and set(('nextcall', 'interval_type', 'interval_number')).issubset(vals.keys()):
+                    and set(('nextcall', 'interval_type', 'interval_number')).issubset(list(vals.keys())):
                 active = vals.get('active', None)
                 if active is None:
                     active = self.read(cr, user, auto_sync_id, ['active'],

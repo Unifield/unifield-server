@@ -116,7 +116,7 @@ class account_account(osv.osv):
             if query:
                 link = " AND "
             instance_ids = context.get('instance_ids')
-            if isinstance(instance_ids, (int, long)):
+            if isinstance(instance_ids, int):
                 instance_ids = [instance_ids]
             if len(instance_ids) == 1:
                 query += link + 'l.instance_id = %s'
@@ -370,7 +370,7 @@ class account_account(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(account_ids, (int, long)):
+        if isinstance(account_ids, int):
             account_ids = [account_ids]
         selected = []
         acc = context.get('accounts_selected')
@@ -415,7 +415,7 @@ class account_account(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(account_ids, (int, long)):
+        if isinstance(account_ids, int):
             account_ids = [account_ids]
         res = {}
         selected = {}
@@ -536,7 +536,7 @@ class account_account(osv.osv):
             context = {}
         if not ids:
             return []
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if limit < 1 or limit > 10:
             raise osv.except_osv(_('Error'), _("You're only allowed to use a limit between 1 and 10."))
@@ -649,7 +649,7 @@ class account_account(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -768,7 +768,7 @@ class account_account(osv.osv):
         Note that the currency_id is the one of the entry to be checked and is used ONLY for the checks on
         transfer journals (if a currency is given).
         """
-        if isinstance(account_ids, (int, long)):
+        if isinstance(account_ids, int):
             account_ids = [account_ids]
         if context is None:
             context = {}
@@ -828,7 +828,7 @@ class account_account(osv.osv):
         :return: {id: True/False, }
         :rtype: dict
         """
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context is None:
             context = {}
@@ -905,7 +905,7 @@ class account_journal(osv.osv):
         res = {}
         if not ids:
             return res
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         for id in ids:
             res[id] = False
@@ -1002,7 +1002,7 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
@@ -1016,7 +1016,7 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
@@ -1251,7 +1251,7 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         # If invoice in context, we come from self.action_move_create from invoice.py. So at invoice validation step.
         if context.get('invoice', False):
@@ -1435,7 +1435,7 @@ class account_move(osv.osv):
             context.update({'move_ids_to_delete': to_delete})
             ml_ids = self.pool.get('account.move.line').search(cr, user_id, [('move_id', 'in', to_delete)])
             if ml_ids:
-                if isinstance(ml_ids, (int, long)):
+                if isinstance(ml_ids, int):
                     ml_ids = [ml_ids]
                 self.pool.get('account.move.line').unlink(cr, user_id, ml_ids, context, check=False)
         self.unlink(cr, user_id, to_delete, context, check=False)

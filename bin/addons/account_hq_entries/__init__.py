@@ -21,9 +21,9 @@
 #
 ##############################################################################
 
-import res_company
-import hq_entries
-import wizard
-import account
+from . import res_company
+from . import hq_entries
+from . import wizard
+from . import account
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -21,7 +21,7 @@
 
 from osv import fields, osv
 
-from _common import rounding
+from ._common import rounding
 import time
 from tools.translate import _
 import decimal_precision as dp
