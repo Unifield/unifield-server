@@ -111899,3 +111899,9 @@ msgstr "Ajouter les Produits affichés à un Mouvement Interne"
 #, python-format
 msgid "You must have at least one line to create the Internal Move"
 msgstr "Vous devez avoir au moins une ligne pour pouvoir créer le Mouvement Interne"
+
+#. module: sync_so
+#: code:addons/sync_so/so_po_common.py:491
+#, python-format
+msgid "Cannot process Document/line due to Product Code %s which does not exist in this instance"
+msgstr "Impossible de traiter le Document/la ligne. Le Code Produit %s n'existe pas dans cette instance"
