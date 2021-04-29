@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -25,6 +25,8 @@ import xml.dom.minidom
 
 from openobject.widgets import JSLink, CSSLink
 from openobject.i18n.format import format_date_custom
+from openobject import ustr
+from openobject.i18n import _
 
 from openerp.utils import rpc, node_attributes
 from openerp.widgets import TinyWidget
@@ -155,9 +157,9 @@ class MonthCalendar(TinyCalendar):
 
         minical = MiniCalendar(self.selected_day)
         groupbox = GroupBox(self.colors, self.color_values, self.selected_day,
-                group_relation=self.fields[self.color_field],
-                title=(self.color_field or None) and self.fields[self.color_field]['string'],
-                mode='month')
+                            group_relation=self.fields[self.color_field],
+                            title=(self.color_field or None) and self.fields[self.color_field]['string'],
+                            mode='month')
 
         self.sidebar = Sidebar(minical, groupbox, self.use_search)
 
@@ -183,9 +185,9 @@ class WeekCalendar(TinyCalendar):
 
         minical = MiniCalendar(self.week[0], True)
         groupbox = GroupBox(self.colors, self.color_values, self.week[0],
-                group_relation=self.fields[self.color_field],
-                title=(self.color_field or None) and self.fields[self.color_field]['string'],
-                mode='week')
+                            group_relation=self.fields[self.color_field],
+                            title=(self.color_field or None) and self.fields[self.color_field]['string'],
+                            mode='week')
 
         self.sidebar = Sidebar(minical, groupbox, self.use_search)
 
@@ -209,9 +211,9 @@ class DayCalendar(TinyCalendar):
 
         minical = MiniCalendar(self.day)
         groupbox =  GroupBox(self.colors, self.color_values, self.day,
-                group_relation=self.fields[self.color_field],
-                title=(self.color_field or None) and self.fields[self.color_field]['string'],
-                mode='day')
+                             group_relation=self.fields[self.color_field],
+                             title=(self.color_field or None) and self.fields[self.color_field]['string'],
+                             mode='day')
 
         self.sidebar = Sidebar(minical, groupbox, self.use_search)
 
@@ -304,8 +306,8 @@ class GanttCalendar(ICalendar):
             mp = mt.prev()
 
             days = [d for d in mp if d.year == mp.year and d.month == mp.month] \
-                 + [d for d in mt if d.year == mt.year and d.month == mt.month] \
-                 + [d for d in mn if d.year == mn.year and d.month == mn.month]
+                + [d for d in mt if d.year == mt.year and d.month == mt.month] \
+                + [d for d in mn if d.year == mn.year and d.month == mn.month]
 
             self.days = days
             self.title = _("%s, Qtr %s") % (y, q)
@@ -373,8 +375,8 @@ class GanttCalendar(ICalendar):
 
         minical = MiniCalendar(day)
         groupbox = GroupBox(self.colors, self.color_values, day,
-                group_relation=self.fields[self.color_field],
-                title=(self.color_field or None) and self.fields[self.color_field]['string'], mode=self.mode)
+                            group_relation=self.fields[self.color_field],
+                            title=(self.color_field or None) and self.fields[self.color_field]['string'], mode=self.mode)
 
         self.sidebar = Sidebar(minical, groupbox, self.use_search)
 

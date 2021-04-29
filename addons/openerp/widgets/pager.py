@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -20,7 +20,7 @@
 ###############################################################################
 
 from openerp.widgets import TinyWidget
-
+from openobject.i18n import _
 
 class Pager(TinyWidget):
 
@@ -32,7 +32,7 @@ class Pager(TinyWidget):
     UNLIMITED = -1
 
     def __init__(self, id=False, ids=[], offset=0, limit=50, count=0,
-            view_type='tree', approximation=False):
+                 view_type='tree', approximation=False):
         super(Pager, self).__init__()
 
         self.id = id
@@ -51,7 +51,7 @@ class Pager(TinyWidget):
         elif self.limit == -1:
             self.limit = False
 
-        if self.view_type in ['form', 'diagram']:        
+        if self.view_type in ['form', 'diagram']:
 
             index = 0
             if self.id in self.ids:

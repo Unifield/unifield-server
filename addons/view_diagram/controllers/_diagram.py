@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -24,7 +24,7 @@ from openerp.utils import rpc, common, TinyDict
 
 from openerp.controllers.form import Form
 from openobject.tools import expose
-
+from openobject.i18n import _
 
 class State(Form):
 
@@ -160,7 +160,7 @@ class Connector(Form):
                                         ('relation', '=', params.context.get('m2o_model', ''))])
 
         fields = [field['name'] for field in proxy_field.read(field_ids, ['name'],
-                                      rpc.session.context)]
+                                                              rpc.session.context)]
 
         connector = rpc.RPCProxy(params.model).read(params.id, fields,
                                                     rpc.session.context)
@@ -335,10 +335,10 @@ class Workflow(Form):
         for tr in data_trs:
             t = connectors.get(str(tr['id']))
             t.update({
-                      'source': tr[src_node][1],
-                      'destination': tr[des_node][1],
-                      'options': {}
-                      })
+                'source': tr[src_node][1],
+                'destination': tr[des_node][1],
+                'options': {}
+            })
 
             for i, fld in enumerate(conn_flds):
                 t['options'][conn_flds_string[i]] = tr[fld]

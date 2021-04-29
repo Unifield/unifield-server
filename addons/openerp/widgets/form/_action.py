@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -22,7 +22,7 @@ import cherrypy
 
 from openerp.utils import rpc, expr_eval, TinyDict
 from openerp.widgets import screen, TinyInputWidget, register_widget
-
+from openobject.i18n import _
 
 __all__ = ["Action"]
 
@@ -68,11 +68,11 @@ class Action(TinyInputWidget):
             views = dict([(x[1], x[0]) for x in self.action['views']])
             view_mode = self.action.get('view_mode', 'tree,form').split(',')
             view_ids = [views.get(x, False) for x in view_mode]
-            
+
             if list(views.keys()) != view_mode:
                 view_mode = [x[1] for x in self.action['views']]
                 view_ids = [x[0] for x in self.action['views']]
-            
+
             if self.action['view_type'] == 'form':
 
                 params = TinyDict()

@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -22,6 +22,7 @@
 import time
 import datetime
 import calendar
+from openobject.i18n import _
 
 DAY_NAMES = [_('Monday'),
              _('Tuesday'),
@@ -125,7 +126,7 @@ class Week(object):
         wd = Day(y, m, d).isoweekday()
 
         if wd == 7:
-           wd = 0
+            wd = 0
 
         result = []
 
@@ -169,8 +170,8 @@ class Week(object):
     def __unicode__(self):
         first, last = self.days[0], self.days[-1]
         if first.year == last.year:
-            return _('%(first)s to %(last)s %(month)s', 
-                        first=first.day, last=last.day, month=first.strftime('%B'))
+            return _('%(first)s to %(last)s %(month)s',
+                     first=first.day, last=last.day, month=first.strftime('%B'))
         return '%s - %s' % (str(self.days[0]), str(self.days[-1]))
 
     def __str__(self):
@@ -205,7 +206,7 @@ class Month(object):
             days += [first.fromordinal(first.toordinal() - i)]
 
         for i in range(42 - starts):
-            days += [first.fromordinal(first.toordinal() + i)]   
+            days += [first.fromordinal(first.toordinal() + i)]
         return days
 
     def weeks(self):

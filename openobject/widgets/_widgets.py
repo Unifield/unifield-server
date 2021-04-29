@@ -1,7 +1,6 @@
 import re
 
-from ._base import *
-from ._resource import *
+from ._base import InputWidget
 
 import formencode
 
@@ -19,7 +18,7 @@ def name2label(name):
     # Note: I *think* it would be thread-safe to
     #       memoize this thing.
     return ' '.join([s.capitalize() for s in
-               re.findall(r'([A-Z][a-z0-9]+|[a-z0-9]+|[A-Z0-9]+)', name)])
+                     re.findall(r'([A-Z][a-z0-9]+|[a-z0-9]+|[A-Z0-9]+)', name)])
 
 
 class FormField(InputWidget):
@@ -201,9 +200,9 @@ class SelectField(Input):
                 group = False
                 optlist = [optgroup]
             for i, option in enumerate(self._iterate_options(optlist)):
-                if len(option) is 2:
+                if len(option) == 2:
                     option_attrs = {}
-                elif len(option) is 3:
+                elif len(option) == 3:
                     option_attrs = dict(option[2])
                 if self._is_option_selected(option[0], value):
                     option_attrs['selected'] = 'selected'
@@ -227,7 +226,7 @@ class Form(FormField):
     template = "/openobject/widgets/templates/form.mako"
 
     params = ['action', 'method', 'submit_text', 'replace_password_fields', 'string', 'display_string',
-            'description', 'display_description']
+              'description', 'display_description']
     member_widgets = ['hidden_fields', 'fields']
 
     hidden_fields = []

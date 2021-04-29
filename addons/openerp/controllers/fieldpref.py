@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -33,7 +33,7 @@ class FieldPref(SecuredController):
     @expose(template="/openerp/controllers/templates/fieldpref.mako")
     def index(self, **kw): #_terp_model, _terp_field, _terp_deps
 
-        
+
         click_ok = None
         params, data = TinyDict.split(kw)
         deps = params.deps
@@ -51,7 +51,7 @@ class FieldPref(SecuredController):
         else:
             dom.append(('user_id', 'in', [rpc.session.uid, False]))
 
-        
+
         fields = rpc.RPCProxy(params.model).fields_get(field, rpc.session.context)
         txt = fields.get(field,{}).get('string', '')
 
@@ -111,8 +111,8 @@ class FieldPref(SecuredController):
         field = field.split('/')[-1]
 
         proxy = rpc.RPCProxy('ir.values')
-            
-        res = proxy.set('default', deps, field, [(model,False)], value, True, False, False, params.you or False, True)
+
+        proxy.set('default', deps, field, [(model,False)], value, True, False, False, params.you or False, True)
 
         return dict(model=params.model, click_ok=click_ok, field=params.field, deps=params.deps2, should_close=True)
 

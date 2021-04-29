@@ -1,15 +1,13 @@
 import logging
 import os
 import sys
-from locale import getlocale
+
 
 libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'lib')
 if os.path.exists(libdir) and libdir not in sys.path:
     sys.path.insert(0, libdir)
 
 import cherrypy
-from . import controllers
-import openobject
 from logging import handlers
 
 __all__ = ['ustr', 'application', 'configure', 'enable_static_paths',
@@ -55,10 +53,8 @@ def ustr(value):
     except:
         return " ".join([ustr(s) for s in value])
 
-__builtins__['ustr'] = ustr
-
-from . import i18n
-i18n._gettext.install()
+from . import controllers
+import openobject
 
 application = cherrypy.tree.mount(controllers._root.Root(), '/')
 def enable_static_paths():

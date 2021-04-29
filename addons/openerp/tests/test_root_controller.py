@@ -1,4 +1,3 @@
-from openerp.utils import rpc
 from openobject.test import TestCase
 
 

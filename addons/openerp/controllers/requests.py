@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -18,7 +18,6 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import cherrypy
 from openerp.controllers import SecuredController, actions
 from openerp.utils import rpc
 
@@ -33,14 +32,14 @@ class Requests(SecuredController):
 
         if not rpc.session.is_logged():
             return [],[]
-        
+
         ids, ids2 = rpc.RPCProxy('res.request').request_get()
 
         total_request = 0
-            
+
         if len(ids):
             total_request = len(ids)
-            
+
         return ids, total_request
 
     @expose()
@@ -48,5 +47,5 @@ class Requests(SecuredController):
         ids, total = self.my()
         return actions.execute(
             rpc.RPCProxy('ir.actions.act_window')\
-                    .for_xml_id('base', 'res_request-act'), domain=('id', 'in', ids)
+            .for_xml_id('base', 'res_request-act'), domain=('id', 'in', ids)
         )

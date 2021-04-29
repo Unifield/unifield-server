@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -26,6 +26,7 @@ import cherrypy
 
 from openobject.tools import expose
 from openobject.i18n import format
+from openobject import ustr
 
 from openerp.utils import rpc, TinyDict, context_with_concurrency_info, cache
 
@@ -54,7 +55,7 @@ class TinyCalendar(Form):
     def get(self, day, mode, **kw):
 
         params, data = TinyDict.split(kw)
-        
+
         options = TinyDict()
         options.selected_day = params.selected_day
 
@@ -65,7 +66,7 @@ class TinyCalendar(Form):
 
         options.date1 = day
         options.mode = mode
-        
+
         if params.colors:
             try:
                 options.colors = eval(kw['_terp_colors'])
@@ -82,7 +83,7 @@ class TinyCalendar(Form):
         params.kalendar = options
 
         form = self.create_form(params)
-        
+
         return dict(
             calendar=ustr(form.screen.widget.render()),
             sidebar=ustr(form.sidebar.render()))

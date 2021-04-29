@@ -1,9 +1,7 @@
-from urllib import parse
 import cherrypy
 
 from openobject import pooler
 from openobject.tools._expose import expose  #import _export #import expose
-from openobject.errors import AuthenticationError
 
 from ._base import BaseController
 
@@ -20,13 +18,13 @@ class Root(BaseController):
         # area of the HTML
         ('X-Requested-With', 'requested_with')
     ]
-    
+
     def clean_headers_params(self, request):
         # clear cache parameter added to prevent ie to cache
         if '_' in request.params:
             del request.params['_']
         self.reset_custom_headers_post_redirection(request)
-    
+
     def reset_custom_headers_post_redirection(self, request):
         """ Firefox doesn't forward headers it has no reason to touch
         (standard or custom headers, doesn't matter) during redirection.
@@ -60,7 +58,7 @@ class Root(BaseController):
         func, vpath = self.find_handler()
 
         if func:
-        # Decode any leftover %2F in the virtual_path atoms.
+            # Decode any leftover %2F in the virtual_path atoms.
             vpath = [x.replace("%2F", "/") for x in vpath]
             request.handler = cherrypy.dispatch.LateParamPageHandler(func, *vpath)
         else:

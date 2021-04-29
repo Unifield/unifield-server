@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -35,7 +35,8 @@ from openerp.widgets import TinyInputWidget, InputWidgetLabel, form
 from openobject.widgets import JSLink, locations
 
 from openobject.i18n.format import convert_date_format_in_domain
-
+from openobject import ustr
+from openobject.i18n import _
 
 def get_search_default(attrs, screen_context=None, default_domain=None, add_active=False):
     screen_context = screen_context or {}
@@ -176,7 +177,7 @@ class Filter(TinyInputWidget):
         self.first_box = attrs.get('first_box')
         self.last_box = attrs.get('last_box')
         self.first_last_box = attrs.get('first_last_box')
-        
+
         if not self.def_checked and attrs.get('group_by_ctx'):
             if self.group_context in attrs['group_by_ctx']:
                 self.def_checked = True
@@ -187,7 +188,7 @@ class Filter(TinyInputWidget):
             # by user's choice.
             self.def_checked = bool(self.filter_status)
 
-        
+
 class M2O_search(form.M2O):
     template = "/openerp/widgets/templates/search/many2one.mako"
     def __init__(self, **attrs):
@@ -232,13 +233,13 @@ class Search(TinyInputWidget):
 
         if not self.filter_status and (values and values.get('filter_status')):
             self.filter_status = values['filter_status']
-        
+
         if isinstance (self.search_view, str):
             self.search_view = eval(self.search_view)
 
         if not self.search_view:
             view_id = kw.get('search_view_id')\
-                        or ctx.get('search_view')
+                or ctx.get('search_view')
             self.search_view = cache.fields_view_get(
                 self.model, view_id or False, 'search', ctx, True)
 
@@ -471,10 +472,10 @@ class Search(TinyInputWidget):
 
                                 elif field.kind in ('date','datetime'):
                                     domain = [(name, '>=', defval)]
-                                    
+
                                 elif field.kind == 'boolean':
                                     domain = [(name, '=', defval!='0')]
-                                               
+
                                 elif many2one_int:
                                     domain = [(name, '=', defval)]
                                 else:
@@ -505,7 +506,7 @@ class Search(TinyInputWidget):
                             if filter_field.groupcontext and filter_field.groupcontext not in self.groupby:
                                 self.groupby.append(filter_field.groupcontext)
                             self.listof_domain.extend(i for i in filter_field.global_domain
-                                                        if i not in self.listof_domain)
+                                                      if i not in self.listof_domain)
                             field.filters.append(filter_field)
         if filters_run:
             views.append(FiltersGroup(children=filters_run))

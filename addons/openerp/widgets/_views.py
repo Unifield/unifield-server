@@ -3,6 +3,7 @@ from openobject import pooler
 
 from openerp.utils import rpc
 from openobject.i18n.format import convert_date_format_in_domain
+from openobject.i18n import _
 
 from . import form
 from . import listgrid
@@ -64,10 +65,10 @@ class FormView(TinyView):
 
         if not screen.is_wizard and screen.ids is None:
             limit = screen.limit or 50
-            
+
             if limit == -1:
                 limit = False
-                
+
             proxy = rpc.RPCProxy(screen.model)
             screen.ids = proxy.search(screen.domain, screen.offset or False,
                                       limit, 0, screen.context)
@@ -90,37 +91,37 @@ class ListView(TinyView):
         screen.search_domain = convert_date_format_in_domain(screen.search_domain, fields, screen.context)
         if screen.group_by_ctx or screen.context.get('group_by') or screen.context.get('group_by_no_leaf'):
             widget = listgroup.ListGroup(screen.name or '_terp_list',
-                                        model=screen.model,
-                                        view=screen.view,
-                                        ids=screen.ids,
-                                        domain=screen.domain,
-                                        context=screen.context,
-                                        view_mode=screen.view_mode,
-                                        editable=screen.editable,
-                                        selectable=screen.selectable,
-                                        offset=screen.offset, limit=screen.limit,
-                                        count=screen.count, nolinks=screen.link,
-                                        group_by_ctx=screen.group_by_ctx,
-                                        approximation=screen.approximation)
+                                         model=screen.model,
+                                         view=screen.view,
+                                         ids=screen.ids,
+                                         domain=screen.domain,
+                                         context=screen.context,
+                                         view_mode=screen.view_mode,
+                                         editable=screen.editable,
+                                         selectable=screen.selectable,
+                                         offset=screen.offset, limit=screen.limit,
+                                         count=screen.count, nolinks=screen.link,
+                                         group_by_ctx=screen.group_by_ctx,
+                                         approximation=screen.approximation)
         else:
             widget = listgrid.List(screen.name or '_terp_list',
-                                    model=screen.model,
-                                    view=screen.view,
-                                    ids=screen.ids,
-                                    domain=screen.domain,
-                                    context=screen.context,
-                                    view_mode=screen.view_mode,
-                                    editable=screen.editable,
-                                    selectable=screen.selectable,
-                                    offset=screen.offset, limit=screen.limit,
-                                    count=screen.count, nolinks=screen.link,
-                                    m2m=screen.m2m, o2m=screen.o2m,
-                                    default_data=screen.default_value,
-                                    force_readonly=screen.force_readonly,
-                                    approximation=screen.approximation,
-                                    unique_id=screen.unique_id,
-                                    filter_selector=screen.filter_selector,
-                                    default_selector=screen.default_selector)
+                                   model=screen.model,
+                                   view=screen.view,
+                                   ids=screen.ids,
+                                   domain=screen.domain,
+                                   context=screen.context,
+                                   view_mode=screen.view_mode,
+                                   editable=screen.editable,
+                                   selectable=screen.selectable,
+                                   offset=screen.offset, limit=screen.limit,
+                                   count=screen.count, nolinks=screen.link,
+                                   m2m=screen.m2m, o2m=screen.o2m,
+                                   default_data=screen.default_value,
+                                   force_readonly=screen.force_readonly,
+                                   approximation=screen.approximation,
+                                   unique_id=screen.unique_id,
+                                   filter_selector=screen.filter_selector,
+                                   default_selector=screen.default_selector)
 
         screen.ids = widget.ids
         screen.limit = widget.limit

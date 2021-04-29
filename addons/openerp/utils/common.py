@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -19,6 +19,7 @@
 #
 ###############################################################################
 import openobject.errors
+from openobject.i18n import _
 
 def error(title, msg):
     raise openobject.errors.TinyError(message=msg, title=title or _("Error"))

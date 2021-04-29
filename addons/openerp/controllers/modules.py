@@ -8,7 +8,7 @@ from io import StringIO
 from openerp.controllers import form
 from openerp.utils import rpc
 
-from openobject import paths, addons, pooler
+from openobject import paths, addons
 from openobject.tools import extract_zip_file
 
 class ModuleForm(form.Form):

@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -18,8 +18,6 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import time
-
 from openerp.utils import expr_eval, TinyDict
 from openerp.widgets import TinyWidget, TinyInputWidget
 
@@ -60,6 +58,6 @@ class Record(dict):
             return expr
 
         return expr_eval(
-                expr, dict(self,
-                           context=self.params.context or {},
-                           active_id=self.get('id', False)))
+            expr, dict(self,
+                       context=self.params.context or {},
+                       active_id=self.get('id', False)))

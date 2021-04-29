@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -22,6 +22,8 @@ from openerp.controllers import SecuredController
 from openerp.utils import rpc
 
 from openobject.tools import expose
+from openobject import ustr
+from openobject.i18n import _
 
 import base64
 import urllib.request, urllib.parse, urllib.error

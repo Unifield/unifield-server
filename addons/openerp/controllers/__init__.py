@@ -1,5 +1,5 @@
-from .utils import *
-from .controllers import *
+from .utils import secured, unsecured, login, change_password
+from .controllers import SecuredController
 
 from . import error_page
 
@@ -35,3 +35,5 @@ from . import modules
 from . import execute
 from . import j18n
 from . import downloadbg
+
+__all__ = ['secured', 'unsecured', 'login', 'change_password', 'SecuredController', 'error_page', 'actions', 'widgets', 'form', 'root', 'tree', 'wizard', 'search', 'preferences', 'selection', 'shortcuts', 'banner', 'shortcut_tooltip', 'requests', 'unifield_version', 'openm2o', 'openo2m', 'openm2m', 'listgrid', 'attachment', 'translator', 'impex', 'fieldpref', 'view_log', 'database', 'viewed', 'viewlist', 'modules', 'execute', 'j18n', 'downloadbg']

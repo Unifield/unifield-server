@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -27,10 +27,11 @@ from cherrypy import _cperror
 import openobject.errors
 from openobject.controllers import BaseController
 from openobject.tools import expose, redirect
+from openobject.i18n import _
 
 class ErrorPage(BaseController):
 
-    _cp_path = "/openerp/errorpage"    
+    _cp_path = "/openerp/errorpage"
 
     @expose()
     def index(self, *args, **kw):

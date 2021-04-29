@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -28,7 +28,8 @@ from openerp.utils import rpc, common, icons, cache, TinyDict
 
 from .form import Form
 from openobject.tools import url, expose
-
+from openobject import ustr
+from openobject.i18n import _
 
 class NewField(Form):
 
@@ -138,7 +139,7 @@ def xml_locate(expr, ref):
         nodes = [n for n in ref.childNodes if n.localName == name]
         try:
             return nodes[index-1]
-        except Exception as e:
+        except Exception:
             return []
 
     parts = expr.split('/')
@@ -169,9 +170,9 @@ def _get_model(node, parent_model):
 
         if pnode.localName == 'field':
             ch = utils.xml_locate('./form[1]', pnode) \
-               + utils.xml_locate('./tree[1]', pnode) \
-               + utils.xml_locate('./graph[1]', pnode) \
-               + utils.xml_locate('./calendar[1]', pnode)
+                + utils.xml_locate('./tree[1]', pnode) \
+                + utils.xml_locate('./graph[1]', pnode) \
+                + utils.xml_locate('./calendar[1]', pnode)
 
             if ch:
                 parents.append(pnode.getAttribute('name'))
@@ -200,7 +201,7 @@ def _get_field_attrs(node, parent_model):
     field = cache.fields_get(model, [name], rpc.session.context)
 
     if field:
-         field = field[name]
+        field = field[name]
 
     return field
 

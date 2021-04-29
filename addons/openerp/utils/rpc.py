@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -31,6 +31,8 @@ from .tiny_socket import TinySocketError
 from datetime import datetime, timedelta
 from collections import OrderedDict
 import cherrypy
+from openobject import ustr
+from openobject.i18n import _
 
 MAX_IP_COLLECTION = 50
 BLOCKED_MIN_COUNT = 5
@@ -233,7 +235,7 @@ class RPCSession(object):
 
     __slots__ = ['host', 'port', 'protocol', 'storage', 'gateway']
     connection_attempt_dict = OrderedDict()  # an OrderedDict is needed here to
-                                             # be able to remove old entries
+    # be able to remove old entries
 
     def __init__(self, host, port, protocol='socket', storage={}):
         """Create new instance of RPCSession.
@@ -348,7 +350,7 @@ class RPCSession(object):
             return -1
 
         client_ip = cherrypy.request.wsgi_environ.get('HTTP_X_FORWARDED_FOR', False) \
-                 or cherrypy.request.wsgi_environ.get('REMOTE_ADDR', 'NO_IP_FOUND')
+            or cherrypy.request.wsgi_environ.get('REMOTE_ADDR', 'NO_IP_FOUND')
 
         if self.is_banned(client_ip):
             return -6

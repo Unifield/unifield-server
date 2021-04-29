@@ -1,13 +1,13 @@
 import copy
 
-from itertools import count, chain, filterfalse
+from itertools import count, chain
 
 import cherrypy
 import formencode.foreach
 
 import openobject
 from openobject import tools
-from openobject.validators import *
+from openobject.validators import DefaultValidator, Schema
 
 from ._meta import WidgetType
 from ._utils import OrderedSet
@@ -40,7 +40,7 @@ class Widget(object, metaclass=WidgetType):
 
     def __new__(cls, *args, **kwargs):
         actual_cls = openobject.pooler.get_pool().get(
-                cls.widget_key, group='widgets')
+            cls.widget_key, group='widgets')
         # if there is nothing in the pool yet (uh?)
         return object.__new__(actual_cls or cls)
 
@@ -50,7 +50,7 @@ class Widget(object, metaclass=WidgetType):
             if not k.startswith('_'):
                 try:
                     setattr(self, k, v)
-                except AttributeError as e:
+                except AttributeError:
                     #skip setting the value of a read only property
                     pass
 
@@ -66,7 +66,7 @@ class Widget(object, metaclass=WidgetType):
                 elif isinstance(attr, dict):
                     attr = attr.copy()
                 setattr(self, name, attr)
-            except AttributeError as e:
+            except AttributeError:
                 pass
 
         self._resources = OrderedSet()
@@ -205,8 +205,8 @@ class Widget(object, metaclass=WidgetType):
         params = self.setup_params(value, **params)
 
         return tools.render_template(
-                tools.load_template(
-                    self.template), params)
+            tools.load_template(
+                self.template), params)
 
     def render(self, value=None, **params):
         return self.display(value, **params)
@@ -246,10 +246,10 @@ class Widget(object, metaclass=WidgetType):
 
     def __eq__(self, other):
         return (
-              (type(other) is type(self)) and
-              (other._serial == self._serial) and
-              (other._name == self._name)
-            )
+            (type(other) is type(self)) and
+            (other._serial == self._serial) and
+            (other._name == self._name)
+        )
 
     def __repr__(self):
         return self.__class__.__name__

@@ -3,6 +3,7 @@ from openerp.widgets import TinyView
 
 from .widgets import get_calendar
 from .widgets import GanttCalendar
+from openobject.i18n import _
 
 class CalendarView(TinyView):
 

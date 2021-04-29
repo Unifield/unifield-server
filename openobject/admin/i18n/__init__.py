@@ -1,1 +1,2 @@
-from ._commands import *
+from ._commands import BabelCommand
+__all__ = ['BabelCommand']

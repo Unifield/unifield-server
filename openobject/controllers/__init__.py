@@ -1,2 +1,4 @@
-from ._base import *
-from ._root import *
+from ._base import BaseController
+from ._root import Root
+assert Root
+assert BaseController

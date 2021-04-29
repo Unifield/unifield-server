@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -40,6 +40,7 @@ import formencode.api
 
 from openobject.validators import BaseValidator
 from openobject.i18n import format
+from openobject.i18n import _
 
 class String(BaseValidator):
     if_empty = False
@@ -178,7 +179,7 @@ class Binary(BaseValidator):
 
         if isinstance(value, BINARY_FIELD_STORAGE_CLASS):
             if value.filename:
-                return base64.encodestring(value.file.read()).decode('utf8')
+                return base64.b64encode(value.file.read()).decode('utf8')
             elif self.not_empty:
                 raise formencode.api.Invalid(_('Please select a file.'), value, state)
         elif value:

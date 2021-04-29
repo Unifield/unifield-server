@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -68,7 +68,7 @@ class M2M(TinyInputWidget):
 
         self.relation = attrs.get('relation', '')
         self.domain = attrs.get('domain', [])
-        self.context = attrs.get('context', {}) or {}        
+        self.context = attrs.get('context', {}) or {}
 
         view = attrs.get('views', {})
         view['uom_rounding'] = attrs.get('uom_rounding', {})
@@ -88,10 +88,6 @@ class M2M(TinyInputWidget):
         id = (ids or None) and ids[0]
 
         parent_id = params.get('_terp_id')
-        pprefix = ''
-        if '/' in self.name:
-            pprefix = self.name[:self.name.rindex('/')]
-
         current = params.chain_get(self.name)
 
         if not current:
@@ -135,11 +131,11 @@ class M2M(TinyInputWidget):
 
             try:
                 ctx = expr_eval(
-                        self.context,
-                        dict(cherrypy.request.terp_record,
-                             context=current.context,
-                             active_id=current.id or False,
-                             parent_id=parent_id))
+                    self.context,
+                    dict(cherrypy.request.terp_record,
+                         context=current.context,
+                         active_id=current.id or False,
+                         parent_id=parent_id))
                 current.context.update(ctx)
             except:
                 pass
@@ -167,7 +163,7 @@ class M2M(TinyInputWidget):
                              selectable=selectable, nolinks=self.link, **{
                                  '_m2m': 1,
                                  'force_readonly': self.force_readonly,
-                            })
+                             })
 
         self.screen.widget.checkbox_name = False
         self.screen.widget.m2m = True

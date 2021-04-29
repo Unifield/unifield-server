@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -32,8 +32,9 @@ from . import form
 from openobject import tools
 from openobject.tools import ast
 from openobject.i18n import format
+from openobject import ustr
 from .pager import Pager
-
+from openobject.i18n import _
 
 class List(TinyWidget):
 
@@ -234,7 +235,7 @@ class List(TinyWidget):
             ctx = rpc.session.context.copy()
             ctx.update(context)
 
-            try:    
+            try:
                 data = proxy.read_web(ids, list(fields.keys()) + ['__last_update'], ctx)
             except:
                 pass
@@ -288,7 +289,7 @@ class List(TinyWidget):
                     if expr_eval(attrs.get('notselectable'), x):
                         self.notselectable.append(x['id'])
                 except:
-                    pass 
+                    pass
 
         self.resequencable = expr_eval(attrs.get('resequencable') or '1')
         # self.resequencable = True  # uncomment this if you want to disable this globally

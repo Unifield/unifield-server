@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -18,15 +18,13 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import urllib.request, urllib.parse, urllib.error
-
 import cherrypy
 from openerp import widgets as tw
 from openerp.utils import rpc, TinyDict, context_with_concurrency_info, expr_eval, node_attributes
 
 from .form import Form, get_validation_schema, default_error_handler, default_exception_handler
 from openobject.tools import expose, validate, error_handler, exception_handler
-
+from openobject import ustr
 import xml.dom.minidom
 
 
@@ -68,7 +66,7 @@ class OpenO2M(Form):
         ctx.update(params.parent_context or {})
         ctx.update(params.o2m_context or {})
         p, ctx = TinyDict.split(ctx)
-        
+
         if ctx.get('default_name'):
             del ctx['default_name']
 
@@ -123,7 +121,7 @@ class OpenO2M(Form):
         ctx.update(params.parent_context or {})
         ctx.update(params.o2m_context or {})
 
-        id = proxy.write([params.parent_id], data, ctx)
+        proxy.write([params.parent_id], data, ctx)
 
         prefix = params.o2m
         current = params.chain_get(prefix)
@@ -165,18 +163,17 @@ class OpenO2M(Form):
     def edit(self, **kw):
         params, data = TinyDict.split(kw)
         return self.create(params)
-    
+
     @expose('json', methods=('POST',))
     def delete(self, model, id):
         error = False
-        res=""
         proxy = rpc.RPCProxy(model)
         try:
             if id:
-                res  = proxy.unlink([int(id)])
+                proxy.unlink([int(id)])
         except Exception as e:
             error = ustr(e)
-            
+
         return dict(error=error)
 
 # vim: ts=4 sts=4 sw=4 si et

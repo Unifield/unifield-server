@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -23,7 +23,6 @@
 This module implementes heirarchical tree view for a tiny model having
     view_type = 'tree'
 """
-import time
 import simplejson
 import cherrypy
 
@@ -36,6 +35,7 @@ from openobject.tools import url, expose
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, cache, icons, common, TinyDict, expr_eval
 from openerp.widgets import tree_view
+from openobject.i18n import _
 
 def decimal_formatter(value, info):
     digits = info.get('digits', (16,2))
@@ -76,14 +76,14 @@ class Tree(SecuredController):
 
         if view_id:
             view_base =  rpc.session.execute(
-                    'object', 'execute', 'ir.ui.view', 'read', [view_id],
-                    ['model', 'type'], context)[0]
+                'object', 'execute', 'ir.ui.view', 'read', [view_id],
+                ['model', 'type'], context)[0]
             model = view_base['model']
             view = cache.fields_view_get(model, view_id, view_base['type'], context)
         else:
             view = cache.fields_view_get(model, False, 'tree', context)
         fields = cache.fields_get(view['model'], False, context)
-            
+
         tree = tree_view.ViewTree(view, model, res_id, domain=domain, context=context, action="/tree/action", fields=fields)
         if tree.toolbar:
             proxy = rpc.RPCProxy(model)
@@ -96,7 +96,7 @@ class Tree(SecuredController):
                 id = tool['id']
                 ids = proxy.read([id], [tree.field_parent], ctx)[0][tree.field_parent]
                 tool['ids'] = ids
-            
+
         can_shortcut = self.can_shortcut_create()
         shortcut_ids = []
 
@@ -105,7 +105,7 @@ class Tree(SecuredController):
                 shortcut_ids.append(sc['res_id'][0])
             else:
                 shortcut_ids.append(sc['res_id'])
-        
+
         return {'tree': tree, 'model': model, 'can_shortcut': can_shortcut, 'shortcut_ids': shortcut_ids}
 
     def can_shortcut_create(self):
@@ -132,6 +132,9 @@ class Tree(SecuredController):
 
         return self.create(params)
 
+    def cmp(self, a, b):
+        return (a > b) - (a < b)
+
     def sort_callback(self, item1, item2, field, sort_order="asc", type=None):
         a = item1[field]
         b = item2[field]
@@ -141,9 +144,9 @@ class Tree(SecuredController):
             b = b[1]
 
         if(sort_order == "dsc"):
-            return -cmp(a, b)
+            return -self.cmp(a, b)
 
-        return cmp(a, b)
+        return self.cmp(a, b)
 
     def return_item(self, element, fields):
         r = []
@@ -154,7 +157,7 @@ class Tree(SecuredController):
     @expose('json')
     def data(self, ids, model, fields, field_parent=None, icon_name=None,
              domain=None, context=None, sort_by=None, sort_order="asc", fields_info=None, colors=None, nolink=False):
-        
+
         if ids == 'None' or ids == '':
             ids = []
 
@@ -180,10 +183,10 @@ class Tree(SecuredController):
 
         if isinstance(context, str):
             context = eval(context)
-        
+
         if isinstance(colors, str):
             colors = eval(colors)
-            
+
         if isinstance(fields_info, str):
             fields_info = simplejson.loads(fields_info)
 
@@ -223,7 +226,7 @@ class Tree(SecuredController):
                             item['color'] = color
                             break
                     except:
-                            pass
+                        pass
 
         # format the data
         for field in fields:
@@ -263,7 +266,7 @@ class Tree(SecuredController):
                 # For nested menu items, remove void action url
                 # to suppress 'No action defined' error.
                 if (model == 'ir.ui.menu' and record['children'] and
-                     not item['action']):
+                        not item['action']):
                     record['action'] = None
 
             records.append(record)
@@ -287,8 +290,8 @@ class Tree(SecuredController):
 
         if ids:
             return actions.execute_by_keyword(
-                    name, adds=adds, model=model, id=id, ids=ids, context=ctx,
-                    report_type='pdf')
+                name, adds=adds, model=model, id=id, ids=ids, context=ctx,
+                report_type='pdf')
         else:
             raise common.message(_("No record selected"))
 
@@ -326,7 +329,7 @@ class Tree(SecuredController):
     @expose()
     def open(self, **kw):
         return self.do_action('tree_but_open', datas={
-                '_terp_model': kw.get('model'),
-                '_terp_context': kw.get('context', {}),
-                '_terp_domain': kw.get('domain', []),
-                'ids': kw.get('id')})
+            '_terp_model': kw.get('model'),
+            '_terp_context': kw.get('context', {}),
+            '_terp_domain': kw.get('domain', []),
+            'ids': kw.get('id')})

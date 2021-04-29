@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -23,14 +23,14 @@ import simplejson
 
 from mako.template import Template
 from mako.lookup import TemplateLookup
-
+from mako import exceptions
 from openobject import templating, paths, pooler
 
 from openobject import i18n
 from . import _utils as utils
 from . import resources
-import types
-import tempfile
+from openobject.i18n import _
+from openobject import ustr
 
 __all__ = ['load_template', 'render_template', 'expose', 'register_template_vars']
 
@@ -50,10 +50,10 @@ def get_template_lookup():
     lookup = pooler.get_pool().get(None, TEMPLATE_LOOKUP_GROUP)
     if not lookup:
         lookup = TemplateLookup(
-                directories=[paths.root(), paths.addons()],
-                default_filters=filters,
-                imports=imports,
-                preprocessor=templating.edition_preprocessor)
+            directories=[paths.root(), paths.addons()],
+            default_filters=filters,
+            imports=imports,
+            preprocessor=templating.edition_preprocessor)
         pooler.get_pool().get_group(TEMPLATE_LOOKUP_GROUP)[None] = lookup
 
     return lookup
@@ -89,7 +89,7 @@ def _cp_vars():
         'session': cherrypy.session,
         'request': cherrypy.request,
         'config': utils.config,
-        'locale': i18n.utils.get_locale
+        'locale': i18n.utils.get_locale,
     }
 
 
@@ -106,9 +106,15 @@ def _py_vars():
         'disabled': lambda e: utils.attr_if('disabled', e),
     }
 
+def _root_vars():
+    return {
+        '_': _,
+        'ustr': ustr,
+    }
+
 register_template_vars(_cp_vars, 'cp')
 register_template_vars(_py_vars, 'py')
-
+register_template_vars(_root_vars, None)
 def _get_vars():
 
     try:
@@ -139,7 +145,11 @@ def render_template(template, kw):
     if 'context' in kw:
         kw['ctx'] = kw.pop('context')
 
-    return utils.NoEscape(template.render_unicode(**kw))
+    try:
+        return utils.NoEscape(template.render_unicode(**kw))
+    except:
+        cherrypy.log(exceptions.text_error_template().render())
+        raise
 
 
 def expose(format='html', template=None, content_type=None, allow_json=False, methods=None, mark_only=False):
@@ -187,9 +197,9 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
             elif format == 'jsonp' and 'callback' in cherrypy.request.params:
                 cherrypy.response.headers['Content-Type'] = 'text/javascript'
                 return '%(function)s(%(data)s);' % {
-                        'function': cherrypy.request.params['callback'],
-                        'data': simplejson.dumps(res)
-                    } 
+                    'function': cherrypy.request.params['callback'],
+                    'data': simplejson.dumps(res)
+                }
             ct = cherrypy.response.headers['Content-Type'] = content_type or cherrypy.response.headers.get('Content-Type', 'text/html')
             if ct.startswith('text/') and 'charset' not in ct:
                 cherrypy.response.headers['Content-Type'] = ct + '; charset=utf-8'

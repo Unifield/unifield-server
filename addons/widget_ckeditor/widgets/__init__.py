@@ -1,1 +1,4 @@
-from ._ckeditor import *
+from ._ckeditor import CKEditor
+
+__all__ = ["CKEditor"]
+

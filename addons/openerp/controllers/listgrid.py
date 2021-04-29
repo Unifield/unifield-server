@@ -26,9 +26,12 @@ from openerp.controllers import SecuredController
 from openerp.utils import rpc, TinyDict, TinyForm, TinyFormError, context_with_concurrency_info, cache
 from openerp.widgets import listgrid, listgroup
 
+
 from . import form
 from . import wizard
 from openobject.tools import expose, ast
+from openobject import ustr
+from openobject.i18n import _
 
 class List(SecuredController):
 
@@ -185,7 +188,6 @@ class List(SecuredController):
 
     @expose()
     def multiple_groupby(self, model, name, grp_domain, group_by, view_id, view_type, parent_group, group_level, groups, no_leaf, **kw):
-        print('iii')
         grp_domain = ast.literal_eval(grp_domain)
         view = cache.fields_view_get(model, view_id, view_type, rpc.session.context.copy())
         group_by = ast.literal_eval(group_by)

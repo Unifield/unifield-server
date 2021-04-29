@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -18,15 +18,12 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import cherrypy
 from openerp.controllers import SecuredController
-from openerp.utils import rpc, TinyDict
+from openerp.utils import rpc
 
-import openerp.controllers.actions as actions
-import openerp.controllers.form as form
 from openobject.tools import expose
 import urllib.request, urllib.parse, urllib.error
-
+from openobject.i18n import _
 
 class Process(SecuredController):
 
@@ -47,7 +44,7 @@ class Process(SecuredController):
         help_ids = rpc.session.execute('object', 'execute', 'ir.actions.act_window', 'search', [('res_model','=',res_model)])
         for help_id in help_ids:
             field = rpc.session.execute('object', 'execute',
-                    'ir.actions.act_window', 'read', help_id, ['help', 'name'])
+                                        'ir.actions.act_window', 'read', help_id, ['help', 'name'])
             if field['help'] and (field['name'] == title):
                 help = field['help']
 
@@ -69,9 +66,9 @@ class Process(SecuredController):
         context_help = 'http://doc.openerp.com/v6.0/index.php?model=%s&lang=%s&version=%s' % (res_model, lang, release.version)
         edit_process_url = ('/openerp/form/edit?'+urllib.parse.urlencode({'model': 'process.process', 'id': id}))
         edit_process_url =  '/?' + urllib.parse.urlencode({'next': edit_process_url})
-        
+
         return dict(id=id, res_model=res_model, res_id=res_id, title=title, selection=selection, fields=fields,
-                    help=help, process_title=process_title, context_help=context_help, lang=lang, 
+                    help=help, process_title=process_title, context_help=context_help, lang=lang,
                     version=release.version,edit_process_url=edit_process_url)
 
     @expose('json')

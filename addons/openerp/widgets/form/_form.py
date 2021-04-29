@@ -39,6 +39,8 @@ from openobject import tools
 from openobject.i18n.utils import get_locale
 from openobject.i18n import format
 from openobject.widgets import JSLink, locations
+from openobject import ustr
+from openobject.i18n import _
 from functools import reduce
 
 
@@ -377,7 +379,7 @@ register_widget(Char, ["char"])
 class HumanSize(Char):
 
     def set_value(self, value):
-        self.default = get_size(value or 0.0) 
+        self.default = get_size(value or 0.0)
 register_widget(HumanSize, ["human_size"])
 
 

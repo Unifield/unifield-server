@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -24,6 +24,7 @@ import cherrypy
 from openobject.widgets import Widget
 from openobject.widgets import InputWidget
 import simplejson
+from openobject import ustr
 
 __all__ = ['TinyWidget', 'TinyInputWidget', 'ConcurrencyInfo',
            'register_widget', 'get_widget', 'get_registered_widgets',
@@ -244,7 +245,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
         if self.readonly:
             params['attrs']['disabled'] = 'disabled'
         if self.editable_style:
-             params['attrs']['editable_style'] = '1'
+            params['attrs']['editable_style'] = '1'
         #if self.states:
         #    states = self.states
         #    # convert into JS

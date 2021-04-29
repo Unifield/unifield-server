@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -28,6 +28,8 @@ from openerp.utils import rpc, common, TinyDict, node_attributes
 from openerp.widgets import treegrid
 
 from openobject import tools
+from openobject import ustr
+from openobject.i18n import _
 from openobject.tools import expose, redirect, ast
 import simplejson
 import time
@@ -199,7 +201,7 @@ class ImpEx(SecuredController):
         fields.update({'id': {'string': 'ID'}, '.id': {'string': 'Database ID'}})
 
         fields_order = list(fields.keys())
-        fields_order.sort(lambda x,y: -cmp(fields[x].get('string', ''), fields[y].get('string', '')))
+        fields_order.sort(lambda x: fields[x].get('string', ''), reverse=True)
         records = []
 
 
@@ -248,7 +250,7 @@ class ImpEx(SecuredController):
                     elif (value['type'] == 'many2one') or (value['type'] == 'many2many' and is_importing):
                         m2ofields.append(field)
                         cfields_order = list(cfields.keys())
-                        cfields_order.sort(lambda x,y: -cmp(cfields[x].get('string', ''), cfields[y].get('string', '')))
+                        cfields_order.sort(lambda x: fields[x].get('string', ''), reverse=True)
                         children = []
                         for j, fld in enumerate(cfields_order):
                             cid = id + '/' + fld
@@ -260,7 +262,7 @@ class ImpEx(SecuredController):
 
                     else:
                         cfields_order = list(cfields.keys())
-                        cfields_order.sort(lambda x,y: -cmp(cfields[x].get('string', ''), cfields[y].get('string', '')))
+                        cfields_order.sort(lambda x: cfields[x].get('string', ''), reverse=True)
                         children = []
                         for j, fld in enumerate(cfields_order):
                             cid = id + '/' + fld
@@ -274,7 +276,7 @@ class ImpEx(SecuredController):
                     proxy = rpc.RPCProxy(ref)
                     cfields = proxy.fields_get(False, rpc.session.context)
                     cfields_order = list(cfields.keys())
-                    cfields_order.sort(lambda x,y: -cmp(cfields[x].get('string', ''), cfields[y].get('string', '')))
+                    cfields_order.sort(lambda x: cfields[x].get('string', ''), reverse=True)
                     children = []
                     for j, fld in enumerate(cfields_order):
                         cid = id + '/' + fld
@@ -331,7 +333,7 @@ class ImpEx(SecuredController):
 
             def model_populate(fields, prefix_node='', prefix=None, prefix_value='', level=2):
                 fields_order = list(fields.keys())
-                fields_order.sort(lambda x,y: -cmp(fields[x].get('string', ''), fields[y].get('string', '')))
+                fields_order.sort(lambda x: fields[x].get('string', ''), reverse=True)
 
                 for field in fields_order:
                     fields_data[prefix_node+field] = fields[field]
@@ -480,6 +482,7 @@ class ImpEx(SecuredController):
                 else: return 0
 
             fields_order = list(fields.keys())
+            # TODO JFB
             fields_order.sort(lambda x,y: str_comp(fields[x].get('string', ''), fields[y].get('string', '')))
             for field in fields_order:
                 if (not fields[field].get('readonly')\

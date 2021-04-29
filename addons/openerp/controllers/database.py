@@ -29,10 +29,12 @@ import cherrypy
 import formencode
 
 from openobject import paths
+from openobject import ustr
 from openobject.controllers import BaseController
 from openobject.tools import url, expose, redirect, validate, error_handler
 import openobject
 import openobject.errors
+from openobject.i18n import _
 
 from openerp import validators
 from openerp.utils import rpc, get_server_version, is_server_local, serve_file
@@ -282,7 +284,7 @@ class Database(BaseController):
                         break
                     else:
                         time.sleep(1)
-                except Exception as e:
+                except Exception:
                     raise DatabaseCreationCrash()
         except DatabaseCreationCrash:
             self.msg = {'message': (_("The server crashed during installation.\nWe suggest you to drop this database.")),
@@ -292,7 +294,7 @@ class Database(BaseController):
             self.msg = {'message': _('Bad super admin password'),
                         'title' : e.title}
             return self.create()
-        except Exception as e:
+        except Exception:
             self.msg = {'message':_("Could not create database.")}
             return self.create()
 
@@ -519,8 +521,8 @@ class Database(BaseController):
                     time_from = time.strptime(config.get('silentupgrade', 'hour_from'), '%H:%M')
                     time_to = time.strptime(config.get('silentupgrade', 'hour_to'), '%H:%M')
                     if not server_rpc.execute('object', 'execute', 'sync.client.sync_server_connection', 'is_automatic_patching_allowed',
-                            config.get('autosync', 'next_exec_date'), True, time_from.tm_hour + time_from.tm_min/60. , time_to.tm_hour + time_to.tm_min/60.
-                            ):
+                                              config.get('autosync', 'next_exec_date'), True, time_from.tm_hour + time_from.tm_min/60. , time_to.tm_hour + time_to.tm_min/60.
+                                              ):
                         self.msg = {
                             'message': _('"Scheduler autosync next date" and "Silent Upgrade interval" are not consistent'),
                             'title': _('Auto sync / silent upgrade'),
@@ -630,7 +632,7 @@ class Database(BaseController):
                         break
                     else:
                         time.sleep(1)
-                except Exception as e:
+                except Exception:
                     raise DatabaseCreationCrash()
         except DatabaseCreationCrash:
             self.msg = {'message': (_("The server crashed during installation.\nWe suggest you to drop this database.")),
@@ -681,7 +683,7 @@ class Database(BaseController):
 
             create_thread = threading.Thread(target=self.background_auto_creation,
                                              args=(password, dbname, config_dict)
-                            )
+                                             )
             create_thread.start()
             create_thread.join(0.5)
 
@@ -756,7 +758,7 @@ class Database(BaseController):
                 if res:
                     cherrypy.response.headers['Content-Type'] = "application/data"
                     cherrypy.response.headers['Content-Disposition'] = 'filename="%s.dump"' % '-'.join(filename)
-                    return base64.decodestring(res)
+                    return base64.b64decode(res)
         except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
@@ -806,7 +808,7 @@ class Database(BaseController):
                     newfile.close()
                 rpc.session.execute_db('restore_file', password, dbname, filename)
             else:
-                data = base64.encodestring(filename.file.read())
+                data = base64.b64encode(filename.file.read())
                 rpc.session.execute_db('restore', password, dbname, data)
         except openobject.errors.AccessDenied as e:
             self.msg = {'message': _('Wrong password'),

@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -24,7 +24,7 @@ import pickle
 import sys
 import struct
 import cherrypy
-
+from openobject import ustr
 DNS_CACHE = {}
 
 class TinySocketError(Exception):
@@ -41,7 +41,7 @@ class TinySocket(object):
     def __init__(self, sock=None):
         if sock is None:
             self.sock = socket.socket(
-            socket.AF_INET, socket.SOCK_STREAM)
+                socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = sock
         self.sock.settimeout(SOCKET_TIMEOUT)

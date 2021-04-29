@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -26,6 +26,7 @@ from .form import Form
 from .error_page import _ep
 import openobject.i18n.format
 from openobject.tools import expose, ast
+from openobject import ustr
 
 def cleanup_group_by(s):
     if s is None:
@@ -146,7 +147,7 @@ class Search(Form):
             pctx = ctx
         except TinyFormError as e:
             return dict(error_field=e.field, error=ustr(e))
-        except Exception as e:
+        except Exception:
             return dict(error=_ep.render())
 
         prefix = params.prefix

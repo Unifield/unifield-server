@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -22,7 +22,6 @@
 import os
 
 from babel.messages.frontend import CommandLineInterface
-from babel.support import Translations
 
 from openobject.admin import BaseCommand
 
@@ -47,7 +46,7 @@ def _get_modules(modules):
 def _get_locales(path, locale=None):
     """Returns an iterator of all locales provided by the addon at 
     the given path.
-    
+
     :param path: the path the an addon
     :param locale: comma separated list of locales or None to get all
                    the locales
@@ -56,7 +55,7 @@ def _get_locales(path, locale=None):
     if locale:
         for l in locale.split(","):
             yield l
-            
+
     if os.path.exists(os.path.join(path, 'po', 'messages')):
         for f in os.listdir(os.path.join(path, 'po', 'messages')):
             if f.endswith('.po'):

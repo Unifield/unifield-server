@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -28,6 +28,8 @@ from .error_page import _ep
 from openobject.tools import expose, redirect, validate, error_handler, exception_handler
 import openobject
 import openobject.paths
+from openobject import ustr
+from openobject.i18n import _
 
 FIELDS_INTERNAL_NAME = '__openerp__real_fiels'
 
@@ -58,7 +60,7 @@ def make_domain(name, value, kind='char'):
     if kind == "selection" and value:
         return [(name, '=', value)]
 
-    if isinstance(value, basestring) and value:
+    if isinstance(value, str) and value:
         return [(name, 'ilike', value)]
 
     if isinstance(value, bool) and value:
@@ -270,7 +272,7 @@ class Form(SecuredController):
                 if isinstance(sc['res_id'], tuple):
                     shortcut_ids.append(sc['res_id'][0])
                 else:
-                    shortcut_ids.append(sc['res_id'])        
+                    shortcut_ids.append(sc['res_id'])
 
         title = form.screen.string or ''
         display_name = {}
@@ -820,7 +822,7 @@ class Form(SecuredController):
         if params.datas:
             form = params.datas['form']
             res = form.get(params.field)
-            return base64.decodestring(res)
+            return base64.b64decode(res)
 
         elif params.id:
             proxy = rpc.RPCProxy(params.model)
@@ -830,9 +832,9 @@ class Form(SecuredController):
                                              "application/x-download", 'attachment',
                                              res[0]['datas_fname'])
 
-            return base64.decodestring(res[0][params.field])
+            return base64.b64decode(res[0][params.field])
         else:
-            return base64.decodestring(data[params.field])
+            return base64.b64decode(data[params.field])
 
 
     @expose()
@@ -876,7 +878,7 @@ class Form(SecuredController):
         else:
             res = proxy.read([int(id)], [field])[0].get(field)
         if res:
-            return base64.decodestring(res)
+            return base64.b64decode(res)
         else:
             return open(openobject.paths.addons('openerp','static','images','placeholder.png'),'rb').read()
 
@@ -901,7 +903,7 @@ class Form(SecuredController):
             data_type, data = data.split(',')
             assert(data_type == 'base64')
             cherrypy.response.headers['Content-Type'] = content_type
-            return base64.decodestring(data)
+            return base64.b64decode(data)
         except:
             raise cherrypy.HTTPError(400)   # Bad request
 
@@ -1129,7 +1131,7 @@ class Form(SecuredController):
             from . import actions
             return actions.execute_by_keyword(name, adds=adds, model=model, id=id, ids=ids, report_type='pdf')
         else:
-            raise common.message(_("No record selected"))    
+            raise common.message(_("No record selected"))
 
     @expose()
     def report(self, **kw):
@@ -1170,7 +1172,7 @@ class Form(SecuredController):
             action = rpc.session.execute('object', 'execute', action_type, 'read', act_id, False, context)
 
         if domain:
-            if isinstance(domain, basestring):
+            if isinstance(domain, str):
                 domain = eval(domain)
             domain.extend(expr_eval(action.get('domain', '[]'), context))
             action['domain'] = ustr(domain)
@@ -1352,7 +1354,7 @@ class Form(SecuredController):
         if kind == "many2one" or kind == "reference":
             defaults.append({'text': _('Open resource'), 'action': "new ManyToOne('%s').open_record('%s')" % (field, value)})
 
-        if isinstance(hide_default_menu, basestring):
+        if isinstance(hide_default_menu, str):
             if hide_default_menu and hide_default_menu.lower() in ('1', 'true'):
                 hide_default_menu = True
             else:

@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -25,7 +25,7 @@ from openerp.widgets import TinyInputWidget, register_widget
 from openerp.widgets.screen import Screen
 from openerp.validators import one2many
 import xml.dom.minidom
-
+from openobject.i18n import _
 
 __all__ = ["O2M", "OneToMany"]
 
@@ -129,7 +129,7 @@ class O2M(TinyInputWidget):
         view_mode = mode
         view_type = mode[0]
         self.view_type = view_type
-        
+
         if not current:
             current = TinyDict()
 

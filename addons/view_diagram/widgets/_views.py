@@ -1,7 +1,7 @@
 from openerp.widgets import TinyView
 
 from .diagram import Diagram
-
+from openobject.i18n import _
 
 class DiagramView(TinyView):
     _type = "diagram"

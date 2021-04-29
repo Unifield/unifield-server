@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -26,13 +26,13 @@ import xml.dom.minidom
 
 from openobject.i18n import format
 from openobject.widgets import JSLink, CSSLink
+from openobject import ustr
 
 from openerp.utils import rpc, node_attributes, cache
 
 from openerp.widgets import TinyWidget, ConcurrencyInfo, get_widget
 
 from .utils import Day, parse_datetime
-import logging
 
 COLOR_PALETTE = ['#f57900', '#cc0000', '#d400a8', '#75507b', '#3465a4', '#73d216', '#c17d11', '#edd400',
                  '#fcaf3e', '#ef2929', '#ff00c9', '#ad7fa8', '#729fcf', '#8ae234', '#e9b96e', '#fce94f',
@@ -142,8 +142,6 @@ class ICalendar(TinyWidget):
         except:
             pass
 
-        view_id = view.get('view_id', False)
-
         dom = xml.dom.minidom.parseString(view['arch'].encode('utf-8'))
         root = dom.childNodes[0]
         attrs = node_attributes(root)
@@ -184,7 +182,7 @@ class ICalendar(TinyWidget):
 
         if self.date_stop:
             self.calendar_fields['date_stop'] = dict(name=self.date_stop,
-                                                         kind=self.fields[self.date_stop]['type'])
+                                                     kind=self.fields[self.date_stop]['type'])
 
         self.calendar_fields['day_length'] = self.day_length
 
@@ -257,12 +255,12 @@ class ICalendar(TinyWidget):
                 search_limit = 10
                 need_to_add_the_user_to_the_list_of_users = False
                 if self.context and self.color_field and \
-                    self.context.get('search_default_user_id') and \
-                    self.color_field == 'user_id' and \
-                    self.fields[self.color_field].get('relation') == 'res.users':
+                        self.context.get('search_default_user_id') and \
+                        self.color_field == 'user_id' and \
+                        self.fields[self.color_field].get('relation') == 'res.users':
                     need_to_add_the_user_to_the_list_of_users = True
                 clr_field = rpc.RPCProxy(self.fields[self.color_field]['relation']).search([], 0, 0, 0, ctx)
-                
+
                 if need_to_add_the_user_to_the_list_of_users and self.context.get('search_default_user_id') not in clr_field:
                     clr_field[search_limit-1] = self.context.get('search_default_user_id')
 

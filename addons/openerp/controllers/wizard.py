@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -21,7 +21,7 @@
 import re
 
 import cherrypy
-from openerp import widgets as tw, validators
+from openerp import widgets as tw
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, icons, TinyDict
 
@@ -29,6 +29,7 @@ from . import form
 from openobject.tools import expose, redirect, validate, error_handler
 from openobject import pooler
 import openobject
+from openobject import ustr
 
 class Wizard(SecuredController):
 
@@ -78,7 +79,7 @@ class Wizard(SecuredController):
                 for f in fields:
                     if 'value' in fields[f]:
                         form_values[f] = fields[f]['value']
-                    
+
                     if f in datas['form'] and fields[f]['type'] == "one2many":
                         datas['form'][f] = [(1, d, {}) for d in datas['form'][f]]
 
@@ -115,14 +116,14 @@ class Wizard(SecuredController):
 
             elif res['type']=='action':
                 from . import actions
-                # If configuration is done 
+                # If configuration is done
                 if res.get('action') and res.get('action').get('res_model') == 'ir.ui.menu' and res['state'] == 'end':
                     return self.end()
-                
+
                 act_res = actions.execute(res['action'], **datas)
                 if act_res:
                     return act_res
-                
+
                 state = res['state']
 
             elif res['type']=='print':
@@ -130,7 +131,6 @@ class Wizard(SecuredController):
 
                 datas['report_id'] = res.get('report_id', False)
                 if res.get('get_id_from_action', False):
-                    backup_ids = datas['ids']
                     datas['ids'] = datas['form']['ids']
 
                 return actions.execute_report(res['report'], **datas)

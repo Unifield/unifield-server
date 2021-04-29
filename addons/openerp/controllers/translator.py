@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -26,7 +26,8 @@ from openerp.controllers import SecuredController
 from openerp.utils import rpc, cache, common, TinyDict
 
 from openobject.tools import expose
-
+from openobject import ustr
+from openobject.i18n import _
 
 #change 'en' to false for context
 def adapt_context(val):
@@ -42,7 +43,7 @@ class Translator(SecuredController):
     @expose(template="/openerp/controllers/templates/translator.mako")
     def index(self, translate='fields', **kw):
         params, data = TinyDict.split(kw)
-        
+
         ctx = dict((params.context or {}), **rpc.session.context)
         params['context'] = ustr(ctx)
 
@@ -63,7 +64,7 @@ class Translator(SecuredController):
         view_relates = view_view.get('toolbar')
 
         names = list(view_fields.keys())
-        names.sort(lambda x,y: cmp(view_fields[x].get('string', ''), view_fields[y].get('string', '')))
+        names.sort(key=lambda x: view_fields[x].get('string', ''))
 
         if translate == 'fields' and params.id:
             # US-3071 : single field translation only for product.product
@@ -98,7 +99,7 @@ class Translator(SecuredController):
                             val = val[0] if isinstance(val, list) and len(val) > 0 else None
 
                             value[lang['code']] = val[name] if isinstance(val, dict) \
-                                                               and name in val else None
+                                and name in val else None
 
                         data += [(name, value, None, attrs.get('string'))]
 
@@ -147,7 +148,7 @@ class Translator(SecuredController):
     @expose(template="/openerp/controllers/templates/translator.mako")
     def save(self, translate='fields', **kw):
         params, data = TinyDict.split(kw)
-        
+
         ctx = dict((params.context or {}), **rpc.session.context)
         params['context'] = ustr(ctx)
         fields_values = []

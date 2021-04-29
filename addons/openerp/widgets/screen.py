@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -25,7 +25,7 @@ from openerp.utils import rpc
 from openerp.utils import cache
 
 from openerp.widgets import TinyInputWidget
-
+from openobject import ustr
 
 class Screen(TinyInputWidget):
 
@@ -53,10 +53,10 @@ class Screen(TinyInputWidget):
         self.view_type     = params.view_type
         self.view_id       = False
         self.action_id     = params.action_id
-        self.group_by_ctx  = params.group_by_ctx or []        
+        self.group_by_ctx  = params.group_by_ctx or []
         self.is_wizard = params.is_wizard
         self.default_value = params.default_data or []
-        
+
         self.m2m = kw.get('_m2m', 0)
         self.o2m = kw.get('_o2m', 0)
         self.get_source = kw.get('get_source', False)
@@ -64,7 +64,7 @@ class Screen(TinyInputWidget):
         self.is_dashboard = False
         if self.model == 'board.board' and self.view_type == 'form':
             self.is_dashboard = True
-            
+
         while len(self.view_ids) < len(self.view_mode):
             self.view_ids += [False]
 
@@ -145,8 +145,8 @@ class Screen(TinyInputWidget):
     def add_view(self, view, view_type='form'):
 
         self.view_id = view.get('view_id', self.view_id)
-        self.view = view  
-        
+        self.view = view
+
         from ._views import get_view_widget
         self.widget = get_view_widget(view_type, self)
 

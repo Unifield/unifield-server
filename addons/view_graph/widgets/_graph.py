@@ -8,7 +8,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -31,8 +31,9 @@ import simplejson
 from openerp.utils import rpc, cache, node_attributes
 from openerp.widgets import TinyWidget
 from openobject.tools import url_plus
-from openobject.widgets import JSSource, JSLink
+from openobject.widgets import JSLink
 from openobject.i18n.format import DT_SERVER_FORMATS, tz_convert
+from openobject import ustr
 
 if not hasattr(locale, 'nl_langinfo'):
     locale.nl_langinfo = lambda *a: '%x'
@@ -258,8 +259,8 @@ class GraphData(object):
                     info[field] = val[field]
 
                 if group_eval in data_all[val[axis[0]]]:
-                     oper = OPERATORS[axis_data[field].get('operator', '+')]
-                     data_all[val[axis[0]]][group_eval] = oper(data_all[val[axis[0]]][group_eval], val[field])
+                    oper = OPERATORS[axis_data[field].get('operator', '+')]
+                    data_all[val[axis[0]]][group_eval] = oper(data_all[val[axis[0]]][group_eval], val[field])
                 else:
                     data_all[val[axis[0]]][group_eval] = val[field]
 
@@ -366,7 +367,6 @@ class BarChart(GraphData):
         if len(res) > 1:
             values = res[0]
             domain = res[1]
-            model = res[2]
             label_x = res[3]
             axis = res[4]
             axis_group = res[5]
@@ -452,14 +452,14 @@ class BarChart(GraphData):
                             ids = eval(ids)
                             dom = [('id', 'in', ids)]
                             u = url_plus('/openerp/form/find', _terp_view_type='tree', _terp_view_mode=ustr(self.view_mode),
-                               _terp_domain=ustr(dom), _terp_model=self.model, _terp_context=ustr(ctx))
+                                         _terp_domain=ustr(dom), _terp_model=self.model, _terp_context=ustr(ctx))
 
                             url.append(u)
 
             else:
                 for dom in domain:
                     u = url_plus('/openerp/form/find', _terp_view_type='tree', _terp_view_mode=ustr(self.view_mode),
-                           _terp_domain=ustr(dom), _terp_model=self.model, _terp_context=ustr(ctx))
+                                 _terp_domain=ustr(dom), _terp_model=self.model, _terp_context=ustr(ctx))
 
                     url.append(u)
 
@@ -514,12 +514,12 @@ class BarChart(GraphData):
                                      "colours": ChartColors,
                                      "values": [s for s in stack_val],
                                      "keys": [key for key in all_keys]}],
-                        "x_axis": {"colour": "#909090",
-                                   "labels": { "labels": [ lbl for lbl in stack_labels ], "rotate": "diagonal", "colour": "#ff0000"},
-                                   "3d": 3, "grid-colour": "#F0EEEE"},
-                        "y_axis": axis_y,
-                        "bg_colour": "#FFFFFF",
-                        "tooltip": {"mouse": 2 }}
+                       "x_axis": {"colour": "#909090",
+                                  "labels": { "labels": [ lbl for lbl in stack_labels ], "rotate": "diagonal", "colour": "#ff0000"},
+                                  "3d": 3, "grid-colour": "#F0EEEE"},
+                       "y_axis": axis_y,
+                       "bg_colour": "#FFFFFF",
+                       "tooltip": {"mouse": 2 }}
 
         else:
             for i, x in enumerate(axis[1:]):
@@ -538,7 +538,7 @@ class BarChart(GraphData):
                                 "type": "bar_3d",
                                 "colour": ChartColors[i],
                                 "values": datas,
-                            "font-size": 10})
+                                "font-size": 10})
 
             result = {"y_axis": axis_y,
                       "title": {"text": ""},
@@ -570,9 +570,7 @@ class PieChart(GraphData):
         if len(res) > 1:
             values = res[0]
             domain = res[1]
-            model = res[2]
             label_x = res[3]
-            axis = res[4]
         else:
             return res
 
@@ -582,7 +580,7 @@ class PieChart(GraphData):
         url = []
         for dom in domain:
             u = url_plus('/openerp/form/find', _terp_view_type='tree', _terp_view_mode=ustr(self.view_mode),
-                       _terp_domain=ustr(dom), _terp_model=self.model, _terp_context=ustr(ctx))
+                         _terp_domain=ustr(dom), _terp_model=self.model, _terp_context=ustr(ctx))
 
             url.append(u)
 

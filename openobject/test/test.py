@@ -1,4 +1,3 @@
-import os
 import sys
 
 from openobject import commands
@@ -16,7 +15,7 @@ class TestCase(helper.CPWebCase):
 commands.CPSessionWrapper = dict
 
 class CPSessionWrapper(dict):
-    
+
     def __setattr__(self, name, value):
         self[name] = value
 
@@ -35,11 +34,11 @@ def setup_server():
     cherrypy.config.update({'environment': 'test_suite'})
 
 def run():
-    
+
     testList = [
         'test_root_controller',
     ]
-    
+
     clp = test.CommandLineParser(testList)
     success = clp.run()
     if clp.interactive:

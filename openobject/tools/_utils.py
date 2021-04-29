@@ -4,9 +4,10 @@ import cherrypy
 from mako.filters import html_escape
 
 from openobject import errors
+from openobject import ustr
 
 
-__all__ = ["url", "url_plus", "redirect", "config", "content", "attrs", "attr_if", "decorated"]
+__all__ = ["url", "url_plus", "redirect", "config", "content", "attrs", "attr_if", "decorated", "errors"]
 
 def url(_cppath, _cpparams=None, **kw):
     """
@@ -54,7 +55,7 @@ def url(_cppath, _cpparams=None, **kw):
         path = query
 
     if path.startswith('/') and cherrypy.request.app and \
-        not path.startswith(cherrypy.request.app.script_name):
+            not path.startswith(cherrypy.request.app.script_name):
         path = cherrypy.request.app.script_name + path
 
     return path
@@ -73,10 +74,10 @@ def redirect(_cppath, _cpparams=None, **kw):
 def config(key, section='global', default=None):
     """A handy function to access config values.
     """
-    
+
     if section == 'global':
         return cherrypy.config.get(key)
-    
+
     return cherrypy.request.app.config.get(section, {}).get(key, default)
 
 

@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -31,11 +31,11 @@ from openerp.utils import rpc, common, expr_eval, TinyDict, is_server_local, ser
 
 from .form import Form
 from openobject import tools
+from openobject.i18n import _
 from .selection import Selection
 from .tree import Tree
 from .wizard import Wizard
 import urllib.request, urllib.parse, urllib.error
-import unicodedata
 import os
 
 def execute_window(view_ids, model, res_id=False, domain=None, view_type='form', context=None,
@@ -138,7 +138,7 @@ def _print_data(data):
     cherrypy.response.headers['Content-Type'] = PRINT_FORMATS[data['format']]
     if data.get('code','normal')=='zlib':
         import zlib
-        content = zlib.decompress(base64.decodestring(data['result'].encode('utf8')))
+        content = zlib.decompress(base64.b64decode(data['result'].encode('utf8')))
     else:
         if not data.get('result') and data.get('path'):
             try:
@@ -158,7 +158,7 @@ def _print_data(data):
                     os.remove(data['path'])
 #            return cherrypy.lib.static.serve_file(data['path'], "application/x-download", 'attachment')
 
-        content = base64.decodestring(data['result'].encode('utf8'))
+        content = base64.b64decode(data['result'].encode('utf8'))
     return content
 
 def execute_report(name, **data):
@@ -216,9 +216,9 @@ def execute_report(name, **data):
                 report_info = proxy.read(res[0], ['filename', 'run_in_background'], read_ctx)
                 if not background_id and report_info.get('run_in_background'):
                     background_id = rpc.session.execute('object', 'execute', 'memory.background.report', 'create',  {
-                                                'file_name': datas.get('target_filename') or report_info['filename'],
-                                                'report_name': report_info['filename'],
-                                            })
+                        'file_name': datas.get('target_filename') or report_info['filename'],
+                        'report_name': report_info['filename'],
+                    })
                     ctx['background_id'] = background_id
                     if 'background_time' not in ctx:
                         max_attempt = 2
@@ -547,7 +547,7 @@ def execute_by_id(act_id, type=None, **data):
     if type is None:
         type = get_action_type(act_id)
 
-    ctx = dict(rpc.session.context, **(data.get('context') or {}))   
+    ctx = dict(rpc.session.context, **(data.get('context') or {}))
 
     res = rpc.session.execute('object', 'execute', type, 'read', act_id, False, ctx)
     return execute(res, **data)

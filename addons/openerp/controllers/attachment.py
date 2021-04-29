@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -22,9 +22,12 @@ import base64
 
 import cherrypy
 from openerp.controllers import SecuredController
-from openerp.utils import rpc, common, TinyDict, serve_file
+from openerp.utils import rpc, common, serve_file
+
 
 from openobject.tools import expose, redirect
+from openobject.i18n import _
+from openobject import ustr
 
 from . import actions
 
@@ -63,7 +66,7 @@ class Attachment(SecuredController):
             if attachment['datas']:
                 # US1690: old style attachement where stored in base
                 cherrypy.response.headers["Content-Disposition"] = 'attachment; filename="%s"' % attachment['datas_fname']
-                return base64.decodestring(attachment['datas'])
+                return base64.b64decode(attachment['datas'])
             else:
                 return serve_file.serve_file(attachment['path'], "application/x-download", 'attachment', attachment['datas_fname'])
         elif attachment['type'] == 'url':
@@ -81,7 +84,7 @@ class Attachment(SecuredController):
             attachment_id = rpc.RPCProxy('ir.attachment').create({
                 'name': datas.filename,
                 'datas_fname': datas.filename,
-                'datas': base64.encodestring(datas.file.read()),
+                'datas': base64.b64encode(datas.file.read()).decode('utf8'),
             }, ctx)
             return {'id': attachment_id, 'name': datas.filename}
         except Exception as e:

@@ -19,7 +19,7 @@ import babel.support
 from openobject.i18n.utils import get_locale
 
 
-__all__ = ['get_translations', 'load_translations', 'gettext', 'install']
+__all__ = ['get_translations', 'load_translations', 'gettext', '_']
 
 
 _translations = {}
@@ -167,7 +167,8 @@ class lazystring(object):
         return self.eval() % other
 
     def __cmp__(self, other):
-        return cmp(self.eval(), other)
+        a = self.eval()
+        return (a > other) - (a < other)
 
     def __eq__(self, other):
         return self.eval() == other
@@ -197,5 +198,4 @@ def gettext2(key, locale=None, domain=None, **kw):
             pass
     return value
 
-def install():
-    __builtins__['_'] = gettext2
+_ = gettext2

@@ -7,7 +7,6 @@ import cherrypy
 import openobject.tools.ast
 from openobject import paths
 
-
 class Graph(dict):
 
     def addNode(self, name, deps):
@@ -198,7 +197,7 @@ _loaded_addons = {}
 
 def get_local_addons():
     return [f for f in os.listdir(paths.addons()) \
-              if os.path.isfile(paths.addons(f, "__openerp__.py"))]
+            if os.path.isfile(paths.addons(f, "__openerp__.py"))]
 
 def load_addons(db_name, config):
     if db_name in _loaded:

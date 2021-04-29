@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from openobject import ustr
+from openobject.i18n import _
 __all__ = ['AuthenticationError', 'TinyException', 'TinyError',
            'TinyWarning', 'TinyMessage', 'Concurrency', 'AccessDenied']
 

@@ -11,6 +11,7 @@ from cherrypy.lib.reprconf import Parser
 import openobject
 import openobject.release
 import openobject.paths
+from openobject.i18n import _
 
 class ConfigurationError(Exception):
     pass
@@ -73,7 +74,7 @@ def start():
             over_config = Parser().dict_from_file(options.config_override)
             for section, value in list(over_config.items()):
                 app_config.setdefault(section, {}).update(value)
-        except Exception as error_config:
+        except Exception:
             pass
     openobject.configure(app_config)
 

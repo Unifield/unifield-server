@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -30,7 +30,8 @@ from openobject import paths
 from openobject.tools._expose import expose
 from openobject.tools._utils import redirect
 import openobject
-
+from openobject import ustr
+from openobject.i18n import _
 
 __all__ = ["secured", "unsecured", "login", "change_password"]
 
@@ -47,7 +48,7 @@ def get_db_list():
         try:
             import winreg
             reg = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                  "Control Panel\\International", 0, winreg.KEY_READ)
+                                 "Control Panel\\International", 0, winreg.KEY_READ)
             value, regtype = winreg.QueryValueEx(reg, "LocaleName")
             winreg.CloseKey(reg)
             if value != 'en-US':

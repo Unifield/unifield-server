@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -23,13 +23,13 @@ import simplejson
 
 from openerp.widgets import TinyWidget
 from openobject.widgets import JSLink
-
+from openobject import ustr
 
 class TreeGrid(TinyWidget):
 
     template = "/openerp/widgets/templates/treegrid.mako"
     params = ['headers', 'showheaders', 'expandall', 'linktarget',
-    'onselection', 'onbuttonclick', 'onheaderclick', 'url', 'url_params']
+              'onselection', 'onbuttonclick', 'onheaderclick', 'url', 'url_params']
 
     javascript = [JSLink("openerp", "javascript/treegrid.js")]
 
@@ -46,12 +46,12 @@ class TreeGrid(TinyWidget):
         icon_name = headers[0].get('icon')
 
         params = dict(model=model,
-                          ids=ids or '',
-                          fields=ustr(fields),
-                          domain=ustr(domain),
-                          context=ustr(context),
-                          field_parent=field_parent,
-                          icon_name=icon_name)
+                      ids=ids or '',
+                      fields=ustr(fields),
+                      domain=ustr(domain),
+                      context=ustr(context),
+                      field_parent=field_parent,
+                      icon_name=icon_name)
 
         params.update(**kw)
         params.pop('children', None)

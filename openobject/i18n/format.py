@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -27,6 +27,7 @@ import pytz
 from babel import dates, numbers
 
 from openobject.i18n.utils import get_locale
+from openobject import ustr
 #from openerp.utils import cache
 #from openerp.utils import rpc
 
@@ -34,12 +35,12 @@ __all__ = ['DT_SERVER_FORMATS', 'get_datetime_format',
            'format_datetime', 'parse_datetime',
            'format_decimal', 'parse_decimal',
            'tz_convert'
-          ]
+           ]
 
 DT_SERVER_FORMATS = {
-  'datetime' : '%Y-%m-%d %H:%M:%S',
-  'date' : '%Y-%m-%d',
-  'time' : '%H:%M:%S'
+    'datetime' : '%Y-%m-%d %H:%M:%S',
+    'date' : '%Y-%m-%d',
+    'time' : '%H:%M:%S'
 }
 
 __pat = re.compile("%\(([dMy]+)\)s")
@@ -72,7 +73,7 @@ def get_datetime_format(kind="datetime"):
     # TODO: correctly convert from LDML to POSIX datetime formatting
     # current converter is trivial and lame and probably very easy to break
     date_format = _to_posix_format(dates.get_date_format(
-            format='short', locale=get_locale())).format
+        format='short', locale=get_locale())).format
     if kind == 'time':
         # Should use dates.get_time_format(locale=get_locale())
         return '%H:%M:%S'
@@ -208,7 +209,7 @@ def parse_datetime(value, kind="datetime", as_timetuple=False):
 def convert_date_format_in_domain(domain, fields, context):
     try:
         return _convert_date_format_in_domain(domain, fields, context)
-    except Exception as e:
+    except Exception:
         cherrypy.log.error("Error in convert_date_format_in_domain:\n", traceback=True)
         return domain
 
@@ -216,9 +217,9 @@ def _convert_date_format_in_domain(domain, fields, context):
     from view_calendar.widgets.utils import DT_FORMAT_INFO
 
     date_fields = dict([(field_name, field_def['type'])
-                            for field_name, field_def
-                                in list(fields.items())
-                                    if field_def['type'] in ['date', 'datetime', 'time']])
+                        for field_name, field_def
+                        in list(fields.items())
+                        if field_def['type'] in ['date', 'datetime', 'time']])
 
     if 'lang' not in cherrypy.session:
         return domain
@@ -272,16 +273,16 @@ def _convert_date_format_in_domain(domain, fields, context):
                     val = parse_datetime(val, dtype)
                     if val:
                         val = DT.datetime.strptime(
-                                DT.datetime.strptime(val, server_dformat)\
-                                    .strftime(user_dformat), user_dformat)\
+                            DT.datetime.strptime(val, server_dformat)\
+                            .strftime(user_dformat), user_dformat)\
                             .strftime(server_dformat)
                     else:
                         formated_date = format_datetime(val, dtype)
                         val = parse_datetime(formated_date, dtype)
                         if val:
                             val = DT.datetime.strptime(
-                                    DT.datetime.strptime(val, server_dformat)\
-                                        .strftime(user_dformat), user_dformat)\
+                                DT.datetime.strptime(val, server_dformat)\
+                                .strftime(user_dformat), user_dformat)\
                                 .strftime(server_dformat)
                 if value_is_list:
                     val = [val]

@@ -1,8 +1,5 @@
-import os
 import sys
 from optparse import OptionParser
-
-import cherrypy
 
 from openobject import release
 
