@@ -89,6 +89,7 @@ class stock_picking(osv.osv):
             ('purchase_id', '=', po_id[0]),
             ('type', '=', 'in'),
             ('state', 'in', ['assigned', 'shipped']),
+            ('claim', '=', False),
         ], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), _('No available IN found for the given PO %s') % po_name)

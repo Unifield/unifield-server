@@ -12859,6 +12859,11 @@ msgstr "Pourcentage de lignes avec des écarts"
 msgid "on FTP server"
 msgstr "sur le serveur FTP"
 
+#. module: msf_tools
+#: field:automated.export,pause:0
+msgid "Pause between generation and transfer (in seconds)"
+msgstr "Pause entre la generation et l'envoi (en secondes)"
+
 #. module: account_mcdb
 #: field:account.mcdb,amount_from:0
 msgid "Begin amount in given currency type"
@@ -55342,8 +55347,8 @@ msgstr "En mois"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1556
 #, python-format
-msgid "Line does not correspond to original IN"
-msgstr "La ligne ne correspond pas à la réception originale"
+msgid "IN Line %s does not correspond to original IN"
+msgstr "La ligne %s du IN ne correspond pas à la réception originale"
 
 #. module: hr
 #: view:hr.job:0
@@ -87584,7 +87589,7 @@ msgstr "The UoM is not compatible with the product."
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:196
 #, python-format
-msgid "The source location is not compatible with the patner"
+msgid "The source location is not compatible with the partner"
 msgstr "La zone source n'est pas compatible avec le partenaire"
 
 #. module: account

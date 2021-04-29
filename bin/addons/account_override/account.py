@@ -1121,7 +1121,7 @@ class account_move(osv.osv):
         # Create a sequence for this new journal entry
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
-        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['manual_name', 'ref'])
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['manual_name', 'ref'], replace=['manual_name'])
         # Default behaviour (create)
         res = super(account_move, self).create(cr, uid, vals, context=context)
         self._check_document_date(cr, uid, res, context)
@@ -1233,7 +1233,7 @@ class account_move(osv.osv):
                     self.pool.get('account.move.line').write(cr, uid,
                                                              ml_id_list, ml_vals, context, False, False)
 
-        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['manual_name', 'ref'])
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['manual_name', 'ref'], replace=['manual_name'])
         res = super(account_move, self).write(cr, uid, ids, vals,
                                               context=context)
         if new_sequence_vals_by_move_id:
