@@ -216,6 +216,7 @@ class stock_picking(osv.osv):
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
         'dpo_incoming': fields.boolean(string='DPO Incoming'),
+        'dpo_id_incoming': fields.integer(string='Id of remote DPO', internal=1, select=1),
         'dpo_out': fields.boolean('DPO Out'),
         'new_dpo_out': fields.boolean('DPO Out (new flow)'),
         'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),

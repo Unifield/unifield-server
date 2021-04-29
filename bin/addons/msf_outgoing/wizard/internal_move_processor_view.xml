@@ -26,7 +26,7 @@
                                        attrs="{'readonly': ['|', ('register_a_claim', '=', False), ('claim_in_has_partner_id', '=', True)], 'required': [('register_a_claim', '=', True)]}"
                                        context="{'search_default_supplier': True}"/>
                                 <field name="claim_type" 
-                                       attrs="{'readonly': [('register_a_claim', '=', False)]}"/>
+                                       attrs="{'readonly': [('register_a_claim', '=', False)], 'required': [('register_a_claim', '=', True)]}"/>
                                 <field name="claim_replacement_picking_expected" 
                                        attrs="{'invisible': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return'))],
                                                'readonly': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return'))]}"/>
