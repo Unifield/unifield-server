@@ -132,13 +132,28 @@
                             </field>
                         </page>
                         <page string="Cost Centers" attrs="{'invisible': [('category', '!=', 'DEST')]}">
-                            <field name="allow_all_cc" colspan="4" on_change="on_change_allow_all_cc(allow_all_cc, dest_cc_ids)"/>
-                            <button name="button_dest_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="4"/>
+                            <field name="allow_all_cc" colspan="4" on_change="on_change_allow_all_cc(allow_all_cc, dest_cc_link_ids)"/>
+                            <button name="button_dest_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="4"
+                                    confirm="Do you really want to remove all the Cost Centers selected?"
+                            />
                             <separator/>
-                            <field name="dest_cc_ids" nolabel="1" colspan="4" on_change="on_change_cc_ids(dest_cc_ids)">
-                                <tree string="Cost Centers">
-                                    <field name="code"/>
-                                    <field name="name"/>
+                            <group colspan="6" col="4">
+                                <button icon="gtk-add" string="Add several Cost Centers" colspan="1"
+                                        name="open_multiple_cc_selection_wizard" type="object"
+                                        context="{'current_destination_id': record_id}"/>
+                                <label string="" colspan="3"/>
+                            </group>
+                            <field name="dest_cc_link_ids" nolabel="1" colspan="4"
+                                   on_change="on_change_cc_ids(dest_cc_link_ids)"
+                                   context="{'current_destination_id': record_id}">
+                                <tree string="Cost Centers" editable="bottom">
+                                    <field name="current_id" invisible="1"/>
+                                    <field name="cc_id" string="Code"
+                                           on_change="on_change_cc_id(cc_id)"
+                                           attrs="{'readonly': [('current_id', '!=', False)]}"/>
+                                    <field name="cc_name" string="Name"/>
+                                    <field name="active_from"/>
+                                    <field name="inactive_from"/>
                                 </tree>
                             </field>
                         </page>
@@ -262,9 +277,10 @@
             <field name="inherit_id" ref="account.view_account_analytic_account_list"/>
             <field name="arch" type="xml">
                 <tree string="Analytic Accounts" position="replace">
-                    <tree toolbar="1" colors="red:(date and date&lt;=current_date or dest_without_cc==True)"
-                          string="Analytic Accounts">
+                    <tree toolbar="1" colors="red:(date and date&lt;=current_date or dest_without_cc==True);grey:selected_in_dest"
+                          notselectable="selected_in_dest" string="Analytic Accounts">
                         <field name="dest_without_cc" invisible="1"/>
+                        <field name="selected_in_dest" invisible="1"/>
                         <field name="name"/>
                         <field name="code"/>
                         <field name="description"/>
