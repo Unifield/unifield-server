@@ -161,8 +161,8 @@ which <func> returns True.
     
     out = []
     for r in data:
-	if func(r):
-	    out.append(r)
+        if func(r):
+            out.append(r)
     return out
 
 def transform(func, data):
@@ -233,7 +233,7 @@ def fwrite_csv(fd, data):
         
 def write_csv(path, data):
     """This function writes comma-separated values to <path>."""
-    fd = file(path, "w")
+    fd = open(path, "w")
     fwrite_csv(fd, data)
     fd.close()
     
@@ -309,7 +309,7 @@ def cut_extremes(data, cutoff_percentage, freq_col=1):
                 r.append(x)
             i += d[freq_col]
             continue
-	elif i + d[freq_col] >= max_idx:
+        elif i + d[freq_col] >= max_idx:
             if i < max_idx and i + d[freq_col] >= max_idx:
                 x = copy.deepcopy(d)
                 x[freq_col] = x[freq_col] - (max_idx - i)
@@ -326,7 +326,7 @@ def mean(data, val_col, freq_col):
         sum += d[val_col] * d[freq_col]
         nr_data += d[freq_col]
     if nr_data == 0:
-	raise IndexError("data is empty")
+        raise IndexError("data is empty")
 
     return sum / float(nr_data)
 

@@ -34,7 +34,7 @@ class Entry(chart_object.T):
             "tick_mark": (tick_mark.T, None, ""),
             "line_style": (line_style.T, None, ""),
             "fill_style": (fill_style.T, None, ""),
-            "label": (StringType, "???", ""),
+            "label": (str, "???", ""),
             }
     __doc__ = legend_doc.doc_entry
 ##AUTOMATICALLY GENERATED
@@ -116,8 +116,8 @@ class T(chart_object.T):
         "loc": (CoordType, None,
                 """Bottom-left corner of the legend.
                 The default location of a legend is the bottom-right end of the chart."""),
-	"shadow": (ShadowType, None, pychart_util.shadow_desc),
-        "nr_rows": (IntType, 9999, "Number of rows in the legend. If the number of plots in a chart is larger than nr_rows, multiple columns are created in the legend."),
+        "shadow": (ShadowType, None, pychart_util.shadow_desc),
+        "nr_rows": (int, 9999, "Number of rows in the legend. If the number of plots in a chart is larger than nr_rows, multiple columns are created in the legend."),
 
         }
 ##AUTOMATICALLY GENERATED
@@ -135,7 +135,7 @@ class T(chart_object.T):
         nr_cols = (len(entries)-1) / nr_rows + 1
         
         ymin = y
-	max_label_width = [0] * nr_cols
+        max_label_width = [0] * nr_cols
         max_sample_width = [0] * nr_cols
         heights = [0] * nr_rows
         
@@ -157,7 +157,7 @@ class T(chart_object.T):
         for w in max_sample_width:
             tot_width += w
             
-	can.rectangle(self.frame_line_style, self.frame_fill_style,
+        can.rectangle(self.frame_line_style, self.frame_fill_style,
                       x - self.left_fudge,	
                       ymin - self.bottom_fudge,	
                       x + tot_width + self.right_fudge,

@@ -506,7 +506,7 @@ def parseString(rml, localcontext = {},fout=None, images={}, path='.',title=None
     node = etree.XML(rml)
     r = _rml_doc(node, localcontext, images, path, title=title)
     if fout:
-        fp = file(fout,'wb')
+        fp = open(fout,'wb')
         r.render(fp)
         fp.close()
         return fout
@@ -524,7 +524,7 @@ if __name__=="__main__":
     if len(sys.argv)>1:
         if sys.argv[1]=='--help':
             trml2pdf_help()
-        print(parseString(file(sys.argv[1], 'r').read()).encode('iso8859-7'))
+        print(parseString(open(sys.argv[1], 'r').read()).encode('iso8859-7'))
     else:
         print('Usage: trml2txt input.rml >output.pdf')
         print('Try \'trml2txt --help\' for more information.')

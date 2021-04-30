@@ -24,7 +24,7 @@ This module is dedicated to help checking lines of Excel file at importation.
 """
 from msf_doc_import import MAX_LINES_NB
 from tools.translate import _
-from mx import DateTime
+from datetime import datetime
 import logging
 import pooler
 import tools
@@ -554,7 +554,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
         if row.cells[ed_cell_nb].type == 'str':
             # if the cell is type str, cast it to DateTime
             try:
-                expiry_date = DateTime.strptime(row.cells[ed_cell_nb].data, '%d/%m/%Y')
+                expiry_date = datetime.strptime(row.cells[ed_cell_nb].data, '%d/%m/%Y')
             except:
                 error_list.append(_('Incorrectly formatted expiry date: %s. '
                                     'The expected date should be > 01/01/1900 in this format '

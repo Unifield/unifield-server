@@ -20,7 +20,6 @@ import logging
 import subprocess
 import base64
 from zipfile import ZipFile
-sys.path.append('.')
 import bsdifftree
 
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
@@ -417,7 +416,7 @@ def do_update():
 
 def update_path():
     """If server starts normally, this step will fix the paths with the configured path in config rc"""
-    from .tools import config
+    from tools import config
     for v in ('log_file', 'lock_file', 'update_dir', 'server_version_file', 'new_version_file'):
         globals()[v] = os.path.join(config['root_path'], globals()[v])
     global server_version
@@ -552,7 +551,7 @@ def do_upgrade(cr, pool):
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
         res = do_prepare(cr, revision_ids)
         if res[0] == 'success':
-            from . import tools
+            import tools
             os.chdir( tools.config['root_path'] )
             restart_server()
         else:
@@ -568,7 +567,7 @@ def reconnect_sync_server():
     """Reconnect the connection manager to the SYNC_SERVER if password file
     exists
     """
-    from . import tools
+    import tools
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
     if os.path.isfile(credential_filepath):
         from . import pooler
@@ -609,7 +608,7 @@ def check_mako_xml():
     not present in it. This tag is useless and can lead to regression if the
     count change.
     """
-    from . import tools
+    import tools
     logger.info("Check mako and xml files don't contain ExpandedColumnCount tag...")
     path_to_exclude = [os.path.join(tools.config['root_path'], 'backup')]
     for file_path in find(tools.config['root_path']):
@@ -782,7 +781,7 @@ def do_pg_update():
     # MAJOR ONLY: 9. Alter tables again to back out workaround
 
     warn("Postgres major update from %s to %s" % (oldVer, newVer))
-    from . import tools
+    import tools
 
     stopped = False
     pg_new_db = None

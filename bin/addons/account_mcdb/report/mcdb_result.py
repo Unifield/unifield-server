@@ -109,7 +109,7 @@ def create_csv(self, cr, uid, ids, data, context=None):
             zf = zipfile.ZipFile(tmpzipname, 'w')
             zf.writestr('export_result.csv', out)
             zf.close()
-            out = file(tmpzipname, 'rb').read()
+            out = open(tmpzipname, 'rb').read()
             os.close(fd)
             os.unlink(tmpzipname)
             return (out, 'zip')

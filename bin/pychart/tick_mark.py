@@ -35,21 +35,21 @@ class T(chart_object.T):
 ##END AUTOMATICALLY GENERATED
     
     def predraw_check(self):
-	if not hasattr(self, "type_checked"):
-	    self.type_check()
-	self.type_checked = 1
+        if not hasattr(self, "type_checked"):
+            self.type_check()
+        self.type_checked = 1
 
 class Circle(T):
     """Draws a circle. """
     def draw(self, can, x, y):
-	self.predraw_check()
+        self.predraw_check()
         can.ellipsis(self.line_style, self.fill_style, x, y,
                         self.size/2.0, 1)
         
 class Square(T):
     """Draws a square."""
     def draw(self, can, x, y):
-	self.predraw_check()
+        self.predraw_check()
         # move to the bottom-left corner
         x = x - self.size/2.0
         y = y - self.size/2.0
@@ -59,7 +59,7 @@ class Square(T):
 class Triangle(T):
     """Draws a triangle pointing up."""
     def draw(self, can, x, y):
-	self.predraw_check()
+        self.predraw_check()
         can.polygon(self.line_style, self.fill_style,
                        ((x-self.size/1.6, y-self.size/2.0),
                         (x+self.size/1.6, y-self.size/2.0),
@@ -67,7 +67,7 @@ class Triangle(T):
 class DownTriangle(T):
     """Draws a triangle pointing down."""
     def draw(self, can, x, y):
-	self.predraw_check()
+        self.predraw_check()
         can.polygon(self.line_style, self.fill_style,
                        ((x, y-self.size/2.0),
                         (x-self.size/1.6, y+self.size/2.0),
@@ -81,7 +81,7 @@ class X(T):
                                          line_style.T(width=0.7),
                                          "The line style of the tick mark")})
     def draw(self, can, x, y):
-	self.predraw_check()
+        self.predraw_check()
         # move to the bottom-left corner
         x = x - self.size/2.0
         y = y - self.size/2.0
@@ -95,7 +95,7 @@ class Plus(T):
                                         line_style.T(width=1),
                                          "The line style of the tick mark.")})
     def draw(self, can, x, y):
-	self.predraw_check()
+        self.predraw_check()
         # move to the bottom-left corner
         can.line(self.line_style, x-self.size/1.4, y, x+self.size/1.4, y)
         can.line(self.line_style, x, y-self.size/1.4, x, y+self.size/1.4)
@@ -103,7 +103,7 @@ class Plus(T):
 class Diamond(T):
     """Draw a square rotated at 45 degrees."""
     def draw(self, can, x, y):
-	self.predraw_check()
+        self.predraw_check()
         # move to the bottom-left corner
         can.polygon(self.line_style, self.fill_style,
                    ((x-self.size/1.4, y), (x, y+self.size/1.4),
@@ -116,7 +116,7 @@ class Star(T):
                                         line_style.T(width=1),
                                          "The line style of the tick mark.")})
     def draw(self, can, x, y):
-	self.predraw_check()
+        self.predraw_check()
         # move to the bottom-left corner
         midx = x
         midy = y

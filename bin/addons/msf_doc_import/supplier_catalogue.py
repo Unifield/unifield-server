@@ -32,7 +32,7 @@ from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT as sup_cat_columns_header
 from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT as sup_cat_columns
 from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
-import mx.DateTime.DateTime
+from datetime import datetime
 
 
 class supplier_catalogue(osv.osv):
@@ -49,7 +49,7 @@ class supplier_catalogue(osv.osv):
         def get_well_formed_date(content):
             if not content:
                 return False
-            elif type(content) == type(mx.DateTime.DateTime(1)):
+            elif isinstance(content, datetime):
                 return content.strftime('%Y-%m-%d')
             elif isinstance(content, str):
                 return content.strip()

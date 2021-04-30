@@ -1464,7 +1464,7 @@ class ContentStream(DecodedStreamObject):
         self.__parseContentStream(stream)
 
     def __parseContentStream(self, stream):
-        # file("f:\\tmp.txt", "w").write(stream.read())
+        # open("f:\\tmp.txt", "w").write(stream.read())
         stream.seek(0, 0)
         operands = []
         while True:
@@ -1851,21 +1851,21 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
 #if __name__ == "__main__":
 #    output = PdfFileWriter()
 #
-#    input1 = PdfFileReader(file("test\\5000-s1-05e.pdf", "rb"))
+#    input1 = PdfFileReader(open("test\\5000-s1-05e.pdf", "rb"))
 #    page1 = input1.getPage(0)
 #
-#    input2 = PdfFileReader(file("test\\PDFReference16.pdf", "rb"))
+#    input2 = PdfFileReader(open("test\\PDFReference16.pdf", "rb"))
 #    page2 = input2.getPage(0)
 #    page3 = input2.getPage(1)
 #    page1.mergePage(page2)
 #    page1.mergePage(page3)
 #
-#    input3 = PdfFileReader(file("test\\cc-cc.pdf", "rb"))
+#    input3 = PdfFileReader(open("test\\cc-cc.pdf", "rb"))
 #    page1.mergePage(input3.getPage(0))
 #
 #    page1.compressContentStreams()
 #
 #    output.addPage(page1)
-#    output.write(file("test\\merge-test.pdf", "wb"))
+#    output.write(open("test\\merge-test.pdf", "wb"))
 
 

@@ -42,7 +42,8 @@ import warnings
 import locale
 import weakref
 import opcode
-import new
+# TODO JFB
+#import new
 from functools import reduce
 try:
     set

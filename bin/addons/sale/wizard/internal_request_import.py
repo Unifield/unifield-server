@@ -29,7 +29,7 @@ import datetime
 import logging
 import tools
 
-from mx import DateTime
+from datetime import datetime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
@@ -475,7 +475,7 @@ class internal_request_import(osv.osv):
 
                 # Line 6: Creation date
                 create_date = values.get(6, [])[1]
-                if type(create_date) == type(DateTime.now()):
+                if isinstance(create_date, datetime):
                     create_date = create_date.strftime('%Y-%m-%d')
                     header_values['imp_creation_date'] = create_date
                 else:
@@ -496,7 +496,7 @@ class internal_request_import(osv.osv):
 
                 # Line 7: Requested date
                 req_date = values.get(7, [])[1]
-                if type(req_date) == type(DateTime.now()):
+                if isinstance(req_date, datetime):
                     req_date = req_date.strftime('%Y-%m-%d')
                     header_values['imp_requested_date'] = req_date
                 else:
@@ -704,7 +704,7 @@ class internal_request_import(osv.osv):
                     # Date of Stock Take
                     if vals[8]:
                         dost = vals[8]
-                        if type(dost) == type(DateTime.now()):
+                        if isinstance(dost, datetime):
                             dost = dost.strftime('%Y-%m-%d')
                             line_data.update({'imp_stock_take_date': dost})
                         else:

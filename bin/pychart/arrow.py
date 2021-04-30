@@ -101,7 +101,7 @@ class T(chart_object.T):
                       "The color of the arrow head."),
         "line_style": (line_style.T, line_style.default,
                        "Line style."),
-        "head_style": (IntType, 1,
+        "head_style": (int, 1,
                        "The value of 0 draws a triangular arrow head. The value of 1 draws a swallow-tail arrow head. The value of 2 draws a circular head. The value of 3 draws a diamond-shaped head.")
             }
 ##AUTOMATICALLY GENERATED

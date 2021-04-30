@@ -88,10 +88,10 @@ _keys = {
                         of values at which lines are drawn."""),
     "y_grid_interval": (IntervalType, None,
                         "The vertical grid-line interval. See also x_grid_interval"),
-    "x_grid_over_plot": (IntType, False,
+    "x_grid_over_plot": (int, False,
                       "If True, grid lines are drawn over plots. Otherwise, plots are drawn over grid lines."),
-    "y_grid_over_plot": (IntType, False, "See x_grid_over_plot."),
-    "plots": (ListType, pychart_util.new_list,
+    "y_grid_over_plot": (int, False, "See x_grid_over_plot."),
+    "plots": (list, pychart_util.new_list,
                """Used only internally by pychart."""),
     "legend": (legend.T, _dummy_legend, "The legend of the chart.",
                """a legend is by default displayed
@@ -238,7 +238,7 @@ class T(chart_object.T):
                 entry = plot.get_legend_entry()
                 if entry == None:
                     pass
-                elif type(entry) != ListType:
+                elif type(entry) != list:
                     legends.append(entry)
                 else:
                     for e in entry:

@@ -80,17 +80,17 @@ def stringify_type(t):
 
 def stringify_value(val):
     t = type(val)
-    if t == StringType:
+    if t == str:
         return '"' + val + '"'
     if t == bool:
         if val: return "True"
         else: return "False"
         
-    if t in (IntType, LongType, FloatType):
+    if t in (int, LongType, FloatType):
         return str(val)
     if val == None:
         return "None"
-    if type(val) == ListType:
+    if type(val) == list:
         return list(map(stringify_value, val))
     for pair in values:
         if pair[0] == val:

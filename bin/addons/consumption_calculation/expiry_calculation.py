@@ -22,8 +22,9 @@
 from osv import osv, fields
 from tools.translate import _
 
-from mx.DateTime import RelativeDateTime, today, DateFrom, Age
 from datetime import date, timedelta, datetime
+from dateutil.relativedelta import relativedelta
+
 
 import time
 import tools
@@ -285,9 +286,9 @@ class product_likely_expire_report(osv.osv):
 
         if consumption_type == 'amc':
             if consumption_from:
-                res.update({'consumption_from': (DateFrom(consumption_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')})
+                res.update({'consumption_from': (datetime.strptime(consumption_from,'%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')})
             if consumption_to:
-                res.update({'consumption_to': (DateFrom(consumption_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+                res.update({'consumption_to': (datetime.strptime(consumption_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
 
         return {'value': res}
 
@@ -413,7 +414,7 @@ class product_likely_expire_report(osv.osv):
                         fmc_to = getattr(segment_line, 'rr_fmc_to_%d'%x)
                         fmc_value = getattr(segment_line, 'rr_fmc_%d'%x)
                         if fmc_from and fmc_to and fmc_value:
-                            segment_product_fmc.setdefault(segment_line.product_id.id, []).append({'from': DateFrom(fmc_from), 'to': DateFrom(fmc_to), 'fmc': fmc_value})
+                            segment_product_fmc.setdefault(segment_line.product_id.id, []).append({'from': datetime.strptime(fmc_from, '%Y-%m-%d'), 'to': datetime.strptime(fmc_to, '%Y-%m-%d'), 'fmc': fmc_value})
                 only_product_ids.append(segment_line.product_id.id)
             location_ids = [loc.id for loc in report.segment_id.location_config_id.local_location_ids]
         else:
@@ -455,14 +456,14 @@ class product_likely_expire_report(osv.osv):
             lot_domain.append(('product_id', 'in', only_product_ids))
 
         lot_ids = lot_obj.search(new_cr, uid, lot_domain, order='product_id, life_date', context=context)
-        from_date = DateFrom(report.date_from)
-        to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
+        from_date = datetime.strptime(report.date_from, '%Y-%m-%d')
+        to_date = datetime.strptime(report.date_to, '%Y-%m-%d') + relativedelta(day=1, months=1, days=-1)
 
         # Set all months between from_date and to_date
-        dates = [DateFrom(datetime.now())]
+        dates = [datetime.now()]
         while (from_date < to_date):
             dates.append(from_date)
-            from_date = from_date + RelativeDateTime(months=1, day=1)
+            from_date = from_date + relativedelta(months=1, day=1)
 
         # Create a report line for each product
         products = {}
@@ -496,7 +497,7 @@ class product_likely_expire_report(osv.osv):
                 for month in dates:
                     # Remove one day to include the expiry date as possible consumable day
                     if not last_expiry_date:
-                        last_expiry_date = month - RelativeDateTime(days=1)
+                        last_expiry_date = month - relativedelta(days=1)
 
                     available_qty = 0.00
                     expired_qty = 0.00
@@ -505,11 +506,11 @@ class product_likely_expire_report(osv.osv):
                     # Create a line for each lot which expired in this month
                     domain = [('product_id', '=', lot.product_id.id),
                               ('id', 'in', lot_ids),
-                              ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))]
+                              ('life_date', '<', (month + relativedelta(months=1, day=1)).strftime('%Y-%m-%d'))]
 
                     if not start_month_flag:
                         domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
-                        item_period_start = (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+                        item_period_start = (month + relativedelta(day=1)).strftime('%Y-%m-%d')
                     else:
                         item_period_start = month.strftime('%Y-%m-%d')
                         domain.append(('life_date', '<=', month.strftime('%Y-%m-01')))
@@ -526,14 +527,14 @@ class product_likely_expire_report(osv.osv):
                     # Create an item line for each lot and each location
                     for product_lot in lot_obj.browse(new_cr, uid, product_lot_ids, context=context):
                         if from_segment and segment_product_fmc:
-                            life_date = DateFrom(product_lot.life_date)
+                            life_date = datetime.strptime(product_lot.life_date, '%Y-%m-%d')
                             consum = 0
                             if life_date > last_expiry_date:
                                 tmp_last_expiry_date = last_expiry_date
                                 for fmc in segment_product_fmc.setdefault(lot.product_id.id, []):
                                     if life_date >= fmc['from'] and tmp_last_expiry_date <= fmc['to']:
                                         end_fmc = min(life_date, fmc['to'])
-                                        lot_days = Age(DateFrom(end_fmc), last_expiry_date)
+                                        lot_days = relativedelta(datetime.strptime(end_fmc, '%Y-%m-%d'), last_expiry_date)
                                         consum += fmc['fmc'] * (lot_days.years*364.8 + lot_days.months*30.44 + lot_days.days)/30.44
                                     if life_date <= fmc['to']:
                                         break
@@ -541,14 +542,14 @@ class product_likely_expire_report(osv.osv):
                                         tmp_last_expiry_date = fmc['to']
 
                         else:
-                            lot_days = Age(DateFrom(product_lot.life_date), last_expiry_date)
+                            lot_days = relativedelta(datetime.strptime(product_lot.life_date, '%Y-%m-%d'), last_expiry_date)
                             lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
                             consum = 0
                             if lot_coeff >= 0.00:
                                 consum = round(lot_coeff*consumption,2)
 
                         if consum > 0:
-                            last_expiry_date = DateFrom(product_lot.life_date)
+                            last_expiry_date = datetime.strptime(product_lot.life_date, '%Y-%m-%d')
                         lot_cons = self.pool.get('product.uom')._compute_qty(new_cr, uid, lot.product_id.uom_id.id, consum, lot.product_id.uom_id.id) + rest
 
                         if lot_cons > 0.00:
@@ -660,11 +661,11 @@ class product_likely_expire_report(osv.osv):
         if not report:
             return []
         res = []
-        from_date = DateFrom(report.date_from)
-        to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
+        from_date = datetime.strptime(report.date_from, '%Y-%m-%d')
+        to_date = datetime.strptime(report.date_to, '%Y-%m-%d') + relativedelta(day=1, months=1, days=-1)
         while (from_date < to_date):
             res.append((from_date, from_date.strftime('%m/%y'), ))
-            from_date = from_date + RelativeDateTime(months=1, day=1)
+            from_date = from_date + relativedelta(months=1, day=1)
         return res
 
     def open_report(self, cr, uid, ids, context=None):
@@ -948,8 +949,8 @@ class product_product(osv.osv):
 
         delta = (delivery_leadtime + d_values.get('coverage', 0.00))*30.0
 
-        report_data = {'date_from': today().strftime('%Y-%m-%d'),
-                       'date_to': (today() + RelativeDateTime(days=delta)).strftime('%Y-%m-%d'),
+        report_data = {'date_from': datetime.today().strftime('%Y-%m-%d'),
+                       'date_to': (datetime.today() + relativedelta(days=delta)).strftime('%Y-%m-%d'),
                        'consumption_type': monthly_consumption,
                        'consumption_from': d_values.get('consumption_period_from'),
                        'consumption_to': d_values.get('consumption_period_to'),

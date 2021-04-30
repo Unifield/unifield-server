@@ -430,7 +430,7 @@ class module(osv.osv):
             zipfile = urllib.request.urlopen(mod.url).read()
             fname = addons.get_module_path(str(mod.name)+'.zip', downloaded=True)
             try:
-                fp = file(fname, 'wb')
+                fp = open(fname, 'wb')
                 fp.write(zipfile)
                 fp.close()
             except Exception:

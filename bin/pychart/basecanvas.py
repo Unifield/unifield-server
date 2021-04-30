@@ -120,7 +120,7 @@ class T(object):
         if not fname:
             return (sys.stdout, False)
         elif isinstance(fname, str):
-            return (file(fname, "wb"), True)
+            return (open(fname, "wb"), True)
         else:
             if not hasattr(fname, "write"):
                 raise Exception("Expecting either a filename or a file-like object, but got %s" % fname)

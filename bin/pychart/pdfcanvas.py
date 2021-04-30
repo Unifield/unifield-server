@@ -53,9 +53,9 @@ class T(basecanvas.T):
         self.__lines = []
         self.__nr_gsave = 0
 
-	if compress_p_ and not _zlib_available_p:
-	    pychart_util.warn("Zlib not available. Compression request ignored.\n")
-	    compress_p_ = 0
+        if compress_p_ and not _zlib_available_p:
+            pychart_util.warn("Zlib not available. Compression request ignored.\n")
+            compress_p_ = 0
         self.__compress_p = compress_p_
 
     def __intern_font(self, name):
@@ -110,18 +110,18 @@ class T(basecanvas.T):
         return
                 
     def __arcsub(self, x, y, radius, start, theta):
-	xcos = math.cos(to_radian(theta))
-	xsin = math.sin(to_radian(theta))
-	x0 = radius * xcos
-	y0 = radius * xsin
- 	x1 = radius * (4-xcos)/3.0
- 	y1 = radius * (1-xcos)*(xcos-3)/(3*xsin)
+        xcos = math.cos(to_radian(theta))
+        xsin = math.sin(to_radian(theta))
+        x0 = radius * xcos
+        y0 = radius * xsin
+        x1 = radius * (4-xcos)/3.0
+        y1 = radius * (1-xcos)*(xcos-3)/(3*xsin)
 
         xx0, xy0 = pychart_util.rotate(x0, y0, start+theta)
         xx1, xy1 = pychart_util.rotate(x1, -y1, start+theta)
         xx2, xy2 = pychart_util.rotate(x1, y1, start+theta)
-	self.__write("%f %f %f %f %f %f c\n" %
-		(x+xx1, y+xy1, x+xx2, y+xy2, x+xx0, y+xy0))
+        self.__write("%f %f %f %f %f %f c\n" %
+        (x+xx1, y+xy1, x+xx2, y+xy2, x+xx0, y+xy0))
     def path_arc(self, x, y, radius, ratio, start, end):
         self.comment("PATHARC %f %f %f %f %f %f\n"
         	     % (x, y, radius, ratio, start, end))
@@ -154,12 +154,12 @@ class T(basecanvas.T):
     def text_end(self):
         self.__write("ET\n")
     def text_moveto(self, x, y, angle):
-	if angle != None:
-	    xcos = math.cos(to_radian(angle))
-	    xsin = math.sin(to_radian(angle))
-	    self.__write("%f %f %f %f %f %f Tm " % (xcos, xsin, -xsin, xcos, x, y))
-	else:
-	    self.__write("1 0 0 1 %f %f Tm " % (x, y))
+        if angle != None:
+            xcos = math.cos(to_radian(angle))
+            xsin = math.sin(to_radian(angle))
+            self.__write("%f %f %f %f %f %f Tm " % (xcos, xsin, -xsin, xcos, x, y))
+        else:
+            self.__write("1 0 0 1 %f %f Tm " % (x, y))
 
     def text_show(self, font_name, font_size, color, str):
         if self.__font_name  != font_name or self.__font_size != font_size:
@@ -245,8 +245,8 @@ class T(basecanvas.T):
         
     def close(self):
         basecanvas.T.close(self)
-	if self.__lines == []:
-	    return
+        if self.__lines == []:
+            return
 
         _fp, need_close = self.open_output(self.__out_fname)
         fp = pdf_stream(_fp)

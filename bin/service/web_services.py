@@ -451,7 +451,7 @@ class db(netsvc.ExportService):
                     cr.execute("select decode(datname, 'escape') from pg_database where datdba=(select usesysid from pg_user where usename=%s) and datname not in ('template0', 'template1', 'postgres') order by datname", (db_user,))
                 else:
                     cr.execute("select decode(datname, 'escape') from pg_database where datname not in('template0', 'template1','postgres') order by datname")
-                res = [str(name) for (name,) in cr.fetchall()]
+                res = [name.tobytes().decode('utf8') for (name,) in cr.fetchall()]
             except Exception:
                 res = []
         finally:

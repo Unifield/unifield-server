@@ -24,7 +24,7 @@ from types import *
 _keys = {
     "width" : (UnitType, theme.default_line_width, "Width of the line, in points."),
     "color": (color.T, color.default, "The color of the line."),
-    "dash" : (TupleType, None,
+    "dash" : (tuple, None,
               """The value
               of None will draw a solid line. Otherwise, this
               attribute specifies the style of dashed lines. 
@@ -34,13 +34,13 @@ _keys = {
               For example, the dash style of (3,2,4,1) draws a dashed line that
               looks like @samp{---__----_---__----_...}.
               """),
-    "cap_style": (IntType, 0,
+    "cap_style": (int, 0,
                   """Defines the style of the tip of the line segment.
                   0: butt cap (square cutoff, with no projection beyond),
                   1: round cap (arc), 2: projecting square cap
                   (square cutoff, but the line extends half the line width).
                   See also Postscript/PDF reference manual."""),
-    "join_style": (IntType, 0,
+    "join_style": (int, 0,
                    """Join style. 0: Miter join (sharp, pointed corners),
                    1: round join (rounded corners),
                    2: bevel join (flattened corners).

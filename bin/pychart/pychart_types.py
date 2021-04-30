@@ -32,7 +32,7 @@ def CoordType(val):
 def IntervalType(val):
     if type(val) in (int, int,
                      float, types.FunctionType):
-	return None
+        return None
     return "Expecting a number or a function"
 
 def CoordOrNoneType(val):
@@ -59,9 +59,9 @@ def UnitType(val):
     
 def ShadowType(val):
     if type(val) not in (tuple, list):
-	return "Expecting tuple or list."
+        return "Expecting tuple or list."
     if len(val) != 3:
-	return "Expecting (xoff, yoff, fill)."
+        return "Expecting (xoff, yoff, fill)."
     return None
 
 def FormatType(val):

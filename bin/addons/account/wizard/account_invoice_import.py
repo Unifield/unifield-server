@@ -25,7 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from tempfile import NamedTemporaryFile
-from base64 import decodestring
+from base64 import b64decode
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from account.report import export_invoice
 from datetime import datetime
@@ -84,7 +84,7 @@ class account_invoice_import(osv.osv_memory):
                 if not wiz.file:
                     raise osv.except_osv(_('Error'), _('Nothing to import.'))
                 fileobj = NamedTemporaryFile('w+b', delete=False)
-                fileobj.write(decodestring(wiz.file))
+                fileobj.write(b64decode(wiz.file))
                 fileobj.close()
                 content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
                 if not content:

@@ -35,7 +35,7 @@ class T(coord.T):
         return v
     def get_min_max(self, dmin, dmax, interval):
         interval = interval or 10
-	dmin = max(0, dmin) # we can't have a negative value with a log scale.
+        dmin = max(0, dmin) # we can't have a negative value with a log scale.
         v = 1.0
         while v > dmin:
             v = v / interval

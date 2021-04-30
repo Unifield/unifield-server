@@ -414,11 +414,11 @@ class configmanager(object):
         text_to_add = "%(db_host)s:*:*:%(db_user)s:%(db_password)s" % self.options
 
         if os.path.exists(filename):
-            content = [x.strip() for x in file(filename, 'r').readlines()]
+            content = [x.strip() for x in open(filename, 'r').readlines()]
             if text_to_add in content:
                 return
 
-        fp = file(filename, 'a+')
+        fp = open(filename, 'a+')
         fp.write(text_to_add + "\n")
         fp.close()
 
@@ -522,7 +522,7 @@ class configmanager(object):
             if not rc_exists and not os.path.exists(os.path.dirname(self.rcfile)):
                 os.makedirs(os.path.dirname(self.rcfile))
             try:
-                p.write(file(self.rcfile, 'w'))
+                p.write(open(self.rcfile, 'w'))
                 if not rc_exists:
                     os.chmod(self.rcfile, 0o600)
             except IOError:

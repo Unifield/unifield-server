@@ -59,8 +59,8 @@ class T(pscanvas.T):
         
         gs_path = get_gs_path()
         self.pipe_fp = None
-	if self.__output_lines == []:
-	    return
+        if self.__output_lines == []:
+            return
 
         if sys.platform != "win32" and hasattr(os, "popen"):
             # UNIX-like systems

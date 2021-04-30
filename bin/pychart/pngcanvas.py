@@ -20,8 +20,8 @@ from . import theme
 class T(gs_frontend.T):
     def close(self):
         gs_frontend.T.close(self)
-	if self.__output_lines == []:
-	    return
+        if self.__output_lines == []:
+            return
 
         if theme.use_color:
             gs_args = "-sDEVICE=png256 -dTextAlphaBits=4 -q -dNOPAUSE" #PDS
@@ -48,7 +48,7 @@ class T(gs_frontend.T):
         self.close_gs()
 
         if temp_fname:
-            temp_fd = file(temp_fname, 'rb')
+            temp_fd = open(temp_fname, 'rb')
             out_fd.write(temp_fd.read())
             temp_fd.close()
             

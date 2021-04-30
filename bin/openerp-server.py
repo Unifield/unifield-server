@@ -87,7 +87,7 @@ def ops_event(what, dbname=None):
 #-----------------------------------------------------------------------
 # import the tools module so that the commandline parameters are parsed
 #-----------------------------------------------------------------------
-from . import tools
+import tools
 updater.update_path()
 logger.info("OpenERP version - %s", release.version)
 logger.info("sys.path %s", ' '.join(sys.path))
@@ -113,28 +113,28 @@ logger.info('initialising distributed objects services')
 #---------------------------------------------------------------
 # connect to the database and initialize it with base if needed
 #---------------------------------------------------------------
-from . import pooler
+import pooler
 
 #----------------------------------------------------------
 # import basic modules
 # (the asserts are to silence pyflakes warnings)
 #----------------------------------------------------------
-from . import osv; assert osv
-from . import workflow; assert workflow
-from . import report; assert report
-from . import service; assert service
+import osv; assert osv
+import workflow; assert workflow
+import report; assert report
+import service; assert service
 
 #----------------------------------------------------------
 # import addons
 #----------------------------------------------------------
-from . import addons; assert addons
+import addons; assert addons
 
 #----------------------------------------------------------
 # Load and update databases if requested
 #----------------------------------------------------------
 
-from .service import http_server
-from . import updater
+from service import http_server
+import updater
 
 if not ( tools.config["stop_after_init"] or \
          tools.config["translate_in"] or \
@@ -143,7 +143,7 @@ if not ( tools.config["stop_after_init"] or \
     http_server.init_xmlrpc()
     http_server.init_static_http()
 
-    from .service import netrpc_server
+    from service import netrpc_server
     netrpc_server.init_servers()
 
 if tools.config['db_name']:

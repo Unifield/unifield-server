@@ -31,7 +31,7 @@ import re
 import copy
 import os
 from xml import dom
-from .report.report_sxw import report_sxw, report_rml
+from report.report_sxw import report_sxw, report_rml
 
 class actions(osv.osv):
     _name = 'ir.actions.actions'

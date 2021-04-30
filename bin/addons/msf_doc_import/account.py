@@ -26,11 +26,11 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from tempfile import NamedTemporaryFile
-from base64 import decodestring
+from base64 import b64decode
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import threading
 import pooler
-import mx
+from datetime import datetime
 from base import currency_date
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 from spreadsheet_xml import SPECIAL_CHAR
@@ -214,7 +214,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 # Update wizard
                 self.write(cr, uid, [wiz.id], {'message': _('Copying file…'), 'progression': 3.00})
                 fileobj = NamedTemporaryFile('w+b', delete=False)
-                fileobj.write(decodestring(wiz.file))
+                fileobj.write(b64decode(wiz.file))
                 fileobj.close()
                 context.update({'from_je_import': True})
                 content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
@@ -287,7 +287,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if not line[cols['Document Date']]:
                         errors.append(_('Line %s. No document date specified!') % (current_line_num,))
                         continue
-                    if not isinstance(line[cols['Document Date']], type(mx.DateTime.now())):
+                    if not isinstance(line[cols['Document Date']], datetime):
                         errors.append(_('Line %s, the column \'Document Date\' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example).') % (current_line_num,))
                         continue
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')

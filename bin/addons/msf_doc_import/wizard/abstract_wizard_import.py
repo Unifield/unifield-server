@@ -22,8 +22,7 @@
 import base64
 import string
 
-from mx import DateTime
-
+from datetime import datetime
 from osv import osv
 from osv import fields
 from tools.translate import _
@@ -78,7 +77,7 @@ your support team and give us this message.
         d = False
         for dformat in accepted_date_format:
             try:
-                d = DateTime.strptime(date_value, dformat)
+                d = datetime.strptime(date_value, dformat)
                 d = d.strftime('%Y-%m-%d %H:%M:%S')
             except ValueError:
                 continue

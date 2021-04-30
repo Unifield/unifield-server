@@ -20,7 +20,7 @@
 ##############################################################################
 
 from osv import osv
-from mx import DateTime
+from datetime import datetime
 
 class import_cell_data(osv.osv_memory):
     '''
@@ -108,28 +108,28 @@ class import_cell_data(osv.osv_memory):
                 return cell_data.strftime('%Y-%m-%d')
             else:
                 try:
-                    expired_date = DateTime.strptime(cell_data,'%Y-%m-%d')
-                    return str(expired_date)
+                    expired_date = datetime.strptime(cell_data,'%Y-%m-%d')
+                    return expired_date.strftime('%Y-%m-%d')
                 except ValueError:
                     try:
-                        expired_date = DateTime.strptime(cell_data,'%Y/%m/%d')
-                        return str(expired_date)
+                        expired_date = datetime.strptime(cell_data,'%Y/%m/%d')
+                        return expired_date.strftime('%Y-%m-%d')
                     except ValueError:
                         try:
-                            expired_date = DateTime.strptime(cell_data,'%d-%m-%Y')
-                            return str(expired_date)
+                            expired_date = datetime.strptime(cell_data,'%d-%m-%Y')
+                            return expired_date.strftime('%Y-%m-%d')
                         except ValueError:
                             try:
-                                expired_date = DateTime.strptime(cell_data,'%d/%m/%Y')
-                                return str(expired_date)
+                                expired_date = datetime.strptime(cell_data,'%d/%m/%Y')
+                                return expired_date.strftime('%Y-%m-%d')
                             except ValueError:
                                 try:
-                                    expired_date = DateTime.strptime(cell_data,'%d-%b-%Y')
-                                    return str(expired_date)
+                                    expired_date = datetime.strptime(cell_data,'%d-%b-%Y')
+                                    return expired_date.strftime('%Y-%m-%d')
                                 except ValueError:
                                     try:
-                                        expired_date = DateTime.strptime(cell_data,'%d/%b/%Y')
-                                        return str(expired_date)
+                                        expired_date = datetime.strptime(cell_data,'%d/%b/%Y')
+                                        return expired_date.strftime('%Y-%m-%d')
                                     except ValueError:
                                         return False
         return False

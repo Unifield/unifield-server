@@ -25,14 +25,13 @@ __all__ = ['db_connect', 'close_db']
 from threading import currentThread
 import logging
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_READ_COMMITTED, ISOLATION_LEVEL_SERIALIZABLE
-from psycopg2.psycopg1 import cursor as psycopg1cursor
 from psycopg2.pool import PoolError
 
 import psycopg2.extensions
 import warnings
-from . import pooler
-from .tools import cache
-from .tools import misc
+import pooler
+from tools import cache
+from tools import misc
 import time
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
@@ -56,9 +55,9 @@ for name, typeoid in list(types_mapping.items()):
 psycopg2.extensions.register_type(psycopg2.extensions.new_type((700, 701, 1700,), 'float', undecimalize))
 
 
-from . import tools
-from .tools.func import wraps, frame_codeinfo
-from .netsvc import Agent
+import tools
+from tools.func import wraps, frame_codeinfo
+from netsvc import Agent
 from datetime import datetime as mdt
 from datetime import timedelta
 import threading
@@ -102,7 +101,8 @@ class Cursor(object):
         if p is not None:
             self._oc = p.get('operations.count')
             self._oe = p.get('operations.event')
-        self._obj = self._cnx.cursor(cursor_factory=psycopg1cursor)
+        # TODO JFB
+        self._obj = self._cnx.cursor()
         self.__closed = False   # real initialisation value
         self.autocommit(False)
         if self.sql_log:
@@ -331,6 +331,13 @@ class Cursor(object):
         self.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, table))
         if self.fetchone():
             self.execute('DROP INDEX "%s"' % (indexname,))
+
+    def __build_dict(self, row):
+        return {d.name: row[i] for i, d in enumerate(self._obj.description)}
+
+    def dictfetchall(self):
+        return [self.__build_dict(row) for row in self._obj.fetchall()]
+
 
 class PsycoConnection(psycopg2.extensions.connection):
     pass

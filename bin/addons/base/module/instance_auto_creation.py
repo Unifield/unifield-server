@@ -30,7 +30,7 @@ import tools
 import threading
 from tools.translate import _
 from osv import fields, osv
-from mx import DateTime
+from datetime import datetime
 import logging
 
 TRUE_LIST = (True, 'True', 'true', 'TRUE', 'Yes', 'YES', 'yes')
@@ -602,8 +602,8 @@ class instance_auto_creation(osv.osv):
                 synchro_serv = pool.get('sync.client.sync_server_connection')
                 ids = synchro_serv.search(cr, uid, [])
                 if ids:
-                    from_mx = DateTime.strptime(config_dict['silentupgrade']['hour_from'], '%H:%M')
-                    to_mx = DateTime.strptime(config_dict['silentupgrade']['hour_to'], '%H:%M')
+                    from_mx = datetime.strptime(config_dict['silentupgrade']['hour_from'], '%H:%M')
+                    to_mx = datetime.strptime(config_dict['silentupgrade']['hour_to'], '%H:%M')
                     sync_vals = {
                         'automatic_patching_hour_from': from_mx.hour + from_mx.minute/60.,
                         'automatic_patching_hour_to': to_mx.hour + to_mx.minute/60.,

@@ -35,11 +35,11 @@ class T(chart_object.T):
         "radius" : (UnitType, None, "The radius of the pie."),
         "line_style" : (line_style.T, line_style.default, "The style of the outer edge of each pie slice."),
 
-        "fill_styles" : (ListType, fill_style.standards.list(),
+        "fill_styles" : (list, fill_style.standards.list(),
                          """The fill style of each item. The length of the
                          list should be equal to the length of the data. 
                          """),
-        "arc_offsets" : (ListType, None,
+        "arc_offsets" : (list, None,
                          """You can draw each pie "slice" shifted off-center.
                          This attribute, if non-None,
                          must be a number sequence whose length is equal to
@@ -54,9 +54,9 @@ class T(chart_object.T):
         "data" : (AnyType, None, pychart_util.data_desc),
         "label_format" : (FormatType, "%s",
                           "Format string of the label"),
-        "label_col" : (IntType, 0,
+        "label_col" : (int, 0,
                        """The column, within "data", from which the labels of items are retrieved."""),
-        "data_col": (IntType, 1,
+        "data_col": (int, 1,
                      """ The column, within "data", from which the data values are retrieved."""),
         "label_offset": (UnitType, None, "The distance from the center of each label."),
         "arrow_style": (arrow.T, None,
@@ -76,7 +76,7 @@ class T(chart_object.T):
         return v
 
     def check_integrity(self):
-	self.type_check()
+        self.type_check()
     def get_data_range(self, which):
         return (0, 1)
     def get_legend_entry(self):

@@ -28,7 +28,7 @@ import zipimport
 import osv
 import tools
 import tools.osutil
-from tools.safe_eval import safe_eval as eval
+from tools.safe_eval import safe_eval
 import pooler
 from tools.translate import _
 
@@ -134,7 +134,7 @@ class Node(Singleton):
         for attr in ('init', 'update', 'demo'):
             if hasattr(self, attr):
                 setattr(node, attr, True)
-        self.children.sort(lambda x, y: cmp(x.name, y.name))
+        self.children.sort(key=lambda x: x.name)
 
     def __setattr__(self, name, value):
         super(Singleton, self).__setattr__(name, value)
@@ -257,7 +257,7 @@ def get_module_as_zip(modulename, b64enc=True, src=True):
 
     ap = ap.encode('utf8')
     if os.path.isfile(ap + '.zip'):
-        val = file(ap + '.zip', 'rb').read()
+        val = open(ap + '.zip', 'rb').read()
         if b64enc:
             val = base64.encodestring(val)
     else:

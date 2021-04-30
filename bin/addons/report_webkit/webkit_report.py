@@ -138,7 +138,7 @@ class WebKitParser(report_sxw):
         # default to UTF-8 encoding.  Use <meta charset="latin-1"> to override.
         command.extend(['--encoding', 'utf-8'])
         if header :
-            head_file = file( os.path.join(
+            head_file = open( os.path.join(
                 tmp_dir,
                 str(time.time()) + '.head.html'
             ),
@@ -149,7 +149,7 @@ class WebKitParser(report_sxw):
             file_to_del.append(head_file.name)
             command.extend(['--header-html', head_file.name])
         if footer :
-            foot_file = file(  os.path.join(
+            foot_file = open(  os.path.join(
                 tmp_dir,
                 str(time.time()) + '.foot.html'
             ),
@@ -174,7 +174,7 @@ class WebKitParser(report_sxw):
             command.extend(['--page-size', str(webkit_header.format).replace(',', '.')])
         count = 0
         for html in html_list :
-            html_file = file(os.path.join(tmp_dir, str(time.time()) + str(count) +'.body.html'), 'w')
+            html_file = open(os.path.join(tmp_dir, str(time.time()) + str(count) +'.body.html'), 'w')
             count += 1
             html_file.write(html)
             html_file.close()
@@ -192,7 +192,7 @@ class WebKitParser(report_sxw):
             for f_to_del in file_to_del :
                 os.unlink(f_to_del)
 
-        pdf = file(out, 'rb').read()
+        pdf = open(out, 'rb').read()
         for f_to_del in file_to_del :
             os.unlink(f_to_del)
 
@@ -234,7 +234,7 @@ class WebKitParser(report_sxw):
         if report_xml.report_file :
             path = addons.get_module_resource(report_xml.report_file)
             if path and os.path.exists(path) :
-                template = file(path).read()
+                template = open(path).read()
         if not template and report_xml.report_webkit_data :
             template =  report_xml.report_webkit_data
         if not template :

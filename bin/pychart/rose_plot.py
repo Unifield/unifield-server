@@ -27,17 +27,17 @@ class T(chart_object.T):
     Sector diagrams are also known as wind roses"""
     keys = {
         "start_angle" : (NumType, 90, ""), # top of chart (north)
-	"center" : (CoordType, None, ""),
-	"base_radius" : (NumType, None, ""),
-	"line_style" : (line_style.T, line_style.T(color=color.black, width=0.3), ""),
+        "center" : (CoordType, None, ""),
+        "base_radius" : (NumType, None, ""),
+        "line_style" : (line_style.T, line_style.T(color=color.black, width=0.3), ""),
         "fill_styles" : (list, fill_style.standards.list()[:],
                          """The fill style of each item. The length of the
                          list should be equal to the length of the data.
                          """),
-	"sector_centred":(int, 1,
-			  """Bool indicating whether the sectors should be centred on each sector_width(e.g. on 0)"""),
-	"dir_offset":  (UnitType, None,
-			"""The distance between the directions and the outermost circle. Defaults fine for most cases"""),
+        "sector_centred":(int, 1,
+                          """Bool indicating whether the sectors should be centred on each sector_width(e.g. on 0)"""),
+        "dir_offset":  (UnitType, None,
+                        """The distance between the directions and the outermost circle. Defaults fine for most cases"""),
         "data" : (AnyType, None, pychart_util.data_desc),
         "label_col" : (int, 0,
                        """The column, within "data", from which the labels of items are retrieved."""),
@@ -45,19 +45,19 @@ class T(chart_object.T):
                      """ The column, within "data", from which the data values are retrieved."""),
         "dir_line_style": (line_style.T, None, ""),
         "dir_fill_style": (fill_style.T, fill_style.default, ""),
-	"shadow": (ShadowType, None, pychart_util.shadow_desc),
-	"sector_width": (int, None, ""), # automatically generated
+        "shadow": (ShadowType, None, pychart_util.shadow_desc),
+        "sector_width": (int, None, ""), # automatically generated
         }
 
     def __init__(self, colour=True, **args):
         chart_object.T.init(self, args)
-	if colour:
-  	    # the theme.color flag does not seem to affect the fill_style.standards,
-	    #besides, I want the first two colors to resemble those of gnuplot's postscript terminal
-  	    self.fill_styles = [fill_style.Plain(bgcolor=color.red),
-				fill_style.Plain(bgcolor=color.green),
-				fill_style.Plain(bgcolor=color.blue),
-				fill_style.Plain(bgcolor=color.magenta)]
+        if colour:
+            # the theme.color flag does not seem to affect the fill_style.standards,
+            #besides, I want the first two colors to resemble those of gnuplot's postscript terminal
+            self.fill_styles = [fill_style.Plain(bgcolor=color.red),
+                    fill_style.Plain(bgcolor=color.green),
+                    fill_style.Plain(bgcolor=color.blue),
+                    fill_style.Plain(bgcolor=color.magenta)]
 
     def check_integrity(self):
         nSectors = len(self.data[0][self.data_col])

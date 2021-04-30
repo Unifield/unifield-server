@@ -6,7 +6,6 @@ import time
 from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
-from mx import DateTime
 from dateutil.relativedelta import relativedelta
 from lxml import etree
 
@@ -32,7 +31,7 @@ class stock_production_lot(osv.osv):
 
         for record in reads:
             if context.get('with_expiry') and record['life_date']:
-                name = '%s - %s'%(record['name'], DateTime.strptime(record['life_date'],'%Y-%m-%d').strftime(date_format).decode('utf-8'))
+                name = '%s - %s'%(record['name'], datetime.strptime(record['life_date'],'%Y-%m-%d').strftime(date_format))
             else:
                 name = record['name']
             res.append((record['id'], name))

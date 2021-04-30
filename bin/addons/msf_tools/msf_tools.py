@@ -34,7 +34,7 @@ import math
 import netsvc
 from zipfile import ZipFile
 from io import StringIO
-from base64 import encodestring
+from base64 import b64encode
 from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import logging
 import threading
@@ -989,7 +989,7 @@ class user_rights_tools(osv.osv_memory):
 
         uac_processor = self.pool.get('user.access.configurator')
         f = z.open(ur['UAC'])
-        data = encodestring(f.read())
+        data = b64encode(f.read())
         f.close()
         if logger:
             log_line = 'Importing %s' % (ur['UAC'],)
@@ -1024,7 +1024,7 @@ class user_rights_tools(osv.osv_memory):
                 file_d = z.open(zp_f, 'r')
 
                 wiz_key = import_key[model]
-                wiz = self.pool.get('msf.import.export').create(cr, uid, {'model_list_selection': wiz_key, 'import_file': encodestring(file_d.read())}, context=context)
+                wiz = self.pool.get('msf.import.export').create(cr, uid, {'model_list_selection': wiz_key, 'import_file': b64encode(file_d.read())}, context=context)
                 file_d.close()
                 self.pool.get('msf.import.export').import_xml(cr, uid, [wiz], raise_on_error=True, context=context)
                 if sync_server and model == 'msf_field_access_rights.field_access_rule_line':

@@ -942,9 +942,9 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
     if config.get('import_partial'):
         fname_partial = module + '/'+ fname
         if not os.path.isfile(config.get('import_partial')):
-            pickle.dump({}, file(config.get('import_partial'),'w+'))
+            pickle.dump({}, open(config.get('import_partial'),'w+'))
         else:
-            data = pickle.load(file(config.get('import_partial')))
+            data = pickle.load(open(config.get('import_partial')))
             if fname_partial in data:
                 if not data[fname_partial]:
                     return
@@ -970,9 +970,9 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
         # Report failed import and abort module install
         raise Exception(_('Module loading failed: file %s/%s could not be processed:\n %s') % (module, fname, warning_msg))
     if config.get('import_partial'):
-        data = pickle.load(file(config.get('import_partial')))
+        data = pickle.load(open(config.get('import_partial')))
         data[fname_partial] = 0
-        pickle.dump(data, file(config.get('import_partial'),'wb'))
+        pickle.dump(data, open(config.get('import_partial'),'wb'))
         cr.commit()
 
 # Custom etree.Resolver to handler external entity on win32

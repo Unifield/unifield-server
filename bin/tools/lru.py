@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # taken from http://code.activestate.com/recipes/252524-length-limited-o1-lru-cache-implementation/
 import threading
+
 from .func import synchronized
 
 __all__ = ['LRU']
@@ -12,7 +13,7 @@ class LRUNode(object):
         self.me = me
         self.next = None
 
-class LRU:
+class LRU(object):
     """
     Implementation of a length-limited O(1) LRU queue.
     Built for and used by PyPE:
@@ -32,11 +33,11 @@ class LRU:
     def __contains__(self, obj):
         return obj in self.d
 
-    @synchronized()
-    def get(self, key, default=None):
-        if key in self.d:
-            return self[key]
-        return default
+    def get(self, obj, val=None):
+        try:
+            return self[obj]
+        except KeyError:
+            return val
 
     @synchronized()
     def __getitem__(self, obj):
@@ -62,7 +63,7 @@ class LRU:
                 return
             a = self.first
             a.next.prev = None
-            self.first = a.__next__
+            self.first = a.next
             a.next = None
             del self.d[a.me[0]]
             del a
@@ -71,10 +72,10 @@ class LRU:
     def __delitem__(self, obj):
         nobj = self.d[obj]
         if nobj.prev:
-            nobj.prev.next = nobj.__next__
+            nobj.prev.next = nobj.next
         else:
-            self.first = nobj.__next__
-        if nobj.__next__:
+            self.first = nobj.next
+        if nobj.next:
             nobj.next.prev = nobj.prev
         else:
             self.last = nobj.prev
@@ -83,8 +84,8 @@ class LRU:
     @synchronized()
     def __iter__(self):
         cur = self.first
-        while cur != None:
-            cur2 = cur.__next__
+        while cur is not None:
+            cur2 = cur.next
             yield cur.me[1]
             cur = cur2
 
@@ -92,13 +93,15 @@ class LRU:
     def __len__(self):
         return len(self.d)
 
+    # FIXME: should this have a P2 and a P3 version or something?
     @synchronized()
     def iteritems(self):
         cur = self.first
-        while cur != None:
-            cur2 = cur.__next__
+        while cur is not None:
+            cur2 = cur.next
             yield cur.me
             cur = cur2
+    items = iteritems
 
     @synchronized()
     def iterkeys(self):
@@ -106,18 +109,23 @@ class LRU:
 
     @synchronized()
     def itervalues(self):
-        for i,j in self.items():
-            yield j
+        return iter(self.d.values())
 
     @synchronized()
     def keys(self):
-        return list(self.d.keys())
+        return list(self.d)
 
     @synchronized()
     def pop(self,key):
         v=self[key]
         del self[key]
         return v
+
+    @synchronized()
+    def clear(self):
+        self.d = {}
+        self.first = None
+        self.last = None
 
     @synchronized()
     def del_map(self, f):

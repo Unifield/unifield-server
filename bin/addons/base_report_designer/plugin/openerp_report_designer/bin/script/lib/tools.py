@@ -27,14 +27,14 @@ def get_absolute_file_path( url ):
 
 # This function reads the content of a file and return it to the caller
 def read_data_from_file( filename ):
-	fp = file( filename, "rb" )
+	fp = open( filename, "rb" )
 	data = fp.read()
 	fp.close()
 	return data
 
 # This function writes the content to a file
 def write_data_to_file( filename, data ):
-	fp = file( filename, 'wb' )
+	fp = open( filename, 'wb' )
 	fp.write( data )
 	fp.close()
 

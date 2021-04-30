@@ -79,7 +79,7 @@ def main():
 
         _separator()
         # Create a file for the output result
-        output = file('output.html', 'wb')
+        output = open('output.html', 'wb')
         # Run tests
         campaign = HTMLTestRunner.HTMLTestRunner(
             stream=output,

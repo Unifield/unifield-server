@@ -21,8 +21,9 @@
 
 from osv import osv
 from osv import fields
-from mx.DateTime import DateFrom, RelativeDateTime
 from lxml import etree
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from tools.translate import _
 from tools.misc import to_xml
 import logging
@@ -68,7 +69,7 @@ class product_history_consumption(osv.osv):
     }
 
     _defaults = {
-        'date_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
+        'date_to': lambda *a: (datetime.now() + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
         'requestor_id': lambda obj, cr, uid, c: uid,
         'requestor_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'status': 'draft',
@@ -96,35 +97,30 @@ class product_history_consumption(osv.osv):
         month_obj = self.pool.get('product.history.consumption.month')
 
         if date_from:
-            date_from = (DateFrom(date_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            date_from = (datetime.strptime(date_from, '%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')
             res['value'].update({'date_from': date_from})
         if date_to:
-            date_to = (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            date_to = (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
             res['value'].update({'date_to': date_to})
 
         # If a period is defined
         if date_from and date_to:
             res['value'].update({'month_ids': []})
-            current_date = DateFrom(date_from) + RelativeDateTime(day=1)
-            if current_date > (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)):
+            current_date = datetime.strptime(date_from, '%Y-%m-%d') + relativedelta(day=1)
+            if current_date > (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)):
                 return {'warning': {'title': _('Error'),
                                     'message':  _('The \'To Date\' should be greater than \'From Date\'')}}
             # For all months in the period
-            while current_date <= (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)):
+            while current_date <= (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)):
                 search_ids = month_obj.search(cr, uid, [('name', '=', current_date.strftime('%m/%Y')), ('history_id', 'in', ids)], context=context)
                 # If the month is in the period and not in the list, create it
                 if not search_ids:
-                    #                    month_id = month_obj.create(cr, uid, {'name': current_date.strftime('%m/%Y'),
-                    #                                                          'date_from': current_date.strftime('%Y-%m-%d'),
-                    #                                                          'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
-                    #                                                          'history_id': ids[0]}, context=context)
-                    #                    res['value']['month_ids'].append(month_id)
                     res['value']['month_ids'].append({'name': current_date.strftime('%m/%Y'),
                                                       'date_from': current_date.strftime('%Y-%m-%d'),
-                                                      'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+                                                      'date_to': (current_date + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
                 else:
                     res['value']['month_ids'].extend(search_ids)
-                current_date = current_date + RelativeDateTime(months=1)
+                current_date = current_date + relativedelta(months=1)
         else:
             res['value'] = {'month_ids': []}
 
@@ -417,7 +413,7 @@ class product_product(osv.osv):
                 remove_default_code = True
 
             for month in months:
-                field_name = DateFrom(month.get('date_from')).strftime('%m_%Y')
+                field_name = datetime.strptime(month.get('date_from'), '%Y-%m-%d').strftime('%m_%Y')
                 if field_name in fields_to_export:
                     history_fields.append(field_name)
 
@@ -487,12 +483,12 @@ class product_product(osv.osv):
             months = context.get('months', [])
             tmp_months = []
             for month in months:
-                tmp_months.append(DateFrom(month.get('date_from')).strftime('%Y-%m'))
+                tmp_months.append(datetime.strptime(month.get('date_from'), '%Y-%m-%d').strftime('%Y-%m'))
 
             tmp_months.sort()
 
             for month in tmp_months:
-                line_view += """<field name="%s" />""" % DateFrom(month).strftime('%m_%Y')
+                line_view += """<field name="%s" />""" % datetime.strptime(month, '%Y-%m-%d').strftime('%m_%Y')
 
             line_view += "</tree>"
 
@@ -532,10 +528,10 @@ class product_product(osv.osv):
             months = context.get('months', [])
 
             for month in months:
-                res.update({DateFrom(month.get('date_from')).strftime('%m_%Y'): {'digits': (16,2),
+                res.update({datetime.strptime(month.get('date_from'), '%Y-%m-%d').strftime('%m_%Y'): {'digits': (16,2),
                                                                                  'selectable': True,
                                                                                  'type': 'float',
-                                                                                 'string': '%s' % DateFrom(month.get('date_from')).strftime('%m/%Y')}})
+                                                                                 'string': '%s' % datetime.strptime(month.get('date_from'), '%Y-%m-%d').strftime('%m/%Y')}})
 
             if context.get('amc', False):
                 res.update({'average': {'digits': (16,2),
@@ -573,7 +569,7 @@ class product_product(osv.osv):
             for r in res:
                 total_consumption = 0.00
                 for month in context.get('months'):
-                    field_name = DateFrom(month.get('date_from')).strftime('%m_%Y')
+                    field_name = datetime.strptime(month.get('date_from'), '%Y-%m-%d').strftime('%m_%Y')
                     cons_context = {
                         'from_date': month.get('date_from'),
                         'to_date': month.get('date_to'),

@@ -58,7 +58,7 @@ class T(chart_object.T):
 
 class X(T):
     keys = pychart_util.union_dict(T.keys,
-                                   {"draw_tics_above": (IntType, 0,
+                                   {"draw_tics_above": (int, 0,
                                                         "If true, tick lines and labels are drawn above the axis line.")})
     __doc__ = axis_doc.doc_x
 ##AUTOMATICALLY GENERATED
@@ -157,7 +157,7 @@ class X(T):
 class Y(T):
     __doc__ = axis_doc.doc_y   
     keys = pychart_util.union_dict(T.keys,
-                                   {"draw_tics_right": (IntType, 0,
+                                   {"draw_tics_right": (int, 0,
                                                         "If true, tick lines and labels are drawn right of the axis line.")})
     
     def draw_left(self, ar, can):

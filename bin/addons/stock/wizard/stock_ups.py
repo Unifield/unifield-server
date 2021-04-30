@@ -86,7 +86,7 @@ class stock_ups_upload(osv.osv_memory):
         data={}
         report = netsvc._group['report']['report.stock.move.lot.ups_xml']
         data['report_type'] = 'raw'
-        fp = file('/tmp/test.xml', 'w').write(report.create(uid, context['active_id'], ids, {}))
+        fp = open('/tmp/test.xml', 'w').write(report.create(uid, context['active_id'], ids, {}))
         return {'type': 'ir.actions.act_window_close'}
 
 stock_ups_upload()

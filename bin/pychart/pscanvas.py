@@ -64,7 +64,7 @@ class T(basecanvas.T):
                 self.__write("%g SG\n" % color.r)
             else:
                 self.__write("%g %g %g SC\n" % (color.r, color.g, color.b))
-	    self.__color = color
+            self.__color = color
     def set_stroke_color(self, color):
         self.set_fill_color(color)
         
@@ -120,12 +120,12 @@ class T(basecanvas.T):
         self.__write("TB\n")
     def text_end(self):
         self.__txtmtx_pushed -= 1
-	self.__write("TE\n")
+        self.__write("TE\n")
     def text_moveto(self, x, y, angle):
-	self.__write("%g %g T " % (x,y))
-	if angle != None and angle != 0:
-	    self.__write("%g R " % angle)
-	self.moveto(0, 0)
+        self.__write("%g %g T " % (x,y))
+        if angle != None and angle != 0:
+            self.__write("%g R " % angle)
+        self.moveto(0, 0)
         
     def text_show(self, font_name, size, color, str):
         self.set_fill_color(color)
@@ -168,8 +168,8 @@ class T(basecanvas.T):
         
     def close(self):
         basecanvas.T.close(self)
-	if self.__output_lines == []:
-	    return
+        if self.__output_lines == []:
+            return
 
         fp, need_close = self.open_output(self.__out_fname)
             

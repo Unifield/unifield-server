@@ -2,7 +2,6 @@
 
 # Module imports
 import base64
-from mx import DateTime
 from datetime import datetime
 import threading
 import time
@@ -512,7 +511,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                         values[index][PACK_HEADER[cell_nb][1]] = cell_data
                     else:
                         values[index].append(cell_data)
-                except DateTime.mxDateTime.RangeError as e:
+                except ValueError as e:
                     raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
 the date has a wrong format: %s') % (index+1, str(e)))
                 except IndexError as e:
@@ -832,7 +831,7 @@ Nothing has been imported because of %s. See below:
                     # not at simulation time
                     if vals.get('prodlot_id') and vals.get('expired_date'):
                         exp_value = vals['expired_date']
-                        if type(vals['expired_date']) == type(DateTime.now()):
+                        if isinstance(vals['expired_date'], datetime):
                             exp_value = exp_value.strftime('%Y-%m-%d')
                         elif vals['expired_date'] and isinstance(vals['expired_date'], str):
                             try:
@@ -1465,7 +1464,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             context = {}
 
         res = False
-        if exp_value and type(exp_value) == type(DateTime.now()):
+        if exp_value and isinstance(exp_value, datetime):
             if not datetime.strptime(exp_value.strftime('%Y-%m-%d'), '%Y-%m-%d') < datetime(1900, 0o1, 0o1, 0, 0, 0):
                 res = exp_value.strftime('%Y-%m-%d')
         elif exp_value and isinstance(exp_value, str):

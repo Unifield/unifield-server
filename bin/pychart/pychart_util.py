@@ -44,7 +44,7 @@ def warn(*strs):
 
 def info(*strs):
     if debug_level < 100:
-	return
+        return
     for s in strs:
         sys.stderr.write(str(s))
     sys.stderr.write("\n")
@@ -102,7 +102,7 @@ def TextAlignType(val):
 def apply_format(format, val, defaultidx):
     if format == None:
         return None
-    elif type(format) == StringType:
+    elif type(format) == str:
         return format % val[defaultidx]
     else:
         return format(*val)

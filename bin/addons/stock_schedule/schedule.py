@@ -28,7 +28,6 @@ from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 
-from mx import DateTime
 
 
 WEEK_DAYS = [('sunday', 'Sunday'), ('monday', 'Monday'),
@@ -71,7 +70,7 @@ class stock_frequence(osv.osv):
         Return the good Date value according to the type of the day param.
         '''
         # Get the day number of the selected day
-        data = {'sunday': 6, 'monday':0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5}
+        data = {'sunday': relativedelta.SU, 'monday':relativedelta.MO, 'tuesday': relativedelta.TU, 'wednesday': relativedelta.WE, 'thursday': relativedelta.TH, 'friday': relativedelta.FR, 'saturday': relativedelta.SA}
         return data.get(monthly_choose_day, 6)
 
     def check_data(self, data):
@@ -187,16 +186,16 @@ class stock_frequence(osv.osv):
         if frequence.name != 'daily':
             return False
         else:
-            start_date = DateTime.strptime(frequence.start_date, '%Y-%m-%d')
-            if start_date > DateTime.today():
+            start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
+            if start_date > datetime.today():
                 return start_date
 
             if not frequence.last_run:
-                return DateTime.today()
+                return daterime.today()
                 #numdays = (today() - start_date).day
                 #modulo = math.ceil(numdays/frequence.daily_frequency_ok)*frequence.daily_frequency_ok
                 #return start_date+RelativeDate(days=modulo)
-            return max(DateTime.today(), DateTime.strptime(frequence.last_run, '%Y-%m-%d')+DateTime.RelativeDate(days=frequence.daily_frequency))
+            return max(datetime.today(), daterime.strptime(frequence.last_run, '%Y-%m-%d')+relativedelta(days=frequence.daily_frequency))
 
     def _compute_next_weekly_date(self, cr, uid, frequence_id):
         '''
@@ -217,22 +216,22 @@ class stock_frequence(osv.osv):
                 raise osv.except_osv(_('Error'), _('You should choose at least one day of week !'))
 
             if not frequence.last_run:
-                start_date = DateTime.strptime(frequence.start_date, '%Y-%m-%d')
-                if start_date < DateTime.today():
-                    start_date = DateTime.today()
+                start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
+                if start_date < datetime.today():
+                    start_date = datetime.today()
                 while True:
                     i = start_date.weekday()
                     if getattr(frequence, 'weekly_%s_ok'%(data[i])):
                         return start_date
-                    start_date += DateTime.RelativeDate(days=1)
+                    start_date += relativedelta(days=1)
 
-            next_date = DateTime.strptime(frequence.last_run, '%Y-%m-%d')+DateTime.RelativeDate(days=1)
+            next_date = datetime.strptime(frequence.last_run, '%Y-%m-%d')+relativedelta(days=1)
             while True:
                 if getattr(frequence, 'weekly_%s_ok'%(data[next_date.weekday()])):
-                    return max(DateTime.today(), next_date)
-                next_date += DateTime.RelativeDate(days=1)
+                    return max(datetime.today(), next_date)
+                next_date += relativedelta(days=1)
                 if next_date.weekday() == 0:
-                    next_date += DateTime.RelativeDate(weeks=frequence.weekly_frequency-1)
+                    next_date += relativedelta(weeks=frequence.weekly_frequency-1)
 
         return False
 
@@ -250,15 +249,15 @@ class stock_frequence(osv.osv):
             if frequence.monthly_one_day:
                 day = self.get_datetime_day(frequence.monthly_choose_day)
                 if frequence.last_run:
-                    from_date = DateTime.strptime(frequence.last_run, '%Y-%m-%d')
-                    return max(DateTime.today(), from_date + DateTime.RelativeDate(months=+frequence.monthly_frequency, weekday=(day,frequence.monthly_choose_freq)))
+                    from_date = datetime.strptime(frequence.last_run, '%Y-%m-%d')
+                    return max(datetime.today(), from_date + relativedelta(months=+frequence.monthly_frequency, weekday=day(frequence.monthly_choose_freq)))
                 else:
-                    start_date = DateTime.strptime(frequence.start_date, '%Y-%m-%d')
-                    if start_date < DateTime.today():
-                        start_date = DateTime.today()
-                    next_date = start_date + DateTime.RelativeDate(weekday=(day,frequence.monthly_choose_freq))
+                    start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
+                    if start_date < datetime.today():
+                        start_date = datetime.today()
+                    next_date = start_date + relativedelta(weekday=day(frequence.monthly_choose_freq))
                     while next_date < start_date:
-                        next_date = next_date + DateTime.RelativeDate(months=1, weekday=(day,frequence.monthly_choose_freq))
+                        next_date = next_date + relativedelta(months=1, weekday=day(frequence.monthly_choose_freq))
                     return next_date
 
             elif frequence.monthly_repeating_ok:
@@ -275,27 +274,27 @@ class stock_frequence(osv.osv):
                 days_ok.sort()
 
                 if frequence.last_run:
-                    from_date = DateTime.strptime(frequence.last_run, '%Y-%m-%d')+DateTime.RelativeDateTime(days=1)
+                    from_date = datetime.strptime(frequence.last_run, '%Y-%m-%d')+relativedelta(days=1)
                     force = True
                 else:
-                    from_date = DateTime.strptime(frequence.start_date, '%Y-%m-%d')
-                    if from_date < DateTime.today():
-                        from_date = DateTime.today()
+                    from_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
+                    if from_date < datetime.today():
+                        from_date = datetime.today()
                     force = False
 
                 if from_date.day > days_ok[-1]:
                     # switch to next month
                     if force:
-                        from_date += DateTime.RelativeDate(day=days_ok[0], months=frequence.monthly_frequency)
-                        return max(DateTime.today(), from_date)
+                        from_date += relativedelta(day=days_ok[0], months=frequence.monthly_frequency)
+                        return max(datetime.today(), from_date)
                     else:
-                        from_date += DateTime.RelativeDate(day=days_ok[0], months=1)
+                        from_date += relativedelta(day=days_ok[0], months=1)
                         return from_date
 
                 days = [a for a in days_ok if a>=from_date.day]
-                from_date += DateTime.RelativeDate(day=days[0])
+                from_date += relativedelta(day=days[0])
                 if force:
-                    return max(DateTime.today(), from_date)
+                    return max(datetime.today(), from_date)
                 return from_date
 
         return False
@@ -311,29 +310,29 @@ class stock_frequence(osv.osv):
         if frequence.name != 'yearly':
             return False
         else:
-            start_date = DateTime.strptime(frequence.start_date, '%Y-%m-%d')
-            if start_date < DateTime.today():
-                start_date = DateTime.today()
+            start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
+            if start_date < datetime.today():
+                start_date = datetime.today()
             if not frequence.last_run:
                 if frequence.yearly_day_ok:
-                    next_date = start_date + DateTime.RelativeDate(month=frequence.yearly_choose_month, day=frequence.yearly_day)
+                    next_date = start_date + relativedelta(month=frequence.yearly_choose_month, day=frequence.yearly_day)
                     if next_date < start_date:
-                        return start_date + DateTime.RelativeDate(month=frequence.yearly_choose_month, day=frequence.yearly_day, years=1)
+                        return start_date + relativedelta(month=frequence.yearly_choose_month, day=frequence.yearly_day, years=1)
                     return next_date
                 if frequence.yearly_date_ok:
                     day = self.get_datetime_day(frequence.yearly_choose_day)
-                    next_date = start_date + DateTime.RelativeDate(month=frequence.yearly_choose_month_freq, weekday=(day, frequence.yearly_choose_freq))
+                    next_date = start_date + relativedelta(month=frequence.yearly_choose_month_freq, weekday=day(frequence.yearly_choose_freq))
                     if next_date < start_date:
-                        return start_date + DateTime.RelativeDate(years=1, month=frequence.yearly_choose_month_freq, weekday=(day, frequence.yearly_choose_freq))
+                        return start_date + relativedelta(years=1, month=frequence.yearly_choose_month_freq, weekday=day(frequence.yearly_choose_freq))
                     return next_date
 
-            next_date = DateTime.strptime(frequence.last_run, '%Y-%m-%d')
+            next_date = daterime.strptime(frequence.last_run, '%Y-%m-%d')
             if frequence.yearly_day_ok:
-                next_date += DateTime.RelativeDate(years=frequence.yearly_frequency, month=frequence.yearly_choose_month, day=frequence.yearly_day)
+                next_date += relativedelta(years=frequence.yearly_frequency, month=frequence.yearly_choose_month, day=frequence.yearly_day)
             else:
                 day = self.get_datetime_day(frequence.yearly_choose_day)
-                next_date += DateTime.RelativeDate(years=frequence.yearly_frequency, month=frequence.yearly_choose_month_freq, weekday=(day, frequence.yearly_choose_freq))
-            return max(DateTime.today(), next_date)
+                next_date += relativedelta(years=frequence.yearly_frequency, month=frequence.yearly_choose_month_freq, weekday=day(frequence.yearly_choose_freq))
+            return max(datetime.today(), next_date)
 
         return False
 

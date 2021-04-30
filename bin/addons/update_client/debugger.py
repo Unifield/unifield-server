@@ -105,7 +105,7 @@ class export_log_content(report_sxw.report_sxw):
             for rec in log.read(cr, uid, ids, ['path', 'name'], context=context):
                 zf.write(rec['path'], rec['name'], compress_type=zipfile.ZIP_DEFLATED)
             zf.close()
-            result = (file(tmpzipname, 'rb').read(), 'zip')
+            result = (open(tmpzipname, 'rb').read(), 'zip')
             os.close(null1)
             os.unlink(tmpzipname)
         return result

@@ -22,7 +22,7 @@
 # !!! each time you create a new report the "name" in the xml file should be on the form "report.sale.order_xls" but WITHOUT "report" at the beginning)
 # so in that case, only name="sale.order_xls" in the xml
 
-from .report import report_sxw
+from report import report_sxw
 from report_webkit.webkit_report import WebKitParser as OldWebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from purchase import PURCHASE_ORDER_STATE_SELECTION

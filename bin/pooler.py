@@ -49,7 +49,7 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
         if if_open:
             return db, None
 
-        from . import addons
+        import addons
         from osv import osv
         pool = osv.osv_pool()
         pool_dic[db_name] = pool
@@ -98,7 +98,7 @@ def get_db_only(db_name):
     # sql_db must not be loaded before the logger is initialized.
     # sql_db import psycopg2.tool which create a default logger if there is not.
     # this resulting of having the logs outputed twice...
-    from . import sql_db
+    import sql_db
     db = sql_db.db_connect(db_name)
     return db
 

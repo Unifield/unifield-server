@@ -63,7 +63,7 @@ from . import xmlid_no_delete
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES, cache
 from functools import reduce
-
+from functools import cmp_to_key
 regex_order = re.compile('^(([a-z0-9_\.]+|"[a-z0-9_\.]+")( *desc| *asc)?( *, *|))+$', re.I)
 
 POSTGRES_CONFDELTYPES = {
@@ -1149,9 +1149,9 @@ class orm_template(object):
                     return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
 
             if not error_list and config.get('import_partial', False) and filename and (not (position%100)):
-                data = pickle.load(file(config.get('import_partial')))
+                data = pickle.load(open(config.get('import_partial')))
                 data[filename] = position
-                pickle.dump(data, file(config.get('import_partial'), 'wb'))
+                pickle.dump(data, open(config.get('import_partial'), 'wb'))
                 if context.get('defer_parent_store_computation'):
                     self._parent_store_compute(cr)
                 cr.commit()
@@ -2648,7 +2648,7 @@ class orm_memory(orm_template):
                         continue
                     return v
                 return 0
-            data.sort(cmp=in_memory_sort)
+            data.sort(key=cmp_to_key(in_memory_sort))
         return data
 
     def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
@@ -2867,7 +2867,7 @@ class orm(orm_template):
         data_ids += [x for x in list(alldata.keys()) if x not in data_ids]
         data = self.read(cr, uid, data_ids, groupby and [groupby] or ['id'], context=context)
         # restore order of the search as read() uses the default _order (this is only for groups, so the size of data_read shoud be small):
-        data.sort(lambda x,y: cmp(data_ids.index(x['id']), data_ids.index(y['id'])))
+        data.sort(key=lambda x: data_ids.index(x['id']))
 
         for d in data:
             if groupby:
@@ -3526,7 +3526,7 @@ class orm(orm_template):
                                 break
                     if ok:
                         self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
-                        self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
+                        self.pool._store_function[object].sort(key=lambda x:x[4])
 
         for (key, null, msg) in self._sql_constraints:
             self.pool._sql_error[self._table+'_'+key] = msg
@@ -4232,7 +4232,7 @@ class orm(orm_template):
 
 
         if upd_todo:
-            upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
+            upd_todo.sort(key=lambda x: self._columns[x].priority)
             # default element in context must be removed when call a one2many or many2many
             rel_context = context.copy()
             for c in list(context.items()):
@@ -4508,7 +4508,7 @@ class orm(orm_template):
         # default element in context must be remove when call a one2many or many2many
         result = []
         if upd_todo:
-            upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
+            upd_todo.sort(key=lambda x: self._columns[x].priority)
             rel_context = context.copy()
             for c in list(context.items()):
                 if c[0].startswith('default_'):

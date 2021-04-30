@@ -31,7 +31,7 @@ import logging
 import os
 import netsvc
 
-from mx import DateTime
+from datetime import datetime
 
 # Server imports
 from osv import osv
@@ -864,7 +864,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                 # Line 10: RTS Date
                 rts_date = values.get(10, [])[1]
                 if rts_date:
-                    if type(rts_date) == type(DateTime.now()):
+                    if isinstance(rts_date, datetime):
                         rts_date = rts_date.strftime('%Y-%m-%d')
                         header_values['imp_ready_to_ship_date'] = rts_date
                     else:
@@ -891,7 +891,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                 # Line 15: Shipment date
                 shipment_date = values.get(15, [])[1]
                 if shipment_date:
-                    if type(shipment_date) == type(DateTime.now()):
+                    if isinstance(shipment_date, datetime):
                         shipment_date = shipment_date.strftime('%Y-%m-%d')
                         header_values['imp_shipment_date'] = shipment_date
                     else:
@@ -1509,7 +1509,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Delivery Confirmed Date
             dcd_value = values[11]
-            if dcd_value and type(dcd_value) == type(DateTime.now()):
+            if dcd_value and isinstance(dcd_value, datetime):
                 write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
             elif dcd_value and isinstance(dcd_value, str):
                 try:
@@ -1704,7 +1704,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Stock Take Date
             stock_take_date = values[9]
-            if stock_take_date and type(stock_take_date) == type(DateTime.now()):
+            if stock_take_date and isinstance(stock_take_date, datetime):
                 write_vals['imp_stock_take_date'] = stock_take_date.strftime('%Y-%m-%d')
             elif stock_take_date and isinstance(stock_take_date, str):
                 try:
@@ -1721,7 +1721,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Delivery Requested Date
             drd_value = values[10]
-            if drd_value and type(drd_value) == type(DateTime.now()):
+            if drd_value and isinstance(drd_value, datetime):
                 write_vals['imp_drd'] = drd_value.strftime('%Y-%m-%d')
             elif drd_value and isinstance(drd_value, str):
                 try:

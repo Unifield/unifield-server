@@ -60,7 +60,7 @@ class base_module_import(osv.osv_memory):
 
         fname = os.path.join(ad, module_name+'.zip')
         try:
-            fp = file(fname, 'wb')
+            fp = open(fname, 'wb')
             fp.write(val)
             fp.close()
         except IOError:

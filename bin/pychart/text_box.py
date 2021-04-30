@@ -26,8 +26,8 @@ from types import *
 
 class T(chart_object.T):
     __doc__ = text_box_doc.doc
-    keys = {"text": (StringType, "???", "Text body. <<font>>"),
-            "loc": (TupleType, (0,0),
+    keys = {"text": (str, "???", "Text body. <<font>>"),
+            "loc": (tuple, (0,0),
                     "The location of the text box."),
             "line_style": (line_style.T, line_style.default,
                            """The line style of the surrounding frame."""),
@@ -41,7 +41,7 @@ class T(chart_object.T):
                            "The amount of space left of the box"),
             "right_fudge": (UnitType, 5,
                             "The amount of space right of the box"),
-            "_arrows": (ListType, pychart_util.new_list, "The list of arrows. Not to be touched by the user directly"),
+            "_arrows": (list, pychart_util.new_list, "The list of arrows. Not to be touched by the user directly"),
 	    "radius": (UnitType, 0,
                        """Radius of the four corners of the rectangle.
                        If the value is zero, a sharp-cornered

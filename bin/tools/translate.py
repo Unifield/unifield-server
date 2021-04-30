@@ -493,7 +493,7 @@ def trans_export(lang, modules, buffer, format, cr, ignore_name=None, only_trans
                 tmpmoddir = join(tmpdir, mod, 'i18n')
                 os.makedirs(tmpmoddir)
                 pofilename = (newlang and mod or lang) + ".po" + (newlang and 't' or '')
-                buf = file(join(tmpmoddir, pofilename), 'w')
+                buf = open(join(tmpmoddir, pofilename), 'w')
                 _process('po', [mod], modrows, buf, lang, newlang)
                 buf.close()
 

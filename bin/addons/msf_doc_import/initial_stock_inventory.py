@@ -26,7 +26,6 @@ import base64
 import tools
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from datetime import datetime
-from mx import DateTime
 
 
 class stock_inventory(osv.osv):
@@ -219,7 +218,7 @@ Product Code, Product Description, Location, Batch, Expiry Date, Quantity"""))
                     to_correct_ok = True
                 elif row.cells[4].type == 'str':
                     try:
-                        expiry = DateTime.strptime(row.cells[4].data, '%d/%m/%Y')
+                        expiry = datetime.strptime(row.cells[4].data, '%d/%m/%Y')
                         if expiry < datetime(1900, 0o1, 0o1, 0, 0, 0):
                             comment += _('You cannot set an expiry date before %s\n') % (
                                 datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),
@@ -769,7 +768,7 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
             if row.cells[5].data:
                 if row.cells[5].type == 'str':
                     try:
-                        expiry = DateTime.strptime(row.cells[5].data, '%d/%m/%Y')
+                        expiry = daterime.strptime(row.cells[5].data, '%d/%m/%Y')
                         if expiry < datetime(1900, 0o1, 0o1, 0, 0, 0):
                             comment += _('You cannot set an expiry date before %s\n') % (
                                 datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from lxml import etree
-from mx import DateTime
+from datetime import datetime
 from tools.translate import _
 from osv import osv
 import csv
@@ -45,7 +45,7 @@ class SpreadsheetCell(SpreadsheetTools):
                     self.type = 'bool'
                 elif dtype == 'DateTime' and self.data:
                     try:
-                        self.data = DateTime.ISO.ParseDateTime(self.data)
+                        self.data = datetime.fromisoformat(self.data)
                         self.type = 'datetime'
                     except Exception as e:
                         self.data = str(e)

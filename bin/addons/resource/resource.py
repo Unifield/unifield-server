@@ -22,7 +22,6 @@
 from datetime import datetime, timedelta
 import math
 from .faces import *
-from new import classobj
 from osv import fields, osv
 from tools.translate import _
 
@@ -270,12 +269,6 @@ class resource_resource(osv.osv):
                          'efficiency': resource_eff,
                       }
                 resource_objs[resource_id] = temp     
-#            resource_objs.append(classobj(str(user.name), (Resource,),{
-#                                             '__doc__': user.name,
-#                                             '__name__': user.name,
-#                                             'vacation': tuple(leaves),
-#                                             'efficiency': resource_eff,
-#                                          }))
         return resource_objs
 
     def compute_vacation(self, cr, uid, calendar_id, resource_id=False, resource_calendar=False, context=None):

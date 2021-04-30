@@ -39,7 +39,7 @@ from datetime import datetime
 from xlwt import Workbook, easyxf, Borders, add_palette_colour, Formula
 import tempfile
 import shutil
-from mx.DateTime import DateTime as mxdt
+from datetime import datetime
 import re
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
@@ -1238,7 +1238,7 @@ class UnicodeWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([not isinstance(s, (int, float, type(None), type(mxdt(10)))) and s.encode("utf-8") or s for s in row])
+        self.writer.writerow([not isinstance(s, (int, float, type(None), datetime)) and s.encode("utf-8") or s for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")

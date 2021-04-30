@@ -25,7 +25,7 @@ from .pychart_types import *
 fill_styles = None
 
 _keys = {
-    "direction" : (StringType, "vertical",
+    "direction" : (str, "vertical",
                    """The direction the growth of the bars. The value is either 'horizontal'
                    or 'vertical'."""),
     "data" : (AnyType, None, """Specifes data points. Unlike other types
@@ -43,15 +43,15 @@ _keys = {
                           takes (x,y) values and returns a string. """
                           + pychart_util.string_desc),
     
-    "label": (StringType, "???", pychart_util.label_desc), 
-    "bcol" : (IntType, 0,
+    "label": (str, "???", pychart_util.label_desc), 
+    "bcol" : (int, 0,
               """Specifies the column from which base values (i.e., X values when attribute "direction" is "vertical", Y values otherwise) are extracted.
 The
               combination of "data", "bcol", and "hcol" attributes defines
               the set of boxes drawn by this chart.
               See also the descriptions of the 'bcol' and 'data' attributes.
               """),
-    "hcol": (IntType, 1,
+    "hcol": (int, 1,
              """The column from which the base and height of
              bars are extracted. See the below example:
               
@@ -71,19 +71,19 @@ The
               from attributes "line_styles" and
               "fill_styles".
              """),
-    "line_styles": (ListType, [line_style.default, None],
+    "line_styles": (list, [line_style.default, None],
                     """The list of line styles for bars.
                     The style of each bar is chosen in a round-robin fashion, if the
                     number of elements in "line_styles" is smaller than
                     actual number of boxes."""),
-    "fill_styles": (ListType, [lambda: next(fill_styles), None],
+    "fill_styles": (list, [lambda: next(fill_styles), None],
                     """List of fill styles for bars.
                     The style of each bar is chosen in a round-robin fashion, if the
                     number of elements in "line_styles" is smaller than
                     actual number of boxes.
                     If this attribute is omitted,
                     a style is picked from standard styles round-robin. <<fill_style>>."""),
-    "cluster": (TupleType, (0, 1), """This attribute is used to
+    "cluster": (tuple, (0, 1), """This attribute is used to
     cluster multiple bar plots side by side in a single chart.
     The value should be a tuple of two integers. The second value should be equal to the total number of bar plots in the chart. The first value should be the relative position of this chart; 0 places this chart the leftmost, and N-1
     (where N is the 2nd value of this attribute) places this chart the rightmost. Consider the below example:
@@ -120,7 +120,7 @@ class T(chart_object.T):
         for pair in self.data:
             if pair[self.bcol] == bval:
                 return pair[self.hcol]
-	raise ValueError(str(bval) + ": can't find the xval")
+        raise ValueError(str(bval) + ": can't find the xval")
 
     def __get_data_range(self, col):
         gmin = 99999999
@@ -210,7 +210,7 @@ class T(chart_object.T):
         return None
         
     def draw(self, ar, can):
-	self.type_check()
+        self.type_check()
         can.clip(ar.loc[0], ar.loc[1],
                  ar.loc[0] + ar.size[0], ar.loc[1] + ar.size[1])
             

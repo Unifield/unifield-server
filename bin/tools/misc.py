@@ -429,7 +429,7 @@ def file_open(name, mode="r", subdir='addons', pathinfo=False):
                 pass
     for i in (name2, name):
         if i and os.path.isfile(i):
-            fo = file(i, mode)
+            fo = open(i, mode)
             if pathinfo:
                 return fo, i
             return fo

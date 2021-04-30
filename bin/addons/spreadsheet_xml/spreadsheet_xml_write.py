@@ -5,7 +5,7 @@ from tools.misc import file_open
 from tools.misc import Path
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
-from .report import report_sxw
+from report import report_sxw
 import os
 import netsvc
 import pooler
@@ -70,7 +70,7 @@ class SpreadsheetReport(WebKitParser):
         if report_xml.report_file:
             path = addons.get_module_resource(report_xml.report_file)
             if path and os.path.exists(path):
-                template = file(path).read()
+                template = open(path).read()
 
         if self.tmpl:
             f = file_open(self.tmpl)
@@ -101,7 +101,7 @@ class SpreadsheetReport(WebKitParser):
             zf = zipfile.ZipFile(tmpzipname, 'w')
             zf.write(tmpname, 'export_result.xls', zipfile.ZIP_DEFLATED)
             zf.close()
-            out = file(tmpzipname, 'rb').read()
+            out = open(tmpzipname, 'rb').read()
             os.close(null1)
             os.close(null)
             os.unlink(tmpzipname)
@@ -112,7 +112,7 @@ class SpreadsheetReport(WebKitParser):
             os.close(null)
             return (Path(tmpname, delete=True), 'xls')
 
-        out = file(tmpname, 'rb').read()
+        out = open(tmpname, 'rb').read()
         os.close(null)
         os.unlink(tmpname)
         return (out, 'xls')

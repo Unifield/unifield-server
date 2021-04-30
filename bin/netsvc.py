@@ -231,7 +231,7 @@ class OpsEventsHandler(logging.Handler):
             self._logging = False
 
 def init_logger():
-    from .tools.translate import resetlocale
+    from tools.translate import resetlocale
     resetlocale()
 
     # create a format for log messages and dates
@@ -313,7 +313,7 @@ class Logger(object):
         warnings.warn("notifyChannel API shouldn't be used anymore, please use "
                       "the standard `logging` module instead",
                       PendingDeprecationWarning, stacklevel=2)
-        from .service.web_services import common
+        from service.web_services import common
 
         log = logging.getLogger(tools.ustr(name))
 

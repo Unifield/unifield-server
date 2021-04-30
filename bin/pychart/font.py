@@ -17,7 +17,7 @@ import string
 from . import pychart_util
 import re
 from . import theme
-from . import afm.dir
+from .afm import dir
 
 
 __doc__ = """The module for manipulating texts and their attributes.
@@ -211,11 +211,11 @@ class text_iterator:
         self.ts = text_state()
         self.stack = []
     def reset(self, s):
-	self.str = str(s)
-	self.i = 0
+        self.str = str(s)
+        self.i = 0
 
     def __return_state(self, ts, str):
-	font_name = ts.family
+        font_name = ts.family
 
         if ts.modifiers != []:
             is_bold = 0
@@ -233,7 +233,7 @@ class text_iterator:
         elif font_name in ("Palatino", "Times", "NewCenturySchlbk"):
             font_name += "-Roman"
                 
-	return (font_name, ts.size, ts.line_height, ts.color,
+        return (font_name, ts.size, ts.line_height, ts.color,
                 ts.halign, ts.valign, ts.angle, str)
     def __parse_float(self):
         istart = self.i
@@ -252,14 +252,14 @@ class text_iterator:
         "Get the next text segment. Return an 8-element array: (FONTNAME, SIZE, LINEHEIGHT, COLOR, H_ALIGN, V_ALIGN, ANGLE, STR."
         l = []
         changed = 0
-	self.old_state = self.ts.copy()
+        self.old_state = self.ts.copy()
         
         while self.i < len(self.str):
             if self.str[self.i] == '/':
                 self.i = self.i+1
                 ch = self.str[self.i]
                 self.i = self.i+1
-		self.old_state = self.ts.copy()
+                self.old_state = self.ts.copy()
                 if ch == '/' or ch == '{' or ch == '}':
                     l.append(ch)
                 elif ch in _font_family_map:
@@ -324,7 +324,7 @@ class text_iterator:
                 self.ts = self.stack[-1]
                 del self.stack[-1]
                 self.i += 1
-		changed = 1
+                changed = 1
             else:
                 l.append(self.str[self.i])
                 self.i += 1
@@ -336,7 +336,7 @@ class text_iterator:
                 self.old_state = self.ts.copy()
                 changed = 0
         if len(l) > 0:
-	    return self.__return_state(self.old_state, ''.join(l))
+            return self.__return_state(self.old_state, ''.join(l))
         else:
             return None
 
@@ -361,7 +361,7 @@ def unaligned_get_dimension(text):
     for line in str(text).split("\n"):
         cur_height = 0
         cur_width = 0
-	itr.reset(line)
+        itr.reset(line)
         while 1:
             elem = next(itr)
             if not elem:

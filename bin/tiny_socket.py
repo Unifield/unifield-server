@@ -22,9 +22,10 @@
 import socket
 import pickle
 import io
+import struct
 
 import zlib
-GZIP_MAGIC = '\x78\xda' # magic when max compression used
+GZIP_MAGIC = b'\x78\xda' # magic when max compression used
 
 class Myexception(Exception):
     """
@@ -63,19 +64,21 @@ class mysocket:
         self.sock.close()
 
     def mysend(self, msg, exception=False, traceback=None):
-        msg = pickle.dumps([msg,traceback])
+        # TODO JFB
+        msg = pickle.dumps([msg,traceback], protocol=2, fix_imports=True)
         if self.is_gzip:
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
         if len(msg) <= 10**8-1:
-            self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
+            self.sock.sendall(struct.pack('8ss%ds'%len(msg), ('%8d'%len(msg)).encode('utf8'), (exception and "1" or "0").encode('utf8'), msg))
         else:
             n8size = len(msg)%10**8
             n16size = len(msg)/10**8
-            self.sock.sendall('%8d%s%16d%s%s' % (n8size, "3", n16size, exception and "1" or "0", msg))
+            self.sock.sendall(struct.pack('8ss16ss%ds'%len(msg), ('%8d'%n8size).encode('utf8'), "3".encode('utf8'), ('%16d'%n16size).encode('utf8'), (exception and "1" or "0").encode('utf8'), msg))
 
     def myreceive(self):
+        # TODO JFB
         def read(sock, size):
-            buf=''
+            buf=b''
             while len(buf) < size:
                 chunk = sock.recv(size - len(buf))
                 if not chunk:
@@ -93,7 +96,7 @@ class mysocket:
             exception = buf
         else:
             exception = False
-        msg = ''
+        msg = b''
         while len(msg) < size:
             chunk = self.sock.recv(size-len(msg))
             if not chunk:
@@ -101,9 +104,10 @@ class mysocket:
             msg = msg + chunk
         if msg.startswith(GZIP_MAGIC):
             msg = zlib.decompress(msg)
-        msgio = io.StringIO(msg)
-        unpickler = pickle.Unpickler(msgio)
-        unpickler.find_global = None
+        msgio = io.BytesIO(msg)
+        unpickler = pickle.Unpickler(msgio, fix_imports=True, encoding='utf8')
+        # TODO JFB
+        #unpickler.find_global = None
         res = unpickler.load()
 
         if isinstance(res[0],Exception):

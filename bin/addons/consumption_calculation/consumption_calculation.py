@@ -21,7 +21,8 @@
 
 from osv import osv
 from osv import fields
-from mx.DateTime import DateFrom, RelativeDate, RelativeDateTime, Age, strptime, now
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from tools.translate import _
 
@@ -402,7 +403,7 @@ class real_average_consumption(osv.osv):
                     _('Error'),
                     _('Only draft Consumption reports can be processed. Maybe this one has been already processed.'),
                 )
-            if DateFrom(rac.period_to) > now():
+            if datetime.strptime(rac.period_to, '%Y-%m-%d') > datetime.now():
                 raise osv.except_osv(_('Error'), _('"Period to" can\'t be in the future.'))
 
             if rac.created_ok:
@@ -1200,7 +1201,7 @@ class monthly_review_consumption(osv.osv):
     }
 
     _defaults = {
-        'period_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
+        'period_to': lambda *a: (datetime.now() + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
         'cons_location_id': lambda *a: 'MSF Instance',
         'company_id': lambda self, cr, uid, ids, c={}: self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
@@ -1213,9 +1214,9 @@ class monthly_review_consumption(osv.osv):
         res = {}
 
         if period_from:
-            res.update({'period_from': (DateFrom(period_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')})
+            res.update({'period_from': (datetime.strptime(period_from, '%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')})
         if period_to:
-            res.update({'period_to': (DateFrom(period_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+            res.update({'period_to': (datetime.strptime(period_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
 
         return {'value': res}
 
@@ -1289,11 +1290,11 @@ class monthly_review_consumption(osv.osv):
             amc_context = context.copy()
             amc_context.update({'from_date': report.period_from, 'to_date': report.period_to})
             if amc_context.get('from_date', False):
-                from_date = (DateFrom(amc_context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+                from_date = (datetime.strptime(amc_context.get('from_date'),'%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')
                 amc_context.update({'from_date': from_date})
 
             if amc_context.get('to_date', False):
-                to_date = (DateFrom(amc_context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+                to_date = (datetime.strptime(amc_context.get('to_date'), '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
                 amc_context.update({'to_date': to_date})
 
 
@@ -1416,11 +1417,11 @@ class monthly_review_consumption_line(osv.osv):
                 context['from_date'] = line.mrc_id.period_from
                 context['to_date'] = line.mrc_id.period_to
                 if context.get('from_date', False):
-                    from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+                    from_date = (datetime.strptime(context.get('from_date'), '%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')
                     context.update({'from_date': from_date})
 
                 if context.get('to_date', False):
-                    to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+                    to_date = (datetime.strptime(context.get('to_date'), '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
                     context.update({'to_date': to_date})
                 data_mrc_id[line.mrc_id.id] = {
                     'context': context,
@@ -1670,11 +1671,11 @@ class monthly_review_consumption_line(osv.osv):
                 last_fmc_reviewed = line.mrc_id.creation_date
 
         if context.get('from_date', False):
-            from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            from_date = (datetime.strptime(context.get('from_date'), '%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')
             context.update({'from_date': from_date})
 
         if context.get('to_date', False):
-            to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            to_date = (datetime.strptime(context.get('to_date'), '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
             context.update({'to_date': to_date})
 
         amc = product_obj.compute_amc(cr, uid, product_id, context=context)[product_id]
@@ -2043,9 +2044,8 @@ class product_product(osv.osv):
         Returns the number of months between to dates according to the number
         of days in the month.
         '''
-        diff_date = Age(to_date, from_date)
         res = 0.0
-
+        diff_date = relativedelta(to_date, from_date)
         def days_in_month(month, year):
             '''
             Returns the # of days in the month
@@ -2063,8 +2063,8 @@ class product_product(osv.osv):
             # Add 12 months by years between the two dates
             if diff_date.years:
                 res += diff_date.years*12
-                from_date += RelativeDate(years=diff_date.years)
-                diff_date = Age(to_date, from_date)
+                from_date += relativedelta(years=diff_date.years)
+                diff_date = relativedelta(to_date, from_date)
             else:
                 # If two dates are in the same month
                 if from_date.month == to_date.month:
@@ -2075,7 +2075,7 @@ class product_product(osv.osv):
                     break
                 elif to_date.month - from_date.month > 1 or to_date.year - from_date.year > 0:
                     res += 1
-                    from_date += RelativeDate(months=1)
+                    from_date += relativedelta(months=1)
                 else:
                     # Number of month till the end of from month
                     fr_nb_days_in_month = days_in_month(from_date.month, from_date.year)
@@ -2094,14 +2094,14 @@ class product_product(osv.osv):
         context = ctx.copy()
 
         if context.get('from_date', False):
-            from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            from_date = (datetime.strptime(context.get('from_date'), '%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')
         else:
-            from_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
+            from_date = (datetime.now() + relativedelta(months=-3, day=1)).strftime('%Y-%m-%d')
 
         if context.get('to_date', False):
-            to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            to_date = (datetime.strptime(context.get('to_date'), '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
         else:
-            to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
+            to_date = (datetime.now() + relativedelta(day=1, days=-1)).strftime('%Y-%m-%d')
 
         context.update({
             'from_date': from_date,
@@ -2117,8 +2117,6 @@ class product_product(osv.osv):
         # Compute the # of days in the report period
         if context is None:
             context = {}
-        from datetime import datetime
-        from dateutil.relativedelta import relativedelta
         report_from = datetime.strptime(line.rac_id.period_from, '%Y-%m-%d')
         report_to = datetime.strptime(line.rac_id.period_to, '%Y-%m-%d')
         dt_from_date = datetime.strptime(from_date, '%Y-%m-%d')

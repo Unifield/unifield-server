@@ -30,7 +30,7 @@ line_style_itr = None
 
 _keys = {
     "data" : (AnyType, None, pychart_util.data_desc),
-    "label": (StringType, "???", pychart_util.label_desc),
+    "label": (str, "???", pychart_util.label_desc),
     "data_label_offset": (CoordType, (0, 5),
                           """The location of data labels relative to the sample point. Meaningful only when data_label_format != None."""),
     "data_label_format": (FormatType, None,
@@ -40,14 +40,14 @@ _keys = {
                           a two-parameter function that takes the (x, y)
                           values and returns a string. """
                           + pychart_util.string_desc),
-    "xcol" : (IntType, 0, pychart_util.xcol_desc),
-    "ycol": (IntType, 1, pychart_util.ycol_desc),
-    "y_error_minus_col": (IntType, 2,
+    "xcol" : (int, 0, pychart_util.xcol_desc),
+    "ycol": (int, 1, pychart_util.ycol_desc),
+    "y_error_minus_col": (int, 2,
                           """The column (within "data") from which the depth of the errorbar is extracted. Meaningful only when error_bar != None. <<error_bar>>"""),
-    "y_error_plus_col": (IntType, -1,
+    "y_error_plus_col": (int, -1,
                          """The column (within "data") from which the height of the errorbar is extracted. Meaningful only when error_bar != None. <<error_bar>>"""),
-    "y_qerror_minus_col":  (IntType, -1, "<<error_bar>>"),
-    "y_qerror_plus_col":  (IntType, -1, "<<error_bar>>"),
+    "y_qerror_minus_col":  (int, -1, "<<error_bar>>"),
+    "y_qerror_plus_col":  (int, -1, "<<error_bar>>"),
 
     "line_style": (line_style.T, lambda: next(line_style_itr), pychart_util.line_desc,
                    "By default, a style is picked from standard styles round-robin. <<line_style>>"),
@@ -61,7 +61,7 @@ class T(chart_object.T):
     __doc__ = line_plot_doc.doc
     keys =  _keys
     def check_integrity(self):
-	self.type_check()
+        self.type_check()
         
 ##AUTOMATICALLY GENERATED
 
