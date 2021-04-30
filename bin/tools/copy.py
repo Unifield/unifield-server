@@ -123,7 +123,7 @@ _copy_dispatch = d = {}
 def _copy_immutable(x):
     return x
 for t in (type(None), int, int, float, bool, str, tuple,
-          frozenset, type, xrange, type,
+          frozenset, type, range, type,
           types.BuiltinFunctionType,
           types.FunctionType):
     d[t] = _copy_immutable
@@ -160,7 +160,7 @@ def _copy_inst(x):
     else:
         y.__dict__.update(state)
     return y
-d[types.InstanceType] = _copy_inst
+d[object] = _copy_inst
 
 del d
 
@@ -240,7 +240,7 @@ try:
 except AttributeError:
     pass
 d[type] = _deepcopy_atomic
-d[xrange] = _deepcopy_atomic
+d[range] = _deepcopy_atomic
 d[type] = _deepcopy_atomic
 d[types.BuiltinFunctionType] = _deepcopy_atomic
 d[types.FunctionType] = _deepcopy_atomic
@@ -319,7 +319,7 @@ def _deepcopy_inst(x, memo):
     else:
         y.__dict__.update(state)
     return y
-d[types.InstanceType] = _deepcopy_inst
+d[object] = _deepcopy_inst
 
 def _reconstruct(x, info, deep, memo=None):
     if isinstance(info, str):

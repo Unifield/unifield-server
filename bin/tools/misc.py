@@ -38,12 +38,12 @@ import time
 import warnings
 import zipfile
 from datetime import datetime
-from email.MIMEText import MIMEText
-from email.MIMEBase import MIMEBase
-from email.MIMEMultipart import MIMEMultipart
-from email.Header import Header
-from email.Utils import formatdate, COMMASPACE
-from email import Encoders
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.header import Header
+from email.utils import formatdate, COMMASPACE
+from email import encoders
 from itertools import islice
 from lxml import etree
 from .which import which
@@ -717,7 +717,7 @@ def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=Non
         for (fname,fcontent) in attach:
             part = MIMEBase('application', "octet-stream")
             part.set_payload( fcontent )
-            Encoders.encode_base64(part)
+            encoders.encode_base64(part)
             part.add_header('Content-Disposition', 'attachment; filename="%s"' % (fname,))
             msg.attach(part)
 
@@ -1286,27 +1286,6 @@ def exception_to_unicode(e):
         return "Unknown message"
 
 
-# to be compatible with python 2.4
-import builtins
-if not hasattr(__builtin__, 'all'):
-    def all(iterable):
-        for element in iterable:
-            if not element:
-                return False
-        return True
-
-    builtins.all = all
-    del all
-
-if not hasattr(__builtin__, 'any'):
-    def any(iterable):
-        for element in iterable:
-            if element:
-                return True
-        return False
-
-    builtins.any = any
-    del any
 
 def get_iso_codes(lang):
     if lang.find('_') != -1:

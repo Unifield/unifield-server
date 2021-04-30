@@ -32,11 +32,11 @@ import socket
 import sys
 import threading
 import time
-from . import release
+import release
 from pprint import pformat
 import warnings
 import heapq
-from . import pooler
+import pooler
 
 # Try to log the traceback in operations.event, but on a best-effort
 # basis: catch all errors and give up
@@ -361,7 +361,7 @@ class Logger(object):
     def shutdown(self):
         logging.shutdown()
 
-from . import tools
+import tools
 init_logger()
 
 class Agent(object):

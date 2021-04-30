@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from . import updater
+import updater
 
 pool_dic = {}
 
@@ -50,8 +50,8 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
             return db, None
 
         from . import addons
-        from . import osv.osv
-        pool = osv.osv.osv_pool()
+        from osv import osv
+        pool = osv.osv_pool()
         pool_dic[db_name] = pool
 
         try:

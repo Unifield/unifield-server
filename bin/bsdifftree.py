@@ -30,7 +30,7 @@ import filecmp
 import hashlib
 
 def _defaultLog(*args):
-    print(*args)
+    print(args)
 
 def _read_file(fn):
     with open(fn, 'rb') as f:

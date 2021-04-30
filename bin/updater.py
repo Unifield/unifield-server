@@ -20,7 +20,8 @@ import logging
 import subprocess
 import base64
 from zipfile import ZipFile
-from . import bsdifftree
+sys.path.append('.')
+import bsdifftree
 
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
@@ -36,7 +37,7 @@ new_version_file = os.path.join(update_dir, 'update-list.txt')
 restart_delay = 5
 
 md5hex_size = (md5().digest_size * 8 / 4)
-base_version = '8' * md5hex_size
+base_version = '8' * int(md5hex_size)
 # match 3 groups : md5sum <space> date (yyyy-mm-dd hh:mm:ss) <space> version
 #example : 694d9c65bce826551df26cefcc6565e1 2015-11-27 16:15:00 UF2.0rc3
 re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)\s*(\d+-\d+-\d+\s*\d+:\d+:\d+)\s*(.*)')

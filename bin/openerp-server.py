@@ -29,8 +29,9 @@ GNU Public Licence.
 
 (c) 2003-TODAY, Fabien Pinckaers - OpenERP s.a.
 """
-
-from . import updater
+import sys
+sys.path.append('.')
+import updater
 updater.do_update()
 
 #----------------------------------------------------------
@@ -39,11 +40,10 @@ updater.do_update()
 import logging
 import os
 import signal
-import sys
 import threading
 import traceback
 
-from . import release
+import release
 __author__ = release.author
 __version__ = release.version
 
@@ -58,7 +58,7 @@ if os.name == 'posix':
 #----------------------------------------------------------
 # get logger
 #----------------------------------------------------------
-from . import netsvc
+import netsvc
 logger = logging.getLogger('server')
 
 # Log an operations.event. In the contexts we are called, we don't
@@ -133,18 +133,18 @@ from . import addons; assert addons
 # Load and update databases if requested
 #----------------------------------------------------------
 
-from . import service.http_server
+from .service import http_server
 from . import updater
 
 if not ( tools.config["stop_after_init"] or \
          tools.config["translate_in"] or \
          tools.config["translate_out"] ):
-    service.http_server.init_servers()
-    service.http_server.init_xmlrpc()
-    service.http_server.init_static_http()
+    http_server.init_servers()
+    http_server.init_xmlrpc()
+    http_server.init_static_http()
 
-    from . import service.netrpc_server
-    service.netrpc_server.init_servers()
+    from .service import netrpc_server
+    netrpc_server.init_servers()
 
 if tools.config['db_name']:
     for dbname in tools.config['db_name'].split(','):
