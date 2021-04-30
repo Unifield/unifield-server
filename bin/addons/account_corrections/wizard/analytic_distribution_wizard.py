@@ -293,9 +293,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                             is_HQ_entries = True
 
                     # In case it's an HQ entries, just generate the REV and COR
-                    if is_HQ_entries:
-                        to_reverse.append(wiz_line)
-                    else:
+                    # if is_HQ_entries:
+                    #     to_reverse.append(wiz_line)
+                    if True:  # TODO: if that's OK, remove this condition (and the block with "is_HQ_entries" if it is unused)
                         # existing line, test modifications
                         # for FP, percentage, CC or destination changes regarding contracts
                         if old_line.analytic_id.id != wiz_line.analytic_id.id \
@@ -309,7 +309,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                         if (old_line.cost_center_id.id != wiz_line.cost_center_id.id or
                                 old_line.destination_id.id != wiz_line.destination_id.id or
                                 old_line.percentage != wiz_line.percentage):
-                            if self._check_period_closed_on_fp_distrib_line(cr, uid, old_line.id):
+                            # TODO: add param is_HQ_origin, or use is_HQ_entries defined above?
+                            if self._check_period_closed_on_fp_distrib_line(cr, uid, old_line.id, is_HQ_origin=is_HQ_origin):
                                 to_reverse.append(wiz_line)
                             else:
                                 to_override.append(wiz_line)
