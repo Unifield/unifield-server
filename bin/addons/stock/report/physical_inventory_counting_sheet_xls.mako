@@ -327,7 +327,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <NumberFormat ss:Format="Short Date"/>
+   <NumberFormat ss:Format="dd/mm/yyyy;@"/>
   </Style>
  </Styles>
  <Worksheet ss:Name="stock">
