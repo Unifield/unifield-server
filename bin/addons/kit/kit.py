@@ -526,7 +526,7 @@ class composition_kit(osv.osv):
                         raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
                     for field in fields:
                         field.set('invisible', 'True')
-                result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root)
+                result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root, encoding='unicode')
 
             # if the view is called from the menu "Kit Composition List" the button duplicate and delete are hidden
             if context.get('composition_type', False) == 'real':
@@ -536,7 +536,7 @@ class composition_kit(osv.osv):
                 root.set('hide_duplicate_button', 'True')
                 root.set('hide_delete_button', 'True')
                 # fields to be modified
-                result['arch'] = etree.tostring(root)
+                result['arch'] = etree.tostring(root, encoding='unicode')
 
         return result
 
@@ -1036,7 +1036,7 @@ class composition_item(osv.osv):
                     for field in fields:
                         field.set('invisible', 'True')
 
-                result['arch'] = etree.tostring(root)
+                result['arch'] = etree.tostring(root, encoding='unicode')
         return result
 
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):

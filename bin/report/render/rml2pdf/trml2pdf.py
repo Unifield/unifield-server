@@ -311,7 +311,7 @@ class _rml_doc(object):
     def _textual_image(self, node):
         rc = ''
         for n in node:
-            rc +=( etree.tostring(n) or '') + n.tail
+            rc +=( etree.tostring(n, encoding='unicode') or '') + n.tail
         return base64.decodestring(node.tostring())
 
     def _images(self, el):
@@ -650,7 +650,7 @@ class _rml_flowable(object):
                 if not n.tag == 'bullet':
                     txt_n.text = utils.xml2str(self._textual(n))
                 txt_n.tail = n.tail and utils._process_text(self, n.tail.replace('\n','')) or ''
-                rc1 += etree.tostring(txt_n)
+                rc1 += etree.tostring(txt_n, encoding='unicode')
         return rc1
 
     def _table(self, node):

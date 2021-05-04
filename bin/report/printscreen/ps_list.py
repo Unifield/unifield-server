@@ -261,7 +261,7 @@ class report_printscreen_list(report_int):
         transform = etree.XSLT(
             etree.parse(os.path.join(tools.config['root_path'],
                                      'addons/base/report/custom_new.xsl')))
-        rml = etree.tostring(transform(new_doc))
+        rml = etree.tostring(transform(new_doc), encoding='unicode')
         self.obj = render.rml(rml, title=self.title)
         self.obj.render()
         return True

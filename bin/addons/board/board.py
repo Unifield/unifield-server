@@ -153,7 +153,7 @@ class board_board(osv.osv):
             return s
 
         archnode = etree.fromstring(encode(arch))
-        return etree.tostring(remove_unauthorized_children(archnode),pretty_print=True)
+        return etree.tostring(remove_unauthorized_children(archnode),pretty_print=True, encoding='unicode')
 
     _columns = {
         'name': fields.char('Dashboard', size=64, required=True),

@@ -138,7 +138,7 @@ class wizard_import_invoice(osv.osv_memory):
         fields = form.xpath("//field[@name='line_ids']")
         for field in fields:
             field.set('context', str(fctx))
-        result['arch'] = etree.tostring(form)
+        result['arch'] = etree.tostring(form, encoding='unicode')
         return result
 
     def single_import(self, cr, uid, ids, context=None):

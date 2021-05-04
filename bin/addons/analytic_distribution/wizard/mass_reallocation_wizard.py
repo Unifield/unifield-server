@@ -205,7 +205,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             fields = tree.xpath("/form/field[@name='account_id']")
             for field in fields:
                 field.set('domain', domain)
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def default_get(self, cr, uid, fields=None, context=None):

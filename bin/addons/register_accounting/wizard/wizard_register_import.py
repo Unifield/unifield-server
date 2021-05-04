@@ -70,7 +70,7 @@ class wizard_register_import(osv.osv_memory):
                 for field in fields:
                     field.text = _(el[1])
             fields = form.xpath
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def create(self, cr, uid, vals, context=None):

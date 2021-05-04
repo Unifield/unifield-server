@@ -62,7 +62,7 @@ class int_commitment_realloc_wizard(osv.osv_memory):
                                     "('fp_compatible_with_cc_ids', '=', cost_center_id)]")
             # NO NEED TO CHANGE DESTINATION_ID FIELD because NO ACCOUNT_ID PRESENCE!
             # Apply changes
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):

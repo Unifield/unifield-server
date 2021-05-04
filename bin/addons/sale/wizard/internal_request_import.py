@@ -203,7 +203,7 @@ class internal_request_import(osv.osv):
                         group_field = field
                 new_field = etree.fromstring(info_msg)
                 group_field.insert(0, new_field)
-                res['arch'] = etree.tostring(root)
+                res['arch'] = etree.tostring(root, encoding='unicode')
 
         return res
 

@@ -1674,7 +1674,7 @@ class purchase_order_line(osv.osv):
                 fields = form.xpath('//form[@string="%s"]' % _('Purchase Order Line'))
                 for field in fields:
                     field.set('string', _("Request for Quotation Line"))
-                result['arch'] = etree.tostring(form)
+                result['arch'] = etree.tostring(form, encoding='unicode')
 
         return result
 

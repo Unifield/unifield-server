@@ -501,7 +501,7 @@ class product_product(osv.osv):
             for element in xml_view.iter("group"):
                 if element.get('string', '') == 'Group by...':
                     xml_view.remove(element)
-            res['arch'] = etree.tostring(xml_view)
+            res['arch'] = etree.tostring(xml_view, encoding='unicode')
 
             # UTP-501 Positive AMC filter
             xml_view = etree.fromstring(res['arch'])
@@ -514,7 +514,7 @@ class product_product(osv.osv):
             # generate new xml form$
             filter_node = etree.fromstring(new_filter)
             xml_view.insert(0, filter_node)
-            res['arch'] = etree.tostring(xml_view)
+            res['arch'] = etree.tostring(xml_view, encoding='unicode')
 
         return res
 

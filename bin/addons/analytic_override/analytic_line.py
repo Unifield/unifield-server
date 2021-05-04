@@ -235,7 +235,7 @@ class account_analytic_line(osv.osv):
                 filter_nodes = tree.xpath('/search/group[1]/filter[@name="intl_engagements"]')
                 if filter_nodes:
                     filter_nodes[0].getparent().remove(filter_nodes[0])
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def _round_amounts(self, vals):

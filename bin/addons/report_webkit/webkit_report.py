@@ -499,7 +499,7 @@ class WebKitParser(report_sxw):
 
         if xml_modified:
             # return modified xml
-            return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
+            return etree.tostring(file_dom, xml_declaration=True, encoding="unicode")
         return xml_string
 
 

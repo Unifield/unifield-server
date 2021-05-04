@@ -295,7 +295,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     field.set('readonly', str(context.get('mode', False) != el))
                     if context.get('mode', False) == el:
                         field.set('on_change', "onchange_%s(%s, parent.total_amount)" % (el, el))
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def verify_analytic_account(self, cr, uid, vals, line_type=None, context=None):

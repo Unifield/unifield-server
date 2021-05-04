@@ -127,7 +127,7 @@ class account_move_line(osv.osv):
                 element_fields = tree.xpath('/tree/field[@name="' + element + '"]')
                 for field in element_fields:
                     tree.remove(field)
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
 
         if view_type == 'tree' and \
                 context.get('selector_display_cheque_number', False):

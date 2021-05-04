@@ -130,7 +130,7 @@ class stock_picking_out_rw(osv.osv):
                 root.set('hide_new_button', 'True')
                 root.set('hide_delete_button', 'True')
                 root.set('hide_duplicate_button', 'True')
-                res['arch'] = etree.tostring(root)
+                res['arch'] = etree.tostring(root, encoding='unicode')
 
         return res
 

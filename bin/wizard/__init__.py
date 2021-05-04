@@ -133,7 +133,7 @@ class interface(netsvc.Service):
                     if not isinstance(arch, UpdateableStr):
                         doc = etree.XML(arch)
                         self.translate_view(cr, doc, state, lang)
-                        arch = etree.tostring(doc)
+                        arch = etree.tostring(doc, encoding='unicode')
 
                     # translate buttons
                     button_list = list(button_list)

@@ -624,7 +624,7 @@ class analytic_account(osv.osv):
             fields = tree.xpath('/form/field[@name="cost_center_ids"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):

@@ -49,7 +49,7 @@ class purchase_order_line(osv.osv):
                 tag.getparent().remove(tag)
             nb = form.xpath('//notebook')
             nb[0].tag = 'empty'
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):

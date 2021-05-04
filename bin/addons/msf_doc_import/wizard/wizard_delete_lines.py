@@ -301,7 +301,7 @@ def noteditable_fields_view_get(res, view_type, context=None):
                 root.set('string', 'Internal request lines')
             if context.get('rfq_ok'):
                 root.set('string', 'RfQ lines')
-        res['arch'] = etree.tostring(root)
+        res['arch'] = etree.tostring(root, encoding='unicode')
 
     return res
 

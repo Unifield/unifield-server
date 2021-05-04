@@ -57,7 +57,7 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
             # Apply changes
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):

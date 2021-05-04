@@ -129,7 +129,7 @@ class account_analytic_line(osv.osv):
                 element_fields = tree.xpath('/tree/field[@name="' + element + '"]')
                 for field in element_fields:
                     tree.remove(field)
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
 
         if view_type == 'tree' and \
                 context.get('selector_display_cheque_number', False):
@@ -151,7 +151,7 @@ class account_analytic_line(osv.osv):
             tree.insert(es_node.getparent().index(es_node) + 1,
                         cheque_number_node)
 
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def copy(self, cr, uid, id, default=None, context=None):

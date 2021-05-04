@@ -974,7 +974,7 @@ class res_partner(osv.osv):
                 fields = tree.xpath('//filter[@name="inactive"]|//filter[@name="active"]')
                 for field in fields:
                     field.set('invisible', "1")
-                view['arch'] = etree.tostring(tree)
+                view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
 res_partner()

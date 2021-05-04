@@ -1026,7 +1026,7 @@ class board_board(osv.osv):
             return s
 
         archnode = etree.fromstring(encode(arch))
-        return etree.tostring(self.remove_unauthorized_children(cr, user, archnode),pretty_print=True)
+        return etree.tostring(self.remove_unauthorized_children(cr, user, archnode),pretty_print=True, encoding='unicode')
 
 
 board_board()

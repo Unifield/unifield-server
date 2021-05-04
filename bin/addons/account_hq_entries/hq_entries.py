@@ -474,7 +474,7 @@ class hq_entries(osv.osv):
         dest_fields = arch.xpath('field[@name="destination_id"]')
         for field in dest_fields:
             field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
-            view['arch'] = etree.tostring(arch)
+            view['arch'] = etree.tostring(arch, encoding='unicode')
         return view
 
     def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):

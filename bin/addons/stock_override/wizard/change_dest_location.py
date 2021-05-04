@@ -202,7 +202,7 @@ class change_dest_location(osv.osv_memory):
         else:
             fields = view_xml.xpath("//button[@name='change_dest_location_selected']")
             fields[0].set('invisible', '1')
-        res['arch'] = etree.tostring(view_xml)
+        res['arch'] = etree.tostring(view_xml, encoding='unicode')
         return res
 
 change_dest_location()

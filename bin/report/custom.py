@@ -339,7 +339,7 @@ class report_custom(report_int):
         transform = etree.XSLT(
             etree.parse(os.path.join(tools.config['root_path'],
                                      'addons/base/report/custom_new.xsl')))
-        rml = etree.tostring(transform(new_doc))
+        rml = etree.tostring(transform(new_doc), encoding='unicode')
 
         self.obj = render.rml(rml)
         self.obj.render()
@@ -619,7 +619,7 @@ class report_custom(report_int):
         transform = etree.XSLT(
             etree.parse(os.path.join(tools.config['root_path'],
                                      'addons/base/report/custom_new.xsl')))
-        rml = etree.tostring(transform(new_doc))
+        rml = etree.tostring(transform(new_doc), encoding='unicode')
 
         self.obj = render.rml(rml)
         self.obj.render()

@@ -95,7 +95,7 @@ class account_bank_statement_line(osv.osv):
                 element_fields = tree.xpath('/tree/field[@name="' + element + '"]')
                 for field in element_fields:
                     tree.remove(field)
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def copy(self, cr, uid, id, default=None, context=None):

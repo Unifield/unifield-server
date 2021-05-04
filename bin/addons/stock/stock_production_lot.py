@@ -653,7 +653,7 @@ class stock_production_lot(osv.osv):
             root = etree.fromstring(result['arch'])
             for node in root.xpath("//field[@name='stock_location_id']"):
                 node.set('invisible', "1")
-            result['arch'] = etree.tostring(root)
+            result['arch'] = etree.tostring(root, encoding='unicode')
         return result
 
 

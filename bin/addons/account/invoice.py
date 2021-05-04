@@ -404,7 +404,7 @@ class account_invoice(osv.osv):
             nodes = doc.xpath("//field[@name='amount_to_pay']")
             for node in nodes:
                 node.set('string', _('Amount to be refunded'))
-            res['arch'] = etree.tostring(doc)
+            res['arch'] = etree.tostring(doc, encoding='unicode')
 
         if view_type == 'tree':
             doc = etree.XML(res['arch'])
@@ -417,7 +417,7 @@ class account_invoice(osv.osv):
                 partner_string = _('Supplier')
             for node in nodes:
                 node.set('string', partner_string)
-            res['arch'] = etree.tostring(doc)
+            res['arch'] = etree.tostring(doc, encoding='unicode')
         elif view_type == 'search':
             # remove the Cancel filter in all invoices but IVO and STV
             context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
@@ -429,7 +429,7 @@ class account_invoice(osv.osv):
                 filter_node = doc.xpath("/search/group[1]/filter[@name='cancel_state']")
                 if filter_node:
                     filter_node[0].getparent().remove(filter_node[0])
-                res['arch'] = etree.tostring(doc)
+                res['arch'] = etree.tostring(doc, encoding='unicode')
         return res
 
     def get_log_context(self, cr, uid, context=None):

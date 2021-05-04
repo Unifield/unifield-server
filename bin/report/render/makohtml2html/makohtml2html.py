@@ -35,13 +35,13 @@ class makohtml2html(object):
         head = html.findall('head')
         header = ''
         for node in head:
-            header += etree.tostring(node)
+            header += etree.tostring(node, encoding='unicode')
         return header
 
     def format_footer(self, footer):
         html_footer = ''
         for node in footer[0].getchildren():
-            html_footer += etree.tostring(node)
+            html_footer += etree.tostring(node, encoding='unicode')
         return html_footer
 
     def format_body(self, html):
@@ -49,7 +49,7 @@ class makohtml2html(object):
         body_list = []
         footer =  self.format_footer(body[-1].getchildren())
         for b in body[:-1]:
-            body_list.append(etree.tostring(b).replace('\t', '').replace('\n',''))
+            body_list.append(etree.tostring(b, encoding='unicode').replace('\t', '').replace('\n',''))
         html_body ='''
         <script type="text/javascript">
 

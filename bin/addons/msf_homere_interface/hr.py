@@ -49,7 +49,7 @@ class hr_payment_method(osv.osv):
                 root.set('hide_new_button', '0')
                 root.set('hide_edit_button', '0')
                 root.set('hide_delete_button', '0')
-                result['arch'] = etree.tostring(root)
+                result['arch'] = etree.tostring(root, encoding='unicode')
         return result
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -359,7 +359,7 @@ class hr_employee(osv.osv):
             for field in fp_fields:
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
                                     "('fp_compatible_with_cc_ids', '=', cost_center_id)]")
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def onchange_cc(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):

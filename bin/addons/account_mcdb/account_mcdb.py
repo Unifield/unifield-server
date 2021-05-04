@@ -194,7 +194,7 @@ class account_mcdb(osv.osv):
             fields = form.xpath('//group[@name="wizard_hq_query"]')
             for field in fields:
                 field.set('invisible', "0")
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
 
         if context.get('from', '') != 'combined.line' and 'document_code' in view['fields']:
             view['fields']['document_code']['string'] = _('Sequence numbers')

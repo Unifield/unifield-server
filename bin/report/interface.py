@@ -176,7 +176,7 @@ class report_rml(report_int):
 
         transform = etree.XSLT(stylesheet)
         xml = etree.tostring(
-            transform(etree.fromstring(xml)))
+            transform(etree.fromstring(xml)), encoding='unicode')
 
         return xml
 
@@ -214,7 +214,7 @@ class report_rml(report_int):
     def create_raw(self,rml, localcontext = None, logo=None, title=None):
         obj = render.odt2odt(etree.XML(rml),localcontext)
         obj.render()
-        return etree.tostring(obj.get())
+        return etree.tostring(obj.get(), encoding='unicode')
 
     def create_sxw(self,rml,localcontext = None):
         obj = render.odt2odt(rml,localcontext)

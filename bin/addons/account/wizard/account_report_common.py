@@ -98,7 +98,7 @@ class account_common_report(osv.osv_memory):
             for node in nodes:
                 node.set('readonly', '1')
                 node.set('help', 'If you print the report from Account list/form view it will not consider Charts of account')
-            res['arch'] = etree.tostring(doc)
+            res['arch'] = etree.tostring(doc, encoding='unicode')
         return res
 
     def onchange_filter(self, cr, uid, ids, filter='filter_no', fiscalyear_id=False, context=None):

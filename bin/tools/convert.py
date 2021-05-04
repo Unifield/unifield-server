@@ -149,7 +149,7 @@ def _eval_xml(self, node, pool, cr, uid, idref, context=None):
                 return s % idref
             _fix_multiple_roots(node)
             return '<?xml version="1.0"?>\n'\
-                +_process("".join([etree.tostring(n, encoding='utf-8').decode('utf8')
+                +_process("".join([etree.tostring(n, encoding='unicode')
                                    for n in node]),
                           idref)
         if t in ('char', 'int', 'float'):
@@ -756,7 +756,7 @@ form: module.record_id""" % (xml_id,)
                           ' xmltag: %s\n'               \
                           ' expected value: %r\n'       \
                           ' obtained value: %r\n'       \
-                          % (rec_string, etree.tostring(test), expected_value, expression_value)
+                          % (rec_string, etree.tostring(test, encoding='unicode'), expected_value, expression_value)
                     sevval = getattr(logging, severity.upper())
                     self.logger.log(sevval, msg)
                     if sevval >= config['assert_exit_level']:
@@ -887,7 +887,7 @@ form: module.record_id""" % (xml_id,)
                         self.__logger.error('Parse error in %s:%d: \n%s',
                                             rec.getroottree().docinfo.URL,
                                             rec.sourceline,
-                                            etree.tostring(rec).strip(), exc_info=True)
+                                            etree.tostring(rec, encoding='unicode').strip(), exc_info=True)
                         self.cr.rollback()
                         cache.clean_caches_for_db(self.cr.dbname)
                         raise

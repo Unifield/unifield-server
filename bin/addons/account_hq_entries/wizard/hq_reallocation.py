@@ -73,7 +73,7 @@ class hq_analytic_reallocation(osv.osv_memory):
             for field in fp_fields:
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
                                     "('fp_compatible_with_cc_ids', '=', cost_center_id)]")
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):

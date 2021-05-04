@@ -293,7 +293,7 @@ class hr_payroll(osv.osv):
             for field in dest_fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
             # Apply changes
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):

@@ -308,7 +308,7 @@ class account_move_line(osv.osv):
                 tags = search.xpath('/search')
                 for tag in tags:
                     tag.set('string', _("Account Entry Lines"))
-                result['arch'] = etree.tostring(search)
+                result['arch'] = etree.tostring(search, encoding='unicode')
         return result
 
     def onchange_account_id(self, cr, uid, ids, account_id=False, third_party=False):

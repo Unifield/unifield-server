@@ -1131,19 +1131,19 @@ class product_attributes(osv.osv):
             root = etree.fromstring(res['arch'])
             for field in root.xpath('//group[@name="batch_attr"]'):
                 field.set('invisible', '0')
-            res['arch'] = etree.tostring(root)
+            res['arch'] = etree.tostring(root, encoding='unicode')
 
         if view_type == 'search' and context.get('display_active_filter'):
             root = etree.fromstring(res['arch'])
             for field in root.xpath('//group[@name="display_active_filter"]'):
                 field.set('invisible', '0')
-            res['arch'] = etree.tostring(root)
+            res['arch'] = etree.tostring(root, encoding='unicode')
 
         if view_type == 'tree' and context.get('display_old_code'):
             root = etree.fromstring(res['arch'])
             for field in root.xpath('//field[@name="old_code"]'):
                 field.set('invisible', '0')
-            res['arch'] = etree.tostring(root)
+            res['arch'] = etree.tostring(root, encoding='unicode')
 
         if view_type == 'search' and context.get('available_for_restriction'):
             context.update({'search_default_not_restricted': 1})
@@ -1178,7 +1178,7 @@ class product_attributes(osv.osv):
             parent_node.insert(state_index+1, new_form)
             parent_node.insert(state_index+1, sep_form)
             # generate xml back to string
-            res['arch'] = etree.tostring(root)
+            res['arch'] = etree.tostring(root, encoding='unicode')
 
         return res
 

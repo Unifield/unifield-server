@@ -1494,7 +1494,7 @@ class orm_template(object):
                 xml = "<form>"
                 for f in node:
                     if f.tag in ('field'):
-                        xml += etree.tostring(f, encoding="utf-8")
+                        xml += etree.tostring(f, encoding="unicode")
                 xml += "</form>"
                 new_xml = etree.fromstring(encode(xml))
                 ctx = context.copy()
@@ -1611,7 +1611,7 @@ class orm_template(object):
                 parent = node.getparent()
                 source = node.text
                 for child in node.getchildren():
-                    source += etree.tostring(child)
+                    source += etree.tostring(child, encoding='unicode')
                 trans = translation_obj._get_source(cr, user, self._name,
                                                     'view', context['lang'], source)
                 parent.remove(node)
@@ -1650,7 +1650,7 @@ class orm_template(object):
     def __view_look_dom_arch(self, cr, user, node, view_id, context=None):
         fields_def = self.__view_look_dom(cr, user, node, view_id, context=context)
         node = self._disable_workflow_buttons(cr, user, node)
-        arch = etree.tostring(node, encoding="utf-8").replace('\t', '')
+        arch = etree.tostring(node, encoding="unicode").replace('\t', '')
         fields = {}
         if node.tag == 'diagram':
             if node.getchildren()[0].tag == 'node':
@@ -1749,7 +1749,7 @@ class orm_template(object):
         for field_name in fields_to_search:
             field_group.append(etree.Element("field", attrib={'name': field_name}))
 
-        return etree.tostring(search_view, encoding="utf-8").replace('\t', '')
+        return etree.tostring(search_view, encoding="unicode").replace('\t', '')
 
     #
     # if view_id, view_type is not required

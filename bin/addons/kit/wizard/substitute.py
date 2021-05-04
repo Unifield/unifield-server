@@ -494,7 +494,7 @@ class substitute(osv.osv_memory):
                     raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
                 for field in fields:
                     field.set('invisible', 'True')
-            result['arch'] = etree.tostring(root)
+            result['arch'] = etree.tostring(root, encoding='unicode')
             # remove the hide_new_button/hide_delete button
             # both button are originally hidden, because in de-kitting, we do not want the user to change anything
             # for substitute, we need these button because the user can choose the products from the kit
@@ -503,7 +503,7 @@ class substitute(osv.osv_memory):
             # root is the tree, we change the attribute to False
             root.set('hide_new_button', 'False')
             root.set('hide_delete_button', 'False')
-            result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root)
+            result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root, encoding='unicode')
 
         if view_type == 'form' and context.get('step', False) == 'de_kitting':
             # load the xml tree
@@ -516,7 +516,7 @@ class substitute(osv.osv_memory):
                     raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
                 for field in fields:
                     field.set('invisible', 'True')
-            result['arch'] = etree.tostring(root)
+            result['arch'] = etree.tostring(root, encoding='unicode')
 
         return result
 

@@ -73,7 +73,7 @@ class _flowable(object):
 
     def _tag_title(self, node):
         node.tag='h1'
-        return etree.tostring(node)
+        return etree.tostring(node, encoding='unicode')
 
     def _tag_spacer(self, node):
         length = 1+int(utils.unit_get(node.get('length')))/35
@@ -107,7 +107,7 @@ class _flowable(object):
             for s in sizes:
                 etree.SubElement(tr, 'td', width=str(s))
 
-        return etree.tostring(new_node)
+        return etree.tostring(new_node, encoding='unicode')
 
     def _tag_para(self, node):
         new_node = copy.deepcopy(node)
@@ -115,7 +115,7 @@ class _flowable(object):
         if new_node.attrib.get('style',False):
             new_node.set('class', new_node.get('style'))
         new_node.text = utils._process_text(self, node.text)
-        return etree.tostring(new_node)
+        return etree.tostring(new_node, encoding='unicode')
 
     def _section(self, node):
         result = ''

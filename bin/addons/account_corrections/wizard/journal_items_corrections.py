@@ -262,7 +262,7 @@ class journal_items_corrections_lines(osv.osv_memory):
             fields = tree.xpath('//field[@name="account_id"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('type_for_register', '=', 'donation'), ('user_type.code', '=', 'expense'), ('user_type.report_type', '=', 'none')]")
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):

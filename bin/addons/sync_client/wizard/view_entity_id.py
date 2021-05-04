@@ -45,7 +45,7 @@ class view_entity_id(osv.osv_memory):
             nodes = doc.xpath("//label[@string]")
             if nodes:
                 nodes[0].set('string', hw_id)
-            res['arch'] = etree.tostring(doc)
+            res['arch'] = etree.tostring(doc, encoding='unicode')
 
         return res
 

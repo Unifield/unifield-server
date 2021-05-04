@@ -263,7 +263,7 @@ class document(object):
                     for el_cld in node:
                         self.parse_node(el_cld,el, browser)
     def xml_get(self):
-        return etree.tostring(self.doc,encoding="utf-8",xml_declaration=True,pretty_print=True)
+        return etree.tostring(self.doc,encoding="unicode",xml_declaration=True,pretty_print=True)
 
     def parse_tree(self, ids, model, context=None):
         if not context:

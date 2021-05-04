@@ -299,7 +299,7 @@ class wizard_template_form(osv.osv_memory):
             fields = form.xpath('//button[@name="save_query"]')
             for field in fields:
                 field.set('invisible', "0")
-            view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form, encoding='unicode')
 
         return view
 

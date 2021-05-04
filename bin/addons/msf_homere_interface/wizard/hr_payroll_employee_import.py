@@ -118,7 +118,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             labels = tree.xpath('/form/label[@string="Nothing"]')
             for label in labels:
                 label.set('string', "%s" % message)
-            view['arch'] = etree.tostring(tree)
+            view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def button_validate(self, cr, uid, ids, context=None):

@@ -45,7 +45,7 @@ class so_po_common(osv.osv_memory):
             root.set('hide_new_button', 'True')
             root.set('hide_delete_button', 'True')
             root.set('hide_duplicate_button', 'True')
-            res['arch'] = etree.tostring(root)
+            res['arch'] = etree.tostring(root, encoding='unicode')
         return res
 
     # UTP-952: get the partner type, for the case of intermission and section

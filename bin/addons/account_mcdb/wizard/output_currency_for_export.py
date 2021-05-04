@@ -67,7 +67,7 @@ class output_currency_for_export(osv.osv_memory):
                     fields = tree.xpath("/form/field[@name='export_format']")
                     for field in fields:
                         field.set('invisible', "1")
-                    view['arch'] = etree.tostring(tree)
+                    view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
     def create(self, cr, uid, vals, context=None):

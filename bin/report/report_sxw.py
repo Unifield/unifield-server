@@ -682,7 +682,7 @@ class report_sxw(report_rml, preprocess.report):
             if rml_parser.logo:
                 logo = base64.decodestring(rml_parser.logo)
             create_doc = self.generators[report_xml.report_type]
-            pdf = create_doc(etree.tostring(processed_rml),rml_parser.localcontext,logo,title.encode('utf8'))
+            pdf = create_doc(etree.tostring(processed_rml, encoding='unicode'),rml_parser.localcontext,logo,title)
             return (pdf, report_xml.report_type)
         finally:
             if rml_parser.log_export:
@@ -726,7 +726,7 @@ class report_sxw(report_rml, preprocess.report):
                     pe[0].text=data['id']
                 if pe.get(rml_parser.localcontext['name_space']["meta"]+"name") == "Info 4":
                     pe[0].text=data['model']
-        meta = etree.tostring(rml_dom_meta, encoding='utf-8',
+        meta = etree.tostring(rml_dom_meta, encoding='unicode',
                               xml_declaration=True)
 
         rml_dom =  etree.XML(rml)
@@ -770,7 +770,7 @@ class report_sxw(report_rml, preprocess.report):
         rml_dom = self.preprocess_rml(rml_dom, mime_type)
         create_doc = self.generators[mime_type]
         odt = etree.tostring(create_doc(rml_dom, rml_parser.localcontext),
-                             encoding='utf-8', xml_declaration=True)
+                             encoding='unicode', xml_declaration=True)
         sxw_z = zipfile.ZipFile(sxw_io, mode='a')
         sxw_z.writestr('content.xml', odt)
         sxw_z.writestr('meta.xml', meta)
@@ -790,7 +790,7 @@ class report_sxw(report_rml, preprocess.report):
                 odt = create_doc(rml_dom,rml_parser.localcontext)
                 if report_xml.header:
                     rml_parser._add_header(odt)
-                odt = etree.tostring(odt, encoding='utf-8',
+                odt = etree.tostring(odt, encoding='unicode',
                                      xml_declaration=True)
                 sxw_z.writestr('styles.xml', odt)
             finally:
@@ -818,7 +818,7 @@ class report_sxw(report_rml, preprocess.report):
         html_dom = self.preprocess_rml(html_dom,'html2html')
 
         create_doc = self.generators['html2html']
-        html = etree.tostring(create_doc(html_dom, html_parser.localcontext))
+        html = etree.tostring(create_doc(html_dom, html_parser.localcontext), encoding='unicode')
 
         return (html.replace('&amp;','&').replace('&lt;', '<').replace('&gt;', '>').replace('</br>',''), report_type)
 

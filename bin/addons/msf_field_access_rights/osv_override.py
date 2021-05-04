@@ -375,7 +375,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                             field.attrib['help'] = '[Field Disabled by Field Access Rights] %s' % (misc.ustr(self._columns[field_name].help))
 
                 # get the modified xml string and return it
-                fields_view['arch'] = etree.tostring(view_xml)
+                fields_view['arch'] = etree.tostring(view_xml, encoding='unicode')
                 return fields_view
 
             else:

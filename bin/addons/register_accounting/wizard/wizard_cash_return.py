@@ -1146,7 +1146,7 @@ class wizard_cash_return(osv.osv_memory):
                 for node in nodes:
                     node.set('confirm', msg)
 
-            res['arch'] = etree.tostring(doc)
+            res['arch'] = etree.tostring(doc, encoding='unicode')
         return res
 
 wizard_cash_return()
