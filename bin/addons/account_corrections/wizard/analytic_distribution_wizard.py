@@ -283,9 +283,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 old_line = self.pool.get('funding.pool.distribution.line').browse(cr, uid, wiz_line.distribution_line_id.id)
 
                 if old_line:
-                    #US-714: For HQ Entries, always create the COR and REV even the period is closed
-                    original_al_id = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%old_line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-
                     # existing line, test modifications
                     # for FP, percentage, CC or destination changes regarding contracts
                     if old_line.analytic_id.id != wiz_line.analytic_id.id \
