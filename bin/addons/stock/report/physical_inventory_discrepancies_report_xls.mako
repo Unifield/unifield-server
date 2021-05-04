@@ -155,7 +155,6 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <NumberFormat ss:Format="dd/mm/yyyy;@"/>
   </Style>
   <Style ss:ID="s33">
    <Borders>
@@ -874,11 +873,7 @@
     <Cell ss:StyleID="s30"><Data ss:Type="Number">${item.theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="Number">${item.counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s38"><Data ss:Type="String">${item.batch_number or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    % if isDate(item.expiry_date):
-    <Cell ss:StyleID="s32"><Data ss:Type="DateTime">${item.expiry_date|n}T00:00:00.000</Data></Cell>
-    % else:
-    <Cell ss:StyleID="s32"><Data ss:Type="String"></Data></Cell>
-    % endif
+    <Cell ss:StyleID="s32"><Data ss:Type="String">${item.expiry_date or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="Number">${item.discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s43"><Data ss:Type="Number">${item.discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s42"><Data ss:Type="Number">${item.total_product_theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
