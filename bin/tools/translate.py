@@ -309,7 +309,7 @@ class TinyPoFile(object):
         lines = self.buffer.readlines()
         # remove the BOM (Byte Order Mark):
         if len(lines):
-            lines[0] = str(lines[0], 'utf8').lstrip(str( codecs.BOM_UTF8, "utf8"))
+            lines[0] = lines[0].lstrip(codecs.BOM_UTF8.decode('utf8'))
 
         lines.append('') # ensure that the file ends with at least an empty line
         return lines
@@ -443,14 +443,14 @@ class TinyPoFile(object):
             self.buffer.write("#, python-format\n")
 
         if not isinstance(trad, str):
-            trad = str(trad, 'utf8')
+            trad = trad.decode('utf8')
         if not isinstance(source, str):
-            source = str(source, 'utf8')
+            source = source.decode('utf8')
 
         msg = "msgid %s\n"      \
               "msgstr %s\n\n"   \
             % (quote(source), quote(trad))
-        self.buffer.write(msg.encode('utf8'))
+        self.buffer.write(msg)
 
 
 # Methods to export the translation file
@@ -524,7 +524,7 @@ def trans_parse_xsl(de):
                     continue
                 l = m.text.strip().replace('\n',' ')
                 if len(l):
-                    res.append(l.encode("utf8"))
+                    res.append(l)
         res.extend(trans_parse_xsl(n))
     return res
 
@@ -540,7 +540,7 @@ def trans_parse_rml(de, withtranslate=True):
             string_list = [s.replace('\n', ' ').strip() for s in re.split('\[\[.+?\]\]', m.text)]
             for s in string_list:
                 if s:
-                    res.append(s.encode("utf8"))
+                    res.append(s)
             if withtranslate:
                 ite = trans_re.finditer(m.text)
                 for i in ite:
@@ -550,7 +550,7 @@ def trans_parse_rml(de, withtranslate=True):
                         s = join_dquotes.sub(r'\1', i.group(2))
                     if s:
                         s = s.decode('string_escape')
-                        res.append(s.encode("utf8"))
+                        res.append(s)
         res.extend(trans_parse_rml(n, False))
     return res
 
@@ -558,29 +558,29 @@ def trans_parse_view(de):
     res = []
     if de.tag == 'attribute' and de.get("name") == 'string':
         if de.text:
-            res.append(de.text.encode("utf8"))
+            res.append(de.text)
     if de.get("string"):
-        res.append(de.get('string').encode("utf8"))
+        res.append(de.get('string'))
     if de.get("sum"):
-        res.append(de.get('sum').encode("utf8"))
+        res.append(de.get('sum'))
     if de.get("confirm"):
-        res.append(de.get('confirm').encode("utf8"))
+        res.append(de.get('confirm'))
     if de.get("help"):
-        res.append(de.get('help').encode("utf8"))
+        res.append(de.get('help'))
     if de.get("required_error_msg"):
-        res.append(de.get('required_error_msg').encode("utf8"))
+        res.append(de.get('required_error_msg'))
     if de.get("filter_selector"):
         try:
             eval_filter = safe_eval(de.get('filter_selector'))
             if eval_filter and isinstance(eval_filter, list):
                 for x in eval_filter:
-                    res.append(x[0].encode("utf8"))
+                    res.append(x[0])
         except Exception:
-            logger.warning('Unable to translate filter_selector: %s' % de.get('filter_selector').encode("utf8"))
+            logger.warning('Unable to translate filter_selector: %s' % de.get('filter_selector'))
     if de.tag == 'translate':
         text_to_translate = ''
         if de.text:
-            text_to_translate = de.text.encode("utf8")
+            text_to_translate = de.text
             # this is made for <translate> tags that contain <br /> tags
             # to incorporate evrything in the same variable
             for child in de.getchildren():
@@ -658,8 +658,8 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
             _to_translate.append(tuple)
 
     def encode(s):
-        if isinstance(s, str):
-            return s.encode('utf8')
+        if not isinstance(s, str):
+            return s.decode('utf8')
         return s
 
     for (xml_name,model,res_id,module) in cr.fetchall():

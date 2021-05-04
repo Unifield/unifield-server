@@ -53,7 +53,7 @@ class UpdateToSend(osv.osv):
             versions = self.version(cr, uid, ids_to_compute, context=context)
             ustr_included_fields = tools.ustr(included_fields)
             for (id, row) in zip(ids_to_compute, datas):
-                for owner in (owners[id] if hasattr(owners[id], '__iter__') else [owners[id]]):
+                for owner in (owners[id] if isinstance(owners[id], list) else [owners[id]]):
                     update_id = update.create(cr, uid, {
                         'session_id' : session_id,
                         'values' : tools.ustr(row),

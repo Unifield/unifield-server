@@ -30,7 +30,7 @@
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
     #'depends': ['base', 'sale', 'sync_client', 'purchase', 'account','register_accounting', 'account_hq_entries', 'msf_instance', 'msf_outgoing','return_claim'],
-    'depends': ['base', 'sale', 'sync_client', 'purchase', 'account','register_accounting', 'account_hq_entries', 'msf_instance', 'msf_outgoing'],
+    'depends': ['base', 'sale', 'sync_client', 'purchase', 'account','register_accounting', 'account_hq_entries', 'msf_instance', 'msf_outgoing', 'tender_flow'],
     'init_xml': [],
     'update_xml' : [],
     'data': [

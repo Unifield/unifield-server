@@ -669,7 +669,7 @@ class users(osv.osv):
     def write(self, cr, uid, ids, values, context=None):
         if not ids:
             return True
-        if not hasattr(ids, '__iter__'):
+        if not isinstance(ids, list):
             ids = [ids]
         if ids == [uid]:
             for key in list(values.keys()):

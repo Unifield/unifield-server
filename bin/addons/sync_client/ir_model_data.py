@@ -117,7 +117,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
             # too, but a different name (would lead to attempted sd ref
             # duplication)
             if hasattr(obj, '_inherit') and obj._name != obj._inherit and \
-               (hasattr(obj._inherit, '__iter__') or self.pool.get(obj._inherit)._table == obj._table):
+               (isinstance(obj._inherit, (list, dict, tuple)) or self.pool.get(obj._inherit)._table == obj._table):
                 continue
 
             # Ignore SQL view records UF-2542
@@ -281,7 +281,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in list(rec.keys()))
         # Just add the warning into log file, and not raise Exception to stop the process
         self._logger.warning("ir.model.data get() method should not be used anymore!")
         result = []
-        for id in (ids if hasattr(ids, '__iter__') else [ids]):
+        for id in (ids if isinstance(ids, list) else [ids]):
             data_ids = self.search(cr, uid, [('model', '=', model._name), ('res_id', '=', id), ('module', '=', 'sd')], limit=1, context=context)
             result.append(data_ids[0] if data_ids else False)
         return result if isinstance(ids, (list, tuple)) else result[0]

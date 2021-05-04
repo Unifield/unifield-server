@@ -35,7 +35,7 @@ server_version_file = 'unifield-version.txt'
 new_version_file = os.path.join(update_dir, 'update-list.txt')
 restart_delay = 5
 
-md5hex_size = (md5().digest_size * 8 / 4)
+md5hex_size = int(md5().digest_size * 8 / 4)
 base_version = '8' * int(md5hex_size)
 # match 3 groups : md5sum <space> date (yyyy-mm-dd hh:mm:ss) <space> version
 #example : 694d9c65bce826551df26cefcc6565e1 2015-11-27 16:15:00 UF2.0rc3
@@ -102,7 +102,7 @@ def add_versions(versions, filepath=server_version_file):
         return
     with open(filepath, 'a') as f:
         for ver in versions:
-            f.write((" ".join([str(x) for x in ver]) if hasattr(ver, '__iter__') else ver)+os.linesep)
+            f.write((" ".join([str(x) for x in ver]) if isinstance(ver, list) else ver)+os.linesep)
 
 def find(path):
     """Unix-like find"""

@@ -47,6 +47,7 @@ def orm_method_overload(fn):
     Wrapper method to override orm.orm classic methods
     """
     original_method = getattr(orm.orm, fn.__name__)
+
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
         if self.pool.get(extended_orm._name) is not None:
@@ -104,7 +105,7 @@ class extended_orm_methods:
         :return: list of ids that need to be pushed (or False for per record call)
 
         """
-        result_iterable = hasattr(ids, '__iter__')
+        result_iterable = isinstance(ids, list)
         if not result_iterable: ids = [ids]
         ids = [_f for _f in ids if _f]
         if not empty_ids and not ids: return ids if result_iterable else False
@@ -158,16 +159,16 @@ SELECT res_id, touched
             "Cannot create xmlids on an ir.model.data object!"
 
         def get_fields(record):
-            if hasattr(field, '__iter__'):
+            if isinstance(field, (list, tuple)):
                 return tuple(getattr(record, f, False) for f in field)
             else:
                 return getattr(record, field, False)
 
-        result_iterable = hasattr(ids, '__iter__')
+        result_iterable =  isinstance(ids, list)
         if not result_iterable: ids = [ids]
         if not ids: return {} if result_iterable else False
 
-        if hasattr(field, '__iter__'):
+        if isinstance(field, (list, tuple)):
             fields_to_fetch = field[:]
         else:
             fields_to_fetch = [field]
@@ -250,7 +251,7 @@ SELECT res_id, touched
         if context is None:
             context = {}
 
-        result_iterable = hasattr(ids, '__iter__')
+        result_iterable = isinstance(ids, list)
         if not result_iterable:
             ids = [ids]
             if previous_values is not None:
@@ -316,7 +317,7 @@ SELECT res_id, touched
         if previous_values is not None:
             whole_fields = list(previous_values[0].keys())
         elif current_values is not None:
-            whole_fields = list(current_values.values())[0].keys()
+            whole_fields = list(list(current_values.values())[0].keys())
         else:
             whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write]
         try:
@@ -443,7 +444,7 @@ SELECT res_id, touched
         :return: dictionary with requested references
 
         """
-        result_iterable = hasattr(sdrefs, '__iter__')
+        result_iterable = isinstance(sdrefs, list)
         if not result_iterable: sdrefs = (sdrefs,)
         elif not isinstance(sdrefs, tuple): sdrefs = tuple(sdrefs)
         sdrefs = [_f for _f in sdrefs if _f]
@@ -599,7 +600,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
            and context.get('avoid_sdref_deletion'):
             return original_unlink(self, cr, uid,
                                    [rec.id for rec
-                                    in self.browse(cr, uid, (ids if hasattr(ids, '__iter__') else [ids]), context=context)
+                                    in self.browse(cr, uid, (ids if isinstance(ids, list) else [ids]), context=context)
                                        if not rec.module == 'sd'],
                                    context=context)
 
@@ -617,7 +618,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                 self.on_delete(cr, uid, ids, context=context)
 
         # US_394: Check if object have an ir.translation
-        if self._name is not 'ir.translation':
+        if self._name != 'ir.translation':
             tr_obj = self.pool.get('ir.translation')
             for obj_id in isinstance(ids, int) and [ids] or ids:
                 # Add commat for prevent delete other object
@@ -641,7 +642,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
         """
         if not ids: return True
-        if not hasattr(ids, '__iter__'): ids = (ids,)
+        if not isinstance(ids, (list, tuple)): ids = (ids,)
         elif not isinstance(ids, tuple): ids = tuple(ids)
         ids = [_f for _f in ids if _f]
         if not ids: return True
@@ -921,5 +922,6 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         return uuid + '/' + table_name + '/' + str(res_id)
 
-for symbol in [sym for sym in [getattr(extended_orm_methods, label) for label in dir(extended_orm_methods)] if isinstance(sym, types.MethodType)]:
-    setattr(orm.orm, symbol.__name__, symbol.__func__)
+
+for symbol in [getattr(extended_orm_methods, label) for label in dir(extended_orm_methods) if callable(getattr(extended_orm_methods, label)) and not label.startswith('__')]:
+    setattr(orm.orm, symbol.__name__, symbol)

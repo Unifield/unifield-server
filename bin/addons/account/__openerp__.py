@@ -43,7 +43,7 @@ module named account_voucher.
     """,
     'website': 'http://www.openerp.com',
     'init_xml': [],
-    "depends" : ["product", "analytic", "process","board"],
+    "depends" : ["product", "analytic", "process","board", "analytic_override"],
     'update_xml': [
         'security/account_security.xml',
         'security/ir.model.access.csv',
