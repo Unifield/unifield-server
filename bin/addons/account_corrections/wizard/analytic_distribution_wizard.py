@@ -286,36 +286,25 @@ class analytic_distribution_wizard(osv.osv_memory):
                     #US-714: For HQ Entries, always create the COR and REV even the period is closed
                     original_al_id = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%old_line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
 
-                    is_HQ_entries = False
-                    if original_al_id and len(original_al_id) == 1:
-                        original_al = ana_line_obj.browse(cr, uid, original_al_id[0], context)
-                        if original_al.journal_id.type == 'hq':
-                            is_HQ_entries = True
+                    # existing line, test modifications
+                    # for FP, percentage, CC or destination changes regarding contracts
+                    if old_line.analytic_id.id != wiz_line.analytic_id.id \
+                            or old_line.percentage != wiz_line.percentage \
+                            or old_line.cost_center_id.id != wiz_line.cost_center_id.id \
+                            or old_line.destination_id.id != wiz_line.destination_id.id:
+                        # FP account changed or % modified
+                        if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [old_line.analytic_id.id]):
+                            raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(old_line.analytic_id.code))
 
-                    # In case it's an HQ entries, just generate the REV and COR
-                    # if is_HQ_entries:
-                    #     to_reverse.append(wiz_line)
-                    if True:  # TODO: if that's OK, remove this condition (and the block with "is_HQ_entries" if it is unused)
-                        # existing line, test modifications
-                        # for FP, percentage, CC or destination changes regarding contracts
-                        if old_line.analytic_id.id != wiz_line.analytic_id.id \
-                                or old_line.percentage != wiz_line.percentage \
-                                or old_line.cost_center_id.id != wiz_line.cost_center_id.id \
-                                or old_line.destination_id.id != wiz_line.destination_id.id:
-                            # FP account changed or % modified
-                            if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [old_line.analytic_id.id]):
-                                raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(old_line.analytic_id.code))
-
-                        if (old_line.cost_center_id.id != wiz_line.cost_center_id.id or
-                                old_line.destination_id.id != wiz_line.destination_id.id or
-                                old_line.percentage != wiz_line.percentage):
-                            # TODO: add param is_HQ_origin, or use is_HQ_entries defined above?
-                            if self._check_period_closed_on_fp_distrib_line(cr, uid, old_line.id, is_HQ_origin=is_HQ_origin):
-                                to_reverse.append(wiz_line)
-                            else:
-                                to_override.append(wiz_line)
-                        elif old_line.analytic_id.id != wiz_line.analytic_id.id:
+                    if (old_line.cost_center_id.id != wiz_line.cost_center_id.id or
+                            old_line.destination_id.id != wiz_line.destination_id.id or
+                            old_line.percentage != wiz_line.percentage):
+                        if self._check_period_closed_on_fp_distrib_line(cr, uid, old_line.id, is_HQ_origin=is_HQ_origin):
+                            to_reverse.append(wiz_line)
+                        else:
                             to_override.append(wiz_line)
+                    elif old_line.analytic_id.id != wiz_line.analytic_id.id:
+                        to_override.append(wiz_line)
 
                     old_line_ok.append(old_line.id)
 
