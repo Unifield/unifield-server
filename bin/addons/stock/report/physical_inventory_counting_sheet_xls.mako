@@ -487,7 +487,7 @@
     % if isDate(item.expiry_date):
     <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${item.expiry_date|n}T00:00:00.000</Data></Cell>
     % else:
-    <Cell ss:StyleID="s108"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="short_date"><Data ss:Type="String"></Data></Cell>
     % endif
     <Cell ss:StyleID="s108"><Data ss:Type="String">${display_product_attributes(item)|x}</Data></Cell>
     <Cell ss:StyleID="s109"><Data ss:Type="String">${yesno(item.is_bn)}</Data></Cell>
