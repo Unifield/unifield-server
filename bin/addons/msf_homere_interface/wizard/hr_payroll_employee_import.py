@@ -27,7 +27,7 @@ from osv import osv
 from osv import fields
 from tempfile import NamedTemporaryFile,mkdtemp
 import csv
-from base64 import decodestring
+from base64 import b64decode
 from time import strftime
 from tools.misc import ustr
 from addons import get_module_resource
@@ -721,7 +721,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
             fileobj = NamedTemporaryFile('w+b', delete=False)
-            fileobj.write(decodestring(wiz.file))
+            fileobj.write(b64decode(wiz.file))
             # now we determine the file format
             filename = fileobj.name
             fileobj.close()

@@ -24,8 +24,9 @@ from osv import fields
 
 from tools.translate import _
 
-from mx.DateTime import DateFrom, now, RelativeDate
 from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
+
 
 import decimal_precision as dp
 
@@ -39,7 +40,7 @@ _HEADER_TYPE = {type('char'): 'string',
                 type(1): 'number',
                 type(1.00): 'number',
                 type(int(1)): 'number',
-                type(now()): 'datetime'}
+                type(datetime.now()): 'datetime'}
 
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
@@ -171,7 +172,7 @@ class supplier_catalogue(osv.osv):
         # the new catalogue
         if isinstance(period_from, date):
             period_from = period_from.strftime('%Y-%m-%d')
-        period_from = DateFrom(period_from) + RelativeDate(days=-1)
+        period_from = datetime.strptime(period_from, '%Y-%m-%d') + relativedelta(days=-1)
         self.write(cr, uid, from_update_ids, {'period_to': period_from.strftime('%Y-%m-%d')}, context=context)
 
         return True
@@ -469,9 +470,9 @@ class supplier_catalogue(osv.osv):
         res = {}
 
         for catalogue in self.browse(cr, uid, ids, context=context):
-            date_from = DateFrom(catalogue.period_from)
-            date_to = DateFrom(catalogue.period_to)
-            res[catalogue.id] = date_from < now() < date_to
+            date_from = datetime.strptime(catalogue.period_from, '%Y-%m-%d')
+            date_to = datetime.strptime(catalogue.period_to, '%Y-%m-%d')
+            res[catalogue.id] = date_from < datetime.now() < date_to
 
         return res
 
@@ -622,7 +623,7 @@ class supplier_catalogue(osv.osv):
                           ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('SoQ Rounding', 'number'), ('Min Order Qty', 'number'),
                           ('Comment', 'string')]
         lines_not_imported = [] # list of list
-        t_dt = type(now())
+        t_dt = type(datetime.now())
         for line in kwargs.get('line_with_error'):
             for f in line:
                 if type(f) == t_dt:

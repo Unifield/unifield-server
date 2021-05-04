@@ -476,8 +476,6 @@ class expression(object):
                     if like:
                         if isinstance(right, str):
                             str_utf8 = right
-                        elif isinstance(right, str):
-                            str_utf8 = right.encode('utf-8')
                         else:
                             str_utf8 = str(right)
                         params = '%%%s%%' % str_utf8

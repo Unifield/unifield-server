@@ -5,8 +5,8 @@ import requests
 from office365.runtime.auth.authentication_context import AuthenticationContext
 from office365.runtime.client_request import ClientRequest
 from office365.sharepoint.client_context import ClientContext
-from office365.runtime.utilities.request_options import RequestOptions
-from office365.runtime.utilities.http_method import HttpMethod
+from office365.runtime.http.request_options import RequestOptions
+from office365.runtime.http.http_method import HttpMethod
 import cgi
 import uuid
 import logging

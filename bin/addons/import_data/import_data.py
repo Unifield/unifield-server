@@ -27,7 +27,7 @@ from tempfile import TemporaryFile
 import base64
 import pooler
 import tools
-from mx import DateTime
+from datetime import datetime
 import re
 import logging
 
@@ -343,7 +343,7 @@ class import_data(osv.osv_memory):
                                     self._cache[dbname]['product.product.%s.%s' % (field, value)] = key
                                 break
                 elif fields_def[field]['type'] == 'date':
-                    dt = DateTime.strptime(value,"%d/%m/%Y")
+                    dt = datetime.strptime(value,"%d/%m/%Y")
                     value = dt.strftime("%Y-%m-%d")
                 elif fields_def[field]['type'] == 'float':
                     # remove space and unbreakable space

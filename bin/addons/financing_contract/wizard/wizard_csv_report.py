@@ -23,7 +23,6 @@ import csv
 import io
 from tools.translate import _
 import datetime
-from mx.DateTime import *
 
 class wizard_csv_report(osv.osv_memory):
 

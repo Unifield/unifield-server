@@ -50,6 +50,7 @@ from .which import which
 from threading import local
 import math
 from functools import reduce
+from functools import cmp_to_key
 
 try:
     from html2text import html2text
@@ -441,7 +442,7 @@ def file_open(name, mode="r", subdir='addons', pathinfo=False):
 #----------------------------------------------------------
 # iterables
 #----------------------------------------------------------
-def flatten(list):
+def flatten(plist):
     """Flatten a list of elements into a uniqu list
     Author: Christophe Simonis (christophe@tinyerp.com)
 
@@ -461,13 +462,10 @@ def flatten(list):
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     """
 
-    def isiterable(x):
-        return hasattr(x, "__iter__")
-
     r = []
-    for e in list:
-        if isiterable(e):
-            for _e in flattern(e):
+    for e in plist:
+        if isinstance(e, (list, tuple)):
+            for _e in flatten(e):
                 r.append(_e)
         else:
             r.append(e)
@@ -1065,11 +1063,11 @@ class read_cache(object):
             for asc, field in clause:
                 f1 = row1[field]
                 f2 = row2[field]
-                ret = cmp(f1, f2)
+                ret = (f1 > f2) - (f1 < f2)  # cmp
                 if ret != 0:
                     return ret if asc else -ret
             return 0
-        return sorted(rows, cmp=key_compare)
+        return sorted(rows, key=cmp_to_key(key_compare))
 
     def filter_dict(self, keys_to_remove, rowset):
         ret = []

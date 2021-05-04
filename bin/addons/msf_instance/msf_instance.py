@@ -29,7 +29,8 @@ from tools import webdav
 import zipfile
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
-from mx import DateTime
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import logging
 import requests
 import time
@@ -683,11 +684,11 @@ class msf_instance_cloud(osv.osv):
                     if self.pool.get('backup.config').search(cr, uid, [('backup_type', '=', 'sharepoint')]):
                         to_write['active'] = True
 
-                next_cron = DateTime.strptime(cron_data.nextcall, '%Y-%m-%d %H:%M:%S')
+                next_cron = datetime.strptime(cron_data.nextcall, '%Y-%m-%d %H:%M:%S')
                 if not cron_data.active or abs(round(next_cron.hour + next_cron.minute/60.,2) - round(myself['cloud_schedule_time'],2)) > 0.001:
-                    next_time = DateTime.now()  + DateTime.RelativeDateTime(minute=0, second=0, hour=round(myself['cloud_schedule_time'],3)) + DateTime.RelativeDateTime(seconds=0)
-                    if next_time < DateTime.now():
-                        next_time += DateTime.RelativeDateTime(days=1)
+                    next_time = datetime.now()  + relativedelta(minute=0, second=0, hour=round(myself['cloud_schedule_time'],3)) + relativedelta(seconds=0)
+                    if next_time < datetime.now():
+                        next_time += relativedelta(days=1)
                     to_write['nextcall'] = next_time.strftime('%Y-%m-%d %H:%M:00')
             if to_write:
                 self._logger.info('Update scheduled task to send backup: active: %s, next call: %s (previous active: %s, next: %s)' % (to_write.get('active', ''), to_write.get('nextcall', ''), cron_data.active, cron_data.nextcall))
@@ -698,9 +699,10 @@ class msf_instance_cloud(osv.osv):
     def _is_in_time_range(self, starttime, endtime):
         if starttime == endtime:
             return False
-        start_dt = (DateTime.now()+DateTime.RelativeDateTime(hour=starttime or 0,minute=0, second=0)).time
-        end_dt = (DateTime.now()+DateTime.RelativeDateTime(hour=endtime or 0,minute=0, second=0)).time
-        now_dt = DateTime.now().time
+        # TODO JFB
+        start_dt = (datetime.now()+relativedelta(hour=starttime or 0,minute=0, second=0)).time
+        end_dt = (datetime.now()+relativedelta(hour=endtime or 0,minute=0, second=0)).time
+        now_dt = datetime.now().time
 
         if start_dt < end_dt:
             return now_dt >= start_dt and now_dt <= end_dt
@@ -785,7 +787,7 @@ class msf_instance_cloud(osv.osv):
             temp_fileobj.seek(0)
 
             zip_size = os.path.getsize(temp_fileobj.name)
-            today = DateTime.now()
+            today = datetime.now()
 
             self._logger.info('OneDrive: upload backup started, buffer_size: %s, total size %s' % (misc.human_size(buffer_size), misc.human_size(zip_size)))
             if progress:

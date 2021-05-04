@@ -26,7 +26,7 @@ from osv import fields
 from tools.translate import _
 from tools.misc import ustr
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from base64 import decodestring
+from base64 import b64decode
 
 class hr_nat_staff_import_wizard(osv.osv_memory):
     _name = 'hr.nat.staff.import'
@@ -101,7 +101,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
             if wiz.filename.split('.')[-1] != 'xml':
                 raise osv.except_osv(_('Warning'), _('This wizard only accept XML files.'))
             # Read file
-            fileobj = SpreadsheetXML(xmlstring=decodestring(wiz.file))
+            fileobj = SpreadsheetXML(xmlstring=b64decode(wiz.file))
             reader = fileobj.getRows()
             next(reader)
             start = 1

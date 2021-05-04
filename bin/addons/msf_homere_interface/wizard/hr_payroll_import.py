@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 import os.path
-from base64 import decodestring
+from base64 import b64decode
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile as zf
 import csv
@@ -517,7 +517,7 @@ class hr_payroll_import(osv.osv_memory):
 
             # Decode file string
             fileobj = NamedTemporaryFile('w+b', delete=False)
-            fileobj.write(decodestring(wiz.file))
+            fileobj.write(b64decode(wiz.file))
             # now we determine the file format
             filename = fileobj.name
             fileobj.close()

@@ -50,7 +50,7 @@ from sync_common import WHITE_LIST_MODEL
 from datetime import datetime, timedelta
 
 from sync_common import OC_LIST_TUPLE
-from base64 import decodestring
+from base64 import b64decode
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -390,7 +390,7 @@ def generate_new_hwid():
             raise Exception('/sbin/ifconfig give no result, please check it is correctly installed')
         mac_list.sort()
         logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
-        hw_hash = hashlib.md5(''.join(mac_list)).hexdigest()
+        hw_hash = hashlib.md5((''.join(mac_list)).encode('utf8')).hexdigest()
     logger.info('Hardware identifier: %s' % hw_hash)
     return hw_hash
 
@@ -776,7 +776,7 @@ class Entity(osv.osv):
         logger = context.get('logger')
         entity = self.get_entity(cr, uid, context)
         encoded_zip = entity.user_rights_data
-        plain_zip = decodestring(encoded_zip)
+        plain_zip = b64decode(encoded_zip)
 
         self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=False, logger=logger, context=context)
         return True
@@ -804,7 +804,7 @@ class Entity(osv.osv):
                 logger.append(_("Download new User Rights: %s") % res.get('name'))
                 logger.write()
             ur_data_encoded = proxy.get_last_user_rights_file(entity.identifier, self._hardware_id, res.get('sum'))
-            ur_data = decodestring(ur_data_encoded)
+            ur_data = b64decode(ur_data_encoded)
             computed_hash = hashlib.md5(ur_data).hexdigest()
             if computed_hash != res.get('sum'):
                 raise Exception('User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum')))

@@ -40,7 +40,7 @@ class wizard_valid_line(osv.osv_memory):
         if isinstance(ids, int):
             ids = [ids]
 
-	for wiz in self.browse(cr, uid, ids, context=context):
+        for wiz in self.browse(cr, uid, ids, context=context):
             line_ids = []
             for line in wiz.mrc_id.line_ids:
                 if not line.valid_ok:
@@ -48,7 +48,7 @@ class wizard_valid_line(osv.osv_memory):
 
             self.write(cr, uid, [wiz.id], {'line_ids': [(6,0,line_ids)]}, context=context)
 
-	return {'type': 'ir.actions.act_window',
+        return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.valid.line',
                 'res_id': ids[0],
                 'view_type': 'form',
@@ -70,7 +70,7 @@ class wizard_valid_line(osv.osv_memory):
             for line in wiz.line_ids:
                 self.pool.get('monthly.review.consumption.line').valid_line(cr, uid, line.id, context=context)
               
-	return {'type': 'ir.actions.act_window',
+        return {'type': 'ir.actions.act_window',
                 'res_model': 'monthly.review.consumption',
                 'res_id': wiz.mrc_id.id,
                 'view_type': 'form',

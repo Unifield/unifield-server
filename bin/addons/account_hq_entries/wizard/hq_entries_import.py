@@ -22,7 +22,7 @@
 
 from osv import osv
 from osv import fields
-from base64 import decodestring
+from base64 import b64decode
 from tempfile import NamedTemporaryFile
 import csv
 from tools.translate import _
@@ -309,7 +309,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
             # Decode file string
             fileobj = NamedTemporaryFile('w+')
-            fileobj.write(decodestring(wiz['file']))
+            fileobj.write(b64decode(wiz['file']))
             # now we determine the file format
             fileobj.seek(0)
             # Read CSV file

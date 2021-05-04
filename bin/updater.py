@@ -427,7 +427,7 @@ def do_prepare(cr, revision_ids):
     """Prepare patches for an upgrade of the server and set the lock file"""
     if not revision_ids:
         return ('failure', 'Nothing to do.', {})
-    from . import pooler
+    import pooler
     pool = pooler.get_pool(cr.dbname)
     version = pool.get('sync_client.version')
 

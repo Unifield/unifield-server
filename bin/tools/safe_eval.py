@@ -83,7 +83,7 @@ _EXPR_OPCODES = _CONST_OPCODES.union(set(opmap[x] for x in [
     # slice operations (Python 3 only has BUILD_SLICE)
     'SLICE+0', 'SLICE+1', 'SLICE+2', 'SLICE+3', 'BUILD_SLICE',
     # comprehensions
-    'LIST_APPEND', 'MAP_ADD', 'SET_ADD',
+    'LIST_APPEND', 'MAP_ADD', 'SET_ADD', 'LIST_EXTEND',
     'COMPARE_OP',
 ] if x in opmap))
 

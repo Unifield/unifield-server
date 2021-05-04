@@ -243,7 +243,7 @@ class ir_ui_menu(osv.osv):
         if icon_path:
             try:
                 icon_file = tools.file_open(icon_path,'rb')
-                icon_image = base64.encodestring(icon_file.read())
+                icon_image = base64.b64encode(icon_file.read())
             finally:
                 icon_file.close()
         return icon_image

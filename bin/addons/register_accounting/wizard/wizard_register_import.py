@@ -28,7 +28,7 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from tempfile import NamedTemporaryFile
-from base64 import decodestring
+from base64 import b64decode
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from base import currency_date
 import threading
@@ -266,7 +266,7 @@ class wizard_register_import(osv.osv_memory):
                 # Update wizard
                 self.write(cr, uid, [wiz.id], {'message': _('Copying file…'), 'progression': 3.00}, context)
                 fileobj = NamedTemporaryFile('w+b', delete=False)
-                fileobj.write(decodestring(wiz.file))
+                fileobj.write(b64decode(wiz.file))
                 fileobj.close()
                 content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
                 if not content:

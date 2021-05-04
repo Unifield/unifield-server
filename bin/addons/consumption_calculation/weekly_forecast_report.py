@@ -19,7 +19,10 @@
 #
 ##############################################################################
 
-from mx.DateTime.DateTime import DateFrom, RelativeDateTime, Age, now
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from dateutil._common import weekday
+
 import threading
 import time
 import logging
@@ -171,11 +174,11 @@ class weekly_forecast_report(osv.osv):
         if consumption_type == 'amc':
             if consumption_from:
                 res.update({
-                    'consumption_from': (DateFrom(consumption_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d'),
+                    'consumption_from': (datetime.strptime(consumption_from, '%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d'),
                 })
             if consumption_to:
                 res.update({
-                    'consumption_to': (DateFrom(consumption_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
+                    'consumption_to': (datetime.strptime(consumption_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
                 })
 
         return {'value': res}
@@ -342,7 +345,7 @@ class weekly_forecast_report(osv.osv):
 
         # background cursor
         new_cr = pooler.get_db(cr.dbname).cursor()
-        fixed_now = now()
+        fixed_now = datetime.now()
         try:
             for report in self.browse(new_cr, uid, ids, context=context):
                 product_domain = [('type', '=', 'product')]
@@ -404,12 +407,12 @@ class weekly_forecast_report(osv.osv):
                     i += 1
                     if report.interval_type == 'week':
                         interval_name = '%s %s' % (_('Week'), i)
-                        interval_from = fixed_now + RelativeDateTime(weeks=i-1, hour=0, minute=0, second=0)
-                        interval_to = fixed_now + RelativeDateTime(weeks=i, days=-1, hour=23, minute=59, second=59)
+                        interval_from = fixed_now + relativedelta(weeks=i-1, hour=0, minute=0, second=0)
+                        interval_to = fixed_now + relativedelta(weeks=i, days=-1, hour=23, minute=59, second=59)
                     else:
                         interval_name = '%s %s' % (_('Month'), i)
-                        interval_from = fixed_now + RelativeDateTime(months=i-1, hour=0, minute=0, second=0)
-                        interval_to = fixed_now + RelativeDateTime(months=i, days=-1, hour=23, minute=59, second=59)
+                        interval_from = fixed_now + relativedelta(months=i-1, hour=0, minute=0, second=0)
+                        interval_to = fixed_now + relativedelta(months=i, days=-1, hour=23, minute=59, second=59)
 
                     intervals.append((interval_name, interval_from, interval_to))
                     dict_int_from.setdefault(interval_from.strftime('%Y-%m-%d'), interval_name)
@@ -554,24 +557,25 @@ class weekly_forecast_report(osv.osv):
 
                     # Return the last from date of interval closest to date
                     def get_interval_by_date(date):
-                        date = DateFrom(date)
+                        date = datetime.strptime(date, '%Y-%m-%d')
                         if date < fixed_now:
                             date = fixed_now
                         if report.interval_type == 'week':
                             st_day = fixed_now.day_of_week
-                            last_date = date + RelativeDateTime(weekday=(st_day, 0))
+                            last_date = date + relativedelta(weekday=weekday(st_day))
                             if date.iso_week[2] == last_date.iso_week[2]:
                                 return date
                             elif date.iso_week[2] > last_date.iso_week[2]:
                                 return last_date
                             else:
-                                return date + RelativeDateTime(weeks=-1) + RelativeDateTime(weekday=(st_day, 0))
+                                # TODO JFB weekday
+                                return date + relativedelta(weeks=-1) + relativedelta(weekday=weekday(st_day))
                         else:
                             st_day = fixed_now.day
                             if date.day >= st_day:
-                                return date + RelativeDateTime(day=st_day)
+                                return date + relativedelta(day=st_day)
                             else:
-                                return date + RelativeDateTime(months=-1, day=st_day)
+                                return date + relativedelta(months=-1, day=st_day)
 
                     # Put expired quantity into the good interval
                     for exp_key, exp_val in exp_vals[product_id].items():
@@ -723,9 +727,9 @@ class weekly_forecast_report(osv.osv):
         res = {}
 
         if report.interval_type == 'week':
-            report_end_date = fixed_now + RelativeDateTime(weeks=report.interval)
+            report_end_date = fixed_now + relativedelta(weeks=report.interval)
         else:
-            report_end_date = fixed_now + RelativeDateTime(months=report.interval)
+            report_end_date = fixed_now + relativedelta(months=report.interval)
 
         for product, av_cons in product_cons.values():
             res.setdefault(product['id'], {'total': 0.00})
@@ -739,17 +743,17 @@ class weekly_forecast_report(osv.osv):
                 ('life_date', '<=', report_end_date.strftime('%Y-%m-%d')),
             ], order='life_date', context=context)
 
-            last_expiry_date = fixed_now - RelativeDateTime(days=1)
+            last_expiry_date = fixed_now - relativedelta(days=1)
             total_expired = 0.00
             rest = 0.00
             already_cons = 0.00
             for lot in lot_obj.browse(cr, uid, prodlot_ids, context=context):
                 l_expired_qty = 0.00
-                lot_days = Age(DateFrom(lot.life_date), last_expiry_date)
+                lot_days = relativedelta(datetime.strptime(lot.life_date, '%Y-%m-%d'), last_expiry_date)
                 lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
 
                 if lot_coeff >= 0.00:
-                    last_expiry_date = DateFrom(lot.life_date)
+                    last_expiry_date = datetime.strptime(lot.life_date, '%Y-%m-%d')
                 if lot_coeff < 0.00:
                     lot_coeff = 0.00
 
