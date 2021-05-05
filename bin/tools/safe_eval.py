@@ -85,6 +85,9 @@ _EXPR_OPCODES = _CONST_OPCODES.union(set(opmap[x] for x in [
     # comprehensions
     'LIST_APPEND', 'MAP_ADD', 'SET_ADD', 'LIST_EXTEND',
     'COMPARE_OP',
+    # specialised comparisons
+    'IS_OP', 'CONTAINS_OP',
+    'DICT_MERGE', 'DICT_UPDATE',
 ] if x in opmap))
 
 _SAFE_OPCODES = _EXPR_OPCODES.union(set(opmap[x] for x in [
@@ -204,7 +207,8 @@ def test_expr(expr, allowed_codes, mode="eval"):
         raise
     except Exception as e:
         exc_info = sys.exc_info()
-        pycompat.reraise(ValueError, ValueError('"%s" while compiling\n%r' % (ustr(e), expr)), exc_info[2])
+        raise ValueError('%s: "%s" while evaluating\n%r' % (ustr(type(e)), ustr(e), expr)).with_traceback(exc_info[2])
+
     assert_valid_codeobj(allowed_codes, code_obj, expr)
     return code_obj
 
@@ -345,7 +349,8 @@ def safe_eval(expr, globals_dict=None, locals_dict=None, mode="eval", nocopy=Fal
         return unsafe_eval(c, globals_dict, locals_dict)
     except Exception as e:
         exc_info = sys.exc_info()
-        pycompat.reraise(ValueError, ValueError('%s: "%s" while evaluating\n%r' % (ustr(type(e)), ustr(e), expr)), exc_info[2])
+        raise ValueError('%s: "%s" while evaluating\n%r' % (ustr(type(e)), ustr(e), expr)).with_traceback(exc_info[2])
+
 def test_python_expr(expr, mode="eval"):
     try:
         test_expr(expr, _SAFE_OPCODES, mode=mode)
