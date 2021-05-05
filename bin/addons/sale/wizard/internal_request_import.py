@@ -266,7 +266,7 @@ class internal_request_import(osv.osv):
         for ir_imp in self.browse(cr, uid, ids, context=context):
             if not ir_imp.file_to_import:
                 raise osv.except_osv(_('Error'), _('No file to import'))
-            xml_file = base64.decodestring(ir_imp.file_to_import)
+            xml_file = base64.b64decode(ir_imp.file_to_import)
             excel_file = SpreadsheetXML(xmlstring=xml_file)
             if not excel_file.getWorksheets():
                 raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
@@ -285,7 +285,7 @@ class internal_request_import(osv.osv):
         '''
         values = {}
         # Read the XML Excel file
-        xml_file = base64.decodestring(file_to_import)
+        xml_file = base64.b64decode(file_to_import)
         fileobj = SpreadsheetXML(xmlstring=xml_file)
 
         # Read all lines

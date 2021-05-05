@@ -84,7 +84,7 @@ class wizard_import_fmc(osv.osv_memory):
         if not obj.file:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file))
 
         # iterator on rows
         rows = fileobj.getRows()

@@ -252,7 +252,7 @@ class wizard_pick_import(osv.osv_memory):
         wiz = self.browse(cr, uid, ids[0], context=context)
         if not wiz.import_file:
             raise osv.except_osv(_('Error'), _('No file to import'))
-        import_file = SpreadsheetXML(xmlstring=base64.decodestring(wiz.import_file))
+        import_file = SpreadsheetXML(xmlstring=base64.b64decode(wiz.import_file))
         import_data_header, import_data_lines = self.get_import_data(cr, uid, ids, import_file, context=context)
 
         if import_data_header['reference'] != wiz.picking_id.name:

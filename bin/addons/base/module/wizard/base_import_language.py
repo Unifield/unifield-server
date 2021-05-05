@@ -48,7 +48,7 @@ class base_language_import(osv.osv_memory):
 
         import_data = self.browse(cr, uid, ids)[0]
         fileobj = TemporaryFile('w+')
-        fileobj.write(base64.decodestring(import_data.data))
+        fileobj.write(base64.b64decode(import_data.data))
 
         # now we determine the file format
         fileobj.seek(0)

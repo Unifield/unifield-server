@@ -411,7 +411,7 @@ class OerpAuthProxy(websrv_lib.AuthProxy):
             return True 
         if auth_str and auth_str.startswith('Basic '):
             auth_str=auth_str[len('Basic '):]
-            (user,passwd) = base64.decodestring(auth_str).split(':')
+            (user,passwd) = base64.b64decode(auth_str).split(':')
             self.provider.log("Found user=\"%s\", passwd=\"***\" for db=\"%s\"" %(user,db))
             acd = self.provider.authenticate(db,user,passwd,handler.client_address)
             if acd != False:

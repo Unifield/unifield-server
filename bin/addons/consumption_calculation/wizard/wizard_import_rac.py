@@ -86,7 +86,7 @@ class wizard_import_rac(osv.osv_memory):
         if not import_rac.file:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(import_rac.file))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(import_rac.file))
         # iterator on rows
         reader = fileobj.getRows()
         next(reader)

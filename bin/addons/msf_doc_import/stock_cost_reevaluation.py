@@ -63,7 +63,7 @@ class stock_cost_reevaluation(osv.osv):
 
         product_cache = {}
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
 
         # iterator on rows
         reader = fileobj.getRows()

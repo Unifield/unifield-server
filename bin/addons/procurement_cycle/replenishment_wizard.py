@@ -21,7 +21,7 @@ class replenishment_consolidated_oc_import(osv.osv_memory):
 
         if not wiz.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
-        file_data = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file_to_import))
+        file_data = SpreadsheetXML(xmlstring=base64.b64decode(wiz.file_to_import))
 
 
         cal_obj = self.pool.get('replenishment.order_calc')

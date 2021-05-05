@@ -96,7 +96,7 @@ class wizard_import_invoice_line(osv.osv_memory):
             template_col_count = len(header_index)
             mandatory_fields = ['Description', 'Account', 'Quantity', 'Unit Price']
 
-            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
+            file_obj = SpreadsheetXML(xmlstring=base64.b64decode(wiz.file))
             row_iterator = file_obj.getRows()
 
             to_write = {}
@@ -329,7 +329,7 @@ Importation completed in %s!
             if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
                 # iterator on rows
                 reader_iterator = fileobj.getRows()
                 # get first line

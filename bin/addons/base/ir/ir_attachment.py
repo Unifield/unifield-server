@@ -144,7 +144,7 @@ class ir_attachment(osv.osv):
                 vals['datas'] = datas
             else:
                 vals['datas'] = '' # erase the old value in DB if any
-            decoded_datas = base64.decodestring(datas or '')
+            decoded_datas = base64.b64decode(datas or '')
             self.check_file_size(cr, uid, decoded_datas, context=context)
             vals['size'] = self.get_octet_size(decoded_datas)
 
@@ -276,7 +276,7 @@ class ir_attachment(osv.osv):
             else:
                 datas = values['datas']
 
-        decoded_datas = base64.decodestring(datas)
+        decoded_datas = base64.b64decode(datas)
         values['size'] = self.get_octet_size(decoded_datas)
         self.check_file_size(cr, uid, decoded_datas, context=context)
         attachment_id = super(ir_attachment, self).create(cr, uid, values,

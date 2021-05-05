@@ -371,13 +371,13 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.filetype == 'excel':
-                xml_file = base64.decodestring(wiz.file_to_import)
+                xml_file = base64.b64decode(wiz.file_to_import)
                 excel_file = SpreadsheetXML(xmlstring=xml_file)
                 if not excel_file.getWorksheets():
                     raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
             else:
                 try:
-                    xml_file = base64.decodestring(wiz.file_to_import)
+                    xml_file = base64.b64decode(wiz.file_to_import)
                     dtd_path = os.path.join(tools.config['root_path'], 'tools/import_po.dtd')
                     dtd = etree.DTD(dtd_path)
                     tree = etree.fromstring(xml_file)
@@ -420,7 +420,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         '''
         values = {}
         # Read the XML file
-        xml_file = base64.decodestring(file_to_import)
+        xml_file = base64.b64decode(file_to_import)
 
         root = ET.fromstring(xml_file)
         if root.tag != 'data':
@@ -518,7 +518,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         '''
         values = {}
         # Read the XML Excel file
-        xml_file = base64.decodestring(file_to_import)
+        xml_file = base64.b64decode(file_to_import)
         fileobj = SpreadsheetXML(xmlstring=xml_file)
 
         # Read all lines

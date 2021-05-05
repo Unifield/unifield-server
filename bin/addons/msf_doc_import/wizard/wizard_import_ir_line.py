@@ -92,7 +92,7 @@ class wizard_import_ir_line(osv.osv_memory):
             header_index = context['header_index']
             mandatory_col_count = 7  # ignore Status column
 
-            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
+            file_obj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_browse.file))
 
             line_num = 0
             to_write = {}
@@ -297,7 +297,7 @@ Importation completed in %s!
             if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
                 # iterator on rows
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)

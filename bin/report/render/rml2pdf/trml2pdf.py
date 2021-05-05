@@ -308,13 +308,13 @@ class _rml_doc(object):
         rc = ''
         for n in node:
             rc +=( etree.tostring(n, encoding='unicode') or '') + n.tail
-        return base64.decodestring(node.tostring())
+        return base64.b64decode(node.tostring())
 
     def _images(self, el):
         result = {}
         for node in el.findall('.//image'):
             rc =( node.text or '')
-            result[node.get('name')] = base64.decodestring(rc)
+            result[node.get('name')] = base64.b64decode(rc)
         return result
 
     def render(self, out):
@@ -486,7 +486,7 @@ class _rml_canvas(object):
                         node.text = newtext or ''
                 image_data = None
                 if node.text:
-                    image_data = base64.decodestring(node.text)
+                    image_data = base64.b64decode(node.text)
                 if image_data:
                     s = BytesIO(image_data)
                 else:
@@ -729,7 +729,7 @@ class _rml_flowable(object):
         return _rml_Illustration(node, self.localcontext, self.styles, self)
 
     def _textual_image(self, node):
-        return base64.decodestring(node.text)
+        return base64.b64decode(node.text)
 
     def _pto(self, node):
         sub_story = []
@@ -832,7 +832,7 @@ class _rml_flowable(object):
                     if self.localcontext:
                         newtext = utils._process_text(self, node.text or '')
                         node.text = newtext
-                    image_data = base64.decodestring(node.text)
+                    image_data = base64.b64decode(node.text)
                 if not image_data:
                     self._logger.debug("No inline image data")
                     return False

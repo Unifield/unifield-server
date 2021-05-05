@@ -576,8 +576,8 @@ def reconnect_sync_server():
         f.close()
         if lines:
             try:
-                dbname = base64.decodestring(lines[0])
-                password = base64.decodestring(lines[1])
+                dbname = base64.b64decode(lines[0])
+                password = base64.b64decode(lines[1])
                 logger.info('dbname = %s' % dbname)
                 db, pool = pooler.get_db_and_pool(dbname)
                 db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have

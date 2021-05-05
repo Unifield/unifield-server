@@ -89,7 +89,7 @@ class wizard_import_tender_line(osv.osv_memory):
             error_log, message = '', ''
             header_index = context['header_index']
 
-            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
+            file_obj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_browse.file))
             # iterator on rows
             rows = file_obj.getRows()
             # ignore the first row
@@ -249,7 +249,7 @@ Importation completed in %s!
             if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
                 # iterator on rows
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)

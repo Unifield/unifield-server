@@ -145,7 +145,7 @@ class kit_mass_import(osv.osv):
 
         values = {}
         # Read the XML file
-        xml_file = base64.decodestring(file_to_import)
+        xml_file = base64.b64decode(file_to_import)
         fileobj = SpreadsheetXML(xmlstring=xml_file)
 
         # Read all lines

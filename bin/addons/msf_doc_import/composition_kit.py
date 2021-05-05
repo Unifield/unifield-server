@@ -85,7 +85,7 @@ class composition_kit(osv.osv):
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
 
         # iterator on rows
         rows = fileobj.getRows()
@@ -184,7 +184,7 @@ Module, Product Code*, Product Description, Quantity, Product UOM, Comment, B.Nu
         if not obj.real_file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.real_file_to_import))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.real_file_to_import))
 
         # iterator on rows
         rows = fileobj.getRows()

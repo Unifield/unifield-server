@@ -149,7 +149,7 @@ class document(object):
                         if ext in ('jpg','jpeg', 'png'):
                             import base64
                             from io import StringIO
-                            dt = base64.decodestring(datas['datas'])
+                            dt = base64.b64decode(datas['datas'])
                             fp = StringIO()
                             fp.write(dt)
                             i = str(len(self.bin_datas))

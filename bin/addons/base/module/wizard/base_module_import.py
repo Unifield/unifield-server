@@ -49,7 +49,7 @@ class base_module_import(osv.osv_memory):
         (data,) = self.browse(cr, uid, ids , context=context)
         module_data = data.module_file
 
-        val = base64.decodestring(module_data)
+        val = base64.b64decode(module_data)
         fp = StringIO()
         fp.write(val)
         fdata = zipfile.ZipFile(fp, 'r')

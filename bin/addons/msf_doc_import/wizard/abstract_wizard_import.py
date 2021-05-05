@@ -338,7 +338,7 @@ class abstract_wizard_import(osv.osv_memory):
         Check if the given file is an good UTF-8 file
         """
         if base == 'base64':
-            import_file = base64.decodestring(import_file)
+            import_file = base64.b64decode(import_file)
 
         try:
             import_file.decode('utf-8')
@@ -370,7 +370,7 @@ class abstract_wizard_import(osv.osv_memory):
                 _('The given file seems not to be encoding in UTF-8. Please check the encoding of the file and re-try.')
             )
 
-        file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wizard_brw.import_file))
+        file_obj = SpreadsheetXML(xmlstring=base64.b64decode(wizard_brw.import_file))
 
         file_obj.getNbRows()
         # iterator on rows

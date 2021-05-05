@@ -111,7 +111,7 @@ class import_currencies(osv.osv_memory):
         for wizard in self.browse(cr, uid, ids, context=context):
             if not wizard.import_file:
                 raise osv.except_osv(_('Warning'), _('Please browse a csv file.'))
-            import_file = base64.decodestring(wizard.import_file)
+            import_file = base64.b64decode(wizard.import_file)
             import_string = io.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
 

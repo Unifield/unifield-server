@@ -101,7 +101,7 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
                                        "has not been found in the database. Please check "\
                                        "the attachments configuration or update the MSR.") % attachments_path)
             datas = attachment_obj.read(cr, uid, attachment_ids[0], ['datas'])['datas']
-            return (base64.decodestring(datas), file_format)
+            return (base64.b64decode(datas), file_format)
         else:
             path = os.path.join(attachments_path, file_name)
             if os.path.exists(path):

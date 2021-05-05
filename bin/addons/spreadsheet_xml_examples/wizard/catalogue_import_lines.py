@@ -62,7 +62,7 @@ class catalogue_import_lines_xls(osv.osv_memory):
         if not wiz.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file_to_import))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz.file_to_import))
 
         # iterator on rows
         reader = fileobj.getRows()

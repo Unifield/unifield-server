@@ -268,12 +268,19 @@ class time(_column):
         return DT.datetime.now().strftime(
             tools.DEFAULT_SERVER_TIME_FORMAT)
 
+def _binary_symbol_f(data):
+    if not data:
+        return None
+    if isinstance(data, bytes):
+        return Binary(value)
+    return Binary(str(data).encode('ascii'))
+
 class binary(_column):
     _type = 'binary'
     _symbol_c = '%s'
-    _symbol_f = lambda symb: symb and Binary(symb) or None
+    _symbol_f = _binary_symbol_f
     _symbol_set = (_symbol_c, _symbol_f)
-    _symbol_get = lambda self, x: x and str(x)
+    _symbol_get = lambda self, x: x
 
     _classic_read = False
     _prefetch = False

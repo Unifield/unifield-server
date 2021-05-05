@@ -49,7 +49,7 @@ class wizard_import_mapping(osv.osv_memory):
         mapping_obj.unlink(cr, uid, mapping_ids, context=context)
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            import_file = base64.decodestring(wizard.import_file)
+            import_file = base64.b64decode(wizard.import_file)
             import_string = io.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
 

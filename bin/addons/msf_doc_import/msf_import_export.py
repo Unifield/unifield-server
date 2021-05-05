@@ -378,7 +378,7 @@ class msf_import_export(osv.osv_memory):
                 model = MODEL_DICT[selection]['model']
                 if model in MODEL_HEADER_NOT_CHECKED:
                     continue
-                xml_string = base64.decodestring(obj['import_file'])
+                xml_string = base64.b64decode(obj['import_file'])
                 self.check_xml_syntax(cr, uid, xml_string, context=context)
                 rows, nb_rows = self.read_file(wiz, context=context)
                 if MODEL_DATA_DICT[selection].get('header_info'):

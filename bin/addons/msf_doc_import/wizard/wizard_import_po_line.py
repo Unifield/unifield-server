@@ -104,7 +104,7 @@ class wizard_import_po_line(osv.osv_memory):
             is_rfq = wiz.po_id.rfq_ok
             mandatory_col_count = 9 if is_rfq else 7
 
-            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
+            file_obj = SpreadsheetXML(xmlstring=base64.b64decode(wiz.file))
 
             """
             1st path: check currency in lines in phasis with document
@@ -440,7 +440,7 @@ Importation completed in %s!
             if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
                 # iterator on rows
                 reader_iterator = fileobj.getRows()
                 # get first line

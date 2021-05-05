@@ -128,7 +128,7 @@ class product_list_import(osv.osv_memory):
             list_brw = self.browse(cr, uid, list_id, context=context)
 
             fileobj = TemporaryFile('w+')
-            fileobj.write(base64.decodestring(file.file_to_import))
+            fileobj.write(base64.b64decode(file.file_to_import))
 
             # now we determine the file format
             fileobj.seek(0)

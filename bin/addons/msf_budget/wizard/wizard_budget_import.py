@@ -258,7 +258,7 @@ class wizard_budget_import(osv.osv_memory):
                         return {}
 
             # And finally read it!
-            import_file = base64.decodestring(wiz_file)
+            import_file = base64.b64decode(wiz_file)
             import_string = io.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
             # A budget import file can contain more than 1 budget. So split budget into multiples ones and browse budget by budget

@@ -300,12 +300,12 @@ class wizard_import_in_simulation_screen(osv.osv):
                     _('Please select a file to import !'),
                 )
             if wiz.filetype == 'excel':
-                xml_file = base64.decodestring(wiz.file_to_import)
+                xml_file = base64.b64decode(wiz.file_to_import)
                 excel_file = SpreadsheetXML(xmlstring=xml_file)
                 if not excel_file.getWorksheets():
                     raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
             else:
-                xml_file = base64.decodestring(wiz.file_to_import)
+                xml_file = base64.b64decode(wiz.file_to_import)
                 try:
                     root = ET.fromstring(xml_file)
                 except ET.ParseError:
@@ -339,7 +339,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         '''
         values = {}
         # Read the XML file
-        xml_file = context.get('xml_is_string', False) and file_to_import or base64.decodestring(file_to_import)
+        xml_file = context.get('xml_is_string', False) and file_to_import or base64.b64decode(file_to_import)
         error = []
 
         root = ET.fromstring(xml_file)
@@ -426,7 +426,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         '''
         values = {}
         # Read the XML Excel file
-        xml_file = context.get('xml_is_string', False) and file_to_import or base64.decodestring(file_to_import)
+        xml_file = context.get('xml_is_string', False) and file_to_import or base64.b64decode(file_to_import)
         fileobj = SpreadsheetXML(xmlstring=xml_file)
 
         # Read all lines

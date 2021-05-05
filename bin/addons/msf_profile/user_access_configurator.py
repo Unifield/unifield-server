@@ -182,7 +182,7 @@ class user_access_configurator(osv.osv_memory):
             if not f:
                 raise osv.except_osv(_('Warning'), _('No File Selected.'))
             # load the selected file according to XML OUTPUT
-            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(f))
+            fileobj = SpreadsheetXML(xmlstring=base64.b64decode(f))
             # iterator on rows
             rows = fileobj.getRows()
             # first row flag

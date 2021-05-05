@@ -96,7 +96,7 @@ class stock_inventory(osv.osv):
 
         product_cache = {}
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
 
         # iterator on rows
         reader = fileobj.getRows()
@@ -649,7 +649,7 @@ class initial_stock_inventory(osv.osv):
         no_product_error = []
         wrong_location = []
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
 
         # iterator on rows
         reader = fileobj.getRows()

@@ -16,7 +16,7 @@ def open_requests(self, cr, uid, ids, filter=False, context=None):
     return result
 
 def get_data_file(cr, uid, data):
-    filedata = base64.decodestring(data)
+    filedata = base64.b64decode(data)
     buf = io.StringIO(filedata)
 
     try:

@@ -646,7 +646,7 @@ class PhysicalInventory(osv.osv):
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
-        counting_sheet_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import))
+        counting_sheet_file = SpreadsheetXML(xmlstring=base64.b64decode(inventory_rec.file_to_import))
 
         product_obj = self.pool.get('product.product')
         product_uom_obj = self.pool.get('product.uom')
@@ -875,7 +875,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
         if not inventory_rec.discrepancies_generated:
             raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
 
-        discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
+        discrepancy_report_file = SpreadsheetXML(xmlstring=base64.b64decode(inventory_rec.file_to_import2))
 
         product_obj = self.pool.get('product.product')
         reason_type_obj = self.pool.get('stock.reason.type')

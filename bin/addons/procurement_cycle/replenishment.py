@@ -1694,7 +1694,7 @@ class replenishment_segment(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         try:
-            file_data = SpreadsheetXML(xmlstring=base64.decodestring(seg.file_to_import))
+            file_data = SpreadsheetXML(xmlstring=base64.b64decode(seg.file_to_import))
 
             existing_line = {}
             for line in seg.line_ids:
@@ -3057,7 +3057,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
         calc = self.browse(cr, uid, ids[0],  context=context)
         if not calc.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
-        file_data = SpreadsheetXML(xmlstring=base64.decodestring(calc.file_to_import))
+        file_data = SpreadsheetXML(xmlstring=base64.b64decode(calc.file_to_import))
 
         existing_line = {}
         for line in calc.order_calc_line_ids:
@@ -3632,7 +3632,7 @@ class product_stock_out(osv.osv):
         obj = self.browse(cr, uid, ids[0], context=context)
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
-        file_data = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+        file_data = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
 
         existing_line = {}
         for line in obj.line_ids:
