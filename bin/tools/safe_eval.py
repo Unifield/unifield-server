@@ -343,26 +343,6 @@ def safe_eval(expr, globals_dict=None, locals_dict=None, mode="eval", nocopy=Fal
     c = test_expr(expr, _SAFE_OPCODES, mode=mode)
     try:
         return unsafe_eval(c, globals_dict, locals_dict)
-    except odoo.exceptions.except_orm:
-        raise
-    except odoo.exceptions.Warning:
-        raise
-    except odoo.exceptions.RedirectWarning:
-        raise
-    except odoo.exceptions.AccessDenied:
-        raise
-    except odoo.exceptions.AccessError:
-        raise
-    except werkzeug.exceptions.HTTPException:
-        raise
-    except odoo.http.AuthenticationError:
-        raise
-    except OperationalError:
-        # Do not hide PostgreSQL low-level exceptions, to let the auto-replay
-        # of serialized transactions work its magic
-        raise
-    except odoo.exceptions.MissingError:
-        raise
     except Exception as e:
         exc_info = sys.exc_info()
         pycompat.reraise(ValueError, ValueError('%s: "%s" while evaluating\n%r' % (ustr(type(e)), ustr(e), expr)), exc_info[2])

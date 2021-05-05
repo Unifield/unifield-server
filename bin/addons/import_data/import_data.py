@@ -235,7 +235,7 @@ class import_data(osv.osv_memory):
                 break
 
         fileobj = TemporaryFile('w+')
-        fileobj.write(base64.decodestring(obj['file']))
+        fileobj.write(base64.b64decode(obj['file']))
         fileobj.seek(0)
         impobj = self.pool.get(obj['object'])
         delimiter = ";"
@@ -551,7 +551,7 @@ class import_data(osv.osv_memory):
                     'description': 'Rejected Lines',
                     'res_model': 'res.request',
                     'res_id': req_id,
-                    'datas': base64.encodestring(errorfile.read()),
+                    'datas': base64.b64encode(errorfile.read()),
                 })
 
         if impobj == 'product.product':

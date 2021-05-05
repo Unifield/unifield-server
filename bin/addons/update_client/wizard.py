@@ -90,8 +90,8 @@ class upgrade(osv.osv_memory):
             connection_module.is_automatic_patching_allowed(cr, uid)
         if automatic_patching:
             password = list(connection_module._get_password(cr, uid, [proxy], None, None, None).values())[0]
-            password = base64.encodestring(password)
-            db_name = base64.encodestring(cr.dbname)
+            password = base64.b64encode(password)
+            db_name = base64.b64encode(cr.dbname)
             credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
             f = open(credential_filepath, 'w')
             f.write(db_name)

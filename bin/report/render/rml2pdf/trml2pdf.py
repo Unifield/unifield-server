@@ -37,12 +37,8 @@ from tools.safe_eval import safe_eval as eval
 from tools.misc import file_open
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.textsplit import wordSplit
+from io import BytesIO
 
-try:
-    from io import StringIO
-    _hush_pyflakes = [ StringIO ]
-except ImportError:
-    from io import StringIO
 
 encoding = 'utf-8'
 
@@ -481,7 +477,7 @@ class _rml_canvas(object):
             if node.get('name'):
                 image_data = self.images[node.get('name')]
                 self._logger.debug("Image %s used", node.get('name'))
-                s = StringIO(image_data)
+                s = BytesIO(image_data)
             else:
                 if self.localcontext:
                     res = utils._regex.findall(node.text)
@@ -492,13 +488,13 @@ class _rml_canvas(object):
                 if node.text:
                     image_data = base64.decodestring(node.text)
                 if image_data:
-                    s = StringIO(image_data)
+                    s = BytesIO(image_data)
                 else:
                     self._logger.debug("No image data!")
                     return False
         else:
             if nfile in self.images:
-                s = StringIO(self.images[nfile])
+                s = BytesIO(self.images[nfile])
             else:
                 try:
                     up = urllib.parse.urlparse(str(nfile))
@@ -509,7 +505,7 @@ class _rml_canvas(object):
                     # Are we safe from cross-site scripting or attacks?
                     self._logger.debug("Retrieve image from %s", nfile)
                     u = urllib.request.urlopen(str(nfile))
-                    s = StringIO(u.read())
+                    s = BytesIO(u.read())
                 else:
                     self._logger.debug("Open image file %s ", nfile)
                     s = _open_image(nfile, path=self.path)
@@ -840,7 +836,7 @@ class _rml_flowable(object):
                 if not image_data:
                     self._logger.debug("No inline image data")
                     return False
-                image = StringIO(image_data)
+                image = BytesIO(image_data)
             else:
                 self._logger.debug("Image get from file %s", node.get('file'))
                 image = _open_image(node.get('file'), path=self.doc.path)
@@ -1023,7 +1019,7 @@ def parseNode(rml, localcontext=None,fout=None, images=None, path='.',title=None
     except Exception:
         logging.getLogger('report').warning('Cannot set font mapping', exc_info=True)
         pass
-    fp = StringIO()
+    fp = BytesIO()
     r.render(fp)
     return fp.getvalue()
 
@@ -1044,7 +1040,7 @@ def parseString(rml, localcontext = {},fout=None, images={}, path='.',title=None
         fp.close()
         return fout
     else:
-        fp = StringIO()
+        fp = BytesIO()
         r.render(fp)
         return fp.getvalue()
 

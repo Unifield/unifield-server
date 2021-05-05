@@ -128,7 +128,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                 lines_not_imported.append(line)
 
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml(['decode.utf8'])),
+        vals = {'data': base64.b64encode(files_with_error.get_xml(['decode.utf8'])),
                 'filename': 'Lines_Not_Imported.xls',
                 'import_error_ok': True}
         return vals
@@ -161,7 +161,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
             if not obj.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file))
+            fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file))
             rows,reader = fileobj.getRows(), fileobj.getRows() # because we got 2 iterations
             # take all the lines of the file in a list of dict
             file_values = wiz_common_import.get_file_values(cr, uid, ids, rows, False, error_list, False, context)
@@ -442,7 +442,7 @@ Importation completed in %s!
             if not wiz['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz['file']))
                 # iterator on rews
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)

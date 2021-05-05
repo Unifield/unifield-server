@@ -96,7 +96,7 @@ class tender(osv.osv):
 #        obj = self.browse(cr, uid, ids, context=context)[0]
 #        if not obj.file_to_import:
 #            raise osv.except_osv(_('Error'), _('Nothing to import.'))
-#        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+#        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
 #        # check that the max number of lines is not excedeed
 #        if check_nb_of_lines(fileobj=fileobj):
 #            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
@@ -174,7 +174,7 @@ class tender(osv.osv):
         context.update({'active_id': ids[0]})
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_tender_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.tender.line').create(cr, uid, {'file': file,
                                                                                 'filename_template': 'template.xls',
                                                                                 'message': """%s %s"""  % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_tender_line_import]), ),

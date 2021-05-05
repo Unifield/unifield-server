@@ -2994,7 +2994,7 @@ class patch_scripts(osv.osv):
                 deleted_count += 1
                 continue
             if attachment.datas:
-                decoded_datas = base64.decodestring(attachment.datas)
+                decoded_datas = base64.b64decode(attachment.datas)
                 vals['size'] = attachment_obj.get_octet_size(decoded_datas)
                 attachment_obj.write(cr, uid, attachment.id, vals)
         if deleted_count:
@@ -4278,7 +4278,7 @@ class base_setup_company(osv.osv_memory):
                     if address[field]:
                         ret[field] = address[field].id
             fp = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb')
-            ret['logo'] = base64.encodestring(fp.read())
+            ret['logo'] = base64.b64encode(fp.read())
             fp.close()
         return ret
 

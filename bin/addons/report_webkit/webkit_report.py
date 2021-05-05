@@ -284,7 +284,7 @@ class WebKitParser(report_sxw):
         parser_instance.localcontext.update({'setLang':self.setLang})
         parser_instance.localcontext.update({'formatLang':parser_instance.format_xls_lang})
         try :
-            html = body_mako_tpl.render(     helper=helper,
+            html = body_mako_tpl.render_unicode(     helper=helper,
                                              css=css,
                                              _=parser_instance.translate_call,
                                              **parser_instance.localcontext
@@ -332,7 +332,7 @@ class WebKitParser(report_sxw):
                     time=time,
                     helper=helper,
                     css=css,
-                    _debug=tools.ustr(html),
+                    _debug=html,
                     formatLang=parser_instance.format_xls_lang,
                     setLang=self.setLang,
                     _=parser_instance.translate_call,

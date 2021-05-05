@@ -624,7 +624,7 @@ class report_sxw(report_rml, preprocess.report):
                         brow_rec = pool.get('ir.attachment').browse(cr, uid, aids[0])
                         if not brow_rec.datas:
                             continue
-                        d = base64.decodestring(brow_rec.datas)
+                        d = base64.b64decode(brow_rec.datas)
                         results.append((d,'pdf'))
                         continue
                 result = self.create_single_pdf(cr, uid, [obj.id], data, report_xml, context)
@@ -635,7 +635,7 @@ class report_sxw(report_rml, preprocess.report):
                         name = aname+'.'+result[1]
                         pool.get('ir.attachment').create(cr, uid, {
                             'name': aname,
-                            'datas': base64.encodestring(result[0]),
+                            'datas': base64.b64encode(result[0]),
                             'datas_fname': name,
                             'res_model': self.table,
                             'res_id': obj.id,
@@ -665,6 +665,7 @@ class report_sxw(report_rml, preprocess.report):
         context = context.copy()
         title = report_xml.name
         rml = report_xml.report_rml_content
+
         # if no rml file is found
         if not rml:
             return False
@@ -680,7 +681,7 @@ class report_sxw(report_rml, preprocess.report):
                 rml_parser._add_header(processed_rml, self.header)
             processed_rml = self.preprocess_rml(processed_rml,report_xml.report_type)
             if rml_parser.logo:
-                logo = base64.decodestring(rml_parser.logo)
+                logo = base64.b64decode(rml_parser.logo)
             create_doc = self.generators[report_xml.report_type]
             pdf = create_doc(etree.tostring(processed_rml, encoding='unicode'),rml_parser.localcontext,logo,title)
             return (pdf, report_xml.report_type)

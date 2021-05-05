@@ -913,7 +913,10 @@ class product_product(osv.osv):
         selected = eval('nomen_manda_%s' % position)
         # if selected value is False, the first False value -1 is used as selected
         if not selected:
-            mandaVals = [i for i in range(_LEVELS) if not eval('nomen_manda_%s' % i)]
+            mandaVals = []
+            for i in range(_LEVELS):
+                if not eval('nomen_manda_%s' % i):
+                    mandaVals.append(i)
             if mandaVals[0] == 0:
                 # first drop down, initialization
                 selected = False

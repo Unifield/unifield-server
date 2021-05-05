@@ -225,7 +225,7 @@ class purchase_order(osv.osv):
 
         simu_id = self.pool.get('wizard.import.po.simulation.screen').create(cr, uid, {
             'order_id': ids[0],
-            'file_to_import': base64.encodestring(file_content),
+            'file_to_import': base64.b64encode(file_content),
             'filetype': filetype,
             'filename': os.path.basename(file_path),
         }, context=context)
@@ -266,7 +266,7 @@ class purchase_order(osv.osv):
         processed, rejected, header = [], [], []
 
         if filetype == 'excel':
-            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_excel(cr, uid, base64.encodestring(file_content), context=context)
+            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_excel(cr, uid, base64.b64encode(file_content), context=context)
             header = values.get(23)
             for key in sorted([k for k in list(values.keys()) if k > 23]):
                 if import_success:
@@ -274,7 +274,7 @@ class purchase_order(osv.osv):
                 else:
                     rejected.append( (key, values[key]) )
         else:
-            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.encodestring(file_content), context=context)
+            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.b64encode(file_content), context=context)
             header = [x.replace('_', ' ').title() for x in values.get(23)]
             for key in sorted([k for k in list(values.keys()) if k > 23]):
                 if import_success:
@@ -427,7 +427,7 @@ class purchase_order(osv.osv):
 
                 # write export on FTP server
                 tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-                tmp_file.write(base64.decodestring(file_res['result']))
+                tmp_file.write(base64.b64decode(file_res['result']))
                 tmp_file.close()
                 rep = ''
                 with open(tmp_file.name, 'rb') as fich:
@@ -443,7 +443,7 @@ class purchase_order(osv.osv):
 
                 # create tmp file
                 tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-                tmp_file.write(base64.decodestring(file_res['result']))
+                tmp_file.write(base64.b64decode(file_res['result']))
                 tmpname = tmp_file.name
                 tmp_file.close()
 
@@ -459,7 +459,7 @@ class purchase_order(osv.osv):
             else:
                 # write export in local file
                 with open(path_to_file, 'w') as fich:
-                    fich.write(base64.decodestring(file_res['result']))
+                    fich.write(base64.b64decode(file_res['result']))
 
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
@@ -648,7 +648,7 @@ class purchase_order(osv.osv):
             columns_header = columns_header[1:]
 
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.po.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',

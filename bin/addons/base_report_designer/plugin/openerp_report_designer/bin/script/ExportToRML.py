@@ -93,14 +93,14 @@ class ExportToRML( unohelper.Base, XJobExecutor ):
         if docinfo.getUserFieldValue(2) == "":
             ErrorDialog("Please Save this file on server","Use Send To Server Option in OpenERP Report Menu","Error")
             exit(1)
-    	filename = self.GetAFileName()
-    	if not filename:
-    	    exit(1)
+        filename = self.GetAFileName()
+        if not filename:
+            exit(1)
         global passwd
         self.password = passwd
         try:
 
-            res = self.sock.execute(database, uid, self.password, 'ir.actions.report.xml', 'sxwtorml',base64.encodestring(data),file_type)
+            res = self.sock.execute(database, uid, self.password, 'ir.actions.report.xml', 'sxwtorml',base64.b64encode(data),file_type)
             if res['report_rml_content']:
                 write_data_to_file( get_absolute_file_path( filename[7:] ), res['report_rml_content'] )
         except Exception as e:

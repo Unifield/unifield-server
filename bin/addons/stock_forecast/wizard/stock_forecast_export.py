@@ -97,7 +97,7 @@ class stock_forecast_export(osv.osv_memory):
                                                 line.stock_situation or '0.0',)
             export += '\n'
             
-        file = base64.encodestring(export.encode("utf-8"))
+        file = base64.b64encode(export.encode("utf-8"))
         
         export_id = self.create(cr, uid, {'list_id': active_id,
                                           'file': file, 

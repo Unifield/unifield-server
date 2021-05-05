@@ -192,7 +192,7 @@ class SendtoServer(unohelper.Base, XJobExecutor):
             #sock = xmlrpclib.ServerProxy(docinfo.getUserFieldValue(0) +'/xmlrpc/object')
 
             file_type = oDoc2.getURL()[7:].split(".")[-1]
-            res = self.sock.execute(database, uid, self.password, 'ir.actions.report.xml', 'upload_report', int(docinfo.getUserFieldValue(2)),base64.encodestring(data),file_type,{})
+            res = self.sock.execute(database, uid, self.password, 'ir.actions.report.xml', 'upload_report', int(docinfo.getUserFieldValue(2)),base64.b64encode(data),file_type,{})
             params = {
                 'name': self.win.getEditText("txtName"),
                 'model': docinfo.getUserFieldValue(3),

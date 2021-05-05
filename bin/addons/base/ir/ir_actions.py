@@ -57,7 +57,7 @@ class report_xml(osv.osv):
             if not data and report[name[:-8]]:
                 fp = None
                 try:
-                    fp = tools.file_open(report[name[:-8]], mode='rb')
+                    fp = tools.file_open(report[name[:-8]], mode='r')
                     data = fp.read()
                 except:
                     data = False

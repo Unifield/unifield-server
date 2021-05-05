@@ -377,7 +377,7 @@ class Entity(osv.osv):
 
             # add to entity object
             zip_file_contents = zip_file_string_io.getvalue()
-            zip_base64 = base64.encodestring(zip_file_contents)
+            zip_base64 = base64.b64encode(zip_file_contents)
 
             # clean up
             zip_base64_output.close()
@@ -530,7 +530,7 @@ class Entity(osv.osv):
 
         # prepare uploaded file
         try:
-            uploaded_file = base64.decodestring(uploaded_file_base64)
+            uploaded_file = base64.b64decode(uploaded_file_base64)
 
             zip_stream = StringIO(uploaded_file)
             zip_file = ZipFile(zip_stream, 'r')

@@ -864,7 +864,7 @@ product will be shown.""",
                 'description': 'IN & OUT Report',
                 'res_model': 'export.report.stock.move',
                 'res_id': ids[0],
-                'datas': base64.encodestring(open(file_name, 'rb').read()),
+                'datas': base64.b64encode(open(file_name, 'rb').read()),
             })
             self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
         except Exception as e:

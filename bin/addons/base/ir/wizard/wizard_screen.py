@@ -34,7 +34,7 @@ class wizard_screen(osv.osv_memory):
         image_file = file_data = tools.file_open(path,'rb')
         try:
             file_data = image_file.read()
-            return base64.encodestring(file_data)
+            return base64.b64encode(file_data)
         finally:
             image_file.close()
 

@@ -105,7 +105,7 @@ def import_translate(uri, user, pwd, dbname, translate_in):
                     datas['form'].update({
                         'name': lang,
                         'code': lang,
-                        'data' : base64.encodestring(trans_obj.read())
+                        'data' : base64.b64encode(trans_obj.read())
                     })
                     trans_obj.close()
                 elif res['type']=='action':

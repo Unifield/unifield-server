@@ -40,7 +40,7 @@ class base_setup_config_choice(osv.osv_memory):
         file_no = str(random.randint(1,3))
         path = os.path.join('base','res','config_pixmaps/%s.png'%file_no)
         file_data = tools.file_open(path,'rb').read()
-        return base64.encodestring(file_data)
+        return base64.b64encode(file_data)
 
     def get_users(self, cr, uid, context=None):
         user_obj = self.pool.get('res.users')

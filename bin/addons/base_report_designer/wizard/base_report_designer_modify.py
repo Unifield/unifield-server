@@ -82,7 +82,7 @@ class base_report_file_sxw(osv.osv_memory):
             context={}
         if 'report_id' in fields:
             res['report_id'] = data['report_id']
-            res['file_sxw'] = base64.encodestring(report.report_sxw_content)
+            res['file_sxw'] = base64.b64encode(report.report_sxw_content)
         return res
 
     _columns = {
@@ -95,11 +95,11 @@ class base_report_file_sxw(osv.osv_memory):
         from base_report_designer import  openerp_sxw2rml
         import io
         data=self.read(cr,uid,ids)[0]
-        sxwval = io.StringIO(base64.decodestring(data['file_sxw_upload']))
+        sxwval = io.StringIO(base64.b64decode(data['file_sxw_upload']))
         fp = tools.file_open('normalized_oo2rml.xsl',subdir='addons/base_report_designer/openerp_sxw2rml')
         newrmlcontent = str(openerp_sxw2rml.sxw2rml(sxwval, xsl=fp.read()))
         report = self.pool.get('ir.actions.report.xml').write(cr, uid, [data['report_id']], {
-            'report_sxw_content': base64.decodestring(data['file_sxw_upload']),
+            'report_sxw_content': base64.b64decode(data['file_sxw_upload']),
             'report_rml_content': newrmlcontent
         })
         cr.commit()
@@ -141,7 +141,7 @@ class base_report_rml_save(osv.osv_memory):
         report = self.pool.get('ir.actions.report.xml').browse(cr, uid, data['report_id'], context=context)
         
         if 'file_rml' in fields:
-            res['file_rml'] =  base64.encodestring(report.report_rml_content)
+            res['file_rml'] =  base64.b64encode(report.report_rml_content)
         return res
     _columns = {
          'file_rml':fields.binary('Save As'),

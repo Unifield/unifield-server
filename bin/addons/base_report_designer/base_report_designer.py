@@ -34,7 +34,7 @@ class report_xml(osv.osv):
         '''
         The use of this function is to get rml file from sxw file.
         '''
-        sxwval = StringIO(base64.decodestring(file_sxw))
+        sxwval = StringIO(base64.b64decode(file_sxw))
         if file_type=='sxw':
             fp = open(addons.get_module_resource('base_report_designer','openerp_sxw2rml', 'normalized_oo2rml.xsl'),'rb')
         if file_type=='odt':
@@ -46,14 +46,14 @@ class report_xml(osv.osv):
         Untested function
         '''
         pool = pooler.get_pool(cr.dbname)
-        sxwval = StringIO(base64.decodestring(file_sxw))
+        sxwval = StringIO(base64.b64decode(file_sxw))
         if file_type=='sxw':
             fp = open(addons.get_module_resource('base_report_designer','openerp_sxw2rml', 'normalized_oo2rml.xsl'),'rb')
         if file_type=='odt':
             fp = open(addons.get_module_resource('base_report_designer','openerp_sxw2rml', 'normalized_odt2rml.xsl'),'rb')
         report = pool.get('ir.actions.report.xml').write(cr, uid, [report_id], {
-            'report_sxw_content': base64.decodestring(file_sxw), 
-            'report_rml_content': str(sxw2rml(sxwval, xsl=fp.read())), 
+            'report_sxw_content': base64.b64decode(file_sxw),
+            'report_rml_content': str(sxw2rml(sxwval, xsl=fp.read())),
         })
         pool.get('ir.actions.report.xml').register_all(cr)
         return True
@@ -64,8 +64,8 @@ class report_xml(osv.osv):
         rml_data= (report.report_rml_content).encode("iso-8859-1", "replace")
         return {
             'file_type' : report.report_type, 
-            'report_sxw_content': report.report_sxw_content and base64.encodestring(sxw_data) or False, 
-            'report_rml_content': report.report_rml_content and base64.encodestring(rml_data) or False
+            'report_sxw_content': report.report_sxw_content and base64.b64encode(sxw_data) or False, 
+            'report_rml_content': report.report_rml_content and base64.b64encode(rml_data) or False
         }
 
 report_xml()

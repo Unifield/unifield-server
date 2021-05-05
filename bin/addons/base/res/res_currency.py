@@ -514,7 +514,7 @@ class res_currency(osv.osv):
         import_obj = self.pool.get('import.currencies')
         import_id = import_obj.create(cr, uid, {
             'rate_date': date,
-            'import_file': base64.encodestring(open(file_to_import, 'r').read()),
+            'import_file': base64.b64encode(open(file_to_import, 'r').read()),
         })
         processed, rejected, headers = import_obj.import_rates(cr, uid, [import_id], auto_import=True)
         return processed, rejected, headers

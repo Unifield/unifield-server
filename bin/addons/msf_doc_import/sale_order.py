@@ -97,7 +97,7 @@ class sale_order(osv.osv):
         context.update({'active_id': ids[0]})
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_ir_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.ir.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
@@ -124,7 +124,7 @@ class sale_order(osv.osv):
         context.update({'active_id': ids[0]})
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_fo_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.fo.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',

@@ -194,7 +194,7 @@ The columns should be in this values:
             else:
                 lines_not_imported.append(line)
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml(default_filters=['decode.utf8'])), 'filename': 'Lines_Not_Imported.xls'}
+        vals = {'data': base64.b64encode(files_with_error.get_xml(default_filters=['decode.utf8'])), 'filename': 'Lines_Not_Imported.xls'}
         return vals
 
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
@@ -511,7 +511,7 @@ The columns should be in this values:
         line_with_error, error_list, notif_list = [], [], []
         error_log, notif_log = '', ''
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
+        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_browse.file))
         rows = fileobj.getRows()
         # take all the lines of the file in a list of dict
         file_values = self.get_file_values(cr, uid, ids, rows, header_index, error_list=[], line_num=False, context=context)
@@ -828,7 +828,7 @@ The columns should be in this values:
             if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")}, context=context)
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
                 # iterator on rows
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)

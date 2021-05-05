@@ -266,7 +266,7 @@ class automated_export_job(osv.osv):
             'description': '%s Lines' % (rejected and _('Rejected') or _('Processed')),
             'res_model': 'automated.export.job',
             'res_id': job_brw.id,
-            'datas': base64.encodestring(csvfile.read())
+            'datas': base64.b64encode(csvfile.read())
         })
 
         return len(data_lines)

@@ -237,7 +237,7 @@ def zip_directory(directory, b64enc=True, src=True):
     archname.close()
 
     if b64enc:
-        return base64.encodestring(archive_data)
+        return base64.b64encode(archive_data)
 
     return archive_data
 
@@ -259,7 +259,7 @@ def get_module_as_zip(modulename, b64enc=True, src=True):
     if os.path.isfile(ap + '.zip'):
         val = open(ap + '.zip', 'rb').read()
         if b64enc:
-            val = base64.encodestring(val)
+            val = base64.b64encode(val)
     else:
         val = zip_directory(ap, b64enc, src)
 

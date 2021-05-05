@@ -776,7 +776,7 @@ class real_average_consumption_line(osv.osv):
                                              _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date or _('No expiry date set')))
                     elif context.get('import_in_progress'):
                         error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)"
-                                               ) % (context.get('line_num', False), expiry_date and strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
+                                               ) % (context.get('line_num', False), expiry_date and datetime.strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
                         context.update({'error_message': error_message})
                 else:
                     prodlot_id = prod_ids[0]
@@ -1787,14 +1787,14 @@ class product_product(osv.osv):
                     raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
                 # Calculate the # of months in the period
                 try:
-                    to_date_str = strptime(to_date, '%Y-%m-%d')
+                    to_date_str = datetime.strptime(to_date, '%Y-%m-%d')
                 except ValueError:
-                    to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
+                    to_date_str = datetime.strptime(to_date, '%Y-%m-%d %H:%M:%S')
 
                 try:
-                    from_date_str = strptime(from_date, '%Y-%m-%d')
+                    from_date_str = datetime.strptime(from_date, '%Y-%m-%d')
                 except ValueError:
-                    from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
+                    from_date_str = datetime.strptime(from_date, '%Y-%m-%d %H:%M:%S')
 
                 nb_months = self._get_date_diff(from_date_str, to_date_str)
 
@@ -1952,7 +1952,7 @@ class product_product(osv.osv):
                 qty = sign * uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
                 res[move['product_id'][0]] += qty
                 if compute_amc_by_month:
-                    period = strptime(move['date'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m')
+                    period = datetime.strptime(move['date'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m')
                     amc_by_month.setdefault(move['product_id'][0], {}).setdefault(period, 0)
                     amc_by_month[move['product_id'][0]][period] += qty
 
@@ -1970,13 +1970,13 @@ class product_product(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
         # Calculate the # of months in the period
         try:
-            to_date_str = strptime(to_date, '%Y-%m-%d')
+            to_date_str = datetime.strptime(to_date, '%Y-%m-%d')
         except ValueError:
-            to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
+            to_date_str = datetime.strptime(to_date, '%Y-%m-%d %H:%M:%S')
         try:
-            from_date_str = strptime(from_date, '%Y-%m-%d')
+            from_date_str = datetime.strptime(from_date, '%Y-%m-%d')
         except ValueError:
-            from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
+            from_date_str = datetime.strptime(from_date, '%Y-%m-%d %H:%M:%S')
 
         nb_months = self._get_date_diff(from_date_str, to_date_str)
         if not nb_months:
@@ -2000,7 +2000,7 @@ class product_product(osv.osv):
             for x in cr.fetchall():
                 from_over = max(from_date, x[1])
                 to_over = min(to_date, x[2])
-                overlap_days = (strptime(to_over, '%Y-%m-%d') - strptime(from_over, '%Y-%m-%d')).days
+                overlap_days = (datetime.strptime(to_over, '%Y-%m-%d') - datetime.strptime(from_over, '%Y-%m-%d')).days
                 if x[0] in list(res.keys()):
                     if  x[3] is None:
                         # qty no set
@@ -2008,11 +2008,11 @@ class product_product(osv.osv):
                         adjusted_day[x[0]] -= overlap_days
                     else:
                         adjusted_qty.setdefault(x[0], 0)
-                        adjusted_qty[x[0]] += (x[3]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
+                        adjusted_qty[x[0]] += (x[3]/(datetime.strptime(x[2], '%Y-%m-%d') - datetime.strptime(x[1], '%Y-%m-%d')).days * overlap_days)
                 for idx in [4, 6, 8]:
                     if x[idx] in list(res.keys()) and x[idx+1]:
                         adjusted_qty.setdefault(x[idx], 0)
-                        adjusted_qty[x[idx]] -= (x[idx+1]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
+                        adjusted_qty[x[idx]] -= (x[idx+1]/(datetime.strptime(x[2], '%Y-%m-%d') - datetime.strptime(x[1], '%Y-%m-%d')).days * overlap_days)
 
 
             nb_months = ((to_date_str-from_date_str).days + 1)/30.44

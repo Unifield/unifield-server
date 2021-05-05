@@ -449,7 +449,7 @@ class automated_import_job(osv.osv):
                         filename = os.path.split(oldest_file)[1]
                         file_content = get_file_content(oldest_file, import_data.ftp_source_ok, ftp_connec, sftp)
                         md5 = hashlib.md5(file_content).hexdigest()
-                        data64 = base64.encodestring(file_content)
+                        data64 = base64.b64encode(file_content)
                     except ValueError:
                         no_file = True
                     except Exception as e:
@@ -491,11 +491,11 @@ class automated_import_job(osv.osv):
                     oldest_file = os.path.join(job.import_id.src_path, job.filename)
 
                     oldest_file_desc = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
-                    oldest_file_desc.write(base64.decodestring(job.file_to_import))
+                    oldest_file_desc.write(base64.b64decode(job.file_to_import))
                     oldest_file_desc.close()
 
                     filename = job.filename
-                    data64 = base64.encodestring(job.file_to_import)
+                    data64 = base64.b64encode(job.file_to_import)
 
                 # Process import
                 error_message = []
@@ -661,7 +661,7 @@ class automated_import_job(osv.osv):
             'description': '%s Lines' % (rejected and _('Rejected') or _('Processed')),
             'res_model': 'automated.import.job',
             'res_id': job_brw.id,
-            'datas': base64.encodestring(csvfile.read())
+            'datas': base64.b64encode(csvfile.read())
         })
 
         return len(data_lines)

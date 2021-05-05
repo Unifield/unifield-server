@@ -275,12 +275,12 @@ class stock_mission_report(osv.osv):
         if attachment_ids:
             # overwrite existing
             ir_attachment_obj.write(cr, uid, attachment_ids[0],
-                                    {'datas': base64.encodestring(data)})
+                                    {'datas': base64.b64encode(data)})
         else:
             ir_attachment_obj.create(cr, uid,
                                      {
                                          'name': file_name,
-                                         'datas': base64.encodestring(data),
+                                         'datas': base64.b64encode(data),
                                          'datas_fname': file_name,
                                      })
             del data

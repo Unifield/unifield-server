@@ -54,7 +54,7 @@ class wiz_common_import(osv.osv_memory):
             else:
                 lines_not_imported.append(line)
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml(default_filters=['decode.utf8']))}
+        vals = {'data': base64.b64encode(files_with_error.get_xml(default_filters=['decode.utf8']))}
         return vals
 
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):

@@ -160,7 +160,7 @@ class import_commitment_wizard(osv.osv_memory):
             for wizard in self.browse(cr, uid, ids, context=context):
                 if not wizard.import_file:
                     raise osv.except_osv(_('Error'), _('Nothing to import.'))
-                import_file = base64.decodestring(wizard.import_file)
+                import_file = base64.b64decode(wizard.import_file)
                 import_string = io.StringIO(import_file)
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
                 total_line = len(import_data) - 1
@@ -439,7 +439,7 @@ class int_commitment_export_wizard(osv.osv_memory):
         # download csv
         vals = {
             'state': 'get',
-            'data': base64.encodestring(csv_buffer.getvalue()),
+            'data': base64.b64encode(csv_buffer.getvalue()),
             'name': file_name,
         }
         csv_buffer.close()

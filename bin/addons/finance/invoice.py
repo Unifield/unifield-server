@@ -53,7 +53,7 @@ class account_invoice(osv.osv):
 
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_account_line_import]
         default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
-        imported_file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        imported_file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
         view_name = context.get('_terp_view_name', 'Import Lines')
         filename_template = _('%s_template.xls') % _(view_name).replace(' ', '_')
         export_id = self.pool.get('wizard.import.invoice.line').create(cr, uid,

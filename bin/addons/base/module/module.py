@@ -642,7 +642,7 @@ class module(osv.osv):
                 'version': module.installed_version,
                 'depends': list(self._web_dependencies(
                     cr, uid, module, context=context)),
-                'content': base64.encodestring(web_data)
+                'content': base64.b64encode(web_data)
             })
         return modules_data
 

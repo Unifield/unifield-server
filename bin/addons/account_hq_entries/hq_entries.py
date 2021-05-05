@@ -655,7 +655,7 @@ class hq_entries(osv.osv):
 
         import_obj = self.pool.get('hq.entries.import')
         import_id = import_obj.create(cr, uid, {
-            'file': base64.encodestring(open(file_to_import, 'r').read()),
+            'file': base64.b64encode(open(file_to_import, 'r').read()),
             'filename': os.path.split(file_to_import)[1],
         })
         processed, rejected, headers = import_obj.button_validate(cr, uid, [import_id], auto_import=True)

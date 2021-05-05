@@ -63,7 +63,7 @@ class base_language_export(osv.osv_memory):
         if this.lang:
             filename = get_iso_codes(this.lang)
         this.name = "%s.%s" % (filename, this.format)
-        out=base64.encodestring(buf.getvalue())
+        out=base64.b64encode(buf.getvalue())
         buf.close()
         return self.write(cr, uid, ids, {'state':'get', 'data':out, 'advice':this.advice, 'name':this.name}, context=context)
 

@@ -90,7 +90,7 @@ class product_list(osv.osv):
             wiz_id = self.pool.get('msf.import.export').create(cr, uid, {
                 'model_list_selection': 'product_list_update',
                 'product_list_id': list_id[0],
-                'import_file': base64.encodestring(xmlstring),
+                'import_file': base64.b64encode(xmlstring),
             }, context=context)
 
             res = self.pool.get('msf.import.export').import_xml(cr, uid, wiz_id, context=context)
@@ -108,7 +108,7 @@ class product_list(osv.osv):
         context.update({'active_id': ids[0]})
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_product_list_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.product.list').create(cr, uid, {'file': file,
                                                                                  'filename_template': 'Product List template.xls',
                                                                                  'message': """%s %s"""  % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_product_list_import]), ),

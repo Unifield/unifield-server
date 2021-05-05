@@ -96,11 +96,11 @@ class base_language_export(osv.osv_memory):
                             headers.append([h, 'char'])
                         xml = SpreadsheetCreator(title=this.name, headers=headers, datas=trans)
 
-                    out = base64.encodestring(xml.get_xml(default_filters=['decode.utf8']))
+                    out = base64.b64encode(xml.get_xml(default_filters=['decode.utf8']))
             else:
                 buf=io.StringIO()
                 tools.trans_export(this.lang, modules, buf, this.format, cr, ignore_name=ignore_name, only_translated_terms=this.only_translated_terms)
-                out = base64.encodestring(buf.getvalue())
+                out = base64.b64encode(buf.getvalue())
                 buf.close()
 
             subject = _("Export translation %s %s ") % (this.lang, this.format)

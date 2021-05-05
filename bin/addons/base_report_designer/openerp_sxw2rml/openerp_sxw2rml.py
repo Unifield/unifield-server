@@ -322,7 +322,7 @@ def sxw2rml(sxw_file, xsl, output='.', save_pict=False):
         images = etree.Element("images")
         for img in tool.images:
             node = etree.Element('image', name=img)
-            node.text = base64.encodestring(tool.images[img])
+            node.text = base64.b64encode(tool.images[img])
             images.append(node)
         root.append(images)
 

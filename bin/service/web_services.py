@@ -350,7 +350,7 @@ class db(netsvc.ExportService):
             logger.notifyChannel("web-services", netsvc.LOG_ERROR,
                                  'DUMP DB: %s failed\n%s' % (db_name, data))
             raise Exception("Couldn't dump database")
-        return base64.encodestring(data)
+        return base64.b64encode(data)
 
     def exp_restore_file(self, db_name, filename):
         _check_db_name(db_name)
@@ -392,7 +392,7 @@ class db(netsvc.ExportService):
     def exp_restore(self, db_name, data):
         _check_db_name(db_name)
         logging.getLogger('web-services').info("Restore DB from memory")
-        buf=base64.decodestring(data)
+        buf=base64.b64decode(data)
         tmpfile = NamedTemporaryFile('w+b', delete=False)
         tmpfile.write(buf)
         tmpfile.close()
@@ -705,7 +705,7 @@ GNU Public Licence.
 
                 try:
                     try:
-                        base64_decoded = base64.decodestring(zips[module])
+                        base64_decoded = base64.b64decode(zips[module])
                     except Exception:
                         l.notifyChannel('migration', netsvc.LOG_ERROR, 'unable to read the module %s' % (module,))
                         raise
@@ -1143,13 +1143,9 @@ class report_spool(netsvc.ExportService):
                 res2 = zlib.compress(result['result'])
                 res['code'] = 'zlib'
             else:
-                #CHECKME: why is this needed???
-                if isinstance(result['result'], str):
-                    res2 = result['result'].encode('latin1', 'replace')
-                else:
-                    res2 = result['result']
+                res2 = result['result']
             if res2:
-                res['result'] = base64.encodestring(res2)
+                res['result'] = base64.b64encode(res2).decode('utf8')
             res['format'] = result['format']
             if 'path' in result:
                 res['path'] = result['path']

@@ -97,7 +97,7 @@ class supplier_catalogue(osv.osv):
             wiz_id = self.pool.get('msf.import.export').create(cr, uid, {
                 'model_list_selection': 'supplier_catalogue_update',
                 'supplier_catalogue_id': catalogue_id[0],
-                'import_file': base64.encodestring(xmlstring),
+                'import_file': base64.b64encode(xmlstring),
             }, context=context)
 
             res = self.pool.get('msf.import.export').import_xml(cr, uid, wiz_id, context=context)
@@ -127,7 +127,7 @@ class supplier_catalogue(osv.osv):
         columns_header = [(_(f[0]), f[1]) for f in sup_cat_columns_header]
 
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        template_file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        template_file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
 
         export_id = wiz_obj.create(cr, uid, {
             'file': template_file,

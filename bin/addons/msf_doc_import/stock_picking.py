@@ -244,7 +244,7 @@ class stock_picking(osv.osv):
             # create simulation screen to get the simulation report:
             self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, [simu_id], {
                 'filetype': filetype,
-                'file_to_import': base64.encodestring(file_content),
+                'file_to_import': base64.b64encode(file_content),
             }, context=context)
 
             context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True, 'simulation_bypass_missing_lot': True, 'auto_import_ok': True})
@@ -287,7 +287,7 @@ class stock_picking(osv.osv):
                 'description': 'IN import file',
                 'res_model': 'stock.picking',
                 'res_id': context.get('new_picking', in_id),
-                'datas': base64.encodestring(file_content),
+                'datas': base64.b64encode(file_content),
             })
             import_success = True
         except Exception as e:
@@ -347,7 +347,7 @@ class stock_picking(osv.osv):
 
         columns_header = [(_(f[0]), f[1]) for f in header_cols]
         default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
-        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = wiz_obj.create(cr, uid, {'file': file,
                                              'filename_template': 'template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
@@ -397,7 +397,7 @@ class stock_picking(osv.osv):
         # TODO: Create a specific template for this case (US-2269)
         # columns_header = [(_(f[0]), f[1]) for f in header_cols]
         # default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
-        # file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        # file = base64.b64encode(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = wiz_obj.create(cr, uid, {'file': False,
                                              'filename_template': 'template.xls',
                                              'filename': 'Lines_Not_Imported.xls',

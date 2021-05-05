@@ -804,7 +804,7 @@ class orm_template(object):
         import_obj = self.pool.get('import_data')
         import_id = import_obj.create(cr, uid, {
             'ignore': 1,
-            'file': base64.encodestring(open(csv_file, 'r').read()),
+            'file': base64.b64encode(open(csv_file, 'r').read()),
             'object': self._name,
             'import_mode': 'create',
         })
@@ -3926,7 +3926,7 @@ class orm(orm_template):
                     ids_to_check.extend([id, update_date])
             if not ids_to_check:
                 continue
-            cr.execute("SELECT id FROM %s WHERE %s" % (self._table, " OR ".join([check_clause]*(len(ids_to_check)/2))), tuple(ids_to_check))  # not_a_user_entry
+            cr.execute("SELECT id FROM %s WHERE %s" % (self._table, " OR ".join([check_clause]*(len(ids_to_check)//2))), tuple(ids_to_check))  # not_a_user_entry
             res = cr.fetchone()
             if res:
                 # mention the first one only to keep the error message readable
