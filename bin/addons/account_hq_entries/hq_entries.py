@@ -30,6 +30,7 @@ import netsvc
 class hq_entries(osv.osv):
     _name = 'hq.entries'
     _description = 'HQ Entries'
+    _trace = True
 
     def _get_analytic_state(self, cr, uid, ids, name, args, context=None):
         """
@@ -228,7 +229,7 @@ class hq_entries(osv.osv):
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'user_validated': fields.boolean("User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
+        'user_validated': fields.boolean("Validated", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
         'date': fields.date("Posting Date", readonly=True),
         'partner_txt': fields.char("Third Party", size=255, readonly=True),
         'period_id': fields.many2one("account.period", "Period", readonly=True),
@@ -243,7 +244,7 @@ class hq_entries(osv.osv):
         'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
                                           selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
-        'is_original': fields.boolean("Is Original HQ Entry?", help="This line was split into other one.", readonly=True),
+        'is_original': fields.boolean("Has been split", help="This line has been split into other ones.", readonly=True),
         'is_split': fields.boolean("Is split?", help="This line comes from a split.", readonly=True),
         'original_id': fields.many2one("hq.entries", "Original HQ Entry", readonly=True, help="The Original HQ Entry from which this line comes from."),
         'split_ids': fields.one2many('hq.entries', 'original_id', "Split lines", help="All lines linked to this original HQ Entry."),

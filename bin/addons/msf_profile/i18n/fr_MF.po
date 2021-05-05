@@ -44180,6 +44180,7 @@ msgstr "Sync order line DB ID"
 #: selection:replenishment.order_calc,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
+#: field:hq.entries,user_validated:0
 #, python-format
 msgid "Validated"
 msgstr "Validé"
@@ -56326,11 +56327,6 @@ msgstr "America/Scoresbysund"
 #: selection:ir.header_webkit,format:0
 msgid "Ledger  28  431.8 x 279.4 mm"
 msgstr "Format Grand livre 28 431,8 x 279.4 mm"
-
-#. module: account_hq_entries
-#: field:hq.entries,user_validated:0
-msgid "User validated?"
-msgstr "Utilisateur validé?"
 
 #. module: financing_contract
 #: model:ir.model,name:financing_contract.model_financing_contract_donor_reporting_line
@@ -100023,8 +100019,13 @@ msgstr "Est corrigible au HQ?"
 
 #. module: account_hq_entries
 #: field:hq.entries,is_original:0
-msgid "Is Original HQ Entry?"
-msgstr "Est une Écriture HQ d'origine?"
+msgid "Has been split"
+msgstr "A été scindé"
+
+#. module: account_hq_entries
+#: help:hq.entries,is_original:0
+msgid "This line has been split into other ones."
+msgstr "Cette ligne a été scindée en d'autres lignes."
 
 #. module: account_hq_entries
 #: field:hq.entries.split,running:0
