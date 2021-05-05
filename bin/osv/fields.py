@@ -897,14 +897,6 @@ class function(_column):
             else:
                 res = dict(list(map(sanitize_binary_value, list(res.items()))))
 
-        elif self._type == "integer":
-            for r in list(res.keys()):
-                # Converting value into string so that it does not affect XML-RPC Limits
-                if isinstance(res[r],dict): # To treat integer values with _multi attribute
-                    for record in list(res[r].keys()):
-                        res[r][record] = str(res[r][record])
-                else:
-                    res[r] = str(res[r])
         return res
     get_memory = get
 
