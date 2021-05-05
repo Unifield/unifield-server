@@ -63,7 +63,6 @@ from . import xmlid_no_delete
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES, cache
 from functools import reduce
-from functools import cmp_to_key
 regex_order = re.compile('^(([a-z0-9_\.]+|"[a-z0-9_\.]+")( *desc| *asc)?( *, *|))+$', re.I)
 
 POSTGRES_CONFDELTYPES = {
@@ -2599,6 +2598,17 @@ class orm_memory(orm_template):
             order_context = {'lang': context.get('lang')}
             order_parts_getters = []
             order_info = {}
+            default_value = {
+                'boolean': False,
+                'integer': 0,
+                'float': 0,
+                'integer_big': 0,
+                'char': '',
+                'text': 0,
+                'date': '',
+                'datetime': '',
+                'time': 0,
+            }
             for order_part in order_spec.split(','):
                 order_split = order_part.strip().split(' ')
                 order_field = order_split[0].strip()
@@ -2614,11 +2624,11 @@ class orm_memory(orm_template):
                         continue
 
                     if order_column._classic_read:
-                        getter = lambda d, i, o_field: len(d) > 1 and d[1].get(o_field) or False
+                        getter = lambda d, i, o_field: len(d) > 1 and d[1].get(o_field) or default_value.get(order_column._type)
                     elif order_column._type == 'many2one':
                         if sort_raw_id:
                             # uppon read, many2one sorting is done directly on 'id'
-                            getter = lambda d, i, o_field: len(d) > 1 and d[1].get(o_field) or False
+                            getter = lambda d, i, o_field: len(d) > 1 and d[1].get(o_field) or ''
                         else:
                             # use the fact the read follow object standard _parent_order/_order to get many2one ordered
                             dest_model = self.pool.get(order_column._obj)
@@ -2628,27 +2638,18 @@ class orm_memory(orm_template):
                                 dest_ids.remove(False)
                             ordered_ids = [ x['id'] for x in dest_model.read(cr, 1, list(dest_ids), ['id'], context=order_context) ]
                             if dest_ids_has_false:
-                                ordered_ids.insert(0, False) # false is always first
+                                ordered_ids.insert(0, 0) # false is always first
                             order_info[order_field] = ordered_ids
-                            getter = lambda d, i, o_field: i.get(o_field) and len(d) > 1 and d[1].get(o_field) and i.get(o_field).index(d[1].get(o_field)) or False
+                            getter = lambda d, i, o_field: i.get(o_field) and len(d) > 1 and d[1].get(o_field) and i.get(o_field).index(d[1].get(o_field)) or ''
                 else:
                     raise NotImplementedError()
-                order_parts_getters.append((getter, order_direction, order_field))
-            # create an inline sort method that fullfill 'cmp' specification
-            def in_memory_sort(x, y):
-                i = order_info
-                for (getter, direction, o_field) in order_parts_getters:
-                    if direction == 'asc': # normal sort order
-                        v = cmp(getter(x, i, o_field), getter(y, i, o_field))
-                    elif direction == 'desc':
-                        v = cmp(getter(y, i, o_field), getter(x, i, o_field))
-                    if v == 0:
-                        # at this level item equals,
-                        # continue to next order field
-                        continue
-                    return v
-                return 0
-            data.sort(key=cmp_to_key(in_memory_sort))
+                order_parts_getters.append((order_field, getter, order_direction == 'desc'))
+
+            def multisort(xs, specs):
+                for key, getter, reverse in reversed(specs):
+                    xs.sort(key=lambda a: getter(a, order_info, key), reverse=reverse)
+                return xs
+            multisort(data, order_parts_getters)
         return data
 
     def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
