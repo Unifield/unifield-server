@@ -286,11 +286,19 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['product_code']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['product_desc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['uom']|x}</Data></Cell>
+                % if move['purchase_id']:
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${move['qty_ordered']|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${move['qty_received']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['unit_price']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['currency']|x}</Data></Cell>
+                % if move['purchase_id']:
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost']|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost_func']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['dest_loc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_loc']|x}</Data></Cell>
