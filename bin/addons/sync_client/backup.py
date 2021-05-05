@@ -265,7 +265,7 @@ class BackupConfig(osv.osv):
         )
         new_thread.start()
         new_thread.join(3.0)
-        if new_thread.isAlive():
+        if new_thread.is_alive():
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'upload_backup_form')[1]
             return {
                 'name':_("Upload in progress"),

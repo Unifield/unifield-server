@@ -153,7 +153,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         for t in self.threads:
             i += 1
             res += "\nNet-RPC #%d: %s " % (i, t.name)
-            if t.isAlive():
+            if t.is_alive():
                 res += "running"
             else:
                 res += "finished"

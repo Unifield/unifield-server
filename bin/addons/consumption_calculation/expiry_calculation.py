@@ -346,7 +346,7 @@ class product_likely_expire_report(osv.osv):
                                       args=(cr, uid, ids, context))
         new_thread.start()
         new_thread.join(10.0)
-        if new_thread.isAlive():
+        if new_thread.is_alive():
             # more than 10 secs to compute data
             # displaying 'waiting form'
             view_id = self.pool.get('ir.model.data').get_object_reference(

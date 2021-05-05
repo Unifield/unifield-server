@@ -1189,7 +1189,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
             new_thread.start()
             new_thread.join(10.0)
 
-            if new_thread.isAlive():
+            if new_thread.is_alive():
                 return self.go_to_simulation(cr, uid, ids, context=context)
             else:
                 state = self.read(cr, uid, ids[0], ['state'], context=context)

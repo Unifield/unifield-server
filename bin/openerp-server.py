@@ -266,7 +266,7 @@ def quit(restart=False, db_name=''):
     # threading.Thread.join() should not mask signals (at least in python 2.5)
     for thread in threading.enumerate():
         if thread != threading.currentThread() and not thread.isDaemon():
-            while thread.isAlive():
+            while thread.is_alive():
                 # need a busyloop here as thread.join() masks signals
                 # and would present the forced shutdown
                 thread.join(0.05)

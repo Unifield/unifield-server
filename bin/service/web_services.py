@@ -282,7 +282,7 @@ class db(netsvc.ExportService):
         return check_tz()
 
     def exp_get_progress(self, id):
-        if self.actions[id]['thread'].isAlive():
+        if self.actions[id]['thread'].is_alive():
             #           return addons.init_progress[db_name]
             return (min(self.actions[id].get('progress', 0),0.95), [])
         else:

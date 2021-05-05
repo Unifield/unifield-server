@@ -162,7 +162,7 @@ class stock_expired_damaged_report(osv.osv):
                 'context': context,
                 'target': 'same',
             }
-            if new_thread.isAlive():
+            if new_thread.is_alive():
                 view_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_expired_damaged_report_info_view')[1]
                 res['view_id'] = [view_id]
 

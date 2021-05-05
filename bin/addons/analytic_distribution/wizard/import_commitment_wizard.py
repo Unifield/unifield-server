@@ -109,7 +109,7 @@ class import_commitment_wizard(osv.osv_memory):
             new_thread = threading.Thread(target=self.import_csv_commitment_lines_bg, args=(cr, uid, ids, context))
             new_thread.start()
             new_thread.join(10.0)
-            if new_thread.isAlive():
+            if new_thread.is_alive():
                 return self.refresh(cr, uid, ids, context=context)
             else:
                 error = self.read(cr, uid, ids[0], ['error'])['error']

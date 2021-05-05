@@ -1151,7 +1151,7 @@ class job_in_progress(osv.osv_memory):
         )
         th.start()
         th.join(3)
-        if not th.isAlive():
+        if not th.is_alive():
             job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
             self.unlink(cr, uid, [job_id])
             if job_data['state'] == 'done':

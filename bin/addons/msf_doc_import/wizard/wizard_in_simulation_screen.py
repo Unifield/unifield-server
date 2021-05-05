@@ -1200,7 +1200,7 @@ Nothing has been imported because of %s. See below:
                 new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context, with_ppl))
                 new_thread.start()
                 new_thread.join(20)
-                if new_thread.isAlive():
+                if new_thread.is_alive():
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
                     prog_id = self.pool.get('stock.picking').update_processing_info(cr, uid, simu_id.picking_id.id, prog_id=False, values={}, context=context)
                     return {

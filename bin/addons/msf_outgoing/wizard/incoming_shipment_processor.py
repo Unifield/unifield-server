@@ -414,7 +414,7 @@ class stock_incoming_processor(osv.osv):
         new_thread.start()
         new_thread.join(30.0)
 
-        if new_thread.isAlive():
+        if new_thread.is_alive():
             view_id = data_obj.get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
             prog_id = picking_obj.update_processing_info(cr, uid, picking_id, prog_id=False, values={}, context=context)
 

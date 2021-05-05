@@ -834,7 +834,7 @@ class internal_request_import(osv.osv):
         new_thread.start()
         new_thread.join(10.0)
 
-        if new_thread.isAlive():
+        if new_thread.is_alive():
             return self.go_to_simulation(cr, uid, ids, context=context)
         return self.go_to_ir(cr, uid, ids, context=context)
 

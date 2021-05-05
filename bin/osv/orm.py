@@ -2680,7 +2680,7 @@ class orm_memory(orm_template):
                     if arg[1] == '=':
                         val = eval('data[arg[0]]'+'==' +' arg[2]', locals())
                     elif arg[1] in ['<', '>', 'in', 'not in', '<=', '>=', '<>']:
-                        val = eval('data[arg[0]]'+arg[1] +' arg[2]', locals())
+                        val = eval('data[arg[0]] '+arg[1] +' arg[2]', locals())
                     elif arg[1] in ['ilike']:
                         val = (str(data[arg[0]]).find(str(arg[2]))!=-1)
 

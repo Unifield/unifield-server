@@ -284,7 +284,7 @@ class usb_synchronisation(osv.osv_memory):
         th = threading.Thread(target=self.pull_continue_thread,args=(cr, uid, ids, context))
         th.start()
         th.join(600)
-        if th.isAlive():
+        if th.is_alive():
             self.write(cr, uid, ids, {'execute_in_background': True})
             view_id = self.pool.get('ir.model.data').get_object_reference(
                 cr, uid, 'sync_remote_warehouse', 'wizard_view_usb_synchronisation_background')[1]

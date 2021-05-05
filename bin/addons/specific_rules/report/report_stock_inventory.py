@@ -154,7 +154,7 @@ location will be shown.""",
                 'context': context,
                 'target': 'same',
             }
-            if new_thread.isAlive():
+            if new_thread.is_alive():
                 view_id = data_obj.get_object_reference(
                     cr, uid,
                     'specific_rules',

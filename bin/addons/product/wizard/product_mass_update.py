@@ -430,7 +430,7 @@ class product_mass_update(osv.osv):
         thread.start()
 
         thread.join(5)
-        if thread.isAlive():
+        if thread.is_alive():
             msg_to_return = _("Update in progress, please leave this window open and press the button 'Update' when you think that the update is done. Otherwise, you can continue to use Unifield.")
             self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
         return True

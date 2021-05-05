@@ -77,7 +77,7 @@ class export_report_inconsistencies(osv.osv):
                 'target': 'same',
             }
 
-            if new_thread.isAlive():
+            if new_thread.is_alive():
                 view_id = data_obj.get_object_reference(
                     cr, uid,
                     'msf_tools',

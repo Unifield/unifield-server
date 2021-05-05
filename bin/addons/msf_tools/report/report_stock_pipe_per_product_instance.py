@@ -74,7 +74,7 @@ class stock_pipe_per_product_instance(osv.osv):
                 'target': 'same',
             }
 
-            if new_thread.isAlive():
+            if new_thread.is_alive():
                 view_id = data_obj.get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_info_view')[1]
                 res['view_id'] = [view_id]
 
