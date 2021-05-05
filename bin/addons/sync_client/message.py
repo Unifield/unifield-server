@@ -34,7 +34,7 @@ class dict_to_obj(object):
         for k, v in list(values.items()):
             if isinstance(v, dict):
                 v = dict_to_obj(v)
-            elif hasattr(v, '__iter__'):
+            elif isinstance(v, (list, tuple)):
                 gen = (dict_to_obj(i) if isinstance(i, dict) else i \
                        for i in v)
                 v = type(v)(gen)
@@ -280,7 +280,7 @@ class message_to_send(osv.osv):
 
 
             for id in obj_ids:
-                for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
+                for destination in (dest[id] if isinstance(dest[id], list) else [dest[id]]):
                     # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
                     if destination is False:
                         destination = 'fake'

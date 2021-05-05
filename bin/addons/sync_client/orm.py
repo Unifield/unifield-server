@@ -445,19 +445,21 @@ SELECT res_id, touched
 
         """
         result_iterable = isinstance(sdrefs, list)
-        if not result_iterable: sdrefs = (sdrefs,)
-        elif not isinstance(sdrefs, tuple): sdrefs = tuple(sdrefs)
-        sdrefs = [_f for _f in sdrefs if _f]
-        if not sdrefs: return {} if result_iterable else False
+        if not result_iterable:
+            sdrefs = (sdrefs,)
+        elif not isinstance(sdrefs, tuple):
+            sdrefs = tuple(sdrefs)
+        sdrefs = tuple([_f for _f in sdrefs if _f])
+        if not sdrefs:
+            return {} if result_iterable else False
+
         if field is None:
             field = 'id' if self._name == 'ir.model.data' else 'res_id'
         field, real_field = ('id' if field == 'is_deleted' else field), field
         if self._name == "ir.model.data":
-            cr.execute("""\
-SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND name IN %%s""" % field, [sdrefs])  # not_a_user_entry
+            cr.execute("SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND name IN %%s" % field, (sdrefs,))  # not_a_user_entry
         else:
-            cr.execute("""\
-SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name IN %%s""" % field, [self._name,sdrefs])  # not_a_user_entry
+            cr.execute("SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name IN %%s" % field, (self._name, sdrefs))  # not_a_user_entry
         try:
             result = RejectingDict(cr.fetchall())
         except DuplicateKey as e:

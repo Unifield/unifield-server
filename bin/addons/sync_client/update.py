@@ -222,7 +222,7 @@ class update_to_send(osv.osv,fv_formatter):
                 ustr_export_fields = tools.ustr(export_fields)
                 for (id, row) in zip(ids_to_compute[min_offset:offset], datas):
                     sdref, version, force_recreation, data_id = sdrefs[id]
-                    for owner in (owners[id] if hasattr(owners[id], '__iter__') else [owners[id]]):
+                    for owner in (owners[id] if isinstance(owners[id], list) else [owners[id]]):
                         update_id = update.create(cr, uid, {
                             'session_id' : session_id,
                             'rule_id' : rule.id,

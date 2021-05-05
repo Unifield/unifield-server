@@ -186,7 +186,7 @@ class FixSendError:
             self._flush()
 
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
-            self.wfile.write(content)
+            self.wfile.write(content.encode('utf8'))
 
 class HttpOptions:
     _HTTP_OPTIONS = {'Allow': ['OPTIONS' ] }
@@ -252,11 +252,11 @@ class MultiHTTPHandler(FixSendError, HttpOptions, http.server.BaseHTTPRequestHan
             read again..
 
         """
-        fore.raw_requestline = "%s %s %s\n" % (self.command, path, self.version)
+        fore.raw_requestline = bytes("%s %s %s\n" % (self.command, path, self.version), 'utf8')
         if not fore.parse_request(): # An error code has been sent, just exit
             return
-        if fore.headers.status:
-            self.log_error("Parse error at headers: %s", fore.headers.status)
+        if fore.headers.defects:
+            self.log_error("Parse error at headers: %s", fore.headers.defects)
             self.close_connection = 1
             self.send_error(400,"Parse error at HTTP headers")
             return
@@ -333,7 +333,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, http.server.BaseHTTPRequestHan
         self.command = None  # set in case of error on the first line
         self.request_version = version = self.default_request_version
         self.close_connection = 1
-        requestline = self.raw_requestline
+        requestline = str(self.raw_requestline, 'utf8')
         if requestline[-2:] == '\r\n':
             requestline = requestline[:-2]
         elif requestline[-1:] == '\n':

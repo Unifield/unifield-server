@@ -16,7 +16,7 @@ import logging
 import time
 import tools
 from zipfile import is_zipfile
-from base64 import decodestring
+from base64 import b64decode
 from io import StringIO
 import hashlib
 import threading
@@ -234,7 +234,7 @@ class sync_server_user_rights(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
         zip_content = self.read(cr, uid, ids[0], ['zip_file'], context=context)['zip_file']
-        return decodestring(zip_content)
+        return b64decode(zip_content)
 
 sync_server_user_rights()
 
@@ -287,7 +287,7 @@ class sync_server_user_rights_add_file(osv.osv_memory):
 
     def done(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
-        plain_zip = decodestring(wiz.zip_file)
+        plain_zip = b64decode(wiz.zip_file)
 
         ur_obj = self.pool.get('sync_server.user_rights')
         new_ur_id = ur_obj.create(cr, uid, {'name': wiz.name, 'sum': hashlib.md5(plain_zip).hexdigest(), 'zip_file': wiz.zip_file}, context=context)
@@ -300,7 +300,7 @@ class sync_server_user_rights_add_file(osv.osv_memory):
 
         expected_bar = 1
         wiz = self.browse(cr, uid, ids[0], context=context)
-        plain_zip = decodestring(wiz.zip_file)
+        plain_zip = b64decode(wiz.zip_file)
         zp = StringIO(plain_zip)
         if not is_zipfile(zp):
             raise osv.except_osv(_('Warning !'), _("The file is not a zip file !"))

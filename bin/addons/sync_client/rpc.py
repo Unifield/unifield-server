@@ -109,7 +109,7 @@ class XmlRPCConnector(Connector):
                     self._logger.warn("retry to connect %s, error : %s" ,i, e)
                 i += 1
         if error:
-            raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (e.faultCode if hasattr(e, 'faultCode') else tools.ustr(e)))
+            raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (error.faultCode if hasattr(error, 'faultCode') else error))
 
 
 class SecuredXmlRPCConnector(XmlRPCConnector):

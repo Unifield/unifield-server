@@ -253,7 +253,7 @@ def normalize_xmlid(string):
     return string.replace(',', '_')
 
 def get_md5(obj):
-    return hashlib.md5(json.dumps(obj, sort_keys=True)).hexdigest()
+    return hashlib.md5(bytes(json.dumps(obj, sort_keys=True), 'utf8')).hexdigest()
 
 def check_md5(md5, data, add_info=""):
     if md5 != get_md5(data):
