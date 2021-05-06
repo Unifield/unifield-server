@@ -91,6 +91,7 @@ Calendar.setup = function (params) {
 	param_default("cache",           false);
 	param_default("showOthers",      false);
 	param_default("multiple",        null);
+	param_default("depends",         null);
 
 	var tmp = ["inputField", "displayArea", "button"];
 	for (var i in tmp) {
@@ -143,6 +144,7 @@ Calendar.setup = function (params) {
 		cal.setRange(params.range[0], params.range[1]);
 		cal.setDateStatusHandler(params.dateStatusFunc);
 		cal.getDateText = params.dateText;
+		cal.depends = params.depends;
 		if (params.ifFormat) {
 			cal.setDateFormat(params.ifFormat);
 		}
@@ -171,6 +173,7 @@ Calendar.setup = function (params) {
 			cal.showsTime = params.showsTime;
 			cal.time24 = (params.timeFormat == "24");
 			cal.weekNumbers = params.weekNumbers;
+			cal.depends = params.depends;
 			mustCreate = true;
 		} else {
 			if (params.date)
@@ -194,6 +197,13 @@ Calendar.setup = function (params) {
 		cal.setDateFormat(dateFmt);
 		if (mustCreate)
 			cal.create();
+		if (params.depends && !dateEl.value) {
+            var depends = document.getElementById(params.depends);
+            if (depends && depends.value) {
+                var depends_date = Date.parseDate(depends.value, dateFmt);
+                cal.setDate(depends_date);
+            }
+        }
 		cal.refresh();
 		if (!params.position)
 			cal.showAtElement(params.button || params.displayArea || params.inputField, params.align);

@@ -29,6 +29,9 @@
                         cal.destroy();
                     },
                     electric: false,
+                % if depends:
+                    depends: '${depends}',
+                % endif
                 });
             });
         </script>

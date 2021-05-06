@@ -17,7 +17,7 @@
     <script type="text/javascript" src="/openerp/static/javascript/o2m.js?v=10.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/binary.js"></script>
     <script type="text/javascript" src="/openerp/static/jscal/calendar.js"></script>
-    <script type="text/javascript" src="/openerp/static/jscal/calendar-setup.js"></script>
+    <script type="text/javascript" src="/openerp/static/jscal/calendar-setup.js?v=21.0"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/web_keyboard_shortcuts.js?v=7.0rc4b"></script>
 

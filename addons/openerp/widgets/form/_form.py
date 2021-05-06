@@ -627,10 +627,11 @@ class DateTime(TinyInputWidget):
 
     javascript = [DTLink("openerp", "jscal/lang/calendar-en.js", location=locations.bodytop)]
 
-    params = ["format", "picker_shows_time"]
+    params = ["format", "picker_shows_time", "depends"]
 
     format = '%Y-%m-%d %H:%M:%S'
     picker_shows_time = True
+    depends = False
 
     def __init__(self, **attrs):
         super(DateTime, self).__init__(**attrs)
@@ -638,6 +639,11 @@ class DateTime(TinyInputWidget):
 
         if attrs['type'] == 'date':
             self.picker_shows_time = False
+        if attrs.get('depends'):
+            if attrs.get('prefix'):
+                self.depends = '%s/%s' % (attrs['prefix'], attrs['depends'])
+            else:
+                self.depends = attrs['depends']
 
         self.validator = validators.DateTime(kind=attrs['type'])
 
