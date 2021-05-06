@@ -408,7 +408,7 @@ class product_likely_expire_report(osv.osv):
                 if report.segment_id.rule != 'cycle':
                     segment_product_amc[segment_line.product_id.id] = local_amc.get(segment_line.id, 0)
                 else:
-                    for x in xrange(1, 13):
+                    for x in xrange(1, 19):
                         fmc_from = getattr(segment_line, 'rr_fmc_from_%d'%x)
                         fmc_to = getattr(segment_line, 'rr_fmc_to_%d'%x)
                         fmc_value = getattr(segment_line, 'rr_fmc_%d'%x)
@@ -523,6 +523,7 @@ class product_likely_expire_report(osv.osv):
 
                     product_lot_ids = lot_obj.search(new_cr, uid, domain, order='life_date', context=context)
 
+                    tmp_last_expiry_date = False
                     # Create an item line for each lot and each location
                     for product_lot in lot_obj.browse(new_cr, uid, product_lot_ids, context=context):
                         if from_segment and segment_product_fmc:
@@ -533,12 +534,12 @@ class product_likely_expire_report(osv.osv):
                                 for fmc in segment_product_fmc.setdefault(lot.product_id.id, []):
                                     if life_date >= fmc['from'] and tmp_last_expiry_date <= fmc['to']:
                                         end_fmc = min(life_date, fmc['to'])
-                                        lot_days = Age(DateFrom(end_fmc), last_expiry_date)
+                                        lot_days = Age(DateFrom(end_fmc), tmp_last_expiry_date)
                                         consum += fmc['fmc'] * (lot_days.years*364.8 + lot_days.months*30.44 + lot_days.days)/30.44
                                     if life_date <= fmc['to']:
                                         break
                                     else:
-                                        tmp_last_expiry_date = fmc['to']
+                                        tmp_last_expiry_date = end_fmc
 
                         else:
                             lot_days = Age(DateFrom(product_lot.life_date), last_expiry_date)
