@@ -41,7 +41,7 @@
             <field name="res_model">stock.picking</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'), ('state', 'not in', ['done', 'cancel'])]</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'), ('state', 'not in', ['delivered', 'cancel'])]</field>
             <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard', 'wh_dashboard': True, 'pick_type': 'delivery'}</field>
             <field name="search_view_id" ref="stock.view_picking_out_search"/>
         </record>
