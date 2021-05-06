@@ -267,9 +267,9 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_order']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['supplier']|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'order_type')|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'categ')|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'priority')|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'order_type') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'categ') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'priority') or ''|x}</Data></Cell>
                 % if move['dr_date'] and isDate(move['dr_date']):
                 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['dr_date'])|n}</Data></Cell>
                 % else:
@@ -286,11 +286,19 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['product_code']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['product_desc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['uom']|x}</Data></Cell>
+                % if move['purchase_id']:
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${move['qty_ordered']|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${move['qty_received']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['unit_price']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['currency']|x}</Data></Cell>
+                % if move['purchase_id']:
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost']|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost_func']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['dest_loc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_loc']|x}</Data></Cell>
