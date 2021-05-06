@@ -647,5 +647,9 @@
             <field name="method">us_6796_hide_prod_status_inconsistencies</field>
         </record>
 
+        <record id="us_8166_hide_consolidated_sm_report" model="patch.scripts">
+            <field name="method">us_8166_hide_consolidated_sm_report</field>
+        </record>
+
     </data>
 </openerp>
