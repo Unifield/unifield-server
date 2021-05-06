@@ -46776,11 +46776,25 @@ msgstr "Id XML"
 msgid "(n/a)"
 msgstr "(n/a)"
 
-#. modules: sync_client, update_client
-#: view:backup.download:0
+#. module: update_client
 #: view:sync.client.logs:0
 msgid "Select a file to download"
 msgstr "Select a file to download"
+
+#. module: sync_client
+#: view:backup.download:0
+msgid "Dump files"
+msgstr "Fichiers de sauvegarde"
+
+#. modules: sync_client
+#: view:backup.download:0
+msgid "Success"
+msgstr "Succès"
+
+#. modules: sync_client
+#: view:backup.download:0
+msgid "Failure"
+msgstr "Échec"
 
 #. module: sourcing
 #: view:multiple.sourcing.wizard:0
