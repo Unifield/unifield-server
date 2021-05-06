@@ -26,6 +26,7 @@ from tools.translate import _
 
 class res_currency_table(osv.osv):
     _name = 'res.currency.table'
+    _trace = True
 
     _columns = {
         'name': fields.char('Currency table name', size=64, required=True),
@@ -71,6 +72,7 @@ res_currency_table()
 class res_currency(osv.osv):
     _name = "res.currency"
     _description = "Currency"
+    _trace = True
     _order = "name"
 
     def _check_unicity_currency_name(self, cr, uid, ids, context=None):
@@ -704,6 +706,7 @@ res_currency()
 class res_currency_rate(osv.osv):
     _name = "res.currency.rate"
     _description = "Currency Rate"
+    _trace = True
     _columns = {
         'name': fields.date('Date', required=True, select=True),
         'rate': fields.float('Rate', digits=(12,6), required=True,
