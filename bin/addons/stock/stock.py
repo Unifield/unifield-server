@@ -159,6 +159,9 @@ class stock_location(osv.osv):
         @param field_names: Name of field
         @return: Dictionary of values
         """
+        if context is None:
+            context = {}
+
         prod_id = context and context.get('product_id', False)
 
         product_product_obj = self.pool.get('product.product')
@@ -171,7 +174,9 @@ class stock_location(osv.osv):
         products_by_location = dict((k, [v['product_id'] for v in itr]) for k, itr in groupby(res_products_by_location, itemgetter('location_id')))
 
         lang_obj = self.pool.get('res.lang')
-        lang_ids = lang_obj.search(cr, uid, [('code', '=', context.get('lang', 'en_US'))])
+        lang_ids = lang_obj.search(cr, uid, [('code', '=', context.get('lang', 'en_MF'))])
+        if not lang_ids:
+            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
         lang = lang_obj.browse(cr, uid, lang_ids[0])
 
         result = dict([(i, {}.fromkeys(field_names, 0.0)) for i in ids])
