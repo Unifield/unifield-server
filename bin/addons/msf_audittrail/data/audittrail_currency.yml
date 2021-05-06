@@ -1,5 +1,5 @@
 -
-  For Currencies (res.currency), track the creation, modification, and deletion
+  For Currencies (res.currency), track the changes on the Currency Tables if applicable
 -
   !python {model: audittrail.rule}: |
     name = 'Currencies'
@@ -9,6 +9,16 @@
         # Create the rule
         fields = ['name', 'rate', 'currency_name', 'symbol', 'rounding', 'active', 'accuracy']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.currency'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.currency'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.currency'), ('name', '=', 'currency_table_id')], context=context)
+
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+          parent_id = field_parent[0]
+          if field_name:
+            name_id = field_name[0]
 
         vals = {
             'name': name,
@@ -17,6 +27,8 @@
             'log_unlink': True,
             'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
+            'parent_field_id': parent_id,
+            'name_get_field_id': name_id,
         }
 
         if not rule_id:
