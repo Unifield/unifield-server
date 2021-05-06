@@ -600,7 +600,9 @@ class stock_picking(osv.osv):
                 if sol_brw.order_id.procurement_request:
                     service_non_stock_ok = True
 
-        if wizard.picking_id and wizard.picking_id.type == 'in' and line.product_id.type == 'service_recep':
+        if wizard.picking_id and wizard.picking_id.type == 'in' and wizard.register_a_claim and wizard.claim_type in ('surplus', 'return'):
+            values['location_dest_id'] = db_data.get('cd_loc')
+        elif wizard.picking_id and wizard.picking_id.type == 'in' and line.product_id.type == 'service_recep':
             values['location_dest_id'] = db_data.get('service_loc')
             values['cd_from_bo'] = False
         elif wizard.dest_type == 'to_cross_docking' and not service_non_stock_ok:
