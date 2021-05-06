@@ -21695,6 +21695,7 @@ msgstr "Etc/GMT-2"
 #: field:tender,notes:0
 #: view:real.average.consumption:0
 #: field:real.average.consumption,notes:0
+#: report:addons/account/report/export_invoice.mako:126
 #, python-format
 msgid "Notes"
 msgstr "Notes"
@@ -27826,11 +27827,6 @@ msgstr "Total Cheque:"
 #: help:sync.client.sync_server_connection,automatic_patching_hour_from:0
 msgid "Enable upgrade from this time"
 msgstr "Enable upgrade from this time"
-
-#. module: account_override
-#: view:account.invoice:0
-msgid "Cancelled Invoices"
-msgstr "Cancelled Invoices"
 
 #. module: resource
 #: model:ir.model,name:resource.model_resource_calendar_leaves
@@ -105880,6 +105876,12 @@ msgid "This document has been generated via a Supply workflow or via synchroniza
 msgstr "Ce document a été généré via un flux \"Supply\" ou via la synchronisation. Les lignes existantes ne peuvent pas être supprimées."
 
 #. module: account_override
+#: code:addons/account_override/invoice.py:2008
+#, python-format
+msgid "This donation has been generated via a Supply workflow. Existing lines can't be deleted."
+msgstr "Cette donation a été générée via un flux \"Supply\". Les lignes existantes ne peuvent pas être supprimées."
+
+#. module: account_override
 #: code:addons/account_override/invoice.py:1785
 #, python-format
 msgid "This document has been generated via synchronization. You can't split its lines."
@@ -108955,6 +108957,12 @@ msgstr "Fractionner Bon Intermission OUT"
 msgid "Split Stock Transfer Voucher"
 msgstr "Fractionner Bon Client"
 
+#. module: account_override
+#: view:account.invoice:0
+#: code:addons/account_override/invoice.py:1281
+msgid "Split Donation"
+msgstr "Fractionner Donation"
+
 #. modules: account_override, register_accounting
 #: view:account.invoice:0
 #: view:account.invoice:0
@@ -108985,6 +108993,12 @@ msgstr "Importer la Ligne de Facture"
 #, python-format
 msgid "Line %s: the account (mandatory) is missing."
 msgstr "Ligne %s : il manque le compte (obligatoire)."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:234
+#, python-format
+msgid "Line %s: the description (mandatory) is missing."
+msgstr "Ligne %s : il manque la description (obligatoire)."
 
 #. module: account
 #: code:addons/account/wizard/account_invoice_import.py:163
@@ -109108,6 +109122,11 @@ msgstr "Les valeurs des lignes du Solde de Clôture doivent être uniques par re
 #: report:account.invoice2:0
 msgid "Cancelled Intermission Voucher OUT"
 msgstr "Bon Intermission OUT annulé"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Cancelled In-kind Donation"
+msgstr "Donation en nature annulée"
 
 #. module: msf_outgoing
 #: field:stock.reserved.products,prodlot_id:0
