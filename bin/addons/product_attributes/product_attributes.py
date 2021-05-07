@@ -2120,7 +2120,7 @@ class product_attributes(osv.osv):
                             type_name = 'Debit Note'
                         # Donation (in-kind donation)
                         elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
-                            type_name = 'In-kind Donation'
+                            type_name = 'Finance document In-kind Donation'
                         # Intermission voucher out
                         elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
                             type_name = 'Intermission Voucher Out'
