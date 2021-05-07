@@ -287,7 +287,7 @@ class res_currency(osv.osv):
         tc_sql = """
             SELECT id FROM audittrail_log_line 
             WHERE res_id = %s
-            AND object_id = (SELECT id FROM ir_model WHERE model='res.currency');
+            AND object_id = (SELECT id FROM ir_model WHERE model='res.currency' LIMIT 1);
         """
         cr.execute(tc_sql, (tuple(ids),))
         tc_ids = [x for x, in cr.fetchall()]
