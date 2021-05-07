@@ -1,13 +1,13 @@
 -
-  For Currencies (res.currency), track the changes on the Currency Tables if applicable
+  Currency (res.currency) creation and deletion. Changes are tracked on the Currency Table if applicable.
 -
   !python {model: audittrail.rule}: |
-    name = 'Currencies'
+    name = 'Currency - Creation and Deletion'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'res.currency')], context=context)
-    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['name', 'currency_name', 'symbol', 'rounding', 'active', 'accuracy']
+        fields = ['name']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.currency'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.currency'), ('name', '=', 'name')], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.currency'), ('name', '=', 'currency_table_id')], context=context)
@@ -23,12 +23,39 @@
         vals = {
             'name': name,
             'object_id': object_ids[0],
-            'log_write': True,
             'log_unlink': True,
             'log_create': True,
+            'log_write': False,
             'field_ids': [(6, 0, fields_ids)],
             'parent_field_id': parent_id,
             'name_get_field_id': name_id,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  Currency (res.currency) edition.
+-
+  !python {model: audittrail.rule}: |
+    name = 'Currency - Edition'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'res.currency')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name', 'currency_name', 'symbol', 'rounding', 'active', 'accuracy']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.currency'), ('name', 'in', fields)], context=context)
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_unlink': False,
+            'log_create': False,
+            'log_write': True,
+            'field_ids': [(6, 0, fields_ids)],
         }
 
         if not rule_id:

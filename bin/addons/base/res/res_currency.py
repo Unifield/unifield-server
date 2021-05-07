@@ -276,6 +276,35 @@ class res_currency(osv.osv):
 
         return res
 
+    def open_currency_tc(self, cr, uid, ids, context=None):
+        """
+        Opens the Track Changes of the currency in a new tab.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        tc_sql = """
+            SELECT id FROM audittrail_log_line 
+            WHERE res_id = %s
+            AND object_id = (SELECT id FROM ir_model WHERE model='res.currency');
+        """
+        cr.execute(tc_sql, (tuple(ids),))
+        tc_ids = [x for x, in cr.fetchall()]
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Track changes'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'audittrail.log.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': [('id', 'in', tc_ids)],
+            'target': 'current',
+        }
+
     def write(self, cr, uid, ids, values, context=None):
         '''
         Active/De-active pricelists according to activation/de-activation of the currency
