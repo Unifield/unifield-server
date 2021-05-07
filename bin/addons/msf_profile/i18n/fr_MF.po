@@ -45167,6 +45167,12 @@ msgstr "Scinder le mouvement de stock sélectionné"
 msgid "OCP matching export"
 msgstr "OCP matching export"
 
+#. module: vertical_integration
+#: code:addons/vertical_integration/wizard/ocp_matching_export.py:86
+#, python-format
+msgid "An OCP matching export has been generated under the name \"%s\" from the database \"%s\"."
+msgstr "Un rapport \"OCP matching export\" a été généré sous le nom \"%s\" depuis la base de données \"%s\"."
+
 #. modules: base, sale, stock
 #: view:ir.actions.todo:0
 #: selection:ir.actions.todo,state:0

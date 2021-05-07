@@ -21,6 +21,7 @@
 
 from osv import fields
 from osv import osv
+from tools.translate import _
 
 import time
 from time import strftime
@@ -82,6 +83,8 @@ class ocp_matching_export_wizard(osv.osv_memory):
         context['background_time'] = 2
 
         data['context'] = context
+        self.log(cr, uid, wizard.id, _('An OCP matching export has been generated under the name "%s" from the database "%s".') %
+                 (data['target_filename'], cr.dbname))
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'hq.ocp.matching',
