@@ -27,6 +27,7 @@ import os.path
 from base64 import b64decode
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile as zf
+import io
 import csv
 from tools.misc import ustr
 from tools.translate import _
@@ -358,7 +359,7 @@ class hr_payroll_import(osv.osv_memory):
         if not pwd:
             raise osv.except_osv(_("Error"), _("File '%s' does not contain the password !") % (homere_file,))
         homere_file_data.close()
-        return pwd.decode('base64')
+        return b64decode(pwd)
 
     def _uf_side_rounding_line_check_gap(self, cr, uid,
                                          currency_id, currency_code, curr_date, gap_amount, context=None):
@@ -546,16 +547,17 @@ class hr_payroll_import(osv.osv_memory):
                     if is_bom != codecs.BOM_UTF8:
                         ini_desc.close()
                         ini_desc = zipobj.open('envoi.ini', 'r', xyargv)
-                    Config.readfp(ini_desc)
+                    Config.readfp(io.TextIOWrapper(ini_desc))
                     field = Config.get('DEFAUT', 'PAYS')
                 except Exception:
+                    raise
                     raise osv.except_osv(_('Error'), _('Could not read envoi.ini file in given ZIP file.'))
                 if not field:
                     raise osv.except_osv(_('Warning'), _('Field not found in envoi.ini file.'))
                 # Read CSV files
                 for csvfile in csvfiles:
                     try:
-                        reader = csv.reader(zipobj.open(csvfile, 'r', xyargv), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
+                        reader = csv.reader(io.TextIOWrapper(zipobj.open(csvfile, 'r', xyargv)), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
                         next(reader)
                     except:
                         fileobj.close()
