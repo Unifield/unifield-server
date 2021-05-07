@@ -860,10 +860,15 @@ class substitute_item(osv.osv_memory):
 
         comment = ''
         if self._name == 'substitute.item' and context.get('comp_item_ids'):
-            comp_item_ids = context.get('comp_item_ids')[0][2]
-            if len(comp_item_ids) == 1:
-                comp_items = self.pool.get('substitute.item.mirror').browse(cr, uid, comp_item_ids, fields_to_fetch=['comment'], context=context)
-                comment = comp_items[0].comment or ''
+            # Strange behavior while adding a new "Products from the stock to the Kit" or changing the product of one
+            # while both treeviews are in edition
+            if 'comment' in context.get('comp_item_ids'):
+                comment = context.get('comp_item_ids').get('comment', '')
+            else:
+                comp_item_ids = context.get('comp_item_ids')[0][2]
+                if len(comp_item_ids) == 1:
+                    comp_items = self.pool.get('substitute.item.mirror').browse(cr, uid, comp_item_ids, fields_to_fetch=['comment'], context=context)
+                    comment = comp_items[0].comment or ''
 
         return comment
 
