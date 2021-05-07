@@ -3425,6 +3425,8 @@ class orm(orm_template):
         cr.commit()     # start a new transaction
 
         for (key, con, null) in self._sql_constraints:
+            if not con:
+                continue
             conname = '%s_%s' % (self._table, key)
 
             cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname=%s", (conname,))
@@ -4007,7 +4009,7 @@ class orm(orm_template):
                                                     [('res_id','in',list(sub_ids)),('model','=',self._name)],
                                                     order='NO_ORDER', context=context)
 
-            if self._name in xmlid_no_delete.prevent_deletion:
+            if referenced_ids and self._name in xmlid_no_delete.prevent_deletion:
                 cr.execute('''select module, name from ir_model_data
                         where
                             (module, name) in %s and
