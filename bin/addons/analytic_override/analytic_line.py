@@ -292,7 +292,7 @@ class account_analytic_line(osv.osv):
                                                                       context=context)
                 if reversed_aal_ids:
                     vals['reversal_origin'] = reversed_aal_ids[0]  # reversal_origin_txt will be automatically updated
-        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'])
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'], replace=['name'])
         # Default behaviour
         res = super(account_analytic_line, self).create(cr, uid, vals, context=context)
         # Check date
@@ -321,7 +321,7 @@ class account_analytic_line(osv.osv):
                 if not el in vals:
                     vals2.update({el: l[el] and l[el]['id'] or False})
             self._check_date(cr, uid, vals2, context=context)
-        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'])
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'], replace=['name'])
         res = super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
         return res
