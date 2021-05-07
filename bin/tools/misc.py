@@ -1243,7 +1243,7 @@ def get_encodings(hint_encoding='utf-8'):
             yield prefenc
 
 
-def ustr(value, hint_encoding='utf-8'):
+def ustr(value, hint_encoding='utf8'):
     """This method is similar to the builtin `str` method, except
        it will return unicode() string.
 
@@ -1261,18 +1261,20 @@ def ustr(value, hint_encoding='utf-8'):
     if isinstance(value, str):
         return value
 
-    if not isinstance(value, str):
-        try:
-            return str(value)
-        except Exception:
-            raise UnicodeError('unable to convert %r' % (value,))
+    if isinstance(value, bytes):
+        return str(value, hint_encoding)
 
-    for ln in get_encodings(hint_encoding):
-        try:
-            return str(value, ln)
-        except Exception:
-            pass
-    raise UnicodeError('unable to convert %r' % (value,))
+    try:
+        return str(value)
+    except Exception:
+        raise UnicodeError('unable to convert %r' % (value,))
+
+    #for ln in get_encodings(hint_encoding):
+    #    try:
+    #        return str(value, ln)
+    #    except Exception:
+    #        pass
+    #raise UnicodeError('unable to convert %r' % (value,))
 
 
 def exception_to_unicode(e):

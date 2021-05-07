@@ -40,9 +40,11 @@ import tools
 from tools.translate import _
 
 def _symbol_set(symb):
-    if symb == None or symb == False:
+    if symb is None or symb is False:
         return None
-    elif isinstance(symb, str):
+    if isinstance(symb, bytes):
+        return str(symb, 'utf8')
+    if isinstance(symb, str):
         return symb
     return str(symb)
 
@@ -272,7 +274,7 @@ def _binary_symbol_f(data):
     if not data:
         return None
     if isinstance(data, bytes):
-        return Binary(value)
+        return Binary(data)
     return Binary(str(data).encode('ascii'))
 
 class binary(_column):
@@ -280,14 +282,18 @@ class binary(_column):
     _symbol_c = '%s'
     _symbol_f = _binary_symbol_f
     _symbol_set = (_symbol_c, _symbol_f)
-    _symbol_get = lambda self, x: x
+    _symbol_get = lambda self, x: self.get_symp(x)
 
     _classic_read = False
     _prefetch = False
 
+    def get_symp(self, x):
+        return x and bytes(x) or ''
+
     def __init__(self, string='unknown', filters=None, **args):
         _column.__init__(self, string=string, **args)
         self.filters = filters
+
 
     def get_memory(self, cr, obj, ids, name, user=None, context=None, values=None):
         if not context:
@@ -833,7 +839,7 @@ class function(_column):
                 self._classic_read = True
             self._classic_write = True
             if type=='binary':
-                self._symbol_get=lambda x:x and str(x)
+                self._symbol_get=lambda x:x and str(x, 'utf8')
 
         if type == 'float':
             self._symbol_c = float._symbol_c
