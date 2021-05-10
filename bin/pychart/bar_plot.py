@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -20,8 +20,7 @@ from . import legend
 from . import error_bar
 from . import bar_plot_doc
 from . import theme
-from types import *
-from .pychart_types import *
+from .pychart_types import AnyType, UnitType, FormatType, CoordType
 
 fill_styles = None
 
@@ -32,15 +31,15 @@ _keys = {
     "data" : (AnyType, None, pychart_util.data_desc),
     "data_label_offset": (CoordType, (0, 5),
                           "The location of data labels relative to the sample point. See also attribute data_label_format."),
-    
+
     "data_label_format": (FormatType, None, """The
                           format string for the label displayed besides each
                           bar.  It can be a `printf' style format
                           string, or a two-parameter function that
                           takes (x,y) values and returns a string. """
                           + pychart_util.string_desc),
-    
-    "label": (str, "???", pychart_util.label_desc), 
+
+    "label": (str, "???", pychart_util.label_desc),
     "bcol" : (int, 0,
               """Specifies the column from which base values (i.e., X values when attribute "direction" is "vertical", Y values otherwise) are extracted.
 The
@@ -70,8 +69,8 @@ The
     "legend_line_style": (line_style.T, None,
                           """The line style used to draw a legend entry. Usually, the value is None, meaning that the value of "line_style" attribute is used."""),
     "legend_fill_style": (fill_style.T, None,
-                   """The fill style used to draw a legend entry. Usually, the value is None, meaning that the value of "fill_style" attribute is used."""),
-                          
+                          """The fill style used to draw a legend entry. Usually, the value is None, meaning that the value of "fill_style" attribute is used."""),
+
     "cluster": (tuple, (0, 1), """This attribute is used to
     cluster multiple bar plots side by side in a single chart.
     The value should be a tuple of two integers. The second value should be equal to the total number of bar plots in the chart. The first value should be the relative position of this chart; 0 places this chart the leftmost, and N-1
@@ -99,33 +98,33 @@ The
     "stack_on": (AnyType, None,
                  "The value must be either None or bar_plot.T. If not None, bars of this plot are stacked on top of another bar plot."),
     "error_minus_col": (int, -1,
-                  """Specifies the column from which the depth of the errorbar is extracted.  This attribute is meaningful only when
+                        """Specifies the column from which the depth of the errorbar is extracted.  This attribute is meaningful only when
                   error_bar != None.
                   """),
     "qerror_minus_col":  (int, -1,
-                  """The depth of the "quartile" errorbar is extracted from 
+                          """The depth of the "quartile" errorbar is extracted from 
                   this column in data. This attribute is meaningful only
                   when error_bar != None. """),
     "error_plus_col": (int, -1,
-                  """The depth of the errorbar is extracted from 
+                       """The depth of the errorbar is extracted from 
                   this column in data. This attribute is meaningful only
                   when error_bar != None."""),
-    "qerror_plus_col":  (int, -1, 
-                  """The depth of the "quartile" errorbar is extracted from 
+    "qerror_plus_col":  (int, -1,
+                         """The depth of the "quartile" errorbar is extracted from 
                   this column in data. This attribute is meaningful only
                   when error_bar != None."""),
     "error_bar": (error_bar.T, None,
                   "Specifies the style of the error bar. <<error_bar>>"),
     "_abs_data" : (list, None,
                    "Used only internally."),
-    }
+}
 
 def find_bar_plot(ar, nth):
     "Find the NTH barplot of the cluster in area AR."
     for plot in ar.plots:
         if isinstance(plot, T) and plot.cluster[0] == nth:
             return plot
-    raise Exception("The %dth bar plot in the cluster not found." % nth)   
+    raise Exception("The %dth bar plot in the cluster not found." % nth)
 
 class T(chart_object.T):
     __doc__ = bar_plot_doc.doc
@@ -136,7 +135,7 @@ class T(chart_object.T):
     def compute_abs_data(self):
         if self._abs_data != None:
             return
-        
+
         if self.stack_on == None:
             self._abs_data = self.data
         else:
@@ -147,7 +146,7 @@ class T(chart_object.T):
                 newpair[self.hcol] = self.stack_on.get_value(newpair[self.bcol]) + pair[self.hcol]
                 n.append(newpair)
             self._abs_data = n
-            
+
 ##AUTOMATICALLY GENERATED
 
 ##END AUTOMATICALLY GENERATED
@@ -176,12 +175,12 @@ class T(chart_object.T):
             plot = find_bar_plot(ar, i)
             off += plot.width + plot.cluster_sep
         return off
-    
+
     def draw_vertical(self, ar, can):
         for pair in self.data:
             xval = pair[self.bcol]
             yval = pychart_util.get_sample_val(pair, self.hcol)
-            
+
             if None in (xval, yval): continue
 
             ybot = 0
@@ -194,8 +193,8 @@ class T(chart_object.T):
             thisX = firstX + self.get_bar_width(ar, self.cluster[0])
 
             can.rectangle(self.line_style, self.fill_style,
-                             thisX, ar.y_pos(ybot), thisX+self.width, 
-                             ar.y_pos(yval))
+                          thisX, ar.y_pos(ybot), thisX+self.width,
+                          ar.y_pos(yval))
 
             if self.error_bar:
                 plus = pair[self.error_minus_col or self.error_plus_col]
@@ -205,18 +204,18 @@ class T(chart_object.T):
                 if self.qerror_minus_col or self.qerror_plus_col:
                     qplus = pair[self.qerror_minus_col or self.qerror_plus_col]
                     qminus = pair[self.qerror_plus_col or self.qerror_minus_col]
-                if None not in (plus, minus, qplus, qminus): 
+                if None not in (plus, minus, qplus, qminus):
                     self.error_bar.draw(can, (thisX+self.width/2.0, ar.y_pos(yval)),
                                         ar.y_pos(yval - minus),
                                         ar.y_pos(yval + plus),
                                         ar.y_pos(yval - qminus),
                                         ar.y_pos(yval + qplus))
-                    
+
             if self.data_label_format:
                 can.show(thisX + self.width/2.0 + self.data_label_offset[0],
-                            ar.y_pos(yval) + self.data_label_offset[1],
-                            "/hC" + pychart_util.apply_format(self.data_label_format, (pair[self.bcol], pair[self.hcol]), 1))
-    
+                         ar.y_pos(yval) + self.data_label_offset[1],
+                         "/hC" + pychart_util.apply_format(self.data_label_format, (pair[self.bcol], pair[self.hcol]), 1))
+
     def draw_horizontal(self, ar, can):
         for pair in self.data:
             yval = pair[self.bcol]
@@ -231,15 +230,15 @@ class T(chart_object.T):
             totalWidth = self.get_bar_width(ar, self.cluster[1])
             firstY = ar.y_pos(yval) - totalWidth/2.0
             thisY = firstY + self.get_bar_width(ar, self.cluster[0])
-            
+
             can.rectangle(self.line_style, self.fill_style,
                           ar.x_pos(xbot), thisY,
                           ar.x_pos(xval), thisY+self.width)
 
             if self.data_label_format:
                 can.show(ar.x_pos(xval) + self.data_label_offset[0],
-                            thisY + self.width/2.0 + self.data_label_offset[1],
-                            "/vM/hL" + pychart_util.apply_format(self.data_label_format, (pair[self.bcol], pair[self.hcol]), 1))
+                         thisY + self.width/2.0 + self.data_label_offset[1],
+                         "/vM/hL" + pychart_util.apply_format(self.data_label_format, (pair[self.bcol], pair[self.hcol]), 1))
 
     def get_legend_entry(self):
         if self.label:
@@ -247,12 +246,12 @@ class T(chart_object.T):
                                 fill_style=(self.legend_fill_style or self.fill_style),
                                 label=self.label)
         return None
-        
+
     def draw(self, ar, can):
         self.type_check()
         can.clip(ar.loc[0], ar.loc[1],
-                ar.loc[0] + ar.size[0], ar.loc[1] + ar.size[1])
-            
+                 ar.loc[0] + ar.size[0], ar.loc[1] + ar.size[1])
+
         if self.direction == "vertical":
             self.draw_vertical(ar, can)
         else:
@@ -264,6 +263,6 @@ class T(chart_object.T):
 def init():
     global fill_styles
     fill_styles = fill_style.standards.iterate()
-    
+
 theme.add_reinitialization_hook(init)
 

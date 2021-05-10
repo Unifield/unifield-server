@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,15 +15,15 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import re
 import reportlab
 import reportlab.lib.units
-from lxml import etree
 from tools.safe_eval import safe_eval as eval
+import copy
 
 _regex = re.compile('\[\[(.+?)\]\]')
 
@@ -61,30 +61,30 @@ def _child_get(node, self=None, tagname=None):
             yield n
 
 def _process_text(self, txt):
-        if not self.localcontext:
-            return txt
-        if not txt:
-            return ''
-        result = ''
-        sps = _regex.split(txt)
-        while sps:
-            # This is a simple text to translate
-            result += self.localcontext.get('translate', lambda x:x)(sps.pop(0))
-            if sps:
-                try:
-                    txt2 = eval(sps.pop(0),self.localcontext)
-                except:
-                    txt2 = ''
-                if type(txt2) == type(0) or type(txt2) == type(0.0):
-                    txt2 = str(txt2)
-                if type(txt2)==type('') or type(txt2)==type(''):
-                    result += txt2
-        return result
+    if not self.localcontext:
+        return txt
+    if not txt:
+        return ''
+    result = ''
+    sps = _regex.split(txt)
+    while sps:
+        # This is a simple text to translate
+        result += self.localcontext.get('translate', lambda x:x)(sps.pop(0))
+        if sps:
+            try:
+                txt2 = eval(sps.pop(0),self.localcontext)
+            except:
+                txt2 = ''
+            if type(txt2) == type(0) or type(txt2) == type(0.0):
+                txt2 = str(txt2)
+            if type(txt2)==type('') or type(txt2)==type(''):
+                result += txt2
+    return result
 
 def text_get(node):
     rc = ''
     for node in node.getchildren():
-            rc = rc + node.text
+        rc = rc + node.text
     return rc
 
 units = [

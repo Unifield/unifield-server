@@ -35,7 +35,6 @@ import codecs
 import io
 import base64
 from msf_field_access_rights.osv_override import _get_instance_level
-from datetime import datetime
 from xlwt import Workbook, easyxf, Borders, add_palette_colour, Formula
 import tempfile
 import shutil

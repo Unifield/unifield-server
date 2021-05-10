@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,14 +15,12 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 from report.render.rml2pdf import utils
-from lxml import etree
 import copy
-import pooler 
 import base64
 import io
 import re
@@ -72,7 +70,7 @@ class html2html(object):
             self._node.remove(n)
         process_text(self.etree, self._node)
         return self._node
-        
+
     def url_modify(self,root):
         for n in root:
             if (n.text.find('<a ')>=0 or n.text.find('&lt;a')>=0) and n.text.find('href')>=0 and n.text.find('style')<=0 :

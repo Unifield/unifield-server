@@ -452,7 +452,7 @@ class automated_import_job(osv.osv):
                         data64 = base64.b64encode(file_content)
                     except ValueError:
                         no_file = True
-                    except Exception as e:
+                    except Exception:
                         no_file = True
                         error = tools.ustr(traceback.format_exc())
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -20,7 +20,7 @@ import re
 from . import font
 from . import pychart_util
 from . import version
-from .scaling import *
+from .scaling import nscale, yscale, xscale
 
 def _compute_bounding_box(points):
     """Given the list of coordinates (x,y), this procedure computes
@@ -59,7 +59,7 @@ InvalidCoord = 999999
 class T(object):
     def __init__(self):
         global active_canvases
-        
+
         self.__xmax = -InvalidCoord
         self.__xmin = InvalidCoord
         self.__ymax = -InvalidCoord
@@ -67,7 +67,7 @@ class T(object):
         self.__clip_box = (-InvalidCoord, -InvalidCoord, InvalidCoord, InvalidCoord)
         self.__clip_stack = []
         self.__nr_gsave = 0
-        
+
         self.title = re.sub("(.*)\\.py$", "\\1", sys.argv[0])
         self.creator = "pychart %s" % (version.version,)
         self.creation_date = time.strftime("(%m/%d/%y) (%I:%M %p)")
@@ -78,23 +78,23 @@ class T(object):
     def set_title(self, s):
         """Define the string to shown in EPS/PDF "Title" field. The default value is the name of the script that creates the EPS/PDF file."""
         self.title = s
-        
+
     def set_creator(self, tag):
         """Define the string to be shown in EPS %%Creator or PDF Producer field. The default value is "pychart"."""
         self.creator = tag
-        
+
     def set_creation_date(self, s):
         """Define the string to shown in EPS/PDF "CreationDate" field. Defalt value of this field is the current time."""
         self.creation_date = s
-        
+
     def set_author(self, s):
         """Set the author string. Unless this method is called, the Author field is not output in EPS or PDF."""
         self.author = s
-        
+
     def add_aux_comments(self, s):
         """Define an auxiliary comments to be output to the file, just after the required headers"""
         self.aux_comments += s
-        
+
     def close(self):
         """This method closes the canvas and writes
         contents to the associated file.
@@ -110,7 +110,7 @@ class T(object):
         where FD is a file (or file-like) object, and NEED_CLOSE is a
         boolean flag that tells whether FD.close() should be called
         after finishing writing to the file.
-        
+
         FNAME can be one of the three things:
         (1) None, in which case (sys.stdout, False) is returned.
         (2) A file-like object, in which case (fname, False) is returned.
@@ -125,11 +125,11 @@ class T(object):
             if not hasattr(fname, "write"):
                 raise Exception("Expecting either a filename or a file-like object, but got %s" % fname)
             return (fname, False)
-        
+
     def setbb(self, x, y):
         """Call this method when point (X,Y) is to be drawn in the
         canvas. This methods expands the bounding box to include
-        this point.""" 
+        this point."""
         self.__xmin = min(self.__xmin, max(x, self.__clip_box[0]))
         self.__xmax = max(self.__xmax, min(x, self.__clip_box[2]))
         self.__ymin = min(self.__ymin, max(y, self.__clip_box[1]))
@@ -137,7 +137,7 @@ class T(object):
 
     def fill_with_pattern(self, pat, x1, y1, x2, y2):
         if invisible_p(x2, y2): return
-	
+
         self.comment("FILL pat=%s (%d %d)-(%d %d)\n" % (pat, x1, y1, x2, y2))
         self.set_fill_color(pat.bgcolor)
         self._path_polygon([(x1, y1), (x1, y2), (x2, y2), (x2, y1)])
@@ -152,7 +152,7 @@ class T(object):
             return
         self.setbb(xmin, ymin)
         self.setbb(xmax, ymax)
-        
+
         self.newpath()
         self.moveto(xscale(points[0][0]), yscale(points[0][1]))
         for point in points[1:]:
@@ -168,7 +168,7 @@ class T(object):
 
         if pat:
             self.comment("POLYGON points=[%s] pat=[%s]"
-                        % (str(points), str(pat)))
+                         % (str(points), str(pat)))
             (xmin, ymin, xmax, ymax) = _compute_bounding_box(points)
 
             if shadow:
@@ -191,19 +191,19 @@ class T(object):
             self.set_line_style(edge_style)
             self._path_polygon(points)
             self.stroke()
-		
+
     def set_background(self, pat, x1, y1, x2, y2):
         xmax, xmin, ymax, ymin = self.__xmax, self.__xmin, self.__ymax, self.__ymin
         self.rectangle(None, pat, x1, y1, x2, y2)
-        self.__xmax, self.__xmin, self.__ymax, self.__ymin = xmax, xmin, ymax, ymin 
-        
+        self.__xmax, self.__xmin, self.__ymax, self.__ymin = xmax, xmin, ymax, ymin
+
     def rectangle(self, edge_style, pat, x1, y1, x2, y2, shadow = None):
         """Draw a rectangle with EDGE_STYLE, fill with PAT, and the
         bounding box (X1, Y1, X2, Y2).  SHADOW is either None or a
         tuple (XDELTA, YDELTA, fillstyle). If non-null, a shadow of
         FILLSTYLE is drawn beneath the polygon at the offset of
         (XDELTA, YDELTA)."""
-        
+
         self.polygon(edge_style, pat, [(x1,y1), (x1,y2), (x2,y2), (x2, y1)],
                      shadow)
 
@@ -213,7 +213,7 @@ class T(object):
         oradius = nscale(radius)
         centerx, centery = xscale(x), yscale(y)
         startx, starty = centerx+oradius * math.cos(to_radian(start_angle)), \
-                         centery+oradius * math.sin(to_radian(start_angle))
+            centery+oradius * math.sin(to_radian(start_angle))
         self.moveto(centerx, centery)
         if start_angle % 360 != end_angle % 360:
             self.moveto(centerx, centery)
@@ -221,7 +221,7 @@ class T(object):
         else:
             self.moveto(startx, starty)
         self.path_arc(xscale(x), yscale(y), nscale(radius),
-                     ratio, start_angle, end_angle)
+                      ratio, start_angle, end_angle)
         self.closepath()
 
     def ellipsis(self, line_style, pattern, x, y, radius, ratio = 1.0,
@@ -250,7 +250,7 @@ class T(object):
                                        y+radius*ratio*2+y_off)
                 self.grestore()
             self.gsave()
-            self.newpath()		
+            self.newpath()
             self._path_ellipsis(x, y, radius, ratio, start_angle, end_angle)
             self.clip_sub()
             self.fill_with_pattern(pattern,
@@ -274,7 +274,7 @@ class T(object):
         self.closepath()
         self.__clip_stack.append(self.__clip_box)
         self.clip_sub()
-	
+
     def clip_polygon(self, points):
         """Create a polygonal clip region. You must call endclip() after
         you completed drawing. See also the polygon method."""
@@ -283,16 +283,16 @@ class T(object):
         self.__clip_stack.append(self.__clip_box)
         self.__clip_box = _intersect_box(self.__clip_box, _compute_bounding_box(points))
         self.clip_sub()
-		
+
     def clip(self, x1, y1, x2, y2):
         """Activate a rectangular clip region, (X1, Y1) - (X2, Y2).
         You must call endclip() after you completed drawing.
-        
+
 canvas.clip(x,y,x2,y2)
 draw something ...
 canvas.endclip()
 """
-    
+
         self.__clip_stack.append(self.__clip_box)
         self.__clip_box = _intersect_box(self.__clip_box, (x1, y1, x2, y2))
         self.gsave()
@@ -303,7 +303,7 @@ canvas.endclip()
         self.lineto(xscale(x2), yscale(y1))
         self.closepath()
         self.clip_sub()
-	
+
     def endclip(self):
         """End the current clip region. When clip calls are nested, it
         ends the most recently created crip region."""
@@ -329,8 +329,8 @@ canvas.endclip()
             elif n == 3:
                 x4 = midpoint(x3, points[i])
                 self.curveto(xscale(x2[0]), xscale(x2[1]),
-                            xscale(x3[0]), xscale(x3[1]),
-                            xscale(x4[0]), xscale(x4[1]))
+                             xscale(x3[0]), xscale(x3[1]),
+                             xscale(x4[0]), xscale(x4[1]))
                 n = 1
             i += 1
             if n == 1:
@@ -339,10 +339,10 @@ canvas.endclip()
                 self.lineto(xscale(x2[0]), xscale(x2[1]))
             if n == 3:
                 self.curveto(xscale(x2[0]), xscale(x2[1]),
-                            xscale(x2[0]), xscale(x2[1]),
-                            xscale(x3[0]), xscale(x3[1]))
+                             xscale(x2[0]), xscale(x2[1]),
+                             xscale(x3[0]), xscale(x3[1]))
             self.stroke()
-		
+
     def line(self, style, x1, y1, x2, y2):
         if not style:
             return
@@ -384,7 +384,7 @@ canvas.endclip()
         self.path_arc(xscale(x1 + radius), yscale(y2 - radius), nscale(radius), 1, 90, 180)
         self.lineto(xscale(x1), xscale(y1+radius))
         self.path_arc(xscale(x1 + radius), yscale(y1 + radius), nscale(radius), 1, 180, 270)
-	
+
     def round_rectangle(self, style, fill, x1, y1, x2, y2, radius, shadow=None):
         """Draw a rectangle with rounded four corners. Parameter <radius> specifies the radius of each corner."""
 
@@ -497,7 +497,7 @@ canvas.endclip()
             rel_x, rel_y = pychart_util.rotate(cur_x, cur_y, angle)
             self.text_begin()
             self.text_moveto(xscale(base_x + rel_x),
-                            yscale(base_y + rel_y), angle)
+                             yscale(base_y + rel_y), angle)
             for segment in strs:
                 font_name, size, color, str = segment
                 self.text_show(font_name, nscale(size), color, str)

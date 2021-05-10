@@ -20,13 +20,8 @@
 ##############################################################################
 
 from osv import osv, fields
-
 from tools.translate import _
-
-from tempfile import TemporaryFile
-
 import base64
-import csv
 
 
 class product_list_export(osv.osv_memory):

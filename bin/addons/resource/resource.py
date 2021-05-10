@@ -21,7 +21,6 @@
 
 from datetime import datetime, timedelta
 import math
-from .faces import *
 from osv import fields, osv
 from tools.translate import _
 
@@ -237,7 +236,7 @@ class resource_resource(osv.osv):
         'company_id': lambda self, cr, uid, context: self.pool.get('res.company')._company_default_get(cr, uid, 'resource.resource', context=context)
     }
 
-    
+
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
@@ -257,18 +256,18 @@ class resource_resource(osv.osv):
             leaves = []
             resource_eff = 1.0
             if resource_ids:
-                resource_id = resource_ids[0]    
+                resource_id = resource_ids[0]
                 resource = self.browse(cr, uid, resource_id, context=context)
                 resource_eff = resource.time_efficiency
                 resource_cal = resource.calendar_id.id
                 if resource_cal:
                     leaves = self.compute_vacation(cr, uid, calendar_id, resource.id, resource_cal, context=context)
                 temp = {
-                         'name' : resource.name,
-                         'vacation': tuple(leaves),
-                         'efficiency': resource_eff,
-                      }
-                resource_objs[resource_id] = temp     
+                    'name' : resource.name,
+                    'vacation': tuple(leaves),
+                    'efficiency': resource_eff,
+                }
+                resource_objs[resource_id] = temp
         return resource_objs
 
     def compute_vacation(self, cr, uid, calendar_id, resource_id=False, resource_calendar=False, context=None):
@@ -284,11 +283,11 @@ class resource_resource(osv.osv):
             leave_ids = resource_calendar_leaves_pool.search(cr, uid, ['|', ('calendar_id', '=', calendar_id),
                                                                        ('calendar_id', '=', resource_calendar),
                                                                        ('resource_id', '=', resource_id)
-                                                                      ], context=context)
+                                                                       ], context=context)
         else:
             leave_ids = resource_calendar_leaves_pool.search(cr, uid, [('calendar_id', '=', calendar_id),
-                                                                      ('resource_id', '=', False)
-                                                                      ], context=context)
+                                                                       ('resource_id', '=', False)
+                                                                       ], context=context)
         leaves = resource_calendar_leaves_pool.read(cr, uid, leave_ids, ['date_from', 'date_to'], context=context)
         for i in range(len(leaves)):
             dt_start = datetime.strptime(leaves[i]['date_from'], '%Y-%m-%d %H:%M:%S')
@@ -305,8 +304,8 @@ class resource_resource(osv.osv):
         """
         if not calendar_id:
             # Calendar is not specified: working days: 24/7
-            return [('fri', '1:0-12:0','12:0-24:0'), ('thu', '1:0-12:0','12:0-24:0'), ('wed', '1:0-12:0','12:0-24:0'), 
-                   ('mon', '1:0-12:0','12:0-24:0'), ('tue', '1:0-12:0','12:0-24:0'), ('sat', '1:0-12:0','12:0-24:0'), ('sun', '1:0-12:0','12:0-24:0')]
+            return [('fri', '1:0-12:0','12:0-24:0'), ('thu', '1:0-12:0','12:0-24:0'), ('wed', '1:0-12:0','12:0-24:0'),
+                    ('mon', '1:0-12:0','12:0-24:0'), ('tue', '1:0-12:0','12:0-24:0'), ('sat', '1:0-12:0','12:0-24:0'), ('sun', '1:0-12:0','12:0-24:0')]
         resource_attendance_pool = self.pool.get('resource.calendar.attendance')
         time_range = "8:00-8:00"
         non_working = ""
@@ -350,8 +349,8 @@ class resource_resource(osv.osv):
 
     #TODO: Write optimized alogrothem for resource availability. : Method Yet not implemented
     def check_availability(self, cr, uid, ids, start, end, context=None):
-        if context ==  None:
-            contex = {}
+        if context is  None:
+            context = {}
         allocation = {}
         return allocation
 
@@ -370,11 +369,11 @@ class resource_calendar_leaves(osv.osv):
     }
 
     def check_dates(self, cr, uid, ids, context=None):
-         leave = self.read(cr, uid, ids[0], ['date_from', 'date_to'])
-         if leave['date_from'] and leave['date_to']:
-             if leave['date_from'] > leave['date_to']:
-                 return False
-         return True
+        leave = self.read(cr, uid, ids[0], ['date_from', 'date_to'])
+        if leave['date_from'] and leave['date_to']:
+            if leave['date_from'] > leave['date_to']:
+                return False
+        return True
 
     _constraints = [
         (check_dates, 'Error! leave start-date must be lower then leave end-date.', ['date_from', 'date_to'])

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -14,9 +14,7 @@
 #
 import sys
 import os
-import re
 import getopt
-from . import pychart_util
 
 __doc__ = """This module is defines variables for changing the looks
 of charts. All the variables can be changed either via environment
@@ -78,7 +76,7 @@ default_line_width = 0.4
 debug_level = 1
 delta_bounding_box = [-3, -3, 3, 3]
 bounding_box = {}
-         
+
 def parse_yesno(str):
     if str in ("yes", "true", "1"):
         return 1
@@ -87,7 +85,7 @@ def parse_yesno(str):
 
 def parse_bounding_box(arg):
     global delta_bounding_box, bounding_box
-    
+
     l = arg.split(",")
     if len(l) != 4:
         raise ValueError("Need to specify margin=LEFT,BOTTOM,RIGHT,TOP")
@@ -149,25 +147,25 @@ def parse_option(opt, arg):
         default_font_family = arg
     elif opt == "font-size":
         default_font_size = float(arg)
-        default_line_height = float(arg)            
+        default_line_height = float(arg)
     elif opt == "line-width":
         default_line_width = float(arg)
     elif opt == "debug-level":
         debug_level = int(arg)
     else:
         raise getopt.GetoptError("Unknown option: " + opt + " " + arg)
-    
+
 if "PYCHART_OPTIONS" in os.environ:
     for opt in os.environ["PYCHART_OPTIONS"].split():
         opt, arg = opt.split("=")
         parse_option(opt, arg)
 
-hooks = []        
+hooks = []
 def add_reinitialization_hook(proc):
     global hooks
     hooks.append(proc)
     proc()
-    
+
 def usage():
     print("Usage: %s [options..]" % sys.argv[0])
     print("""
@@ -186,7 +184,7 @@ def reinitialize():
     the theme variables to other modules that depend on their values."""
     for proc in hooks:
         proc()
-    
+
 def get_options(argv = None):
     """This procedure takes a list of command line arguments in <argv>
     and parses
@@ -232,4 +230,4 @@ ar = area.T(...)
     reinitialize()
     return args
 
-    
+

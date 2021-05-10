@@ -1,4 +1,4 @@
-from osv import osv, fields
+from osv import osv
 
 class MessageReceived(osv.osv):
     _inherit = 'sync.client.message_received'
@@ -9,7 +9,7 @@ MessageReceived()
 class MessageToSend(osv.osv):
     _inherit = 'sync.client.message_to_send'
     _name = 'sync_remote_warehouse.message_to_send'
-    
+
     def get_message_packet(self, cr, uid, context=None):
         packet = []
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
@@ -22,7 +22,7 @@ class MessageToSend(osv.osv):
                 'source' : entity.name,
                 'arguments' : message.arguments,
             })
-            
+
         return packet
 
 MessageToSend()

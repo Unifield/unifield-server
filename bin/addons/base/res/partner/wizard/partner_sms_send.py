@@ -19,8 +19,6 @@
 #
 ##############################################################################
 
-import wizard
-import netsvc
 import tools
 from osv import fields, osv
 
@@ -52,9 +50,9 @@ class partner_sms_send(osv.osv_memory):
         partner_pool = self.pool.get('res.partner')
         active_ids = context and context.get('active_ids', [])
         res = {}
-        for partner in partner_pool.browse(cr, uid, active_ids, context=context):            
+        for partner in partner_pool.browse(cr, uid, active_ids, context=context):
             if 'mobile_to' in fields:
-                res.update({'mobile_to': partner.mobile})            
+                res.update({'mobile_to': partner.mobile})
         return res
 
     def sms_send(self, cr, uid, ids, context):
@@ -66,16 +64,16 @@ class partner_sms_send(osv.osv_memory):
             @param ids: the ID or list of IDs
             @param context: A standard dictionary
             @return: number indicating the acknowledgement
-        """             
+        """
         nbr = 0
-        
+
         for data in self.browse(cr, uid, ids, context) :
             tools.sms_send(
-                    data.user,
-                    data.password, 
-                    data.app_id, 
-                    tools.ustr(data.text), 
-                    data.mobile_to)
+                data.user,
+                data.password,
+                data.app_id,
+                tools.ustr(data.text),
+                data.mobile_to)
             nbr += 1
         return {}
 partner_sms_send()

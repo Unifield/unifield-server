@@ -21,9 +21,9 @@
 
 import time
 from report import report_sxw
-from osv import osv
 import pooler
-from tools.translate import _
+
+
 class product_pricelist(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
         super(product_pricelist, self).__init__(cr, uid, name, context=context)
@@ -96,9 +96,9 @@ class product_pricelist(report_sxw.rml_parse):
             products = []
             for product in pool.get('product.product').read(self.cr, self.uid, product_ids, ['name', 'code'], context=self.localcontext):
                 val = {
-                     'id':product['id'],
-                     'name':product['name'],
-                     'code':product['code']
+                    'id':product['id'],
+                    'name':product['name'],
+                    'code':product['code']
                 }
                 i = 1
                 for qty in self.quantity:

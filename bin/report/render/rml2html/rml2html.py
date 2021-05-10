@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -39,7 +39,7 @@ import sys
 import io
 from lxml import etree
 import copy
-from . import utils
+from . import utils as utils2
 from report.render.rml2pdf import utils
 
 class _flowable(object):
@@ -102,7 +102,7 @@ class _flowable(object):
                         pass
         process(node,new_node)
         if new_node.get('colWidths',False):
-            sizes = [utils.unit_get(x) for x in new_node.get('colWidths').split(',')]
+            sizes = [utils2.unit_get(x) for x in new_node.get('colWidths').split(',')]
             tr = etree.SubElement(new_node, 'tr')
             for s in sizes:
                 etree.SubElement(tr, 'td', width=str(s))
@@ -167,8 +167,8 @@ class _rml_tmpl_frame(_rml_tmpl_tag):
 class _rml_tmpl_draw_string(_rml_tmpl_tag):
     def __init__(self, node, style,localcontext = {}):
         self.localcontext = localcontext
-        self.posx = utils.unit_get(node.get('x'))
-        self.posy =  utils.unit_get(node.get('y'))
+        self.posx = utils2.unit_get(node.get('x'))
+        self.posy =  utils2.unit_get(node.get('y'))
 
         aligns = {
             'drawString': 'left',
@@ -203,7 +203,7 @@ class _rml_tmpl_draw_string(_rml_tmpl_tag):
 class _rml_tmpl_draw_lines(_rml_tmpl_tag):
     def __init__(self, node, style, localcontext = {}):
         self.localcontext = localcontext
-        coord = [utils.unit_get(x) for x in utils._process_text(self, node.text).split(' ')]
+        coord = [utils2.unit_get(x) for x in utils._process_text(self, node.text).split(' ')]
         self.ok = False
         self.posx = coord[0]
         self.posy = coord[1]
@@ -224,7 +224,7 @@ class _rml_stylesheet(object):
         self.localcontext = localcontext
         self.attrs = {}
         self._tags = {
-            'fontSize': lambda x: ('font-size',str(utils.unit_get(x)+5.0)+'px'),
+            'fontSize': lambda x: ('font-size',str(utils2.unit_get(x)+5.0)+'px'),
             'alignment': lambda x: ('text-align',str(x))
         }
         result = ''
@@ -232,7 +232,7 @@ class _rml_stylesheet(object):
             attr = {}
             attrs = ps.attrib
             for key, val in list(attrs.items()):
-                 attr[key] = val
+                attr[key] = val
             attrs = []
             for a in attr:
                 if a in self._tags:
@@ -261,7 +261,7 @@ class _rml_draw_style(object):
                 else:
                     self.style[key] = result[key]
     def font_size_get(self,tag):
-        size  = utils.unit_get(self.style.get('td', {}).get('font-size','16'))
+        size  = utils2.unit_get(self.style.get('td', {}).get('font-size','16'))
         return size
 
     def get(self,tag):
@@ -291,18 +291,18 @@ class _rml_template(object):
             id = pt.get('id')
             self.template_order.append(id)
             for tmpl in pt.findall('frame'):
-                posy = int(utils.unit_get(tmpl.get('y1')))
-                posx = int(utils.unit_get(tmpl.get('x1')))
-                frames[(posy,posx,tmpl.get('id'))] = _rml_tmpl_frame(posx, utils.unit_get(tmpl.get('width')))
+                posy = int(utils2.unit_get(tmpl.get('y1')))
+                posx = int(utils2.unit_get(tmpl.get('x1')))
+                frames[(posy,posx,tmpl.get('id'))] = _rml_tmpl_frame(posx, utils2.unit_get(tmpl.get('width')))
             for tmpl in pt.findall('pageGraphics'):
                 for n in tmpl:
-                        if n.tag == 'image':
-                           self.data = rc + utils._process_text(self, n.text)
-                        if n.tag in self._tags:
-                            t = self._tags[n.tag](n, self.style,self.localcontext)
-                            frames[(t.posy,t.posx,n.tag)] = t
-                        else:
-                            self.style.update(n)
+                    if n.tag == 'image':
+                        self.data = rc + utils._process_text(self, n.text)
+                    if n.tag in self._tags:
+                        t = self._tags[n.tag](n, self.style,self.localcontext)
+                        frames[(t.posy,t.posx,n.tag)] = t
+                    else:
+                        self.style.update(n)
             keys = list(frames.keys())
             keys.sort()
             keys.reverse()
@@ -319,7 +319,7 @@ class _rml_template(object):
     def _get_style(self):
         return self.style
 
-    def set_next_template(self):
+    def set_next_template(self, name=''):
         self.template = self.template_order[(self.template_order.index(name)+1) % self.template_order]
         self.frame_pos = -1
 

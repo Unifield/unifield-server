@@ -25,8 +25,8 @@ class stock_analyze_view(osv.osv_memory):
     _name = "stock.analyze.view"
     _description = "Stock analyze view"
     _columns = {
-        'from_date': fields.datetime('From'), 
-        'to_date': fields.datetime('To'), 
+        'from_date': fields.datetime('From'),
+        'to_date': fields.datetime('To'),
     }
 
     def action_open_window(self, cr, uid, ids, context=None):
@@ -38,20 +38,19 @@ class stock_analyze_view(osv.osv_memory):
          @param context: A standard dictionary 
          @return: Invoice type
         """
-        mod_obj = self.pool.get('ir.model.data')
         location_ids = self.pool.get('stock.location').search(cr, uid, [('location_category', '=', 'stock')], context=context)
         for location_obj in self.read(cr, uid, ids, ['from_date', 'to_date']):
             return {
-                'name': False, 
-                'view_type': 'form', 
-                'view_mode': 'tree,form', 
-                'res_model': 'product.product', 
-                'type': 'ir.actions.act_window', 
-                'context': {'location': location_ids, 
-                       'compute_child': False,
-                       'from_date': location_obj['from_date'], 
-                       'to_date': location_obj['to_date']}, 
-                'domain': [('type', '<>', 'service')], 
+                'name': False,
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'res_model': 'product.product',
+                'type': 'ir.actions.act_window',
+                'context': {'location': location_ids,
+                            'compute_child': False,
+                            'from_date': location_obj['from_date'],
+                            'to_date': location_obj['to_date']},
+                'domain': [('type', '<>', 'service')],
             }
 
 stock_analyze_view()

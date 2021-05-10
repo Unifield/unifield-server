@@ -27,7 +27,6 @@ to be fine-tuned manually.
 """
 
 import yaml
-import logging
 from lxml import etree
 
 __VERSION__ = '0.0.2'
@@ -218,12 +217,6 @@ class Report(YamlTag):
 class xml_report(XmlTag):
     tag=Report
 
-# deletes tag
-class Delete(YamlTag):
-    yaml_tag = '!delete'
-class xml_delete(XmlTag):
-    tag=Delete
-
 # python tag
 class Python(YamlTag):
     yaml_tag = '!python'
@@ -249,7 +242,7 @@ class xml_delete(XmlTag):
     tag=Delete
 
 def represent_data(dumper, data):
-        return dumper.represent_mapping('tag:yaml.org,2002:map', [('!'+str(data), data.child_tags)])
+    return dumper.represent_mapping('tag:yaml.org,2002:map', [('!'+str(data), data.child_tags)])
 
 yaml.SafeDumper.add_representer(Record, represent_data)
 yaml.SafeDumper.add_representer(data, represent_data)
@@ -293,7 +286,7 @@ class xml_parse(object):
         parser = etree.XMLParser()
         parser.setElementClassLookup(MyLookup())
         result = []
-        self.root = etree.XML(file(fname).read(), parser)
+        self.root = etree.XML(open(fname).read(), parser)
         for data in self.root:
             if hasattr(data, '_to_yaml'):
                 obj = data._to_yaml()

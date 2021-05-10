@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv, fields
-from tools.translate import _
 
 class ir_filters(osv.osv):
     '''
@@ -39,10 +38,9 @@ class ir_filters(osv.osv):
         return my_acts
 
     def create_or_replace(self, cr, uid, vals, context=None):
-        filter_id = None
         lower_name = vals['name'].lower()
         matching_filters = [x for x in self.get_filters(cr, uid, vals['model_id'])
-                                if x['name'].lower() == lower_name]
+                            if x['name'].lower() == lower_name]
         if matching_filters:
             self.write(cr, uid, matching_filters[0]['id'], vals, context)
             return False

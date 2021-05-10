@@ -22,9 +22,6 @@
 from osv import fields
 from osv import osv
 
-import string
-
-
 class related_sourcing(osv.osv):
     """
     This object is used to link sourcing lines on a same PO to the same

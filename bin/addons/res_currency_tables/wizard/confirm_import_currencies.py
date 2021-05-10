@@ -18,8 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from osv import osv, fields
-from lxml import etree
+from osv import osv
 
 class confirm_import_currencies(osv.osv_memory):
     _name = 'confirm.import.currencies'

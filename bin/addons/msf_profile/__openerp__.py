@@ -33,7 +33,6 @@
     "depends" : [
         "msf_audittrail",
         "msf_tools",
-        "base_report_designer",
         "msf_partner",
         "analytic_distribution",
         "register_accounting",

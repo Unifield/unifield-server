@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -12,19 +12,16 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-from . import tick_mark
 from . import line_style
-from . import pychart_util
 from . import chart_object
 from . import fill_style
-import types
 from . import error_bar_doc
 from . import object_set
-from .pychart_types import *
+from .pychart_types import UnitType
 
 __doc__ = """Pychart offers several styles of error bars. Some of them
 only displays the min/max confidence interval, while others can display
-quartiles in addition to min/max.""" 
+quartiles in addition to min/max."""
 
 class T(chart_object.T):
     keys = {}
@@ -52,12 +49,12 @@ class error_bar1(T):
 class error_bar2(T):
     __doc__ = error_bar_doc.doc_2
     keys = {"tic_len" : (UnitType, 3,
-                        "The length of the horizontal bars"),
+                         "The length of the horizontal bars"),
             "hline_style": (line_style.T, line_style.default,
-                           "The style of the horizontal bars."),
+                            "The style of the horizontal bars."),
             "vline_style": (line_style.T, None,
-                           "The style of the vertical bar.")
-             }
+                            "The style of the vertical bar.")
+            }
 
 ##AUTOMATICALLY GENERATED
 
@@ -140,7 +137,6 @@ class error_bar6(T):
 ##END AUTOMATICALLY GENERATED
     def draw(self, can, loc, min, max, qmin = None, qmax = None):
         x = loc[0]
-        y = loc[1]
 
         can.rectangle(self.line_style, self.fill_style,
                       x - self.box_width / 2.0, min,

@@ -22,8 +22,6 @@
 from osv import osv
 from osv import fields
 
-from tools.translate import _
-
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -37,7 +35,7 @@ class res_partner(osv.osv):
             else:
                 res[part.id] = 'No'
         return res
-    
+
     _columns = {
         'catalogue_ids': fields.one2many('supplier.catalogue', 'partner_id', string='Catalogues', readonly=True),
         'catalogue_bool': fields.function(_get_bool_cat, type='char', method=True, string='Catalogue'),
@@ -49,7 +47,7 @@ class res_partner(osv.osv):
         defaults['catalogue_ids'] = []
 
         return super(res_partner, self).copy(cr, uid, partner_id, defaults, context=context)
-    
+
 res_partner()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

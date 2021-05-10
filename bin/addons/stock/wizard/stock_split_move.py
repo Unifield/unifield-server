@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -24,7 +24,7 @@ from osv import osv, fields
 class stock_split_move_line(osv.osv_memory):
     _name = 'stock.move.line.split'
     _description = "Split Moves"
-    
+
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
          @param self: The object pointer.
@@ -33,7 +33,7 @@ class stock_split_move_line(osv.osv_memory):
          @param fields: List of fields for which we want default values 
          @param context: A standard dictionary 
          @return: A dictionary which of fields with values. 
-        """ 
+        """
         if context is None:
             context = {}
         res = super(stock_split_move_line, self).default_get(cr, uid, fields, context=context)
@@ -43,7 +43,7 @@ class stock_split_move_line(osv.osv_memory):
         for m in [line for line in pick.move_lines]:
             res['move%s'%(m.id)] = m.product_qty
         return res
-    
+
     def view_init(self, cr, uid, fields_list, context=None):
         """ Creates view dynamically and adding fields at runtime.
          @param self: The object pointer.
@@ -64,8 +64,8 @@ class stock_split_move_line(osv.osv_memory):
             except:
                 return res
         return res
-    
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', 
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form',
                         context=None, toolbar=False, submenu=False):
         """ Changes the view dynamically
          @param self: The object pointer.
@@ -90,7 +90,7 @@ class stock_split_move_line(osv.osv_memory):
         arch_lst.append('</form>')
         res['arch'] = '\n'.join(arch_lst)
         return res
-    
+
     def split_lines(self, cr, uid, ids, context=None):
         """ Splits moves in quantity given in the wizard.
          @param self: The object pointer.
@@ -99,7 +99,7 @@ class stock_split_move_line(osv.osv_memory):
          @param ids: List of ids selected 
          @param context: A standard dictionary 
          @return: A dictionary which of fields with values. 
-        """ 
+        """
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
@@ -112,11 +112,11 @@ class stock_split_move_line(osv.osv_memory):
             if 0 < quantity < move.product_qty:
                 new_qty = move.product_qty - quantity
                 new_uos_qty = new_qty / move.product_qty * move.product_uos_qty
-                new_obj = move_obj.copy(cr, uid, move.id, {'product_qty' : new_qty, 'product_uos_qty': new_uos_qty, 'state':move.state})
+                move_obj.copy(cr, uid, move.id, {'product_qty' : new_qty, 'product_uos_qty': new_uos_qty, 'state':move.state})
                 uos_qty = quantity / move.product_qty * move.product_uos_qty
                 move_obj.write(cr, uid, [move.id], {'product_qty' : quantity, 'product_uos_qty': uos_qty})
         return {'type': 'ir.actions.act_window_close'}
-    
+
 stock_split_move_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

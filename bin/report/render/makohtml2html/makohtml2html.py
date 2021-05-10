@@ -18,7 +18,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import mako
 from lxml import etree
 from mako.template import Template
 from mako.lookup import TemplateLookup
@@ -127,7 +126,7 @@ class makohtml2html(object):
         except Exception as e:
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             netsvc.Logger().notifyChannel('report', netsvc.LOG_ERROR,
-                                'report :\n%s\n%s\n' % (tb_s, str(e)))
+                                          'report :\n%s\n%s\n' % (tb_s, str(e)))
 
 def parseNode(html, localcontext = {}):
     r = makohtml2html(html, localcontext)

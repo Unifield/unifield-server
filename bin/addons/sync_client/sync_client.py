@@ -171,7 +171,7 @@ def sync_subprocess(step='status', defaults_logger={}):
                     raise BaseException(patch_failed)
 
                 res = fn(self, self.sync_cursor, uid, *args, **kwargs)
-            except osv.except_osv as e:
+            except osv.except_osv:
                 logger.switch(step, 'failed')
                 raise
             except BaseException as e:
@@ -407,7 +407,7 @@ def get_hardware_id():
         try:
                 # check if there is hwid stored in the registry
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key,
-                                 0, winreg.KEY_READ) as registry_key:
+                                0, winreg.KEY_READ) as registry_key:
                 hw_hash, regtype = winreg.QueryValueEx(registry_key, "HardwareId")
                 logger.info("HardwareId registry key found: %s" % hw_hash)
         except WindowsError:
@@ -419,7 +419,7 @@ def get_hardware_id():
             # write the new hwid in the registry
             try:
                 with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key,
-                                     0, winreg.KEY_ALL_ACCESS) as registry_key:
+                                    0, winreg.KEY_ALL_ACCESS) as registry_key:
                     winreg.SetValueEx(registry_key, "HardwareId", 0, winreg.REG_SZ, hw_hash)
             except WindowsError as e:
                 logger.error('Error on write of HardwareId in the registry: %s' % e)

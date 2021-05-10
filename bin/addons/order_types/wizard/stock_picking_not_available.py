@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,16 +20,15 @@
 ##############################################################################
 
 from osv import osv, fields
-from tools.translate import _
 
 class stock_picking_not_available(osv.osv_memory):
     _name = 'stock.picking.not.available'
-    
+
     _columns = {
         'move_id': fields.many2one('stock.move', 'Move id'),
         'picking_id': fields.many2one('stock.picking', 'Picking id'),
     }
-    
+
     def yes(self, cr, uid, ids, context=None):
         context.update({'yesorno': True,})
         picking_ids = []

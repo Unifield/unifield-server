@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -12,12 +12,12 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-import sys,string,re,math
+import re,math
 from xml.dom.minidom import Document,Comment
 from . import theme
 from . import basecanvas
 from . import version
-from .scaling import *
+from .scaling import yscale, xscale
 
 # Note we flip all y-coords and negate all angles because SVG's coord
 # system is inverted wrt postscript/PDF - note it's not enough to
@@ -64,7 +64,7 @@ def _protectCurrentChildren(elt):
                 elt = g
                 break
     return elt
-            
+
 class T(basecanvas.T):
     def __init__(self, fname):
         basecanvas.T.__init__(self)
@@ -72,7 +72,7 @@ class T(basecanvas.T):
         self.__xmin, self.__xmax, self.__ymin, self.__ymax = 0,0,0,0
         self.__doc = Document()
         self.__doc.appendChild(self.__doc.createComment
-             ('Created by PyChart ' + version.version + ' ' + version.copyright))
+                               ('Created by PyChart ' + version.version + ' ' + version.copyright))
         self.__svg = self.__doc.createElement('svg') # the svg doc
         self.__doc.appendChild(self.__svg)
         self.__defs = self.__doc.createElement('defs') # for clip paths
@@ -90,8 +90,8 @@ class T(basecanvas.T):
                           stroke_linejoin = 'miter',
                           stroke_linecap = 'butt',
                           stroke_dasharray = 'none')
-        
-    def _updateStyle(self, **addstyledict): 
+
+    def _updateStyle(self, **addstyledict):
         elt = _protectCurrentChildren(self.__currElt)
 
         # fetch the current styles for this node
@@ -108,7 +108,7 @@ class T(basecanvas.T):
         # Do some pre-processing on the caller-supplied add'l styles
         # Convert '_' to '-' so caller can specify style tags as python
         # variable names, eg. stroke_width => stroke-width.
-        # Also convert all RHS values to strs 
+        # Also convert all RHS values to strs
         for key in list(addstyledict.keys()):
             k = re.sub('_','-',key)
             addstyledict[k] = str(addstyledict[key]) # all vals => strs
@@ -117,9 +117,9 @@ class T(basecanvas.T):
         for k in list(addstyledict.keys()) :
             if (k in mystyledict or # need to overwrite it
                 (k not in dfltstyledict) or # need to set it
-                dfltstyledict[k] != addstyledict[k]) : # need to override it
+                    dfltstyledict[k] != addstyledict[k]) : # need to override it
                 mystyledict[k] = addstyledict[k]
-        
+
         s = _makeStyleStr(mystyledict)
         if s : elt.setAttribute('style',s)
 
@@ -129,7 +129,7 @@ class T(basecanvas.T):
     # methods below define the pychart backend device API
 
     # First are a set of methods to start, construct and finalize a path
-    
+
     def newpath(self):                  # Start a new path
         if (self.__currElt.nodeName != 'g') :
             raise OverflowError("No containing group for newpath")
@@ -140,8 +140,8 @@ class T(basecanvas.T):
 
     # This set of methods add data to an existing path element,
     # simply add to the 'd' (data) attribute of the path elt
-    
-    def moveto(self, x, y):             # 
+
+    def moveto(self, x, y):             #
         if (self.__currElt.nodeName != 'path') :
             raise OverflowError("No path for moveto")
         d = ' '.join([self.__currElt.getAttribute('d'),'M',repr(x),repr(-y)]).strip()
@@ -163,7 +163,7 @@ class T(basecanvas.T):
         if (self.__currElt.nodeName != 'path') :
             raise OverflowError("No path for path_arc")
 
-        self.comment('x=%g, y=%g, r=%g, :=%g, %g-%g' 
+        self.comment('x=%g, y=%g, r=%g, :=%g, %g-%g'
                      % (x,y,radius,ratio,start_angle,end_angle))
 
         xs = x+radius*math.cos(2*math.pi/360.*start_angle)
@@ -174,7 +174,7 @@ class T(basecanvas.T):
             while end_angle <= start_angle: # '<=' so 360->0 becomes 360->720
                 end_angle += 360
         full_circ = (end_angle - start_angle >= 360) # draw a full circle?
-            
+
         d = self.__currElt.getAttribute('d')
         d += ' %s %g %g' % (d and 'L' or 'M',xs,-ys) # draw from CP, if exists
         if (radius > 0) : # skip, eg. 0-radius 'rounded' corners which blowup
@@ -373,7 +373,7 @@ class T(basecanvas.T):
             self.__currElt = g
         else:
             raise ValueError("Illegal placement of push_transformation")
-            
+
         t = ''
         if baseloc :
             t += 'translate(%g,%g) '%(baseloc[0],-baseloc[1])
@@ -381,7 +381,7 @@ class T(basecanvas.T):
             t += 'rotate(%g) '%-angle
         if scale :
             t += 'scale(%g,%g) '%tuple(scale)
-            
+
         self.gsave()
         self.__currElt.setAttribute('transform',t.strip())
         if elt:                         # elt has incomplete 'path' or None
@@ -393,7 +393,7 @@ class T(basecanvas.T):
 
     # If verbose, add comments to the output stream (helps debugging)
     def comment(self, str):
-        if _comment_p : 
+        if _comment_p :
             self.__currElt.appendChild(self.__doc.createComment(str))
 
     # The verbatim method is currently not supported - presumably with
@@ -414,7 +414,7 @@ class T(basecanvas.T):
         # when we get close()d immediately by theme reinit
         if (len(self.__svg.childNodes[-1].childNodes) == 0) :
             return
-            
+
         fp, need_close = self.open_output(self.__out_fname)
         bbox = theme.adjust_bounding_box([self.__xmin, self.__ymin,
                                           self.__xmax, self.__ymax])

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,13 +15,12 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import netsvc
 from osv import fields, osv
-from tools.translate import _
 
 class stock_ups(osv.osv_memory):
     _name = "stock.ups"
@@ -70,7 +69,7 @@ class stock_ups_final(osv.osv_memory):
         return {'xmlfile' : report.create(uid, context['active_id'], ids, {})}
 
     _columns = {
-        'xmlfile': fields.binary('XML File'), 
+        'xmlfile': fields.binary('XML File'),
     }
 
 stock_ups_final()
@@ -86,7 +85,7 @@ class stock_ups_upload(osv.osv_memory):
         data={}
         report = netsvc._group['report']['report.stock.move.lot.ups_xml']
         data['report_type'] = 'raw'
-        fp = open('/tmp/test.xml', 'w').write(report.create(uid, context['active_id'], ids, {}))
+        open('/tmp/test.xml', 'w').write(report.create(uid, context['active_id'], ids, {}))
         return {'type': 'ir.actions.act_window_close'}
 
 stock_ups_upload()

@@ -154,7 +154,7 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                                 except ValueError:
                                     try:
                                         expiry_date = time.strftime('%Y-%m-%d', time.strptime(row[5].data, '%d/%b/%Y'))
-                                    except ValueError as e:
+                                    except ValueError:
                                         error += _("""Line %s of the imported file: expiry date %s has a wrong format (day/month/year).'\n"""
                                                    ) % (line_num, row[5],)
                             if expiry_date:

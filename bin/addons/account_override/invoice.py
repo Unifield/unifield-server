@@ -1377,7 +1377,7 @@ class account_invoice(osv.osv):
                 elif vals['invoice_line_tax_id'] and l.invoice_line_tax_id:
                     # track <> tax lines, if it's the case abort tax(es) in merge
                     tax_ids = [ t.id for t in l.invoice_line_tax_id ]
-                    if cmp(vals['invoice_line_tax_id'], tax_ids) != 0:
+                    if vals['invoice_line_tax_id'] !=  tax_ids:
                         vals['invoice_line_tax_id'] = False
                 else:
                     # no tax(es) for this line, abort tax(es) in merge

@@ -111,7 +111,7 @@ class account_invoice_import(osv.osv_memory):
                 currency_line = import_cell_data_obj.get_line_values(cr, uid, ids, next(rows))
                 try:
                     currency_name = currency_line[1]
-                except IndexError as e:
+                except IndexError:
                     raise osv.except_osv(_('Warning'), _('No currency found.'))
                 currency_ids = currency_obj.search(cr, uid,
                                                    [('name', '=', currency_name), ('currency_table_id', '=', False),
@@ -121,7 +121,7 @@ class account_invoice_import(osv.osv_memory):
                 partner_line = import_cell_data_obj.get_line_values(cr, uid, ids, next(rows))
                 try:
                     partner_name = partner_line[1]
-                except IndexError as e:
+                except IndexError:
                     raise osv.except_osv(_('Warning'), _('No partner found.'))
                 partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_name), ('active', '=', True)], context=context)
                 if not partner_ids:
@@ -130,12 +130,12 @@ class account_invoice_import(osv.osv_memory):
                 posting_date_line = import_cell_data_obj.get_line_values(cr, uid, ids, next(rows))
                 try:
                     posting_date = posting_date_line[1] or False
-                except IndexError as e:
+                except IndexError:
                     posting_date = False
                 if posting_date:
                     try:
                         posting_date = posting_date.strftime('%Y-%m-%d')
-                    except AttributeError as e:
+                    except AttributeError:
                         raise osv.except_osv(_('Warning'), _("The posting date has a wrong format."))
                 invoice_dom = [('id', '=', invoice.id),
                                ('currency_id', '=', currency_ids[0]),
@@ -171,7 +171,7 @@ class account_invoice_import(osv.osv_memory):
                         continue
                     try:
                         line_number = int(line_number)
-                    except ValueError as e:
+                    except ValueError:
                         errors.append(_("Line %s: the line number format is incorrect.") % (current_line_num,))
                         continue
                     invoice_line_dom = [('invoice_id', '=', invoice.id), ('line_number', '=', line_number)]
@@ -204,7 +204,7 @@ class account_invoice_import(osv.osv_memory):
                     vals['account_id'] = account.id
                     try:
                         unit_price = float(unit_price)
-                    except ValueError as e:
+                    except ValueError:
                         errors.append(_("Line %s: the unit price format is incorrect.") % (current_line_num,))
                         continue
                     vals['price_unit'] = unit_price
@@ -221,7 +221,7 @@ class account_invoice_import(osv.osv_memory):
                             vals['product_id'] = product_ids[0]
                         try:
                             quantity = float(quantity)
-                        except ValueError as e:
+                        except ValueError:
                             errors.append(_("Line %s: the quantity format is incorrect.") % (current_line_num,))
                             continue
                         vals['quantity'] = quantity

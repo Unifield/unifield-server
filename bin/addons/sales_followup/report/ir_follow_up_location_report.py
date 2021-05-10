@@ -28,7 +28,6 @@ from datetime import timedelta
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
-
 class ir_follow_up_location_report_parser(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(ir_follow_up_location_report_parser, self).__init__(cr, uid, name, context=context)
@@ -197,7 +196,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
             received_qty = 0.00  # for received non-stockable products
             if len(line.move_ids) > 0:
-                for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
+                first_sort = sorted(line.move_ids, key=lambda x: x.id)
+                for move in sorted(first_sort, key=lambda x: sort_state.get(x.state, 0)):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),

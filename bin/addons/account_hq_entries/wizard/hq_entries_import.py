@@ -63,7 +63,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         try:
             description, reference, document_date, date, account_description, third_party, booking_amount, booking_currency, \
                 destination, cost_center, funding_pool, free1, free2 = line
-        except ValueError as e:
+        except ValueError:
             raise osv.except_osv(_('Error'), _('Unknown format.'))
         acc_obj = self.pool.get('account.account')
         anacc_obj = self.pool.get('account.analytic.account')

@@ -1004,8 +1004,8 @@ def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=Fa
     # on Win wizard dir was missing
     module_path = os.path.join(config['addons_path'], module)
     sub_dir = module
-    
-    if True or isinstance(xmlfile, file):
+
+    if isinstance(xmlfile, io.IOBase):
         xmlfile_name = xmlfile.name
         common_prefix = os.path.commonprefix([module_path, xmlfile_name])
         xmlfile_dir = os.path.dirname(xmlfile_name)

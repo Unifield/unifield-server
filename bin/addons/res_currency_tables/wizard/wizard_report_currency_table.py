@@ -20,9 +20,7 @@
 ##############################################################################
 from osv import osv, fields
 
-import datetime
 import time
-from dateutil.relativedelta import relativedelta
 from tools.translate import _
 
 class wizard_report_currency_table(osv.osv_memory):
@@ -50,7 +48,7 @@ class wizard_report_currency_table(osv.osv_memory):
         instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
         data['target_filename'] = _('FX rates by currency_%s_%s') % (instance, time.strftime('%Y%m%d'))
         return {'type': 'ir.actions.report.xml', 'report_name': 'msf.currency.table', 'datas': data}
-        
+
 
 wizard_report_currency_table()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

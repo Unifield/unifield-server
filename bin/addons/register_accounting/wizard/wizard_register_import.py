@@ -300,17 +300,17 @@ class wizard_register_import(osv.osv_memory):
                 first_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, next(rows))
                 try:
                     instance_code = first_line[1]
-                except IndexError as e:
+                except IndexError:
                     raise osv.except_osv(_('Warning'), _('Proprietary Instance not found.'))
                 second_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, next(rows))
                 try:
                     journal_code = second_line[1]
-                except IndexError as e:
+                except IndexError:
                     raise osv.except_osv(_('Warning'), _('No journal code found.'))
                 third_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, next(rows))
                 try:
                     currency_code = third_line[1]
-                except IndexError as e:
+                except IndexError:
                     raise osv.except_osv(_('Warning'), _('No currency code found.'))
                 # Check first info: proprietary instance
                 instance_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=', instance_code)])
@@ -382,11 +382,11 @@ class wizard_register_import(osv.osv_memory):
                     # Bypass this line if NO debit AND NO credit
                     try:
                         bd = line[cols['amount_in']]
-                    except IndexError as e:
+                    except IndexError:
                         bd = 0.0
                     try:
                         bc = line[cols['amount_out']]
-                    except IndexError as e:
+                    except IndexError:
                         bc = 0.0
                     if (not bd and not bc) or (bd == 0.0 and bc == 0.0):
                         errors.append(_('Line %s: Neither Amount IN or Amount OUT are present.') % (current_line_num,))
@@ -578,7 +578,7 @@ class wizard_register_import(osv.osv_memory):
                                     if view_type == 'view':
                                         errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['destination']], _('Destination')))
                                         continue
-                        except IndexError as e:
+                        except IndexError:
                             pass
                         # Check Cost Center
                         try:
@@ -590,7 +590,7 @@ class wizard_register_import(osv.osv_memory):
                                     if view_type == 'view':
                                         errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['cost_center']], _('Cost Center')))
                                         continue
-                        except IndexError as e:
+                        except IndexError:
                             pass
                         # Check funding pool
                         try:
@@ -603,7 +603,7 @@ class wizard_register_import(osv.osv_memory):
                                         errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['funding_pool']], _('Funding Pool')))
                                         continue
 
-                        except IndexError as e:
+                        except IndexError:
                             pass
                         # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 

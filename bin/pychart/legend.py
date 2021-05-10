@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -15,16 +15,13 @@
 from . import tick_mark
 from . import font
 from . import line_style
-from . import color
 from . import fill_style
 from . import chart_object
 from . import pychart_util
-import types
 from . import legend_doc
 from . import theme
 
-from .pychart_types import *
-from types import *
+from .pychart_types import ShadowType, CoordType, UnitType
 
 class Entry(chart_object.T):
     keys = {"line_len" : (UnitType, None,
@@ -40,14 +37,14 @@ class Entry(chart_object.T):
 ##AUTOMATICALLY GENERATED
 
 ##END AUTOMATICALLY GENERATED
-    
+
     def label_width(self):
         return font.text_width(" " + self.label)
     def get_line_len(self):
         return self.line_len or theme.default_font_size
     def get_rect_size(self):
         return self.rect_size or theme.default_font_size * 7 / 10.0
-        
+
     def sample_width(self):
         w = 0
         if self.fill_style != None:
@@ -60,24 +57,24 @@ class Entry(chart_object.T):
     def height(self):
         h = font.text_height(self.label)[0]
         return h
-    
+
     def draw(self, ar, can, x_tick, x_label, y):
         """Draw a legend entry. X_TICK and X_LABEL are the X location \
         (in points) of where the sample and label are drawn."""
 
         rect_size = self.get_rect_size()
         line_len = self.get_line_len()
-        
+
         nr_lines = len(self.label.split("\n"))
         text_height = font.text_height(self.label)[0]
         line_height = text_height / float(nr_lines)
         y_center = y + text_height - line_height/1.5
-            
+
         if self.fill_style != None:
             can.rectangle(self.line_style, self.fill_style,
-                             x_tick, y_center - rect_size/2.0,
-                             x_tick + rect_size,
-                             y_center + rect_size/2.0)
+                          x_tick, y_center - rect_size/2.0,
+                          x_tick + rect_size,
+                          y_center + rect_size/2.0)
         elif self.line_style != None:
             can.line(self.line_style, x_tick, y_center,
                      x_tick + line_len, y_center)
@@ -85,7 +82,7 @@ class Entry(chart_object.T):
                 self.tick_mark.draw(can, x_tick + line_len/2.0, y_center)
         elif self.tick_mark != None:
             self.tick_mark.draw(can, x_tick, y_center)
-            
+
         can.show(x_label, y, self.label)
 
 __doc__ = """Legend is a rectangular box drawn in a chart to describe
@@ -119,7 +116,7 @@ class T(chart_object.T):
         "shadow": (ShadowType, None, pychart_util.shadow_desc),
         "nr_rows": (int, 9999, "Number of rows in the legend. If the number of plots in a chart is larger than nr_rows, multiple columns are created in the legend."),
 
-        }
+    }
 ##AUTOMATICALLY GENERATED
 
 ##END AUTOMATICALLY GENERATED
@@ -133,12 +130,12 @@ class T(chart_object.T):
 
         nr_rows = min(self.nr_rows, len(entries))
         nr_cols = (len(entries)-1) / nr_rows + 1
-        
+
         ymin = y
         max_label_width = [0] * nr_cols
         max_sample_width = [0] * nr_cols
         heights = [0] * nr_rows
-        
+
         for i in range(len(entries)):
             l = entries[i]
             (col, row) = divmod(i, nr_rows)
@@ -156,10 +153,10 @@ class T(chart_object.T):
             tot_width += w
         for w in max_sample_width:
             tot_width += w
-            
+
         can.rectangle(self.frame_line_style, self.frame_fill_style,
-                      x - self.left_fudge,	
-                      ymin - self.bottom_fudge,	
+                      x - self.left_fudge,
+                      ymin - self.bottom_fudge,
                       x + tot_width + self.right_fudge,
                       ymax + self.top_fudge,
                       self.shadow)
@@ -175,7 +172,7 @@ class T(chart_object.T):
                 l = entries[idx]
                 if row != 0:
                     this_y -= self.inter_row_sep
-                    
+
                 l.draw(ar, can, this_x, this_x + max_sample_width[col], this_y)
             x += max_label_width[col] + max_sample_width[col] + self.inter_col_sep
 

@@ -21,8 +21,6 @@
 
 from osv import osv, fields
 
-from tools.translate import _
-
 from tempfile import TemporaryFile
 
 import base64

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,17 +15,15 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
-import os,types
 from lxml import etree
 import netsvc
 import tools
 from tools.safe_eval import safe_eval
 from . import print_fnc
-import copy
 from osv.orm import browse_null, browse_record
 import pooler
 
@@ -101,167 +99,167 @@ class document(object):
             return value
 
     def eval(self, record, expr):
-#TODO: support remote variables (eg address.title) in expr
-# how to do that: parse the string, find dots, replace those dotted variables by temporary
-# "simple ones", fetch the value of those variables and add them (temporarily) to the _data
-# dictionary passed to eval
+        #TODO: support remote variables (eg address.title) in expr
+        # how to do that: parse the string, find dots, replace those dotted variables by temporary
+        # "simple ones", fetch the value of those variables and add them (temporarily) to the _data
+        # dictionary passed to eval
 
-#FIXME: it wont work if the data hasn't been fetched yet... this could
-# happen if the eval node is the first one using this browse_record
-# the next line is a workaround for the problem: it causes the resource to be loaded
-#Pinky: Why not this ? eval(expr, browser) ?
-#       name = browser.name
-#       data_dict = browser._data[self.get_value(browser, 'id')]
+        #FIXME: it wont work if the data hasn't been fetched yet... this could
+        # happen if the eval node is the first one using this browse_record
+        # the next line is a workaround for the problem: it causes the resource to be loaded
+        #Pinky: Why not this ? eval(expr, browser) ?
+        #       name = browser.name
+        #       data_dict = browser._data[self.get_value(browser, 'id')]
         return safe_eval(expr, {}, {'obj': record})
 
     def parse_node(self, node, parent, browser, datas=None):
-            attrs = self.node_attrs_get(node)
-            if 'type' in attrs:
-                if attrs['type']=='field':
-                    value = self.get_value(browser, attrs['name'])
+        attrs = self.node_attrs_get(node)
+        if 'type' in attrs:
+            if attrs['type']=='field':
+                value = self.get_value(browser, attrs['name'])
 #TODO: test this
-                    if value == '' and 'default' in attrs:
-                        value = attrs['default']
-                    el = etree.SubElement(parent, node.tag)
-                    el.text = tounicode(value)
+                if value == '' and 'default' in attrs:
+                    value = attrs['default']
+                el = etree.SubElement(parent, node.tag)
+                el.text = tounicode(value)
 #TODO: test this
-                    for key, value in attrs.items():
-                        if key not in ('type', 'name', 'default'):
-                            el.set(key, value)
+                for key, value in attrs.items():
+                    if key not in ('type', 'name', 'default'):
+                        el.set(key, value)
 
-                elif attrs['type']=='attachment':
+            elif attrs['type']=='attachment':
+                if isinstance(browser, list):
+                    model = browser[0]._table_name
+                else:
+                    model = browser._table_name
+
+                value = self.get_value(browser, attrs['name'])
+
+                service = netsvc.LocalService("object_proxy")
+                ids = service.execute(self.cr.dbname, self.uid, 'ir.attachment', 'search', [('res_model','=',model),('res_id','=',int(value))])
+                datas = service.execute(self.cr.dbname, self.uid, 'ir.attachment', 'read', ids)
+
+                if len(datas):
+                    # if there are several, pick first
+                    datas = datas[0]
+                    fname = str(datas['datas_fname'])
+                    ext = fname.split('.')[-1].lower()
+                    if ext in ('jpg','jpeg', 'png'):
+                        import base64
+                        from io import StringIO
+                        dt = base64.b64decode(datas['datas'])
+                        fp = StringIO()
+                        fp.write(dt)
+                        i = str(len(self.bin_datas))
+                        self.bin_datas[i] = fp
+                        el = etree.SubElement(parent, node.tag)
+                        el.text = i
+
+            elif attrs['type']=='data':
+                #TODO: test this
+                txt = self.datas.get('form', {}).get(attrs['name'], '')
+                el = etree.SubElement(parent, node.tag)
+                el.text = txt
+
+            elif attrs['type']=='function':
+                if attrs['name'] in self.func:
+                    txt = self.func[attrs['name']](node)
+                else:
+                    txt = print_fnc.print_fnc(attrs['name'], node)
+                el = etree.SubElement(parent, node.tag)
+                el.text = txt
+
+            elif attrs['type']=='eval':
+                value = self.eval(browser, attrs['expr'])
+                el = etree.SubElement(parent, node.tag)
+                el.text = str(value)
+
+            elif attrs['type']=='fields':
+                fields = attrs['name'].split(',')
+                vals = {}
+                for b in browser:
+                    value = tuple([self.get_value2(b, f) for f in fields])
+                    if not value in vals:
+                        vals[value]=[]
+                    vals[value].append(b)
+                keys = list(vals.keys())
+                keys.sort()
+
+                if 'order' in attrs and attrs['order']=='desc':
+                    keys.reverse()
+
+                v_list = [vals[k] for k in keys]
+                for v in v_list:
+                    el = etree.SubElement(parent, node.tag)
+                    for el_cld in node:
+                        self.parse_node(el_cld, el, v)
+
+            elif attrs['type']=='call':
+                if len(attrs['args']):
+                    #TODO: test this
+                    # fetches the values of the variables which names where passed in the args attribute
+                    args = [self.eval(browser, arg) for arg in attrs['args'].split(',')]
+                else:
+                    args = []
+                # get the object
+                if 'model' in attrs:
+                    obj = self.pool.get(attrs['model'])
+                else:
                     if isinstance(browser, list):
-                        model = browser[0]._table_name
+                        obj = browser[0]._table
                     else:
-                        model = browser._table_name
+                        obj = browser._table
 
-                    value = self.get_value(browser, attrs['name'])
-
-                    service = netsvc.LocalService("object_proxy")
-                    ids = service.execute(self.cr.dbname, self.uid, 'ir.attachment', 'search', [('res_model','=',model),('res_id','=',int(value))])
-                    datas = service.execute(self.cr.dbname, self.uid, 'ir.attachment', 'read', ids)
-
-                    if len(datas):
-                        # if there are several, pick first
-                        datas = datas[0]
-                        fname = str(datas['datas_fname'])
-                        ext = fname.split('.')[-1].lower()
-                        if ext in ('jpg','jpeg', 'png'):
-                            import base64
-                            from io import StringIO
-                            dt = base64.b64decode(datas['datas'])
-                            fp = StringIO()
-                            fp.write(dt)
-                            i = str(len(self.bin_datas))
-                            self.bin_datas[i] = fp
-                            el = etree.SubElement(parent, node.tag)
-                            el.text = i
-
-                elif attrs['type']=='data':
-#TODO: test this
-                    txt = self.datas.get('form', {}).get(attrs['name'], '')
-                    el = etree.SubElement(parent, node.tag)
-                    el.text = txt
-
-                elif attrs['type']=='function':
-                    if attrs['name'] in self.func:
-                        txt = self.func[attrs['name']](node)
+                # get the ids
+                if 'ids' in attrs:
+                    ids = self.eval(browser, attrs['ids'])
+                else:
+                    if isinstance(browser, list):
+                        ids = [b.id for b in browser]
                     else:
-                        txt = print_fnc.print_fnc(attrs['name'], node)
-                    el = etree.SubElement(parent, node.tag)
-                    el.text = txt
+                        ids = [browser.id]
 
-                elif attrs['type']=='eval':
-                    value = self.eval(browser, attrs['expr'])
-                    el = etree.SubElement(parent, node.tag)
-                    el.text = str(value)
+                # call the method itself
+                newdatas = getattr(obj, attrs['name'])(self.cr, self.uid, ids, *args)
 
-                elif attrs['type']=='fields':
-                    fields = attrs['name'].split(',')
-                    vals = {}
-                    for b in browser:
-                        value = tuple([self.get_value2(b, f) for f in fields])
-                        if not value in vals:
-                            vals[value]=[]
-                        vals[value].append(b)
-                    keys = list(vals.keys())
-                    keys.sort()
+                def parse_result_tree(node, parent, datas):
+                    if not node.tag == etree.Comment:
+                        el = etree.SubElement(parent, node.tag)
+                        atr = self.node_attrs_get(node)
+                        if 'value' in atr:
+                            if not isinstance(datas[atr['value']], str):
+                                txt = str(datas[atr['value']])
+                            else:
+                                txt = datas[atr['value']]
+                            el.text = txt
+                        else:
+                            for el_cld in node:
+                                parse_result_tree(el_cld, el, datas)
+                if not isinstance(newdatas, list):
+                    newdatas = [newdatas]
+                for newdata in newdatas:
+                    parse_result_tree(node, parent, newdata)
 
-                    if 'order' in attrs and attrs['order']=='desc':
-                        keys.reverse()
-
-                    v_list = [vals[k] for k in keys]
+            elif attrs['type']=='zoom':
+                value = self.get_value(browser, attrs['name'])
+                if value:
+                    if not isinstance(value, list):
+                        v_list = [value]
+                    else:
+                        v_list = value
                     for v in v_list:
                         el = etree.SubElement(parent, node.tag)
                         for el_cld in node:
                             self.parse_node(el_cld, el, v)
-
-                elif attrs['type']=='call':
-                    if len(attrs['args']):
-#TODO: test this
-                        # fetches the values of the variables which names where passed in the args attribute
-                        args = [self.eval(browser, arg) for arg in attrs['args'].split(',')]
-                    else:
-                        args = []
-                    # get the object
-                    if 'model' in attrs:
-                        obj = self.pool.get(attrs['model'])
-                    else:
-                        if isinstance(browser, list):
-                            obj = browser[0]._table
-                        else:
-                            obj = browser._table
-
-                    # get the ids
-                    if 'ids' in attrs:
-                        ids = self.eval(browser, attrs['ids'])
-                    else:
-                        if isinstance(browser, list):
-                            ids = [b.id for b in browser]
-                        else:
-                            ids = [browser.id]
-
-                    # call the method itself
-                    newdatas = getattr(obj, attrs['name'])(self.cr, self.uid, ids, *args)
-
-                    def parse_result_tree(node, parent, datas):
-                        if not node.tag == etree.Comment:
-                            el = etree.SubElement(parent, node.tag)
-                            atr = self.node_attrs_get(node)
-                            if 'value' in atr:
-                                if not isinstance(datas[atr['value']], str):
-                                    txt = str(datas[atr['value']])
-                                else:
-                                     txt = datas[atr['value']]
-                                el.text = txt
-                            else:
-                                for el_cld in node:
-                                    parse_result_tree(el_cld, el, datas)
-                    if not isinstance(newdatas, list):
-                        newdatas = [newdatas]
-                    for newdata in newdatas:
-                        parse_result_tree(node, parent, newdata)
-
-                elif attrs['type']=='zoom':
-                    value = self.get_value(browser, attrs['name'])
-                    if value:
-                        if not isinstance(value, list):
-                            v_list = [value]
-                        else:
-                            v_list = value
-                        for v in v_list:
-                            el = etree.SubElement(parent, node.tag)
-                            for el_cld in node:
-                                self.parse_node(el_cld, el, v)
-            else:
-                # if there is no "type" attribute in the node, copy it to the xml data and parse its children
-                if not node.tag == etree.Comment:
-                    if node.tag == parent.tag:
-                        el = parent
-                    else:
-                        el = etree.SubElement(parent, node.tag)
-                    for el_cld in node:
-                        self.parse_node(el_cld,el, browser)
+        else:
+            # if there is no "type" attribute in the node, copy it to the xml data and parse its children
+            if not node.tag == etree.Comment:
+                if node.tag == parent.tag:
+                    el = parent
+                else:
+                    el = etree.SubElement(parent, node.tag)
+                for el_cld in node:
+                    self.parse_node(el_cld,el, browser)
     def xml_get(self):
         return etree.tostring(self.doc,encoding="unicode",xml_declaration=True,pretty_print=True)
 

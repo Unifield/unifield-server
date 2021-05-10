@@ -3,7 +3,6 @@
 
 
 from report import report_sxw
-from osv import osv
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class product_simple_template(report_sxw.rml_parse):

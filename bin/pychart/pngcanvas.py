@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -13,7 +13,6 @@
 # for more details.
 #
 import sys
-import os
 from . import gs_frontend
 from . import theme
 
@@ -28,10 +27,10 @@ class T(gs_frontend.T):
         else:
             gs_args = "-sDEVICE=pnggray -dTextAlphaBits=4 -q -dNOPAUSE" #PDS
 
-            
+
         temp_fname = None # the temporary file desc.
-        out_fd = None  # the final destination. 
-        
+        out_fd = None  # the final destination.
+
         if self.__out_fname and isinstance(self.__out_fname, str):
             gs_args += " -sOutputFile=%s" % self.__out_fname
         else:
@@ -51,6 +50,6 @@ class T(gs_frontend.T):
             temp_fd = open(temp_fname, 'rb')
             out_fd.write(temp_fd.read())
             temp_fd.close()
-            
+
 
 

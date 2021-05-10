@@ -4,7 +4,6 @@ import tools
 from tools.safe_eval import safe_eval as eval
 from tools.translate import _
 import functools
-import types
 from datetime import datetime
 
 from sync_common import WHITE_LIST_MODEL, xmlid_to_sdref
@@ -333,7 +332,7 @@ SELECT res_id, touched
         if previous_values is None:
             touch(
                 list(self.get_sd_ref(cr, uid, ids, field='id',
-                                context=context).values()),
+                                     context=context).values()),
                 whole_fields+['id'])
             # handle one2many
             o2m_fields = filter_o2m(whole_fields)
@@ -359,7 +358,7 @@ SELECT res_id, touched
                 "Missing previous values: %s got, %s expected" \
                 % (list(previous_values.keys()), ids)
             for res_id, (data_id, touched) in list(self.get_sd_ref(cr, uid, ids, \
-                                                              field=['id','touched'], context=context).items()):
+                                                                   field=['id','touched'], context=context).items()):
                 prev_rec, next_rec = \
                     previous_values[res_id], current_values[res_id]
                 modified = set([field for field in whole_fields if next_rec[field] != prev_rec[field]])

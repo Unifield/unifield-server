@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv, fields
-from tools.translate import _
 
 
 class product_price_list(osv.osv_memory):
@@ -58,7 +57,7 @@ class product_price_list(osv.osv_memory):
             'type': 'ir.actions.report.xml',
             'report_name': 'product.pricelist',
             'datas': datas,
-       }
+        }
 product_price_list()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

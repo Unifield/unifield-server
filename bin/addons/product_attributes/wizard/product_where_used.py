@@ -32,7 +32,6 @@ class product_where_used(osv.osv_memory):
         '''
         line_obj = self.pool.get('product.list.line')
         item_obj = self.pool.get('composition.item')
-        prod_obj = self.pool.get('product.product')
 
         if not context:
             context= {}
@@ -52,7 +51,7 @@ class product_where_used(osv.osv_memory):
             kit_ids = []
             items = item_obj.search(cr, uid, [('item_product_id', '=', product.id),
                                               ('item_kit_id.composition_type', '=', 'theoretical')],
-                                            context=context)
+                                    context=context)
             for i in item_obj.browse(cr, uid, items, context=context):
                 kit_ids.append(i.item_kit_id.id)
 

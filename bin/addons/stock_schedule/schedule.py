@@ -191,11 +191,11 @@ class stock_frequence(osv.osv):
                 return start_date
 
             if not frequence.last_run:
-                return daterime.today()
+                return datetime.today()
                 #numdays = (today() - start_date).day
                 #modulo = math.ceil(numdays/frequence.daily_frequency_ok)*frequence.daily_frequency_ok
                 #return start_date+RelativeDate(days=modulo)
-            return max(datetime.today(), daterime.strptime(frequence.last_run, '%Y-%m-%d')+relativedelta(days=frequence.daily_frequency))
+            return max(datetime.today(), datetime.strptime(frequence.last_run, '%Y-%m-%d')+relativedelta(days=frequence.daily_frequency))
 
     def _compute_next_weekly_date(self, cr, uid, frequence_id):
         '''
@@ -326,7 +326,7 @@ class stock_frequence(osv.osv):
                         return start_date + relativedelta(years=1, month=frequence.yearly_choose_month_freq, weekday=day(frequence.yearly_choose_freq))
                     return next_date
 
-            next_date = daterime.strptime(frequence.last_run, '%Y-%m-%d')
+            next_date = datetime.strptime(frequence.last_run, '%Y-%m-%d')
             if frequence.yearly_day_ok:
                 next_date += relativedelta(years=frequence.yearly_frequency, month=frequence.yearly_choose_month, day=frequence.yearly_day)
             else:

@@ -19,11 +19,7 @@
 #
 ##############################################################################
 
-from . import wkf_logs
 from . import workitem
-
-import netsvc
-import pooler
 
 def create(cr, ident, wkf_id):
     (uid,res_type,res_id) = ident

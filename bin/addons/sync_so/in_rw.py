@@ -19,14 +19,12 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 import netsvc
 
 import logging
 
 from sync_common import xmlid_to_sdref
-from sync_client import get_sale_purchase_logger
-from . import picking_rw
 
 class stock_move(osv.osv):
 
@@ -40,8 +38,8 @@ class stock_move(osv.osv):
         pickid = kwargs['picking']
         picking_obj = self.pool.get('stock.picking')
         if pickid and picking_obj._get_usb_entity_type(cr, uid) == picking_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            picking_obj.write(cr, uid, pickid, {'already_replicated': False}, context=context)                
-                
+            picking_obj.write(cr, uid, pickid, {'already_replicated': False}, context=context)
+
         return super(stock_move, self)._create_chained_picking_internal_request(cr, uid, context, *args, **kwargs)
 
 stock_move()
@@ -49,7 +47,7 @@ stock_move()
 class stock_picking(osv.osv):
     '''
     Stock.picking override for Remote Warehouse tasks: This class is for the INcoming Shipment and Internal moves
-    
+
     '''
     _inherit = "stock.picking"
     _logger = logging.getLogger('------sync.stock.picking')
@@ -80,7 +78,7 @@ class stock_picking(osv.osv):
         pick_dict = in_info.to_dict()
         pick_name = pick_dict['name']
         move_obj = self.pool.get('stock.move')
-        
+
         existing_pick = self.search(cr, uid, [('name', '=', pick_name)], context=context)
         if not existing_pick: # If not exist, just create the new IN
             message = "The IN " + pick_name + " will be created in " + cr.dbname
@@ -93,17 +91,17 @@ class stock_picking(osv.osv):
         if existing_pick.state != 'assigned':
             message = "Sorry, the existing IN " + pick_name + " may have already been processed. Cannot update any more!"
             self._logger.info(message)
-            return message 
-        
+            return message
+
         # UF-2422: Remove all current IN lines, then recreate new lines
         move_obj.unlink(cr, uid, [x.id for x in existing_pick.move_lines], force=True)
-            
+
         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
         for line in picking_lines:
             vals = line[2]
             vals['picking_id'] = existing_pick.id
             move_obj.create(cr, uid, vals, context=context)
-                
+
         self.write(cr, uid, existing_pick.id, {'state': 'shipped'}, context=context)
         message = "The IN " + pick_name + " has been now updated and sent to shipped available."
         self._logger.info(message)
@@ -133,7 +131,7 @@ class stock_picking(osv.osv):
 
         self._logger.info(message)
         return message
-    
+
     def usb_cancel_in(self, cr, uid, source, in_info, context=None):
         if context is None:
             context = {}
@@ -141,7 +139,7 @@ class stock_picking(osv.osv):
         pick_dict = in_info.to_dict()
         pick_name = pick_dict['name']
         origin = pick_dict['origin']
-            
+
         self._logger.info("+++ RW: Cancel the Incoming Shipment: %s from %s to %s" % (pick_name, source, cr.dbname))
 
         rw_type = self._get_usb_entity_type(cr, uid)
@@ -152,7 +150,7 @@ class stock_picking(osv.osv):
                     message = "Sorry, the IN: " + pick_name + " does not exist in " + cr.dbname
                     self._logger.info(message)
                     raise Exception(message)
-                
+
                 self.action_cancel(cr, uid,existing_pick, context=context)
                 message = "Cancelled successfully the Incoming Shipment: " + pick_name
             else:
@@ -161,10 +159,10 @@ class stock_picking(osv.osv):
                 raise Exception(message)
         else:
             message = "Sorry, the given operation is only available for Remote Warehouse instance!"
-        
+
         self._logger.info(message)
         return message
-    
+
     def usb_replicate_in(self, cr, uid, source, in_info, context=None):
         if context is None:
             context = {}
@@ -172,7 +170,7 @@ class stock_picking(osv.osv):
         pick_dict = in_info.to_dict()
         pick_name = pick_dict['name']
         origin = pick_dict['origin']
-            
+
         self._logger.info("+++ RW: Replicate the Incoming Shipment: %s from %s to %s" % (pick_name, source, cr.dbname))
         move_obj = self.pool.get('stock.move')
 
@@ -184,11 +182,11 @@ class stock_picking(osv.osv):
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 header_result['move_lines'] = picking_lines
                 header_result['already_replicated'] = True
-                
+
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
                 existing_pick = self.search(cr, uid, [('origin', '=', origin),
-                    ('subtype', '=', 'picking'), ('type', '=', 'in'), ('state',
-                        '=', 'draft')], limit=1, order='NO_ORDER', context=context)
+                                                      ('subtype', '=', 'picking'), ('type', '=', 'in'), ('state',
+                                                                                                         '=', 'draft')], limit=1, order='NO_ORDER', context=context)
                 if existing_pick:
                     message = "Sorry, the IN: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
@@ -196,13 +194,13 @@ class stock_picking(osv.osv):
                 del header_result['state']
                 pick_id = self.create(cr, uid, header_result , context=context)
                 # update this object as backorder of previous object
-                
+
                 if pick_id: # If successfully created, then get the sdref of the CP IN and store into this replicated IN in RW
                     sdref, temp = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
                     if sdref:
                         bo_of_other = self.search(cr, uid,
-                                [('rw_sdref_counterpart', '=', sdref)],
-                                order='NO_ORDER', context=context)
+                                                  [('rw_sdref_counterpart', '=', sdref)],
+                                                  order='NO_ORDER', context=context)
                         if bo_of_other:# The original IN of this backorder IN exists, update that original IN
                             self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
 
@@ -222,7 +220,7 @@ class stock_picking(osv.osv):
                 raise Exception(message)
         else:
             message = "Sorry, the given operation is only available for Remote Warehouse instance!"
-        
+
         self._logger.info(message)
         return message
 
@@ -232,16 +230,16 @@ class stock_picking(osv.osv):
         This is the PICK with format PICK00x-y, meaning the PICK00x-y got closed making the backorder PICK got updated (return products
         into this backorder PICK)
         '''
-        
+
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
-            
+
         self._logger.info("+++ RW: Create partial INcoming Shipment: %s from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
 
         message = "Unknown error, please check the log file."
-        
+
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         rw_type = self._get_usb_entity_type(cr, uid)
@@ -265,7 +263,7 @@ class stock_picking(osv.osv):
                             real_in_id = self.find_sd_ref(cr, uid, xmlid_to_sdref(rw_sdref_counterpart), context=context)
                             if real_in_id: # found the real IN id of the original IN for performing the partial incoming reception
                                 pick_ids = [real_in_id]
-                
+
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):
@@ -274,10 +272,10 @@ class stock_picking(osv.osv):
                         #self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
                         self.rw_do_create_partial_in(cr, uid, pick_ids[0], header_result, picking_lines, context)
-                        
+
                         message = "The IN: " + pick_name + " has been successfully created in " + cr.dbname
                         self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
-        
+
                 else:
                     message = "The IN: " + pick_name + " not found in " + cr.dbname
                     self._logger.info(message)
@@ -286,10 +284,10 @@ class stock_picking(osv.osv):
                 message = "Sorry, the case without the origin PO is not yet available!"
                 self._logger.info(message)
                 raise Exception(message)
-                
-        elif rw_type == self.REMOTE_WAREHOUSE: 
+
+        elif rw_type == self.REMOTE_WAREHOUSE:
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
-                
+
         self._logger.info(message)
         return message
 
@@ -309,17 +307,17 @@ class stock_picking(osv.osv):
         search_condition = [('type', '=', 'internal'), ('subtype', '=', 'standard'), ('name', '=', pick_name)]
         if origin:
             search_condition.append(('origin', '=', origin))
-            
+
         header_result = {}
         self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context, pick_dict['partner_id'])
         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
         header_result['move_lines'] = picking_lines
         header_result['already_replicated'] = True
         state = pick_dict['state']
-        
+
         # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
         existing_pick = self.search(cr, uid, search_condition,
-                limit=1, order='NO_ORDER', context=context)
+                                    limit=1, order='NO_ORDER', context=context)
         if existing_pick:
             message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
             self._logger.info(message)
@@ -333,9 +331,9 @@ class stock_picking(osv.osv):
             self.action_assign(cr, uid, [pick_id], context=context)
             if header_result.get('date_done', False):
                 context['rw_date'] = False
-        
+
         message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
-            
+
         self._logger.info(message)
         return message
 
@@ -344,7 +342,7 @@ class stock_picking(osv.osv):
         """
         res = super(stock_picking, self).action_shipped_wkf(cr, uid, ids, context=context)
         rw_type = self._get_usb_entity_type(cr, uid)
-        if rw_type == self.CENTRAL_PLATFORM:        
+        if rw_type == self.CENTRAL_PLATFORM:
             self.write(cr, uid, ids, {'already_replicated': False})
         return res
 
@@ -353,21 +351,21 @@ class stock_picking(osv.osv):
         processor_obj = self.pool.get('stock.incoming.processor')
         in_processor = processor_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
         processor_obj.write(cr, uid, in_processor, {'direct_incoming': False}, context=context)
-        
+
         self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
         partial_datas = {}
         partial_datas[pick_id] = {}
         context['InShipOut'] = "IN"  # asking the IN object to be logged
         context['rw_sync'] = True
-        
+
         move_obj = self.pool.get('stock.move')
         move_proc = self.pool.get('stock.move.in.processor')
-        
+
         # UF-2531: Get the associate name for the case of creating PICK or INT
         associate_pick_name = False
         if 'associate_pick_name' in header_result:
             associate_pick_name = header_result.get('associate_pick_name', False)
-        
+
         for l in pack_data:
             data = l[2]
 
@@ -458,7 +456,7 @@ class stock_picking(osv.osv):
                     data['ordered_quantity'] = data['product_qty']
                     move_proc.create(cr, uid, data, context=context)
 
-        # UF-2531: if creating PICK, check if the associated name is well a PICK 
+        # UF-2531: if creating PICK, check if the associated name is well a PICK
         if associate_pick_name and 'PICK' in associate_pick_name:
             context['associate_pick_name'] = associate_pick_name
 
@@ -473,7 +471,7 @@ class stock_picking(osv.osv):
             if int_ids:
                 self.write(cr, uid, int_ids[0], {'name': associate_pick_name}, context)
                 self.write(cr, uid, new_picking, {'associate_pick_name': associate_pick_name}, context)
-        
+
         # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
         in_name = self.browse(cr, uid, new_picking, context=context)['name']
         if new_picking != pick_id:
@@ -494,7 +492,7 @@ class stock_picking(osv.osv):
         '''
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
-            
+
         self._logger.info("+++ RW: Create Partial Internal Moves: %s from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
@@ -511,11 +509,11 @@ class stock_picking(osv.osv):
                 search_condition.append(('name', '=', header_result.get('associate_pick_name')))
             else: # if this is not a partial reception of INT, then just take the given INT itself
                 search_condition.append(('name', '=', pick_name))
-                
+
             #US-24: Now allow also the INT without origin nor partner
             if origin:
                 search_condition.append(('origin', '=', origin))
-            
+
             pick_ids = self.search(cr, uid, search_condition, context=context)
             if pick_ids:
                 pick_id = pick_ids[0]
@@ -541,18 +539,18 @@ class stock_picking(osv.osv):
                         context['rw_date'] = False
 
                     self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
-                    
+
                     message = "The Internal Moves: " + pick_name + " has been successfully received in " + cr.dbname
                     self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
-    
+
             else:
                 message = "The IN: " + pick_name + " not found in " + cr.dbname
                 self._logger.info(message)
                 raise Exception(message)
-                
-        elif rw_type == self.REMOTE_WAREHOUSE: 
+
+        elif rw_type == self.REMOTE_WAREHOUSE:
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
-                
+
         self._logger.info(message)
         return message
 
@@ -563,12 +561,12 @@ class stock_picking(osv.osv):
         wizard_line_obj = self.pool.get('internal.move.processor')
         move_obj = self.pool.get('stock.move')
         wizard = wizard_obj.browse(cr, uid, in_processor, context=context)
-        
+
         # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
         # If the line got split, based on line number and create new wizard line
         move_already_checked = []
         for sline in picking_lines:
-            sline = sline[2]            
+            sline = sline[2]
             line_number = sline['line_number']
             if not sline['product_qty'] or sline['product_qty'] == 0.00:
                 continue
@@ -616,7 +614,7 @@ class stock_picking(osv.osv):
                     wizard_line_obj.create(cr, uid, vals, context=context)
 
         wizard_obj.do_partial(cr, uid, [in_processor], context=context)
-        
+
         in_name = self.browse(cr, uid, pick_id, context=context)['name']
         message = "The Internal Moves " + in_name + " is now closed!"
         self._logger.info(message)

@@ -20,10 +20,6 @@
 ##############################################################################
 
 from osv import fields, osv
-from tools.translate import _
-import decimal_precision as dp
-
-import netsvc
 
 
 class confirm(osv.osv_memory):
@@ -35,7 +31,7 @@ class confirm(osv.osv_memory):
                 'display_close_confirm': fields.boolean(string='Display Close Button', readonly=True),
                 'display_back_confirm': fields.boolean(string='Display Back Button', readonly=True),
                 }
-    
+
     _defaults = {'question': lambda s, cr, uid, c: c.get('question', False),
                  'display_close_confirm': lambda s, cr, uid, c: c.get('display_close_confirm', True), # by default, we display close
                  'display_back_confirm': lambda s, cr, uid, c: c.get('display_back_confirm', False), # by default, we do not display back
@@ -47,7 +43,7 @@ class confirm(osv.osv_memory):
         '''
         # we need the context for the wizard switch
         assert context, 'no context defined'
-        
+
         wiz_obj = self.pool.get('wizard')
         # no data for type 'back'
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], w_type='back', context=context)
@@ -70,5 +66,5 @@ class confirm(osv.osv_memory):
         res = getattr(obj, func)(cr, uid, *args, context=context, **kwargs)
         # return result from callback function
         return res
-    
+
 confirm()

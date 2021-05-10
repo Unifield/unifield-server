@@ -168,7 +168,7 @@ def data_files():
 
     return files
 
-f = file('openerp-server', 'w')
+f = open('openerp-server', 'w')
 f.write("""#!/bin/sh
 echo "Error: the content of this file should have been replaced during "
 echo "installation\n"

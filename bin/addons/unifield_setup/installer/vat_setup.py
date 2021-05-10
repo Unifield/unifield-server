@@ -22,7 +22,6 @@
 from osv import osv
 from osv import fields
 
-from tools.translate import _
 
 
 class vat_setup(osv.osv_memory):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -12,12 +12,9 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-import sys
-import re
 from . import theme
-from . import version
 from . import basecanvas
-from .scaling import *
+from .scaling import yscale, xscale, nscale_seq, nscale
 
 comment_p = 0
 
@@ -30,7 +27,7 @@ class T(basecanvas.T):
         self.__nr_gsave = 0
         self.__font_ids = {}
         self.__nr_fonts = 0
-        
+
     def __reset_context(self):
         self.__font_name = None
         self.__font_size = -1
@@ -46,7 +43,7 @@ class T(basecanvas.T):
         self.__nr_fonts += 1
         self.__font_ids[name] = id
         return id
-    
+
     def newpath(self):
         self.__write("N\n")
     def stroke(self):
@@ -55,7 +52,7 @@ class T(basecanvas.T):
         self.__write("CP\n")
     def moveto(self, x, y):
         self.__write('%g %g M\n' % (x, y))
-    
+
     def set_fill_color(self, color):
         if self.__color == color:
             pass
@@ -67,21 +64,21 @@ class T(basecanvas.T):
             self.__color = color
     def set_stroke_color(self, color):
         self.set_fill_color(color)
-        
+
     def set_line_style(self, style):
         self.set_stroke_color(style.color)
         if (self.__line_style == style):
             pass
         else:
-            self.__write("%g %d %d " % (nscale(style.width), 
-				      style.cap_style, style.join_style))
+            self.__write("%g %d %d " % (nscale(style.width),
+                                        style.cap_style, style.join_style))
             if style.dash != None:
-                self.__write("[%s] 0 SLD " % 
-                           " ".join(map(str, nscale_seq(style.dash))))
+                self.__write("[%s] 0 SLD " %
+                             " ".join(map(str, nscale_seq(style.dash))))
             else:
                 self.__write("SL ")
         self.__line_style = style
-            
+
     def gsave(self):
         self.__nr_gsave += 1
         self.__write("GS\n")
@@ -92,13 +89,13 @@ class T(basecanvas.T):
 
     def clip_sub(self):
         self.__write("clip\n")
-        
+
     def path_arc(self, x, y, radius, ratio, start_angle, end_angle):
         self.push_transformation((x, y), (1, ratio), None)
         self.__write("0 0 %g %g %g arc\n" % (radius, start_angle, end_angle))
         self.pop_transformation()
 
-    def curveto(self, a,b,c,d,e,f):    
+    def curveto(self, a,b,c,d,e,f):
         self.__write("%g %g %g %g %g %g curveto\n" % (a,b,c,d,e,f))
 
     def push_transformation(self, baseloc, scale, angle, in_text=0):
@@ -126,7 +123,7 @@ class T(basecanvas.T):
         if angle != None and angle != 0:
             self.__write("%g R " % angle)
         self.moveto(0, 0)
-        
+
     def text_show(self, font_name, size, color, str):
         self.set_fill_color(color)
         if (self.__font_name == font_name and self.__font_size == size):
@@ -139,11 +136,11 @@ class T(basecanvas.T):
         self.__write("(%s) show\n" % (str))
 
     def _path_polygon(self, points):
-        if (len(points) == 4 
-            and points[0][0] == points[1][0] 
-            and points[2][0] == points[3][0] 
-            and points[0][1] == points[3][1] 
-            and points[1][1] == points[2][1]):
+        if (len(points) == 4
+            and points[0][0] == points[1][0]
+            and points[2][0] == points[3][0]
+            and points[0][1] == points[3][1]
+                and points[1][1] == points[2][1]):
             # a rectangle.
             (xmin, ymin, xmax, ymax) = basecanvas._compute_bounding_box(points)
             if basecanvas.invisible_p(xmax, ymax):
@@ -151,11 +148,11 @@ class T(basecanvas.T):
             self.setbb(xmin, ymin)
             self.setbb(xmax, ymax)
             self.__write("%g %g %g %g RECT\n" % \
-                       (xscale(points[0][0]), yscale(points[0][1]),
-                        xscale(points[2][0]), yscale(points[2][1])))
+                         (xscale(points[0][0]), yscale(points[0][1]),
+                          xscale(points[2][0]), yscale(points[2][1])))
         else:
             basecanvas.T._path_polygon(self, points)
-            
+
     def lineto(self, x, y):
         self.__write("%g %g L\n" % (x, y))
     def fill(self):
@@ -165,28 +162,28 @@ class T(basecanvas.T):
             self.verbatim("%" + str)
     def verbatim(self, str):
         self.__write(str)
-        
+
     def close(self):
         basecanvas.T.close(self)
         if self.__output_lines == []:
             return
 
         fp, need_close = self.open_output(self.__out_fname)
-            
+
         if self.__nr_gsave != 0:
             raise Exception("gsave misnest (%d)" % (self.__nr_gsave))
         self.write_preamble(fp)
-        
+
         fp.writelines(self.__output_lines)
         fp.writelines(["showpage end\n",
                        "%%Trailer\n",
                        "%%EOF\n"])
         if need_close:
             fp.close()
-            
+
     def __write(self, str):
         self.__output_lines.append(str)
-    
+
     def writelines(self, l):
         self.__output_lines.extend(l)
 
@@ -251,8 +248,8 @@ preamble_text="""
 """
 
 # SL: set line style.
-# width [dash] x linecap linejoin SL -> 
+# width [dash] x linecap linejoin SL ->
 
 # SF: set font.
-# name size SF -> 
+# name size SF ->
 

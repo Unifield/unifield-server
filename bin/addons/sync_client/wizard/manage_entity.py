@@ -21,7 +21,6 @@
 
 from osv import osv
 from osv import fields
-from osv import orm
 from tools.translate import _
 
 import logging
@@ -31,7 +30,7 @@ class entity_manager(osv.osv_memory):
     _name = "sync.client.entity_manager"
     _description = "Wizard invalidate and more"
     _logger = logging.getLogger('sync.client')
-    
+
     _columns = {
         'entity_ids' : fields.one2many('sync.client.child_entity', 'manage_id', 'Children Instances'),
         'state' : fields.selection([('data_needed','Need Data'),('ready','Ready')], 'State', required=True),
@@ -42,7 +41,7 @@ class entity_manager(osv.osv_memory):
         'identifier' : fields.char("Identifier", size=64, readonly=True),
         'name' : fields.char("Identifier", size=64, readonly=True),
     }
-    
+
     def retrieve(self, cr, uid, ids, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
@@ -59,39 +58,39 @@ class entity_manager(osv.osv_memory):
             raise osv.except_osv(_('Error !'), res[1])
         else:
             self.write(cr, uid, ids, my_infos, context=context)
-        return True 
-        
-    _defaults = { 
+        return True
+
+    _defaults = {
         'state' : 'data_needed',
     }
-    
-    
-entity_manager()   
-    
-    
+
+
+entity_manager()
+
+
 class child_entity(osv.osv_memory):
     _name = "sync.client.child_entity"
     _description = "Representation of a child entity for the parent"
-    
-    
+
+
     _columns = {
         'name': fields.char('Instance Name', size=64, readonly=True, required=True),
-        'identifier': fields.char('Identifier', size=64, readonly=True), 
+        'identifier': fields.char('Identifier', size=64, readonly=True),
         'parent': fields.char('Parent Instance', size=64, readonly=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),
         'state' : fields.selection([('pending','Pending'),('validated','Validated'), ('updated', 'Updated'), ('invalidated','Invalidated')], 'State', required=True),
-        'manage_id' : fields.many2one('sync.client.entity_manager','Instance Manager'), 
-        'group': fields.text('Group Name', size=512, readonly=True),     
-    
+        'manage_id' : fields.many2one('sync.client.entity_manager','Instance Manager'),
+        'group': fields.text('Group Name', size=512, readonly=True),
+
     }
-    
+
     def validation(self, cr, uid, ids, context=None):
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
         hardware_id = self.pool.get('sync.client.entity')._hardware_id
-        uuid_validate = [] 
+        uuid_validate = []
         for entity in self.browse(cr, uid, ids, context=context):
             uuid_validate.append(entity.identifier)
-        
+
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         res = proxy.validate(uuid, hardware_id, uuid_validate, context)
         if res and res[0]:
@@ -99,14 +98,14 @@ class child_entity(osv.osv_memory):
         elif res and not res[0]:
             raise osv.except_osv(_('Error !'), res[1])
         return True
-    
+
     def invalidation(self, cr, uid, ids, context=None):
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
         hardware_id = self.pool.get('sync.client.entity')._hardware_id
-        uuid_validate = [] 
+        uuid_validate = []
         for entity in self.browse(cr, uid, ids, context=context):
             uuid_validate.append(entity.identifier)
-        
+
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         res = proxy.invalidate(uuid, hardware_id, uuid_validate, context)
         if res and res[0]:
@@ -114,5 +113,5 @@ class child_entity(osv.osv_memory):
         elif res and not res[0]:
             raise osv.except_osv(_('Error !'), res[1])
         return True
-    
+
 child_entity()

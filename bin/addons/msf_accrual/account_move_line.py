@@ -23,17 +23,14 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
-from time import strftime
-from tools.misc import flatten
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
     _columns = {
-        'accrual': fields.boolean(string="Accrual?", readonly=True, 
-            help="If true, this line was created by an accrual generation."),
+        'accrual': fields.boolean(string="Accrual?", readonly=True,
+                                  help="If true, this line was created by an accrual generation."),
     }
 
     _defaults = {

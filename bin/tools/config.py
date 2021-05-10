@@ -426,7 +426,7 @@ class configmanager(object):
             try:
                 import winreg
             except ImportError:
-                _winreg = None
+                winreg = None
             x=winreg.ConnectRegistry(None,winreg.HKEY_LOCAL_MACHINE)
             y = winreg.OpenKey(x, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment", 0,winreg.KEY_ALL_ACCESS)
             winreg.SetValueEx(y,"PGPASSFILE", 0, winreg.REG_EXPAND_SZ, filename )

@@ -185,7 +185,7 @@ def open_register_view(self, cr, uid, register_id, context=None):
     result['target'] = 'crush'
     result['view_mode'] = 'form,tree,graph'
     # Sort views by first letter (form, then tree). this permit to show form instead tree view
-    result['views'] = sorted(result['views'], cmp=lambda x,y: cmp(x[1][0:1], y[1][0:1]))
+    result['views'] = sorted(result['views'], key=lambda x: x[1][0:1])
     # Take right ID to display form view
     for view in result['views']:
         if view[1] and view[1] == 'form':

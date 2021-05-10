@@ -40,7 +40,7 @@ class split_move(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         if isinstance(ids, int):
             ids = [ids]
-        
+
         # objects
         move_obj = self.pool.get('stock.move')
         # memory moves selected
@@ -59,22 +59,22 @@ class split_move(osv.osv_memory):
             # cannot select all available
             if selected_qty == available_qty:
                 raise osv.except_osv(_('Error !'),_('Selected quantity is equal to available quantity (%0.1f %s).')%(available_qty, move.product_uom.name))
-            
+
             # quantity difference for new stock move
             new_qty = available_qty - selected_qty
             # update the selected move
             values = {'product_qty': new_qty, 'product_uos_qty': new_qty}
-            # update the object    
+            # update the object
             move_obj.write(cr, uid, [move.id], values, context=context)
             # create new move - reset productionlot and location
             location_id = move.kit_creation_id_stock_move.default_location_src_id_kit_creation.id
-            new_move_id = move_obj.copy(cr, uid, move.id, {'state': 'confirmed',
-                                                           'product_qty': selected_qty,
-                                                           'product_uos_qty': selected_qty,
-                                                           'prodlot_id': False,
-                                                           'asset_id': False,
-                                                           'location_id': location_id}, context=context)
-        
+            move_obj.copy(cr, uid, move.id, {'state': 'confirmed',
+                                             'product_qty': selected_qty,
+                                             'product_uos_qty': selected_qty,
+                                             'prodlot_id': False,
+                                             'asset_id': False,
+                                             'location_id': location_id}, context=context)
+
         return {'type': 'ir.actions.act_window_close'}
-    
+
 split_move()

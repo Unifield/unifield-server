@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -18,11 +18,9 @@ from . import pychart_util
 from . import fill_style
 from . import font
 from . import chart_object
-from . import color
 from . import arrow
 from . import text_box_doc
-from .pychart_types import *
-from types import *
+from .pychart_types import ShadowType, UnitType
 
 class T(chart_object.T):
     __doc__ = text_box_doc.doc
@@ -42,7 +40,7 @@ class T(chart_object.T):
             "right_fudge": (UnitType, 5,
                             "The amount of space right of the box"),
             "_arrows": (list, pychart_util.new_list, "The list of arrows. Not to be touched by the user directly"),
-	    "radius": (UnitType, 0,
+            "radius": (UnitType, 0,
                        """Radius of the four corners of the rectangle.
                        If the value is zero, a sharp-cornered
                        rectangle is drawn."""),
@@ -58,32 +56,32 @@ class T(chart_object.T):
         width = font.text_width(self.text) + self.right_fudge + self.left_fudge
         height = (font.text_height(self.text))[0] + self.top_fudge + self.bottom_fudge
         return (x, y, width, height)
-    
+
     def choose_end_point(self, tipx, tipy):
         (x, y, width, height) = self.get_dimension()
-        
+
         minDist = -1
         minPoint = None
         vertices = [(x, y),
                     (x+width, y),
                     (x+width, y+height),
                     (x, y+height)]
-            
+
         if tipx >= x and tipx < x+width:
             vertices.append((tipx, y))
             vertices.append((tipx, y+height))
         if tipy >= y and tipy < y+height:
             vertices.append((x, tipy))
             vertices.append((x+width, tipy))
-            
+
         for startPoint in vertices:
             dist = ((startPoint[0] - tipx) **2 + (startPoint[1] - tipy) **2)
             if not minPoint or dist < minDist:
                 minPoint = startPoint
                 minDist = dist
-            
+
         return minPoint
-    
+
     def add_arrow(self, tipLoc, tail=None, arrow = arrow.default):
         """This method adds a straight arrow that points to
         @var{TIPLOC}, which is a tuple of integers. @var{TAIL}
@@ -98,7 +96,7 @@ class T(chart_object.T):
         the arrow. <<arrow>>.
         """
         self._arrows.append((tipLoc, tail, arrow))
-        
+
     def draw(self, can = None):
         if can == None:
             can = canvas.default_canvas()
@@ -107,14 +105,14 @@ class T(chart_object.T):
         text_width = font.text_width(self.text)
         text_height = font.text_height(self.text)[0]
         (halign, valign, angle) = font.get_align(self.text)
-        
+
         if self.line_style or self.fill_style:
             width = text_width+self.left_fudge+self.right_fudge
             height = text_height+self.bottom_fudge+self.top_fudge
             can.round_rectangle(self.line_style, self.fill_style,
-                                   x-self.left_fudge, y-self.bottom_fudge,
-                                   x-self.left_fudge+width, y-self.bottom_fudge+height,
-                                   self.radius, self.shadow)
+                                x-self.left_fudge, y-self.bottom_fudge,
+                                x-self.left_fudge+width, y-self.bottom_fudge+height,
+                                self.radius, self.shadow)
 
         if halign == 'L':
             can.show(x, y, self.text)
@@ -149,5 +147,5 @@ class T(chart_object.T):
             else:
                 origin = self.choose_end_point(tipLoc[0], tipLoc[1])
             arrow.draw((origin, tipLoc), can)
-            
+
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -16,9 +16,8 @@ import string
 import sys
 import re
 import os.path
-from pychart import *
-from types import *
-from pychart.pychart_types import *
+from . import chart_object
+from pychart.pychart_types import FloatType, LongType, ShadowType, AnyType, ModuleType
 
 oldstdout = sys.stdout
 if os.path.exists("/dev/null"):
@@ -47,9 +46,9 @@ def stringify_type(t):
         return "any"
     if t == ShadowType:
         return "(xoff,yoff,fill)"
-    elif re.search("NumType", s):    
+    elif re.search("NumType", s):
         return "number"
-    elif re.search("UnitType", s):    
+    elif re.search("UnitType", s):
         return "length in points (\\\\xref{unit})"
     elif re.search("CoordType", s):
         return "(x,y)"
@@ -85,7 +84,7 @@ def stringify_value(val):
     if t == bool:
         if val: return "True"
         else: return "False"
-        
+
     if t in (int, LongType, FloatType):
         return str(val)
     if val == None:
@@ -101,8 +100,8 @@ def break_string(name):
     max_len = 10
     if len(name) < max_len:
         return name
-    
-    name = re.sub("(\\d\\d)([^\\d])", "\\1-\n\\2", name) 
+
+    name = re.sub("(\\d\\d)([^\\d])", "\\1-\n\\2", name)
     name = re.sub("black(.)", "black-\n\\1", name)
 
     elems = string.split(name, "\n")

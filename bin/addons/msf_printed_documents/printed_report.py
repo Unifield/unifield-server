@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -120,7 +120,7 @@ class ir_actions_report_xml(osv.osv):
                     try:
                         vals_dict.update({field_name: getattr(model_doc, func_name)(context=context)})
                         continue
-                    except AttributeError as e:
+                    except AttributeError:
                         error += _('%s : The function \'%s\' is not a valid function for the \'%s\' model.\n') % (field_name, func_name, report.model._name)
                         break
 
@@ -180,21 +180,21 @@ class ir_actions_report_xml(osv.osv):
         Check the validity of the target filename of the report
         '''
         valid_fields_type = (
-                fields.many2one,
-                fields.selection,
-                fields.char,
-                fields.float,
-                fields.integer,
-                fields.date,
-                fields.datetime,
-                fields.time,
+            fields.many2one,
+            fields.selection,
+            fields.char,
+            fields.float,
+            fields.integer,
+            fields.date,
+            fields.datetime,
+            fields.time,
         )
         bad_type = False
 
         for report in self.browse(cr, uid, ids, context=context):
             if not report.target_filename:
                 continue
-    
+
             error = ''
             try:
                 report_name = self.pool.get('ir.sequence')._process(cr, uid, report.target_filename)
@@ -214,7 +214,7 @@ class ir_actions_report_xml(osv.osv):
                     try:
                         getattr(model_doc, func_name)
                         continue
-                    except AttributeError as e:
+                    except AttributeError:
                         error += _('%s : The function \'%s\' is not a valid function for the \'%s\' model.\n') % (field_name, func_name, model_doc._name)
                         break
 
@@ -241,7 +241,7 @@ class ir_actions_report_xml(osv.osv):
                         error += _('%s : The field \'%s\' is not in \'%s\' model.\n') % (field_name, split_field[i], model_doc._name)
                         break
                         if not isinstance(model_doc._columns[field], valid_fields_type):
-                            bad_type = True                    
+                            bad_type = True
                             error += _('%s : The field \'%s\' is not a valid field type for report name.\n') % (field_name, field)
 
             if bad_type:
@@ -257,10 +257,10 @@ class ir_actions_report_xml(osv.osv):
 
             if error:
                 raise osv.except_osv(_('Error'), error)
-    
+
         return True
 
-    _constraints = [ 
+    _constraints = [
         (_check_target_validity, 'The target filename given is not valid', ['target_filename']),
     ]
 

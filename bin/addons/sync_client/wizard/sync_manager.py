@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv, fields
-from sync_client import sync_client
 
 class sync_manager(osv.osv_memory):
     _name = 'sync.client.sync_manager'
@@ -40,7 +39,7 @@ class sync_manager(osv.osv_memory):
     }
 
     _defaults = {
-                 'state' : _get_state,
+        'state' : _get_state,
     }
 
     def sync(self, cr, uid, ids, context=None):

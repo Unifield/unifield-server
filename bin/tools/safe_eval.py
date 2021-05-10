@@ -18,7 +18,6 @@ import dis
 from opcode import HAVE_ARGUMENT, opmap, opname
 
 import functools
-from psycopg2 import OperationalError
 from types import CodeType
 import logging
 import sys
@@ -348,6 +347,7 @@ def safe_eval(expr, globals_dict=None, locals_dict=None, mode="eval", nocopy=Fal
     try:
         return unsafe_eval(c, globals_dict, locals_dict)
     except Exception as e:
+        raise
         exc_info = sys.exc_info()
         raise ValueError('%s: "%s" while evaluating\n%r' % (ustr(type(e)), ustr(e), expr)).with_traceback(exc_info[2])
 

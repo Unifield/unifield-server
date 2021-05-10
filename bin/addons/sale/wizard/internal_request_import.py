@@ -29,7 +29,6 @@ import datetime
 import logging
 import tools
 
-from datetime import datetime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _

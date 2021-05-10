@@ -20,8 +20,6 @@
 ##############################################################################
 import time
 
-import pooler
-
 from report import report_sxw
 from msf_supply_doc_export.msf_supply_doc_export import WebKitParser
 from msf_supply_doc_export.msf_supply_doc_export import getIds

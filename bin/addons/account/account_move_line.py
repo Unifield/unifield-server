@@ -725,11 +725,7 @@ class account_move_line(osv.osv):
                 tax_id = tax_ids and tax_ids[0].id or False
             val['account_tax_id'] = tax_id
         return {'value': val}
-    #
-    # type: the type if reconciliation (no logic behind this field, for info)
-    #
-    # writeoff; entry generated for the difference between the lines
-    #
+
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if context is None:
             context = {}

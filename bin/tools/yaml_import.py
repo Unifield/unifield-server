@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-import types
 import time # used to eval time.strftime expressions
 from datetime import datetime, timedelta
 import logging
@@ -261,12 +260,12 @@ class YamlInterpreter(object):
                                 rmsg = ''
                                 try:
                                     lmsg = unsafe_eval(left, self.eval_context, RecordDictWrapper(record))
-                                except Exception as e:
+                                except Exception:
                                     lmsg = '<exc>'
 
                                 try:
                                     rmsg = unsafe_eval(right, self.eval_context, RecordDictWrapper(record))
-                                except Exception as e:
+                                except Exception:
                                     rmsg = '<exc>'
 
                                 msg += 'values: ! %s %s %s'
@@ -415,7 +414,7 @@ class YamlInterpreter(object):
         except AssertionError as e:
             self._log_assert_failure(python.severity, 'AssertionError in Python code %s: %s', python.name, e)
             return
-        except Exception as e:
+        except Exception:
             self.logger.debug('Exception during evaluation of !python block in yaml_file %s.', self.filename, exc_info=True)
             raise
         else:

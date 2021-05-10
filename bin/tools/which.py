@@ -42,8 +42,8 @@ __docformat__ = 'restructuredtext en'
 __all__ = 'which which_files pathsep defpath defpathext F_OK R_OK W_OK X_OK'.split()
 
 import sys
-from os import access, defpath, pathsep, environ, F_OK, R_OK, W_OK, X_OK
-from os.path import exists, dirname, split, join
+from os import access, defpath, pathsep, environ, F_OK, X_OK
+from os.path import exists, split, join
 
 windows = sys.platform.startswith('win')
 
@@ -57,7 +57,7 @@ if windows:
     del seen
 
     defpathext = [''] + environ.get('PATHEXT',
-        '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC').lower().split(pathsep)
+                                    '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC').lower().split(pathsep)
 else:
     defpathext = ['']
 

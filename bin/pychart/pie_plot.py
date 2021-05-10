@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -23,8 +23,7 @@ from . import font
 from . import pie_plot_doc
 from . import theme
 
-from .pychart_types import *
-from types import *
+from .pychart_types import ShadowType, UnitType, FormatType, AnyType, CoordType, NumType
 
 class T(chart_object.T):
     __doc__ = pie_plot_doc.doc
@@ -65,7 +64,7 @@ class T(chart_object.T):
         "label_line_style": (line_style.T, None, "The style of the frame surrounding each label."),
         "label_fill_style": (fill_style.T, fill_style.default, "The fill style of the frame surrounding each label."),
         "shadow": (ShadowType, None, pychart_util.shadow_desc)
-        }
+    }
 ##AUTOMATICALLY GENERATED
 
 ##END AUTOMATICALLY GENERATED
@@ -86,10 +85,10 @@ class T(chart_object.T):
             fill = self.fill_styles[i]
             i = (i + 1) % len(self.fill_styles)
             legends.append(legend.Entry(line_style=self.line_style,
-                                        fill_style=fill, 
+                                        fill_style=fill,
                                         label=val[self.label_col]))
         return legends
-    
+
     def draw(self, ar, can):
         center = self.center
         if not center:
@@ -100,20 +99,20 @@ class T(chart_object.T):
             radius = min(ar.size[0]/2.0, ar.size[1]/2.0) * 0.5
 
         label_offset = radius + (self.label_offset or radius * 0.1)
-        
+
         total = self._total()
         i = 0
         cur_angle = self.start_angle
         for val in self.data:
             fill = self.fill_styles[i]
             degree = 360 * float(val[self.data_col]) / float(total)
-            
+
             off = (0, 0)
             if len(self.arc_offsets) > i:
                 off = pychart_util.rotate(self.arc_offsets[i], 0, cur_angle - degree/2.0)
             x_center = center[0]+ off[0]
             y_center = center[1]+ off[1]
-            
+
             can.ellipsis(self.line_style, fill,
                          x_center, y_center, radius, 1,
                          cur_angle - degree, cur_angle,

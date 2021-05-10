@@ -167,7 +167,7 @@ showpage'''
                         inst_id = inst_id[0]
                         graph_instance_get(cr, graph, inst_id, data.get('nested', False))
                     ps_string = graph.create(prog='dot', format='ps')
-        except Exception as e:
+        except Exception:
             import traceback, sys
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             logger.notifyChannel('workflow', netsvc.LOG_ERROR, 'Exception in call: ' + tb_s)

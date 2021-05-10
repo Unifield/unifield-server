@@ -19,9 +19,7 @@
 #
 ##############################################################################
 
-from osv import fields, osv
-from tools.translate import _
-import time
+from osv import osv
 
 class stock_replacement(osv.osv_memory):
     """

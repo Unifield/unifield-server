@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -21,8 +21,7 @@ from . import legend
 from . import object_set
 from . import line_plot_doc
 from . import theme
-from .pychart_types import *
-from types import *
+from .pychart_types import FormatType, CoordType, AnyType
 
 default_width = 1.2
 line_style_itr = None
@@ -55,14 +54,14 @@ _keys = {
     "tick_mark": (tick_mark.T, None, pychart_util.tick_mark_desc),
     "error_bar": (error_bar.T, None,
                   "The style of the error bar. <<error_bar>>"),
-    }
+}
 
 class T(chart_object.T):
     __doc__ = line_plot_doc.doc
     keys =  _keys
     def check_integrity(self):
         self.type_check()
-        
+
 ##AUTOMATICALLY GENERATED
 
 ##END AUTOMATICALLY GENERATED
@@ -78,7 +77,7 @@ class T(chart_object.T):
                                 fill_style=None,
                                 label=self.label)
         return None
-    
+
     def draw(self, ar, can):
 
         # Draw the line
@@ -86,7 +85,7 @@ class T(chart_object.T):
         clipbox = theme.adjust_bounding_box([ar.loc[0], ar.loc[1],
                                              ar.loc[0] + ar.size[0],
                                              ar.loc[1] + ar.size[1]]);
-        
+
         can.clip(clipbox[0],clipbox[1],clipbox[2],clipbox[3])
         if self.line_style:
             points = []
@@ -97,16 +96,16 @@ class T(chart_object.T):
                     points.append((ar.x_pos(xval), ar.y_pos(yval)))
             can.lines(self.line_style, points)
         can.endclip()
-        
+
         # Draw tick marks and error bars
         can.clip(ar.loc[0] - 10, ar.loc[1] - 10,
-                ar.loc[0] + ar.size[0] + 10,
-                ar.loc[1] + ar.size[1] + 10)
+                 ar.loc[0] + ar.size[0] + 10,
+                 ar.loc[1] + ar.size[1] + 10)
         for pair in self.data:
             x = pair[self.xcol]
             y = pychart_util.get_sample_val(pair, self.ycol)
             if None in (x, y): continue
-            
+
             x_pos = ar.x_pos(x)
             y_pos = ar.y_pos(y)
 
@@ -127,13 +126,13 @@ class T(chart_object.T):
                         self.error_bar.draw(can, (x_pos, y_pos),
                                             ar.y_pos(y - minus),
                                             ar.y_pos(y + plus))
-                        
+
             if self.tick_mark:
                 self.tick_mark.draw(can, x_pos, y_pos)
             if self.data_label_format:
                 can.show(x_pos + self.data_label_offset[0],
-                            y_pos + self.data_label_offset[1],
-                            "/hC" + pychart_util.apply_format(self.data_label_format, (x, y), 1))
+                         y_pos + self.data_label_offset[1],
+                         "/hC" + pychart_util.apply_format(self.data_label_format, (x, y), 1))
 
         can.endclip()
 

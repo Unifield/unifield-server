@@ -58,7 +58,7 @@ class modeloverview(report_sxw.rml_parse):
         self.modulepos[fields[0].model_id.model] = self.num
         self.num += len(fields)+3
 
-        return sorted(fields, cmp=lambda x,y: cmp(x.name, y.name))
+        return sorted(fields, key=lambda x: x.name)
 
     def makeselcomment(self, field):
         if field.ttype not in ('selection', 'reference'):

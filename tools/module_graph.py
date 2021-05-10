@@ -24,7 +24,6 @@
 
 import os
 import optparse
-import sys
 import glob
 
 def load_information_from_description_file(module):
@@ -34,7 +33,7 @@ def load_information_from_description_file(module):
     for filename in ['__openerp__.py', '__terp__.py']:
         description_file = os.path.join(module, filename)
         if os.path.isfile(description_file):
-            return eval(file(description_file).read())
+            return eval(open(description_file).read())
 
     return {}
 

@@ -44,6 +44,7 @@ from io import StringIO
 
 import logging
 from functools import reduce
+import tempfile
 
 
 logger = netsvc.Logger()
@@ -592,15 +593,15 @@ class MigrationManager(object):
                         continue
                     mod = fp = fp2 = None
                     try:
-                        fp = tools.file_open(pyfile)
+                        fp = tools.file_open(pyfile, 'r')
 
                         # imp.load_source need a real file object, so we create
                         # one from the file-like object we get from file_open
-                        fp2 = os.tmpfile()
+                        fp2 = tempfile.NamedTemporaryFile('w', delete=False)
                         fp2.write(fp.read())
                         fp2.seek(0)
                         try:
-                            mod = imp.load_source(name, pyfile, fp2)
+                            mod = imp.load_source(name, fp2.name, fp2)
                             logger.notifyChannel('migration', netsvc.LOG_INFO, 'module %(addon)s: Running migration %(version)s %(name)s' % mergedict({'name': mod.__name__}, strfmt))
                             mod.migrate(self.cr, pkg.installed_version)
                         except ImportError:

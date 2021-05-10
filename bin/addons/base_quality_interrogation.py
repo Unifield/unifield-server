@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,19 +15,16 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import xmlrpc.client
-import configparser
 import optparse
 import sys
-import _thread
 import threading
 import os
 import time
-import pickle
 import base64
 import socket
 
@@ -117,9 +114,7 @@ def check_quality(uri, user, pwd, dbname, modules, quality_logs):
     quality_logs += 'quality-logs'
     if uid:
         conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/object')
-        final = {}
         for module in modules:
-            qualityresult = {}
             test_detail = {}
             quality_result = execute(conn,'execute', dbname, uid, pwd,'module.quality.check','check_quality',module)
             detail_html = ''
@@ -167,14 +162,11 @@ def wait(id,url=''):
 
 def create_db(uri, dbname, user='admin', pwd='admin', lang='en_US'):
     conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/db')
-    obj_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/object')
-    wiz_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/wizard')
-    login_conn = xmlrpc.client.ServerProxy(uri + '/xmlrpc/common')
     db_list = execute(conn, 'list')
     if dbname in db_list:
         drop_db(uri, dbname)
     id = execute(conn,'create',admin_passwd, dbname, True, lang)
-    wait(id,uri)    
+    wait(id,uri)
     install_module(uri, dbname, ['base_module_quality'],user=user,pwd=pwd)
     return True
 
@@ -189,7 +181,7 @@ def make_links(uri, uid, dbname, source, destination, module, user, pwd):
     if module in ('base','quality_integration_server'):
         return True
     if os.path.islink(destination + '/' + module):
-        os.unlink(destination + '/' + module)                
+        os.unlink(destination + '/' + module)
     for path in source:
         if os.path.isdir(path + '/' + module):
             os.symlink(path + '/' + module, destination + '/' + module)
@@ -221,7 +213,7 @@ def install_module(uri, dbname, modules, addons='', extra_addons='',  user='admi
         datas = {}
         #while state!='menu':
         while state!='end':
-            res = execute(wizard_conn, 'execute', dbname, uid, pwd, wiz_id, datas, state, {})
+            execute(wizard_conn, 'execute', dbname, uid, pwd, wiz_id, datas, state, {})
             if state == 'init':
                 state = 'start'
             elif state == 'start':
@@ -240,7 +232,7 @@ def upgrade_module(uri, dbname, modules, user='admin', pwd='admin'):
         datas = {}
         #while state!='menu':
         while state!='end':
-            res = execute(wizard_conn, 'execute', dbname, uid, pwd, wiz_id, datas, state, {})
+            execute(wizard_conn, 'execute', dbname, uid, pwd, wiz_id, datas, state, {})
             if state == 'init':
                 state = 'start'
             elif state == 'start':
@@ -265,7 +257,7 @@ Basic Commands:
 """
 parser = optparse.OptionParser(usage)
 parser.add_option("--modules", dest="modules",
-                     help="specify modules to install or check quality")
+                  help="specify modules to install or check quality")
 parser.add_option("--addons-path", dest="addons_path", help="specify the addons path")
 parser.add_option("--quality-logs", dest="quality_logs", help="specify the path of quality logs files which has to stores")
 parser.add_option("--root-path", dest="root_path", help="specify the root path")
@@ -275,9 +267,9 @@ parser.add_option("-d", "--database", dest="db_name", help="specify the database
 parser.add_option("--login", dest="login", help="specify the User Login")
 parser.add_option("--password", dest="pwd", help="specify the User Password")
 parser.add_option("--translate-in", dest="translate_in",
-                     help="specify .po files to import translation terms")
+                  help="specify .po files to import translation terms")
 parser.add_option("--extra-addons", dest="extra_addons",
-                     help="specify extra_addons and trunkCommunity modules path ")
+                  help="specify extra_addons and trunkCommunity modules path ")
 
 (opt, args) = parser.parse_args()
 if len(args) != 1:
@@ -292,10 +284,10 @@ def die(cond, msg):
         sys.exit(1)
 
 die(opt.modules and (not opt.db_name),
-        "the modules option cannot be used without the database (-d) option")
+    "the modules option cannot be used without the database (-d) option")
 
 die(opt.translate_in and (not opt.db_name),
-        "the translate-in option cannot be used without the database (-d) option")
+    "the translate-in option cannot be used without the database (-d) option")
 
 options = {
     'addons-path' : opt.addons_path or 'addons',
@@ -326,7 +318,7 @@ if opt.translate_in:
 uri = 'http://localhost:' + str(options['port'])
 
 server_thread = threading.Thread(target=start_server,
-                args=(options['root-path'], options['port'],options['netport'], options['addons-path']))
+                                 args=(options['root-path'], options['port'],options['netport'], options['addons-path']))
 try:
     server_thread.start()
     if command == 'create-db':

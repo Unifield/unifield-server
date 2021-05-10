@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,9 +20,7 @@
 ##############################################################################
 
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 
-import pooler
 import time
 
 class procurement_request_report(report_sxw.rml_parse):

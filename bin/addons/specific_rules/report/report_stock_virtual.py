@@ -21,7 +21,6 @@
 
 from osv import osv, fields
 from tools.translate import _
-import tools
 from tools.sql import drop_view_if_exists
 
 class stock_report_prodlots_virtual(osv.osv):

@@ -16,20 +16,18 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 from osv import osv
 from osv import fields
-import pooler
-from tools.translate import _
 import threading
 
 
 class lang_setup(osv.osv_memory):
     _name = 'lang.setup'
     _inherit = 'res.config'
-    
+
     def _list_lang(self, cr, uid, context=None):
         lang_obj = self.pool.get('res.lang')
         lang_ids = lang_obj.search(cr, uid, [('code', 'like', '_MF')])
@@ -41,7 +39,7 @@ class lang_setup(osv.osv_memory):
     _columns = {
         'lang_id': fields.selection(_list_lang, string='Language', size=-1, required=True),
     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Display the default value for system language
@@ -57,10 +55,10 @@ class lang_setup(osv.osv_memory):
                 res['lang_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_profile', 'lang_msf_en')[1]
             except ValueError:
                 res = False
-        
+
         return res
-        
-    
+
+
     def execute(self, cr, uid, ids, context=None):
         '''
         Fill the default lang on the configuration and for the current user
@@ -94,20 +92,20 @@ lang_setup()
 class config_users(osv.osv):
     _name = 'res.config.users'
     _inherit = 'res.config.users'
-    
+
     def default_get(self, cr, uid, fields, context=False):
         '''
         If no lang defined, get this of the configuration setup
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        
+
         res = super(config_users, self).default_get(cr, uid, fields, context=context)
-            
+
         if not setup_id:
             res['context_lang'] = 'en_MF'
         else:
             res['context_lang'] = setup_id.lang_id
-        
+
         return res
-    
+
 config_users()

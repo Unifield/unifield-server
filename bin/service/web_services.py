@@ -733,7 +733,7 @@ GNU Public Licence.
             return True
         except tm.RemoteContractException as e:
             self.abortResponse(1, 'Migration Error', 'warning', str(e))
-        except Exception as e:
+        except Exception:
             import traceback
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception( sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             l.notifyChannel('migration', netsvc.LOG_ERROR, tb_s)

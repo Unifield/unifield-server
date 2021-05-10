@@ -231,7 +231,7 @@ class Cursor(object):
                 sqllogitems = list(sqllogs[type].items())
                 sqllogitems.sort(key=lambda k: k[1][1])
                 self.__logger.log(logging.DEBUG_SQL, "SQL LOG %s:", type)
-                sqllogitems.sort(lambda x,y: cmp(x[1][0], y[1][0]))
+                sqllogitems.sort(key=lambda x: x[1][0])
                 for r in sqllogitems:
                     delay = timedelta(microseconds=r[1][1])
                     self.__logger.log(logging.DEBUG_SQL, "table: %s: %s/%s",

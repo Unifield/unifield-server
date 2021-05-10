@@ -20,10 +20,8 @@
 ##############################################################################
 
 import time
-import calendar
 
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 

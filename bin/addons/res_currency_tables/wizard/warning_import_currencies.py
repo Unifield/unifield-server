@@ -19,7 +19,6 @@
 #
 ##############################################################################
 from osv import osv, fields
-from lxml import etree
 from tools.translate import _
 
 class warning_import_currencies_lines(osv.osv_memory):
@@ -35,7 +34,7 @@ warning_import_currencies_lines()
 
 class warning_import_currencies(osv.osv_memory):
     _name = 'warning.import.currencies'
-    
+
     _columns = {
         'currency_list': fields.text("Currency list"),
         'date': fields.date("Date", required=True),

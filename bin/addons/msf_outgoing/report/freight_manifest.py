@@ -20,7 +20,6 @@
 ##############################################################################
 
 import time
-import pooler
 
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport

@@ -36,7 +36,7 @@ import tempfile
 
 def try_report(cr, uid, rname, ids, data=None, context=None, our_module=None):
     """ Try to render a report <rname> with contents of ids
-    
+
         This function should also check for common pitfalls of reports.
     """
     if our_module:
@@ -47,15 +47,11 @@ def try_report(cr, uid, rname, ids, data=None, context=None, our_module=None):
         data = {}
     if context is None:
         context = {}
-    if rname.startswith('report.'):
-        rname_s = rname[7:]
-    else:
-        rname_s = rname
     log.log(netsvc.logging.TEST, "  - Trying %s.create(%r)", rname, ids)
     res = netsvc.LocalService(rname).create(cr, uid, ids, data, context)
     if not isinstance(res, tuple):
         raise RuntimeError("Result of %s.create() should be a (data,format) tuple, now it is a %s" % \
-                                (rname, type(res)))
+                           (rname, type(res)))
     (res_data, res_format) = res
 
     if not res_data:
@@ -97,8 +93,8 @@ def try_report(cr, uid, rname, ids, data=None, context=None, our_module=None):
     return True
 
 def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
-                wiz_data=None, wiz_buttons=None,
-                context=None, our_module=None):
+                      wiz_data=None, wiz_buttons=None,
+                      context=None, our_module=None):
     """Take an ir.action.act_window and follow it until a report is produced
 
         :param action_id: the integer id of an action, or a reference to xml id
@@ -167,7 +163,7 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
         context.update(safe_eval(action.get('context','{}'), context.copy()))
         if action['type'] in ['ir.actions.act_window', 'ir.actions.submenu']:
             for key in ('res_id', 'res_model', 'view_type', 'view_mode',
-                    'limit', 'auto_refresh', 'search_view', 'auto_search', 'search_view_id'):
+                        'limit', 'auto_refresh', 'search_view', 'auto_search', 'search_view_id'):
                 datas[key] = action.get(key, datas.get(key, None))
 
             view_id = False
@@ -184,7 +180,7 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
             assert datas['res_model'], "Cannot use the view without a model"
             # Here, we have a view that we need to emulate
             log_test("will emulate a %s view: %s#%s",
-                        action['view_type'], datas['res_model'], view_id or '?')
+                     action['view_type'], datas['res_model'], view_id or '?')
 
             view_res = pool.get(datas['res_model']).fields_view_get(cr, uid, view_id, action['view_type'], context)
             assert view_res and view_res.get('arch'), "Did not return any arch for the view"
@@ -209,7 +205,6 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
             action_name = action.get('name')
             try:
                 from xml.dom import minidom
-                cancel_found = False
                 buttons = []
                 dom_doc = minidom.parseString(view_res['arch'])
                 if not action_name:
@@ -218,10 +213,8 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
                 for button in dom_doc.getElementsByTagName('button'):
                     button_weight = 0
                     if button.getAttribute('special') == 'cancel':
-                        cancel_found = True
                         continue
                     if button.getAttribute('icon') == 'gtk-cancel':
-                        cancel_found = True
                         continue
                     if button.getAttribute('default_focus') == '1':
                         button_weight += 20
@@ -232,10 +225,10 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
                     string = button.getAttribute('string') or '?%s' % len(buttons)
 
                     buttons.append( { 'name': button.getAttribute('name'),
-                                'string': string,
-                                'type': button.getAttribute('type'),
-                                'weight': button_weight,
-                                })
+                                      'string': string,
+                                      'type': button.getAttribute('type'),
+                                      'weight': button_weight,
+                                      })
             except Exception as e:
                 log.warning("Cannot resolve the view arch and locate the buttons!", exc_info=True)
                 raise AssertionError(e.args[0])
@@ -268,7 +261,7 @@ def try_report_action(cr, uid, action_id, active_model=None, active_ids=None,
                     break
                 else:
                     log.warning("in the \"%s\" form, the \"%s\" button has unknown type %s",
-                        action_name, b['string'], b['type'])
+                                action_name, b['string'], b['type'])
             return res
 
         elif action['type']=='ir.actions.report.xml':

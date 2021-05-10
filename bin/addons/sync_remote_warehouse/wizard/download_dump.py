@@ -1,5 +1,4 @@
 from datetime import datetime
-import base64
 
 from osv import osv, fields
 
@@ -16,7 +15,7 @@ class download_dump(osv.osv_memory):
             res[wizard_id] = f.read()
             f.close()
         return res
-    
+
     _name = 'download_dump'
 
     _columns = {
@@ -24,9 +23,9 @@ class download_dump(osv.osv_memory):
         'database_dump': fields.function(get_dump_file, method=True, store=False, type='binary', string="Download Backup"),
         'dump_name': fields.char('File name', 40, readonly=True),
     }
-    
+
     _defaults = {
         'dump_name': lambda self, cr, uid, context: '%s_RW-%s.dump' % (cr.dbname, datetime.now().strftime('%Y%m%d-%H%M%S')),
     }
-    
+
 download_dump()

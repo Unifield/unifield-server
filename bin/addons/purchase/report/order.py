@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,13 +15,12 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import time
 from report import report_sxw
-from osv import osv
 import pooler
 
 class order(report_sxw.rml_parse):
@@ -44,7 +43,7 @@ class order(report_sxw.rml_parse):
             tax_ids = res[0]
         res = [tax.name for tax in pooler.get_pool(self.cr.dbname).get('account.tax').browse(self.cr, self.uid, tax_ids)]
         return ",\n ".join(res)
-    
+
     def _get_tax(self, order_obj):
         self.cr.execute("SELECT DISTINCT tax_id FROM purchase_order_taxe, purchase_order_line, purchase_order \
             WHERE (purchase_order_line.order_id=purchase_order.id) AND (purchase_order.id=%s)", (order_obj.id))
@@ -70,8 +69,8 @@ class order(report_sxw.rml_parse):
                 for line in pooler.get_pool(self.cr.dbname).get('purchase.order.line').browse(self.cr, self.uid, line_ids):
                     base += line.price_subtotal
                 res.append({'code':tax.name,
-                    'base':base,
-                    'amount':base*tax.amount})
+                            'base':base,
+                            'amount':base*tax.amount})
         return res
     def _get_product_code(self, product_id, partner_id):
         product_obj=pooler.get_pool(self.cr.dbname).get('product.product')

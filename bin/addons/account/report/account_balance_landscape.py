@@ -53,7 +53,7 @@ class account_balance_landscape(report_sxw.rml_parse):
             'cal_total':self.cal_total,
             'total_dr':self.total_dr,
             'total_cr':self.total_cr
-            })
+        })
         self.context = context
 
     def linesForYear(self,form):
@@ -98,7 +98,6 @@ class account_balance_landscape(report_sxw.rml_parse):
             ref_bal='nothing'
 
 
-        total_for_perc=[]
         self.done_total=1
         self.total_for_perc=self.linesForTotal(form, ids={}, doneAccount={}, level=1)
         self.done_total=0
@@ -127,7 +126,6 @@ class account_balance_landscape(report_sxw.rml_parse):
             return []
 
         ctx = self.context.copy()
-        result_total_parent=[]
 
         for id in form['fiscalyear']:
             tmp=[]
@@ -142,7 +140,7 @@ class account_balance_landscape(report_sxw.rml_parse):
                 accounts.append(tmp)
 
         merged_accounts=list(zip(*accounts))
-         # used to check for the frst record so all sum_credit and sum_debit r set to 0.00
+        # used to check for the frst record so all sum_credit and sum_debit r set to 0.00
         if level==1:
             doneAccount={}
         for entry in merged_accounts:
@@ -176,7 +174,7 @@ class account_balance_landscape(report_sxw.rml_parse):
                 ids2 = [(x.code,x.id) for x in entry[0].child_id]
                 ids2.sort()
 
-                result_total_parent = self.linesForTotal(form, [x[1] for x in ids2], doneAccount, level+1)
+                self.linesForTotal(form, [x[1] for x in ids2], doneAccount, level+1)
 
         return [self.result_total]
 
@@ -203,11 +201,8 @@ class account_balance_landscape(report_sxw.rml_parse):
         if level==1:   #if parent is called,done is not empty when called again.
             done={}
 
-        def cmp_code(x, y):
-            return cmp(x.code, y.code)
         for n in range(0,len(accounts)):
-            accounts[n].sort(cmp_code)
-        common={}
+            accounts[n].sort(key=lambda x: x.code)
         merged_accounts=list(zip(*accounts))
 
         for entry in merged_accounts:
@@ -255,7 +250,7 @@ class account_balance_landscape(report_sxw.rml_parse):
                     'name': entry[0].name,
                     'level': level,
                     'status': self.status,
-                    }
+                }
 
                 for j in range(0,len(entry)):
 
@@ -358,21 +353,21 @@ class account_balance_landscape(report_sxw.rml_parse):
                 res['level'] = l['level']
                 for k,v in list(l.items()):
                     if k.startswith('debit'+str(year_dict['last_str'])):
-                     res['debit'] = v
+                        res['debit'] = v
                     if k.startswith('credit'+str(year_dict['last_str'])):
-                     res['credit'] = v
+                        res['credit'] = v
                     if k.startswith('balance'+str(year_dict['last_str'])) and not k.startswith('balance_perc'+str(year_dict['last_str'])):
-                     res['balance'] =v
+                        res['balance'] =v
                     if k.startswith('balance_perc'+str(year_dict['last_str'])) and not k.startswith('balance'+str(year_dict['last_str'])):
-                     res['balance_perc'] = v
+                        res['balance_perc'] = v
                     if form['compare_pattern'] == 'bal_perc':
                         if k.startswith('bal_perc'+str(year_dict['last_str'])):
-                         res['pattern'] = v
+                            res['pattern'] = v
                     elif form['compare_pattern'] == 'bal_cash':
                         if k.startswith('bal_cash'+str(year_dict['last_str'])):
-                         res['pattern'] = v
+                            res['pattern'] = v
                     else:
-                         res['pattern'] = ''
+                        res['pattern'] = ''
                 final_result.append(res)
         return final_result
 

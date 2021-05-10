@@ -22,7 +22,6 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-import osv
 import time
 from report.interface import report_int
 from report.render import render
@@ -54,7 +53,6 @@ class report_stock(report_int):
 
         now = time.strftime('%Y-%m-%d')
         dt_from = now
-        dt_to = now
 
         names = dict(pooler.get_pool(cr.dbname).get('product.product').name_get(cr, uid, product_ids))
         for name in names:
@@ -101,13 +99,13 @@ class report_stock(report_int):
         dt = dt_from
         qty = 0
 
-        io = io.StringIO()
-        gt = stock_graph.stock_graph(io)
+        ios = io.StringIO()
+        gt = stock_graph.stock_graph(ios)
         for prod_id in products:
             gt.add(prod_id, names.get(prod_id, 'Unknown'), products[prod_id])
         gt.draw()
         gt.close()
-        self.obj = external_pdf(io.getvalue())
+        self.obj = external_pdf(ios.getvalue())
         self.obj.render()
         return (self.obj.pdf, 'pdf')
 report_stock('report.stock.product.history')

@@ -1,6 +1,5 @@
 from osv import osv, fields
 import updater
-import release
 from report import report_sxw
 import pooler
 import zipfile

@@ -23,11 +23,6 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import base64
-from msf_doc_import import GENERIC_MESSAGE
-# import below commented in utp-1344: becomes useless as the import is done in wizard
-#from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-#import check_line
-#from msf_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_tender_line_import
 from msf_doc_import import GENERIC_MESSAGE
@@ -48,16 +43,16 @@ class tender(osv.osv):
         return res
 
     _columns = {
-# The field below were replaced by the wizard_import_fo_line (utp-113)
-#        'file_to_import': fields.binary(string='File to import',
-#                                        help="""* You can use the template of the export for the format that you need to use.
-#                                                * The file should be in XML Spreadsheet 2003 format.
-#                                                * You can import up to %s lines each time,
-#                                                else you have to split the lines in several files and import each one by one.
-#                                                """ % MAX_LINES_NB),
+        # The field below were replaced by the wizard_import_fo_line (utp-113)
+        #        'file_to_import': fields.binary(string='File to import',
+        #                                        help="""* You can use the template of the export for the format that you need to use.
+        #                                                * The file should be in XML Spreadsheet 2003 format.
+        #                                                * You can import up to %s lines each time,
+        #                                                else you have to split the lines in several files and import each one by one.
+        #                                                """ % MAX_LINES_NB),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
-    
+
     def _check_active_product(self, cr, uid, ids, context=None):
         '''
         Check if the tender contains a line with an inactive products
@@ -65,14 +60,14 @@ class tender(osv.osv):
         inactive_lines = self.pool.get('tender.line').search(cr, uid, [('product_id.active', '=', False),
                                                                        ('tender_id', 'in', ids),
                                                                        ('tender_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
-        
+
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')          
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
             return False
         return True
-    
+
     _constraints = [
         (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['tender_line_ids', 'state'])
     ]
@@ -209,7 +204,7 @@ class tender_line(osv.osv):
     '''
     _inherit = 'tender.line'
     _description = 'Tender Line'
-    
+
     def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
         '''
         Fill the error message if the product of the line is inactive
@@ -223,21 +218,21 @@ class tender_line(osv.osv):
             if line.tender_id and line.tender_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': _('The product in line is inactive !')}
-                
-        return res    
-    
+
+        return res
+
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'text_error': fields.text('Errors'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
     }
-    
+
     _defaults = {
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
-    
+
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']
         if context is None:
@@ -277,12 +272,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
         '''
         Check if the UoM is convertible to product standard UoM
         '''
-        warning = {}
         if product_uom and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, product_uom, context=context)
             if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
                 return {'warning': {'title': _('Wrong Product UOM !'),
                                     'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}}

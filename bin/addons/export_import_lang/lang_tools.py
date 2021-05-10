@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from tools.translate import _
-from osv import fields,osv
+from osv import osv
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from tempfile import TemporaryFile
 import zipfile

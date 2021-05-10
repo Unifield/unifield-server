@@ -20,7 +20,6 @@
 ##############################################################################
 from lxml import etree
 import io
-import io
 import base64
 from datetime import datetime
 import os

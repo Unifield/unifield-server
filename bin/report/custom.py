@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -25,7 +25,6 @@ import netsvc
 
 import tools
 from tools.safe_eval import safe_eval as eval
-from . import print_xml
 from . import render
 from .interface import report_int
 from . import common
@@ -33,7 +32,7 @@ from osv.osv import except_osv
 from osv.orm import browse_null
 from osv.orm import browse_record_list
 import pooler
-from pychart import *
+from pychart import arrow, fill_style, pie_plot, legend, area, canvas, category_coord, bar_plot, axis, line_plot, line_style, theme
 from . import misc
 import io
 from lxml import etree
@@ -51,7 +50,7 @@ class external_pdf(render.render):
 theme.use_color = 1
 
 
-#TODO: devrait heriter de report_rml a la place de report_int 
+#TODO: devrait heriter de report_rml a la place de report_int
 # -> pourrait overrider que create_xml a la place de tout create
 # heuu, ca marche pas ds tous les cas car graphs sont generes en pdf directment
 # par pychart, et on passe donc pas par du rml
@@ -68,7 +67,6 @@ class report_custom(report_int):
     #
     def _row_get(self, cr, uid, objs, fields, conditions, row_canvas=None, group_by=None):
         result = []
-        tmp = []
         for obj in objs:
             tobreak = False
             for cond in conditions:
@@ -124,7 +122,7 @@ class report_custom(report_int):
                         result += self._row_get(cr, uid, objs, field_new, cond_new, row, group_by)
                     else:
                         result.append(row)
-        return result 
+        return result
 
 
     def create(self, cr, uid, ids, datas, context=None):
@@ -145,7 +143,7 @@ class report_custom(report_int):
         fields.sort(lambda x,y : x['sequence'] - y['sequence'])
 
         if report['field_parent']:
-            parent_field = service.execute(cr.dbname, uid, 'ir.model.fields', 'read', [report['field_parent'][0]],['model'])
+            service.execute(cr.dbname, uid, 'ir.model.fields', 'read', [report['field_parent'][0]],['model'])
         model_name = service.execute(cr.dbname, uid, 'ir.model', 'read', [report['model_id'][0]], ['model'],context=context)[0]['model']
 
         fct = {}
@@ -161,7 +159,7 @@ class report_custom(report_int):
                 field_child = f['field_child'+str(i)]
                 if field_child:
                     row.append(
-                        service.execute(cr.dbname, uid, 
+                        service.execute(cr.dbname, uid,
                                         'ir.model.fields', 'read', [field_child[0]],
                                         ['name'], context=context)[0]['name']
                     )
@@ -240,10 +238,10 @@ class report_custom(report_int):
                         row.append(fct[str(fields[col]['operation'])]([x[col] for x in res_dic[key]]))
                 new_res.append(row)
             results = new_res
-        
+
         if report['type']=='table':
             if report['field_parent']:
-                res = self._create_tree(uid, ids, report, fields, level, results, context)
+                self._create_tree(uid, ids, report, fields, level, results, context)
             else:
                 sort_idx = 0
                 for idx in range(len(fields)):
@@ -251,12 +249,12 @@ class report_custom(report_int):
                         sort_idx = idx
                         break
                 try :
-                    results.sort(lambda x,y : cmp(float(x[sort_idx]),float(y[sort_idx])))
+                    results.sort(key=lambda x: float(x[sort_idx]))
                 except :
-                    results.sort(lambda x,y : cmp(x[sort_idx],y[sort_idx]))
+                    results.sort(key=lambda x: x[sort_idx])
                 if report['limitt']:
                     results = results[:int(report['limitt'])]
-                res = self._create_table(uid, ids, report, fields, None, results, context)
+                self._create_table(uid, ids, report, fields, None, results, context)
         elif report['type'] in ('pie','bar', 'line'):
             results2 = []
             prev = False
@@ -275,11 +273,11 @@ class report_custom(report_int):
                             row.append(r[j])
                 results2.append(row)
             if report['type']=='pie':
-                res = self._create_pie(cr,uid, ids, report, fields, results2, context)
+                self._create_pie(cr,uid, ids, report, fields, results2, context)
             elif report['type']=='bar':
-                res = self._create_bars(cr,uid, ids, report, fields, results2, context)
+                self._create_bars(cr,uid, ids, report, fields, results2, context)
             elif report['type']=='line':
-                res = self._create_lines(cr,uid, ids, report, fields, results2, context)
+                self._create_lines(cr,uid, ids, report, fields, results2, context)
         return (self.obj.get(), 'pdf')
 
     def _create_tree(self, uid, ids, report, fields, level, results, context):
@@ -288,7 +286,7 @@ class report_custom(report_int):
             pageSize=[pageSize[1],pageSize[0]]
 
         new_doc = etree.Element('report')
-        
+
         config = etree.SubElement(new_doc, 'config')
 
         def _append_node(name, text):
@@ -350,14 +348,14 @@ class report_custom(report_int):
         service = netsvc.LocalService("object_proxy")
         pdf_string = io.StringIO()
         can = canvas.init(fname=pdf_string, format='pdf')
-        
+
         can.show(80,380,'/16/H'+report['title'])
-        
+
         ar = area.T(size=(350,350),
-        #x_coord = category_coord.T(['2005-09-01','2005-10-22'],0),
-        x_axis = axis.X(label = fields[0]['name'], format="/a-30{}%s"),
-        y_axis = axis.Y(label = ', '.join([x['name'] for x in fields[1:]])))
-        
+                    #x_coord = category_coord.T(['2005-09-01','2005-10-22'],0),
+                    x_axis = axis.X(label = fields[0]['name'], format="/a-30{}%s"),
+                    y_axis = axis.Y(label = ', '.join([x['name'] for x in fields[1:]])))
+
         process_date = {}
         process_date['D'] = lambda x : reduce(lambda xx,yy : xx+'-'+yy,x.split('-')[1:3])
         process_date['M'] = lambda x : x.split('-')[1]
@@ -369,9 +367,8 @@ class report_custom(report_int):
         order_date['Y'] = lambda x : x
 
         abscissa = []
-        tmp = {}
-        
-        idx = 0 
+
+        idx = 0
         date_idx = None
         fct = {}
         for f in fields:
@@ -380,7 +377,7 @@ class report_custom(report_int):
                 type = service.execute(cr.dbname, uid, 'ir.model.fields', 'read', [field_id],['ttype'])
                 if type[0]['ttype'] == 'date':
                     date_idx = idx
-                    fct[idx] = process_date[report['frequency']] 
+                    fct[idx] = process_date[report['frequency']]
                 else:
                     fct[idx] = lambda x : x
             else:
@@ -436,7 +433,7 @@ class report_custom(report_int):
                 ar.add_plot(plot)
                 abscissa.update(fields_bar[idx])
                 idx0 += 1
-        
+
         abscissa = [[x, None] for x in abscissa]
         ar.x_coord = category_coord.T(abscissa,0)
         ar.draw(can)
@@ -453,9 +450,9 @@ class report_custom(report_int):
         service = netsvc.LocalService("object_proxy")
         pdf_string = io.StringIO()
         can = canvas.init(fname=pdf_string, format='pdf')
-        
+
         can.show(80,380,'/16/H'+report['title'])
-        
+
         process_date = {}
         process_date['D'] = lambda x : reduce(lambda xx,yy : xx+'-'+yy,x.split('-')[1:3])
         process_date['M'] = lambda x : x.split('-')[1]
@@ -467,10 +464,10 @@ class report_custom(report_int):
         order_date['Y'] = lambda x : x
 
         ar = area.T(size=(350,350),
-            x_axis = axis.X(label = fields[0]['name'], format="/a-30{}%s"),
-            y_axis = axis.Y(label = ', '.join([x['name'] for x in fields[1:]])))
+                    x_axis = axis.X(label = fields[0]['name'], format="/a-30{}%s"),
+                    y_axis = axis.Y(label = ', '.join([x['name'] for x in fields[1:]])))
 
-        idx = 0 
+        idx = 0
         date_idx = None
         fct = {}
         for f in fields:
@@ -479,13 +476,13 @@ class report_custom(report_int):
                 type = service.execute(cr.dbname, uid, 'ir.model.fields', 'read', [field_id],['ttype'])
                 if type[0]['ttype'] == 'date':
                     date_idx = idx
-                    fct[idx] = process_date[report['frequency']] 
+                    fct[idx] = process_date[report['frequency']]
                 else:
                     fct[idx] = lambda x : x
             else:
                 fct[idx] = lambda x : x
             idx+=1
-        
+
         # plot are usually displayed year by year
         # so we do so if the first field is a date
         data_by_year = {}
@@ -503,7 +500,7 @@ class report_custom(report_int):
 
         nb_bar = len(data_by_year)*(len(fields)-1)
         colors = [fill_style.Plain(bgcolor=x) for x in misc.choice_colors(nb_bar)]
-        
+
         abscissa = {}
         for line in list(data_by_year.keys()):
             fields_bar = []
@@ -531,7 +528,7 @@ class report_custom(report_int):
                     data_cum.append([k, float(data[k])+float(prev)])
                     if fields[idx+1]['cumulate']:
                         prev += data[k]
-                        
+
                 idx0 = 0
                 plot = bar_plot.T(label=fields[idx+1]['name']+' '+str(line), data = data_cum, cluster=(idx0*(len(fields)-1)+idx,nb_bar), fill_style=colors[idx0*(len(fields)-1)+idx])
                 ar.add_plot(plot)

@@ -115,7 +115,6 @@ class catalogue_import_lines_xls(osv.osv_memory):
                     if row.cells[4].type not in ('float', 'int'):
                         self.log_error(line_num, _('Rounding %s should by a number')%(row.cells[4].data, ), error)
                         continue
-                    rounding = row.cells[4].data
             if row_len >= 6:
                 if row.cells[5].data:
                     if row.cells[5].type not in ('float', 'int'):

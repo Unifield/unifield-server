@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -13,7 +13,6 @@
 # for more details.
 #
 import sys
-import atexit
 import atexit
 from . import basecanvas
 from . import pscanvas
@@ -41,10 +40,10 @@ def init(fname = None, format = None):
     When <fname> is omitted or is None, the output is sent to standard
     output. When <format> is omitted, it is guessed from the <fname>'s
     suffix; failing that, "ps" is selected."""
-    
+
     fname = fname or theme.output_file
     format = format or theme.output_format
-    
+
     if format == None:
         if not isinstance(fname, str):
             format = "ps"
@@ -63,7 +62,7 @@ def init(fname = None, format = None):
         can = pngcanvas.T(fname)
     elif format == "x11":
         can = x11canvas.T(fname)
-    elif format == "svg":               
+    elif format == "svg":
         can = svgcanvas.T(fname)
     else:
         can = pdfcanvas.T(fname, theme.compress_output)
@@ -77,10 +76,10 @@ def default_canvas():
 
 def _exit():
     global _oldexitfunc, _active_canvases
-    
+
     for can in basecanvas.active_canvases[:]:
         can.close()
-        
+
     if _oldexitfunc:
         foo = _oldexitfunc
         _oldexitfunc = None
@@ -88,7 +87,7 @@ def _exit():
 
 #
 # The following procedures are there just for backward compatibility.
-# 
+#
 def line(style, x1, y1, x2, y2):
     default_canvas().line(style, x1, y1, x2, y2)
 def curve(style, points):
@@ -115,7 +114,7 @@ def round_rectangle(style, fill, x1, y1, x2, y2, radius, shadow=None):
     default_canvas().round_rectangle(style, fill, x1, y1, x2, y2, radius, shadow)
 def show(x, y, str):
     default_canvas().show(x, y, str)
-    
+
 
 if "exitfunc" not in vars(sys):
     atexit.register(_exit)

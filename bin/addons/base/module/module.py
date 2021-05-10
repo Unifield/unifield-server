@@ -25,7 +25,6 @@ import imp
 import logging
 import os
 import re
-import io
 import urllib.request, urllib.parse, urllib.error
 import zipfile
 import zipimport

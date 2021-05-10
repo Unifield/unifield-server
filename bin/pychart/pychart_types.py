@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -12,7 +12,6 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-from . import pychart_util
 import types
 AnyType = 9998
 
@@ -24,10 +23,10 @@ def CoordType(val):
     if val[0] != None:
         error = NumType(val[0])
         if error: return error
-    if val[1] != None:    
+    if val[1] != None:
         error = NumType(val[1])
         if error: return error
-    return None    
+    return None
 
 def IntervalType(val):
     if type(val) in (int, int,
@@ -43,8 +42,8 @@ def CoordOrNoneType(val):
     for v in val:
         if v != None and NumType(val[0]) != None:
             return "Expecting a pair of numbers"
-    return None    
-    
+    return None
+
 def NumType(val):
     if type(val) in (int, int, float):
         return None
@@ -56,7 +55,7 @@ def UnitType(val):
         return None
     else:
         return "Expecting a unit, found \"" + str(val) + "\""
-    
+
 def ShadowType(val):
     if type(val) not in (tuple, list):
         return "Expecting tuple or list."

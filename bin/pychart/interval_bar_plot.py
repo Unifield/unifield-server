@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -19,8 +19,7 @@ from . import chart_object
 from . import legend
 from . import bar_plot_doc
 from . import theme
-from types import *
-from .pychart_types import *
+from .pychart_types import AnyType, UnitType, FormatType, CoordType
 
 fill_styles = None
 
@@ -32,18 +31,18 @@ _keys = {
     of charts, the "hcol"th column of the data must be a sequence of
     numbers, not just a single number. See also the description of
     "hcol"."""
-    ),
+              ),
     "data_label_offset": (CoordType, (0, 5),
                           "The location of data labels relative to the sample point. See also attribute data_label_format."),
-    
+
     "data_label_format": (FormatType, None, """The
                           format string for the label displayed besides each
                           bar.  It can be a `printf' style format
                           string, or a two-parameter function that
                           takes (x,y) values and returns a string. """
                           + pychart_util.string_desc),
-    
-    "label": (str, "???", pychart_util.label_desc), 
+
+    "label": (str, "???", pychart_util.label_desc),
     "bcol" : (int, 0,
               """Specifies the column from which base values (i.e., X values when attribute "direction" is "vertical", Y values otherwise) are extracted.
 The
@@ -109,7 +108,7 @@ The
     clustered boxes. The unit is points."""),
     "stack_on": (AnyType, None,
                  "The value must be either None or bar_plot.T. If not None, bars of this plot are stacked on top of another bar plot."),
-    }
+}
 
 class T(chart_object.T):
     __doc__ = bar_plot_doc.doc
@@ -133,7 +132,7 @@ class T(chart_object.T):
                 max += v
             if max > gmax: gmax = max
         return (gmin, gmax)
-    
+
     def get_data_range(self, which):
         if self.direction == 'vertical':
             if which == 'X':
@@ -151,36 +150,35 @@ class T(chart_object.T):
         line_style = self.line_styles[nth % len(self.line_styles)]
         fill_style = self.fill_styles[nth % len(self.fill_styles)]
         return (line_style, fill_style)
-    
+
     def draw_vertical(self, ar, can):
         for pair in self.data:
             xval = pair[self.bcol]
             yvals = pychart_util.get_sample_val(pair, self.hcol)
-            
+
             if None in (xval, yvals): continue
 
-            ybot = 0
-            
+
             totalWidth = (self.width+self.cluster_sep) * self.cluster[1] - self.cluster_sep
             firstX = ar.x_pos(xval) - totalWidth/2.0
             thisX = firstX + (self.width+self.cluster_sep) * self.cluster[0] - self.cluster_sep
 
             cury = yvals[0]
             n = 0
-            
+
             for yval in yvals[1:]:
                 (line_style, fill_style) = self.get_style(n)
                 can.rectangle(line_style, fill_style,
-                              thisX, ar.y_pos(cury), thisX+self.width, 
+                              thisX, ar.y_pos(cury), thisX+self.width,
                               ar.y_pos(cury + yval))
                 cury += yval
                 n += 1
-                
+
                 if self.data_label_format:
                     can.show(thisX + self.width/2.0 + self.data_label_offset[0],
                              ar.y_pos(cury) + self.data_label_offset[1],
                              "/hC" + pychart_util.apply_format(self.data_label_format, (pair[self.bcol], pair[self.hcol]), 1))
-	    
+
     def draw_horizontal(self, ar, can):
         for pair in self.data:
             yval = pair[self.bcol]
@@ -201,19 +199,19 @@ class T(chart_object.T):
                               ar.x_pos(xval), thisY+self.width)
                 curx = xval
                 n += 1
-                
+
     def get_legend_entry(self):
         if self.label:
             return legend.Entry(line_style=self.line_styles[0],
                                 fill_style=self.fill_styles[0],
                                 label=self.label)
         return None
-        
+
     def draw(self, ar, can):
         self.type_check()
         can.clip(ar.loc[0], ar.loc[1],
                  ar.loc[0] + ar.size[0], ar.loc[1] + ar.size[1])
-            
+
         if self.direction == "vertical":
             self.draw_vertical(ar, can)
         else:
@@ -224,6 +222,6 @@ class T(chart_object.T):
 def init():
     global fill_styles
     fill_styles = fill_style.standards.iterate()
-    
+
 theme.add_reinitialization_hook(init)
 

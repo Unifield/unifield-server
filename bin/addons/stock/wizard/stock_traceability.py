@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
 
 class action_traceability(osv.osv_memory):
     """
@@ -28,7 +28,7 @@ class action_traceability(osv.osv_memory):
     """
     _name = "action.traceability"
     _description = "Action traceability "
-     
+
     def action_traceability(self, cr, uid, ids, context=None):
         """ It traces the information of a product
         @param self: The object pointer.

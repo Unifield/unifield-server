@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -14,11 +14,9 @@
 #
 from . import chart_object
 from . import object_set
-import types
-from . import theme
 from . import pychart_util
 from . import color_doc
-from .pychart_types import *
+from .pychart_types import NumType
 
 blackify_colors = 1
 
@@ -28,7 +26,7 @@ class T(chart_object.T):
         "r" : (NumType, 0.0, "The intensity of red. The value is between 0 and 1."),
         "g" : (NumType, 0.0, "The intensity of green. The value is between 0 and 1."),
         "b" : (NumType, 0.0, "The intensity of blue. The value is between 0 and 1.")
-        }
+    }
 ##AUTOMATICALLY GENERATED
 ##END AUTOMATICALLY GENERATED
     def __str__(self):
@@ -39,7 +37,7 @@ class T(chart_object.T):
             return "<color:grayscale=%f>" % self.r
         else:
             return "<color:r=%f,g=%f,b=%f>" % (self.r, self.g, self.b)
-        
+
 standards = object_set.T()
 def _intern(r,g,b):
     c = T(r = r, g = g, b = b)

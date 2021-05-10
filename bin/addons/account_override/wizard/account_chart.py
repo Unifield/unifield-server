@@ -305,7 +305,6 @@ class account_chart(osv.osv_memory):
                 'currency_filtering': wiz.currency_id and wiz.currency_id.name or _('All'),
                 'account_type': wiz.account_type,
                 'granularity': wiz.granularity,
-                'instance_header': wiz.instance_header,
             }
         # UF-1718: Add currency name used from the wizard. If none, set it to "All" (no currency filtering)
         currency_name = _("No one specified")

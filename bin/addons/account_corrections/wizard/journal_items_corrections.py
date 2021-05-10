@@ -430,9 +430,9 @@ class journal_items_corrections(osv.osv_memory):
         new_account = new_line.account_id and new_line.account_id.id or False
         old_third_party = old_line.partner_id or old_line.employee_id or old_line.transfer_journal_id or False
         new_third_party = new_line.partner_id or new_line.employee_id or new_line.transfer_journal_id or False
-        if cmp(old_account, new_account):
+        if old_account != new_account:
             res += 1
-        if cmp(old_third_party, new_third_party):
+        if old_third_party != new_third_party:
             res += 2
         return res
 

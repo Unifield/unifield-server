@@ -29,7 +29,7 @@ class purchase_order_line(osv.osv):
     def _hook_product_id_change(self, cr, uid, *args, **kwargs):
         '''
         Override the computation of product qty to order
-        '''                   
+        '''
         product_id = kwargs['product']
         partner_id = kwargs['partner_id']
         product_qty = kwargs['product_qty']
@@ -40,11 +40,8 @@ class purchase_order_line(osv.osv):
         context = kwargs['context']
         res = kwargs['res']
         rounding_qty = product_qty
-        
+
         partner_price = self.pool.get('pricelist.partnerinfo')
-        suppinfo_obj = self.pool.get('product.supplierinfo')
-        prod_obj = self.pool.get('product.product')
-        catalogue_obj = self.pool.get('supplier.catalogue')
         currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist, context=context).currency_id.id
         info_prices = []
         suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), ('product_id', '=', product_id.product_tmpl_id.id)], context=context)
@@ -55,18 +52,18 @@ class purchase_order_line(osv.osv):
                   ('valid_from', '=', False),
                   '|', ('valid_till', '>=', order_date),
                   ('valid_till', '=', False)]
-            
+
         domain_cur = [('currency_id', '=', currency_id)]
         domain_cur.extend(domain)
         info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
         if not info_prices:
             info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
-            
+
         if info_prices:
-#            info = partner_price.browse(cr, uid, info_price, context=context)[0]
+            #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
             info = partner_price.browse(cr, uid, info_prices[0], context=context)
             seller_delay = info.suppinfo_id.delay
-            
+
             if info.min_order_qty and product_qty < info.min_order_qty:
                 product_qty = info.min_order_qty
                 res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set for a minimal quantity of %s '\
@@ -84,7 +81,7 @@ class purchase_order_line(osv.osv):
                     message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
                     res['warning'].update({'message': message})
                 product_qty = rounding_qty + (info.rounding - rounding_qty%info.rounding)
-                    
+
         return res, product_qty, product_qty, seller_delay
-    
+
 purchase_order_line()

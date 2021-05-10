@@ -20,11 +20,7 @@ try:
 except:
     import pickle
 
-try:
-    import io as StringIO
-except:
-    import io
-
+import io
 import logging
 
 GZIP_MAGIC = '\x78\xda' # magic when max compression used
@@ -244,7 +240,7 @@ class NetRPCConnector(Connector):
 
         socket.disconnect()
         if error:
-            raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (e.faultCode if hasattr(e, 'faultCode') else tools.ustr(e)))
+            raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (error.faultCode if hasattr(error, 'faultCode') else tools.ustr(error)))
         return result
 
 class GzipNetRPCConnector(NetRPCConnector):
@@ -414,8 +410,7 @@ class Object(object):
         records = self.__send__('read', *arguments)
 
         if isinstance(ids, (list, tuple)):
-            records.sort(lambda x, y: cmp(ids.index(x['id']),
-                                          ids.index(y['id'])))
+            records.sort(key=lambda x: ids.index(x['id']))
 
         return records
 

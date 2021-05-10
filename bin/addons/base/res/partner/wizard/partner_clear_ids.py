@@ -19,8 +19,7 @@
 #
 ##############################################################################
 
-import netsvc
-from osv import fields, osv
+from osv import osv
 
 class partner_clear_ids(osv.osv_memory):
     """ Clear IDs """

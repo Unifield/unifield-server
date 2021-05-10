@@ -19,7 +19,6 @@
 #
 ##############################################################################
 
-import netsvc
 import tools
 from osv import fields, osv
 import re
@@ -70,9 +69,9 @@ class partner_wizard_spam(osv.osv_memory):
                                      openobject_id="res.partner-%s"%partner.id)
                     nbr += 1
             event_pool.create(cr, uid,
-                    {'name': 'Email(s) sent through mass mailing',
-                     'partner_id': partner.id,
-                     'description': data.text })
+                              {'name': 'Email(s) sent through mass mailing',
+                               'partner_id': partner.id,
+                               'description': data.text })
     #TODO: log number of message sent
         return {'email_sent': nbr}
 

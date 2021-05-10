@@ -18,8 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from pychart import *
-import pychart.legend
+from pychart import axis, area, text_box, line_plot, line_style, fill_style, canvas
 import time
 from report.misc import choice_colors
 

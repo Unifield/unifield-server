@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -24,7 +24,7 @@ from . import render
 from io import StringIO
 import xml.dom.minidom
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.units import mm
 from reportlab.lib.pagesizes import A4
 import reportlab.lib
@@ -38,7 +38,7 @@ class simple(render.render):
 
         title = parser.documentElement.tagName
         doc = SimpleDocTemplate(self.result, pagesize=A4, title=title,
-          author='OpenERP, Fabien Pinckaers', leftmargin=10*mm, rightmargin=10*mm)
+                                author='OpenERP, Fabien Pinckaers', leftmargin=10*mm, rightmargin=10*mm)
 
         styles = reportlab.lib.styles.getSampleStyleSheet()
         title_style = copy.deepcopy(styles["Heading1"])
@@ -66,7 +66,6 @@ class simple(render.render):
         return self.result.getvalue()
 
 if __name__=='__main__':
-    import time
     s = simple()
     s.xml = '''<test>
         <author-list>

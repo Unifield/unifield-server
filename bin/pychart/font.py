@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -86,28 +86,28 @@ _undefined_font_warned = {}
 def _intern_afm(font, text):
     global _undefined_font_warned
     font2 = font in _font_aliases and _font_aliases[font]
-    if font in afm.dir.afm:
-        return afm.dir.afm[font]
-    if font2 in afm.dir.afm:
-        return afm.dir.afm[font2]
+    if font in dir.afm:
+        return dir.afm[font]
+    if font2 in dir.afm:
+        return dir.afm[font2]
 
-    try:        
+    try:
         exec("import pychart.afm.%s" % re.sub("-", "_", font))
-        return afm.dir.afm[font]
+        return dir.afm[font]
     except:
         if not font2 and font not in _undefined_font_warned:
             pychart_util.warn("Warning: unknown font '%s' while parsing '%s'" % (font, text))
             _undefined_font_warned[font] = 1
-    
+
     if font2:
         try:
             exec("import pychart.afm.%s" % re.sub("-", "_", font2))
-            return afm.dir.afm[font2]
+            return dir.afm[font2]
         except:
             if font not in _undefined_font_warned:
                 pychart_util.warn("Warning: unknown font '%s' while parsing '%s'" % (font, text))
                 _undefined_font_warned[font] = 1
-    return None    
+    return None
 def line_width(font, size, text):
     table = _intern_afm(font, text)
     if not table:
@@ -120,7 +120,7 @@ def line_width(font, size, text):
             width += table[code]
         else:
             width += 10000
-            
+
     width = float(width) * size / 1000.0
     return width
 
@@ -128,7 +128,7 @@ _font_family_map = {'T': "Times",
                     'H': "Helvetica",
                     'C': "Courier",
                     'N': "Helvetica-Narrow",
-                    'B': "Bookman-Demi", 
+                    'B': "Bookman-Demi",
                     'A': "AvantGarde-Book",
                     'P': "Palatino",
                     'S': "Symbol"}
@@ -203,7 +203,7 @@ class text_state:
         self.halign = theme.default_font_halign
         self.valign = theme.default_font_valign
         self.angle = theme.default_font_angle
-        
+
 class text_iterator:
     def __init__(self, s):
         self.str = str(s)
@@ -232,7 +232,7 @@ class text_iterator:
                 font_name += "Italic"
         elif font_name in ("Palatino", "Times", "NewCenturySchlbk"):
             font_name += "-Roman"
-                
+
         return (font_name, ts.size, ts.line_height, ts.color,
                 ts.halign, ts.valign, ts.angle, str)
     def __parse_float(self):
@@ -240,12 +240,12 @@ class text_iterator:
         while self.i < len(self.str) and self.str[self.i] in string.digits or self.str[self.i] == '.':
             self.i += 1
         return float(self.str[istart:self.i])
-            
+
     def __parse_int(self):
         istart = self.i
         while self.i < len(self.str) and \
-              (self.str[self.i] in string.digits or
-               self.str[self.i] == '-'):
+            (self.str[self.i] in string.digits or
+             self.str[self.i] == '-'):
             self.i += 1
         return int(self.str[istart:self.i])
     def __next__(self):
@@ -253,7 +253,7 @@ class text_iterator:
         l = []
         changed = 0
         self.old_state = self.ts.copy()
-        
+
         while self.i < len(self.str):
             if self.str[self.i] == '/':
                 self.i = self.i+1
@@ -278,7 +278,7 @@ class text_iterator:
                     self.ts.family = self.str[istart:self.i]
                     self.i += 1
                     changed = 1
-                    
+
                 elif ch in string.digits:
                     self.i -= 1
                     self.ts.size = self.__parse_int()

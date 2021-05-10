@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -20,9 +20,8 @@ import math
 from . import arrow_doc
 from . import canvas
 
-from .pychart_types import *
-from types import *
-from .scaling import *
+from .pychart_types import UnitType
+from .scaling import nscale, yscale, xscale
 
 __doc__ = """
 Arrow is an optional component of a chart that draws line segments with
@@ -38,16 +37,16 @@ a.draw([(10,10), (20,30)])
 """
 
 def draw_arrowhead(can, tailx, taily, tipx, tipy, thickness, head_len, style):
-    can.comment("ARROWHEAD tail=(%d,%d) tip=(%d,%d)\n" 
-	        % (tailx, taily, tipx, tipy))
-    
+    can.comment("ARROWHEAD tail=(%d,%d) tip=(%d,%d)\n"
+                % (tailx, taily, tipx, tipy))
+
     halfthickness = thickness/2.0
     dx = tipx - tailx
     dy = tipy - taily
     arrow_len = math.sqrt(dx*dx + dy*dy)
     angle = math.atan2(dy, dx) * 360 / (2*math.pi)
     base = arrow_len - head_len
-    can.push_transformation((tailx, taily), None, angle)    
+    can.push_transformation((tailx, taily), None, angle)
 
     can.newpath()
     if style == 0:
@@ -94,16 +93,16 @@ class T(chart_object.T):
     __doc__ = arrow_doc.doc
     keys = {
         "thickness" : (UnitType, 4,
-                        "The width of the arrow head."),
+                       "The width of the arrow head."),
         "head_len": (UnitType, 8,
-                    "The length of the arrow head."),
+                     "The length of the arrow head."),
         "head_color": (color.T, color.default,
-                      "The color of the arrow head."),
+                       "The color of the arrow head."),
         "line_style": (line_style.T, line_style.default,
                        "Line style."),
         "head_style": (int, 1,
                        "The value of 0 draws a triangular arrow head. The value of 1 draws a swallow-tail arrow head. The value of 2 draws a circular head. The value of 3 draws a diamond-shaped head.")
-            }
+    }
 ##AUTOMATICALLY GENERATED
 
 ##END AUTOMATICALLY GENERATED
@@ -119,7 +118,7 @@ class T(chart_object.T):
         self.type_check()
         xtip = points[-1][0]
         ytip = points[-1][1]
-        
+
         xtail = points[-2][0]
         ytail = points[-2][1]
 
@@ -140,7 +139,7 @@ class T(chart_object.T):
                        nscale(self.thickness),
                        nscale(self.head_len),
                        self.head_style)
-        
+
         can.setbb(xtail, ytail)
         can.setbb(xtip, ytip)
 
@@ -168,17 +167,17 @@ fat1 = _intern(T(head_style=1, head_len=12, thickness=10, line_style=line_style.
 fat2 = _intern(T(head_style=2, head_len=12, thickness=10, line_style=line_style.T(width=2)))
 fat3 = _intern(T(head_style=3, head_len=12, thickness=10, line_style=line_style.T(width=2)))
 fatgray0 = _intern(T(head_style=0, head_len=12, thickness=10,
-                      head_color = color.gray50,
-                      line_style=line_style.T(width=2, color=color.gray50)))
+                     head_color = color.gray50,
+                     line_style=line_style.T(width=2, color=color.gray50)))
 fatgray1 = _intern(T(head_style=1, head_len=12, thickness=10,
-                      head_color = color.gray50,
-                      line_style=line_style.T(width=2, color=color.gray50)))
+                     head_color = color.gray50,
+                     line_style=line_style.T(width=2, color=color.gray50)))
 fatgray2 = _intern(T(head_style=2, head_len=12, thickness=10,
-                      head_color = color.gray50,
-                      line_style=line_style.T(width=2, color=color.gray50)))
+                     head_color = color.gray50,
+                     line_style=line_style.T(width=2, color=color.gray50)))
 fatgray3 = _intern(T(head_style=3, head_len=12, thickness=10,
-                      head_color = color.gray50,
-                      line_style=line_style.T(width=2, color=color.gray50)))
+                     head_color = color.gray50,
+                     line_style=line_style.T(width=2, color=color.gray50)))
 
 default = a1
 

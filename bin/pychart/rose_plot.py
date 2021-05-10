@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -20,7 +20,7 @@ from . import chart_object
 from . import legend
 from . import font
 from . import color
-from .pychart_types import *
+from .pychart_types import ShadowType, AnyType, UnitType, NumType, CoordType
 
 class T(chart_object.T):
     """Plots sector diagram which can be superimposed on one another.
@@ -47,7 +47,7 @@ class T(chart_object.T):
         "dir_fill_style": (fill_style.T, fill_style.default, ""),
         "shadow": (ShadowType, None, pychart_util.shadow_desc),
         "sector_width": (int, None, ""), # automatically generated
-        }
+    }
 
     def __init__(self, colour=True, **args):
         chart_object.T.init(self, args)
@@ -55,9 +55,9 @@ class T(chart_object.T):
             # the theme.color flag does not seem to affect the fill_style.standards,
             #besides, I want the first two colors to resemble those of gnuplot's postscript terminal
             self.fill_styles = [fill_style.Plain(bgcolor=color.red),
-                    fill_style.Plain(bgcolor=color.green),
-                    fill_style.Plain(bgcolor=color.blue),
-                    fill_style.Plain(bgcolor=color.magenta)]
+                                fill_style.Plain(bgcolor=color.green),
+                                fill_style.Plain(bgcolor=color.blue),
+                                fill_style.Plain(bgcolor=color.magenta)]
 
     def check_integrity(self):
         nSectors = len(self.data[0][self.data_col])
@@ -83,15 +83,15 @@ class T(chart_object.T):
             fill = self.fill_styles[i]
             i = (i + 1) % len(self.fill_styles)
             legends.append(legend.Entry(line_style=self.line_style,
-                                    fill_style=fill,
-                                    label=dataset[self.label_col]))
+                                        fill_style=fill,
+                                        label=dataset[self.label_col]))
         return legends
 
     def draw(self, ar, can):
         center = self.center
         if not center:
             center = (ar.loc[0] + ar.size[0]/2.0,
-                            ar.loc[1] + ar.size[1]/2.0)
+                      ar.loc[1] + ar.size[1]/2.0)
         base_radius = self.base_radius # the maximum radius of a wedge
         if not base_radius:
             base_radius = min(ar.size[0]/2.0, ar.size[1]/2.0) #* 0.8
@@ -117,7 +117,7 @@ class T(chart_object.T):
 
                 for d in directions:
                     x_label, y_label = pychart_util.rotate(dir_offset, 0, angle) # coords for bottom left corner of box
-                    tw = font.text_width(d)
+                    font.text_width(d)
                     half = 1/3. # normal arithmetic does not seem to apply to these text_box objects...
                     if (angle == 0): # east
                         y_label -= font.text_height(d)[0]*half # move down half
@@ -138,7 +138,7 @@ class T(chart_object.T):
                 stop = cur_angle-i*sector_decrement # these may seem confusing, but remember that we need to go counterclockwise
 
                 can.ellipsis(self.line_style, fill,
-                             x_center, y_center, radius, 1, start, stop, self.shadow) 
+                             x_center, y_center, radius, 1, start, stop, self.shadow)
                 cur_angle = (cur_angle - self.sector_width) % 360 # we want to go in anticlockwise direction (North, West, South, etc. as in meteorology)
             i = (i + 1) % len(self.fill_styles)
 

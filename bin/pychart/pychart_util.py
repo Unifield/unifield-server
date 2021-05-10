@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -14,9 +14,6 @@
 #
 import sys
 import math
-import types
-import traceback
-from types import *
 
 def inch_to_point(inch):
     return inch * 72.0
@@ -61,8 +58,8 @@ def get_data_list(data, col):
         val = get_sample_val(item, col)
         if val != None:
             r.append(val)
-    return r        
-    
+    return r
+
 def get_data_range(data, col):
     data = get_data_list(data, col)
     for item in data:
@@ -76,7 +73,7 @@ def round_down(val, bound):
 def round_up(val, bound):
     return (int((val-1)/float(bound))+1) * bound
 
-    
+
 #
 # Attribute type checking stuff
 #
@@ -107,7 +104,7 @@ def apply_format(format, val, defaultidx):
     else:
         return format(*val)
 
-    
+
 data_desc = "Specifies the data points. <<chart_data>>"
 label_desc = "The label to be displayed in the legend. <<legend>>, <<font>>"
 xcol_desc = """The column, within attribute "data", from which the X values of sample points are extracted. <<chart_data>>"""

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
- ##############################################################################
-#    
+##############################################################################
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,13 +15,12 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import wizard
 import pooler
-import time
 
 action_type =  '''<?xml version="1.0"?>
 <form string="Select Action Type">
@@ -42,22 +41,22 @@ report_action_fields = {
 }
 
 class create_action(wizard.interface):
-    
+
     def _create_report_action(self, cr, uid, data, context={}):
         pool = pooler.get_pool(cr.dbname)
-         
+
         reports = pool.get('ir.actions.report.xml')
         form = data['form']
-        
+
         rpt = reports.browse(cr, uid, form['report'])
-        
+
         action = """action = {"type": "ir.actions.report.xml","model":"%s","report_name": "%s","ids": context["active_ids"]}""" % (rpt.model, rpt.report_name)
-        
+
         obj = pool.get('ir.actions.server')
         obj.write(cr, uid, data['ids'], {'code':action})
-        
+
         return {}
-    
+
     states = {
         'init': {
             'actions': [],

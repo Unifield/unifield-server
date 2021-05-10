@@ -98,7 +98,7 @@ class report_printscreen_list(report_int):
                             continue
                         child_ids = model.search(cr, uid, inner_domain)
                         res = model.read(cr, uid, child_ids, list(result['fields'].keys()), context)
-                        res.sort(lambda x,y: cmp(ids.index(x['id']), ids.index(y['id'])))
+                        res.sort(key=lambda x: ids.index(x['id']))
                         rows.extend(res)
             dom = [('id','in',ids)]
             if self.groupby_no_leaf and len(ids) and not ids[0]:
@@ -112,7 +112,7 @@ class report_printscreen_list(report_int):
                 for id in datas['ids']:
                     rows_new += [elem for elem in rows if elem['id'] == id]
                 rows = rows_new
-        res = self._create_table(uid, datas['ids'], result['fields'], fields_order, rows, context, model_desc)
+        self._create_table(uid, datas['ids'], result['fields'], fields_order, rows, context, model_desc)
         return (self.obj.get(), 'pdf')
 
 

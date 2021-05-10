@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -18,9 +18,8 @@ from . import chart_object
 from . import fill_style
 from . import legend
 from . import range_plot_doc
-from .pychart_types import *
-from types import *
-from .scaling import *
+from .pychart_types import AnyType
+from .scaling import yscale, xscale
 
 
 class T(chart_object.T):
@@ -30,17 +29,17 @@ class T(chart_object.T):
         "label": (str, "???", pychart_util.label_desc),
         "xcol" : (int, 0, pychart_util.xcol_desc),
         "min_col": (int, 1,
-                   "The lower bound of the sweep is extracted from "
-                   + "this column of data."),
-        "max_col": (int, 2, 
-                   "The upper bound of the sweep is extracted from "
-                   + "this column of data."),
+                    "The lower bound of the sweep is extracted from "
+                    + "this column of data."),
+        "max_col": (int, 2,
+                    "The upper bound of the sweep is extracted from "
+                    + "this column of data."),
         "line_style": (line_style.T, line_style.default,
-                      "The style of the boundary line."),
+                       "The style of the boundary line."),
         "fill_style": (fill_style.T, fill_style.default,
-                      ""),
-        }
-    
+                       ""),
+    }
+
 ##AUTOMATICALLY GENERATED
 
 ##END AUTOMATICALLY GENERATED
@@ -62,7 +61,7 @@ class T(chart_object.T):
         return None
 
     def draw(self, ar, can):
-        
+
         prevPair = None
 
         xmin=999999
@@ -78,7 +77,7 @@ class T(chart_object.T):
             y = pychart_util.get_sample_val(pair, self.max_col)
             if y == None:
                 continue
-            
+
             xmin = min(xmin, ar.x_pos(x))
             xmax = max(xmax, ar.x_pos(x))
             ymin = min(ymin, ar.y_pos(y))
@@ -108,7 +107,7 @@ class T(chart_object.T):
         can.fill_with_pattern(self.fill_style, xmin, ymin, xmax, ymax)
         can.grestore()
 
-        if self.line_style: 
+        if self.line_style:
             # draw the boundary.
             prevPair = None
             can.newpath()

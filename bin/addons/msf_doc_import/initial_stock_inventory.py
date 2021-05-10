@@ -768,7 +768,7 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
             if row.cells[5].data:
                 if row.cells[5].type == 'str':
                     try:
-                        expiry = daterime.strptime(row.cells[5].data, '%d/%m/%Y')
+                        expiry = datetime.strptime(row.cells[5].data, '%d/%m/%Y')
                         if expiry < datetime(1900, 0o1, 0o1, 0, 0, 0):
                             comment += _('You cannot set an expiry date before %s\n') % (
                                 datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),

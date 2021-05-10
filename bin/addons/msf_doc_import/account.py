@@ -302,8 +302,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                             continue
                         if not book_debit and not book_credit:
                             # /!\ display different messages depending if values are zero or empty
-                            debit_is_zero = book_debit is 0 or book_debit is 0.0
-                            credit_is_zero = book_credit is 0 or book_credit is 0.0
+                            debit_is_zero = book_debit == 0 and isinstance(book_debit, (float, int))
+                            credit_is_zero = book_credit == 0 and isinstance(book_credit, (float, int))
                             if debit_is_zero and credit_is_zero:
                                 errors.append(_('Line %s. Booking Debit and Booking Credit at 0, please change.') % (current_line_num,))
                                 continue

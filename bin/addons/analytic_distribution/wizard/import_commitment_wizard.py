@@ -182,7 +182,7 @@ class import_commitment_wizard(osv.osv_memory):
                     try:
                         description, reference, document_date, date, account_code, destination, \
                             cost_center, funding_pool, third_party,  booking_amount, booking_currency = line
-                    except ValueError as e:
+                    except ValueError:
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('Unknown format.'))
 
                     # Dates

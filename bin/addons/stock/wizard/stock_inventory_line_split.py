@@ -19,17 +19,15 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
 
-from tools.translate import _
-import time
 
 class stock_inventory_line_split(osv.osv_memory):
     _inherit = "stock.move.split"
     _name = "stock.inventory.line.split"
     _description = "Split inventory lines"
 
-    
+
     def default_get(self, cr, uid, fields, context=None):
         """ To check the availability of production lot. 
         @param self: The object pointer.
@@ -38,20 +36,20 @@ class stock_inventory_line_split(osv.osv_memory):
         @param fields: List of fields for which we want default values 
         @param context: A standard dictionary 
         @return: A dictionary which of fields with values. 
-        """        
+        """
         if context is None:
             context = {}
         record_id = context and context.get('active_id',False)
         res = {}
-        line = self.pool.get('stock.inventory.line').browse(cr, uid, record_id, context=context)        
+        line = self.pool.get('stock.inventory.line').browse(cr, uid, record_id, context=context)
         if 'product_id' in fields:
             res.update({'product_id':line.product_id.id})
         if 'product_uom' in fields:
             res.update({'product_uom': line.product_uom.id})
         if 'qty' in fields:
-            res.update({'qty': line.product_qty})       
+            res.update({'qty': line.product_qty})
         return res
-    
+
     def split(self, cr, uid, ids, line_ids, context=None):
         """ To split stock inventory lines according to production lot.
         @param self: The object pointer.
@@ -61,29 +59,29 @@ class stock_inventory_line_split(osv.osv_memory):
         @param line_ids: the ID or list of IDs of inventory lines we want to split
         @param context: A standard dictionary 
         @return: 
-        """                    
+        """
         prodlot_obj = self.pool.get('stock.production.lot')
         line_obj = self.pool.get('stock.inventory.line')
-        new_line = []        
+        new_line = []
         for data in self.browse(cr, uid, ids, context=context):
             for inv_line in line_obj.browse(cr, uid, line_ids, context=context):
                 line_qty = inv_line.product_qty
-                quantity_rest = inv_line.product_qty                
-                new_line = []   
+                quantity_rest = inv_line.product_qty
+                new_line = []
                 if data.use_exist:
                     lines = [l for l in data.line_exist_ids if l]
                 else:
-                    lines = [l for l in data.line_ids if l]                         
+                    lines = [l for l in data.line_ids if l]
                 for line in lines:
                     quantity = line.quantity
                     if quantity <= 0 or line_qty == 0:
                         continue
-                    quantity_rest -= quantity                    
+                    quantity_rest -= quantity
                     if quantity_rest <= 0:
                         quantity_rest = quantity
                         break
                     default_val = {
-                        'product_qty': quantity,                         
+                        'product_qty': quantity,
                     }
                     current_line = line_obj.copy(cr, uid, inv_line.id, default_val)
                     new_line.append(current_line)
@@ -94,14 +92,14 @@ class stock_inventory_line_split(osv.osv_memory):
                         prodlot_id = prodlot_obj.create(cr, uid, {
                             'name': line.name,
                             'product_id': inv_line.product_id.id},
-                        context=context)
+                            context=context)
                     line_obj.write(cr, uid, [current_line], {'prod_lot_id': prodlot_id})
-                    
+
                     update_val = {}
-                    if quantity_rest > 0:                        
-                        update_val['product_qty'] = quantity_rest                                            
+                    if quantity_rest > 0:
+                        update_val['product_qty'] = quantity_rest
                         line_obj.write(cr, uid, [inv_line.id], update_val)
-                    
+
         return new_line
 stock_inventory_line_split()
 

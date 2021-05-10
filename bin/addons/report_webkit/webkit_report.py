@@ -46,7 +46,6 @@ from report.report_sxw import report_sxw, report_rml, _int_format, \
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 import addons
-import tools
 from tools.translate import _
 from osv.osv import except_osv
 
@@ -285,10 +284,10 @@ class WebKitParser(report_sxw):
         parser_instance.localcontext.update({'formatLang':parser_instance.format_xls_lang})
         try :
             html = body_mako_tpl.render_unicode(     helper=helper,
-                                             css=css,
-                                             _=parser_instance.translate_call,
-                                             **parser_instance.localcontext
-                                             )
+                                                     css=css,
+                                                     _=parser_instance.translate_call,
+                                                     **parser_instance.localcontext
+                                                     )
         except Exception:
             msg = exceptions.text_error_template().render()
             netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)

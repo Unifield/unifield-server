@@ -18,10 +18,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from osv import fields, osv
+from osv import osv
 import csv
 import io
-from tools.translate import _
 import datetime
 
 class wizard_csv_report(osv.osv_memory):
@@ -44,12 +43,12 @@ class wizard_csv_report(osv.osv_memory):
 
                 # get amount in selected currency
                 out_currency_amount = self.pool.get('res.currency').compute(cr,
-                                                           uid,
-                                                           contract.reporting_currency.id,
-                                                           currency_id.id,
-                                                           out_currency_amount or 0.0,
-                                                           round=True,
-                                                           context=context)
+                                                                            uid,
+                                                                            contract.reporting_currency.id,
+                                                                            currency_id.id,
+                                                                            out_currency_amount or 0.0,
+                                                                            round=True,
+                                                                            context=context)
 
             # Dictionary for selection
 

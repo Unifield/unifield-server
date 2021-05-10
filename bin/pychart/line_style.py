@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
-# 
+#
 # Jockey is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any
@@ -18,8 +18,7 @@ from . import chart_object
 from . import object_set
 from . import theme
 from . import line_style_doc
-from .pychart_types import *
-from types import *
+from .pychart_types import UnitType
 
 _keys = {
     "width" : (UnitType, theme.default_line_width, "Width of the line, in points."),
@@ -45,7 +44,7 @@ _keys = {
                    1: round join (rounded corners),
                    2: bevel join (flattened corners).
                    See also Postscript/PDF reference manual.""")
-    }
+}
 
 class T(chart_object.T):
     __doc__ = line_style_doc.doc
@@ -59,7 +58,7 @@ class T(chart_object.T):
             return s
         return "<linestyle: width=%s, color=%s, dash=%s, cap=%d, join=%d>" \
                % (self.width, self.color, self.dash, self.cap_style, self.join_style)
-    
+
 default = T(color=color.default)
 
 dash1 = 1.5,1.5  # - - - -
@@ -116,7 +115,7 @@ red_dash1 = T(color=color.red, dash=dash1)
 darkblue_dash1 = T(color=color.darkblue, dash=dash1)
 darkseagreen_dash1 = T(color=color.darkseagreen, dash=dash1)
 darkkhaki_dash1 = T(color=color.darkkhaki, dash=dash1)
-    
+
 red_dash2 = T(color=color.red, dash=dash2)
 darkblue_dash2 = T(color=color.darkblue, dash=dash2)
 darkseagreen_dash2 = T(color=color.darkseagreen, dash=dash2)
@@ -128,7 +127,7 @@ _name_table = None
 def init():
     global standards, _name_table
     standards = object_set.T()
-    
+
     if theme.use_color:
         standards.add(black, red, darkblue, gray70, darkseagreen,
                       darkkhaki, gray30,
@@ -148,7 +147,7 @@ def init():
     for style in standards.list():
         style.width = theme.default_line_width
     _name_table = None
-    
+
 def name_table():
     global _name_table
     if not _name_table:
