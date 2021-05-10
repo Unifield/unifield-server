@@ -127,7 +127,7 @@ class export_report_stopped_products(osv.osv):
 
         # export datas :
         report_name = "stopped.products.xls"
-        attachment_name = "stopped_products_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
+        attachment_name = "phase_out_products_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
         rp_spool = report_spool()
         res_export = rp_spool.exp_report(cr.dbname, uid, report_name, report_ids, datas, context)
         file_res = {'state': False}
