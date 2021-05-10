@@ -8591,6 +8591,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:replenishment.consolidated_oc.import,state:0
 #: view:replenishment.parent.segment:0
 #: selection:replenishment.parent.segment,state_parent:0
+#: view:composition.item:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -10716,6 +10717,7 @@ msgstr "Remote Warehouse"
 #: selection:kit.creation.to.consume,fake_state:0
 #: selection:kit.creation.to.consume,state:0
 #: selection:stock.move,hidden_creation_state:0
+#: view:composition.item:0
 msgid "In Production"
 msgstr "En Production"
 
@@ -35401,7 +35403,7 @@ msgid "    - %s :\n"
 msgstr "    - %s :\n"
 "Login : %s"
 
-#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export, product_nomenclature, account_mcdb, product, hr, account_override, procurement, msf_accrual, sync_client, product_nomenclature, account_mcdb, msf_doc_import
+#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export, product_nomenclature, account_mcdb, product, hr, account_override, procurement, msf_accrual, sync_client, product_nomenclature, account_mcdb, msf_doc_import, kit
 #: field:cash.request.liquidity,status:0
 #: field:cash.request.liquidity.bank,status:0
 #: field:cash.request.liquidity.cash,status:0
@@ -35443,6 +35445,7 @@ msgstr "    - %s :\n"
 #: field:product.mass.update,state:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:235
 #: report:addons/register_accounting/report/open_advances_xls.mako:160
+#: view:composition.item:0
 #, python-format
 msgid "Status"
 msgstr "Statut"
@@ -54489,6 +54492,7 @@ msgstr "Vérification des lignes…"
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:119
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:140
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:142
+#: view:composition.item:0
 #, python-format
 msgid "Closed"
 msgstr "Clôturé"
@@ -76804,6 +76808,7 @@ msgstr "Valeur totale"
 #: selection:product.mass.update,state:0
 #: view:replenishment.parent.segment:0
 #: selection:replenishment.parent.segment,state_parent:0
+#: view:composition.item:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -83493,6 +83498,7 @@ msgstr "monthly.budget.wizard"
 #: selection:composition.kit,state:0
 #: view:replenishment.segment:0
 #: view:replenishment.parent.segment:0
+#: view:composition.item:0
 msgid "Completed"
 msgstr "Terminé"
 
