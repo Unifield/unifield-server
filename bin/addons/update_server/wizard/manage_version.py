@@ -11,6 +11,8 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import hashlib
 from base64 import b64decode
+import zipfile
+from io import BytesIO
 import mimetypes
 
 mimetypes.init()
@@ -55,10 +57,7 @@ class manage_version(osv.osv):
                     'message' : "Missing patch file.",
                 }, context=context)
             patch = b64decode(wiz.patch)
-            #TODO import zipfile from python 2.7
-            #fh_patch = StringIO(patch)
-            #if not is_zipfile(fh_patch):
-            if not patch[:2] == 'PK':
+            if not zipfile.is_zipfile(BytesIO(patch)):
                 return self.write(cr, uid, ids, {
                     'state' : 'error',
                     'message' : "The patch you tried to upload doesn't looks like a ZIP file! Please upload only zip files.",

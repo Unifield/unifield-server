@@ -15,7 +15,7 @@ from hashlib import md5
 from datetime import datetime
 import time
 from base64 import b64decode
-from io import StringIO
+from io import BytesIO
 import logging
 import subprocess
 import base64
@@ -76,10 +76,12 @@ def parse_version_file(filepath):
     with open(filepath, 'r') as f:
         for line in f:
             line = line.rstrip()
-            if not line: continue
+            if not line:
+                continue
             try:
                 result = re_version.findall(line)
-                if not result: continue
+                if not result:
+                    continue
                 md5sum, date, version_name = result[0]
                 versions.append({'md5sum': md5sum,
                                  'date': date,
@@ -102,7 +104,7 @@ def add_versions(versions, filepath=server_version_file):
         return
     with open(filepath, 'a') as f:
         for ver in versions:
-            f.write((" ".join([str(x) for x in ver]) if isinstance(ver, list) else ver)+os.linesep)
+            f.write("%s%s"% (" ".join([x for x in ver]) if isinstance(ver, (list, tuple)) else ver, os.linesep))
 
 def find(path):
     """Unix-like find"""
@@ -470,7 +472,7 @@ def do_prepare(cr, revision_ids):
             if os.path.exists(delete_file):
                 tmp_del = os.path.join(path, 'delete-%s' % time.time())
                 os.rename(delete_file, tmp_del)
-            f = StringIO(patch)
+            f = BytesIO(patch)
             try:
                 zip = ZipFile(f, 'r')
                 zip.extractall(path)
