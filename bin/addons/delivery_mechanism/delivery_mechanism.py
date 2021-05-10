@@ -925,7 +925,7 @@ class stock_picking(osv.osv):
                             # search for sol that match with the updated move:
                             move_obj.write(cr, uid, [out_move.id], move_values, context=context)
                             processed_out_moves.append(new_out_move_id)
-                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(new_out_move_id)
+                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or '', []).append(new_out_move_id)
 
                         elif uom_partial_qty == out_move.product_qty and out_move.id not in processed_out_moves:
                             out_values.update({
@@ -936,7 +936,7 @@ class stock_picking(osv.osv):
                             remaining_out_qty = 0.00
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
-                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
+                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or '', []).append(out_move.id)
                         elif uom_partial_qty > out_move.product_qty and out_move.id not in processed_out_moves:
                             if out_moves[out_moves.index(out_move)] != out_moves[-1]:
                                 # Just update the out move with the value of the out move with UoM of IN
@@ -962,7 +962,7 @@ class stock_picking(osv.osv):
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
-                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
+                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or '', []).append(out_move.id)
                         else:
                             # OK all OUT lines processed and still have extra qty !
                             if extra_qty > 0 and not context.get('auto_import_ok'):
