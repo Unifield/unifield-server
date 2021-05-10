@@ -21,6 +21,8 @@
 
 from osv import fields
 from osv import osv
+from tools.translate import _
+from account_override import finance_export
 
 from time import strftime
 
@@ -63,6 +65,9 @@ class ocb_matching_export_wizard(osv.osv_memory):
         }, context=context)
         context['background_id'] = background_id
         context['background_time'] = 2
+
+        report_name = _("OCB matching export Access Interface")
+        finance_export.log_vi_exported(self, cr, uid, report_name, wizard.id, data['target_filename'])
 
         data['context'] = context
         return {

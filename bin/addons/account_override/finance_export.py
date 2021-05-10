@@ -294,4 +294,14 @@ class finance_archive():
         # Return result
         return (out, 'zip')
 
+
+def log_vi_exported(self, cr, uid, report_name, obj_id, file_name):
+    """
+    Stores a message in the res.logs when the VI report is exported, with the related filename and DB name. This message isn't
+    displayed in the interface, its main goal is to be able to check that the DB IDs have been generated from the right database.
+    """
+    self.log(cr, uid, obj_id,
+             _('A report "%s" has been generated under the name "%s" from the database "%s".') % (report_name, file_name, cr.dbname),
+             read=True)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

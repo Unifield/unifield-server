@@ -22,6 +22,7 @@
 from osv import fields
 from osv import osv
 from tools.translate import _
+from account_override import finance_export
 
 import time
 from time import strftime
@@ -82,9 +83,13 @@ class ocp_matching_export_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 2
 
+        if context.get('ocb_matching'):
+            report_name = _('OCB matching export')
+        else:
+            report_name = _('OCP matching export')
+        finance_export.log_vi_exported(self, cr, uid, report_name, wizard.id, data['target_filename'])
+
         data['context'] = context
-        self.log(cr, uid, wizard.id, _('An OCP matching export has been generated under the name "%s" from the database "%s".') %
-                 (data['target_filename'], cr.dbname))
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'hq.ocp.matching',
