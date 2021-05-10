@@ -26,6 +26,7 @@ from tools.translate import _
 
 class res_currency_table(osv.osv):
     _name = 'res.currency.table'
+    _trace = True
 
     _columns = {
         'name': fields.char('Currency table name', size=64, required=True),
@@ -71,6 +72,7 @@ res_currency_table()
 class res_currency(osv.osv):
     _name = "res.currency"
     _description = "Currency"
+    _trace = True
     _order = "name"
 
     def _check_unicity_currency_name(self, cr, uid, ids, context=None):
@@ -273,6 +275,35 @@ class res_currency(osv.osv):
                 self.create_associated_pricelist(cr, uid, cur_id[0], context=context)
 
         return res
+
+    def open_currency_tc(self, cr, uid, ids, context=None):
+        """
+        Opens the Track Changes of the currency in a new tab.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        tc_sql = """
+            SELECT id FROM audittrail_log_line 
+            WHERE res_id = %s
+            AND object_id = (SELECT id FROM ir_model WHERE model='res.currency' LIMIT 1);
+        """
+        cr.execute(tc_sql, (tuple(ids),))
+        tc_ids = [x for x, in cr.fetchall()]
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Track changes'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'audittrail.log.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': [('id', 'in', tc_ids)],
+            'target': 'current',
+        }
 
     def write(self, cr, uid, ids, values, context=None):
         '''
@@ -704,6 +735,7 @@ res_currency()
 class res_currency_rate(osv.osv):
     _name = "res.currency.rate"
     _description = "Currency Rate"
+    _trace = True
     _columns = {
         'name': fields.date('Date', required=True, select=True),
         'rate': fields.float('Rate', digits=(12,6), required=True,

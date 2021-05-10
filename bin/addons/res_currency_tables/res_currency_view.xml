@@ -29,6 +29,7 @@
 	                        <field name="currency_name"/>
 	                        <field name="rate"/>
 	                        <field name="date"/>
+                            <button name="open_currency_tc" type="object" icon="gtk-print-preview" string="Track changes"/>
 	                    </tree>
                         <form string="Currency">
 		                    <group col="6" colspan="6">

@@ -33055,9 +33055,11 @@ msgstr "\n"
 msgid "SMS Message"
 msgstr "Message SMS"
 
-#. module: msf_audittrail
+#. modules: msf_audittrail, base, res_currency_tables
 #: code:addons/msf_audittrail/audittrail.py:526
 #: model:ir.actions.act_window,name:msf_audittrail.action_audittrail_view_log
+#: code:addons/base/res/res_currency.py:297
+#: view:res.currency.table:0
 #, python-format
 msgid "Track changes"
 msgstr "Suivi des Modifications"
