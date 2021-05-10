@@ -17826,6 +17826,7 @@ msgstr "Liste pas trouvée !"
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocp
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocp
+#: code:addons/vertical_integration/wizard/ocp_export.py:99
 msgid "Export to HQ system (OCP)"
 msgstr "Export to HQ system (OCP)"
 
@@ -45168,8 +45169,15 @@ msgstr "Scinder le mouvement de stock sélectionné"
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_ocp_matching_export
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocp_matching_export
 #: view:ocp.matching.export.wizard:0
+#: code:addons/vertical_integration/wizard/ocp_matching_export.py:89
 msgid "OCP matching export"
 msgstr "OCP matching export"
+
+#. module: account_override
+#: code:addons/account_override/finance_export.py:304
+#, python-format
+msgid "A report \"%s\" has been generated under the name \"%s\" from the database \"%s\"."
+msgstr "Un rapport \"%s\" a été généré sous le nom \"%s\" depuis la base de données \"%s\"."
 
 #. modules: base, sale, stock
 #: view:ir.actions.todo:0
@@ -67404,12 +67412,14 @@ msgstr "File %s not found.\n"
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export
 #: view:ocb.matching.export.wizard:0
+#: code:addons/vertical_integration/wizard/ocp_matching_export.py:87
 msgid "OCB matching export"
 msgstr "OCB matching export"
 
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export_old
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export_old
+#: code:addons/vertical_integration/wizard/ocb_matching_export.py:69
 msgid "OCB matching export Access Interface"
 msgstr "Interface d'accès de OCB matching export"
 
@@ -95791,6 +95801,7 @@ msgstr "Thai / ภาษาไทย"
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb
+#: code:addons/vertical_integration/wizard/ocb_export.py:98
 msgid "Export to HQ system (OCB)"
 msgstr "Export to HQ system (OCB)"
 
@@ -106714,6 +106725,7 @@ msgstr "Réf. du INT"
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb_old
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb_old
+#: code:addons/vertical_integration/wizard/ocb_export.py:96
 msgid "Export to HQ system (OCB) Access Interface"
 msgstr "Interface d'accès de l'Export vers le système HQ (OCB)"
 
