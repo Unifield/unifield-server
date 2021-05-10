@@ -332,7 +332,7 @@ class wizard_cancel_lines(osv.osv_memory):
             if resource and wiz.initial_doc_type == 'purchase.order':  # Cancel & resource PO line(s)
                 line_obj.cancel_and_resource_pol(cr, uid, line_ids, context=context)
             else:
-                line_obj.action_cancel(cr, uid, line_ids, context=context)
+                netsvc.LocalService("workflow").trg_validate(uid, wiz.to_cancel_type, line_ids, 'cancel', cr)
 
         context['from_cancel_wizard'] = False
 
