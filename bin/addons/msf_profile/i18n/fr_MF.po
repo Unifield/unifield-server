@@ -54474,6 +54474,7 @@ msgstr "Vérification des lignes…"
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:119
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:140
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:142
+#: view:composition.item:0
 #, python-format
 msgid "Closed"
 msgstr "Clôturé"

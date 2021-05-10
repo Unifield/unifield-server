@@ -434,6 +434,7 @@
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
                     <filter icon="gtk-execute" name="in_production" string="In Production" domain="[('state','=', 'in_production')]" separator="1" />
                     <filter icon="gtk-paste-v" name="completed" string="Completed" domain="[('state','=','completed')]" />
+					<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
 					<field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" string="Kit" />
