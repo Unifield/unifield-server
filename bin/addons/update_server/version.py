@@ -17,7 +17,7 @@ import time
 import tools
 from zipfile import is_zipfile
 from base64 import b64decode
-from io import StringIO
+from io import BytesIO
 import hashlib
 import threading
 
@@ -228,7 +228,7 @@ class sync_server_user_rights(osv.osv):
     def get_md5_zip(self, cr, uid, ids, context=None):
         if isinstance(ids, int):
             ids = [ids]
-        return self.read(cr, uid, ids[0], ['zip_file'], context=context)['zip_file']
+        return str(self.read(cr, uid, ids[0], ['zip_file'], context=context)['zip_file'], 'utf8')
 
     def get_plain_zip(self, cr, uid, ids, context=None):
         if isinstance(ids, int):
@@ -301,7 +301,7 @@ class sync_server_user_rights_add_file(osv.osv_memory):
         expected_bar = 1
         wiz = self.browse(cr, uid, ids[0], context=context)
         plain_zip = b64decode(wiz.zip_file)
-        zp = StringIO(plain_zip)
+        zp = BytesIO(plain_zip)
         if not is_zipfile(zp):
             raise osv.except_osv(_('Warning !'), _("The file is not a zip file !"))
 

@@ -33,7 +33,7 @@ import math
 
 import netsvc
 from zipfile import ZipFile
-from io import StringIO
+from io import BytesIO
 from base64 import b64encode
 from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import logging
@@ -982,7 +982,7 @@ class user_rights_tools(osv.osv_memory):
 
         if context is None:
             context = {}
-        zp = StringIO(plain_zip)
+        zp = BytesIO(plain_zip)
         ur = self.pool.get('user_rights.tools').unzip_file(cr, uid, zp, context=context)
         z = ZipFile(zp)
 
