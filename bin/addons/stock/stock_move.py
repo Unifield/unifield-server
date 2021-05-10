@@ -1244,7 +1244,7 @@ class stock_move(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
             wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
             # Make the stock moves available
-            picking_obj.action_assign(cr, uid, [pickid], context=context)
+            picking_obj.action_assign(cr, uid, [pickid], assign_expired=True, context=context)
         picking_obj.log_picking(cr, uid, [pickid], context=context)
         return
 
@@ -1337,7 +1337,7 @@ class stock_move(osv.osv):
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
-    def action_assign(self, cr, uid, ids, lefo=False, context=None):
+    def action_assign(self, cr, uid, ids, lefo=False, assign_expired=False, context=None):
         """ Changes state to confirmed or waiting.
         @return: List of values
         """
@@ -1350,7 +1350,7 @@ class stock_move(osv.osv):
                 self.action_confirm(cr, uid, [move.id])
             if move.state in ('confirmed', 'waiting'):
                 todo.append(move.id)
-        res = self.check_assign(cr, uid, todo, lefo=lefo)
+        res = self.check_assign(cr, uid, todo, lefo=lefo, assign_expired=assign_expired)
         return res
 
     def force_assign_manual(self, cr, uid, ids, context=None):
@@ -1478,7 +1478,7 @@ class stock_move(osv.osv):
     #
     # Duplicate stock.move
     #
-    def check_assign(self, cr, uid, ids, lefo=False, context=None):
+    def check_assign(self, cr, uid, ids, lefo=False, assign_expired=False, context=None):
         """ Checks the product type and accordingly writes the state.
         @return: No. of moves done
         """
@@ -1505,7 +1505,7 @@ class stock_move(osv.osv):
                 prod_lot = False
                 if bn_needed and move.prodlot_id:
                     prod_lot = move.prodlot_id.id
-                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True, prod_lot=prod_lot, lefo=lefo)
+                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True, prod_lot=prod_lot, lefo=lefo, assign_expired=assign_expired)
                 if res:
                     if move.location_id.id == move.location_dest_id.id:
                         state = 'done'

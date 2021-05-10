@@ -132,13 +132,17 @@ class wizard_hq_report_oca(osv.osv_memory):
                 p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True}, context=context)
 
 
+        if nb_ok and export_wiz.pause:
+            msg.append('[%s] pause for %s seconds' % (time.strftime('%Y-%m-%d %H:%M:%S'), export_wiz.pause))
+            time.sleep(export_wiz.pause)
+
         if export_wiz.ftp_dest_ok:
             # send all reports (old + and new) to remote
             for filename in os.listdir(export_wiz.destination_local_path):
                 fullfilename = os.path.join(export_wiz.destination_local_path, filename)
-                msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), fullfilename, export_wiz.dest_path))
                 try:
                     if os.path.isfile(fullfilename):
+                        msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), fullfilename, export_wiz.dest_path))
                         export_job_obj.send_file(cr, uid, export_wiz, remote_con, fullfilename, export_wiz.dest_path, delete=True, context=context)
                         if disable_generation:
                             nb_ok += 1
@@ -152,9 +156,9 @@ class wizard_hq_report_oca(osv.osv_memory):
             current_report_path = export_wiz.report_local_path
             for filename in os.listdir(export_wiz.report_local_path):
                 fullfilename = os.path.join(export_wiz.report_local_path, filename)
-                msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), fullfilename, export_wiz.report_path))
                 try:
                     if os.path.isfile(fullfilename):
+                        msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), fullfilename, export_wiz.report_path))
                         export_job_obj.send_file(cr, uid, export_wiz, remote_con, fullfilename, export_wiz.report_path, delete=True, context=context)
                         if disable_generation:
                             nb_ok += 1

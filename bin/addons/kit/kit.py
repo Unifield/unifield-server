@@ -1415,7 +1415,7 @@ class stock_location(osv.osv):
         # we check for the available qty (in:done, out: assigned, done)
         return {'total': self.pool.get('product.product').read(cr, uid, product_id, ['qty_allocable'], context=stock_context).get('qty_allocable', 0)}
 
-    def _product_reserve_lot(self, cr, uid, ids, product_id, needed_qty, uom_id, context=None, lock=False, prod_lot=False, lefo=False):
+    def _product_reserve_lot(self, cr, uid, ids, product_id, needed_qty, uom_id, context=None, lock=False, prod_lot=False, lefo=False, assign_expired=False):
         """
         refactoring of original reserver method, taking production lot into account
 
@@ -1465,9 +1465,12 @@ class stock_location(osv.osv):
 
 
         factor = pool_uom.read(cr, uid, uom_id, ['factor'])['factor']
-        sql = ""
+        sql = " (expired_date is null or expired_date >= CURRENT_DATE) "
         if prod_lot:
-            sql = " AND prodlot_id = %s" % prod_lot
+            if assign_expired:
+                sql = " prodlot_id = %s" % prod_lot
+            else:
+                sql += " AND prodlot_id = %s" % prod_lot
         # Change BN/ED selection in Kitting Orders if Last Expired First Out is used
         flefo = lefo and "DESC" or "ASC"
 
@@ -1482,7 +1485,7 @@ class stock_location(osv.osv):
                             m.location_id<>m.location_dest_id AND
                             m.product_id=%s AND
                             m.state='done' AND
-                            (expired_date is null or expired_date >= CURRENT_DATE) """ + sql + """
+                            """ + sql + """
                             GROUP BY m.location_dest_id, loc.parent_left, m.prodlot_id, lot.life_date
 
                             UNION
@@ -1496,7 +1499,7 @@ class stock_location(osv.osv):
                             m.location_dest_id<>m.location_id AND
                             m.product_id=%s AND
                             m.state in ('done', 'assigned') AND
-                            (expired_date is null or expired_date >= CURRENT_DATE) """ + sql + """
+                            """ + sql + """
                             GROUP BY m.location_id, loc.parent_left, m.prodlot_id, lot.life_date) as subs
                     GROUP BY location, parent_left, prodlot_id, expired_date
                     ORDER BY expired_date """ + flefo + """, prodlot_id asc, parent_left

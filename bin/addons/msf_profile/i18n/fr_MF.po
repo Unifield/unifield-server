@@ -12859,6 +12859,11 @@ msgstr "Pourcentage de lignes avec des écarts"
 msgid "on FTP server"
 msgstr "sur le serveur FTP"
 
+#. module: msf_tools
+#: field:automated.export,pause:0
+msgid "Pause between generation and transfer (in seconds)"
+msgstr "Pause entre la generation et l'envoi (en secondes)"
+
 #. module: account_mcdb
 #: field:account.mcdb,amount_from:0
 msgid "Begin amount in given currency type"
@@ -21691,6 +21696,7 @@ msgstr "Etc/GMT-2"
 #: field:tender,notes:0
 #: view:real.average.consumption:0
 #: field:real.average.consumption,notes:0
+#: report:addons/account/report/export_invoice.mako:126
 #, python-format
 msgid "Notes"
 msgstr "Notes"
@@ -27822,11 +27828,6 @@ msgstr "Total Cheque:"
 #: help:sync.client.sync_server_connection,automatic_patching_hour_from:0
 msgid "Enable upgrade from this time"
 msgstr "Enable upgrade from this time"
-
-#. module: account_override
-#: view:account.invoice:0
-msgid "Cancelled Invoices"
-msgstr "Cancelled Invoices"
 
 #. module: resource
 #: model:ir.model,name:resource.model_resource_calendar_leaves
@@ -44177,6 +44178,7 @@ msgstr "Sync order line DB ID"
 #: selection:replenishment.order_calc,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
+#: field:hq.entries,user_validated:0
 #, python-format
 msgid "Validated"
 msgstr "Validé"
@@ -46774,11 +46776,25 @@ msgstr "Id XML"
 msgid "(n/a)"
 msgstr "(n/a)"
 
-#. modules: sync_client, update_client
-#: view:backup.download:0
+#. module: update_client
 #: view:sync.client.logs:0
 msgid "Select a file to download"
 msgstr "Select a file to download"
+
+#. module: sync_client
+#: view:backup.download:0
+msgid "Dump files"
+msgstr "Fichiers de sauvegarde"
+
+#. modules: sync_client
+#: view:backup.download:0
+msgid "Success"
+msgstr "Succès"
+
+#. modules: sync_client
+#: view:backup.download:0
+msgid "Failure"
+msgstr "Échec"
 
 #. module: sourcing
 #: view:multiple.sourcing.wizard:0
@@ -56324,11 +56340,6 @@ msgstr "America/Scoresbysund"
 #: selection:ir.header_webkit,format:0
 msgid "Ledger  28  431.8 x 279.4 mm"
 msgstr "Format Grand livre 28 431,8 x 279.4 mm"
-
-#. module: account_hq_entries
-#: field:hq.entries,user_validated:0
-msgid "User validated?"
-msgstr "Utilisateur validé?"
 
 #. module: financing_contract
 #: model:ir.model,name:financing_contract.model_financing_contract_donor_reporting_line
@@ -100034,8 +100045,13 @@ msgstr "Est corrigible au HQ?"
 
 #. module: account_hq_entries
 #: field:hq.entries,is_original:0
-msgid "Is Original HQ Entry?"
-msgstr "Est une Écriture HQ d'origine?"
+msgid "Has been split"
+msgstr "A été scindé"
+
+#. module: account_hq_entries
+#: help:hq.entries,is_original:0
+msgid "This line has been split into other ones."
+msgstr "Cette ligne a été scindée en d'autres lignes."
 
 #. module: account_hq_entries
 #: field:hq.entries.split,running:0
@@ -105889,6 +105905,12 @@ msgid "This document has been generated via a Supply workflow or via synchroniza
 msgstr "Ce document a été généré via un flux \"Supply\" ou via la synchronisation. Les lignes existantes ne peuvent pas être supprimées."
 
 #. module: account_override
+#: code:addons/account_override/invoice.py:2008
+#, python-format
+msgid "This donation has been generated via a Supply workflow. Existing lines can't be deleted."
+msgstr "Cette donation a été générée via un flux \"Supply\". Les lignes existantes ne peuvent pas être supprimées."
+
+#. module: account_override
 #: code:addons/account_override/invoice.py:1785
 #, python-format
 msgid "This document has been generated via synchronization. You can't split its lines."
@@ -107226,6 +107248,36 @@ msgid "From 12"
 msgstr "De 12"
 
 #. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_from_13:0
+msgid "From 13"
+msgstr "De 13"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_from_14:0
+msgid "From 14"
+msgstr "De 14"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_from_15:0
+msgid "From 15"
+msgstr "De 15"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_from_16:0
+msgid "From 16"
+msgstr "De 16"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_from_17:0
+msgid "From 17"
+msgstr "De 17"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_from_18:0
+msgid "From 18"
+msgstr "De 18"
+
+#. module: procurement_cycle
 #: field:replenishment.segment.line,rr_fmc_from_2:0
 msgid "From 2"
 msgstr "De 2"
@@ -107996,6 +108048,36 @@ msgid "RR FMC 12"
 msgstr "RR PCM 12"
 
 #. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_13:0
+msgid "RR FMC 13"
+msgstr "RR PCM 13"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_14:0
+msgid "RR FMC 14"
+msgstr "RR PCM 14"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_15:0
+msgid "RR FMC 15"
+msgstr "RR PCM 15"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_16:0
+msgid "RR FMC 16"
+msgstr "RR PCM 16"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_17:0
+msgid "RR FMC 17"
+msgstr "RR PCM 17"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_18:0
+msgid "RR FMC 18"
+msgstr "RR PCM 18"
+
+#. module: procurement_cycle
 #: field:replenishment.segment.line,rr_fmc_2:0
 msgid "RR FMC 2"
 msgstr "RR PCM 2"
@@ -108393,6 +108475,36 @@ msgstr "À 11"
 #: field:replenishment.segment.line,rr_fmc_to_12:0
 msgid "To 12"
 msgstr "À 12"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_to_13:0
+msgid "To 13"
+msgstr "À 13"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_to_14:0
+msgid "To 14"
+msgstr "À 14"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_to_15:0
+msgid "To 15"
+msgstr "À 15"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_to_16:0
+msgid "To 16"
+msgstr "À 16"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_to_17:0
+msgid "To 17"
+msgstr "À 17"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_fmc_to_18:0
+msgid "To 18"
+msgstr "À 18"
 
 #. module: procurement_cycle
 #: field:replenishment.segment.line,rr_fmc_to_2:0
@@ -108964,6 +109076,12 @@ msgstr "Fractionner Bon Intermission OUT"
 msgid "Split Stock Transfer Voucher"
 msgstr "Fractionner Bon Client"
 
+#. module: account_override
+#: view:account.invoice:0
+#: code:addons/account_override/invoice.py:1281
+msgid "Split Donation"
+msgstr "Fractionner Donation"
+
 #. modules: account_override, register_accounting
 #: view:account.invoice:0
 #: view:account.invoice:0
@@ -108994,6 +109112,12 @@ msgstr "Importer la Ligne de Facture"
 #, python-format
 msgid "Line %s: the account (mandatory) is missing."
 msgstr "Ligne %s : il manque le compte (obligatoire)."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:234
+#, python-format
+msgid "Line %s: the description (mandatory) is missing."
+msgstr "Ligne %s : il manque la description (obligatoire)."
 
 #. module: account
 #: code:addons/account/wizard/account_invoice_import.py:163
@@ -109117,6 +109241,11 @@ msgstr "Les valeurs des lignes du Solde de Clôture doivent être uniques par re
 #: report:account.invoice2:0
 msgid "Cancelled Intermission Voucher OUT"
 msgstr "Bon Intermission OUT annulé"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Cancelled In-kind Donation"
+msgstr "Donation en nature annulée"
 
 #. module: msf_outgoing
 #: field:stock.reserved.products,prodlot_id:0

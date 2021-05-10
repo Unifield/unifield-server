@@ -58,6 +58,7 @@
         'data/audittrail_account_tax.yml',
         'data/audittrail_res_company.yml',
         'data/audittrail_dest_cc_link.yml',
+        'data/audittrail_hq_entry.yml',
         'audittrail_report.xml',
         'audittrail_invoice_data.yml',
     ],

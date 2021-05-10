@@ -53,6 +53,14 @@ class patch_scripts(osv.osv):
     }
 
     # UF21.0
+    def us_8166_hide_consolidated_sm_report(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        consolidated_sm_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'mission_stock', 'consolidated_mission_stock_wizard_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, consolidated_sm_report_menu_id, {'active': instance.level == 'coordo'}, context={})
+        return True
+
     def us_7295_update_new_dest_cc_link(self, cr, uid, *a, **b):
         """
         CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new field "dest_cc_link_ids"

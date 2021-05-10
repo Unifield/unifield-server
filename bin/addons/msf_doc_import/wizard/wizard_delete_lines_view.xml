@@ -26,20 +26,6 @@
             </field>
         </record>
 
-        <record id="return_claim_product_line_form_delete_view" model="ir.ui.view">
-            <field name="name">return.claim.product.line.form.delete.view</field>
-            <field name="model">return.claim</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="return_claim.view_return_claim_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form//field[@name='product_line_ids_return_claim']" position="before">
-                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                    </xpath>                                                    
-                </data>
-            </field>
-        </record>
-
         <record id="return_claim_product_line_tree_delete_view" model="ir.ui.view">
             <field name="name">return.claim.product.line.tree.delete.view</field>
             <field name="model">claim.product.line</field>

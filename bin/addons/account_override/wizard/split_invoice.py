@@ -73,16 +73,19 @@ class wizard_split_invoice(osv.osv_memory):
         line_to_modify = []
         for wiz_line in wizard.invoice_line_ids:
             # Quantity
-            if wiz_line.quantity <= 0:
+            initial_qty = wiz_line.invoice_line_id and wiz_line.invoice_line_id.quantity or 0.0
+            if wiz_line.quantity <= 10**-3:
                 raise osv.except_osv(_('Warning'), _('%s: Quantity should be positive!') % wiz_line.description)
-            if wiz_line.quantity > wiz_line.invoice_line_id.quantity:
+            if abs(wiz_line.quantity - initial_qty) > 10**-3 and wiz_line.quantity > initial_qty:
                 raise osv.except_osv(_('Warning'), _('%s: Quantity should be inferior or equal to initial quantity!') % wiz_line.description)
             # Price unit
-            if wiz_line.price_unit <= 0:
+            if wiz_line.price_unit <= 10**-3:
+                # US-8295 Note that this check is kept on purpose on Donations even if they can have lines with amount zero. The only way to
+                # use the split feature with those lines is to remove them from the Split wizard in order to send them to the second invoice.
                 raise osv.except_osv(_('Warning'), _('%s: Unit price should be positive!') % wiz_line.description)
             # We add line if its quantity have changed or that another line have been deleted from original invoice
             #+ (so that the number of original invoice are more than invoice line in the current wizard)
-            if wiz_line.quantity != wiz_line.invoice_line_id.quantity or len(wizard.invoice_id.invoice_line) > len(wizard.invoice_line_ids):
+            if abs(wiz_line.quantity - initial_qty) > 10**-3 or len(wizard.invoice_id.invoice_line) > len(wizard.invoice_line_ids):
                 line_to_modify.append(wiz_line.id)
         if not len(line_to_modify):
             raise osv.except_osv(_('Error'), _('No line were modified. No split done.'))

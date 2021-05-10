@@ -870,25 +870,28 @@ class replenishment_segment(osv.osv):
     def _missing_instances(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
 
-        for seg in self.browse(cr, uid, ids, fields_to_fetch=['main_instance', 'remote_location_ids', 'last_generation'], context=context):
-            instances_name_by_id = {seg.main_instance.id: seg.main_instance.code}
-            all_instances = set([seg.main_instance.id])
-            for remote_loc in seg.remote_location_ids:
-                all_instances.add(remote_loc.instance_id.id)
-                instances_name_by_id[remote_loc.instance_id.id] = remote_loc.instance_id.code
+        for seg in self.browse(cr, uid, ids, fields_to_fetch=['main_instance', 'remote_location_ids', 'last_generation', 'location_config_id', 'hidden'], context=context):
+            all_instances = set()
+            all_instances_review = set()
+            if not seg.hidden or seg.location_config_id.include_product:
+                instances_name_by_id = {seg.main_instance.id: seg.main_instance.code}
+                all_instances = set([seg.main_instance.id])
+                for remote_loc in seg.remote_location_ids:
+                    all_instances.add(remote_loc.instance_id.id)
+                    instances_name_by_id[remote_loc.instance_id.id] = remote_loc.instance_id.code
 
-            all_instances_review = all_instances.copy()
-            for data_done in seg.last_generation:
-                if data_done.review_date:
-                    try:
-                        all_instances_review.remove(data_done.instance_id.id)
-                    except KeyError:
-                        pass
-                if data_done.full_date:
-                    try:
-                        all_instances.remove(data_done.instance_id.id)
-                    except KeyError:
-                        pass
+                all_instances_review = all_instances.copy()
+                for data_done in seg.last_generation:
+                    if data_done.review_date:
+                        try:
+                            all_instances_review.remove(data_done.instance_id.id)
+                        except KeyError:
+                            pass
+                    if data_done.full_date:
+                        try:
+                            all_instances.remove(data_done.instance_id.id)
+                        except KeyError:
+                            pass
 
             ret[seg.id] = {'missing_order_calc': ', '.join([instances_name_by_id.get(x, '') for x in all_instances]), 'missing_inv_review': ', '.join([instances_name_by_id.get(x, '') for x in all_instances_review]) }
         return ret
@@ -1236,7 +1239,7 @@ class replenishment_segment(osv.osv):
                         else:
                             break
 
-                    for fmc_d in range(1, 13):
+                    for fmc_d in range(1, 19):
                         from_fmc = getattr(line, 'rr_fmc_from_%d'%fmc_d)
                         to_fmc = getattr(line, 'rr_fmc_to_%d'%fmc_d)
                         num_fmc = getattr(line, 'rr_fmc_%d'%fmc_d)
@@ -1735,7 +1738,7 @@ class replenishment_segment(osv.osv):
                     'max_qty': False,
                     'auto_qty': False
                 }
-                for fmc in range(1, 13):
+                for fmc in range(1, 19):
                     data_towrite.update({
                         'rr_fmc_%d' % fmc: False,
                         'rr_fmc_from_%d' % fmc: False,
@@ -1782,7 +1785,7 @@ class replenishment_segment(osv.osv):
                         line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
                     else:
                         data_towrite['buffer_qty'] = row.cells[col_buffer_min_qty].data
-                    for fmc in range(1, 13):
+                    for fmc in range(1, 19):
                         if cells_nb - 1 >=  col_first_fmc and row.cells[col_first_fmc].data:
                             from_data = False
                             fmc_data = row.cells[col_first_fmc].data
@@ -1968,7 +1971,7 @@ class replenishment_segment(osv.osv):
             ''', (_id, first_day_of_month))
             for x in cr.dictfetchall():
                 to_update = {}
-                for fmc_d in range(1, 13):
+                for fmc_d in range(1, 19):
                     from_fmc = x['rr_fmc_from_%d'%fmc_d]
                     to_fmc = x['rr_fmc_to_%d'%fmc_d]
                     num_fmc = x['rr_fmc_%d'%fmc_d]
@@ -2196,7 +2199,7 @@ class replenishment_segment_line(osv.osv):
             ret[id] = ""
         for line in self.browse(cr, uid, ids, context=context):
             add = []
-            for x in range(4, 13):
+            for x in range(4, 19):
                 rr_fmc = getattr(line, 'rr_fmc_%d'%x)
                 rr_from = getattr(line, 'rr_fmc_from_%d'%x)
                 rr_to = getattr(line, 'rr_fmc_to_%d'%x)
@@ -2334,6 +2337,24 @@ class replenishment_segment_line(osv.osv):
         'rr_fmc_12': fields.float_null('RR FMC 12', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_12': fields.date('From 12'),
         'rr_fmc_to_12': fields.date('To 12'),
+        'rr_fmc_13': fields.float_null('RR FMC 13', related_uom='uom_id', digits=(16, 2)),
+        'rr_fmc_from_13': fields.date('From 13'),
+        'rr_fmc_to_13': fields.date('To 13'),
+        'rr_fmc_14': fields.float_null('RR FMC 14', related_uom='uom_id', digits=(16, 2)),
+        'rr_fmc_from_14': fields.date('From 14'),
+        'rr_fmc_to_14': fields.date('To 14'),
+        'rr_fmc_15': fields.float_null('RR FMC 15', related_uom='uom_id', digits=(16, 2)),
+        'rr_fmc_from_15': fields.date('From 15'),
+        'rr_fmc_to_15': fields.date('To 15'),
+        'rr_fmc_16': fields.float_null('RR FMC 16', related_uom='uom_id', digits=(16, 2)),
+        'rr_fmc_from_16': fields.date('From 16'),
+        'rr_fmc_to_16': fields.date('To 16'),
+        'rr_fmc_17': fields.float_null('RR FMC 17', related_uom='uom_id', digits=(16, 2)),
+        'rr_fmc_from_17': fields.date('From 17'),
+        'rr_fmc_to_17': fields.date('To 17'),
+        'rr_fmc_18': fields.float_null('RR FMC 18', related_uom='uom_id', digits=(16, 2)),
+        'rr_fmc_from_18': fields.date('From 18'),
+        'rr_fmc_to_18': fields.date('To 18'),
         'replacing_product_id': fields.many2one('product.product', 'Replacing product', select=1),
         'replaced_product_id': fields.many2one('product.product', 'Replaced product', select=1),
         'warning': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
@@ -2354,7 +2375,7 @@ class replenishment_segment_line(osv.osv):
         for line in self.browse(cr, uid, line_ids, context=context):
             prev_to = False
             md5_data = []
-            for x in range(1, 13):
+            for x in range(1, 19):
                 rr_fmc = getattr(line, 'rr_fmc_%d'%x)
                 rr_from = getattr(line, 'rr_fmc_from_%d'%x)
                 rr_to = getattr(line, 'rr_fmc_to_%d'%x)
@@ -2442,7 +2463,7 @@ class replenishment_segment_line(osv.osv):
                 vals['replaced_product_id'] = False
             if vals['status'] not in  ('replaced', 'phasingout'):
                 vals['replacing_product_id'] = False
-        for x in range(1, 12):
+        for x in range(1, 18):
             if vals.get('rr_fmc_to_%d'%x):
                 try:
                     vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
@@ -2663,6 +2684,12 @@ class replenishment_segment_line_amc(osv.osv):
             for line in segment.line_ids:
                 lines[line.product_id.id] = line.id
             if not lines:
+                if gen_inv_review:
+                    last_gen_data['review_date'] = datetime_now
+                    if last_gen_id:
+                        last_gen_obj.write(cr, uid, last_gen_id, last_gen_data, context=context)
+                    else:
+                        last_gen_obj.create(cr, uid, last_gen_data, context=context)
                 continue
             # update vs create line
             cache_line_amc = {}
