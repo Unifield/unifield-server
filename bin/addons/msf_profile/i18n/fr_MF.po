@@ -96737,6 +96737,7 @@ msgstr "product.likely.expire.report.item"
 #: field:shipment.add.pack.processor,partner_id:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:901
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:317
 #, python-format
 msgid "Customer"
 msgstr "Client"
@@ -112063,3 +112064,14 @@ msgstr " Demande Interne"
 #, python-format
 msgid " Field Order"
 msgstr " Commande de Terrain"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1064
+#, python-format
+msgid "PO Details"
+msgstr "Détails BdC"
+
+#. module: sales_followup
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:323
+msgid "FO Details"
+msgstr "Détails CdT"

@@ -166,6 +166,8 @@
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Status (order)
     <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # PO Details
+    <Column ss:AutoFitWidth="1" ss:Width="200" />
     # Customer
     <Column ss:AutoFitWidth="1" ss:Width="120" />
     # Customer ref
@@ -293,6 +295,7 @@
       % endif
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['po_details'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
