@@ -54,7 +54,7 @@ class export_report_stopped_products(osv.osv):
 
     def generate_report(self, cr, uid, ids, context=None):
         '''
-        Generate a report of stopped products
+        Generate a report of phase out products
         Method is called by button on XML view (form)
         '''
         prod_obj = self.pool.get('product.product')
@@ -127,7 +127,7 @@ class export_report_stopped_products(osv.osv):
 
         # export datas :
         report_name = "stopped.products.xls"
-        attachment_name = "stopped_products_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
+        attachment_name = "phase_out_products_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
         rp_spool = report_spool()
         res_export = rp_spool.exp_report(cr.dbname, uid, report_name, report_ids, datas, context)
         file_res = {'state': False}
@@ -139,7 +139,7 @@ class export_report_stopped_products(osv.osv):
         attachment_obj.create(new_cr, uid, {
             'name': attachment_name,
             'datas_fname': attachment_name,
-            'description': "Stopped products",
+            'description': "Phase Out products",
             'res_model': 'export.report.stopped.products',
             'res_id': report_ids[0],
             'datas': file_res.get('result'),
@@ -159,7 +159,7 @@ export_report_stopped_products()
 
 class parser_report_stopped_products_xls(report_sxw.rml_parse):
     '''
-    To parse our mako template for stopped products
+    To parse our mako template for phase out products
     '''
     def __init__(self, cr, uid, name, context=None):
         super(parser_report_stopped_products_xls, self).__init__(cr, uid, name, context=context)
@@ -176,7 +176,7 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 
     def get_uf_stopped_products(self):
         '''
-        Return browse record list that contains stopped products
+        Return browse record list that contains phase out products
         taking in account non-local/temp products stopped in the current instance,
         and products in stock mission if they have qty in stock or in pipe
         '''
@@ -190,6 +190,7 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 
         hq_phase_out_ids = prod_obj.search(self.cr, self.uid, [
             ('state', '=', phase_out_state_id),
+            ('active', '=', True),
             ('international_status', '!=', status_local_id),
             ('international_status', '!=', temporary_status_id)],
             context=self.localcontext)
@@ -201,10 +202,10 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
             ('in_pipe_qty', '!=', 0)
         ], context=self.localcontext)
 
-        sm_phase_out_ids = smrl_obj.read(self.cr, self.uid, smrl_ids, ['product_id'], context=self.localcontext)
-        sm_phase_out_ids = [x.get('product_id')[0] for x in sm_phase_out_ids]
+        sm_phase_out_ids = smrl_obj.read(self.cr, self.uid, smrl_ids, ['product_id', 'active'], context=self.localcontext)
+        sm_phase_out_ids = [x.get('product_id')[0] for x in sm_phase_out_ids if x.get('active') is True]
 
-        # build a list of stopped products with unique ids and sorted by default_code:
+        # build a list of phase out products with unique ids and sorted by default_code:
         phase_out_ids = list(set(hq_phase_out_ids + sm_phase_out_ids))
         ls = []
         for prod in prod_obj.browse(self.cr, self.uid, phase_out_ids, context=self.localcontext):
