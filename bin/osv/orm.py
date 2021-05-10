@@ -4844,6 +4844,7 @@ class orm(orm_template):
         translation = 0
         if order_spec:
             order_by_elements = []
+            order_by_elements_nodir = []
             self._check_qorder(order_spec)
             for order_part in order_spec.split(','):
                 translatable = False
@@ -4892,6 +4893,8 @@ class orm(orm_template):
                         trans_name = '"ir_translation%s"' % translation
                         init_field = '"%s"."%s"' % (self._table, order_field)
                         order_by_elements.append('COALESCE(%s."value", %s) %s' % (trans_name, init_field, order_direction))
+                        if query.having:
+                            order_by_elements_nodir.append('COALESCE(%s."value", %s)' % (trans_name, init_field))
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
                             trans_name, trans_table, trans_name, trans_obj_name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
@@ -4907,6 +4910,8 @@ class orm(orm_template):
 
                         init_field = self._inherits_join_calc(order_field, query)
                         order_by_elements.append('COALESCE(%s."value", %s) %s' % (trans_name, init_field, order_direction))
+                        if query.having:
+                            order_by_elements_nodir.append('COALESCE(%s."value", %s)' % (trans_name, init_field))
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
                             trans_name, parent_obj._table, trans_name, parent_obj._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
@@ -4926,10 +4931,17 @@ class orm(orm_template):
                     if isinstance(end_inner_clause, list):
                         for clause in end_inner_clause:
                             order_by_elements.append("%s %s" % (clause, order_direction))
+                            if query.having:
+                                order_by_elements_nodir.append(clause)
                     else:
                         order_by_elements.append("%s %s" % (end_inner_clause, order_direction))
+                        if query.having:
+                            order_by_elements_nodir.append(end_inner_clause)
             if order_by_elements:
                 order_by_clause = ",".join(order_by_elements)
+
+        if order_by_elements_nodir:
+            query.having_group_by = '%s, %s' % (query.having_group_by, ','.join(order_by_elements_nodir))
 
         return order_by_clause and (' ORDER BY %s ' % order_by_clause) or '', from_order_clause
 
@@ -4949,7 +4961,7 @@ class orm(orm_template):
 
         query = self._where_calc(cr, user, args, context=context)
         self._apply_ir_rules(cr, user, query, 'read', context=context)
-        if order == 'NO_ORDER':
+        if order == 'NO_ORDER' or count:
             order_by=''
             from_order_clause = []
         else:
@@ -4972,11 +4984,12 @@ class orm(orm_template):
                 return res[0][0]
             else:
                 count_query = ''.join(('SELECT "%s".id FROM ' % self._table,
-                                       from_clause, where_str, query.having, limit_str, offset_str))
+                                       from_clause, where_str, query.having_group_by, query.having, limit_str, offset_str))
                 cr.execute(count_query, where_clause_params)
                 return cr.rowcount
+
         select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
-                                from_clause, where_str, query.having, order_by,limit_str, offset_str))
+                                from_clause, where_str, query.having_group_by, query.having, order_by,limit_str, offset_str))
         cr.execute(select_query, where_clause_params)
         res = cr.fetchall()
         return [x[0] for x in res]
