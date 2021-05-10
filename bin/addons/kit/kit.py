@@ -278,6 +278,7 @@ class composition_kit(osv.osv):
                           'asset_id_substitute_item': item.item_asset_id.id,
                           'lot_mirror': item.item_lot,
                           'exp_substitute_item': item.item_exp,
+                          'comment': item.comment,
                           }
                 id = mirror_obj.create(cr, uid, values, context=context)
                 result.append(id)

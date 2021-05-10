@@ -24569,6 +24569,8 @@ msgstr "Produits Stoppés"
 #: field:stock.production.lot,comment:0
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:64
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:77
+#: field:substitute.item,comment:0
+#: field:substitute.item.mirror,comment:0
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
