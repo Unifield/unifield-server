@@ -138,7 +138,7 @@ def get_validation_schema(self):
     cherrypy.request.terp_data = data
 
     params.nodefault = True
-
+    params.validation_form = True
     form = self.create_form(params)
     cherrypy.request.terp_form = form
 
