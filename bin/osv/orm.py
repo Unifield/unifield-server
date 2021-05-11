@@ -1421,6 +1421,10 @@ class orm_template(object):
                                                             self._name + ',' + f, 'field', context_lang)
                     if res_trans:
                         res[f]['string'] = res_trans
+                if field_col._type == 'float' and context_lang == 'en_MF' and hasattr(field_col, 'en_thousand_sep'):
+                    if not field_col.en_thousand_sep:
+                        res[f]['en_thousand_sep'] = False
+
                 if field_col.help and context_lang != 'en_US':
                     help_trans = translation_obj._get_source(cr, user,
                                                              self._name + ',' + f, 'help', context_lang)
