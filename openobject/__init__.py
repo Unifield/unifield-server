@@ -33,13 +33,16 @@ def ustr(value):
     if hasattr(value, "__unicode__"):
         return str(value)
 
+    if isinstance(value, bytes):
+        return str(value, 'utf8')
+
     try: # first try without encoding
         return str(value)
     except:
         pass
 
     try: # then try with utf-8
-        return str(value, 'utf-8')
+        return str(value, 'utf8')
     except:
         pass
 

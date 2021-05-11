@@ -157,7 +157,6 @@ def _print_data(data):
                 if data.get('delete', False) and os.path.exists(data['path']):
                     os.remove(data['path'])
 #            return cherrypy.lib.static.serve_file(data['path'], "application/x-download", 'attachment')
-
         content = base64.b64decode(data['result'].encode('utf8'))
     return content
 
