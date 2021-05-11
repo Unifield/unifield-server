@@ -75,13 +75,33 @@ class patch_scripts(osv.osv):
 
         return True
 
-    # UF21.0
     def us_8166_hide_consolidated_sm_report(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:
             return True
         consolidated_sm_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'mission_stock', 'consolidated_mission_stock_wizard_menu')[1]
         self.pool.get('ir.ui.menu').write(cr, uid, consolidated_sm_report_menu_id, {'active': instance.level == 'coordo'}, context={})
+        return True
+
+    def us_7019_force_password_expiration(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj:
+            # don't run on new instances
+            cr.execute("update res_users set last_password_change =  NOW() - interval '7 months'")
+            self._logger.warn('Force password expiration on %d users.' % (cr.rowcount,))
+            cr.execute("update res_users set never_expire='t' where login in ('unidata', 'unidata2', 'unidata_screen', 'unidatasupply', 'unidataonly')")
+            self._logger.warn('Set never expire on %d unidata users.' % (cr.rowcount,))
+            if self.pool.get('sync.server.entity'):
+                cr.execute("""
+                    update res_users u set never_expire='t' from
+                        res_groups_users_rel grp_rel, ir_model_data d
+                    where
+                        grp_rel.uid = u.id and
+                        d.res_id = grp_rel.gid and
+                        d.name = 'instance_sync_user' and
+                        d.module = 'sync_server'
+                """)
+                self._logger.warn('Sync server: set never expire on %d sync users.' % (cr.rowcount,))
         return True
 
     # UF20.0

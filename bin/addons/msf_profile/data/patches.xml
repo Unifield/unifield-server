@@ -656,5 +656,8 @@
             <field name="method">us_7941_auto_vi_set_partner</field>
         </record>
 
+        <record id="us_7019_force_password_expiration" model="patch.scripts">
+            <field name="method">us_7019_force_password_expiration</field>
+        </record>
     </data>
 </openerp>

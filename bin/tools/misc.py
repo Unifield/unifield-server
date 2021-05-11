@@ -1892,6 +1892,8 @@ class Path():
         self.delete = delete
 
 def use_prod_sync(cr, uid=False, pool=False):
+    if not cr.table_exists('sync_client_sync_server_connection'):
+        return False
     cr.execute('''SELECT host, database
             FROM sync_client_sync_server_connection''')
     host, database = cr.fetchone()

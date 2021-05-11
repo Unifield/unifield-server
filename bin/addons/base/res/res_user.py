@@ -33,6 +33,7 @@ import logging
 from passlib.hash import bcrypt
 from service import http_server
 from msf_field_access_rights.osv_override import _get_instance_level
+import time
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -336,7 +337,7 @@ class users(osv.osv):
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
         security.check_password_validity(self, cr, uid, None, value, value, login)
         encrypted_password = bcrypt.encrypt(tools.ustr(value))
-        self.write(cr, uid, id, {'password': encrypted_password})
+        self.write(cr, uid, id, {'password': encrypted_password, 'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S')})
 
     def _is_erp_manager(self, cr, uid, ids, name=None, arg=None, context=None):
         '''
@@ -495,7 +496,17 @@ class users(osv.osv):
         'log_xmlrpc': fields.boolean('Log XMLRPC requests', help="Log the XMLRPC requests of this user into a dedicated file"),
         'last_use_shortcut': fields.datetime('Last use of shortcut', help="Last date when a shortcut was used", readonly=True),
         'nb_shortcut_used': fields.integer('Number of shortcut used', help="Number of time a shortcut has been used by this user", readonly=True),
+        'last_password_change': fields.datetime('Last Password Change', readonly=1),
+        'never_expire': fields.boolean('Password never expires', help="If unticked, the password must be changed every 6 months"),
     }
+
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
+        fg = super(users, self).fields_get(cr, uid, fields, context=context, with_uom_rounding=with_uom_rounding)
+        if fg.get('never_expire') and not tools.config.get('is_prod_instance') and not tools.misc.use_prod_sync(cr):
+            fg['never_expire']['string'] = '%s (%s)' % (fg['never_expire']['string'], _('not applicable on this sandbox'))
+            fg['never_expire']['help'] = _('On this sandbox passwords never expire')
+
+        return fg
 
     def on_change_company_id(self, cr, uid, ids, company_id):
         return {
@@ -606,6 +617,8 @@ class users(osv.osv):
         'view': 'simple',
         'is_synchronizable': False,
         'synchronize': False,
+        'last_password_change': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'never_expire': lambda self, cr, *a: cr.dbname == 'SYNC_SERVER',
     }
 
     @tools.cache()
@@ -932,6 +945,7 @@ class users(osv.osv):
                 vals = {
                     'password': new_passwd,
                     'force_password_change': False,
+                    'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }
                 self.check(db_name, uid, tools.ustr(old_passwd))
                 result = self.write(cr, 1, uid, vals)
