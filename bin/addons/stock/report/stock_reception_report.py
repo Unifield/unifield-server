@@ -27,6 +27,16 @@ class stock_reception_report(report_sxw.rml_parse):
         model_obj = self.pool.get('ir.model.data')
         res = []
 
+        ave_price_list = {}
+        self.cr.execute("""
+            SELECT distinct on (m.id) m.id, new_standard_price FROM stock_move m
+            LEFT JOIN standard_price_track_changes tc on tc.product_id = m.product_id AND tc.change_date >= m.date
+            WHERE m.id IN %s
+            ORDER BY m.id, change_date ASC;
+        """, (tuple(moves_ids),))
+        for move_d in self.cr.fetchall():
+            ave_price_list[move_d[0]] = move_d[1]
+
         for move in move_obj.browse(self.cr, self.uid, moves_ids, context=self.localcontext):
             pick = move.picking_id
             pol = move.purchase_line_id or False
@@ -40,6 +50,11 @@ class stock_reception_report(report_sxw.rml_parse):
                 func_price_unit = round(curr_obj.compute(self.cr, self.uid, po.pricelist_id.currency_id.id,
                                                          move.company_id.currency_id.id, move.price_unit,
                                                          round=False, context=self.localcontext), 2)
+            func_ave_price = ave_price_list.get(move.id, False) or move.product_id.standard_price
+            if move.company_id.currency_id.id != move.product_id.currency_id.id:
+                func_ave_price = round(curr_obj.compute(self.cr, self.uid, move.product_id.currency_id.id,
+                                                        move.company_id.currency_id.id, func_ave_price,
+                                                        round=False, context=self.localcontext), 2)
 
             # Get the linked INT's move using move.move_dest_id
             cross_docking_id = model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
@@ -92,8 +107,11 @@ class stock_reception_report(report_sxw.rml_parse):
                 'qty_received': move.product_qty,
                 'unit_price': move.price_unit,
                 'currency': move.price_currency_id and move.price_currency_id.name or '',
+                'ave_price_func': func_ave_price,
                 'total_cost': move.product_qty * move.price_unit,
                 'total_cost_func': move.product_qty * func_price_unit,
+                'ave_total_cost_func': move.product_qty * func_ave_price,
+                'comment': move.comment or '',
                 'dest_loc': move.location_dest_id and move.location_dest_id.name or '',
                 'final_dest_loc': final_dest_loc,
                 'exp_receipt_date': move.date_expected,

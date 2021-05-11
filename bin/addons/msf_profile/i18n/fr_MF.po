@@ -112129,3 +112129,32 @@ msgstr "ne s'applique pas à cette instance de tests"
 #: field:res.users,last_password_change:0
 msgid "Last Password Change"
 msgstr "Dernier changement de mot de passe"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:257
+msgid "Ave. Cost Price Total Cost (Functional currency)"
+msgstr "Prix Moyen Total (Devise fonctionnelle)"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:254
+msgid "Ave. Cost Price (Functional currency)"
+msgstr "Prix Moyen (Devise fonctionnelle)"
+
+#. module: stock_override
+#: code:addons/stock_override/report/report_stock_move.py:849
+#, python-format
+msgid "Ave. Cost Price Value (%s)"
+msgstr "Valeur Prix Moyen (%s)"
+
+#. module: stock_override
+#: code:addons/stock_override/report/report_stock_move.py:849
+#, python-format
+msgid "Ave. Price Movement value (%s)"
+msgstr "Valeur du Mouvement Prix Moyen (%s)"
+
+#. module: stock, stock_override
+#: code:addons/stock_override/report/report_stock_move.py:849
+#: report:addons/stock/report/stock_reception_report_xls.mako:258
+#, python-format
+msgid "Line Comment"
+msgstr "Commentaire de la ligne"
