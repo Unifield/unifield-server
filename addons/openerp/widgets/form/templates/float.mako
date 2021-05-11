@@ -4,7 +4,14 @@
         kind="${kind}" 
         name='${name}' 
         id ='${name}' 
-        value="${value}" 
+        % if not en_thousand_sep:
+            en_thousand_sep = 'False'
+        % endif
+        % if not en_thousand_sep and value:
+            value="${value.replace(',', '')}"
+        % else:
+            value="${value}"
+        % endif
         size="1"
         class="${css_class}" 
         ${py.attrs(attrs, fld_readonly=1 if readonly_before_state else 0)} />

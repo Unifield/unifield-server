@@ -823,7 +823,7 @@ MochiKit.Base.update(ListView.prototype, {
         var self = this;
         var req = openobject.http.postJSON('/openerp/listgrid/save', args);
 
-        var $current_record = jQuery('table[id="'+this.name+'_grid'+'"]').find('tr.grid-row[record="'+id+'"]');
+        var $current_record = jQuery('table[id="'+this.name+'_grid'+'"]').find('tr.grid-row[record="'+(id||-1)+'"]');
         req.addCallback(function(obj) {
             if (obj.error) {
                 error_display(obj.error);
@@ -846,6 +846,15 @@ MochiKit.Base.update(ListView.prototype, {
                         }
                     } else if($req_field.hasClass('errorfield')) {
                         $req_field.removeClass('errorfield');
+                    }
+                }
+                if (obj.error_field) {
+                    var $field_error = $current_record.find('td [id="'+'_terp_listfields/'+obj.error_field+'"]');
+                    if ($field_error.length) {
+                        $field_error.addClass('errorfield');
+                        if (!$focus_field) {
+                            $focus_field = $field_error;
+                        }
                     }
                 }
                 if($focus_field) {

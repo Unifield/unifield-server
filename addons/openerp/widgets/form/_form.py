@@ -463,11 +463,14 @@ register_widget(NullBoolean, ["null_boolean"])
 
 class Float(TinyInputWidget):
     template = "/openerp/widgets/form/templates/float.mako"
-
+    params = ['en_thousand_sep']
+    en_thousand_sep = True
     def __init__(self, **attrs):
         super(Float, self).__init__(**attrs)
 
         self.with_null = attrs.get('with_null')
+        if not attrs.get('en_thousand_sep', True):
+            self.en_thousand_sep = False
         rounding = False
         if attrs.get('rounding_value') and attrs.get('uom_rounding'):
             if isinstance(attrs.get('rounding_value'), (list, tuple)):
@@ -487,7 +490,7 @@ class Float(TinyInputWidget):
         computation = attrs.get('computation', False)
         if isinstance(computation, basestring):
             computation = eval(computation)
-        self.validator = validators.Float(digit=digit, computation=computation, rounding=rounding)
+        self.validator = validators.Float(digit=digit, computation=computation, rounding=rounding, en_thousand_sep=self.en_thousand_sep)
 
 #        if not self.default:
 #            self.default = 0.0
