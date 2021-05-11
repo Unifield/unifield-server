@@ -63,12 +63,13 @@ class patch_scripts(osv.osv):
 
     def us_7295_update_new_dest_cc_link(self, cr, uid, *a, **b):
         """
-        CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new field "dest_cc_link_ids"
-        => recreates the links without activation/inactivation dates
+        CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new one "dest_cc_link_ids".
 
-        At HQ Level, it also:
+        In all instances: deletes the old CCs, and creates the related links without activation/inactivation dates.
+
+        At HQ Level only:
         - triggers a sync of all the links created in HQ
-        - sends a message to trigger the deletion of all the links created out of HQ.
+        - sends a message to trigger the deletion of all the links created out of HQ (used at migration time only).
         """
         cr.execute("""
                    INSERT INTO dest_cc_link(dest_id, cc_id)
