@@ -3033,6 +3033,9 @@ class sale_order_line(osv.osv):
                 qty = float(qty)
             vals.update({'product_uos_qty' : qty * product_obj.read(cr, uid, product_id, ['uos_coeff'])['uos_coeff']})
 
+        if vals.get('po_cft', False) == 'pli':
+            vals.update({'po_cft': 'po'})
+
         pricelist = False
         order_id = vals.get('order_id', False)
         order_data = False

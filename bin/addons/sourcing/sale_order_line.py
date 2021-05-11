@@ -43,6 +43,7 @@ _SELECTION_PO_CFT = [
     ('dpo', 'Direct Purchase Order'),
     ('cft', 'Tender'),
     ('rfq', 'Request for Quotation'),
+    ('pli', 'Purchase List'),
 ]
 
 
@@ -898,6 +899,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
                 )
 
+            if line.product_id and line.po_cft == 'pli' and line.supplier.partner_type != 'external':
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""You can't source with 'Purchase List' to a non-external partner."""),
+                )
+
             if line.order_id.state == 'validated' and line.order_id.order_type in (
                     'donation_st', 'donation_exp') and line.type != 'make_to_stock':
                 raise osv.except_osv(
@@ -1255,6 +1262,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             elif sourcing_line.po_cft == 'dpo':
                 domain.append(('order_type', '=', 'direct'))
                 domain.append(('dest_address_id', '=', sourcing_line.order_id.partner_shipping_id.id))
+            elif sourcing_line.po_cft == 'pli':
+                domain.append(('order_type', '=', 'purchase_list'))
 
             # supplier's order creation mode:
             if sourcing_line.supplier.po_by_project in ('project', 'category_project') or (sourcing_line.po_cft == 'dpo' and sourcing_line.supplier.po_by_project == 'all'):
@@ -1360,11 +1369,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
                 'unique_fo_id': sourcing_line.order_id.id if sourcing_line.supplier.po_by_project == 'isolated' else False,
             }
-            if sourcing_line.po_cft == 'po': # Purchase Order
+            if sourcing_line.po_cft == 'po':  # Purchase Order
                 po_values.update({
                     'order_type': 'regular',
                 })
-            elif sourcing_line.po_cft == 'dpo': # Direct Purchase Order
+            elif sourcing_line.po_cft == 'dpo':  # Direct Purchase Order
                 po_values.update({
                     'order_type': 'direct',
                     'dest_partner_id': sourcing_line.order_id.partner_id.id,
@@ -1372,6 +1381,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 })
                 #if sourcing_line.order_id.partner_id.partner_type in ('esc', 'external'):
                 #    po_values['po_version'] = 2 # TODO NEEDED ?
+            elif sourcing_line.po_cft == 'pli':  # Purchase List
+                po_values.update({'order_type': 'purchase_list'})
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
 
@@ -1589,7 +1600,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr) # confirmation create pick/out or INT
 
                 elif sourcing_line.type == 'make_to_order':
-                    if sourcing_line.po_cft in ('po', 'dpo'):
+                    if sourcing_line.po_cft in ('po', 'dpo', 'pli'):
                         po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
                         if not po_to_use: # then create new PO:
                             po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
@@ -2124,6 +2135,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             res['value'].update({'po_cft': 'dpo'})
 
         partner_id = 'supplier' in value and value['supplier'] or partner_id
+
+        if partner_id:
+            p_type = self.pool.get('res.partner').read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type']
+            if po_cft == 'pli' and p_type != 'external':
+                res['warning'] = {
+                    'title': _('Warning'),
+                    'message': _("""'Purchase List' is not allowed with a non-external partner."""),
+                }
+                res['value'].update({'po_cft': 'po'})
+
         if line_id and partner_id and line.product_id:
             check_fnct = product_obj._on_change_restriction_error
             res, error = self._check_product_constraints(
@@ -2279,6 +2300,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'title': _('Warning'),
                 'message': _('The chosen partner has no address. Please define an address before continuing.'),
             }
+
+        # Search the local market partner id
+        data_obj = self.pool.get('ir.model.data')
+        data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'),
+                                            ('name', '=', 'res_partner_local_market')], limit=1, order='NO_ORDER')
+        if data_id and partner.id == data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']:
+            result['value'].update({'po_cft': 'pli'})
 
         # If the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
         line = self.browse(cr, uid, line_id, context=context)
