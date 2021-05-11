@@ -2984,7 +2984,7 @@ class sale_order_line(osv.osv):
         '''
         context = context is None and {} or context
 
-        if context.get('button') in ['button_remove_lines', 'check_lines_to_fix', 'add_multiple_lines', 'wizard_import_ir_line']:
+        if context.get('button') in ['button_remove_lines', 'button_cancel_lines', 'check_lines_to_fix', 'add_multiple_lines', 'wizard_import_ir_line']:
             return True
         cond1 = not context.get('noraise')
         cond2 = not context.get('import_in_progress')

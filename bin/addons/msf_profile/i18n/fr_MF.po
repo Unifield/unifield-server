@@ -6382,6 +6382,7 @@ msgstr "Bons de commande sourcés"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_delete_lines.py:633
+#: code:addons/msf_doc_import/wizard/wizard_cancel_lines.py:357
 #, python-format
 msgid "The select empty lines is not available for this document"
 msgstr "La sélection de lignes vides n'est pas disponible pour ce document"
@@ -13170,11 +13171,12 @@ msgstr "Dépendances :"
 msgid "A list of all group names given button access by this rule"
 msgstr "A list of all group names given button access by this rule"
 
-#. module: purchase
-#: code:addons/purchase/wizard/purchase_line_cancel.py:51
+#. modules: msf_doc_import, purchase
+#: code:addons/msf_doc_import/wizard/wizard_cancel_lines.py:227
+#: code:addons/purchase/wizard/purchase_line_cancel.py:52
 #, python-format
 msgid "You cannot cancel a purchase order line which has already been synchronized"
-msgstr "You cannot cancel a purchase order line which has already been synchronized"
+msgstr "Vous ne pouvez pas annuler une ligne de BdC qui a déjà été synchronisée"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:203
@@ -13282,6 +13284,7 @@ msgstr "Non traduit"
 
 #. module: msf_doc_import
 #: view:wizard.delete.lines:0
+#: view:wizard.cancel.lines:0
 msgid "Select Qty=0 lines"
 msgstr "Sélectionner Qté=0 lignes"
 
@@ -22442,6 +22445,7 @@ msgstr "Modalités de l'application"
 #. modules: consumption_calculation, msf_doc_import
 #: view:wizard.delete.lines:0
 #: view:wizard.valid.line:0
+#: view:wizard.cancel.lines:0
 msgid "Select all lines"
 msgstr "Sélectionner toutes les lignes"
 
@@ -73403,6 +73407,7 @@ msgstr "Pacific/Kwajalein"
 #: view:mission.stock.wizard:0
 #: view:sale.order.line:0
 #: view:wizard.delete.lines:0
+#: view:wizard.cancel.lines:0
 #: view:wizard.export.po:0
 #: view:wizard.export.po.validated:0
 #: view:wizard.import.auto.supply.line:0
@@ -112179,3 +112184,36 @@ msgstr "Vous ne pouvez pas sourcer avec 'Liste d'Achats' vers un partenaire non-
 #, python-format
 msgid "'Purchase List' is not allowed with a non-external partner."
 msgstr "'Liste d'Achats' n'est pas autorisé avec un partenaire non-externe."
+
+#. modules: msf_doc_import, sale, purchase
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Cancel Lines"
+msgstr "Annuler des Lignes"
+
+#. module: msf_doc_import
+#: view:wizard.cancel.lines:0
+msgid "Cancel lines"
+msgstr "Annuler des lignes"
+
+#. module: msf_doc_import
+#: view:wizard.cancel.lines:0
+msgid "Lines to cancel"
+msgstr "Lignes à annuler"
+
+#. module: msf_doc_import
+#: view:wizard.cancel.lines:0
+msgid "Cancel selected lines"
+msgstr "Annuler les lignes sélectionnées"
+
+#. module: msf_doc_import
+#: view:wizard.cancel.lines:0
+msgid "Cancel & Resource selected lines"
+msgstr "Annuler & Ressourcer les lignes sélectionnées"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_cancel_lines.py:65
+#, python-format
+msgid "No line to cancel"
+msgstr "Aucune ligne à annuler"
