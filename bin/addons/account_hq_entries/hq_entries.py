@@ -44,6 +44,7 @@ class hq_entries(osv.osv):
         res = {}
         logger = netsvc.Logger()
         ad_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -87,6 +88,13 @@ class hq_entries(osv.osv):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive DEST (%s)') % (line.id or '', dest.code or ''))
                     continue
+            if line.destination_id and line.cost_center_id and line.date and \
+                    dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context):
+                res[line.id] = 'invalid'
+                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING,
+                                     _('%s: inactive combination (%s - %s)') %
+                                     (line.id or '', line.destination_id.code or '', line.cost_center_id.code or ''))
+                continue
             # G Check
             if line.analytic_id:
                 fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, context={'date': line.document_date})
@@ -485,6 +493,9 @@ class hq_entries(osv.osv):
     def _check_cc(self, cr, uid, ids, context=None):
         """
         At synchro time sets HQ entry to Not Run if the Cost Center used in the line doesn't exist or is inactive
+
+        Note: if the CC is active but the Dest/CC combination is inactive, the sync update is NOT blocked:
+              the HQ entry will be created with an invalid AD to be fixed before validation.
         """
         if isinstance(ids, (int, long)):
             ids = [ids]

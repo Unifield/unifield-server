@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<openerp>
+      <data>
+            <!-- DEST CC LINK - FORM VIEW -->
+            <record id="view_dest_cc_link_form" model="ir.ui.view">
+                <field name="name">dest.cc.link.form</field>
+                <field name="model">dest.cc.link</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form noteditable="1">
+                        <field name="cc_id"/>
+                        <newline/>
+                        <field name="active_from"/>
+                        <field name="inactive_from"/>
+                    </form>
+                </field>
+            </record>
+
+            <!-- DEST CC LINK - TREE VIEW -->
+            <record id="view_dest_cc_link_tree" model="ir.ui.view">
+                <field name="name">dest.cc.link.tree</field>
+                <field name="model">dest.cc.link</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree>
+                        <field name="cc_id"/>
+                        <field name="active_from"/>
+                        <field name="inactive_from"/>
+                    </tree>
+                </field>
+            </record>
+
+            <!-- DEST CC LINK - SEARCH VIEW -->
+            <record id="view_dest_cc_link_search" model="ir.ui.view">
+                <field name="name">dest.cc.link.search</field>
+                <field name="model">dest.cc.link</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search>
+                        <group>
+                            <field name="cc_id"/>
+                            <field name="active_from"/>
+                            <field name="inactive_from"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
+       </data>
+</openerp>

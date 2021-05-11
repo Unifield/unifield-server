@@ -104,6 +104,20 @@ class patch_scripts(osv.osv):
                 self._logger.warn('Sync server: set never expire on %d sync users.' % (cr.rowcount,))
         return True
 
+    # UF21.0
+    def us_7295_update_new_dest_cc_link(self, cr, uid, *a, **b):
+        """
+        CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new field "dest_cc_link_ids"
+        => recreates the links without activation/inactivation dates
+        """
+        cr.execute("""
+                   INSERT INTO dest_cc_link(dest_id, cc_id)
+                   SELECT destination_id, cost_center_id FROM destination_cost_center_rel
+                   """)
+        cr.execute("DELETE FROM destination_cost_center_rel")
+        self._logger.warn('Destinations: %s Dest CC Links generated.', cr.rowcount)
+        return True
+
     # UF20.0
     def us_7866_fill_in_target_cc_code(self, cr, uid, *a, **b):
         """

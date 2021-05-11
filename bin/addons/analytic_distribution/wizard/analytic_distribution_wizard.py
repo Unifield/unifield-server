@@ -1008,6 +1008,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         distrib_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         for w in self.browse(cr, uid, ids):
             # UF-1678
             # For Cost center and destination analytic accounts, check is done on POSTING date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
@@ -1021,6 +1022,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if not fpline.destination_id.filter_active:
                         raise osv.except_osv(_('Error'), _('Destination %s is either inactive at the date %s, or it allows no Cost Center.')
                                              % (fpline.destination_id.code or '', w.posting_date))
+                    if dest_cc_link_obj.is_inactive_dcl(cr, uid, fpline.destination_id.id, fpline.cost_center_id.id, w.posting_date):
+                        raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active at this date: %s") %
+                                             (fpline.destination_id.code or '', fpline.cost_center_id.code or '', w.posting_date))
             # UF-1678
             # For funding pool analytic account, check is done on DOCUMENT date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.document_date:
@@ -1081,7 +1085,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
             distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
-            if not distrib_id:
+            if not distrib_id or not self.pool.get('analytic.distribution').exists(cr, uid, distrib_id, context=context):
                 # create a new analytic distribution
                 analytic_vals = {}
                 if wiz.partner_type:#UF-2138: added the ref to partner type of FO/PO

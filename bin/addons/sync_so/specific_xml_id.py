@@ -307,6 +307,30 @@ class account_analytic_account(osv.osv):
 
 account_analytic_account()
 
+class dest_cc_link(osv.osv):
+    _inherit = 'dest.cc.link'
+
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        '''
+            same destination as CC
+        '''
+        if not ids:
+            return []
+
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        res = dict.fromkeys(ids, False)
+        mapping = {}
+        uniq_cc_ids = {}
+        for dest_cc_link in self.browse(cr, uid, ids, fields_to_fetch=['cc_id'], context=context):
+            mapping[dest_cc_link.id] = dest_cc_link.cc_id.id
+            uniq_cc_ids[dest_cc_link.cc_id.id] = True
+        cc_destination = self.pool.get('account.analytic.account').get_destination_name(cr, uid, uniq_cc_ids.keys(), 'category', context)
+        for dest_cc_link_id in mapping:
+            res[dest_cc_link_id] = cc_destination.get(mapping[dest_cc_link_id], [])
+        return res
+
+dest_cc_link()
 
 #US-113: Sync only to the mission with attached prop instance
 class financing_contract_contract(osv.osv):
