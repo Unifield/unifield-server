@@ -123,8 +123,10 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
 
 @expose(template="/openerp/controllers/templates/change_password.mako")
 def change_password(target, db=None, user=None, password=None,
-                    action=None, message=None, origArgs={}):
+                    action=None, message=None, origArgs=None, expired=False):
 
+    if origArgs is None:
+        origArgs = {}
     url = rpc.session.connection_string
     url = str(url[:-1])
 
@@ -143,7 +145,7 @@ def change_password(target, db=None, user=None, password=None,
     return dict(target=do_change_password_page, url=url, dblist=dblist, db=db,
                 user=user, password=password, new_password=new_password,
                 confirm_password=confirm_password, action=action, message=message,
-                origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset)
+                origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset, expired=expired)
 
 def secured(fn):
     """A Decorator to make a SecuredController controller method secured.
@@ -219,14 +221,14 @@ def secured(fn):
             if action == 'login' and login_ret == -4:
                 return login(cherrypy.request.path_info, message=_('A script during patch failed! Login is forbidden for the moment. Please contact your administrator'),
                              db=db, user=user, action=action, origArgs=get_orig_args(kw))
-            if action == 'login' and login_ret == -5: # must change password
+            if action == 'login' and login_ret in (-5, -7): # must change password
                 if 'confirm_password' in kw:
                     message = rpc.session.change_password(db, user, password, kw['new_password'], kw['confirm_password'])
                     if message is not True:
                         clear_change_password_fields(kw)
                         result = change_password(cherrypy.request.path_info,
                                                  message=message, db=db, user=user, password=password,
-                                                 action=action, origArgs=get_orig_args(kw))
+                                                 action=action, origArgs=get_orig_args(kw), expired=login_ret==-7)
                         clear_change_password_fields(kw)
 
                         return result
@@ -237,7 +239,7 @@ def secured(fn):
 
                 result = change_password(cherrypy.request.path_info,
                                          message=_('You have to change your password.'),
-                                         db=db, user=user, password=password, action=action, origArgs=get_orig_args(kw))
+                                         db=db, user=user, password=password, action=action, origArgs=get_orig_args(kw), expired=login_ret==-7)
                 clear_change_password_fields(kw)
                 return result
             elif action == 'login' and login_ret == -6:

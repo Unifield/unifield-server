@@ -142,6 +142,8 @@ class RPCGateway(object):
                 common.error('ServerUpdate', err.code)
             elif err.code.startswith('ForcePasswordChange'):
                 common.error('ForcePasswordChange', err.code)
+            elif err.code.startswith('PasswordExpired'):
+                common.error('PasswordExpired', err.code)
             elif err.code.startswith('PatchFailed'):
                 common.error('PatchFailed', err.code)
             elif err.code.startswith('AccessDenied'):
@@ -368,6 +370,8 @@ class RPCSession(object):
                 return -4
             elif e.title == 'ForcePasswordChange':
                 return -5
+            elif e.title == 'PasswordExpired':
+                return -7
             return -1
 
         if uid <= 0:
