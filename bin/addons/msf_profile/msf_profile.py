@@ -65,6 +65,8 @@ class patch_scripts(osv.osv):
         """
         CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new field "dest_cc_link_ids"
         => recreates the links without activation/inactivation dates
+
+        At HQ Level, it also triggers a sync of all the links created.
         """
         cr.execute("""
                    INSERT INTO dest_cc_link(dest_id, cc_id)
@@ -72,6 +74,15 @@ class patch_scripts(osv.osv):
                    """)
         cr.execute("DELETE FROM destination_cost_center_rel")
         self._logger.warn('Destinations: %s Dest CC Links generated.', cr.rowcount)
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''active_from'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE (SELECT instance_identifier FROM msf_instance WHERE id = (SELECT instance_id FROM res_company)) || '%'
+            """)
+            self._logger.warn('Sync. triggered on %s Dest CC Links.' % (cr.rowcount,))
         return True
 
     # UF20.0
