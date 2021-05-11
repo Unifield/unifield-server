@@ -656,5 +656,9 @@
             <field name="method">us_8166_hide_consolidated_sm_report</field>
         </record>
 
+        <record id="us_7941_auto_vi_set_partner" model="patch.scripts">
+            <field name="method">us_7941_auto_vi_set_partner</field>
+        </record>
+
     </data>
 </openerp>

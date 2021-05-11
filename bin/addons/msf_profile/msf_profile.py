@@ -51,8 +51,30 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
-
     # UF21.0
+    def us_7941_auto_vi_set_partner(self, cr, uid, *a, **b):
+        cr.execute('''
+            update automated_import imp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
+                from automated_import_function function
+            where
+                function.id = imp.function_id and
+                imp.partner_id is null and
+                function.multiple='t'
+        ''')
+        self._logger.warn('APU set on %s VI import.' % (cr.rowcount,))
+
+        cr.execute('''
+            update automated_export exp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
+                from automated_export_function function
+            where
+                function.id = exp.function_id and
+                exp.partner_id is null and
+                function.multiple='t'
+        ''')
+        self._logger.warn('APU set on %s VI export.' % (cr.rowcount,))
+
+        return True
+
     def us_8166_hide_consolidated_sm_report(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:

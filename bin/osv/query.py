@@ -53,6 +53,7 @@ class Query(object):
         self.where_clause_params = where_clause_params or []
 
         self.having = ''
+        self.having_group_by = ''
         # holds table joins done explicitly, supporting outer joins. The JOIN
         # condition should not be in `where_clause`. The dict is used as follows:
         #   self.joins = {

@@ -8591,6 +8591,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:replenishment.consolidated_oc.import,state:0
 #: view:replenishment.parent.segment:0
 #: selection:replenishment.parent.segment,state_parent:0
+#: view:composition.item:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -10716,6 +10717,7 @@ msgstr "Remote Warehouse"
 #: selection:kit.creation.to.consume,fake_state:0
 #: selection:kit.creation.to.consume,state:0
 #: selection:stock.move,hidden_creation_state:0
+#: view:composition.item:0
 msgid "In Production"
 msgstr "En Production"
 
@@ -17824,6 +17826,7 @@ msgstr "Liste pas trouvée !"
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocp
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocp
+#: code:addons/vertical_integration/wizard/ocp_export.py:99
 msgid "Export to HQ system (OCP)"
 msgstr "Export to HQ system (OCP)"
 
@@ -24464,8 +24467,8 @@ msgstr "Lignes d'Ecriture"
 #. module: msf_tools
 #: model:ir.actions.report.xml,name:msf_tools.report_stopped_products_xls
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:57
-msgid "Stopped products"
-msgstr "Produits Stoppés"
+msgid "Phase Out products"
+msgstr "Produits Supprimés"
 
 #. modules: tender_flow, product_asset, update_client, register_accounting, return_claim, msf_doc_import, supplier_catalogue, purchase_compare_rfq, product_list, stock, reason_types_moves, stock_override, purchase_override, specific_rules, kit, base, msf_tools, sales_followup, account, msf_outgoing, order_nomenclature, msf_field_access_rights, sale, msf_button_access_rights, analytic_distribution, msf_supply_doc_export, consumption_calculation, procurement_request
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:153
@@ -24568,6 +24571,8 @@ msgstr "Produits Stoppés"
 #: field:stock.production.lot,comment:0
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:64
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:77
+#: field:substitute.item,comment:0
+#: field:substitute.item.mirror,comment:0
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -33056,9 +33061,11 @@ msgstr "\n"
 msgid "SMS Message"
 msgstr "Message SMS"
 
-#. module: msf_audittrail
+#. modules: msf_audittrail, base, res_currency_tables
 #: code:addons/msf_audittrail/audittrail.py:526
 #: model:ir.actions.act_window,name:msf_audittrail.action_audittrail_view_log
+#: code:addons/base/res/res_currency.py:297
+#: view:res.currency.table:0
 #, python-format
 msgid "Track changes"
 msgstr "Suivi des Modifications"
@@ -35401,7 +35408,7 @@ msgid "    - %s :\n"
 msgstr "    - %s :\n"
 "Login : %s"
 
-#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export, product_nomenclature, account_mcdb, product, hr, account_override, procurement, msf_accrual, sync_client, product_nomenclature, account_mcdb, msf_doc_import
+#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export, product_nomenclature, account_mcdb, product, hr, account_override, procurement, msf_accrual, sync_client, product_nomenclature, account_mcdb, msf_doc_import, kit
 #: field:cash.request.liquidity,status:0
 #: field:cash.request.liquidity.bank,status:0
 #: field:cash.request.liquidity.cash,status:0
@@ -35443,6 +35450,7 @@ msgstr "    - %s :\n"
 #: field:product.mass.update,state:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:235
 #: report:addons/register_accounting/report/open_advances_xls.mako:160
+#: view:composition.item:0
 #, python-format
 msgid "Status"
 msgstr "Statut"
@@ -45164,8 +45172,15 @@ msgstr "Scinder le mouvement de stock sélectionné"
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_ocp_matching_export
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocp_matching_export
 #: view:ocp.matching.export.wizard:0
+#: code:addons/vertical_integration/wizard/ocp_matching_export.py:89
 msgid "OCP matching export"
 msgstr "OCP matching export"
+
+#. module: account_override
+#: code:addons/account_override/finance_export.py:304
+#, python-format
+msgid "A report \"%s\" has been generated under the name \"%s\" from the database \"%s\"."
+msgstr "Un rapport \"%s\" a été généré sous le nom \"%s\" depuis la base de données \"%s\"."
 
 #. modules: base, sale, stock
 #: view:ir.actions.todo:0
@@ -54490,6 +54505,7 @@ msgstr "Vérification des lignes…"
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:119
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:140
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:142
+#: view:composition.item:0
 #, python-format
 msgid "Closed"
 msgstr "Clôturé"
@@ -63495,8 +63511,8 @@ msgstr "Xor"
 #: view:export.report.stopped.products:0
 #: model:ir.actions.act_window,name:msf_tools.export_report_stopped_products_action
 #: model:ir.ui.menu,name:msf_tools.export_report_stopped_products_menu
-msgid "Export Stopped Products"
-msgstr "Exporter produits stoppés"
+msgid "Export Phase Out Products"
+msgstr "Exporter Produits Supprimés"
 
 #. module: account
 #: model:ir.actions.report.xml,name:account.account_central_journal
@@ -67402,12 +67418,14 @@ msgstr "File %s not found.\n"
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export
 #: view:ocb.matching.export.wizard:0
+#: code:addons/vertical_integration/wizard/ocp_matching_export.py:87
 msgid "OCB matching export"
 msgstr "OCB matching export"
 
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export_old
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export_old
+#: code:addons/vertical_integration/wizard/ocb_matching_export.py:69
 msgid "OCB matching export Access Interface"
 msgstr "Interface d'accès de OCB matching export"
 
@@ -76808,6 +76826,7 @@ msgstr "Valeur totale"
 #: selection:product.mass.update,state:0
 #: view:replenishment.parent.segment:0
 #: selection:replenishment.parent.segment,state_parent:0
+#: view:composition.item:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -83498,6 +83517,7 @@ msgstr "monthly.budget.wizard"
 #: selection:composition.kit,state:0
 #: view:replenishment.segment:0
 #: view:replenishment.parent.segment:0
+#: view:composition.item:0
 msgid "Completed"
 msgstr "Terminé"
 
@@ -95790,6 +95810,7 @@ msgstr "Thai / ภาษาไทย"
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb
+#: code:addons/vertical_integration/wizard/ocb_export.py:98
 msgid "Export to HQ system (OCB)"
 msgstr "Export to HQ system (OCB)"
 
@@ -96726,6 +96747,7 @@ msgstr "product.likely.expire.report.item"
 #: field:shipment.add.pack.processor,partner_id:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:901
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:317
 #, python-format
 msgid "Customer"
 msgstr "Client"
@@ -103863,8 +103885,8 @@ msgstr "Instance/Mission"
 
 #. module: msf_tools
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:73
-msgid "There is no stopped products to report"
-msgstr "Il n'y a aucun produit stoppé"
+msgid "There is no phase out products to report"
+msgstr "Il n'y a aucun produit supprimé"
 
 #. module: msf_tools, product
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
@@ -106732,6 +106754,7 @@ msgstr "Réf. du INT"
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb_old
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb_old
+#: code:addons/vertical_integration/wizard/ocb_export.py:96
 msgid "Export to HQ system (OCB) Access Interface"
 msgstr "Interface d'accès de l'Export vers le système HQ (OCB)"
 
@@ -112172,3 +112195,32 @@ msgstr "%sLa combinaison \"%s - %s\" n'est pas active à cette date : %s"
 #, python-format
 msgid "At least one Analytic Journal Item using the combination \"%s - %s\" has a Posting Date outside the activation dates selected."
 msgstr "Au moins une Ligne d'Ecriture Analytique utilisant la combinaison \"%s - %s\" a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1956
+#, python-format
+msgid "The Order Type of this Purchase Order can not be changed. One of its lines has a Service Product sourced from a%s."
+msgstr "Le Type de Commande de ce Bon de Commande ne peut pas être changé. Une de ses lignes a un Produit Service qui a été sourcé d'une%s."
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1956
+#, python-format
+msgid "n Internal Request"
+msgstr " Demande Interne"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1956
+#, python-format
+msgid " Field Order"
+msgstr " Commande de Terrain"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1064
+#, python-format
+msgid "PO Details"
+msgstr "Détails BdC"
+
+#. module: sales_followup
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:323
+msgid "FO Details"
+msgstr "Détails CdT"

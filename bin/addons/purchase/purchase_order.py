@@ -1924,15 +1924,15 @@ class purchase_order(osv.osv):
         if ids:
             order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
             err = []
-            for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart']):
-                if order['is_a_counterpart'] and order_type != 'loan':
+            for order in self.browse(cr, uid, ids, fields_to_fetch=['name', 'fixed_order_type', 'order_type', 'is_a_counterpart', 'order_line']):
+                if order.is_a_counterpart and order_type != 'loan':
                     err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
                 else:
-                    json_info = json.loads(order['fixed_order_type'])
+                    json_info = json.loads(order.fixed_order_type)
                     if json_info and order_type not in json_info:
                         allowed_type = ' / '.join([_(order_types_dict.get(x)) for x in json_info])
                         err.append(
-                            _('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
+                            _('%s: Only %s order types are allowed for this purchase order') % (order.name, allowed_type))
 
                 if err:
                     return {
@@ -1941,9 +1941,21 @@ class purchase_order(osv.osv):
                             'message': '\n'.join(x for x in err),
                         },
                         'value': {
-                            'order_type': order['order_type'],
+                            'order_type': order.order_type,
                         }
                     }
+
+                # Check if any PO line with an Service product has been sourced from a FO/IR
+                if order.order_type == 'direct' and order_type != 'direct':
+                    for pol in order.order_line:
+                        if pol.linked_sol_id and pol.product_id and pol.product_id.type == 'service_recep':
+                            return {
+                                'value': {'order_type': order.order_type},
+                                'warning': {
+                                    'title': _('Error'),
+                                    'message': _('The Order Type of this Purchase Order can not be changed. One of its lines has a Service Product sourced from a%s.') % (pol.linked_sol_id.procurement_request and _('n Internal Request') or _(' Field Order'))
+                                },
+                            }
 
         # check if the current PO was created from scratch :
         if order_type == 'direct':

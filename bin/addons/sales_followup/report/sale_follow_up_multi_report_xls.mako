@@ -190,6 +190,8 @@
     <Table x:FullColumns="1" x:FullRows="1">
         ## Order ref
         <Column ss:AutoFitWidth="1" ss:Width="130.0" />
+        ## Customer
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Customer ref
         <Column ss:AutoFitWidth="1" ss:Width="170.0" />
         ## PO ref
@@ -200,6 +202,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Line Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
+        ## FO Details
+        <Column ss:AutoFitWidth="1" ss:Width="200.0" />
         ## Received
         <Column ss:AutoFitWidth="1" ss:Width="54.75" />
         ## Requested Delivery Date
@@ -310,11 +314,13 @@
         <%
             headers_list = [
                 _('Order ref'),
+                _('Customer'),
                 _('Customer ref'),
                 _('PO ref'),
                 _('Supplier'),
                 _('Doc. Status'),
                 _('Line Status'),
+                _('FO Details'),
                 _('Received'),
                 _('RDD'),
                 _('Item'),
@@ -345,11 +351,13 @@
             <Row ss:Height="11.25">
                 %if line.get('state', '') in ['cancel', 'cancel_r']:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.name|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.partner_id and o.partner_id.name or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.client_order_ref and o.short_client_ref or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
                     % if o.date_order and isDate(o.date_order):
                         % if getLang() == 'fr_MF':
                         <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
@@ -424,11 +432,13 @@
                     % endif
                 % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id and o.partner_id.name or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref and o.short_client_ref or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
                     % if o.date_order and isDate(o.date_order):
                         % if getLang() == 'fr_MF':
                         <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>

@@ -1769,14 +1769,13 @@ class product_attributes(osv.osv):
 
                         prod_code = self.read(cr, uid, ids[0], ['default_code'], context=context)
                         error_msg = []
-
                         wiz_error = self.pool.get('product.deactivation.error').browse(cr, uid, deactivate_result['error'], context=context)
                         if wiz_error.stock_exist:
                             error_msg.append('Stock exists (internal locations)')
 
                         doc_errors = []
                         for error in wiz_error.error_lines:
-                            doc_errors.append(error.doc_ref)
+                            doc_errors.append("%s : %s" % (error.type or '', error.doc_ref or ''))
 
                         if doc_errors:
                             error_msg.append('Product is contained in opened documents :\n - %s'  % ' \n - '.join(doc_errors))
@@ -2140,7 +2139,7 @@ class product_attributes(osv.osv):
                             type_name = 'Debit Note'
                         # Donation (in-kind donation)
                         elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
-                            type_name = 'In-kind Donation'
+                            type_name = 'Finance document In-kind Donation'
                         # Intermission voucher out
                         elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
                             type_name = 'Intermission Voucher Out'
@@ -2160,7 +2159,7 @@ class product_attributes(osv.osv):
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': type_name,
                                                         'internal_type': 'account.invoice',
-                                                        'doc_ref': invoice.invoice_id.number,
+                                                        'doc_ref': invoice.invoice_id.number or invoice.invoice_id.name or '',
                                                         'doc_id': invoice.invoice_id.id}, context=context)
 
 
@@ -2962,7 +2961,7 @@ class product_deactivation_error_line(osv.osv_memory):
         'error_id': fields.many2one('product.deactivation.error', string='Error', readonly=True),
         'type': fields.char(size=64, string='Documents type'),
         'internal_type': fields.char(size=64, string='Internal document type'),
-        'doc_ref': fields.char(size=64, string='Reference'),
+        'doc_ref': fields.char(size=128, string='Reference'),
         'doc_id': fields.integer(string='Internal Reference'),
         'view_id': fields.integer(string='Reference of the view to open'),
     }
