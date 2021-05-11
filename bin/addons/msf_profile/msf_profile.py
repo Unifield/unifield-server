@@ -66,7 +66,9 @@ class patch_scripts(osv.osv):
         CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new field "dest_cc_link_ids"
         => recreates the links without activation/inactivation dates
 
-        At HQ Level, it also triggers a sync of all the links created.
+        At HQ Level, it also:
+        - triggers a sync of all the links created in HQ
+        - sends a message to trigger the deletion of all the links created out of HQ.
         """
         cr.execute("""
                    INSERT INTO dest_cc_link(dest_id, cc_id)
@@ -83,6 +85,7 @@ class patch_scripts(osv.osv):
                 AND name LIKE (SELECT instance_identifier FROM msf_instance WHERE id = (SELECT instance_id FROM res_company)) || '%'
             """)
             self._logger.warn('Sync. triggered on %s Dest CC Links.' % (cr.rowcount,))
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-7295-delete-not-hq-links'})
         return True
 
     # UF20.0
@@ -4714,6 +4717,32 @@ class sync_tigger_something(osv.osv):
 
                 _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
+        if vals.get('name') == 'us-7295-delete-not-hq-links':
+            cr.execute("""
+                DELETE FROM dest_cc_link 
+                WHERE id IN (
+                    SELECT res_id
+                    FROM ir_model_data
+                    WHERE module='sd' 
+                    AND model='dest.cc.link' 
+                    AND name LIKE ANY (
+                        SELECT instance_identifier || '%'
+                        FROM msf_instance
+                        WHERE level IN ('coordo', 'project')
+                    )
+                )
+            """)
+            cr.execute("""
+                DELETE FROM ir_model_data
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE ANY (
+                    SELECT instance_identifier || '%'
+                    FROM msf_instance
+                    WHERE level IN ('coordo', 'project')
+                )
+            """)
+            _logger.warn('Deletion of %d Dest CC Links created out of HQ' % (cr.rowcount,))
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
