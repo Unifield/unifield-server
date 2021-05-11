@@ -87,28 +87,35 @@ class patch_scripts(osv.osv):
         """
         CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new one "dest_cc_link_ids".
 
-        In all instances: deletes the old CCs, and creates the related links without activation/inactivation dates.
+        1) In all instances: deletes the old CCs, and creates the related links without activation/inactivation dates.
 
-        At HQ Level only:
-        - triggers a sync of all the links created in HQ
-        - sends a message to trigger the deletion of all the links created out of HQ (used at migration time only).
+        2) At HQ Level: sends a message to trigger the deletion of all the links created out of HQ (used at migration time only).
+
+        3) Out of HQ: prevents the sync of the links created, they are used at migration time only and will be deleted, cf 2).
         """
-        cr.execute("""
-                   INSERT INTO dest_cc_link(dest_id, cc_id)
-                   SELECT destination_id, cost_center_id FROM destination_cost_center_rel
-                   """)
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        dest_ids = analytic_acc_obj.search(cr, uid, [('category', '=', 'DEST')])
+        dcl_nb = 0
+        for dest in analytic_acc_obj.browse(cr, uid, dest_ids, fields_to_fetch=['dest_cc_ids']):
+            for cc in dest.dest_cc_ids:
+                dest_cc_link_obj.create(cr, uid, {'dest_id': dest.id, 'cc_id': cc.id})
+                dcl_nb += 1
+        self._logger.warn('Destinations: %s Dest CC Links generated.', dcl_nb)
+
         cr.execute("DELETE FROM destination_cost_center_rel")
-        self._logger.warn('Destinations: %s Dest CC Links generated.', cr.rowcount)
+        self._logger.warn('Destinations: %s CC deleted.', cr.rowcount)
+
         if _get_instance_level(self, cr, uid) == 'hq':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-7295-delete-not-hq-links'})
+        else:
             cr.execute("""
                 UPDATE ir_model_data 
-                SET touched ='[''active_from'']', last_modification = NOW()
+                SET touched ='[]', last_modification = '1980-01-01 00:00:00'
                 WHERE module='sd' 
                 AND model='dest.cc.link' 
                 AND name LIKE (SELECT instance_identifier FROM msf_instance WHERE id = (SELECT instance_id FROM res_company)) || '%'
             """)
-            self._logger.warn('Sync. triggered on %s Dest CC Links.' % (cr.rowcount,))
-            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-7295-delete-not-hq-links'})
         return True
 
     # UF20.0
