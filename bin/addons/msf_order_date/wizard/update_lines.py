@@ -225,7 +225,10 @@ class update_lines(osv.osv_memory):
 
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             stock_take_date = obj.stock_take_date
-            dom = [('order_id', '=', obj.id), ('state', 'in', ['draft', 'validated', 'validated_n'])]
+            if line_obj == self.pool.get('purchase.order.line'):
+                dom = [('order_id', '=', obj.id), ('state', '=', 'draft')]
+            else:
+                dom = [('order_id', '=', obj.id), ('state', 'in', ['draft', 'validated', 'validated_n'])]
             if selected and context.get('button_selected_ids'):
                 dom += [('id', 'in', context.get('button_selected_ids'))]
             line_ids = line_obj.search(cr, uid, dom, context=context)

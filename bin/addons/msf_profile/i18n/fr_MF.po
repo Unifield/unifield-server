@@ -73661,13 +73661,18 @@ msgstr "Please add some invoices!"
 msgid "Global"
 msgstr "Global"
 
-#. modules: msf_order_date, procurement_request, purchase
+#. modules: msf_order_date, procurement_request
 #: code:addons/msf_order_date/order_dates.py:709
 #: code:addons/procurement_request/procurement_request.py:542
-#: code:addons/purchase/purchase_order.py:1178
 #, python-format
 msgid "Do you want to update the Date of Stock Take of all/selected Order lines ?"
 msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+
+#. modules: purchase
+#: code:addons/purchase/purchase_order.py:1178
+#, python-format
+msgid "Do you want to update the Date of Stock Take of all/selected draft Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lignes brouillon de la Commande ou les lignes brouillon sélectionnées ?"
 
 #. modules: register_accounting, msf_homere_interface, documents_done, consumption_calculation, msf_button_access_rights, mission_stock, msf_doc_import, analytic_distribution, sourcing, sale, account
 #: field:mass.reallocation.verification.wizard,error_ids:0

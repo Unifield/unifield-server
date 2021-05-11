@@ -208,8 +208,8 @@
                                 <field name="from_address" domain="[('partner_id', '=', company_id)]" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="dest_partner_names"/>
                                 <group colspan="2" col="3">
-                                    <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                    <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}" />
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="no_line" invisible="1"/>
@@ -263,7 +263,7 @@
                                     <field name="old_price_unit" invisible="1"/>
                                     <field name="date_planned"/>
                                     <field name="confirmed_delivery_date"/>
-                                    <field name="stock_take_date"/>
+                                    <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                                     <button name="button_analytic_distribution" string="Analytical distribution" type="object" context="{'partner_type': parent.partner_type}" icon="terp-stock_symbol-selection"/>
                                     <field name="analytic_distribution_state_recap" string="A.D"/>
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
@@ -821,7 +821,7 @@
                             <field name="old_price_unit" invisible="1"/>
                             <field name="date_planned" attrs="{'readonly': [('state', 'not in', ('draft', 'validated_n', 'validated'))]}"/>
                             <field name="confirmed_delivery_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated', 'validated_n', 'rfq_sent', 'rfq_updated'))]}"/>
-                            <field name="stock_take_date"/>
+                            <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                             <group colspan="4">
                                 <group colspan="2">
                                     <field name="original_qty" colspan="1" readonly="1"/>
