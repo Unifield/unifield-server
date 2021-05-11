@@ -1260,12 +1260,6 @@ class product_attributes(osv.osv):
                 error = True
                 msg = _('be exchanged')
                 st_cond = product.state.no_external or product.state.no_esc or product.state.no_internal
-            elif 'internal' in constraints and sale_obj and product.state and product.state.code == 'phase_out' and \
-                    partner_type == 'section' and sale_type in ('donation_exp', 'donation_st'):
-                # To prevent the donation of Phased Out products to Inter-section partners
-                error = True
-                msg = _('be donated to an Inter-section')
-                st_cond = True
             elif product.no_external and 'external' in constraints and \
                     (not sale_obj or (sale_obj and product.state and product.state.code != 'phase_out')):
                 error = True
