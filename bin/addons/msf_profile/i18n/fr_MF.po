@@ -24561,8 +24561,6 @@ msgstr "Produits Stoppés"
 #: field:stock.production.lot,comment:0
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:64
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:77
-#: code:addons/stock_override/report/report_stock_move.py:849
-#: report:addons/stock/report/stock_reception_report_xls.mako:258
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -111918,3 +111916,10 @@ msgstr "Valeur Prix Moyen (%s)"
 #, python-format
 msgid "Ave. Price Movement value (%s)"
 msgstr "Valeur du Mouvement Prix Moyen (%s)"
+
+#. module: stock, stock_override
+#: code:addons/stock_override/report/report_stock_move.py:849
+#: report:addons/stock/report/stock_reception_report_xls.mako:258
+#, python-format
+msgid "Line Comment"
+msgstr "Commentaire de la ligne"

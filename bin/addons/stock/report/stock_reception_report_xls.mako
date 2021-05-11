@@ -149,7 +149,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Ave. Cost Price Total Cost (Functional currency)
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
-        ## Comment
+        ## Line Comment
         <Column ss:AutoFitWidth="1" ss:Width="200.0" />
         ## Destination Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
@@ -255,7 +255,7 @@
             _('Total Cost (PO currency)'),
             _('Total Cost (Functional currency)'),
             _('Ave. Cost Price Total Cost (Functional currency)'),
-            _('Comment'),
+            _('Line Comment'),
             _('Destination Location'),
             _('Final Destination Location'),
             _('Expected Receipt Date'),
