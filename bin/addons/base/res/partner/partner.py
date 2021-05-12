@@ -400,6 +400,13 @@ class res_partner_address(osv.osv):
         Added in US-7003 to prevent changing the unlink method
         If the address is linked to a Shipment, deactivate it instead of deleting but only if the document isn't opened
         '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         ship_obj = self.pool.get('shipment')
         ship_ids = ship_obj.search(cr, uid, [('address_id', 'in', ids)], context=context)
         if ship_ids:

@@ -3953,13 +3953,6 @@ class orm(orm_template):
                                      % (operation, self._description))
 
     def unlink_web(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if not ids:
-            return True
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
         return self.unlink(cr, uid, ids, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
