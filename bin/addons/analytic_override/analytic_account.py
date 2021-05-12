@@ -913,8 +913,10 @@ class analytic_account(osv.osv):
                                                                 order='NO_ORDER', context=context)
                     dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
                 # create the CC to be created
+                out_of_sync_ctx = context.copy()
+                del out_of_sync_ctx['sync_update_execution']  # removed in order for the sdrefs to be created
                 for cc_id in [c for c in new_cc_ids if c not in current_cc_ids]:
-                    dest_cc_link_obj.create(cr, uid, {'dest_id': dest_id, 'cc_id': cc_id}, context=context)
+                    dest_cc_link_obj.create(cr, uid, {'dest_id': dest_id, 'cc_id': cc_id}, context=out_of_sync_ctx)
             del vals['dest_cc_ids']
         return True
 
