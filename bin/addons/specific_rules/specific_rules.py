@@ -57,15 +57,19 @@ class sale_order_line(osv.osv):
 
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='CC/DG', type='char'),}
 
-    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
-                          uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-                          lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0, uom=False, qty_uos=0, uos=False, name='',
+                          partner_id=False, lang=False, update_tax=True, date_order=False, packaging=False,
+                          fiscal_position=False, flag=False, context=None):
         '''
         if the product is short shelf life we display a warning
         '''
+        if context is None:
+            context = {}
+
         # call to super
-        result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
-                                                                uom, qty_uos, uos, name, partner_id, lang, update_tax, date_order, packaging, fiscal_position, flag)
+        result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom, qty_uos,
+                                                                uos, name, partner_id, lang, update_tax, date_order,
+                                                                packaging, fiscal_position, flag, context=context)
 
         # if the product is short shelf life, display a warning
         if product:
