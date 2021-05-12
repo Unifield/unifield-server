@@ -949,8 +949,8 @@ class product_attributes(osv.osv):
         'removal_time': fields.integer('Product Removal Time',
                                        help='The number of months before a production lot should be removed.'),
         'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
-        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
-        'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
+        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True, hide_default_menu=True),
+        'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True, hide_default_menu=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                                      type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.selection(

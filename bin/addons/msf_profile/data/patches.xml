@@ -659,9 +659,14 @@
         <record id="us_7019_force_password_expiration" model="patch.scripts">
             <field name="method">us_7019_force_password_expiration</field>
         </record>
-		
-		<record id="us_7295_update_new_dest_cc_link" model="patch.scripts">
+
+        <record id="us_7295_update_new_dest_cc_link" model="patch.scripts">
             <field name="method">us_7295_update_new_dest_cc_link</field>
         </record>
+
+        <record id="us_8196_delete_default_prod_curr" model="patch.scripts">
+            <field name="method">us_8196_delete_default_prod_curr</field>
+        </record>
+
     </data>
 </openerp>
