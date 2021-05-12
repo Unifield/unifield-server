@@ -4747,7 +4747,7 @@ class sync_tigger_something(osv.osv):
 
                 _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
-        if vals.get('name') == 'us-7295-delete-not-hq-links':
+        if vals.get('name') == 'us-7295-delete-not-hq-links' and context.get('sync_update_execution'):
             cr.execute("""
                 DELETE FROM dest_cc_link 
                 WHERE id IN (
