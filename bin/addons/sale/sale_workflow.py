@@ -587,8 +587,7 @@ class sale_order_line(osv.osv):
                 if sol.procurement_request:
                     check_vals = {'constraints': 'consumption'}
                 else:
-                    order = sol.order_id
-                    check_vals = {'obj_type': 'sale.order', 'partner_id': order.partner_id.id, 'sale_type': order.order_type}
+                    check_vals = {'obj_type': 'sale.order', 'partner_id': sol.order_id.partner_id.id}
                 self.pool.get('product.product')._get_restriction_error(cr, uid, [sol.product_id.id], vals=check_vals, context=context)
             if sol.order_id.procurement_request and not sol.order_id.location_requestor_id:
                 raise osv.except_osv(_('Warning !'),

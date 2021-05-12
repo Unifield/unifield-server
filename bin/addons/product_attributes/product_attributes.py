@@ -1203,7 +1203,6 @@ class product_attributes(osv.osv):
         constraints = []
         partner_type = False
         sale_obj = vals.get('obj_type') == 'sale.order'
-        sale_type = vals.get('sale_type', False)
 
         # Compute the constraint if a partner is passed in vals
         if vals.get('partner_id'):

@@ -846,7 +846,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 for order in self.browse(cr, uid, ids):
                     for line in order.order_line:
                         if line.product_id:
-                            res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order', 'sale_type': order_type})
+                            res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order'})
                             if test:
                                 res.setdefault('value', {}).update({'partner_order_id': False, 'partner_shipping_id': False, 'partner_invoice_id': False})
                                 return res
@@ -2507,8 +2507,7 @@ class sale_order_line(osv.osv):
         if product:
             if partner_id:
                 # Test the compatibility of the product with the partner of the order
-                sale_type = context.get('sale_id') and self.pool.get('sale.order').read(cr, uid, context['sale_id'], ['order_type'])['order_type'] or False
-                res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order', 'sale_type': sale_type})
+                res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order'})
                 if test:
                     return res
 
@@ -2649,7 +2648,7 @@ class sale_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             if line.order_id and line.order_id.partner_id and line.product_id:
-                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order', 'sale_type': line.order_id.order_type}, context=context):
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order'}, context=context):
                     return False
 
         return True
