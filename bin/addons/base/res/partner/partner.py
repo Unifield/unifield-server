@@ -395,6 +395,28 @@ class res_partner_address(osv.osv):
                                                % (', '.join(ship_names),)}}
         return {}
 
+    def unlink_web(self, cr, uid, ids, context=None):
+        '''
+        Added in US-7003 to prevent changing the unlink method
+        If the address is linked to a Shipment, deactivate it instead of deleting but only if the document isn't opened
+        '''
+        ship_obj = self.pool.get('shipment')
+        ship_ids = ship_obj.search(cr, uid, [('address_id', 'in', ids)], context=context)
+        if ship_ids:
+            ship_names = []
+            for ship in ship_obj.browse(cr, uid, ship_ids, fields_to_fetch=['state', 'name'], context=context):
+                if ship.state in ['draft', 'shipped']:
+                    ship_names.append(ship.name)
+            if ship_names:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The Address can not be deactivated. There is open SHIPs for this address: %s.\nPlease process them first.')
+                    % (', '.join(ship_names),))
+            else:
+                return self.write(cr, uid, ids, {'active': False}, context=context)
+
+        return super(res_partner_address, self).unlink_web(cr, uid, ids, context=context)
+
 
 res_partner_address()
 

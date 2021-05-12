@@ -111897,6 +111897,7 @@ msgstr "Vous devez avoir au moins une ligne pour pouvoir créer le Mouvement Int
 
 #. module: base
 #: code:addons/base/res/partner/partner.py:394
+#: code:addons/base/res/partner/partner.py:413
 #, python-format
 msgid "The Address can not be deactivated. There is open SHIPs for this address: %s.\n"
 "Please process them first."

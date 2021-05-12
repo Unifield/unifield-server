@@ -3952,6 +3952,16 @@ class orm(orm_template):
                                      _('Operation prohibited by access rules, or performed on an already deleted document (Operation: %s, Document type: %s).')
                                      % (operation, self._description))
 
+    def unlink_web(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return self.unlink(cr, uid, ids, context=context)
+
     def unlink(self, cr, uid, ids, context=None):
         """
         Delete records with given ids
