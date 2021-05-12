@@ -60,8 +60,8 @@ class patch_scripts(osv.osv):
             cur_id = user_record.company_id.currency_id.id
             cr.execute('update product_product set currency_id = %s where currency_id != %s', (cur_id, cur_id))
             self._logger.warn('Changed cost price currency on %d products' % (cr.rowcount,))
-            cr.execute('update product_product set field_currency_id = %s where currency_id != %s', (cur_id, cur_id))
-            self._logger.warn('Changed cost price currency on %d products' % (cr.rowcount,))
+            cr.execute('update product_product set field_currency_id = %s where field_currency_id != %s', (cur_id, cur_id))
+            self._logger.warn('Changed field price currency on %d products' % (cr.rowcount,))
         return True
 
     def us_7941_auto_vi_set_partner(self, cr, uid, *a, **b):
