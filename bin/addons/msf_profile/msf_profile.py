@@ -93,6 +93,9 @@ class patch_scripts(osv.osv):
 
         3) Out of HQ: prevents the sync of the links created, they are used at migration time only and will be deleted, cf 2).
         """
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
         analytic_acc_obj = self.pool.get('account.analytic.account')
         dest_cc_link_obj = self.pool.get('dest.cc.link')
         dest_ids = analytic_acc_obj.search(cr, uid, [('category', '=', 'DEST')])
