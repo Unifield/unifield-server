@@ -112367,3 +112367,17 @@ msgstr "%sLa combinaison \"%s - %s\" n'est pas active à cette date : %s"
 msgid "At least one Analytic Journal Item using the combination \"%s - %s\" has a Posting Date outside the activation dates selected."
 msgstr "Au moins une Ligne d'Ecriture Analytique utilisant la combinaison \"%s - %s\" a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
 
+#. module: base
+#: code:addons/base/res/partner/partner.py:394
+#: code:addons/base/res/partner/partner.py:413
+#, python-format
+msgid "The Address can not be deactivated. There are open SHIPs for this address: %s.\n"
+"Please process them first or change their delivery address."
+msgstr "L'Adresse ne peut pas être désactivée. Il y a des Éxpéditions ouvertes pour cette adresse: %s.\n"
+"Veuillez les traiter en premier lieu ou changer leur adresse de livraison."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3740
+#, python-format
+msgid "The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process."
+msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée (%s). Veuillez en sélectionner une autre pour pouvoir continuer le traitement."
