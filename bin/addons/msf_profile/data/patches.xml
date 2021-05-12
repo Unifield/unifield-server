@@ -648,6 +648,10 @@
         </record>
 
         <!-- UF21.0 -->
+        <record id="us_7295_update_new_dest_cc_link" model="patch.scripts">
+            <field name="method">us_7295_update_new_dest_cc_link</field>
+        </record>
+
         <record id="us_8166_hide_consolidated_sm_report" model="patch.scripts">
             <field name="method">us_8166_hide_consolidated_sm_report</field>
         </record>
@@ -658,10 +662,6 @@
 
         <record id="us_7019_force_password_expiration" model="patch.scripts">
             <field name="method">us_7019_force_password_expiration</field>
-        </record>
-		
-		<record id="us_7295_update_new_dest_cc_link" model="patch.scripts">
-            <field name="method">us_7295_update_new_dest_cc_link</field>
         </record>
     </data>
 </openerp>

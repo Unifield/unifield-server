@@ -112366,3 +112366,4 @@ msgstr "%sLa combinaison \"%s - %s\" n'est pas active à cette date : %s"
 #, python-format
 msgid "At least one Analytic Journal Item using the combination \"%s - %s\" has a Posting Date outside the activation dates selected."
 msgstr "Au moins une Ligne d'Ecriture Analytique utilisant la combinaison \"%s - %s\" a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
+

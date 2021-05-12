@@ -279,6 +279,7 @@ SELECT res_id, touched
             'replenishment.segment': ['line_ids', 'child_ids'],
             'replenishment.parent.segment': ['child_ids'],
             'shipment': ['picking_ids'],
+            'account.analytic.account': ['dest_cc_link_ids'],
         }
 
         _previous_calls = _previous_calls or []

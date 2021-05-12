@@ -319,15 +319,30 @@ class dest_cc_link(osv.osv):
 
         if isinstance(ids, (long, int)):
             ids = [ids]
+        if context is None:
+            context = {}
         res = dict.fromkeys(ids, False)
         mapping = {}
         uniq_cc_ids = {}
+        inst_obj = self.pool.get('msf.instance')
         for dest_cc_link in self.browse(cr, uid, ids, fields_to_fetch=['cc_id'], context=context):
             mapping[dest_cc_link.id] = dest_cc_link.cc_id.id
             uniq_cc_ids[dest_cc_link.cc_id.id] = True
         cc_destination = self.pool.get('account.analytic.account').get_destination_name(cr, uid, uniq_cc_ids.keys(), 'category', context)
         for dest_cc_link_id in mapping:
-            res[dest_cc_link_id] = cc_destination.get(mapping[dest_cc_link_id], [])
+            inst_list = cc_destination.get(mapping[dest_cc_link_id], [])
+            # create a new list from which the coordos with active projects are excluded
+            # (no need to generate an update for them as they will pull those from their projects)
+            new_inst_list = []
+            if inst_list:
+                inst_ids = inst_obj.search(cr, uid, [('instance', 'in', inst_list)], order='NO_ORDER', context=context)
+                for inst in inst_obj.browse(cr, uid, inst_ids, fields_to_fetch=['level', 'instance'], context=context):
+                    if inst.level != 'coordo':
+                        new_inst_list.append(inst.instance)
+                    elif not inst_obj.search_exist(cr, uid, [('parent_id', '=', inst.id), ('state', '=', 'active')], context=context):
+                        new_inst_list.append(inst.instance)
+            res[dest_cc_link_id] = new_inst_list
+
         return res
 
 dest_cc_link()

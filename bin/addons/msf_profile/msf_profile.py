@@ -104,18 +104,42 @@ class patch_scripts(osv.osv):
                 self._logger.warn('Sync server: set never expire on %d sync users.' % (cr.rowcount,))
         return True
 
-    # UF21.0
     def us_7295_update_new_dest_cc_link(self, cr, uid, *a, **b):
         """
-        CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new field "dest_cc_link_ids"
-        => recreates the links without activation/inactivation dates
+        CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new one "dest_cc_link_ids".
+
+        1) In all instances: deletes the old CCs, and creates the related links without activation/inactivation dates.
+
+        2) At HQ Level: sends a message to trigger the deletion of all the links created out of HQ (used at migration time only).
+
+        3) Out of HQ: prevents the sync of the links created, they are used at migration time only and will be deleted, cf 2).
         """
-        cr.execute("""
-                   INSERT INTO dest_cc_link(dest_id, cc_id)
-                   SELECT destination_id, cost_center_id FROM destination_cost_center_rel
-                   """)
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        dest_ids = analytic_acc_obj.search(cr, uid, [('category', '=', 'DEST')])
+        dcl_nb = 0
+        for dest in analytic_acc_obj.browse(cr, uid, dest_ids, fields_to_fetch=['dest_cc_ids']):
+            for cc in dest.dest_cc_ids:
+                dest_cc_link_obj.create(cr, uid, {'dest_id': dest.id, 'cc_id': cc.id})
+                dcl_nb += 1
+        self._logger.warn('Destinations: %s Dest CC Links generated.', dcl_nb)
+
         cr.execute("DELETE FROM destination_cost_center_rel")
-        self._logger.warn('Destinations: %s Dest CC Links generated.', cr.rowcount)
+        self._logger.warn('Destinations: %s CC deleted.', cr.rowcount)
+
+        if _get_instance_level(self, cr, uid) == 'hq':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-7295-delete-not-hq-links'})
+        else:
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[]', last_modification = '1980-01-01 00:00:00'
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE (SELECT instance_identifier FROM msf_instance WHERE id = (SELECT instance_id FROM res_company)) || '%'
+            """)
         return True
 
     # UF20.0
@@ -4747,6 +4771,32 @@ class sync_tigger_something(osv.osv):
 
                 _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
+        if vals.get('name') == 'us-7295-delete-not-hq-links' and context.get('sync_update_execution'):
+            cr.execute("""
+                DELETE FROM dest_cc_link 
+                WHERE id IN (
+                    SELECT res_id
+                    FROM ir_model_data
+                    WHERE module='sd' 
+                    AND model='dest.cc.link' 
+                    AND name LIKE ANY (
+                        SELECT instance_identifier || '%'
+                        FROM msf_instance
+                        WHERE level IN ('coordo', 'project')
+                    )
+                )
+            """)
+            cr.execute("""
+                DELETE FROM ir_model_data
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE ANY (
+                    SELECT instance_identifier || '%'
+                    FROM msf_instance
+                    WHERE level IN ('coordo', 'project')
+                )
+            """)
+            _logger.warn('Deletion of %d Dest CC Links created out of HQ' % (cr.rowcount,))
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
