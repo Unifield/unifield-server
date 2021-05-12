@@ -391,7 +391,7 @@ class res_partner_address(osv.osv):
                 ship_names = [s.name for s in ship_obj.browse(cr, uid, open_ship_ids, fields_to_fetch=['name'], context=context)]
                 return {'value': {'active': True},
                         'warning': {'title': _('Error'),
-                                    'message': _('The Address can not be deactivated. There are open SHIPs for this address: %s.\nPlease process them first.')
+                                    'message': _('The Address can not be deactivated. There are open SHIPs for this address: %s.\nPlease process them first or change their delivery address.')
                                                % (', '.join(ship_names),)}}
         return {}
 
@@ -417,7 +417,7 @@ class res_partner_address(osv.osv):
             if ship_names:
                 raise osv.except_osv(
                     _('Error'),
-                    _('The Address can not be deactivated. There are open SHIPs for this address: %s.\nPlease process them first.')
+                    _('The Address can not be deactivated. There are open SHIPs for this address: %s.\nPlease process them first or change their delivery address.')
                     % (', '.join(ship_names),))
             else:
                 return self.write(cr, uid, ids, {'active': False}, context=context)

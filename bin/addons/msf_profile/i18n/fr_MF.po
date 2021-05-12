@@ -111900,9 +111900,9 @@ msgstr "Vous devez avoir au moins une ligne pour pouvoir créer le Mouvement Int
 #: code:addons/base/res/partner/partner.py:413
 #, python-format
 msgid "The Address can not be deactivated. There are open SHIPs for this address: %s.\n"
-"Please process them first."
+"Please process them first or change their delivery address."
 msgstr "L'Adresse ne peut pas être désactivée. Il y a des Éxpéditions ouvertes pour cette adresse: %s.\n"
-"Veuillez les traiter en premier lieu."
+"Veuillez les traiter en premier lieu ou changer leur adresse de livraison."
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:3740
