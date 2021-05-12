@@ -91,7 +91,7 @@ class Float(formencode.validators.Number):
     def _to_python(self, value, state):
         try:
             if self.en_thousand_sep=='False' and value and ',' in value:
-                raise ValueError
+                raise formencode.api.Invalid(_('Comma character "," not accepted in this field'), value, state)
             value = format.parse_decimal(value)
         except ValueError:
             raise formencode.api.Invalid(_('Invalid literal for float'), value, state)

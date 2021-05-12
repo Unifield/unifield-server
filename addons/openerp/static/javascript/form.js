@@ -239,6 +239,7 @@ function validate_required(form){
     }, form.elements);
 
     var result = true;
+    var err_msg = false;
 
     for (var i = 0; i < elements.length; i++) {
         var elem = elements[i];
@@ -247,7 +248,6 @@ function validate_required(form){
         var kind = jQuery(elem).attr('kind');
         // Custom message for a required field to display if it's empty
         // TODO: Improve for multiple fields with this attr
-        var err_msg = jQuery(elem).attr('required_error_msg');
 
         if (kind == 'many2many') {
             elem2 = openobject.dom.get(elem.name + '_set') || elem;
@@ -260,8 +260,12 @@ function validate_required(form){
 
         if (!value) {
             jQuery(elem2).addClass('errorfield');
+            err_msg = jQuery(elem).attr('required_error_msg');
             result = false;
         } else if (kind == 'float' && jQuery(elem).attr('en_thousand_sep') && value.indexOf(',') !== -1) {
+            if (result) {
+                err_msg = _('Comma character "," not accepted in this field');
+            }
             jQuery(elem2).addClass('errorfield');
             result = false;
         } else
