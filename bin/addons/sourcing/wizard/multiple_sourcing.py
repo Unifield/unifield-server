@@ -202,6 +202,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
             res['location_id'] = loc
         if supplier != -1:
             res['supplier_id'] = supplier
+            local_market_id = 0
+            try:
+                local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
+            except ValueError:
+                pass
+            if supplier == local_market_id:
+                res['po_cft'] = 'pli'
         if group is not None:
             res['related_sourcing_id'] = group
 
