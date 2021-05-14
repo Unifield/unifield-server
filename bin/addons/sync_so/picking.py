@@ -1115,6 +1115,54 @@ class stock_picking(osv.osv):
         """
         return True
 
+    def dpo_reception_split(self, cr, uid, source, sync_data, context=None):
+        purchase_line_obj = self.pool.get('purchase.order.line')
+
+        msg_obj = self.pool.get('sync.client.message_received')
+        origin_id = msg_obj.search(cr, uid, [('identifier', '=', context.get('identifier')), ('run', '=', False), ('remote_call', '=', 'stock.picking.dpo_reception')])
+        origin_data = msg_obj.browse(cr, uid, origin_id[0])
+
+        data = sync_data.to_dict()
+        remote_po_name = '%s.%s' % (source, data['purchase_id']['name'])
+
+        pick_data = {}
+        for move_line in data.get('move_lines'):
+            move_data = self.format_data(cr, uid, move_line, source, context=context)
+            dpo_line_id = move_data['dpo_line_id']
+            if not dpo_line_id:
+                continue
+            pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id', 'confirmation_date'], context=context)
+            po = pol.order_id
+            if po.order_type != 'direct':
+                raise Exception('PO %s is not a DPO !' % (po.name,))
+            if remote_po_name not in po.customer_ref:
+                raise Exception('PO %s is not linked to %s !' % (po.name, remote_po_name))
+            if po.po_version == 1:
+                continue
+            if po.id not in pick_data:
+                pick_data[po.id] = []
+            pick_data[po.id].append(move_line)
+        header = {}
+        for x in data:
+            if x != 'move_lines':
+                header[x] = data[x]
+        nb = 0
+        if len(pick_data) > 1:
+            cr.execute('select min(sync_id) from sync_client_message_received')
+            min_sync = cr.fetchone[0]
+            for x in pick_data:
+                nb += 1
+                min_sync -= 1
+                data = header.copy()
+                data['move_lines'] = pick_data[x]
+                if nb == 1:
+                    print cr.mogrify('update sync_client_message_received set arguments = %s;', ('[%s]'% data, ))
+                else:
+                    new_id = '%s_%s' % (context.get('identifier'), nb)
+                    print cr.mogrify("insert into sync_client_message_received (identifier, run, remote_call, source, create_date, arguments, rule_sequence, sync_id) values (%s, 'f', 'stock.picking.dpo_reception', %s, %s, %s, %s, %s);",
+                                     (new_id, source, origin_data.create_date, '[%s]'% data, origin_data.rule_sequence,  min_sync))
+
+        raise
 
     def dpo_reception(self, cr, uid, source, sync_data, context=None):
         move_obj = self.pool.get('stock.move')
@@ -1125,11 +1173,10 @@ class stock_picking(osv.osv):
         remote_po_name = '%s.%s' % (source, data['purchase_id']['name'])
 
 
-        #location_id = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0]
         location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')[1]
         stock_location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
-        pick_data = {
+        pick_data_header = {
             'physical_reception_date': data['physical_reception_date'],
             'move_lines': [],
             'reason_type_id': reason_type_id,
@@ -1143,9 +1190,10 @@ class stock_picking(osv.osv):
         }
 
         currency_cache = {}
-        move_lines_cancelled = []
+        move_lines_cancelled = {}
         out_data = {}
-        po_currency_id = False
+        po_currency_id = {}
+        pick_data = {}
         for move_line in data.get('move_lines'):
             move_data = self.format_data(cr, uid, move_line, source, context=context)
             dpo_line_id = move_data['dpo_line_id']
@@ -1155,23 +1203,21 @@ class stock_picking(osv.osv):
             move_data['sync_dpo'] = False
             move_data['purchase_line_id'] = dpo_line_id
             pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id', 'confirmation_date'], context=context)
-            if not pick_data['purchase_id']:
-                po = pol.order_id
-                if po.order_type != 'direct':
-                    raise Exception('PO %s is not a DPO !' % (po.name,))
-                if remote_po_name not in po.customer_ref:
-                    raise Exception('PO %s is not linked to %s !' % (po.name, remote_po_name))
-                if po.po_version == 1:
-                    return "Ignored because old DPO flow"
-                pick_data['purchase_id'] = po.id
-                pick_data['partner_id'] = po.partner_id.id
-                pick_data['partner_id2'] = po.partner_id.id
-                pick_data['address_id'] = po.partner_address_id.id
-                pick_data['origin'] = po.name
-                po_currency_id = po.pricelist_id.currency_id.id
-            else:
-                if pol.order_id.id != pick_data['purchase_id']:
-                    raise Exception('Line %s, purchase order not found' % (move_data['line_number'],))
+            po = pol.order_id
+            if po.order_type != 'direct':
+                raise Exception('PO %s is not a DPO !' % (po.name,))
+            if remote_po_name not in po.customer_ref:
+                raise Exception('PO %s is not linked to %s !' % (po.name, remote_po_name))
+            if po.po_version == 1:
+                continue
+            if po.id not in pick_data:
+                pick_data[po.id] = pick_data_header.copy()
+                pick_data[po.id]['purchase_id'] = po.id
+                pick_data[po.id]['partner_id'] = po.partner_id.id
+                pick_data[po.id]['partner_id2'] = po.partner_id.id
+                pick_data[po.id]['address_id'] = po.partner_address_id.id
+                pick_data[po.id]['origin'] = po.name
+                po_currency_id[po.id] = po.pricelist_id.currency_id.id
             move_data['product_qty'] = move_data['quantity']
             del(move_data['quantity'])
 
@@ -1183,33 +1229,44 @@ class stock_picking(osv.osv):
                 if cur_sdref not in currency_cache:
                     currency_cache[cur_sdref] = curr_obj.find_sd_ref(cr, uid, xmlid_to_sdref(cur_sdref), context=context)
                 move_data['price_currency_id'] = currency_cache.get(cur_sdref)
-            if move_data.get('price_currency_id') and move_data['price_currency_id'] != po_currency_id and move_line['price_unit']:
+            if move_data.get('price_currency_id') and move_data['price_currency_id'] != po_currency_id[po.id] and move_line['price_unit']:
                 ctx_fx = context.copy()
                 if pol.confirmation_date:
                     ctx_fx['currency_date'] = pol.confirmation_date
-                move_data['price_unit'] = curr_obj.compute(cr, uid, move_data['price_currency_id'], po_currency_id, move_line['price_unit'], round=False, context=ctx_fx)
-                move_data['price_currency_id'] = po_currency_id
+                move_data['price_unit'] = curr_obj.compute(cr, uid, move_data['price_currency_id'], po_currency_id[po.id], move_line['price_unit'], round=False, context=ctx_fx)
+                move_data['price_currency_id'] = po_currency_id[po.id]
             else:
                 move_data['price_unit'] = move_line['price_unit']
             move_data['location_id'] = location_id
             move_data['location_dest_id'] = location_id
             move_data['reason_type_id'] = reason_type_id
-            if move_data['state'] == 'cancel' and pick_data['state'] != 'cancel':
+            if move_data['state'] == 'cancel' and data['state'] != 'cancel':
+                if po.id not in move_lines_cancelled:
+                    move_lines_cancelled[po.id] = {}
                 # mix of cancelled and done moves in the same pick
-                move_lines_cancelled.append(move_data)
+                move_lines_cancelled[po.id].append(move_data)
             else:
-                pick_data['move_lines'].append((0, 0, move_data))
+                pick_data[po.id]['move_lines'].append((0, 0, move_data))
             move_data['state'] = 'assigned'
 
-        if not pick_data['purchase_id']:
+        if not pick_data:
             return "Ignored because old DPO flow no po found"
 
-        ctx_picking = context.copy()
-        ctx_picking['keep_date'] = True
-        pick_id = self.create(cr, uid, pick_data, context=ctx_picking)
-        if pick_data['state'] == 'cancel':
-            self.action_cancel(cr, uid, [pick_id])
-        else:
+        msg_txt = []
+        to_cancel = data['state'] == 'cancel'
+        pick_to_done = []
+        for po_id in pick_data:
+            ctx_picking = context.copy()
+            ctx_picking['keep_date'] = True
+            pick_id = self.create(cr, uid, pick_data[po_id], context=ctx_picking)
+            if to_cancel:
+                self.action_cancel(cr, uid, [pick_id])
+            else:
+                pick_to_done.append(pick_id)
+            pick_name = self.read(cr, uid, pick_id, ['name'], context=context)
+            msg_txt.append('%s as %s state' % (pick_name['name'], data['state']))
+
+        if not to_cancel:
             # create the OUT
             for so in out_data:
                 out_pick_data = self.pool.get('sale.order')._get_picking_data(cr, uid, so, context=context, force_simple=True)
@@ -1230,13 +1287,15 @@ class stock_picking(osv.osv):
                 self.action_done(cr, uid, [out_id], context=context)
                 self.set_delivered(cr, uid, [out_id], context=context)
 
-            for cancelled in move_lines_cancelled:
+        for po_id in move_lines_cancelled:
+            for cancelled in move_lines_cancelled[po_id]:
                 cancelled['picking_id'] = pick_id
                 move_id = move_obj.create(cr, uid, cancelled, context=context)
                 move_obj.action_cancel(cr, uid, move_id, context=context)
+
+        for pick_id in pick_to_done:
             self.action_done(cr, uid, [pick_id])
-        pick_name = self.read(cr, uid, pick_id, ['name'], context=context)
-        return '%s as %s state' % (pick_name['name'], pick_data['state'])
+        return "\n".join(msg_txt)
 
 stock_picking()
 
