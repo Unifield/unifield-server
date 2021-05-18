@@ -323,6 +323,8 @@ class wizard_cancel_lines(osv.osv_memory):
             for line in wiz.line_ids:
                 for l in line[2]:
                     line_ids.append(l)
+            if not line_ids:
+                return {'type': 'ir.actions.act_window_close'}
 
             context.update({
                 'noraise': True,
