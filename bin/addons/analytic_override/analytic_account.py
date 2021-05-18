@@ -1138,7 +1138,12 @@ class analytic_account(osv.osv):
             ids = [ids]
         multiple_cc_wiz_obj = self.pool.get('multiple.cc.selection.wizard')
         if ids:
-            multiple_cc_wiz_id = multiple_cc_wiz_obj.create(cr, uid, {'dest_id': ids[0]}, context=context)
+            dest_id = ids[0]
+            # ensure that the dest. is in context even outside edition mode
+            context.update({
+                'current_destination_id': dest_id,
+            })
+            multiple_cc_wiz_id = multiple_cc_wiz_obj.create(cr, uid, {'dest_id': dest_id}, context=context)
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'multiple.cc.selection.wizard',
