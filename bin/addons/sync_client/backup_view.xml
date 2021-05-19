@@ -201,10 +201,11 @@ action = {
       <field name="model">backup.download</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree string="Select a file to download" hide_new_button="1" hide_delete_button="1" hide_edit_button="1">
+        <tree string="Dump files" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" colors="red: failed">
           <field name="name"/>
           <field name="mtime"/>
-          <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward"/>
+          <field name="failed" invisible="1" />
+          <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward" attrs="{'invisible': [('failed', '=', True)]}"/>
         </tree>
       </field>
     </record>
@@ -218,7 +219,8 @@ action = {
           <group colspan="4" col="6">
               <field name="name"/>
               <field name="mtime"/>
-              <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward"/>
+              <field name="failed" invisible="1" />
+              <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward" attrs="{'invisible': [('failed', '=', True)]}"/>
          </group>
         </form>
       </field>
@@ -230,6 +232,9 @@ action = {
       <field name="type">search</field>
       <field name="arch" type="xml">
         <search>
+          <filter icon="terp-check" name="Success" string="Success" domain="[('failed', '=', False)]"/>
+          <filter icon="gtk-cancel" name="Failure" string="Failure" domain="[('failed', '=', True)]"/>
+          <separator />
           <field name="name"/>
           <field name="mtime"/>
         </search>

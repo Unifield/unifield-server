@@ -58,6 +58,7 @@ OBJ_TO_RECREATE = [
     'account.mcdb',
     'wizard.template',
     'account.analytic.account',
+    'dest.cc.link',
 ]
 
 
@@ -217,7 +218,7 @@ class update_to_send(osv.osv,fv_formatter):
                 offset = min_offset + 200 < max_offset and min_offset +200 or max_offset
                 datas = self.export_data(cr, uid, ids_to_compute[min_offset:offset],
                                          export_fields, context=context)['datas']
-                sdrefs = self.get_sd_ref(cr, uid, ids_to_compute,
+                sdrefs = self.get_sd_ref(cr, uid, ids_to_compute[min_offset:offset],
                                          field=['name','version','force_recreation','id'], context=context)
                 ustr_export_fields = tools.ustr(export_fields)
                 for (id, row) in zip(ids_to_compute[min_offset:offset], datas):
@@ -309,35 +310,33 @@ class update_to_send(osv.osv,fv_formatter):
         self._logger.debug("package created for update ids=%s" % ids_in_package)
         return (ids_in_package, data)
 
-    def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
-        min_offset = 0
-        max_offset = len(update_ids)
-        while min_offset < max_offset:
-            offset = (min_offset + 200) < max_offset and min_offset + 200 or max_offset
+    def sync_finished(self, cr, uid, session_id, sync_field='sync_date', context=None):
+        # specific case to split the active field on product.product
+        # i.e: at COO an update received on product must not block a possible update on active field to the project
+        cr.execute('''
+            update product_product set active_sync_change_date = upd.create_date
+                from sync_client_update_to_send upd, ir_model_data d, sync_client_rule rule
+            where
+                rule.id = upd.rule_id and
+                rule.sequence_number in (602, 603) and
+                d.model = 'product.product' and
+                d.name = upd.sdref and
+                product_product.id = d.res_id and
+                upd.session_id = %s
+        ''', (session_id, ))
 
-            # specific case to split the active field on product.product
-            # i.e: at COO an update received on product must not block a possible update on active field to the project
-            cr.execute('''
-                update product_product set active_sync_change_date = upd.create_date
-                    from sync_client_update_to_send upd, ir_model_data d, sync_client_rule rule
-                where
-                    rule.id = upd.rule_id and
-                    rule.sequence_number in (602, 603) and
-                    d.model = 'product.product' and
-                    d.name = upd.sdref and
-                    product_product.id = d.res_id and
-                    upd.id in %s
-            ''', (tuple(update_ids[min_offset:offset]),))
-            for update in self.browse(cr, uid, update_ids[min_offset:offset], context=context):
-                try:
-                    self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                                                                 update.sdref, {'version':update.version,sync_field:update.create_date, 'resend': False},
-                                                                 context=context)
-                except ValueError:
-                    self._logger.warning("Cannot find record %s during pushing update process!" % update.sdref)
-            min_offset += 200
-        self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
-        self._logger.debug(_("Push finished: %d updates") % len(update_ids))
+
+        cr.execute('''update ir_model_data d set
+                version=upd.version, '''+sync_field+'''=upd.create_date, resend='f'
+            from sync_client_update_to_send upd
+            where
+                upd.session_id=%s and
+                upd.sdref=d.name and
+                d.module='sd'
+        ''', (session_id, )) # not_a_user_entry
+
+        cr.execute('''update sync_client_update_to_send set sent='t', sent_date=%s where session_id=%s ''', (fields.datetime.now(), session_id))
+        self._logger.debug(_("Push finished: %d updates") % cr.rowcount)
 
     _order = 'create_date desc, id desc'
 update_to_send()

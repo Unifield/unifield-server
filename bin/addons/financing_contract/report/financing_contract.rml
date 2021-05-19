@@ -110,6 +110,7 @@
     <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P121" fontName="Helvetica-Oblique" fontSize="8.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P121red" fontName="Helvetica-Oblique" fontSize="8.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0" textColor="red"/>
     <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="P14" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P15" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -333,6 +334,10 @@
           <td>
             <para style="P21">[[ repeatIn(line['account_list'], 'ali') ]]</para>
             <para style="P121" alignment="LEFT">[[ ali ]]</para>
+            <section>
+            <para style="P21">[[ repeatIn(line['account_invalid_list'], 'ali') ]]</para>
+            <para style="P121red" alignment="LEFT">[[ ali ]]</para>
+            </section>
           </td>
         </tr>
       </blockTable>

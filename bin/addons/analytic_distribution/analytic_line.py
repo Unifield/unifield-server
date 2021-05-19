@@ -413,6 +413,8 @@ class analytic_line(osv.osv):
             ids = [ids]
         # Prepare some value
         ad_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        period_obj = self.pool.get('account.period')
         account = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category', 'date_start', 'date'], context=context)
         account_type = account and account.get('category', False) or False
         res = []
@@ -422,6 +424,9 @@ class analytic_line(osv.osv):
         date_start = account and account.get('date_start', False) or False
         date_stop = account and account.get('date', False) or False
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
+        cmp_dates = {}
+        wiz_period_open = period_obj.search_exist(cr, uid, [('date_start', '<=', wiz_date), ('date_stop', '>=', wiz_date),
+                                                            ('special', '=', False), ('state', '=', 'draft')], context=context)
         for aline in self.browse(cr, uid, ids):
             # UTP-800: Change date comparison regarding FP. If FP, use document date. Otherwise use date.
             aline_cmp_date = aline.date
@@ -435,13 +440,25 @@ class analytic_line(osv.osv):
                 if aline.journal_id.type == 'hq' or aline.period_id and aline.period_id.state in ['done', 'mission-closed']:
                     aline_cmp_date = wiz_date
                     # these lines will be reverted, check if the reverted line is active
-                    oc_dest_date_start = max(aline.cost_center_id.date_start, aline.destination_id.date_start)
-                    oc_dest_date_stop = min(aline.cost_center_id.date or '9999-01-01', aline.destination_id.date or '9999-01-01')
-                    if (oc_dest_date_start and wiz_date < oc_dest_date_start) or (oc_dest_date_stop and wiz_date >= oc_dest_date_stop):
+                    if not wiz_period_open:
                         expired_date_ids.append(aline.id)
+                    else:
+                        oc_dest_date_start = max(aline.cost_center_id.date_start, aline.destination_id.date_start)
+                        oc_dest_date_stop = min(aline.cost_center_id.date or '9999-01-01', aline.destination_id.date or '9999-01-01')
+                        if (oc_dest_date_start and wiz_date < oc_dest_date_start) or (oc_dest_date_stop and wiz_date >= oc_dest_date_stop):
+                            expired_date_ids.append(aline.id)
+                        else:
+                            # check the Dest/CC link validity with the original Dest and CC which will be used in the REV
+                            destination_id = aline.destination_id and aline.destination_id.id or False
+                            cost_center_id = aline.cost_center_id and aline.cost_center_id.id or False
+                            if destination_id and cost_center_id and \
+                                    dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, wiz_date, context=context):
+                                expired_date_ids.append(aline.id)
             if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date >= date_stop):
                 expired_date_ids.append(aline.id)
+            cmp_dates[aline.id] = aline_cmp_date
         # Process regarding account_type
+        ids = [i for i in ids if i not in expired_date_ids]  # exclude the AJI in expired_date_ids
         if account_type == 'OC':
             for aline in self.browse(cr, uid, ids):
                 # Verify that:
@@ -449,10 +466,11 @@ class analytic_line(osv.osv):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
                 if check_accounts and aline.account_id.id in check_accounts:
                     continue
-                if ad_obj.check_dest_cc_compatibility(cr, uid, aline.destination_id and aline.destination_id.id or False,
-                                                      account_id, context=context):
-                    if ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context):
-                        res.append(aline.id)
+                dest_id = aline.destination_id and aline.destination_id.id or False
+                if ad_obj.check_dest_cc_compatibility(cr, uid, dest_id, account_id, context=context) and \
+                    ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context) and \
+                        not dest_cc_link_obj.is_inactive_dcl(cr, uid, dest_id, account_id, cmp_dates[aline.id], context=context):
+                    res.append(aline.id)
         elif account_type == 'FUNDING':
             # Browse all analytic line to verify them
             for aline in self.browse(cr, uid, ids):
@@ -475,19 +493,16 @@ class analytic_line(osv.osv):
             for aline in self.browse(cr, uid, ids, context=context):
                 # the following check is included into check_fp_acc_dest_compatibility:
                 # account_id in [x.id for x in aline.general_account_id.destination_ids]
-                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, aline.cost_center_id and aline.cost_center_id.id or False,
-                                                      context=context) and \
+                cc_id = aline.cost_center_id and aline.cost_center_id.id or False
+                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, cc_id, context=context) and \
                     ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
-                                                           account_id, context=context):
+                                                           account_id, context=context) and \
+                        not dest_cc_link_obj.is_inactive_dcl(cr, uid, account_id, cc_id, cmp_dates[aline.id], context=context):
                     res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
             for i in ids:
                 res.append(i)
-        # Delete elements that are in expired_date_ids
-        for e in expired_date_ids:
-            if e in res:
-                res.remove(e)
         return res
 
     def check_dest_cc_fp_compatibility(self, cr, uid, ids,
@@ -513,6 +528,7 @@ class analytic_line(osv.osv):
                         new_cc_id, new_cc_br,
                         new_fp_id, new_fp_br):
             ad_obj = self.pool.get('analytic.distribution')
+            dest_cc_link_obj = self.pool.get('dest.cc.link')
             if not general_account_br.is_analytic_addicted:
                 res.append((id, entry_sequence, ''))
                 return False
@@ -533,7 +549,7 @@ class analytic_line(osv.osv):
             # - cost center and funding pool compatibility
             if not ad_obj.check_fp_cc_compatibility(cr, uid, new_fp_id, new_cc_id, context=context):
                 # not compatible with CC
-                res.append((id, entry_sequence, _('CC')))
+                res.append((id, entry_sequence, _('CC ')))
                 return False
 
             # - destination / account
@@ -548,6 +564,9 @@ class analytic_line(osv.osv):
                 return False
             if not check_date(new_cc_br, posting_date):
                 res.append((id, entry_sequence, _('CC date')))
+                return False
+            if new_dest_id and new_cc_id and dest_cc_link_obj.is_inactive_dcl(cr, uid, new_dest_id, new_cc_id, posting_date, context=context):
+                res.append((id, entry_sequence, _('DEST/CC combination date')))
                 return False
             if new_fp_id != msf_pf_id and not \
                     check_date(new_fp_br, posting_date):

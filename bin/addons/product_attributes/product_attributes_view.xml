@@ -736,8 +736,9 @@
 	    <field name="model">product.cold_chain</field>
 	    <field name="type">search</field>
 	    <field name="arch" type="xml">
-	        <search string="Cold chain">
+	        <search string="Thermosensitivity">
 	            <field name="name" />
+	            <field name="cold_chain" />
 	        </search>
 	    </field>
 	</record>
@@ -746,13 +747,14 @@
 	    <field name="model">product.cold_chain</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Cold chain" editable="top" >
+                <tree string="Thermosensitivity" editable="top" >
 	            <field name="name" />
+	            <field name="cold_chain" />
                 </tree>
             </field>
         </record>
 	<record id="product_cold_chain_action" model="ir.actions.act_window">
-            <field name="name">Cold chain</field>
+            <field name="name">Thermosensitivity</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">product.cold_chain</field>
             <field name="view_type">form</field>

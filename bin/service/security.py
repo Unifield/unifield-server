@@ -27,7 +27,7 @@ import re
 from passlib.hash import bcrypt
 from tools.translate import _
 from osv import osv
-PASSWORD_MIN_LENGHT = 6
+PASSWORD_MIN_LENGHT = 8
 
 # When rejecting a password, hide the traceback
 class ExceptionNoTb(Exception):
@@ -77,6 +77,7 @@ def login(db_name, login, password):
     # get, then the server will update the module at this step without display
     # the "Server is updating modules ..." message
     cr = pooler.get_db_only(db_name).cursor()
+    user_res = False
     try:
         nb = _get_number_modules(cr, testlogin=True)
         patch_failed = [0]
@@ -94,22 +95,29 @@ def login(db_name, login, password):
             raise Exception("ServerUpdate: Server is updating modules ...")
 
         pool = pooler.get_pool(db_name)
+
+        user_obj = pool.get('res.users')
+        user_res = user_obj.login(db_name, login, password)
+
+        if not user_res:
+            return False
+
+        if user_res != 1 and patch_failed[0]:
+            raise Exception("PatchFailed: A script during upgrade has failed. Login is forbidden. Please contact your administrator")
+
         lower_login = tools.ustr(login).lower()
         # check if the user have to change his password
-        cr.execute("""SELECT force_password_change
+        cr.execute("""SELECT force_password_change, not coalesce(never_expire, 'f') AND coalesce(last_password_change, NOW()) + interval '6 months' < NOW()
         FROM res_users
         WHERE login=%s AND active and (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""", (lower_login,))
-        force_password = [x[0] for x in cr.fetchall()]
-        if any(force_password):
+        force_password, expired_password = cr.fetchone()
+        if force_password:
             raise Exception("ForcePasswordChange: The admin requests your password change ...")
+        if expired_password and ( tools.config.get('is_prod_instance') or tools.misc.use_prod_sync(cr) ) and expired_password:
+            raise Exception("PasswordExpired: your password has expired and must be changed.")
+
     finally:
         cr.close()
-
-    user_obj = pool.get('res.users')
-    user_res = user_obj.login(db_name, login, password)
-
-    if user_res != 1 and patch_failed[0]:
-        raise Exception("PatchFailed: A script during upgrade has failed. Login is forbidden. Please contact your administrator")
 
     return user_res
 
@@ -131,15 +139,9 @@ def check_password_validity(self, cr, uid, old_password, new_password, confirm_p
     :raise osv.except_osv: if the password is not ok
     '''
     # check it contains at least one digit
-    if not re.search(r'\d', new_password):
+    if not re.search(r'\d', new_password) or not re.search(r'[A-Z]', new_password) or not re.search(r'[^a-zA-Z0-9]', new_password) or len(new_password) < PASSWORD_MIN_LENGHT:
         message = _('The new password is not strong enough. '\
-                    'Password must contain at least one digit.')
-        raise osv.except_osv(_('Operation Canceled'), message)
-
-    # check new_password lenght
-    if len(new_password) < PASSWORD_MIN_LENGHT:
-        message = _('The new password is not strong enough. '\
-                    'Password must be at least %s characters long.' % PASSWORD_MIN_LENGHT)
+                    'It must be at least %s characters long and contain at least one digit, one capital letter and one special character') % PASSWORD_MIN_LENGHT
         raise osv.except_osv(_('Operation Canceled'), message)
 
     # check login != new_password:

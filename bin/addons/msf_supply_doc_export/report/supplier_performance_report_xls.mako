@@ -101,7 +101,7 @@
  </Styles>
 
 % for r in objects:
-<ss:Worksheet ss:Name="${_('Supplier Performance Report')|x}">
+<ss:Worksheet ss:Name="${_('Supplier Perf.')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Supplier
         <Column ss:AutoFitWidth="1" ss:Width="130.0" />
@@ -161,6 +161,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
         ## Physical Reception Date
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
+        ## Order Type
+        <Column ss:AutoFitWidth="1" ss:Width="140.0" />
+        ## Customer
+        <Column ss:AutoFitWidth="1" ss:Width="165.0" />
         ## Days to validate
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Days to confirm
@@ -254,6 +258,8 @@
             _('Delivery Requested Date (RDD)'),
             _('Delivery Confirmed Date (CDD)'),
             _('Physical Reception Date'),
+            _('Order Type'),
+            _('Customer'),
             _('Days to validate'),
             _('Days to confirm'),
             _('Delay b/w actual delivery and CDD (days)'),
@@ -346,6 +352,7 @@
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
+
                 % if line['po_vali_date'] and isDate(line['po_vali_date']):
                 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['po_vali_date'])|n}</Data></Cell>
                 % else:
@@ -371,6 +378,9 @@
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
+
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['order_type']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['customer']|x}</Data></Cell>
 
                 ## Days
                 % if line['days_crea_vali'] != '-':

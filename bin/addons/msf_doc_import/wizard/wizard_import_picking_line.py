@@ -93,6 +93,8 @@ class wizard_import_pick_line(osv.osv_memory):
             try:
                 picking = wiz_browse.picking_id
 
+                partner_loc = picking.partner_id and picking.partner_id.property_stock_supplier.id or False
+
                 ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
                 line_ignored_num = []
                 error_list = []
@@ -165,6 +167,9 @@ class wizard_import_pick_line(osv.osv_memory):
                         src_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
                                                                       pick_ext_cu=picking.ext_cu, product_id=to_write['product_id'],
                                                                       check_type='src', row=row, cell_nb=8, context=context)
+                        if partner_loc and partner_loc != src_value['location_id']:
+                            raise osv.except_osv(_('Error'), _('The source location is not compatible with the partner'))
+
                         to_write.update({'location_id': src_value['location_id'], 'is_ext_cu': src_value['is_ext_cu'],
                                          'error_list': src_value['error_list'],})
                         if not src_value['location_id']:

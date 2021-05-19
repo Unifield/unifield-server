@@ -626,5 +626,42 @@
             <field name="method">us_7243_migrate_contract_quad</field>
         </record>
 
+        <record id="us_7808_ocg_rename_esc" model="patch.scripts">
+            <field name="method">us_7808_ocg_rename_esc</field>
+        </record>
+
+        <!-- UF20.0 -->
+        <record id="us_7848_cold_chain" model="patch.scripts">
+            <field name="method">us_7848_cold_chain</field>
+        </record>
+
+        <record id="us_7749_migrate_dpo_flow" model="patch.scripts">
+            <field name="method">us_7749_migrate_dpo_flow</field>
+        </record>
+
+        <record id="us_7866_fill_in_target_cc_code" model="patch.scripts">
+            <field name="method">us_7866_fill_in_target_cc_code</field>
+        </record>
+
+        <record id="us_6796_hide_prod_status_inconsistencies" model="patch.scripts">
+            <field name="method">us_6796_hide_prod_status_inconsistencies</field>
+        </record>
+
+        <!-- UF21.0 -->
+        <record id="us_7295_update_new_dest_cc_link" model="patch.scripts">
+            <field name="method">us_7295_update_new_dest_cc_link</field>
+        </record>
+
+        <record id="us_8166_hide_consolidated_sm_report" model="patch.scripts">
+            <field name="method">us_8166_hide_consolidated_sm_report</field>
+        </record>
+
+        <record id="us_7941_auto_vi_set_partner" model="patch.scripts">
+            <field name="method">us_7941_auto_vi_set_partner</field>
+        </record>
+
+        <record id="us_7019_force_password_expiration" model="patch.scripts">
+            <field name="method">us_7019_force_password_expiration</field>
+        </record>
     </data>
 </openerp>

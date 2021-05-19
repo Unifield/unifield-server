@@ -28,6 +28,11 @@ from account_override import finance_export
 
 from report import report_sxw
 
+
+##### WARNING #####
+### This file is for OCB matching export Access Interface. For the standard OCB matching, see hq_report_ocp_matching.py ###
+
+
 class finance_archive(finance_export.finance_archive):
     def postprocess_reconciliable(self, cr, uid, data, model, column_deletion=False):
         """

@@ -146,7 +146,7 @@ class purchase_order(osv.osv):
                 # if all PO lines have been invoiced and the SI aren't in Draft anymore: invoiced rate must be 100%
                 # (event if some SI amounts have been lowered)
                 po_states = ['done']
-                if purchase.order_type == 'direct':  # DPO use case: CV and SI are both created at DPO confirmation
+                if purchase.order_type == 'direct' and purchase.po_version == 1:  # DPO v1 use case: CV and SI are both created at DPO confirmation
                     po_states = ['confirmed', 'confirmed_p', 'done']
                 if purchase.state in po_states and all(x.state != 'draft' for x in purchase.invoice_ids):
                     res[purchase.id] = 100.0
@@ -185,11 +185,11 @@ class purchase_order(osv.osv):
         res = {}
 
         for order in self.browse(cr, uid, ids, context=context):
-            # Direct PO is 100.00% received when a user confirm the reception at customer side
-            if order.order_type == 'direct' and order.state == 'done':
+            # Direct PO v1 is 100.00% received when a user confirm the reception at customer side
+            if order.po_version == 1 and order.order_type == 'direct' and order.state == 'done':
                 res[order.id] = 100.00
                 continue
-            elif order.order_type == 'direct' and order.state != 'done':
+            elif order.po_version == 1 and order.order_type == 'direct' and order.state != 'done':
                 res[order.id] = 0.00
                 continue
             res[order.id] = 0.00
@@ -905,9 +905,11 @@ class purchase_order(osv.osv):
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'show_default_msg': fields.boolean(string='Show PO Default Message'),
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
+        'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
         'file_openpyxl_imp': fields.binary(string='File Openpyxl', filters='*.xls*'),
     }
     _defaults = {
+        'po_version': 2,
         'split_during_sll_mig': False,
         'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
@@ -1050,10 +1052,11 @@ class purchase_order(osv.osv):
             elif vals.get('order_type') == 'loan':
                 vals.update({'invoice_method': 'manual'})
             elif vals.get('order_type') in ['direct']:
-                vals.update({'invoice_method': 'order'})
-                if vals.get('partner_id'):
-                    if self.pool.get('res.partner').read(cr, uid, vals.get('partner_id'), ['partner_type'], context=context)['partner_type'] == 'esc':
-                        vals.update({'invoice_method': 'manual'})
+                vals.update({'invoice_method': 'picking'})
+                if vals.get('partner_id') and self.pool.get('res.partner').read(cr, uid, vals.get('partner_id'), ['partner_type'], context=context)['partner_type'] == 'esc':
+                    vals.update({'invoice_method': 'manual'})
+                elif vals.get('dest_partner_id') and self.pool.get('res.partner').read(cr, uid, vals.get('dest_partner_id'), ['partner_type'], context=context)['partner_type'] == 'external':
+                    vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
 
@@ -1067,6 +1070,53 @@ class purchase_order(osv.osv):
             self._check_stock_take_date(cr, uid, res, context=context)
 
         return res
+
+    def write_web(self, cr, uid, ids, vals, context=None):
+        """
+        Overridden method called by the Web on write
+        """
+        pol_obj = self.pool.get('purchase.order.line')
+        partner_obj = self.pool.get('res.partner')
+        cur_obj = self.pool.get('res.currency')
+        suppinf_obj = self.pool.get('product.supplierinfo')
+        partinf_obj = self.pool.get('pricelist.partnerinfo')
+
+        if 'partner_id' in vals:
+            partner = partner_obj.browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist_purchase', 'partner_type'], context=context)
+            to_curr_id = partner.property_product_pricelist_purchase.currency_id.id
+            if vals.get('pricelist_id') and partner.partner_type == 'external':
+                to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
+
+            for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id'], context=context):
+                if order.state in ('draft', 'draft_p', 'validated') and vals['partner_id'] != order.partner_id.id:
+                    for line in order.order_line:
+                        if line.state in ('draft', 'validated_n', 'validated'):
+                            if line.product_id:
+                                to_suppinf_ids = suppinf_obj.search(cr, uid, [('name', '=', partner.id), ('product_id', '=', line.product_id.id)], context=context)
+                                price_to_convert = line.product_id.standard_price
+                                from_curr_id = line.product_id.currency_id.id
+                                if to_suppinf_ids:
+                                    domain = [('uom_id', '=', line.product_uom.id), ('suppinfo_id', 'in', to_suppinf_ids),
+                                              '|', ('valid_from', '<=', order.date_order), ('valid_from', '=', False),
+                                              '|', ('valid_till', '>=', order.date_order), ('valid_till', '=', False)]
+                                    domain_cur = [('currency_id', '=', to_curr_id)]
+                                    domain_cur.extend(domain)
+
+                                    part_inf_ids = partinf_obj.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+                                    if not part_inf_ids:
+                                        part_inf_ids = partinf_obj.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+                                    if part_inf_ids:
+                                        partinf_line = partinf_obj.browse(cr, uid, part_inf_ids[0], fields_to_fetch=['price', 'currency_id'], context=context)
+                                        price_to_convert = partinf_line.price
+                                        from_curr_id = partinf_line.currency_id.id
+                            else:
+                                from_curr_id = order.pricelist_id.currency_id.id
+                                price_to_convert = line.price_unit
+
+                            new_price = cur_obj.compute(cr, uid, from_curr_id, to_curr_id, price_to_convert, round=False)
+                            pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
+
+        return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -1115,9 +1165,13 @@ class purchase_order(osv.osv):
                     vals.update({'invoice_method': partner_type == 'section' and 'picking' or 'manual'})
                 elif vals.get('order_type') == 'loan':
                     vals.update({'invoice_method': 'manual'})
-                elif vals.get('order_type') in ['direct', ] and partner_type != 'esc':
-                    vals.update({'invoice_method': 'order'})
-                elif vals.get('order_type') in ['direct', ] and partner_type == 'esc':
+                elif vals.get('order_type') in ['direct'] and partner_type != 'esc':
+                    dest_partner_type = res_partner_obj.read(cr, uid, int(vals.get('dest_partner_id', order['partner_id'][0])), ['partner_type'], context=context)['partner_type']
+                    if dest_partner_type == 'external':
+                        vals.update({'invoice_method': 'order'})
+                    else:
+                        vals.update({'invoice_method': 'picking'})
+                elif vals.get('order_type') in ['direct'] and partner_type == 'esc':
                     vals.update({'invoice_method': 'manual'})
                 else:
                     vals.update({'invoice_method': 'picking'})
@@ -1447,7 +1501,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Date of Stock Take of all/selected Order lines ?'), }
+        return {'name': _('Do you want to update the Date of Stock Take of all/selected draft Order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
@@ -1500,6 +1554,7 @@ class purchase_order(osv.osv):
                     'company_id': o.company_id.id,
                     'main_purchase_id': o.id,
                     'purchase_ids': [(4, o.id)],
+                    'from_supply': True,
                 }
 
                 if o.analytic_distribution_id:
@@ -1918,15 +1973,15 @@ class purchase_order(osv.osv):
         if ids:
             order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
             err = []
-            for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart']):
-                if order['is_a_counterpart'] and order_type != 'loan':
+            for order in self.browse(cr, uid, ids, fields_to_fetch=['name', 'fixed_order_type', 'order_type', 'is_a_counterpart', 'order_line']):
+                if order.is_a_counterpart and order_type != 'loan':
                     err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
                 else:
-                    json_info = json.loads(order['fixed_order_type'])
+                    json_info = json.loads(order.fixed_order_type)
                     if json_info and order_type not in json_info:
                         allowed_type = ' / '.join([_(order_types_dict.get(x)) for x in json_info])
                         err.append(
-                            _('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
+                            _('%s: Only %s order types are allowed for this purchase order') % (order.name, allowed_type))
 
                 if err:
                     return {
@@ -1935,9 +1990,21 @@ class purchase_order(osv.osv):
                             'message': '\n'.join(x for x in err),
                         },
                         'value': {
-                            'order_type': order['order_type'],
+                            'order_type': order.order_type,
                         }
                     }
+
+                # Check if any PO line with an Service product has been sourced from a FO/IR
+                if order.order_type == 'direct' and order_type != 'direct':
+                    for pol in order.order_line:
+                        if pol.linked_sol_id and pol.product_id and pol.product_id.type == 'service_recep':
+                            return {
+                                'value': {'order_type': order.order_type},
+                                'warning': {
+                                    'title': _('Error'),
+                                    'message': _('The Order Type of this Purchase Order can not be changed. One of its lines has a Service Product sourced from a%s.') % (pol.linked_sol_id.procurement_request and _('n Internal Request') or _(' Field Order'))
+                                },
+                            }
 
         # check if the current PO was created from scratch :
         if order_type == 'direct':
@@ -2305,7 +2372,7 @@ class purchase_order(osv.osv):
             reason_type_id = get_reference('reason_type_in_kind_donation')
         return reason_type_id
 
-    def create_picking(self, cr, uid, order, context=None):
+    def create_picking(self, cr, uid, order, context=None, sourced_on_dpo=False, sourced_dpo_id=False):
         if context is None:
             context = {}
 
@@ -2323,6 +2390,10 @@ class purchase_order(osv.osv):
             'move_lines': [],
         }
 
+        if sourced_on_dpo:
+            values['dpo_incoming'] = True
+        if sourced_dpo_id:
+            values['dpo_id_incoming'] = sourced_dpo_id
         reason_type_id = self.get_reason_type_id(cr, uid, order, context)
         if reason_type_id:
             values.update({'reason_type_id': reason_type_id})
@@ -2380,6 +2451,8 @@ class purchase_order(osv.osv):
             'comment': pol.comment,
             'line_number': pol.line_number,
         }
+        if pol.from_dpo_line_id:
+            values['dpo_line_id'] = pol.from_dpo_line_id
 
         if incoming.reason_type_id:
             values.update({'reason_type_id': incoming.reason_type_id.id})

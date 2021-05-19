@@ -83,7 +83,7 @@
   <Column ss:AutoFitWidth="1" ss:Width="250"/>
   <Column ss:AutoFitWidth="1" ss:Width="100"/>
   <Column ss:AutoFitWidth="1" ss:Width="150" ss:Span="1"/>
-  <Column ss:AutoFitWidth="1" ss:Width="300"/>
+  <Column ss:AutoFitWidth="1" ss:Width="300" ss:Span="1"/>
 
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Number')}</Data></Cell>
@@ -103,11 +103,19 @@
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
-      <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.document_date or False|n}T00:00:00.000</Data></Cell>
+      % if isDate(o.document_date):
+          <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.document_date|n}T00:00:00.000</Data></Cell>
+      % else:
+          <Cell ss:StyleID="non_editable"><Data ss:Type="String"></Data></Cell>
+      % endif
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-      <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.date_invoice or False|n}T00:00:00.000</Data></Cell>
+      % if isDate(o.date_invoice):
+          <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.date_invoice|n}T00:00:00.000</Data></Cell>
+      % else:
+          <Cell ss:StyleID="non_editable"><Data ss:Type="String"></Data></Cell>
+      % endif
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Account')}</Data></Cell>
@@ -123,6 +131,7 @@
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Quantity')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Description')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Notes')}</Data></Cell>
   </Row>
 
   <% is_ro = is_readonly(o) %>
@@ -148,6 +157,9 @@
         <Cell ss:StyleID="editable_number"><Data ss:Type="Number">${inv_line.price_unit|x}</Data></Cell>
 
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.name or ''|x}</Data></Cell>
+
+        <!-- export Notes including line breaks (|xn) -->
+        <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
     </Row>
   % endfor
 

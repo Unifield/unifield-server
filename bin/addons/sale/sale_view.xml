@@ -9,6 +9,29 @@
         <menuitem id="base.menu_product" name="Products" parent="base.menu_base_partner" sequence="9"/>
         <menuitem action="product.product_normal_action" id="product.menu_products" parent="base.menu_product" sequence="1"/>
 
+
+        <record id="sync_order_label_tree" model="ir.ui.view">
+            <field name="name">sync.order.label.tree</field>
+            <field name="model">sync.order.label</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Order in sync. instance" hide_new_button="True" hide_delete_button="True">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="sync_order_label_search" model="ir.ui.view">
+            <field name="name">sync.order.label.search</field>
+            <field name="model">sync.order.label</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                </search>
+            </field>
+        </record>
+
         <record id="view_shop_form" model="ir.ui.view">
             <field name="name">sale.shop</field>
             <field name="model">sale.shop</field>
@@ -183,13 +206,13 @@
                             <newline/>
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_fo_line" string="Import lines" icon="gtk-dnd" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                                <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object"/>
+                                <button name="button_cancel_lines" string="Cancel Lines" icon="gtk-remove" colspan="1" type="object"/>
                                 <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
                                 <newline/>
                                 <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object"/>
                             </group>
                             <field name="order_line" colspan="4" mode="tree,form,graph" nolabel="1" widget="one2many_list"
-                                context="{'sale_id': active_id, 'pricelist_id': pricelist_id, 'categ': categ, 'partner_id': partner_id}"
+                                context="{'sale_id': active_id, 'pricelist_id': pricelist_id, 'categ': categ, 'partner_id': partner_id, 'fo_created_by_po_sync': fo_created_by_po_sync}"
                                 on_change="order_line_change(order_line)"
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2"
@@ -218,6 +241,11 @@
                                             <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
                                             <field name="stock_take_date"/>
                                             <field name="display_resourced_orig_line"/>
+                                            <field name="sync_linked_pol" invisible="True"/>
+                                            <field name="sync_sourced_origin" invisible="True"/>
+                                            <group invisible="not context.get('fo_created_by_po_sync')" colspan="2">
+                                                <field name="instance_sync_order_ref" domain="[('order_id', '=', context.get('sale_id', 0))]" attrs="{'invisible': [('sync_linked_pol', '!=', False)], 'readonly': ['|', ('state', '!=', 'draft'), ('sync_sourced_origin', '!=', False)]}" on_change="on_change_instance_sync_order_ref(instance_sync_order_ref)"/>
+                                            </group>
                                             <separator colspan="4" string="Changes"/>
                                             <group colspan="4">
                                                 <group colspan="2">

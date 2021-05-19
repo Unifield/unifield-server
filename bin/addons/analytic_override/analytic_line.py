@@ -159,6 +159,7 @@ class account_analytic_line(osv.osv):
             return True
 
         account_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
 
         #US-419: Use the document date and not posting date when checking the validity of analytic account
         # tech: replaced all date by document_date
@@ -171,6 +172,8 @@ class account_analytic_line(osv.osv):
                     raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
         if 'date' in vals and vals['date'] is not False:
             date = vals['date']
+            dest = False
+            cc = False
             if vals.get('cost_center_id', False):
                 cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
                 if date < cc.date_start or (cc.date != False and date >= cc.date):
@@ -181,6 +184,9 @@ class account_analytic_line(osv.osv):
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (dest.name or '',))
+            if context.get('from') != 'mass_reallocation' and dest and cc and \
+                    dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
+                raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active.") % (dest.code or '', cc.code or ''))
         return True
 
     def _check_document_date(self, cr, uid, ids):
@@ -292,7 +298,7 @@ class account_analytic_line(osv.osv):
                                                                       context=context)
                 if reversed_aal_ids:
                     vals['reversal_origin'] = reversed_aal_ids[0]  # reversal_origin_txt will be automatically updated
-        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'])
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'], replace=['name'])
         # Default behaviour
         res = super(account_analytic_line, self).create(cr, uid, vals, context=context)
         # Check date
@@ -321,7 +327,7 @@ class account_analytic_line(osv.osv):
                 if not el in vals:
                     vals2.update({el: l[el] and l[el]['id'] or False})
             self._check_date(cr, uid, vals2, context=context)
-        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'])
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'], replace=['name'])
         res = super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
         return res

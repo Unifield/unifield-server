@@ -197,6 +197,8 @@ class float(_column):
         _column.__init__(self, string=string, **args)
         self.digits = digits
         self.digits_compute = digits_compute
+        if not args.get('en_thousand_sep', True):
+            self.en_thousand_sep = False
 
         # custom fields
         self.computation = args.get('computation', False)

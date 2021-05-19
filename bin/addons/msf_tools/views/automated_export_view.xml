@@ -8,9 +8,16 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Automated exports">
-                    <filter name="inactive" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
+                    <filter icon="terp-check" name="filteractive" string="Active" domain="[('active', '=', True)]" />
+                    <filter icon="gtk-dialog-error" name="filterinactive" string="Inactive" domain="[('active', '=', False)]" />
                     <field name="name" />
                     <field name="function_id" />
+                    <field name="partner_id" />
+                    <newline />
+                    <group expand="1" string="Group By..." colspan="4" col="4">
+                        <filter string="Partner" name="groupby_partner_id" icon="terp-partner" domain="[]"  context="{'group_by':'partner_id'}"/>
+                        <filter string="Function" name="groupby_function_id" icon="terp-accessories-archiver" domain="[]"  context="{'group_by':'function_id'}"/>
+                    </group>
                 </search>
             </field>
         </record>
@@ -20,12 +27,14 @@
             <field name="model">automated.export</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Automated exports">
+                <tree string="Automated exports" colors="red: not active">
                     <field name="name" />
                     <field name="function_id" />
+                    <field name="partner_id" />
                     <field name="start_time" />
                     <field name="interval" />
                     <field name="interval_unit" />
+                    <field name="active"  />
                 </tree>
             </field>
         </record>
@@ -41,10 +50,15 @@
                     <field name="function_id" widget="selection" on_change="change_function_id(function_id)"/>
                     <field name="active" />
                     <field name="export_format" attrs="{'invisible': [('disable_cron', '=', True)]}"/>
+                    <label colspan="2" />
+                    <field name="partner_id" attrs="{'invisible': [('multiple', '=', False)], 'required': [('multiple', '=', True)]}"/>
+                    <newline />
+                    <field name="pause" attrs="{'invisible': [('disable_cron', '=', False)]}"/>
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
                     <button name="sent_to_remote" string="Manually send to FTP" colspan="2" type="object" icon="cloud.png" attrs="{'invisible': ['|', ('disable_cron', '=', False), ('ftp_ok', '=', False)]}" />
 
                     <field name="disable_cron" invisible="1" />
+                    <field name="multiple" invisible="1" />
 
                     <separator colspan="4" string="FTP server" />
                     <group col="4" colspan="4">
@@ -87,6 +101,7 @@
             <field name="res_model">automated.export</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_filteractive' : 1}</field>
         </record>
         <menuitem
             id="automated_export_menu"

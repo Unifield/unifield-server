@@ -76,7 +76,6 @@ class stock_reception_wizard(osv.osv_memory):
         for wizard in self.browse(cr, uid, ids, context=context):
             move_domain = [
                 ('type', '=', 'in'),
-                ('purchase_line_id', '!=', False),
                 ('picking_id.state', '=', 'done'),
                 ('state', '=', 'done'),
             ]
@@ -96,10 +95,10 @@ class stock_reception_wizard(osv.osv_memory):
                 move_domain.append(('picking_id.order_category', '=', wizard.order_category))
 
             if wizard.order_type:
-                move_domain.append(('purchase_line_id.order_id.order_type', '=', wizard.order_type))
+                move_domain.extend((('purchase_line_id', '!=', False), ('purchase_line_id.order_id.order_type', '=', wizard.order_type)))
 
             if wizard.nomen_manda_0:
-                move_domain.append(('purchase_line_id.product_id.nomen_manda_0', '=', wizard.nomen_manda_0.id))
+                move_domain.append(('product_id.nomen_manda_0', '=', wizard.nomen_manda_0.id))
 
             if wizard.location_dest_id:
                 move_domain.append(('location_dest_id', '=', wizard.location_dest_id.id))

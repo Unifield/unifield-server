@@ -40,8 +40,8 @@ class analytic_account(osv.osv):
         if context is None:
             context = {}
         res = {}
-        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'type', 'allow_all_cc', 'dest_cc_ids'], context=context):
-            if a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_ids:
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'type', 'allow_all_cc', 'dest_cc_link_ids'], context=context):
+            if a.category == 'DEST' and a.type != 'view' and not a.allow_all_cc and not a.dest_cc_link_ids:
                 res[a.id] = True
             else:
                 res[a.id] = False
@@ -95,7 +95,7 @@ class analytic_account(osv.osv):
                 arg.append(('category', '!=', 'DEST'))
                 arg.append(('type', '=', 'view'))
                 arg.append(('allow_all_cc', '=', True))
-                arg.append(('dest_cc_ids', '!=', False))
+                arg.append(('dest_cc_link_ids', '!=', False))
             # filter: inactive
             elif x[0] == 'filter_active' and x[2] is False:
                 arg.append('|')
@@ -106,9 +106,9 @@ class analytic_account(osv.osv):
                 arg.append('&')
                 arg.append('&')
                 arg.append(('category', '=', 'DEST'))
-                arg.append(('type', '=', 'normal'))
+                arg.append(('type', '!=', 'view'))
                 arg.append(('allow_all_cc', '=', False))
-                arg.append(('dest_cc_ids', '=', False))
+                arg.append(('dest_cc_link_ids', '=', False))
         return arg
 
     def _get_fake(self, cr, uid, ids, *a, **b):
@@ -282,11 +282,20 @@ class analytic_account(osv.osv):
                 cc = arg[2]
                 if operator != '=' or not isinstance(cc, (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter not implemented on Destinations.'))
-                all_dest_ids = self.search(cr, uid, [('category', '=', 'DEST')], context=context)
-                compatible_dest_ids = []
-                for dest in self.browse(cr, uid, all_dest_ids, fields_to_fetch=['allow_all_cc', 'dest_cc_ids'], context=context):
-                    if dest.allow_all_cc or (cc and cc in [c.id for c in dest.dest_cc_ids]):
-                        compatible_dest_ids.append(dest.id)
+                if not cc:
+                    # by default if no CC is selected display only the Destinations compatible with all CC
+                    compatible_dest_ids = self.search(cr, uid, [('category', '=', 'DEST'),
+                                                                ('type', '!=', 'view'),
+                                                                ('allow_all_cc', '=', True)], context=context)
+                else:
+                    compatible_dest_sql = """
+                        SELECT id
+                        FROM account_analytic_account
+                        WHERE category = 'DEST' AND type != 'view'
+                        AND (allow_all_cc = 't' OR id IN (SELECT dest_id FROM dest_cc_link WHERE cc_id = %s));
+                    """
+                    cr.execute(compatible_dest_sql, (cc,))
+                    compatible_dest_ids = [x[0] for x in cr.fetchall()]
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
@@ -442,6 +451,54 @@ class analytic_account(osv.osv):
             }
         return res
 
+    def _get_selected_in_dest(self, cr, uid, cc_ids, name=False, args=False, context=None):
+        """
+        Returns True for the Cost Centers already selected in the Destination:
+        they will be displayed in grey in the list and won't be re-selectable.
+        """
+        if context is None:
+            context = {}
+        if isinstance(cc_ids, (int, long)):
+            cc_ids = [cc_ids]
+        selected = []
+        dest_id = context.get('current_destination_id') or False
+        if dest_id:
+            dest = self.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
+            selected = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
+        res = {}
+        for cc_id in cc_ids:
+            res[cc_id] = cc_id in selected
+        return res
+
+    def _get_dest_cc_link_dates(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns a dict with key = id of the analytic account,
+        and value = dict with dest_cc_link_active_from and dest_cc_link_inactive_from dates separated by commas (String).
+        Note that the date format is the same in EN and FR, and that empty dates are not ignored.
+        E.g.: '2021-03-02,2021-03-01,,2021-03-03,'
+
+        This is used in Destination Import Tools, in particular for the Export of existing entries used as examples.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'dest_cc_link_ids'], context=context):
+            active_date_list = []
+            inactive_date_list = []
+            if a.category == 'DEST':
+                for cc_link in a.dest_cc_link_ids:
+                    active_date_str = "%s" % (cc_link.active_from or "")
+                    active_date_list.append(active_date_str)
+                    inactive_date_str = "%s" % (cc_link.inactive_from or "")
+                    inactive_date_list.append(inactive_date_str)
+            res[a.id] = {
+                'dest_cc_link_active_from': ",".join(active_date_list),
+                'dest_cc_link_inactive_from': ",".join(inactive_date_list),
+            }
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -463,6 +520,17 @@ class analytic_account(osv.osv):
         'dest_cc_ids': fields.many2many('account.analytic.account', 'destination_cost_center_rel',
                                         'destination_id', 'cost_center_id', string='Cost Centers',
                                         domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
+        'dest_cc_link_ids': fields.one2many('dest.cc.link', 'dest_id', string="Cost Centers", required=False),
+        'dest_cc_link_active_from': fields.function(_get_dest_cc_link_dates, method=True, type='char',
+                                                    store=False, readonly=True,
+                                                    string='Activation Combination Dest / CC from',
+                                                    help="Technical field used for Import Tools only",
+                                                    multi="dest_cc_link_dates"),
+        'dest_cc_link_inactive_from': fields.function(_get_dest_cc_link_dates, method=True, type='char',
+                                                      store=False, readonly=True,
+                                                      string='Inactivation Combination Dest / CC from',
+                                                      help="Technical field used for Import Tools only",
+                                                      multi="dest_cc_link_dates"),
         'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),  # for the Destinations
         'allow_all_cc_with_fp': fields.boolean(string="Allow all Cost Centers"),  # for the Funding Pools
         'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
@@ -498,6 +566,8 @@ class analytic_account(osv.osv):
         'fp_account_ids': fields.many2many('account.account', 'fp_account_rel', 'fp_id', 'account_id', string='G/L Accounts',
                                            domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't')]",
                                            help="G/L accounts linked to the Funding Pool", order_by='code'),
+        'selected_in_dest': fields.function(_get_selected_in_dest, string='Selected in Destination', method=True,
+                                            type='boolean', store=False),
     }
 
     _defaults ={
@@ -577,39 +647,49 @@ class analytic_account(osv.osv):
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
         return res
 
-    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, cc_ids, acc_type='destination', field_name='allow_all_cc', context=None):
+    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, cc_ids, acc_type='destination', field_name='allow_all_cc',
+                               m2m=False, context=None):
         """
         If the user tries to tick the box "Allow all Cost Centers" whereas CC are selected,
         informs him that he has to remove the CC first
         (acc_type = name of the Analytic Account Type to which the CC are linked, displayed in the warning msg)
         """
         res = {}
-        if allow_all_cc and cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
-            # NOTE: the msg is stored in a variable on purpose, otherwise the ".po" translation files would wrongly contain Python code
-            msg = 'Please remove the Cost Centers linked to the %s before ticking this box.' % acc_type.title()
-            warning = {
-                'title': _('Warning!'),
-                'message': _(msg)
-            }
-            res['warning'] = warning
-            res['value'] = {field_name: False, }
+        if allow_all_cc:
+            if m2m:
+                cc_filled_in = cc_ids and cc_ids[0][2] or False  # e.g. [(6, 0, [1, 2])]
+            else:
+                cc_filled_in = cc_ids or False
+            if cc_filled_in:
+                # NOTE: the msg is stored in a variable on purpose, otherwise the ".po" translation files would wrongly contain Python code
+                msg = 'Please remove the Cost Centers linked to the %s before ticking this box.' % acc_type.title()
+                warning = {
+                    'title': _('Warning!'),
+                    'message': _(msg)
+                }
+                res['warning'] = warning
+                res['value'] = {field_name: False, }
         return res
 
     def on_change_allow_all_cc_with_fp(self, cr, uid, ids, allow_all_cc_with_fp, cost_center_ids, context=None):
         return self.on_change_allow_all_cc(cr, uid, ids, allow_all_cc_with_fp, cost_center_ids, acc_type='funding pool',
-                                           field_name='allow_all_cc_with_fp', context=context)
+                                           field_name='allow_all_cc_with_fp', m2m=True, context=context)
 
-    def on_change_cc_ids(self, cr, uid, ids, cc_ids, field_name='allow_all_cc', context=None):
+    def on_change_cc_ids(self, cr, uid, ids, cc_ids, field_name='allow_all_cc', m2m=False, context=None):
         """
         If at least a CC is selected, unticks the box "Allow all Cost Centers"
         """
         res = {}
-        if cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+        if m2m:
+            cc_filled_in = cc_ids and cc_ids[0][2] or False  # e.g. [(6, 0, [1, 2])]
+        else:
+            cc_filled_in = cc_ids or False
+        if cc_filled_in:
             res['value'] = {field_name: False, }
         return res
 
     def on_change_cc_with_fp(self, cr, uid, ids, cost_center_ids, context=None):
-        return self.on_change_cc_ids(cr, uid, ids, cost_center_ids, field_name='allow_all_cc_with_fp', context=context)
+        return self.on_change_cc_ids(cr, uid, ids, cost_center_ids, field_name='allow_all_cc_with_fp', m2m=True, context=context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
@@ -685,6 +765,7 @@ class analytic_account(osv.osv):
             if vals['category'] != 'DEST':
                 vals['destination_ids'] = [(6, 0, [])]
                 vals['dest_cc_ids'] = [(6, 0, [])]
+                vals['dest_cc_link_ids'] = []  # related dest.cc.links (if any) are deleted in _clean_dest_cc_link
                 vals['allow_all_cc'] = False  # default value
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
@@ -727,6 +808,7 @@ class analytic_account(osv.osv):
         default['tuple_destination_summary'] = []
         default['line_ids'] = []
         default['dest_cc_ids'] = []
+        default['dest_cc_link_ids'] = []
         return super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
 
     def _check_name_unicity(self, cr, uid, ids, context=None):
@@ -785,6 +867,59 @@ class analytic_account(osv.osv):
                     self.log(cr, uid, analytic_account_id, _('At least one Analytic Journal Item using the Analytic Account %s '
                                                              'has a Posting Date outside the activation dates selected.') % (analytic_acc.code))
 
+    def _clean_dest_cc_link(self, cr, uid, ids, vals, context=None):
+        """
+        In case Dest CC Links are reset in an analytic account: deletes the related existing Dest CC Links if any.
+        Probable UC: Dest CC Links selected on a destination, then account changed to another category.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if 'dest_cc_link_ids' in vals and not vals['dest_cc_link_ids']:
+            dcl_ids = []
+            for analytic_acc in self.browse(cr, uid, ids, fields_to_fetch=['dest_cc_link_ids'], context=context):
+                dcl_ids.extend([dcl.id for dcl in analytic_acc.dest_cc_link_ids])
+            if dcl_ids:
+                self.pool.get('dest.cc.link').unlink(cr, uid, dcl_ids, context=context)
+        return True
+
+    def _dest_cc_ids_must_be_updated(self, vals, context):
+        """
+        Returns True if dest_cc_ids in vals must be changed to dest_cc_link_ids (the goal of this method is to ensure
+        that the same condition is used everywhere and that the UC where all CC are removed is taken into account)
+        """
+        if context and vals and context.get('sync_update_execution') and vals.get('dest_cc_ids') and vals['dest_cc_ids'][0][2] is not None:
+            return True
+        return False
+
+    def _update_synched_dest_cc_ids(self, cr, uid, dest_ids, vals, context):
+        """
+        For synch made before or while US-7295 was released: changes the dest_cc_ids into dest_cc_link_ids
+        """
+        if self._dest_cc_ids_must_be_updated(vals, context):
+            dest_cc_link_obj = self.pool.get('dest.cc.link')
+            if isinstance(dest_ids, (int, long)):
+                dest_ids = [dest_ids]
+            for dest_id in dest_ids:
+                dest = self.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
+                # note: after US-7295 patch script no instance has any dest_cc_ids, all CC links are necessarily dest.cc.link
+                current_cc_ids = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
+                new_cc_ids = vals['dest_cc_ids'][0][2] or []  # take into account the UC where all CC are removed
+                # delete the CC to be deleted
+                cc_to_be_deleted = [c for c in current_cc_ids if c not in new_cc_ids]
+                if cc_to_be_deleted:
+                    dcl_to_be_deleted = dest_cc_link_obj.search(cr, uid, [('dest_id', '=', dest_id), ('cc_id', 'in', cc_to_be_deleted)],
+                                                                order='NO_ORDER', context=context)
+                    dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
+                # create the CC to be created
+                out_of_sync_ctx = context.copy()
+                del out_of_sync_ctx['sync_update_execution']  # removed in order for the sdrefs to be created
+                for cc_id in [c for c in new_cc_ids if c not in current_cc_ids]:
+                    dest_cc_link_obj.create(cr, uid, {'dest_id': dest_id, 'cc_id': cc_id}, context=out_of_sync_ctx)
+            del vals['dest_cc_ids']
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Some verifications before analytic account creation
@@ -797,6 +932,9 @@ class analytic_account(osv.osv):
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
+        vals_copy = vals.copy()
+        if self._dest_cc_ids_must_be_updated(vals, context):
+            del vals['dest_cc_ids']  # replaced by dest_cc_link_ids in _update_synched_dest_cc_ids (called after create as it uses the new id)
         # for auto instance creation, fx gain has been stored, need HQ sync + instance sync to get CC
         if context.get('sync_update_execution') and vals.get('code') and vals.get('category') == 'OC':
             param = self.pool.get('ir.config_parameter')
@@ -804,9 +942,11 @@ class analytic_account(osv.osv):
             if init_cc_fx_gain and vals.get('code') == init_cc_fx_gain:
                 vals['for_fx_gain_loss'] = True
                 param.set_param(cr, 1, 'INIT_CC_FX_GAIN', '')
-        ids = super(analytic_account, self).create(cr, uid, vals, context=context)
-        self._check_name_unicity(cr, uid, ids, context=context)
-        return ids
+        analytic_acc_id = super(analytic_account, self).create(cr, uid, vals, context=context)
+        self._check_name_unicity(cr, uid, analytic_acc_id, context=context)
+        self._clean_dest_cc_link(cr, uid, analytic_acc_id, vals, context=context)
+        self._update_synched_dest_cc_ids(cr, uid, analytic_acc_id, vals_copy, context)
+        return analytic_acc_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -822,7 +962,9 @@ class analytic_account(osv.osv):
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
+        self._update_synched_dest_cc_ids(cr, uid, ids, vals, context)
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
+        self._clean_dest_cc_link(cr, uid, ids, vals, context=context)
         self.check_access_rule(cr, uid, ids, 'write', context=context)
         if context.get('from_web', False) or context.get('from_import_menu', False):
             cat_instance = self.read(cr, uid, ids, ['category', 'instance_id', 'is_pf'], context=context)[0]
@@ -919,9 +1061,15 @@ class analytic_account(osv.osv):
 
     def button_dest_cc_clear(self, cr, uid, ids, context=None):
         """
-        Removes all Cost Centers selected in the Destination view
+        Removes all Dest / CC combinations selected in the Cost Centers tab of the Destination form
         """
-        self.write(cr, uid, ids, {'dest_cc_ids': [(6, 0, [])]}, context=context)
+        if context is None:
+            context = {}
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        for dest in self.browse(cr, uid, ids, fields_to_fetch=['dest_cc_link_ids'], context=context):
+            dest_cc_link_ids = [dcl.id for dcl in dest.dest_cc_link_ids]
+            if dest_cc_link_ids:
+                dest_cc_link_obj.unlink(cr, uid, dest_cc_link_ids, context=context)
         return True
 
     def button_dest_clear(self, cr, uid, ids, context=None):
@@ -966,6 +1114,28 @@ class analytic_account(osv.osv):
         """
         if date_to_check < analytic_acc_br.date_start or (analytic_acc_br.date and date_to_check >= analytic_acc_br.date):
             return False
+        return True
+
+    def open_multiple_cc_selection_wizard(self, cr, uid, ids, context=None):
+        """
+        Creates and displays a Multiple CC Selection Wizard linked to the current Destination
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        multiple_cc_wiz_obj = self.pool.get('multiple.cc.selection.wizard')
+        if ids:
+            multiple_cc_wiz_id = multiple_cc_wiz_obj.create(cr, uid, {'dest_id': ids[0]}, context=context)
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'multiple.cc.selection.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [multiple_cc_wiz_id],
+                'context': context,
+            }
         return True
 
 

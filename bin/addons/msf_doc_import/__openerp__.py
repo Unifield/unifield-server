@@ -63,6 +63,7 @@
         'view/composition_kit_import_line_view.xml',
         'wizard/wizard_import_po_view.xml',
         'wizard/wizard_delete_lines_view.xml',
+        'wizard/wizard_cancel_lines_view.xml',
         'wizard/wiz_common_import_view.xml',
         'data/msf_doc_import_data.xml',
         'data/inactive_categ.xml',

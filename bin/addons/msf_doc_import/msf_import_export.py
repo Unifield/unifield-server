@@ -32,6 +32,7 @@ from tools.translate import _
 from tempfile import TemporaryFile
 from lxml import etree
 from lxml.etree import XMLSyntaxError
+from datetime import datetime
 
 from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 from msf_doc_import.msf_import_export_conf import MODEL_DICT
@@ -626,6 +627,58 @@ class msf_import_export(osv.osv_memory):
             # thread.join(wait_time)
         return self.bg_import(cr, uid, wiz, expected_headers, rows, raise_on_error=raise_on_error,  context=context)
 
+    def _handle_dest_cc_dates(self, cr, uid, data, dest_cc_list, dest_cc_tuple_list, context=None):
+        """
+        Gets and checks the dest_cc_link_active_from and dest_cc_link_inactive_from dates.
+        Updates the dest_cc_tuple_list with tuples containing (cost_center, active_date, inactive_date)
+        """
+        if context is None:
+            context = {}
+        dest_cc_active_date_list = []
+        dest_cc_inactive_date_list = []
+        active_from = (True, 'dest_cc_link_active_from', _("Activation Combination Dest / CC from"))
+        inactive_from = (False, 'dest_cc_link_inactive_from', _("Inactivation Combination Dest / CC from"))
+        for t in [active_from, inactive_from]:
+            active = t[0]
+            col_name = t[1]
+            col_str = t[2]
+            dest_cc_date_list = []
+            if data.get(col_name):
+                split_char = ';'
+                if split_char not in data.get(col_name):
+                    split_char = ','
+                for cost_center_date in data.get(col_name).split(split_char):
+                    cc_date = cost_center_date.strip()
+                    if cc_date:
+                        cc_date = cc_date.replace(' 00:00:00.00', '')  # can be if there is only one date in the cell
+                        try:
+                            cc_date = datetime.strptime(cc_date, "%Y-%m-%d")
+                        except ValueError:
+                            raise Exception(_('The dates in the column "%s" should use the format YYYY-MM-DD.') % col_str)
+                    else:
+                        cc_date = False  # the related Dest/CC combination has no activation/inactivation date
+                    dest_cc_date_list.append(cc_date)
+                del data[col_name]
+            if len(dest_cc_date_list) > len(dest_cc_list):
+                raise Exception(_('The number of dates in the column "%s" exceeds the number of Cost Centers indicated.') % col_str)
+            if active:
+                dest_cc_active_date_list = dest_cc_date_list[:]
+            else:
+                dest_cc_inactive_date_list = dest_cc_date_list[:]
+        for num, cc in enumerate(dest_cc_list):
+            try:
+                dest_cc_active_date = dest_cc_active_date_list[num]
+            except IndexError:
+                dest_cc_active_date = False
+            try:
+                dest_cc_inactive_date = dest_cc_inactive_date_list[num]
+            except IndexError:
+                dest_cc_inactive_date = False
+            if dest_cc_active_date and dest_cc_inactive_date and dest_cc_active_date >= dest_cc_inactive_date:
+                cc_code = self.pool.get('account.analytic.account').read(cr, uid, cc, ['code'], context=context)['code'] or ''
+                raise Exception(_('The activation date related to the Cost Center %s must be before the inactivation date.') % cc_code)
+            dest_cc_tuple_list.append((cc, dest_cc_active_date, dest_cc_inactive_date))
+
     def bg_import(self, cr, uid, import_brw, headers, rows, raise_on_error=False, context=None):
         """
         Run the import of lines in background
@@ -647,6 +700,7 @@ class msf_import_export(osv.osv_memory):
         acc_obj = self.pool.get('account.account')
         acc_analytic_obj = self.pool.get('account.analytic.account')
         acc_dest_obj = self.pool.get('account.destination.link')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
 
         cost_centers_cache = {}
         gl_account_cache = {}
@@ -731,7 +785,7 @@ class msf_import_export(osv.osv_memory):
         # custom process to retrieve CC, Destination_ids
         custom_m2m = []
         if import_brw.model_list_selection == 'destinations':
-            custom_m2m = ['dest_cc_ids', 'destination_ids']
+            custom_m2m = ['destination_ids']
         elif import_brw.model_list_selection == 'funding_pools':
             custom_m2m = ['cost_center_ids', 'tuple_destination_account_ids']
         for c_m2m in custom_m2m:
@@ -1025,6 +1079,7 @@ class msf_import_export(osv.osv_memory):
                         data['tuple_destination_account_ids'] = [(6, 0, [])]
 
                 # Destinations
+                dest_cc_tuple_list = []
                 if import_brw.model_list_selection == 'destinations':
                     context['from_import_menu'] = True
                     data['category'] = 'DEST'
@@ -1042,14 +1097,14 @@ class msf_import_export(osv.osv_memory):
                     if data['type'] not in ['normal', 'view']:
                         raise Exception(_('The Type must be either "Normal" or "View".'))
                     # Cost Centers
-                    if data.get('dest_cc_ids'):
+                    dest_cc_list = []
+                    if data.get('dest_cc_link_ids'):
                         if data.get('allow_all_cc'):
                             raise Exception(_("Please either list the Cost Centers to allow, or allow all Cost Centers."))
-                        dest_cc_list = []
                         split_char = ';'
-                        if split_char not in data.get('dest_cc_ids'):
+                        if split_char not in data.get('dest_cc_link_ids'):
                             split_char = ','
-                        for cost_center in data.get('dest_cc_ids').split(split_char):
+                        for cost_center in data.get('dest_cc_link_ids').split(split_char):
                             cc = cost_center.strip()
                             if cc not in cost_centers_cache:
                                 cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), ('code', '=', cc)]
@@ -1059,9 +1114,7 @@ class msf_import_export(osv.osv_memory):
                                 dest_cc_list.append(cc_ids[0])
                             else:
                                 raise Exception(_('Cost Center "%s" not found.') % cc)
-                        data['dest_cc_ids'] = [(6, 0, dest_cc_list)]
-                    else:
-                        data['dest_cc_ids'] = [(6, 0, [])]
+                    self._handle_dest_cc_dates(cr, uid, data, dest_cc_list, dest_cc_tuple_list, context=context)
                     # Accounts
                     if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
                         acc_list = []
@@ -1089,8 +1142,6 @@ class msf_import_export(osv.osv_memory):
                             # in case of empty columns on non-required fields, existing values should be deleted
                             if 'date' not in data:
                                 data['date'] = False
-                            if 'dest_cc_ids' not in data:
-                                data['dest_cc_ids'] = [(6, 0, [])]
                             if 'allow_all_cc' not in data:
                                 data['allow_all_cc'] = False
                             if 'destination_ids' not in data:
@@ -1164,6 +1215,7 @@ class msf_import_export(osv.osv_memory):
 
                 data.update(forced_values)
 
+                id_created = False
                 if data.get('comment') == '[DELETE]':
                     impobj.unlink(cr, uid, ids_to_update, context=context)
                     nb_lines_deleted += len(ids_to_update)
@@ -1182,11 +1234,66 @@ class msf_import_export(osv.osv_memory):
                             line_created = impobj.create(cr, uid, data, context=context)
                             lines_already_updated.append(line_created)
                     else:
-                        impobj.create(cr, uid, data, context=context)
+                        id_created = impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
                     if allow_partial:
                         cr.commit()
+                # For Dest CC Links: create, update or delete the links if necessary
+                if import_brw.model_list_selection == 'destinations':
+                    if isinstance(ids_to_update, (int, long)):
+                        ids_to_update = [ids_to_update]
+                    if not dest_cc_tuple_list and ids_to_update:
+                        # UC1: Dest CC Link column empty => delete all current Dest/CC combinations attached to the Dest
+                        old_dcl_ids = dest_cc_link_obj.search(cr, uid, [('dest_id', 'in', ids_to_update)], order='NO_ORDER', context=context)
+                        if old_dcl_ids:
+                            dest_cc_link_obj.unlink(cr, uid, old_dcl_ids, context=context)
+                    else:
+                        # UC2: new dest
+                        if id_created:
+                            for cc, active_date, inactive_date in dest_cc_tuple_list:
+                                dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': id_created,
+                                                                  'active_from': active_date, 'inactive_from': inactive_date},
+                                                        context=context)
+                        elif ids_to_update:
+                            for dest_id in ids_to_update:
+                                dest = acc_analytic_obj.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
+                                current_cc_ids = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
+                                new_cc_ids = []
+                                for cc, active_date, inactive_date in dest_cc_tuple_list:
+                                    new_cc_ids.append(cc)
+                                    # UC3: new combinations in existing Destinations
+                                    if cc not in current_cc_ids:
+                                        dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': dest_id,
+                                                                          'active_from': active_date, 'inactive_from': inactive_date},
+                                                                context=context)
+                                    else:
+                                        # UC4: combinations to be updated with new dates
+                                        dcl_ids = dest_cc_link_obj.search(cr, uid,
+                                                                          [('dest_id', '=', dest_id), ('cc_id', '=', cc)],
+                                                                          limit=1, context=context)
+                                        if dcl_ids:
+                                            dest_cc_link = dest_cc_link_obj.read(cr, uid, dcl_ids[0],
+                                                                                 ['active_from', 'inactive_from'], context=context)
+                                            if dest_cc_link['active_from']:
+                                                current_active_dt = datetime.strptime(dest_cc_link['active_from'], "%Y-%m-%d")
+                                            else:
+                                                current_active_dt = False
+                                            if dest_cc_link['inactive_from']:
+                                                current_inactive_dt = datetime.strptime(dest_cc_link['inactive_from'], "%Y-%m-%d")
+                                            else:
+                                                current_inactive_dt = False
+                                            if (current_active_dt != active_date) or (current_inactive_dt != inactive_date):
+                                                dest_cc_link_obj.write(cr, uid, dest_cc_link['id'],
+                                                                       {'active_from': active_date, 'inactive_from': inactive_date},
+                                                                       context=context)
+                                # UC5: combinations to be deleted in existing Destinations
+                                cc_to_be_deleted = [c for c in current_cc_ids if c not in new_cc_ids]
+                                if cc_to_be_deleted:
+                                    dcl_to_be_deleted = dest_cc_link_obj.search(cr, uid,
+                                                                                [('dest_id', '=', dest_id), ('cc_id', 'in', cc_to_be_deleted)],
+                                                                                order='NO_ORDER', context=context)
+                                    dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 if raise_on_error:

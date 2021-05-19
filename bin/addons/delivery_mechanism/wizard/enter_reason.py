@@ -33,10 +33,12 @@ class enter_reason(osv.osv_memory):
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Incoming Shipment', readonly=True),
         'change_reason': fields.char(string='Change Reason', size=1024),
+        'in_from_dpo': fields.boolean('Sourced on remote to DPO ?'),
     }
 
     _defaults = {
         'picking_id': lambda obj, cr, uid, c: c and c.get('picking_id', False),
+        'in_from_dpo': lambda obj, cr, uid, c: c and c.get('in_from_dpo', False),
     }
 
     def do_cancel(self, cr, uid, ids, context=None):

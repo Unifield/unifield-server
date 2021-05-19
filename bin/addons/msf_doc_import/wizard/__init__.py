@@ -155,6 +155,7 @@ import wizard_import_picking_line
 import wiz_common_import
 import wizard_import_tender_line
 import wizard_delete_lines
+import wizard_cancel_lines
 import wizard_import_product_list
 import wizard_import_product_line
 import wizard_import_supplier_catalogue

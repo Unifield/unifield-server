@@ -508,8 +508,8 @@ class stock_picking(osv.osv):
                     new_std_price = ((current_price * product_availability[line.product_id.id])
                                      + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
 
-            new_std_price = currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
-                                                 new_std_price, round=True, context=context)
+            new_std_price = round(currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
+                                                       new_std_price, round=False, context=context), 5)
 
             # Write the field according to price type field
             product_obj.write(cr, uid, [line.product_id.id], {'standard_price': new_std_price})
@@ -600,7 +600,9 @@ class stock_picking(osv.osv):
                 if sol_brw.order_id.procurement_request:
                     service_non_stock_ok = True
 
-        if wizard.picking_id and wizard.picking_id.type == 'in' and line.product_id.type == 'service_recep':
+        if wizard.picking_id and wizard.picking_id.type == 'in' and wizard.register_a_claim and wizard.claim_type in ('surplus', 'return'):
+            values['location_dest_id'] = db_data.get('cd_loc')
+        elif wizard.picking_id and wizard.picking_id.type == 'in' and line.product_id.type == 'service_recep':
             values['location_dest_id'] = db_data.get('service_loc')
             values['cd_from_bo'] = False
         elif wizard.dest_type == 'to_cross_docking' and not service_non_stock_ok:
@@ -1006,7 +1008,8 @@ class stock_picking(osv.osv):
                                             (picking_dict['type'])),
                     'move_lines':[],
                     'state':'draft',
-                    'in_dpo': context.get('for_dpo', False),
+                    'in_dpo': context.get('for_dpo', False), # TODO used ?
+                    'dpo_incoming': wizard.picking_id.dpo_incoming,
                 }
 
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -1022,6 +1025,7 @@ class stock_picking(osv.osv):
                         ('purchase_id', '=', picking_dict['purchase_id'][0]),
                         ('in_dpo', '=', True),
                         ('state', '=', 'assigned'),
+
                     ], limit=1, context=context)
                 elif sync_in and picking_dict['purchase_id'] and shipment_ref:
                     backorder_ids = self.search(cr, uid, [
@@ -1089,8 +1093,6 @@ class stock_picking(osv.osv):
 
                 # Put the done moves in this new picking
                 done_values = {'picking_id': backorder_id}
-                if not context.get('for_dpo'):
-                    done_values['dpo_line_id'] = 0
                 move_obj.write(cr, uid, done_moves, done_values, context=context)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'create_bo': _('Done'),
@@ -1295,6 +1297,9 @@ class stock_picking(osv.osv):
         model = 'enter.reason'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
+        pick = self.read(cr, uid, ids[0], ['from_wkf_sourcing', 'dpo_incoming', 'type'])
+        if pick['type'] == 'in' and pick['dpo_incoming'] and not pick['from_wkf_sourcing']:
+            context['in_from_dpo'] = True
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, picking_id=ids[0]))
 

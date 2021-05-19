@@ -419,7 +419,7 @@ class account_invoice(osv.osv):
                 node.set('string', partner_string)
             res['arch'] = etree.tostring(doc)
         elif view_type == 'search':
-            # remove the Cancel filter in all invoices but IVO and STV
+            # remove the Cancel filter in all invoices but IVO and STV (in Donations the filter is named differently)
             context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
                 context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
             context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
@@ -459,6 +459,10 @@ class account_invoice(osv.osv):
                     ctx.update({'type': vals['type']})
                 if '_terp_view_name' in ctx:
                     del ctx['_terp_view_name']
+                # if we click on the res.log...
+                ctx.update({'from_inv_form': True,  # ...we are sent to the invoice form...
+                            'from_split': False,  # ...and won't be in a split process.
+                            })
                 message = _("Invoice '%s' is waiting for validation.") % name
                 self.log(cr, uid, inv_id, message, context=ctx)
             return res
@@ -1341,6 +1345,9 @@ class account_invoice(osv.osv):
             if 'invoice_line_tax_id' in line:
                 line['invoice_line_tax_id'] = [(6,0, line.get('invoice_line_tax_id', [])) ]
 
+            if 'purchase_order_line_ids' in line:
+                line['purchase_order_line_ids'] = [(6, 0, line.get('purchase_order_line_ids', []))]
+
             if 'analytic_distribution_id' in line:
                 if line.get('analytic_distribution_id', False) and line.get('analytic_distribution_id')[0]:
                     distrib_id = line.get('analytic_distribution_id')[0]
@@ -2132,7 +2139,10 @@ class ir_values(osv.osv):
 
     def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         """
-        Hides the Report "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        Hides the reports:
+        - "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        - "FO Follow-up Finance" in the menu of other invoices than IVO/STV
+        - "STV/IVO lines follow-up" in the menu of other invoices than IVO/STV (+ renames it depending on the inv. type)
         """
         if context is None:
             context = {}
@@ -2140,8 +2150,21 @@ class ir_values(osv.osv):
         model_names = [x[0] for x in models]
         if key == 'action' and key2 == 'client_print_multi' and 'account.invoice' in model_names:
             new_act = []
+            context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+                context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+            context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+                not context.get('is_debit_note', False)
             for v in values:
+                # renaming
+                if len(v) > 2 and v[1] == 'invoice_lines_follow_up' and v[2].get('name'):
+                    if context_ivo:
+                        v[2]['name'] = _('IVO lines follow-up')
+                    elif context_stv:
+                        v[2]['name'] = _('STV lines follow-up')
+                # display
                 if not context.get('is_intermission') and len(v) > 2 and v[2].get('report_name', '') == 'invoice.excel.export':
+                    continue
+                elif not context_ivo and not context_stv and len(v) > 1 and v[1] in ('fo_follow_up_finance', 'invoice_lines_follow_up'):
                     continue
                 else:
                     new_act.append(v)

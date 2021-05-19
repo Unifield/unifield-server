@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE INVOICE [
+    <!ENTITY payment_tab SYSTEM "../account/account_invoice_payment_tab.xml">
+]>
+
 <openerp>
     <data>
 
@@ -300,20 +305,6 @@
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
-                        <page string="Payments">
-                            <field name="payment_to_display_ids" colspan="4" nolabel="1">
-                                <tree string="Payments">
-                                    <field name="date"/>
-                                    <field name="ref"/>
-                                    <field name="name"/>
-                                    <field name="journal_id" />
-                                    <field name="debit"/>
-                                    <field name="credit"/>
-                                    <field name="amount_currency"/>
-                                    <field name="currency_id"/>
-                                </tree>
-                            </field>
-                        </page>
                     </notebook>
                 </form>
             </field>
@@ -352,7 +343,7 @@
             <field name="type">form</field>
             <field name="priority">63</field>
             <field name="arch" type="xml">
-                <form string="In-kind Donation">
+                <form string="In-kind Donation" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
                         <field name="journal_id" domain="[('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]"/>
                         <field name="number"/>
@@ -362,6 +353,7 @@
                         <button name="%(account.action_account_change_currency)d" type="action" icon="terp-stock_effects-object-colorize" string="Change" attrs="{'invisible':[('state','!=','draft')]}" />
                         <newline/>
                         <field string="Donor" name="partner_id"
+                               attrs="{'readonly': [('from_supply', '=', True)]}"
                                domain="[('supplier', '=', True), ('partner_type', 'in', ['external', 'section', 'esc'])]"
                                on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id, is_inkind_donation)"
                                context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"/>
@@ -389,17 +381,25 @@
                             <field name="reference_type" nolabel="1" size="0"/>
                             <field name="reference" nolabel="1"/>
                             <field name="name"/>
-                            <field name="origin"/>
+                            <field name="origin" attrs="{'readonly': [('from_supply', '=', True)]}"/>
                             <newline/>
                             <label string="" colspan="2"/>
                             <field name="check_total" required="2"/>
+                            <group name="import" string=" Import Lines " colspan="4" col="4">
+                                <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                        attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <button name="export_invoice" string="Export Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                        force_editable="1"/>
+                            </group>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
                                 <tree string="Donation Lines" editable="both"
                                       colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:analytic_distribution_state in ('none','valid') and inactive_product == False">
+                                    <field name="from_supply" invisible="1"/>
                                     <field name="line_number" readonly="1" displayon="noteditable"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="product_id"
+                                           attrs="{'readonly': [('from_supply', '=', True)]}"
                                            on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
                                     />
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
@@ -409,7 +409,10 @@
                                     <field name="analytic_distribution_state_recap" readonly="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="have_analytic_distribution_from_header" invisible="1"/>
-                                    <field name="quantity" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
+                                    <field name="quantity"
+                                           attrs="{'readonly': [('from_supply', '=', True)]}"
+                                           on_change="onchange_donation_qty_price(quantity, price_unit, context)"
+                                    />
                                     <field name="price_unit" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
                                     <field name="price_subtotal" readonly="1"/>
                                     <field name="name"/>
@@ -417,10 +420,18 @@
                                     <field name="inactive_error" invisible="1" />
                                 </tree>
                                 <form string="Donation Line">
-                                    <field name="product_id" on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)" default_focus="1"/>
+                                    <field name="from_supply" invisible="1"/>
+                                    <field name="product_id"
+                                           attrs="{'readonly': [('from_supply', '=', True)]}"
+                                           on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
+                                           default_focus="1"
+                                    />
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
                                     <field name="name" colspan="4" />
-                                    <field name="quantity" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
+                                    <field name="quantity"
+                                           attrs="{'readonly': [('from_supply', '=', True)]}"
+                                           on_change="onchange_donation_qty_price(quantity, price_unit, context)"
+                                    />
                                     <field name="price_unit" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
                                     <field name="price_subtotal" readonly="1"/>
                                     <separator colspan="4" string="Notes" />
@@ -431,14 +442,30 @@
                                 <label string="" colspan="2"/>
                                 <field name="have_donation_certificate" invisible="1"/>
                                 <button name="button_donation_certificate" type="object" string="No Donation certificate" icon="terp-mail-replied" readonly="1" attrs="{'invisible': [('have_donation_certificate', '!=', False)]}"/>
-                                <button name="button_donation_certificate" type="object" string="Donation certificate" icon="terp-mail-replied" attrs="{'invisible': [('have_donation_certificate', '=', False)]}"/>
+                                <button name="button_donation_certificate" type="object"
+                                        string="Donation certificate" icon="terp-mail-replied"
+                                        attrs="{'invisible': [('have_donation_certificate', '=', False)]}"
+                                        force_editable="1"
+                                />
                                 <field name="state"/>
                                 <field name="amount_total"/>
                             </group>
-                            <group col="4" colspan="4">
-                                <label string=""/>
+                            <group colspan="4" col="6">
+                                <field name="from_supply" invisible="1"/>
+                                <button string="Cancel document" name="invoice_cancel"
+                                        confirm="Do you really want to cancel this document?"
+                                        type="workflow" icon="gtk-cancel"
+                                        attrs="{'invisible': ['|',
+                                                              ('state', '!=', 'draft'),
+                                                              ('from_supply', '=', False)]}"/>
+                                <button name="button_split_invoice" type="object" string="Split Donation"
+                                        icon="gtk-cut"
+                                        attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                                 <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
-                                <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print" states="open,paid,inv_close"/>
+                                <group attrs="{'invisible': [('state', 'not in', ['open', 'paid', 'inv_close'])]}" colspan="6" col="4">
+                                    <label string=""/>
+                                    <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print"/>
+                                </group>
                             </group>
                         </page>
                     </notebook>
@@ -702,6 +729,7 @@
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
+                        &payment_tab;
                         <page string="Counterpart Invoice">
                             <field name="from_supply" invisible="1"/>
                             <field name="synced"
@@ -821,8 +849,6 @@
                             <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,inv_close,proforma,sale,proforma2"/>
                         </group>
                     </xpath>
-                    <xpath expr="//page[@string='Payments']" position="replace">
-                    </xpath>
                 </data>
             </field>
         </record>
@@ -870,7 +896,7 @@
                    <group col="10" colspan="4">
                         <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
                         <filter name="open" icon="terp-camera_test" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
-                        <filter name="cancelled" icon="terp-dialog-close" string="Cancelled" domain="[('state','=','cancel')]" help="Cancelled Invoices"/>
+                        <filter name="cancel_state_donation" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                         <separator orientation="vertical"/>
                         <field name="number"/>
                         <field name="partner_id"/>
@@ -906,7 +932,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True)]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1'}</field>
+            <field name="context">{'type': 'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_open': 1}</field>
             <field name="search_view_id" ref="view_account_invoice_filter_donation"/>
         </record>
 

@@ -405,17 +405,6 @@ product will be shown.""",
         loc_usage = ['supplier', 'customer', 'internal', 'inventory', 'procurement', 'production']
         for report in self.browse(cr, uid, ids, context=context):
             domain = [
-                '|',
-                ('type', '=', 'in'),
-                ('type', '=', 'out'),
-                '|', '&',
-                ('picking_id.subtype', '=', 'standard'),
-                ('picking_id.state', 'in', ['done', 'delivered']),
-                '&', '&', '&',
-                ('picking_id.subtype', '=', 'packing'),
-                ('picking_id.shipment_id', '!=', 'f'),
-                ('picking_id.shipment_id.parent_id', '!=', 'f'),
-                ('picking_id.shipment_id.state', 'in', ['done', 'delivered']),
                 ('location_id.usage', 'in', loc_usage),
                 ('location_dest_id.usage', 'in', loc_usage),
                 ('state', '=', 'done'),
@@ -573,9 +562,20 @@ product will be shown.""",
         for x in loc_obj.read(cr, uid, all_loc_ids, ['name'], context=lang_ctx):
             location_info[x['id']] = x['name']
 
-        new_cr =  pooler.get_db(cr.dbname).cursor()
+        new_cr = pooler.get_db(cr.dbname).cursor()
         try:
+            ave_price_list = {}
+            new_cr.execute("""
+                SELECT distinct on (m.id) m.id, new_standard_price FROM stock_move m
+                LEFT JOIN standard_price_track_changes tc on tc.product_id = m.product_id AND tc.change_date >= m.date
+                WHERE m.id IN %s
+                ORDER BY m.id, change_date ASC
+            """, (tuple(datas['moves']),))
+            for move_d in new_cr.fetchall():
+                ave_price_list[move_d[0]] = move_d[1]
+
             new_cr.execute('''select
+                    m.id as move_id, 
                     m.product_id as product_id,
                     m.prodlot_id as prodlot_id,
                     m.product_qty as product_qty,
@@ -586,6 +586,7 @@ product will be shown.""",
                     COALESCE(trans.value, t.name) as product_name,
                     m.price_unit as price_unit,
                     m.price_currency_id as price_currency_id,
+                    p.currency_id as product_currency_id,
                     pick.name as pick_name,
                     m.date as date,
                     uom.name as uom_name,
@@ -600,6 +601,7 @@ product will be shown.""",
                     lot.life_date as life_date,
                     COALESCE(pick.origin, m.origin) as origin,
                     pi.ref as pi_name,
+                    m.comment,
                     case when m.sale_line_id is not null and not so.procurement_request then so.order_type when m.purchase_line_id is not null then po.order_type end as order_type,
                     case when m.sale_line_id is not null then so.categ when m.purchase_line_id is not null then po.categ end as order_category,
                     case when pick.subtype not in ('ppl', 'packing') then null when so.procurement_request then %s else pl.currency_id end as bug_pl
@@ -690,6 +692,12 @@ product will be shown.""",
                                 rate_cache[rate_key] = curr_obj.read(cr, uid, move_currency, ['rate'], {'currency_date': first_day})['rate'] or 1
                             prod_price = prod_price/rate_cache[rate_key]
 
+                    # Get average price
+                    func_ave_price = ave_price_list.get(move['move_id'], False) or move['standard_price']
+                    if currency_id != move['product_currency_id']:
+                        func_ave_price = curr_obj.compute(cr, uid, move['product_currency_id'], currency_id,
+                                                          func_ave_price, round=False, context=self.localcontext)
+
                     yield [
                         move['default_code'],
                         move['product_name'],
@@ -701,6 +709,8 @@ product will be shown.""",
                         move['product_qty'],
                         prod_price,
                         move['product_qty'] * prod_price,
+                        func_ave_price,
+                        move['product_qty'] * func_ave_price,
                         prod_stock_bn,
                         prod_stock,
                         location_info.get(move['location_src_id']),
@@ -710,6 +720,7 @@ product will be shown.""",
                         reason_info.get(move['reason_type_id']) or '',
                         move['pi_name'] or move['pick_name'] or move['move_name'] or '',
                         move['pi_name'] and move['move_name'] or move['origin'] or '',
+                        move['comment'] or '',
                         ORDER_TYPES.get(move['order_type']) or '',
                         ORDER_CATEGORIES.get(move['order_category']) or '',
                     ]
@@ -812,8 +823,8 @@ product will be shown.""",
             currency = report.company_id.currency_id
             header = [
                 (_('DB/instance name'), report.company_id.name or '', ''),
-                (_('Generated on'), report.name and  datetime.datetime.strptime(report.name, '%Y-%m-%d %H:%M:%S') or '', header2_date_time_style),
-                (_('From'), report.date_from and  datetime.datetime.strptime(report.date_from, '%Y-%m-%d') or '', header2_date_style),
+                (_('Generated on'), report.name and datetime.datetime.strptime(report.name, '%Y-%m-%d %H:%M:%S') or '', header2_date_time_style),
+                (_('From'), report.date_from and datetime.datetime.strptime(report.date_from, '%Y-%m-%d') or '', header2_date_style),
                 (_('To'), report.date_to and datetime.datetime.strptime(report.date_to, '%Y-%m-%d') or '', header2_date_style),
                 (_('Specific partner'), report.partner_id and report.partner_id.name or '', ''),
                 (_('Specific location(s)'), report.location_ids and ' ; '.join([l.name for l in report.location_ids]) or '', ''),
@@ -836,7 +847,7 @@ product will be shown.""",
 
             row_count += 1
             pos = 0
-            headers = [(_('Product Code'), '', 25), (_('Product Description'), '', 70), (_('UoM'), '', 11),  (_('Product Main Type'), '', 11),  (_('Stock Move Date'), date_time_format,20), (_('Batch'), '',30), (_('Exp Date'), date_format, 11), (_('Quantity'), '', 10), (_('Unit Price (%s)') % (currency.name,), '', 10), (_('Movement value (%s)') % (currency.name,) , '', 10), (_('BN stock after movement (instance)'), '', 10), (_('Total stock after movement (instance)'), '', 10),  (_('Source'), '', 40), (_('Destination'), '', 40), (_('Partner'), '', 30), (_('Partner Type'), '', 15), (_('Reason Type'), '', 30), (_('Document Ref.'), '', 40), (_('Origin'), '', 70), (_('Order Type'), '', 15), (_('Order Category'), '', 11)]
+            headers = [(_('Product Code'), '', 25), (_('Product Description'), '', 70), (_('UoM'), '', 11),  (_('Product Main Type'), '', 11),  (_('Stock Move Date'), date_time_format,20), (_('Batch'), '',30), (_('Exp Date'), date_format, 11), (_('Quantity'), '', 10), (_('Unit Price (%s)') % (currency.name,), '', 10), (_('Movement value (%s)') % (currency.name,) , '', 10), (_('Ave. Cost Price Value (%s)') % (currency.name,), '', 10), (_('Ave. Price Movement value (%s)') % (currency.name,) , '', 10), (_('BN stock after movement (instance)'), '', 10), (_('Total stock after movement (instance)'), '', 10),  (_('Source'), '', 40), (_('Destination'), '', 40), (_('Partner'), '', 30), (_('Partner Type'), '', 15), (_('Reason Type'), '', 30), (_('Document Ref.'), '', 40), (_('Origin'), '', 70), (_('Line Comment'), '', 60), (_('Order Type'), '', 15), (_('Order Category'), '', 11)]
 
             for header_row, col_type, size in headers:
                 sheet.col(pos).width = size * 256

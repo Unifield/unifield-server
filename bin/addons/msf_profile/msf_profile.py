@@ -51,8 +51,149 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+    # UF21.0
+    def us_7941_auto_vi_set_partner(self, cr, uid, *a, **b):
+        cr.execute('''
+            update automated_import imp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
+                from automated_import_function function
+            where
+                function.id = imp.function_id and
+                imp.partner_id is null and
+                function.multiple='t'
+        ''')
+        self._logger.warn('APU set on %s VI import.' % (cr.rowcount,))
+
+        cr.execute('''
+            update automated_export exp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
+                from automated_export_function function
+            where
+                function.id = exp.function_id and
+                exp.partner_id is null and
+                function.multiple='t'
+        ''')
+        self._logger.warn('APU set on %s VI export.' % (cr.rowcount,))
+
+        return True
+
+    def us_8166_hide_consolidated_sm_report(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        consolidated_sm_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'mission_stock', 'consolidated_mission_stock_wizard_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, consolidated_sm_report_menu_id, {'active': instance.level == 'coordo'}, context={})
+        return True
+
+    def us_7019_force_password_expiration(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj:
+            # don't run on new instances
+            cr.execute("update res_users set last_password_change =  NOW() - interval '7 months'")
+            self._logger.warn('Force password expiration on %d users.' % (cr.rowcount,))
+            cr.execute("update res_users set never_expire='t' where login in ('unidata', 'unidata2', 'unidata_screen', 'unidatasupply', 'unidataonly')")
+            self._logger.warn('Set never expire on %d unidata users.' % (cr.rowcount,))
+            if self.pool.get('sync.server.entity'):
+                cr.execute("""
+                    update res_users u set never_expire='t' from
+                        res_groups_users_rel grp_rel, ir_model_data d
+                    where
+                        grp_rel.uid = u.id and
+                        d.res_id = grp_rel.gid and
+                        d.name = 'instance_sync_user' and
+                        d.module = 'sync_server'
+                """)
+                self._logger.warn('Sync server: set never expire on %d sync users.' % (cr.rowcount,))
+        return True
+
+    def us_7295_update_new_dest_cc_link(self, cr, uid, *a, **b):
+        """
+        CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new one "dest_cc_link_ids".
+
+        1) In all instances: deletes the old CCs, and creates the related links without activation/inactivation dates.
+
+        2) At HQ Level: sends a message to trigger the deletion of all the links created out of HQ (used at migration time only).
+
+        3) Out of HQ: prevents the sync of the links created, they are used at migration time only and will be deleted, cf 2).
+        """
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        dest_ids = analytic_acc_obj.search(cr, uid, [('category', '=', 'DEST')])
+        dcl_nb = 0
+        for dest in analytic_acc_obj.browse(cr, uid, dest_ids, fields_to_fetch=['dest_cc_ids']):
+            for cc in dest.dest_cc_ids:
+                dest_cc_link_obj.create(cr, uid, {'dest_id': dest.id, 'cc_id': cc.id})
+                dcl_nb += 1
+        self._logger.warn('Destinations: %s Dest CC Links generated.', dcl_nb)
+
+        cr.execute("DELETE FROM destination_cost_center_rel")
+        self._logger.warn('Destinations: %s CC deleted.', cr.rowcount)
+
+        if _get_instance_level(self, cr, uid) == 'hq':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-7295-delete-not-hq-links'})
+        else:
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[]', last_modification = '1980-01-01 00:00:00'
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE (SELECT instance_identifier FROM msf_instance WHERE id = (SELECT instance_id FROM res_company)) || '%'
+            """)
+        return True
+
+    # UF20.0
+    def us_7866_fill_in_target_cc_code(self, cr, uid, *a, **b):
+        """
+        Fills in the new "cost_center_code" field of the Account Target Cost Centers.
+        """
+        cr.execute("""
+                   UPDATE account_target_costcenter t_cc
+                   SET cost_center_code = (SELECT code FROM account_analytic_account a_acc WHERE a_acc.id = t_cc.cost_center_id);
+                   """)
+        self._logger.warn('Cost Center Code updated in %s Target CC.' % (cr.rowcount,))
+        return True
+
+    def us_7848_cold_chain(self, cr, uid, *a, **b):
+        for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'return_ppl_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+            cr.execute("update %s set kc_check = '' where kc_check != ''" % (table, )) # not_a_user_entry
+            cr.execute(""" update %s rel set kc_check='X'
+                from product_product prod, product_cold_chain c
+                where
+                    prod.id = rel.product_id and
+                    prod.cold_chain = c.id and
+                    c.cold_chain='t'
+            """ % (table, )) # not_a_user_entry
+        return True
+
+    def us_7749_migrate_dpo_flow(self, cr, uid, *a, **b):
+        # ignore old DPO IN: do not generate sync msg for old IN
+        cr.execute("update stock_picking set dpo_incoming='f' where dpo_incoming='t'")
+        cr.execute('update purchase_order set po_version=1')
+        cr.execute("update purchase_order set po_version=2, invoice_method='picking' where order_type='direct' and state in ('draft', 'validated')")
+        return True
+
+    def us_6796_hide_prod_status_inconsistencies(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': instance.level != 'project'}, context={})
+        return True
 
     # UF19.0
+    def us_7808_ocg_rename_esc(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocg':
+            cr.execute("update res_partner set name='MSF LOGISTIQUE' where id in (select res_id from ir_model_data where name='1e206c21-b2ba-11e4-a614-005056290182/res_partner/6')")
+            self._logger.warn('%d ESC partner renamed' % (cr.rowcount,))
+
+            if _get_instance_level(self, cr, uid) == 'hq':
+                cr.execute("update ir_model_data set touched='[''name'']', last_modification=now() where name='1e206c21-b2ba-11e4-a614-005056290182/res_partner/6'")
+                self._logger.warn('%d ESC sync update triggered' % (cr.rowcount,))
+        return True
+
+
     def us_7243_migrate_contract_quad(self, cr, uid, *a, **b):
         quad_obj = self.pool.get('financing.contract.account.quadruplet')
         if not cr.table_exists('financing_contract_actual_account_quadruplets_old'):
@@ -3558,25 +3699,25 @@ class patch_scripts(osv.osv):
         :param b: Named parameters
         :return: True
         """
-        prd_obj = self.pool.get('product.product')
-        data_obj = self.pool.get('ir.model.data')
+        #prd_obj = self.pool.get('product.product')
+        #data_obj = self.pool.get('ir.model.data')
 
-        heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
-        no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+        #heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
+        #no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
-        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
-        if prd_ids:
-            cr.execute("""
-                UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
-            """, (heat_id, tuple(prd_ids),))
+        #prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
+        #if prd_ids:
+        #    cr.execute("""
+        #        UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
+        #    """, (heat_id, tuple(prd_ids),))
 
-        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
-        if no_prd_ids:
-            cr.execute("""
-                UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
-            """, (no_heat_id, tuple(no_prd_ids),))
+        #no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
+        #if no_prd_ids:
+        #    cr.execute("""
+        #        UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
+        #    """, (no_heat_id, tuple(no_prd_ids),))
 
-        cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
+        #cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
 
         return True
 
@@ -4630,6 +4771,32 @@ class sync_tigger_something(osv.osv):
 
                 _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
+        if vals.get('name') == 'us-7295-delete-not-hq-links' and context.get('sync_update_execution'):
+            cr.execute("""
+                DELETE FROM dest_cc_link 
+                WHERE id IN (
+                    SELECT res_id
+                    FROM ir_model_data
+                    WHERE module='sd' 
+                    AND model='dest.cc.link' 
+                    AND name LIKE ANY (
+                        SELECT instance_identifier || '%'
+                        FROM msf_instance
+                        WHERE level IN ('coordo', 'project')
+                    )
+                )
+            """)
+            cr.execute("""
+                DELETE FROM ir_model_data
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE ANY (
+                    SELECT instance_identifier || '%'
+                    FROM msf_instance
+                    WHERE level IN ('coordo', 'project')
+                )
+            """)
+            _logger.warn('Deletion of %d Dest CC Links created out of HQ' % (cr.rowcount,))
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 

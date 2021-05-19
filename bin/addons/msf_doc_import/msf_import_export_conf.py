@@ -549,7 +549,9 @@ MODEL_DATA_DICT = {
             'type',
             'date_start',
             'date',  # "inactive from"
-            'dest_cc_ids',
+            'dest_cc_link_ids',
+            'dest_cc_link_active_from',
+            'dest_cc_link_inactive_from',
             'destination_ids',
             'allow_all_cc',
         ],

@@ -160,7 +160,7 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
             res[pol.id] = {
                 'customer_ref': pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False,
-                'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.name or '',
+                'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.name or '',
             }
 
         return res
@@ -439,6 +439,23 @@ class purchase_order_line(osv.osv):
 
         return ret
 
+    def _in_qty_remaining(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
+
+        res = {}
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
+            move_processed_ids = move_obj.search(cr, uid, [('purchase_line_id', '=', pol.id), ('state', 'in', ['cancel', 'cancel_r', 'done'])], context=context)
+            qty = pol.product_qty
+            for move_processed in move_obj.browse(cr, uid, move_processed_ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
+                if move_processed.product_uom.id != pol.product_uom.id:
+                    qty -= uom_obj._compute_qty(cr, uid, move_processed.product_uom.id, move_processed['product_qty'], pol.product_uom.id)
+                else:
+                    qty -= move_processed['product_qty']
+            res[pol.id] = qty
+        return res
+
+
     _columns = {
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -496,7 +513,7 @@ class purchase_order_line(osv.osv):
         'move_dest_id': fields.many2one('stock.move', 'Reservation Destination', ondelete='set null', select=True),
         'location_dest_id': fields.many2one('stock.location', 'Final Destination of move', ondelete='set null', select=True),
         'price_unit': fields.float('Unit Price', required=True,
-                                   digits_compute=dp.get_precision('Purchase Price Computation')),
+                                   digits_compute=dp.get_precision('Purchase Price Computation'), en_thousand_sep=False),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False,
                                   readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal',
@@ -566,7 +583,10 @@ class purchase_order_line(osv.osv):
         'validation_date': fields.date('Validation Date', readonly=True),
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
-        'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
+        'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR/FO name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
+        'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
+        'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
+        'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
     }
 
     _defaults = {
@@ -629,7 +649,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         # Do not prevent modification during synchro
-        if not context.get('from_vi_import') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        if not context.get('from_vi_import') and not context.get('sync_update_execution') and not context.get('sync_message_execution') and 'cancel_only' not in context:
             error_lines = []
             linked_orders = []
             for pol in self.browse(cr, uid, ids, context=context):
@@ -1249,6 +1269,7 @@ class purchase_order_line(osv.osv):
             'esc_confirmed': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'from_dpo_line_id': False,
         })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
@@ -1262,6 +1283,8 @@ class purchase_order_line(osv.osv):
         if not default:
             default = {}
 
+
+        default['from_dpo_line_id'] = False
         # do not copy canceled purchase.order.line:
         pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id', 'product_id'], context=context)
         if pol.state in ['cancel', 'cancel_r'] and not context.get('allow_cancelled_pol_copy', False):
@@ -1270,9 +1293,9 @@ class purchase_order_line(osv.osv):
             self.pool.get('product.product')._get_restriction_error(cr, uid, [pol.product_id.id],
                                                                     {'partner_id': pol.order_id.partner_id.id}, context=context)
 
-        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
+        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], })
 
-        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref']:
             if field not in default:
                 default[field] = False
 
