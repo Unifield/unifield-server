@@ -58,9 +58,9 @@ class patch_scripts(osv.osv):
         user_record = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'])
         if user_record.company_id and user_record.company_id.currency_id:
             cur_id = user_record.company_id.currency_id.id
-            cr.execute('update product_product set currency_id = %s where currency_id != %s', (cur_id, cur_id))
+            cr.execute("update product_product set currency_id = %s, currency_fixed='t' where currency_id != %s", (cur_id, cur_id))
             self._logger.warn('Changed cost price currency on %d products' % (cr.rowcount,))
-            cr.execute('update product_product set field_currency_id = %s where field_currency_id != %s', (cur_id, cur_id))
+            cr.execute("update product_product set field_currency_id = %s, currency_fixed='t' where field_currency_id != %s", (cur_id, cur_id))
             self._logger.warn('Changed field price currency on %d products' % (cr.rowcount,))
         return True
 
