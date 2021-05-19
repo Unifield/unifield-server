@@ -1611,15 +1611,29 @@ class purchase_order(osv.osv):
 
         sheet["A1"] = "hello"
         sheet["A2"] = "world!"
+        sheet["A3"] = "some"
+        sheet["A4"] = "random"
+        sheet["A5"] = "text"
+        sheet["B1"] = "just"
+        sheet["C1"] = "testing"
+        sheet["D1"] = "some"
+        sheet["E1"] = "new"
+        sheet["F1"] = "openpyxl"
 
         # Add image
-        # img = openpyxl.drawing.image.Image(PILImage.open('addons/purchase/images/test7.png'))
-        # img.anchor = 'A4'
-        # sheet.add_image(img)
+        img = openpyxl.drawing.image.Image(PILImage.open('addons/purchase/images/msf-logo.png'))
+        img.anchor = 'A7'
+        sheet.add_image(img)
 
         # Add shape/form
-        shape = openpyxl.drawing.shape.Shape(coordinates=((1, 0), (2, 2)), text='Test form', ROUND_RECT='roundRect')
-        shape.anchor = 'B2'
+        # shape = openpyxl.drawing.shape.Shape(coordinates=((1, 0), (2, 2)), text='Test form', ROUND_RECT='roundRect')
+        # shape.anchor = 'B2'
+
+        # Add horizontal grouping/folding
+        sheet.column_dimensions.group('B', 'D', hidden=True)
+
+        # Add vertical grouping/folding
+        sheet.row_dimensions.group(2, 4, hidden=False)
 
         workbook.save(filename='/tmp/hello_world.xlsx')
 
