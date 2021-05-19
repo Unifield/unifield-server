@@ -1178,7 +1178,6 @@ class stock_picking(osv.osv):
         reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
         pick_data_header = {
             'physical_reception_date': data['physical_reception_date'],
-            'move_lines': [],
             'reason_type_id': reason_type_id,
             'state': data['state'],
             'type': 'in',
@@ -1212,6 +1211,7 @@ class stock_picking(osv.osv):
                 continue
             if po.id not in pick_data:
                 pick_data[po.id] = pick_data_header.copy()
+                pick_data[po.id]['move_lines'] = []
                 pick_data[po.id]['purchase_id'] = po.id
                 pick_data[po.id]['partner_id'] = po.partner_id.id
                 pick_data[po.id]['partner_id2'] = po.partner_id.id
