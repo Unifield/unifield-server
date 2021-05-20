@@ -95,9 +95,9 @@ class ViewForm(Form):
         self.screen = Screen(prefix='', hastoolbar=True, hassubmenu=True, editable=editable, readonly=readonly,
                              selectable=params.selectable or 2, get_source=get_source, force_readonly=params.readonly)
 
-        if self.screen.widget and self.screen.view_type in ['form', 'tree'] and not params.get_source and not params.validation_form:
+        if self.screen.widget and self.screen.view_type in ['form', 'tree'] and (not params.get_source or params.get_source == '_terp_list') and not params.validation_form:
             # params.validation_form == True on fields validation done by the web before the write
-            # params.get_source is set when a listgrid o2m is refreshed
+            # params.get_source is set when a listgrid o2m is refreshed, on tree view params.get_source is _terp_list
             self.logs = Logs()
 
         if self.screen.widget and hasattr(self.screen.widget, 'sidebar'):
