@@ -1115,55 +1115,6 @@ class stock_picking(osv.osv):
         """
         return True
 
-    def dpo_reception_split(self, cr, uid, source, sync_data, context=None):
-        purchase_line_obj = self.pool.get('purchase.order.line')
-
-        msg_obj = self.pool.get('sync.client.message_received')
-        origin_id = msg_obj.search(cr, uid, [('identifier', '=', context.get('identifier')), ('run', '=', False), ('remote_call', '=', 'stock.picking.dpo_reception')])
-        origin_data = msg_obj.browse(cr, uid, origin_id[0])
-
-        data = sync_data.to_dict()
-        remote_po_name = '%s.%s' % (source, data['purchase_id']['name'])
-
-        pick_data = {}
-        for move_line in data.get('move_lines'):
-            move_data = self.format_data(cr, uid, move_line, source, context=context)
-            dpo_line_id = move_data['dpo_line_id']
-            if not dpo_line_id:
-                continue
-            pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id', 'confirmation_date'], context=context)
-            po = pol.order_id
-            if po.order_type != 'direct':
-                raise Exception('PO %s is not a DPO !' % (po.name,))
-            if remote_po_name not in po.customer_ref:
-                raise Exception('PO %s is not linked to %s !' % (po.name, remote_po_name))
-            if po.po_version == 1:
-                continue
-            if po.id not in pick_data:
-                pick_data[po.id] = []
-            pick_data[po.id].append(move_line)
-        header = {}
-        for x in data:
-            if x != 'move_lines':
-                header[x] = data[x]
-        nb = 0
-        if len(pick_data) > 1:
-            cr.execute('select min(sync_id) from sync_client_message_received')
-            min_sync = cr.fetchone[0]
-            for x in pick_data:
-                nb += 1
-                min_sync -= 1
-                data = header.copy()
-                data['move_lines'] = pick_data[x]
-                if nb == 1:
-                    print cr.mogrify('update sync_client_message_received set arguments = %s;', ('[%s]'% data, ))
-                else:
-                    new_id = '%s_%s' % (context.get('identifier'), nb)
-                    print cr.mogrify("insert into sync_client_message_received (identifier, run, remote_call, source, create_date, arguments, rule_sequence, sync_id) values (%s, 'f', 'stock.picking.dpo_reception', %s, %s, %s, %s, %s);",
-                                     (new_id, source, origin_data.create_date, '[%s]'% data, origin_data.rule_sequence,  min_sync))
-
-        raise
-
     def dpo_reception(self, cr, uid, source, sync_data, context=None):
         move_obj = self.pool.get('stock.move')
         purchase_line_obj = self.pool.get('purchase.order.line')
