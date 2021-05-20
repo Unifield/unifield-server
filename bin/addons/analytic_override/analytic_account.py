@@ -913,10 +913,22 @@ class analytic_account(osv.osv):
                                                                 order='NO_ORDER', context=context)
                     dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
                 # create the CC to be created
+                dcl_created = []
                 out_of_sync_ctx = context.copy()
                 del out_of_sync_ctx['sync_update_execution']  # removed in order for the sdrefs to be created
                 for cc_id in [c for c in new_cc_ids if c not in current_cc_ids]:
-                    dest_cc_link_obj.create(cr, uid, {'dest_id': dest_id, 'cc_id': cc_id}, context=out_of_sync_ctx)
+                    new_dcl_id = dest_cc_link_obj.create(cr, uid, {'dest_id': dest_id, 'cc_id': cc_id}, context=out_of_sync_ctx)
+                    dcl_created.append(new_dcl_id)
+                if dcl_created:
+                    # prevents the sync of the links created, which are used at migration time only and will be deleted
+                    # (see the US-7295 patch script). Note: sync direction is DOWN so this code is never executed in HQ.
+                    cr.execute("""
+                               UPDATE ir_model_data 
+                               SET touched ='[]', last_modification = '1980-01-01 00:00:00'
+                               WHERE module='sd' 
+                               AND model='dest.cc.link' 
+                               AND res_id IN %s
+                    """, (tuple(dcl_created),))
             del vals['dest_cc_ids']
         return True
 
@@ -1126,7 +1138,12 @@ class analytic_account(osv.osv):
             ids = [ids]
         multiple_cc_wiz_obj = self.pool.get('multiple.cc.selection.wizard')
         if ids:
-            multiple_cc_wiz_id = multiple_cc_wiz_obj.create(cr, uid, {'dest_id': ids[0]}, context=context)
+            dest_id = ids[0]
+            # ensure that the dest. is in context even outside edition mode
+            context.update({
+                'current_destination_id': dest_id,
+            })
+            multiple_cc_wiz_id = multiple_cc_wiz_obj.create(cr, uid, {'dest_id': dest_id}, context=context)
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'multiple.cc.selection.wizard',
