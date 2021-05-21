@@ -1193,7 +1193,7 @@ class stock_picking(osv.osv):
             move_data['reason_type_id'] = reason_type_id
             if move_data['state'] == 'cancel' and data['state'] != 'cancel':
                 if po.id not in move_lines_cancelled:
-                    move_lines_cancelled[po.id] = {}
+                    move_lines_cancelled[po.id] = []
                 # mix of cancelled and done moves in the same pick
                 move_lines_cancelled[po.id].append(move_data)
             else:
