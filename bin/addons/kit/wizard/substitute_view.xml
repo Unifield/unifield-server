@@ -24,7 +24,7 @@
                         	<tree hide_new_button="True" hide_delete_button="True" string="Products to remove from the Kit" editable="top" colors="red:integrity_status_func_substitute_item!='empty'">
 	                			<field name="module_substitute_item" readonly="True" />
 			            		<field name="product_id_substitute_item" readonly="True" />
-			            		<field name="qty_substitute_item" attrs="{'readonly': [('product_id_substitute_item', '=', False)]}" />
+			            		<field name="qty_substitute_item" readonly="True" />
 			            		<field name="uom_id_substitute_item" readonly="True" />
 			            		<field name="asset_id_substitute_item" readonly="True" />
 								<field name="comment" readonly="True" />
