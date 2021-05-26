@@ -52,6 +52,18 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
     # UF21.0
+    def us_8196_delete_default_prod_curr(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_values where key = 'default' and model='product.product' and name in ('currency_id','field_currency_id') ;")
+        self._logger.warn('Delete %d default values on product currencies' % (cr.rowcount,))
+        user_record = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'])
+        if user_record.company_id and user_record.company_id.currency_id:
+            cur_id = user_record.company_id.currency_id.id
+            cr.execute("update product_product set currency_id = %s, currency_fixed='t' where currency_id != %s", (cur_id, cur_id))
+            self._logger.warn('Changed cost price currency on %d products' % (cr.rowcount,))
+            cr.execute("update product_product set field_currency_id = %s, currency_fixed='t' where field_currency_id != %s", (cur_id, cur_id))
+            self._logger.warn('Changed field price currency on %d products' % (cr.rowcount,))
+        return True
+
     def us_7941_auto_vi_set_partner(self, cr, uid, *a, **b):
         cr.execute('''
             update automated_import imp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)

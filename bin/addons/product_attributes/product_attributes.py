@@ -949,8 +949,8 @@ class product_attributes(osv.osv):
         'removal_time': fields.integer('Product Removal Time',
                                        help='The number of months before a production lot should be removed.'),
         'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
-        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
-        'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
+        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True, hide_default_menu=True),
+        'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True, hide_default_menu=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                                      type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.selection(
@@ -1046,6 +1046,7 @@ class product_attributes(osv.osv):
         'uf_create_date': fields.datetime(_('Creation date')),
         'instance_level': fields.function(_get_product_instance_level, method=True, string='Instance Level', internal=1, type='char'),
         'show_ud': fields.function(_get_dummy, fnct_search=_search_show_ud, method=True, type='boolean', string='Search UD NSL or ST/NS', internal=1),
+        'currency_fixed': fields.boolean('Currency Changed by US-8196'),
     }
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
@@ -2281,7 +2282,7 @@ class product_attributes(osv.osv):
         if default is None:
             default = {}
 
-        for to_reset in ['replace_product_id', 'replaced_by_product_id']:
+        for to_reset in ['replace_product_id', 'replaced_by_product_id', 'currency_fixed']:
             if to_reset not in default:
                 default[to_reset] = False
 
