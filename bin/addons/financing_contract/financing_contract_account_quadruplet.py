@@ -191,7 +191,7 @@ class financing_contract_account_quadruplet(osv.osv):
             ctr_obj = self.pool.get('financing.contract.contract')
             contract = ctr_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids', 'cost_center_ids', 'quad_gen_date'], context=context)
             cr.execute('''select max(last_modification) from ir_model_data where module='sd' and (
-                model in ('account.analytic.account', 'account.destination.link') or (model = 'financing.contract.contract' and res_id = %s)
+                model in ('account.analytic.account', 'account.destination.link', 'dest.cc.link') or (model = 'financing.contract.contract' and res_id = %s)
             )''', (contract_id,))
             last_obj_modified = cr.fetchone()[0]
             if not contract.quad_gen_date or last_obj_modified > contract.quad_gen_date or contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S'):
