@@ -105785,6 +105785,12 @@ msgstr "La Date de Prise de Stock des lignes %s n'est pas cohérente! Elle ne de
 msgid "The Stock Take Date of %s is not consistent! It should not be later than its creation date"
 msgstr "La Date de Prise de Stock de %s n'est pas cohérente! Elle ne devrait pas être ultérieure à sa date de création"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1712
+#, python-format
+msgid "The  'Stock Take Date' is not consistent! It should not be later than %s's creation date"
+msgstr "La  'Date de Prise de Stock' n'est pas cohérente! Elle ne devrait pas être ultérieure à la date de création de %s"
+
 #. module: purchase
 #: view:purchase.order:0
 msgid "Estimated transport costs : "

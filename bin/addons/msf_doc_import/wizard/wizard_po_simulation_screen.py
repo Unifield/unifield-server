@@ -1706,7 +1706,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if import_type in ('new', 'split'):
                 stock_take_date = values[9]
                 if stock_take_date and type(stock_take_date) == type(DateTime.now()):
-                    write_vals['imp_stock_take_date'] = stock_take_date.strftime('%Y-%m-%d')
+                    if stock_take_date.strftime('%Y-%m-%d') <= line.simu_id.order_id.date_order:
+                        write_vals['imp_stock_take_date'] = stock_take_date.strftime('%Y-%m-%d')
+                    else:
+                        err_msg = _('The  \'Stock Take Date\' is not consistent! It should not be later than %s\'s creation date') \
+                            % (line.simu_id.order_id.name,)
+                        errors.append(err_msg)
+                        write_vals['type_change'] = 'error'
                 elif stock_take_date and isinstance(stock_take_date, str):
                     try:
                         time.strptime(stock_take_date, '%Y-%m-%d')
