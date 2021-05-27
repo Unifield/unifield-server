@@ -3034,6 +3034,14 @@ class sale_order_line(osv.osv):
 
         if vals.get('po_cft', False) == 'pli':
             vals.update({'po_cft': 'po'})
+        # If the supplier is Local Market, set the default PO/CFT to Purchase List
+        if vals.get('supplier'):
+            # Look if the supplier is the same res_partner as Local Market
+            data_obj = self.pool.get('ir.model.data')
+            is_loc_mar = data_obj.search_exists(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'),
+                                                          ('name', '=', 'res_partner_local_market'), ('res_id', '=', vals['supplier'])], context=context)
+            if is_loc_mar:
+                vals.update({'po_cft': 'pli'})
 
         pricelist = False
         order_id = vals.get('order_id', False)

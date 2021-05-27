@@ -2303,11 +2303,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'message': _('The chosen partner has no address. Please define an address before continuing.'),
             }
 
-        # Search the local market partner id
+        # Look if the partner is the same res_partner as Local Market
         data_obj = self.pool.get('ir.model.data')
-        data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'),
-                                            ('name', '=', 'res_partner_local_market')], limit=1, order='NO_ORDER')
-        if data_id and partner.id == data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']:
+        is_loc_mar = data_obj.search_exists(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'),
+                                                      ('name', '=', 'res_partner_local_market'), ('res_id', '=', partner.id)], context=context)
+        if is_loc_mar:
             result['value'].update({'po_cft': 'pli'})
 
         # If the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
