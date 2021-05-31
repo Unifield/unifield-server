@@ -517,7 +517,7 @@ class weekly_forecast_report(osv.osv):
                     product_id = product['id']
                     j += 1
                     cons = product_cons[product_id][1]
-                    if not cons and not product['qty_available']:
+                    if not cons and not product['qty_available'] and not in_pipe_vals.get(product_id):
                         continue
 
                     weekly_cons = cons

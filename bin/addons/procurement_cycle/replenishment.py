@@ -2182,14 +2182,10 @@ class replenishment_segment_line(osv.osv):
                 for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'to_date': segment[seg_id]['to_date_rdd'], 'location': segment[seg_id]['location_ids']}):
                     ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_before_rdd'] =  prod_id.incoming_qty
 
-                for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, segment[seg_id]['prod_seg_line'].keys(), to_date=segment[seg_id]['to_date_rdd'], location_ids=segment[seg_id]['location_ids']).iteritems():
-                    ret[segment[seg_id]['prod_seg_line'][prod_id]]['pipeline_before_rdd'] += qty
 
             if not inv_review and 'pipeline_between_rdd_oc' in field_name:
                 for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'from_strict_date': segment[seg_id]['to_date_rdd'], 'to_date': segment[seg_id]['to_date_oc'], 'location': segment[seg_id]['location_ids']}):
                     ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_between_rdd_oc'] = prod_id.incoming_qty
-                    for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, segment[seg_id]['prod_seg_line'].keys(), from_date=segment[seg_id]['to_date_rdd'], to_date=segment[seg_id]['to_date_oc'], location_ids=segment[seg_id]['location_ids']).iteritems():
-                        ret[segment[seg_id]['prod_seg_line'][prod_id]]['pipeline_between_rdd_oc'] += qty
 
         return ret
 
