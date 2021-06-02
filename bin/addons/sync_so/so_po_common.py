@@ -80,9 +80,17 @@ class so_po_common(osv.osv_memory):
             context = {}
         context.update({'active_test': False})
         partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
-        if not partner.address:
+
+        # Check if the default addresses are deactivated
+        address_id = False
+        for address in partner.address:
+            if address.active:
+                address_id = address.id
+                break
+
+        if not address_id:
             raise Exception("The partner address is not found in the system. The operation is thus interrupted.")
-        return partner.address[0].id
+        return address_id
 
     def get_price_list_id(self, cr, uid, partner_id, context=None):
         if not context:
