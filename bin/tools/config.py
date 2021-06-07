@@ -475,7 +475,7 @@ class configmanager(object):
                         decoded = b64decode(value)
                         # check if the result can be utf-8 encoded, otherwise the initial string is not a b64 string
                         decoded.decode('UTF-8')
-                        value = decoded
+                        value = str(decoded, 'utf8')
                     except:
                         pass
                 self.options[name] = value
