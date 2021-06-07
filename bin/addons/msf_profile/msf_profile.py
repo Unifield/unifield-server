@@ -4640,7 +4640,15 @@ class sync_tigger_something_target_lower(osv.osv):
                 fp_to_coo_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), ('instance_id', '=', current_instance.id)], context=context)
                 if fp_to_coo_ids:
                     logging.getLogger('trigger').info('Touch %d fp' % (len(fp_to_coo_ids),))
-                    self.pool.get('account.analytic.account').synchronize(cr, uid, fp_to_coo_ids, context=context)
+                    # trigger a sync in SQL in order not to re-trigger sync on the o2m linked to the FP
+                    trigger_sync_sql = """
+                        UPDATE ir_model_data
+                        SET touched ='[''code'']', last_modification=NOW()
+                        WHERE module='sd'
+                        AND model='account.analytic.account'
+                        AND res_id IN %s
+                    """
+                    cr.execute(trigger_sync_sql, (tuple(fp_to_coo_ids),))
 
         return super(sync_tigger_something_target_lower, self).create(cr, uid, vals, context)
 
