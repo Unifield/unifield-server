@@ -209,7 +209,7 @@ def base_module_upgrade(cr, pool, upgrade_now=False):
         else:
             logger.info("--------------- ISSUES WITH PATCH APPLICATION ---------------")
 
-def process_deletes(update_dir, webpath):
+def process_deletes(update_dir, unifield_root):
     delfile = os.path.join(update_dir, 'delete.txt')
     if not os.path.exists(delfile):
         return
@@ -218,12 +218,15 @@ def process_deletes(update_dir, webpath):
     with open(delfile) as f:
         for line in f:
             line = line.strip()
-            if line.startswith("web/"):
-                src = os.path.join(webpath, line[4:])
-                dest = os.path.join(webpath, 'backup', line[4:])
-            else:
-                src = line
-                dest = os.path.join('backup', line)
+            if sys.platform != 'win32':
+                if line.startswith('Web'):
+                    line = os.path.join('unifield-web', line[4:])
+                elif line.startswith('Server'):
+                    line = os.path.join('unifield-server', line[7:])
+                else:
+                    continue
+            src = os.path.join(unifield_root, line)
+            dest = os.path.join(unifield_root, 'backup', line)
 
             destdir = os.path.dirname(dest)
             if not os.path.exists(destdir):
@@ -236,9 +239,6 @@ def process_deletes(update_dir, webpath):
             else:
                 warn("File to delete %s not found." % src)
     return deleted
-
-def is_webfile(f):
-    return re.match("^web[\\\/](.*)", f)
 
 def do_update():
     """Real update of the server (before normal OpenERP execution).
@@ -257,6 +257,7 @@ def do_update():
         revisions = []
         files = []
         deleted_files = []
+        unifield_root = ''
         try:
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
@@ -264,39 +265,11 @@ def do_update():
             ## Explore .update directory
 
             ## Prepare backup directory
-            if not os.path.exists('backup'):
-                os.mkdir('backup')
+            backup_dir = os.path.join(unifield_root, 'backup')
+            if not os.path.exists(backup_dir):
+                os.makedirs(backup_dir)
             else:
-                rmtree('backup')
-
-            if os.name == "nt":
-                import winreg
-
-                try:
-                    registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0", 0,
-                                                   winreg.KEY_READ)
-                    value, regtype = winreg.QueryValueEx(registry_key, "EventMessageFile")
-                    winreg.CloseKey(registry_key)
-                    regval = value
-                    warn("webmode registry key : %s" % regval)
-                except WindowsError:
-                    warn("webmode registry key not found")
-                    regval = "c:\Program Files (x86)\msf\\Unifield\Web\service\libs\servicemanager.pyd"
-
-                res = re.match("^(.*)\\\\service\\\\libs\\\\servicemanager.pyd", regval)
-                if res:
-                    webpath = res.group(1)
-                else:
-                    webpath = "c:\\Program Files (x86)\\msf\\Unifield\\Web"
-
-            else:
-                #We're on the runbot
-                webpath = '../../unifield-web/'
-            webbackup = os.path.join(webpath, 'backup')
-            if not os.path.exists(webbackup):
-                os.mkdir(webbackup)
-            else:
-                rmtree(webbackup)
+                rmtree(backup_dir)
 
             webupdated = False
             ## Update Files
@@ -307,50 +280,46 @@ def do_update():
                 if f == 'delete.txt':
                     continue
 
-                webfile = is_webfile(f)
                 warn("Filename : `%s'" % (f))
-                if webfile:
-                    target = os.path.join(update_dir, f)
-                    bak = os.path.join(webbackup, webfile.group(1))
-                    webf = os.path.join(webpath, webfile.group(1))
-                    warn("webmode (webpath, target, bak, webf): %s, %s, %s, %s" % (webpath, target, bak, webf))
-                    if os.path.isdir(target):
-                        if os.path.isfile(webf) or os.path.islink(webf):
-                            os.unlink(webf)
-                        if not os.path.exists(webf):
-                            os.mkdir(webf)
-                        os.mkdir(bak)
+                if sys.platform != 'win32':
+                    if f.startswith('Web'):
+                        target = os.path.join('unifield-web', update_dir, f[4:])
+                    elif f.startswith('Server'):
+                        target = os.path.join('unifield-server', update_dir, f[7:])
                     else:
-                        if os.path.exists(webf):
-                            warn("`%s' -> `%s'" % (webf, bak))
-                            os.rename(webf, bak)
-                        warn("`%s' -> `%s'" % (target, webf))
-                        os.rename(target, webf)
-                    webupdated = True
-                else:
-                    target = os.path.join(update_dir, f)
-                    bak = os.path.join('backup', f)
+                        continue
+                src = os.path.join(unifield_root, update_dir, f)
+                bak = os.path.join(backup_dir, f)
 
-                    if os.path.isdir(target):
-                        if os.path.isfile(f) or os.path.islink(f):
-                            os.unlink(f)
-                        if not os.path.exists(f):
-                            os.mkdir(f)
-                        os.mkdir(bak)
-                    else:
-                        if os.path.exists(f):
-                            warn("`%s' -> `%s'" % (f, bak))
-                            os.rename(f, bak)
-                        warn("`%s' -> `%s'" % (target, f))
-                        os.rename(target, f)
+                if os.path.isdir(src):
+                    if os.path.isfile(f) or os.path.islink(f):
+                        os.unlink(f)
+                    if not os.path.exists(f):
+                        os.mkdir(f)
+                    os.mkdir(bak)
+                else:
+                    if os.path.exists(f):
+                        warn("`%s' -> `%s'" % (f, bak))
+                        os.rename(f, bak)
+                    warn("`%s' -> `%s'" % (src, f))
+                    os.rename(src, f)
+                if f.startswith('Web'):
+                    webupdated = True
 
             # Read and apply the deleted.txt file.
-            deleted_files = process_deletes(update_dir, webpath)
+            deleted_files = process_deletes(update_dir, unifield_root)
 
             # Clean out the PYC files so that they can be recompiled
             # by the (potentially) updated pythonXX.dll.
-            for d in [ '.', webpath ]:
-                for root, dirs, o_files in os.walk(d):
+            if sys.platform != 'win32':
+                path_to_clean = ['unifield-server', 'unifield-web']
+            else:
+                path_to_clean = ['Server', 'Web', 'python']
+            for d in path_to_clean:
+                for root, dirs, o_files in os.walk(os.path.join(unifield_root, d)):
+                    for dir_name in dirs:
+                        if dir_name == '__pycache__':
+                            rmtree(os.path.join(root, dir_name))
                     for file in o_files:
                         if file.endswith('.pyc'):
                             file = os.path.join(root, file)
@@ -372,8 +341,8 @@ def do_update():
             #Restart web server
             if webupdated and os.name == "nt":
                 try:
-                    subprocess.call('net stop "OpenERP Web 6.0"')
-                    subprocess.call('net start "OpenERP Web 6.0"')
+                    subprocess.call('net stop openerp-web-6.0')
+                    subprocess.call('net start openerp-web-6.0')
                 except OSError as e:
                     warn("Exception in Web server restart :")
                     warn(str(e))
@@ -385,15 +354,11 @@ def do_update():
             except:
                 warn("Unknown error")
             ## Restore backup and purge .update
+            ## TODO
             if files or deleted_files:
                 warn("Restoring... ")
                 for f in reversed(files + deleted_files):
-                    webfile = is_webfile(f)
-                    if webfile:
-                        f = os.path.join(webpath, webfile.group(1))
-                        target = os.path.join(webbackup, webfile.group(1))
-                    else:
-                        target = os.path.join('backup', f)
+                    target = os.path.join('backup', f)
                     if os.path.isfile(target) or os.path.islink(target):
                         warn("`%s' -> `%s'" % (target, f))
                         if os.path.isfile(f):
@@ -406,6 +371,9 @@ def do_update():
                 Try(lambda:rmtree(update_dir))
         if os.name == 'nt':
             warn("Exiting OpenERP Server with code 1 to tell service to restart")
+            subprocess.call('sc delete openerp-server-6.0', stdout=log, stderr=log)
+            subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" "%(INSTDIR)s\Server\openerp-server.py"' % {'INSTDIR': unifield_root},stdout=log, stderr=log)
+            subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-server-py3 AppDirectory "%(INSTDIR)s\Server"' % {'INSTDIR': unifield_root},  stdout=log, stderr=log)
             sys.exit(1) # require service to restart
         else:
             warn(("Restart OpenERP in %s:" % exec_path), \
