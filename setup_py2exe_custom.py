@@ -26,7 +26,8 @@ import os
 import tempfile
 
 if os.name == 'nt':
-    from py2exe.build_exe import py2exe as build_exe, fancy_split
+    from py2exe import build_exe
+    from py2exe.distutils_buildexe import py2exe, fancy_split
 else:
     # fake it for non-Windows, so that setup.py can be run for
     # installing dependencies.
@@ -89,8 +90,8 @@ def byte_compile_noop(py_files, optimize=0, force=0,
 
 # byte_compile()
 
-class custom_py2exe(build_exe):
-    user_options = build_exe.user_options + [
+class custom_py2exe(py2exe):
+    user_options = py2exe.user_options + [
         ("collected-libs-dir", None,
          "Place all collected libs under a specific sub-directory"),
         ("collected-libs-data-relocate", None,
@@ -146,7 +147,7 @@ if hasattr(sys, 'frozen'):
     def create_binaries(self, py_files, extensions, dlls):
         dist = self.distribution
 
-        # Do not try compiling .py files for 'packages', we 
+        # Do not try compiling .py files for 'packages', we
         # want them into the exe directory - and only collected
         # dependencies with 'collected libbs dir'
         src_build_cmd = dist.get_command_obj('build')
@@ -191,7 +192,7 @@ if hasattr(sys, 'frozen'):
         if dist.has_data_files():
             dist.data_files = [ fixup_location(f) for f in dist.data_files ]
 
-        # Call parent create_binaries() without any py_files, so that py2exe 
+        # Call parent create_binaries() without any py_files, so that py2exe
         # do no force their compilations
         return build_exe.create_binaries(self, [], extensions, dlls)
 

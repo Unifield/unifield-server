@@ -92,7 +92,7 @@ setup(
     license=license,
     python_requires = ">=3.9.5",
     install_requires=[
-        "pypiwin32==219;platform_system=='Windows'",
+        "pywin32==300;platform_system=='Windows'",
         "cheroot==8.5.2",
         "MarkupSafe==1.1.1",
         "more-itertools==8.7.0",
