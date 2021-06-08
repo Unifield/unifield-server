@@ -103,7 +103,6 @@ class configmanager(object):
             'publisher_warranty_url': 'http://services.openerp.com/publisher-warranty/',
             'osv_memory_count_limit': None, # number of records in each osv_memory virtual table
             'osv_memory_age_limit': 1, # hours
-            'additional_xml': False,
             'create_db_dir_for_attachment': True,
             'sync_user_login': False,
             'sync_user_password': False,
@@ -166,7 +165,6 @@ class configmanager(object):
                           help="load demo data for a module (use \"all\" for all modules)", default=False)
         parser.add_option("-u", "--update", dest="update",
                           help="update a module (use \"all\" for all modules)")
-        parser.add_option("--additional-xml", dest="additional_xml", help="load additonal xml files", default=False, action='store_true')
         parser.add_option("--cache-timeout", dest="cache_timeout",
                           help="set the timeout for the cache system", type="int")
         parser.add_option("-t", "--timezone", dest="timezone", help="specify reference timezone for the server (e.g. Europe/Brussels")
@@ -321,7 +319,6 @@ class configmanager(object):
                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
                 'secure_cert_file', 'secure_pkey_file',
                 'static_http_enable', 'static_http_document_root', 'static_http_url_prefix',
-                'additional_xml'
                 ]
 
         for arg in keys:
@@ -497,10 +494,11 @@ class configmanager(object):
             pass
 
     def save(self):
-        p = configparser.ConfigParser()
+        p = configparser.RawConfigParser()
         loglevelnames = dict(list(zip(list(self._LOGLEVELS.values()), list(self._LOGLEVELS.keys()))))
         p.add_section('options')
         for opt in sorted(self.options.keys()):
+            print(opt, self.options[opt], type(self.options[opt]))
             if opt in ('version', 'language', 'translate_out', 'translate_in', 'overwrite_existing_translations', 'init', 'update'):
                 continue
             if opt in self.blacklist_for_save:
@@ -508,7 +506,7 @@ class configmanager(object):
             if opt in ('log_level', 'assert_exit_level'):
                 p.set('options', opt, loglevelnames.get(self.options[opt], self.options[opt]))
             elif 'pass' in opt and isinstance(self.options[opt], str):
-                p.set('options', opt, b64encode(self.options[opt]))
+                p.set('options', opt, str(b64encode(bytes(self.options[opt], 'utf8')), 'utf8'))
             else:
                 p.set('options', opt, self.options[opt])
 

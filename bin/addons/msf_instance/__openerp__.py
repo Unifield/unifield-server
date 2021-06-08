@@ -39,9 +39,6 @@
         'wizard/account_analytic_chart_view.xml',
         'data/remote_backup.xml',
     ],
-    "additional_xml": [
-        'data/instance_data.xml',
-    ],
     'demo_xml': [
     ],
     'installable': True,

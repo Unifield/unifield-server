@@ -31,9 +31,6 @@
     "depends" : ["mission_stock"],
     'update_xml': [
     ],
-    "additional_xml": [
-        'mission_stock_cron_data.xml',
-    ],
     "demo_xml": [],
     'test': [
     ],

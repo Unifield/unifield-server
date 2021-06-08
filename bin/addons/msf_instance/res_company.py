@@ -22,32 +22,10 @@
 
 from osv import osv, fields
 from tools.translate import _
-import logging
-import tools
 
 class res_company(osv.osv):
     _name = 'res.company'
     _inherit = 'res.company'
-
-    def init(self, cr):
-        """
-            Create a instance for yml test
-        """
-        if hasattr(super(res_company, self), 'init'):
-            super(res_company, self).init(cr)
-
-        mod_obj = self.pool.get('ir.module.module')
-        demo = False
-        mod_id = mod_obj.search(cr, 1, [('name', '=', 'msf_instance')])
-        if mod_id:
-            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
-        if demo:
-            current_module = 'msf_instance'
-            file_to_load = '%s/data/instance_data.xml' % (current_module, )
-
-            logging.getLogger('init').info('HOOK: module msf_instance: loading %s' % file_to_load)
-            file = tools.file_open(file_to_load)
-            tools.convert_xml_import(cr, current_module, file, {}, mode='init', noupdate=False)
 
     _columns = {
         'instance_id': fields.many2one('msf.instance', string="Proprietary Instance",
