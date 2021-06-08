@@ -498,7 +498,6 @@ class configmanager(object):
         loglevelnames = dict(list(zip(list(self._LOGLEVELS.values()), list(self._LOGLEVELS.keys()))))
         p.add_section('options')
         for opt in sorted(self.options.keys()):
-            print(opt, self.options[opt], type(self.options[opt]))
             if opt in ('version', 'language', 'translate_out', 'translate_in', 'overwrite_existing_translations', 'init', 'update'):
                 continue
             if opt in self.blacklist_for_save:
