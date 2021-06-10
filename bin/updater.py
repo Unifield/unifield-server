@@ -257,7 +257,7 @@ def do_update():
         revisions = []
         files = []
         deleted_files = []
-        unifield_root = ''
+        unifield_root = '..'
         try:
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
@@ -288,9 +288,13 @@ def do_update():
                         target = os.path.join('unifield-server', update_dir, f[7:])
                     else:
                         continue
-                src = os.path.join(unifield_root, update_dir, f)
+                src = os.path.join(update_dir, f)
                 bak = os.path.join(backup_dir, f)
 
+                if f.startswith('Web'):
+                    webupdated = True
+
+                f = os.path.join(unifield_root, f)
                 if os.path.isdir(src):
                     if os.path.isfile(f) or os.path.islink(f):
                         os.unlink(f)
@@ -303,8 +307,6 @@ def do_update():
                         os.rename(f, bak)
                     warn("`%s' -> `%s'" % (src, f))
                     os.rename(src, f)
-                if f.startswith('Web'):
-                    webupdated = True
 
             # Read and apply the deleted.txt file.
             deleted_files = process_deletes(update_dir, unifield_root)
@@ -342,10 +344,15 @@ def do_update():
             if webupdated and os.name == "nt":
                 try:
                     subprocess.call('net stop openerp-web-6.0')
-                    subprocess.call('net start openerp-web-6.0')
                 except OSError as e:
                     warn("Exception in Web server restart :")
                     warn(str(e))
+                # TODO: if migration ...
+                real_root = os.path.realpath(unifield_root)
+                subprocess.call('sc delete openerp-web-6.0')
+                subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-web-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Web\openerp-web.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
+                subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-web-py3 AppDirectory "%(INSTDIR)s\Web"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
+                subprocess.call(r'net start openerp-web-py3')
 
         except BaseException as e:
             warn("Update failure!")
@@ -371,9 +378,13 @@ def do_update():
                 Try(lambda:rmtree(update_dir))
         if os.name == 'nt':
             warn("Exiting OpenERP Server with code 1 to tell service to restart")
+            # TODO: if new install ...
             subprocess.call('sc delete openerp-server-6.0', stdout=log, stderr=log)
-            subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" "%(INSTDIR)s\Server\openerp-server.py"' % {'INSTDIR': unifield_root},stdout=log, stderr=log)
-            subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-server-py3 AppDirectory "%(INSTDIR)s\Server"' % {'INSTDIR': unifield_root},  stdout=log, stderr=log)
+            real_root = os.path.realpath(unifield_root)
+            warn(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8  """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root})
+            subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
+            subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-server-py3 AppDirectory "%(INSTDIR)s\Server"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
+            subprocess.call(r'net start openerp-server-py3')
             sys.exit(1) # require service to restart
         else:
             warn(("Restart OpenERP in %s:" % exec_path), \

@@ -117,7 +117,8 @@ class version(osv.osv):
         rec = self.browse(cr, uid, ids, context=context)[0]
         if rec.state != 'confirmed':
             return (False, "The revision %s is not enabled!" % sum)
-        return (True, rec.patch)
+        # TODO PY3: manage query from py2 and py3 ?
+        return (True, str(rec.patch, 'utf8'))
 
     def delete_revision(self, cr, uid, ids, context=None):
         return self.unlink(cr, uid, ids, context=context)
@@ -165,6 +166,7 @@ class sync_manager(osv.osv):
     def get_zip(self, cr, uid, entity, revision, context=None):
         self._logger.info("::::::::[%s] download patch" % (entity.name, ))
         return self.pool.get('sync_server.version')._get_zip(cr, 1, revision)
+
 
 sync_manager()
 
