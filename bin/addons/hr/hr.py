@@ -21,7 +21,6 @@
 
 from osv import fields, osv
 
-import addons
 
 class hr_employee_category(osv.osv):
 
@@ -186,13 +185,10 @@ class hr_employee(osv.osv):
             work_email = self.pool.get('res.users').browse(cr, uid, user_id, context=context).user_email
         return {'value': {'work_email' : work_email}}
 
-    def _get_photo(self, cr, uid, context=None):
-        photo_path = addons.get_module_resource('hr','images','photo.png')
-        return open(photo_path, 'rb').read().encode('base64')
 
     _defaults = {
         'active': 1,
-        'photo': _get_photo,
+        'photo': False,
     }
 
     def _check_recursion(self, cr, uid, ids, context=None):
