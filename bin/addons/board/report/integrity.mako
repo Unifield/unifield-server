@@ -106,7 +106,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
       % else:
         <Cell ss:StyleID="ssBorder"></Cell>
       % endif
-    % elif isinstance(cell, (int, float, long)):
+    % elif isinstance(cell, (int, float)):
       <Cell ss:StyleID="ssBorder"><Data ss:Type="Number">${cell}</Data></Cell>
     % else:
       <Cell ss:StyleID="ssBorder"><Data ss:Type="String">${cell|x}</Data></Cell>

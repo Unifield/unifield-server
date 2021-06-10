@@ -38,11 +38,6 @@ class hq_report_oca(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
-    def _enc(self, st):
-        if isinstance(st, str):
-            return st.encode('utf8')
-        return st
-
     def translate_account(self, cr, uid, pool, browse_account, context=None):
         """
         Returns the "HQ System Account Code" of the account in parameter if it exists, else returns the standard account code
@@ -500,19 +495,19 @@ class hq_report_oca(report_sxw.report_sxw):
             out = ''
         else:
             # manual export
-            zip_buffer = io.StringIO()
+            zip_buffer = io.BytesIO()
             in_memory = True
-        first_fileobj = NamedTemporaryFile('w+b', delete=False)
-        second_fileobj = NamedTemporaryFile('w+b', delete=False)
+        first_fileobj = NamedTemporaryFile('w+', delete=False, newline='')
+        second_fileobj = NamedTemporaryFile('w+', delete=False, newline='')
         # for Raw data file: use double quotes for all entries
         writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL, delimiter=",")
         for line in first_report:
-            writer.writerow(list(map(self._enc, line)))
+            writer.writerow(line)
         first_fileobj.close()
         # for formatted data file: use double quotes only for entries containing double quote or comma
         writer = csv.writer(second_fileobj, quoting=csv.QUOTE_MINIMAL, delimiter=",")
         for line in second_report:
-            writer.writerow(list(map(self._enc, line)))
+            writer.writerow(line)
         second_fileobj.close()
 
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")

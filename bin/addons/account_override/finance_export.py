@@ -24,7 +24,7 @@
 from osv import osv
 from tools.translate import _
 import csv
-from io import StringIO
+from io import BytesIO
 import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
@@ -74,8 +74,8 @@ class finance_archive():
         if not line:
             return []
         for element in line:
-            if type(element) == str:
-                newline.append(element.encode('utf-8'))
+            if isinstance(line, bytes):
+                newline.append(str(element,'utf8'))
             else:
                 newline.append(element)
         return newline
@@ -140,7 +140,7 @@ class finance_archive():
             # And we want this: [2, 4, 6, 8]
             # So we do some process on this list
             res_ids = [int(x) for x in ids]
-        md5sum.update(','.join([name, model, str(res_ids)]))
+        md5sum.update(bytes(','.join([name, model, str(res_ids)]), 'utf8'))
         return md5sum.hexdigest()
 
     def postprocess_selection_columns(self, cr, uid, data, changes, column_deletion=False):
@@ -181,7 +181,7 @@ class finance_archive():
         Create an archive with sqlrequests params and processrequests params.
         """
         # open buffer for result zipfile
-        zip_buffer = StringIO()
+        zip_buffer = BytesIO()
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
 
@@ -205,7 +205,7 @@ class finance_archive():
             # temporary file (process filename to display datetime data instead of %(year)s chars)
             filename = pool.get('ir.sequence')._process(cr, uid, fileparams['filename'] or '') or fileparams['filename']
             if filename not in files:
-                tmp_file = NamedTemporaryFile('w+b', delete=False)
+                tmp_file = NamedTemporaryFile('w+', delete=False, newline='')
             else:
                 tmp_file = files[filename]
 

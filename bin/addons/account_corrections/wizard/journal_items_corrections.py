@@ -445,7 +445,7 @@ class journal_items_corrections(osv.osv_memory):
 #        # Verifications
 #        if not context:
 #            context = {}
-#        if isinstance(ids, (int, long)):
+#        if isinstance(ids, int):
 #            ids = [ids]
 #        # Verify that date is superior to line's date
 #        for wiz in self.browse(cr, uid, ids, context=context):

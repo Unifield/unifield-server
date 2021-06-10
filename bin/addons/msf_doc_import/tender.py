@@ -79,7 +79,7 @@ class tender(osv.osv):
 #        '''
 #        if not context:
 #            context = {}
-#        if isinstance(ids, (int, long)):
+#        if isinstance(ids, int):
 #            ids = [ids]
 #        product_obj = self.pool.get('product.product')
 #        uom_obj = self.pool.get('product.uom')

@@ -81,28 +81,28 @@ class hq_report_ocba(report_sxw.report_sxw):
 
         data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.move.line'),
-            'Proprietary instance': self._enc(r.instance_id and r.instance_id.code or r.instance_id.name or ''),
-            'Journal Code': self._enc(r.journal_id and r.journal_id.code or ''),
-            'Entry Sequence': self._enc(r.move_id and r.move_id.name or ''),
-            'Description': self._enc(r.name),
-            'Reference': self._enc(r.ref),
+            'Proprietary instance': r.instance_id and r.instance_id.code or r.instance_id.name or '',
+            'Journal Code': r.journal_id and r.journal_id.code or '',
+            'Entry Sequence': r.move_id and r.move_id.name or '',
+            'Description': r.name,
+            'Reference': r.ref,
             'Document Date': r.document_date or '',
             'Posting Date': r.date or '',
-            'G/L Account': self._enc(r.account_id and r.account_id.code or ''),  # code
-            'Account description': self._enc(r.account_id and r.account_id.name or ''),
-            'Third Party': self._enc(r.partner_id and r.partner_id.name or ''),  # US-497: extract name from partner_id (better than partner_txt)
-            'EE ID': self._enc(r.employee_id and r.employee_id.identification_id or ''),  # nat/staff ID Number
+            'G/L Account': r.account_id and r.account_id.code or '',  # code
+            'Account description': r.account_id and r.account_id.name or '',
+            'Third Party': r.partner_id and r.partner_id.name or '',  # US-497: extract name from partner_id (better than partner_txt)
+            'EE ID': r.employee_id and r.employee_id.identification_id or '',  # nat/staff ID Number
             'Partner DB ID': r.partner_id and finance_export.finance_archive._get_hash(cr, uid, [r.partner_id.id], 'res_partner') or '',
             'Destination': '',
             'Cost Centre': '',
             'Booking Debit': self._enc_amount(not r.is_addendum_line and r.debit_currency or 0.),
             'Booking Credit': self._enc_amount(not r.is_addendum_line and r.credit_currency or 0.),
-            'Booking Currency': self._enc(r.currency_id and r.currency_id.name or ''),
+            'Booking Currency': r.currency_id and r.currency_id.name or '',
             'Functional Debit': self._enc_amount(r.debit),
             'Functional Credit': self._enc_amount(r.credit),
-            'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
+            'Functional Currency': r.functional_currency_id and r.functional_currency_id.name or '',
             'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=False), digits=self._EXCHANGE_RATE_DIGITS),
-            'Reconciliation code': self._enc(r.reconcile_txt),  # only for B/S)
+            'Reconciliation code': r.reconcile_txt,  # only for B/S)
         }
         self._add_row('entries', file_data=file_data, data=data)
 
@@ -140,14 +140,14 @@ class hq_report_ocba(report_sxw.report_sxw):
         data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, entry_data['ids'], 'account.move.line'),
             'Proprietary instance': '',
-            'Journal Code': self._enc(journal_code),
+            'Journal Code': journal_code,
             'Entry Sequence': seq_number,
-            'Description': self._enc(description),
+            'Description': description,
             'Reference': '',
             'Document Date': build_data['default_date'],
             'Posting Date': build_data['default_date'],
-            'G/L Account': self._enc(account_code or ''),
-            'Account description': self._enc(entry_data['account_name']),
+            'G/L Account': account_code or '',
+            'Account description': entry_data['account_name'],
             'Third Party': '',
             'EE ID': '',
             'Partner DB ID': '',
@@ -155,10 +155,10 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Cost Centre': '',
             'Booking Debit': self._enc_amount(is_debit and booking or 0.),
             'Booking Credit': self._enc_amount(not is_debit and booking or 0.),
-            'Booking Currency': self._enc(ccy_name or ''),
+            'Booking Currency': ccy_name or '',
             'Functional Debit': self._enc_amount(is_debit and func or 0.),
             'Functional Credit': self._enc_amount(not is_debit and func or 0.),
-            'Functional Currency': self._enc(build_data['functional_ccy_name']),
+            'Functional Currency': build_data['functional_ccy_name'],
             'Exchange rate': self._enc_amount(rate,
                                               digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': '',
@@ -173,7 +173,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         partner_db_id = ''
         partner_txt = ''
         if r.move_id:
-            ee_id = self._enc(r.move_id.employee_id and r.move_id.employee_id.identification_id or '')
+            ee_id = r.move_id.employee_id and r.move_id.employee_id.identification_id or ''
             partner_db_id = r.move_id.partner_id and finance_export.finance_archive._get_hash(cr, uid, [r.move_id.partner_id.id], 'res_partner') or ''
             partner_txt = r.move_id.partner_id and r.move_id.partner_id.name or ''
         # NOTE: if from sync no move line, no 3rd party link, only partner_txt:
@@ -186,26 +186,26 @@ class hq_report_ocba(report_sxw.report_sxw):
 
         data={
             'DB ID': finance_export.finance_archive._get_hash(cr, uid, [r.id], 'account.analytic.line'),
-            'Proprietary instance': self._enc(r.instance_id and r.instance_id.code or r.instance_id.name or ''),
-            'Journal Code': self._enc(r.journal_id and r.journal_id.code or ''),
-            'Entry Sequence': self._enc(r.entry_sequence or ''),
-            'Description': self._enc(r.name),
-            'Reference': self._enc(r.ref),
+            'Proprietary instance': r.instance_id and r.instance_id.code or r.instance_id.name or '',
+            'Journal Code': r.journal_id and r.journal_id.code or '',
+            'Entry Sequence': r.entry_sequence or '',
+            'Description': r.name,
+            'Reference': r.ref,
             'Document Date': r.document_date or '',
             'Posting Date': r.date or '',
-            'G/L Account': self._enc(r.general_account_id and r.general_account_id.code or ''),  # code
-            'Account description': self._enc(r.general_account_id and r.general_account_id.name or ''),
-            'Third Party': self._enc(partner_txt),
+            'G/L Account': r.general_account_id and r.general_account_id.code or '',  # code
+            'Account description': r.general_account_id and r.general_account_id.name or '',
+            'Third Party': partner_txt,
             'EE ID': ee_id,  # nat/staff ID Number
             'Partner DB ID': partner_db_id,
-            'Destination': self._enc(r.destination_id and r.destination_id.code or ''),
-            'Cost Centre': self._enc(r.cost_center_id and r.cost_center_id.code or ''),
+            'Destination': r.destination_id and r.destination_id.code or '',
+            'Cost Centre': r.cost_center_id and r.cost_center_id.code or '',
             'Booking Debit': self._enc_amount(booking_amount, debit=True),
             'Booking Credit': self._enc_amount(booking_amount, debit=False),
-            'Booking Currency': self._enc(r.currency_id and r.currency_id.name or ''),
+            'Booking Currency': r.currency_id and r.currency_id.name or '',
             'Functional Debit': self._enc_amount(r.amount, debit=True),
             'Functional Credit': self._enc_amount(r.amount, debit=False),
-            'Functional Currency': self._enc(r.functional_currency_id and r.functional_currency_id.name or ''),
+            'Functional Currency': r.functional_currency_id and r.functional_currency_id.name or '',
             'Exchange rate': self._enc_amount(self._get_rate(cr, uid, r, is_analytic=True), digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': '',  # no reconcile for expense account
         }
@@ -385,18 +385,18 @@ class hq_report_ocba(report_sxw.report_sxw):
         """
         :return zip buffer
         """
-        zip_buffer = io.StringIO()
+        zip_buffer = io.BytesIO()
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
         tmp_fds = []
 
         # fill zip file
         for f in file_data:
-            tmp_fd = NamedTemporaryFile('w+b', delete=False)
+            tmp_fd = NamedTemporaryFile('w+', delete=False)
             tmp_fds.append(tmp_fd)
             writer = csv.writer(tmp_fd, quoting=csv.QUOTE_ALL)
 
             for line in file_data[f]['data']:
-                writer.writerow(list(map(self._enc, line)))
+                writer.writerow(line)
             tmp_fd.close()
 
             out_zipfile.write(tmp_fd.name, target_filename + ".csv",
@@ -457,13 +457,6 @@ class hq_report_ocba(report_sxw.report_sxw):
                 entry_dt = r.document_date or r.date
 
         return get_month_rate(r.currency_id.id, entry_dt)
-
-    def _enc(self, st):
-        if not st:
-            return ''
-        if isinstance(st, str):
-            return st.encode('utf8')
-        return st
 
     def _enc_amount(self, amount, debit=None, digits=False):
         """

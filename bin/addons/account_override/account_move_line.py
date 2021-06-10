@@ -61,7 +61,7 @@ class account_move_line(osv.osv):
             result = ''.join([string, ' - ', text])
         if text == '' or string == '':
             return result
-        pattern = re.compile('\%s([0-9]+) - ' % string)
+        pattern = re.compile('%s([0-9]+) - ' % string)
         m = re.match(pattern, text)
         if m and m.groups():
             number = m.groups() and m.groups()[0]

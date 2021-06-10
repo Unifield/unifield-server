@@ -35,11 +35,6 @@ class hq_report_ocg(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
-    def _enc(self, st):
-        if isinstance(st, str):
-            return st.encode('utf8')
-        return st
-
     def translate_account(self, cr, uid, pool, browse_account, context={}):
         mapping_obj = pool.get('account.export.mapping')
         if browse_account:
@@ -352,16 +347,16 @@ class hq_report_ocg(report_sxw.report_sxw):
             prefix += "xxxxxx"
         prefix += "_"
 
-        zip_buffer = io.StringIO()
-        first_fileobj = NamedTemporaryFile('w+b', delete=False)
-        second_fileobj = NamedTemporaryFile('w+b', delete=False)
+        zip_buffer = io.BytesIO()
+        first_fileobj = NamedTemporaryFile('w+', delete=False, newline='')
+        second_fileobj = NamedTemporaryFile('w+', delete=False, newline='')
         writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL)
         for line in first_report:
-            writer.writerow(list(map(self._enc,line)))
+            writer.writerow(line)
         first_fileobj.close()
         writer = csv.writer(second_fileobj, quoting=csv.QUOTE_ALL)
         for line in second_report:
-            writer.writerow(list(map(self._enc,line)))
+            writer.writerow(line)
         second_fileobj.close()
 
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")

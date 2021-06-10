@@ -527,7 +527,7 @@ class product_nomenclature(osv.osv):
         # first, and the link to parent got sync-ed afterward, which violates the uniqueness on name.
         # Currently we don't have any better solution for this, we will temporarily "disable" it
 
-        #        if isinstance(ids, (int, long)):
+        #        if isinstance(ids, int):
         #            ids = [ids]
         #        for nomen in self.browse(cr, uid, ids, context=context):
         #            if self.search_count(cr, uid, [('complete_name', '=', nomen.complete_name)], context=context)>1:

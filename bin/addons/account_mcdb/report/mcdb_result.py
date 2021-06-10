@@ -91,7 +91,7 @@ def create_csv(self, cr, uid, ids, data, context=None):
         logging.getLogger('Finance export').info('CSV Exporting %d %s ...' % (len(ids), self.table))
         pool = pooler.get_pool(cr.dbname)
         obj = pool.get('account.line.csv.export')
-        outfile = tempfile.TemporaryFile('w+')
+        outfile = tempfile.TemporaryFile('w+', newline='')
         writer = csv.writer(outfile, quotechar='"', delimiter=',')
 
         if self.table == 'account.analytic.line':
