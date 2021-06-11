@@ -222,6 +222,11 @@ class GettextAlias(object):
             frame = frame.f_back
             if not frame:
                 return source
+            if frame.f_locals.get('.0'):
+                # _ called in generator / iterator
+                frame = frame.f_back
+                if not frame:
+                    return source
             lang = self._get_lang(frame)
             if lang:
                 cr, is_new_cr = self._get_cr(frame)
@@ -237,6 +242,7 @@ class GettextAlias(object):
             logger.debug('translation went wrong for "%r", skipped', source)
             # if so, double-check the root/base translations filenames
         finally:
+            del frame
             if cr and is_new_cr:
                 cr.close()
         return res
