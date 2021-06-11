@@ -130,7 +130,11 @@ class RPCGateway(object):
             result = self.__rpc__(obj, method, args, auth=auth)
             return self.__convert(result)
         except socket.error as e:
-            raise openobject.errors.TinyException(e.message or e.strerror, title=_('Application Error'))
+            if hasattr(e, 'message'):
+                error = e.message
+            else:
+                error = e.strerror
+            raise openobject.errors.TinyException(error, title=_('Application Error'))
 
         except RPCException as err:
             if err.type in ('warning', 'UserError'):
