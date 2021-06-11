@@ -72,7 +72,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     continue
             yield self.pool.get('sale.order').browse(self.cr, self.uid, order)
 
-        raise StopIteration
+        return
 
     def _get_products(self, order, count=False):
         '''
@@ -86,7 +86,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         for order_line_id in order_line_ids:
             yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id, context=self.localcontext)
 
-        raise StopIteration
+        return
 
     def _is_returned(self, move):
         '''
@@ -347,7 +347,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             percent = float(self._order_iterator) / float(self._nb_orders)
             self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
 
-        raise StopIteration
+        return
 
     def _parse_date_xls(self, dt_str, is_datetime=True):
         if not dt_str or dt_str == 'False':

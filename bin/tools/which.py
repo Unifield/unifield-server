@@ -42,8 +42,11 @@ __docformat__ = 'restructuredtext en'
 __all__ = 'which which_files pathsep defpath defpathext F_OK R_OK W_OK X_OK'.split()
 
 import sys
-from os import access, defpath, pathsep, environ, F_OK, X_OK
-from os.path import exists, split, join
+from os import access, defpath, pathsep, environ, F_OK, X_OK, W_OK
+from os.path import exists, split, join, dirname
+
+assert W_OK # unit test
+assert dirname # unit test
 
 windows = sys.platform.startswith('win')
 

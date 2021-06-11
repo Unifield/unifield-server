@@ -81,7 +81,7 @@ def getIterObjects(self, cr, uid, ids, context):
         if new_ids:
             for o in table_obj.browse(cr, uid, new_ids, list_class=report_sxw.browse_record_list, context=context, fields_process=field_process):
                 yield o
-    raise StopIteration
+    return
 
 def create_csv(self, cr, uid, ids, data, context=None):
     try:

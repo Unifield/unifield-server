@@ -146,7 +146,7 @@ class po_follow_up(osv.osv_memory):
         for res in cr.dictfetchall():
             yield res
 
-        raise StopIteration
+        return
 
 
     def get_qty_backordered(self, cr, uid, pol_id, qty_ordered, qty_received, first_line):

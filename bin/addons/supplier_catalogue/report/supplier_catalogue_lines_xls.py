@@ -56,7 +56,7 @@ class supplier_catalogue_lines_report_parser(report_sxw.rml_parse):
 
             yield cat_line
 
-        raise StopIteration
+        return
 
 
 class supplier_catalogue_lines_report_xls(WebKitParser):

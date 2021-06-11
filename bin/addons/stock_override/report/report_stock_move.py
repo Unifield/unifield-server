@@ -541,7 +541,7 @@ product will be shown.""",
         rate_cache = {}
 
         if not datas['moves']:
-            raise StopIteration
+            return
         if not datas['selected_locs']:
             inst_full_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_locations')[1]
             loc_domain = [('location_id', 'child_of', inst_full_view_id), ('active', 'in', ['t', 'f'])]
@@ -622,7 +622,7 @@ product will be shown.""",
             while True:
                 rows = new_cr.dictfetchmany(600)
                 if not rows:
-                    raise StopIteration
+                    return
                 for move in rows:
                     nb_done += 1
                     if nb_done % 300 == 0:
@@ -703,7 +703,7 @@ product will be shown.""",
                         ORDER_CATEGORIES.get(move['order_category']) or '',
                     ]
 
-            raise StopIteration
+            return
         finally:
             new_cr.commit()
             new_cr.close(True)

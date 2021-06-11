@@ -653,7 +653,7 @@ class po_follow_up_mixin(object):
             for pol in self.cr.fetchall():
                 yield pol
 
-        raise StopIteration
+        return
 
     def getLineStyle(self, line):
         return 'lgrey' if line.get('raw_state', '') in ['cancel', 'cancel_r'] else 'line'
@@ -1026,7 +1026,7 @@ class po_follow_up_mixin(object):
         for res in self.cr.dictfetchall():
             yield res
 
-        raise StopIteration
+        return
 
     def getReportHeaderLine1(self):
         return self.datas.get('report_header')[0]

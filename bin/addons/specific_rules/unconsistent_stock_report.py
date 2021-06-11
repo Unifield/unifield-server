@@ -95,7 +95,7 @@ class unconsistent_stock_report(osv.osv):
             if r['quantity'] > 0.00:
                 yield r
 
-        raise StopIteration
+        return
 
     def _get_unconsistent_non_managed_stock(self, cr, uid, context=None):
         """
@@ -136,7 +136,7 @@ class unconsistent_stock_report(osv.osv):
             if r['quantity'] > 0.00:
                 yield r
 
-        raise StopIteration
+        return
 
     def _get_unconsistent_moves(self, cr, uid, bm='f', perishable='t', context=None):
         """
@@ -205,7 +205,7 @@ class unconsistent_stock_report(osv.osv):
             if r['quantity'] > 0.00:
                 yield r
 
-        raise StopIteration
+        return
 
     def _get_unconsistent_upil(self, cr, uid, model='stock_inventory', context=None):
         """
@@ -271,7 +271,7 @@ class unconsistent_stock_report(osv.osv):
             if r['quantity'] > 0.00:
                 yield r
 
-        raise StopIteration
+        return
 
     def _get_unconsistent_ucrl(self, cr, uid, context=None):
         """
@@ -332,7 +332,7 @@ class unconsistent_stock_report(osv.osv):
             if r['quantity'] > 0.00:
                 yield r
 
-        raise StopIteration
+        return
 
     def _get_unconsistent_ukol(self, cr, uid, context=None):
         """
@@ -393,7 +393,7 @@ class unconsistent_stock_report(osv.osv):
             if r['quantity'] > 0.00:
                 yield r
 
-        raise StopIteration
+        return
 
     def _get_unconsistent_ucsm(self, cr, uid, context=None):
         """
@@ -440,7 +440,7 @@ class unconsistent_stock_report(osv.osv):
             if r['quantity'] > 0.00:
                 yield r
 
-        raise StopIteration
+        return
 
     def generate_report(self, cr, uid, ids, context=None):
         """

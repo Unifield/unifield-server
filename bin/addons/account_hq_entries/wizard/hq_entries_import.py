@@ -324,11 +324,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('You are trying to import a file with the wrong file format; please import a CSV file.'))
             res = True
             # Omit first line that contains hearders
-            headers = None
-            try:
-                headers = next(reader)
-            except StopIteration:
-                raise osv.except_osv(_('Error'), _('File is empty!'))
+            headers = next(reader)
             line_index = 1
             for line in reader:
                 line_index += 1
