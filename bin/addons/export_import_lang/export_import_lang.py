@@ -100,7 +100,7 @@ class base_language_export(osv.osv_memory):
             else:
                 buf=io.StringIO()
                 tools.trans_export(this.lang, modules, buf, this.format, cr, ignore_name=ignore_name, only_translated_terms=this.only_translated_terms)
-                out = base64.b64encode(buf.getvalue())
+                out = base64.b64encode(bytes(buf.getvalue(), 'utf8'))
                 buf.close()
 
             subject = _("Export translation %s %s ") % (this.lang, this.format)

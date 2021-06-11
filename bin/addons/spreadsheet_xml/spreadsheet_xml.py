@@ -162,8 +162,8 @@ class SpreadsheetXML(SpreadsheetTools):
         return SpreadsheetRow(table[0].iter('{%s}Row' % self.defaultns))
 
     def enc(self, s):
-        if isinstance(s, str):
-            return s.encode('utf8')
+        if isinstance(s, bytes):
+            return str(s, 'utf8')
         return s
 
     def to_csv(self, to_file=False, worksheet=1):

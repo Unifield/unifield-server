@@ -555,7 +555,7 @@ def trans_parse_rml(de, withtranslate=True):
                     elif i.group(1) == '"':
                         s = join_dquotes.sub(r'\1', i.group(2))
                     if s:
-                        s = s.decode('string_escape')
+                        s = bytes(s, 'utf-8').decode('unicode_escape')
                         res.append(s)
         res.extend(trans_parse_rml(n, False))
     return res
@@ -888,7 +888,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                 code_line += code_string[code_offset:i.start(1)].count('\n')
                 # now, since we did a binary read of a python source file, we
                 # have to expand pythonic escapes like the interpreter does.
-                src = src.decode('string_escape')
+                src = bytes(src, 'utf-8').decode('unicode_escape')
                 push_translation(module, terms_type, frelativepath, code_line, encode(src))
                 code_line += i.group(1).count('\n')
                 code_offset = i.end() # we have counted newlines up to the match end
@@ -904,7 +904,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                 else:
                     src = join_quotes.sub(r'\1', src)
                 code_line += code_string[code_offset:i.start(1)].count('\n')
-                src = src.decode('string_escape')
+                src = bytes(src, 'utf-8').decode('unicode_escape')
                 push_translation(module, terms_type, frelativepath, code_line, encode(src))
                 code_line += i.group(1).count('\n')
                 code_offset = i.end() # we have counted newlines up to the match end

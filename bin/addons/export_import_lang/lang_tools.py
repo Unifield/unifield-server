@@ -17,7 +17,7 @@ def open_requests(self, cr, uid, ids, filter=False, context=None):
 
 def get_data_file(cr, uid, data):
     filedata = base64.b64decode(data)
-    buf = io.StringIO(filedata)
+    buf = io.BytesIO(filedata)
 
     try:
         zipf = zipfile.ZipFile(buf, 'r')
@@ -33,8 +33,8 @@ def get_data_file(cr, uid, data):
     try:
         s_xml = SpreadsheetXML(xmlstring=filedata)
     except osv.except_osv:
-        fileobj = TemporaryFile('w+b')
-        fileobj.write(filedata)
+        fileobj = TemporaryFile('w+')
+        fileobj.write(str(filedata,'utf8'))
         fileformat = 'csv'
     else:
         fileobj = TemporaryFile('w+')
