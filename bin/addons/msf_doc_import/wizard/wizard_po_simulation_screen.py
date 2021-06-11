@@ -449,7 +449,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         def get_field_index(node, index):
             if not index:
                 index = 0
-            if node.getchildren():
+            if list(node):
                 for subnode in node:
                     index = get_field_index(subnode, index)
                 return index
@@ -497,7 +497,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     for ad_node in fl:
                         if ad_node.text:
                             values[index].append(ad_node.text or '')
-                elif not fl.getchildren():
+                elif not list(fl):
                     if fl.attrib['name'] in field_parser:
                         try:
                             value = field_parser[fl.attrib['name']](fl.text)

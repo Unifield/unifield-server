@@ -589,7 +589,7 @@ def trans_parse_view(de):
             text_to_translate = de.text
             # this is made for <translate> tags that contain <br /> tags
             # to incorporate evrything in the same variable
-            for child in de.getchildren():
+            for child in list(de):
                 text_to_translate += etree.tostring(child, encoding='unicode')
         else:
             text_to_translate += etree.tostring(child, encoding='unicode')

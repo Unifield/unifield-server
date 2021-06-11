@@ -396,7 +396,7 @@ class _rml_template(object):
                 posx = int(utils.unit_get(tmpl.get('x1')))
                 frames[(posy,posx,tmpl.get('id'))] = _rml_tmpl_frame(posx, utils.unit_get(tmpl.get('width')))
             for tmpl in node.findall('pageGraphics'):
-                for n in tmpl.getchildren():
+                for n in list(tmpl):
                     if n.nodeType==n.ELEMENT_NODE:
                         if n.localName in self._tags:
                             t = self._tags[n.localName](n, self.style)

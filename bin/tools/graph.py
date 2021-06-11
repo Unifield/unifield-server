@@ -350,14 +350,14 @@ class graph(object):
         """
         adj_nodes = self.adj_position(node, adj_rank)
         l = len(adj_nodes)
-        m = l/2
+        m = l//2
 
         if l==0:
             return -1.0
         elif l%2 == 1:
             return adj_nodes[m]#median of the middle element
         elif l==2:
-            return (adj_nodes[0]+adj_nodes[1])/2
+            return (adj_nodes[0]+adj_nodes[1])//2
         else:
             left = adj_nodes[m-1] - adj_nodes[0]
             right = adj_nodes[l-1] - adj_nodes[m]
@@ -407,16 +407,16 @@ class graph(object):
                 list.reverse()
 
                 if no%2==0:
-                    first_half = list[no/2:]
+                    first_half = list[no//2:]
                     factor = -factor
                 else:
-                    first_half = list[no/2+1:]
+                    first_half = list[no//2+1:]
                     if max_level==1:#for the case when horizontal graph is there
-                        self.result[list[no/2]]['y'] = mid_pos + (self.result[list[no/2]]['x']%2 * 0.5)
+                        self.result[list[no//2]]['y'] = mid_pos + (self.result[list[no//2]]['x']%2 * 0.5)
                     else:
-                        self.result[list[no/2]]['y'] = mid_pos + factor
+                        self.result[list[no//2]]['y'] = mid_pos + factor
 
-                last_half = list[:no/2]
+                last_half = list[:no//2]
 
                 i=1
                 for node in first_half:
@@ -439,13 +439,13 @@ class graph(object):
         no = len(l)
 
         if no%2==0:
-            first_half = l[no/2:]
+            first_half = l[no//2:]
             factor = 1
         else:
-            first_half = l[no/2+1:]
+            first_half = l[no//2+1:]
             factor = 0
 
-        last_half = l[:no/2]
+        last_half = l[:no//2]
 
         i=1
         for child in first_half:
@@ -454,16 +454,16 @@ class graph(object):
 
             if self.transitions.get(child, False):
                 if last:
-                    self.result[child]['y'] = last + len(self.transitions[child])/2 + 1
+                    self.result[child]['y'] = last + len(self.transitions[child])//2 + 1
                 last = self.tree_order(child, last)
 
         if no%2:
-            mid_node = l[no/2]
+            mid_node = l[no//2]
             self.result[mid_node]['y'] = mid_pos
 
             if self.transitions.get((mid_node), False):
                 if last:
-                    self.result[mid_node]['y'] = last + len(self.transitions[mid_node])/2 + 1
+                    self.result[mid_node]['y'] = last + len(self.transitions[mid_node])//2 + 1
                 last = self.tree_order(mid_node)
             else:
                 if last:
@@ -479,7 +479,7 @@ class graph(object):
             i += 1
             if self.transitions.get(child, False):
                 if last:
-                    self.result[child]['y'] = last + len(self.transitions[child])/2 + 1
+                    self.result[child]['y'] = last + len(self.transitions[child])//2 + 1
                 last = self.tree_order(child, last)
 
         if last_child:
@@ -496,9 +496,9 @@ class graph(object):
             max_level = max([len(x) for x in list(self.levels.values())])
 
             if max_level%2:
-                self.result[self.start]['y'] = (max_level+1)/2 + self.max_order + (self.max_order and 1)
+                self.result[self.start]['y'] = (max_level+1)//2 + self.max_order + (self.max_order and 1)
             else:
-                self.result[self.start]['y'] = (max_level)/2 + self.max_order + (self.max_order and 1)
+                self.result[self.start]['y'] = (max_level)//2 + self.max_order + (self.max_order and 1)
 
             self.graph_order()
 
@@ -539,20 +539,20 @@ class graph(object):
 
 
                 no = len(roots)
-                first_half = roots[:no/2]
+                first_half = roots[:no//2]
 
                 if no%2==0:
-                    last_half = roots[no/2:]
+                    last_half = roots[no//2:]
                 else:
-                    last_half = roots[no/2+1:]
+                    last_half = roots[no//2+1:]
 
-                factor = -math.floor(no/2)
+                factor = -math.floor(no//2)
                 for start in first_half:
                     self.result[start]['y'] = base + factor
                     factor += 1
 
                 if no%2:
-                    self.result[roots[no/2]]['y'] = base + factor
+                    self.result[roots[no//2]]['y'] = base + factor
                 factor +=1
 
                 for start in last_half:

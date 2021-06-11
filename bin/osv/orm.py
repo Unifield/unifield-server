@@ -708,7 +708,7 @@ class orm_template(object):
                     if isinstance(r, (browse_record_list, list)):
                         first = True
                         fields2 = [(x[:i+1]==f[:i+1] and x[i+1:]) \
-                                      or [] for x in fields]
+                                   or [] for x in fields]
                         if fields2 in done:
                             if [x for x in fields2 if x]:
                                 break
@@ -1609,7 +1609,7 @@ class orm_template(object):
             if node.tag == 'translate':
                 parent = node.getparent()
                 source = node.text
-                for child in node.getchildren():
+                for child in list(node):
                     source += etree.tostring(child, encoding='unicode')
                 trans = translation_obj._get_source(cr, user, self._name,
                                                     'view', context['lang'], source)
@@ -1652,10 +1652,10 @@ class orm_template(object):
         arch = etree.tostring(node, encoding="unicode").replace('\t', '')
         fields = {}
         if node.tag == 'diagram':
-            if node.getchildren()[0].tag == 'node':
-                node_fields = self.pool.get(node.getchildren()[0].get('object')).fields_get(cr, user, list(fields_def.keys()), context)
-            if node.getchildren()[1].tag == 'arrow':
-                arrow_fields = self.pool.get(node.getchildren()[1].get('object')).fields_get(cr, user, list(fields_def.keys()), context)
+            if list(node)[0].tag == 'node':
+                node_fields = self.pool.get(list(node)[0].get('object')).fields_get(cr, user, list(fields_def.keys()), context)
+            if list(node)[1].tag == 'arrow':
+                arrow_fields = self.pool.get(list(node)[1].get('object')).fields_get(cr, user, list(fields_def.keys()), context)
             for key, value in list(node_fields.items()):
                 fields[key] = value
             for key, value in list(arrow_fields.items()):

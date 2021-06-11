@@ -39,14 +39,14 @@ class makohtml2html(object):
 
     def format_footer(self, footer):
         html_footer = ''
-        for node in footer[0].getchildren():
+        for node in list(footer[0]):
             html_footer += etree.tostring(node, encoding='unicode')
         return html_footer
 
     def format_body(self, html):
         body = html.findall('body')
         body_list = []
-        footer =  self.format_footer(body[-1].getchildren())
+        footer =  self.format_footer(list(body[-1]))
         for b in body[:-1]:
             body_list.append(etree.tostring(b, encoding='unicode').replace('\t', '').replace('\n',''))
         html_body ='''

@@ -83,7 +83,7 @@ def _process_text(self, txt):
 
 def text_get(node):
     rc = ''
-    for node in node.getchildren():
+    for node in list(node):
         rc = rc + node.text
     return rc
 
