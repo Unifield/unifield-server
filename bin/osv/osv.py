@@ -186,9 +186,9 @@ class object_proxy(netsvc.Service):
                 except IntegrityError as inst:
                     osv_pool = pooler.get_pool(dbname)
                     for key in list(osv_pool._sql_error.keys()):
-                        if key in inst[0]:
+                        if key in inst.pgerror:
                             self.abortResponse(1, _('Constraint Error'), 'warning',
-                                               tr(osv_pool._sql_error[key], 'sql_constraint') or inst[0])
+                                               tr(osv_pool._sql_error[key], 'sql_constraint') or inst.pgerror)
                     if inst.pgcode in (errorcodes.NOT_NULL_VIOLATION, errorcodes.FOREIGN_KEY_VIOLATION, errorcodes.RESTRICT_VIOLATION):
                         msg = _('The operation cannot be completed, probably due to the following:\n- deletion: you may be trying to delete a record while other records still reference it\n- creation/update: a mandatory field is not correctly set')
                         self.logger.debug("IntegrityError", exc_info=True)

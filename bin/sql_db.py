@@ -173,16 +173,16 @@ class Cursor(object):
                 osv_pool = pooler.pool_dic.get(self.dbname)
                 if osv_pool:
                     for key in list(osv_pool._sql_error.keys()):
-                        if key in ie[0]:
-                            self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, tools.misc.ustr(ie[0]))
+                        if key in ie.pgerror:
+                            self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, tools.misc.ustr(ie.pgerror))
                             #US-88: if error occurred for account analytic then just clear the cache
-                            if 'account_analytic_account_parent_id_fkey' in ie[0]:
+                            if 'account_analytic_account_parent_id_fkey' in ie.pgerror:
                                 cache.clean_caches_for_db(self.dbname)
                             raise
                 self.__logger.exception("Unknown Constraint Error: %s %s", self._obj.query or query, misc.get_stack())
 
             #US-88: if error occurred for account analytic then just clear the cache
-            if 'account_analytic_account_parent_id_fkey' in ie[0]:
+            if 'account_analytic_account_parent_id_fkey' in ie.pgerror:
                 cache.clean_caches_for_db(self.dbname)
             raise
         except Exception:
