@@ -38,7 +38,6 @@ from osv import fields
 
 from tools.translate import _
 from io import StringIO
-from mission_stock.mission_stock import UnicodeWriter
 
 from threading import RLock
 
@@ -448,8 +447,9 @@ class automated_import_job(osv.osv):
                             raise ValueError()
                         filename = os.path.split(oldest_file)[1]
                         file_content = get_file_content(oldest_file, import_data.ftp_source_ok, ftp_connec, sftp)
-                        md5 = hashlib.md5(file_content).hexdigest()
-                        data64 = base64.b64encode(file_content)
+                        bytes_content = bytes(file_content, 'utf8')
+                        md5 = hashlib.md5(bytes_content).hexdigest()
+                        data64 = base64.b64encode(bytes_content)
                     except ValueError:
                         no_file = True
                     except Exception:
@@ -627,10 +627,10 @@ class automated_import_job(osv.osv):
             pth_filename = os.path.join(job_brw.import_id.report_path, filename)
 
         self.infolog(cr, uid, _('Writing file report at %s') % pth_filename)
-        csvfile = tempfile.NamedTemporaryFile(mode='wb', delete=False) if on_ftp else open(pth_filename, 'wb')
+        csvfile = tempfile.NamedTemporaryFile(mode='w', delete=False) if on_ftp else open(pth_filename, 'w')
         if on_ftp:
             temp_path = csvfile.name
-        spamwriter = UnicodeWriter(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
+        spamwriter = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
         headers_row = [_('Line number')] + headers
         if rejected:
             headers_row += [_('Error')]
@@ -643,7 +643,7 @@ class automated_import_job(osv.osv):
         csvfile.close()
 
         if on_ftp and job_brw.import_id.ftp_protocol == 'ftp':
-            with open(temp_path, 'rb') as temp_file:
+            with open(temp_path, 'r') as temp_file:
                 rep = ftp_connec.storbinary('STOR %s' % pth_filename, temp_file)
                 if not rep.startswith('2'):
                     raise osv.except_osv(_('Error'), _('Unable to write report on FTP server'))
@@ -661,7 +661,7 @@ class automated_import_job(osv.osv):
             'description': '%s Lines' % (rejected and _('Rejected') or _('Processed')),
             'res_model': 'automated.import.job',
             'res_id': job_brw.id,
-            'datas': base64.b64encode(csvfile.read())
+            'datas': base64.b64encode(bytes(csvfile.read(), 'utf8'))
         })
 
         return len(data_lines)

@@ -31,7 +31,6 @@ import threading
 import logging
 import os
 import csv
-import codecs
 import io
 import base64
 from msf_field_access_rights.osv_override import _get_instance_level
@@ -271,6 +270,9 @@ class stock_mission_report(osv.osv):
         ir_attachment_obj = self.pool.get('ir.attachment')
         attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
                                                              file_name)])
+
+        if isinstance(data, str):
+            data = bytes(data, 'utf8')
         if attachment_ids:
             # overwrite existing
             ir_attachment_obj.write(cr, uid, attachment_ids[0],
@@ -297,10 +299,6 @@ class stock_mission_report(osv.osv):
                 if x[1].endswith('qty'):
                     ignore_if_null.append(num)
 
-        if not write_attachment_in_db:
-            export_file = open(os.path.join(attachments_path, file_name), 'wb')
-        else:
-            export_file = io.StringIO()
 
         header_row = [_(column_name) for column_name, colum_property in header]
         instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
@@ -309,7 +307,11 @@ class stock_mission_report(osv.osv):
         report_last_updt = report_data['last_update']
 
         if file_type == 'csv':
-            writer = UnicodeWriter(export_file, dialect=excel_semicolon)
+            if not write_attachment_in_db:
+                export_file = open(os.path.join(attachments_path, file_name), 'w', newline='')
+            else:
+                export_file = io.StringIO()
+            writer = csv.writer(export_file, dialect=excel_semicolon)
             # Write common data: Current Instance, Instance Selection, Generation Date, Export Date
             writer.writerows([[_("Generating instance"), instance_name], [_("Instance selection"), report_name],
                               [_("Last update"), report_last_updt], [_("Export Date"), time.strftime('%Y-%m-%d %H:%M:%S')]])
@@ -317,6 +319,10 @@ class stock_mission_report(osv.osv):
             writer.writerow(header_row)
 
         if file_type == 'xls':
+            if not write_attachment_in_db:
+                export_file = open(os.path.join(attachments_path, file_name), 'wb')
+            else:
+                export_file = io.BytesIO()
             # write the headers
             borders = Borders()
             borders.left = Borders.THIN
@@ -346,7 +352,7 @@ class stock_mission_report(osv.osv):
                 """)
             data_row_style.borders = borders
             data_row_style.num_format_str = 'DD/MMM/YYYY HH:MM'
-            book = Workbook()
+            book = Workbook(encoding='utf-8')
             sheet = book.add_sheet('Sheet 1')
             sheet.row_default_height = 60*20
 
@@ -1219,38 +1225,6 @@ class stock_mission_report(osv.osv):
 
 stock_mission_report()
 
-class UnicodeWriter:
-    """
-    A CSV writer which will write rows to CSV file "f",
-    which is encoded in the given encoding.
-    from https://docs.python.org
-    """
-
-    # utf-8-sig is important here. It is the only encoding working with Windows
-    # Microsoft Excel and also Linux
-    # https://docs.python.org/2/library/codecs.html#encodings-and-unicode
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8-sig", **kwds):
-        # Redirect output to a queue
-        self.queue = io.StringIO()
-        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
-        self.stream = f
-        self.encoder = codecs.getincrementalencoder(encoding)()
-
-    def writerow(self, row):
-        self.writer.writerow([not isinstance(s, (int, float, type(None), datetime)) and s.encode("utf-8") or s for s in row])
-        # Fetch UTF-8 output from the queue ...
-        data = self.queue.getvalue()
-        data = data.decode("utf-8")
-        # ... and reencode it into the target encoding
-        data = self.encoder.encode(data)
-        # write to the target stream
-        self.stream.write(data)
-        # empty queue
-        self.queue.truncate(0)
-
-    def writerows(self, rows):
-        for row in rows:
-            self.writerow(row)
 
 class stock_mission_report_line_location(osv.osv):
     '''

@@ -232,7 +232,7 @@ class automated_export_job(osv.osv):
         on_ftp = job_brw.export_id.ftp_report_ok
         assert not on_ftp or (on_ftp and ftp_connec) or (on_ftp and sftp), _('FTP connection issue')
 
-        csvfile = tempfile.NamedTemporaryFile(mode='wb', delete=False) if on_ftp else open(pth_filename, 'wb')
+        csvfile = tempfile.NamedTemporaryFile(mode='w', delete=False, newline='') if on_ftp else open(pth_filename, 'w', newline='')
         if on_ftp:
             temp_path = csvfile.name
         spamwriter = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
@@ -259,14 +259,14 @@ class automated_export_job(osv.osv):
             except:
                 raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
 
-        csvfile = open(on_ftp and temp_path or pth_filename, 'r')
+        csvfile = open(on_ftp and temp_path or pth_filename, 'rb')
         att_obj.create(cr, uid, {
             'name': filename,
             'datas_fname': filename,
             'description': '%s Lines' % (rejected and _('Rejected') or _('Processed')),
             'res_model': 'automated.export.job',
             'res_id': job_brw.id,
-            'datas': base64.b64encode(csvfile.read())
+            'datas': str(base64.b64encode(csvfile.read()), 'utf8')
         })
 
         return len(data_lines)

@@ -225,7 +225,7 @@ class purchase_order(osv.osv):
 
         simu_id = self.pool.get('wizard.import.po.simulation.screen').create(cr, uid, {
             'order_id': ids[0],
-            'file_to_import': base64.b64encode(file_content),
+            'file_to_import': base64.b64encode(bytes(file_content, 'utf8')),
             'filetype': filetype,
             'filename': os.path.basename(file_path),
         }, context=context)
@@ -266,7 +266,7 @@ class purchase_order(osv.osv):
         processed, rejected, header = [], [], []
 
         if filetype == 'excel':
-            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_excel(cr, uid, base64.b64encode(file_content), context=context)
+            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_excel(cr, uid, base64.b64encode(bytes(file_content,'utf8')), context=context)
             header = values.get(23)
             for key in sorted([k for k in list(values.keys()) if k > 23]):
                 if import_success:
@@ -274,7 +274,7 @@ class purchase_order(osv.osv):
                 else:
                     rejected.append( (key, values[key]) )
         else:
-            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.b64encode(file_content), context=context)
+            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.b64encode(bytes(file_content, 'utf8')), context=context)
             header = [x.replace('_', ' ').title() for x in values.get(23)]
             for key in sorted([k for k in list(values.keys()) if k > 23]):
                 if import_success:
@@ -443,7 +443,7 @@ class purchase_order(osv.osv):
 
                 # create tmp file
                 tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-                tmp_file.write(base64.b64decode(file_res['result']))
+                tmp_file.write(str(base64.b64decode(file_res['result']), 'utf8'))
                 tmpname = tmp_file.name
                 tmp_file.close()
 
@@ -458,8 +458,8 @@ class purchase_order(osv.osv):
                 os.remove(tmpname)
             else:
                 # write export in local file
-                with open(path_to_file, 'w') as fich:
-                    fich.write(base64.b64decode(file_res['result']))
+                with open(path_to_file, 'wb') as fich:
+                    fich.write(base64.b64decode(bytes(file_res['result'], 'utf8')))
 
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
