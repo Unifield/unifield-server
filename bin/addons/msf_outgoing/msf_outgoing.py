@@ -3822,7 +3822,7 @@ class stock_picking(osv.osv):
 
             families_data[key]['move_ids'][0][2].append(line.id)
 
-        for family_data in sorted(list(families_data.values()), key=lambda move_id: list(families_data.values())[0]):
+        for family_data in sorted(families_data.values(), key=lambda x: x.get('from_pack')):
             if 'id' in family_data:
                 fam_id = family_data['id']
                 del family_data['id']
