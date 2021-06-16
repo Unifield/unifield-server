@@ -1426,7 +1426,7 @@ def human_size(data):
     Return the size in a human readable format
     """
     units = ('Bytes', 'KB', 'MB', 'GB', 'TB')
-    if isinstance(data, str):
+    if isinstance(data, (str, bytes)):
         size = float(len(data))
     elif isinstance(data, int):
         size = float(data)
