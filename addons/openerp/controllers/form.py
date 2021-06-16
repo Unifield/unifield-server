@@ -140,7 +140,7 @@ def get_validation_schema(self):
     cherrypy.request.terp_data = data
 
     params.nodefault = True
-
+    params.validation_form = True
     form = self.create_form(params)
     cherrypy.request.terp_form = form
 
@@ -1225,7 +1225,12 @@ class Form(SecuredController):
 
         for k, v in data.items():
             try:
-                data[k] = eval(v)
+                # specific UC on Kit Substitution when on_change on product_id replacement is called where a line in Products to remove is edited
+                if model == 'substitute.item' and callback.startswith('on_change_product_id') and k.startswith('composition_item_ids/'):
+                    del (data[k])
+                    del (kw[k])
+                else:
+                    data[k] = eval(v)
             except:
                 pass
 

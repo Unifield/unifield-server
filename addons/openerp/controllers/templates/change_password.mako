@@ -115,7 +115,13 @@
                 <fieldset class="box">
                     <img src="/openerp/static/images/stock/password.png" alt=""/>
                     <p>
-                    ${_("Your password has been reset by an administrator. Please choose a new password. It must be at least 6 characters long and must contain at least one number.")}</p>
+                    % if expired:
+                        ${_("Your password has been reset by an administrator.")}
+                    % else:
+                        ${_("Your password has expired.")}
+                    % endif
+
+                    ${_("Please choose a new password. It must be at least 8 characters long and must contain at least one digit, one capital letter and one special character.")}</p>
                 </fieldset>
             </td>
         </tr>

@@ -467,11 +467,14 @@ register_widget(NullBoolean, ["null_boolean"])
 
 class Float(TinyInputWidget):
     template = "/openerp/widgets/form/templates/float.mako"
-
+    params = ['en_thousand_sep']
+    en_thousand_sep = True
     def __init__(self, **attrs):
         super(Float, self).__init__(**attrs)
 
         self.with_null = attrs.get('with_null')
+        if not attrs.get('en_thousand_sep', True):
+            self.en_thousand_sep = False
         rounding = False
         if attrs.get('rounding_value') and attrs.get('uom_rounding'):
             if isinstance(attrs.get('rounding_value'), (list, tuple)):
@@ -491,7 +494,7 @@ class Float(TinyInputWidget):
         computation = attrs.get('computation', False)
         if isinstance(computation, str):
             computation = eval(computation)
-        self.validator = validators.Float(digit=digit, computation=computation, rounding=rounding)
+        self.validator = validators.Float(digit=digit, computation=computation, rounding=rounding, en_thousand_sep=self.en_thousand_sep)
 
 #        if not self.default:
 #            self.default = 0.0
@@ -631,10 +634,11 @@ class DateTime(TinyInputWidget):
 
     javascript = [DTLink("openerp", "jscal/lang/calendar-en.js", location=locations.bodytop)]
 
-    params = ["format", "picker_shows_time"]
+    params = ["format", "picker_shows_time", "depends"]
 
     format = '%Y-%m-%d %H:%M:%S'
     picker_shows_time = True
+    depends = False
 
     def __init__(self, **attrs):
         super(DateTime, self).__init__(**attrs)
@@ -642,6 +646,11 @@ class DateTime(TinyInputWidget):
 
         if attrs['type'] == 'date':
             self.picker_shows_time = False
+        if attrs.get('depends'):
+            if attrs.get('prefix'):
+                self.depends = '%s/%s' % (attrs['prefix'], attrs['depends'])
+            else:
+                self.depends = attrs['depends']
 
         self.validator = validators.DateTime(kind=attrs['type'])
 

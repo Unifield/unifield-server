@@ -379,7 +379,7 @@ class TinyForm(object):
                     if rounding_value in attrs.get('uom_rounding'):
                         rounding = int(abs(math.log10(attrs['uom_rounding'][rounding_value])))
 
-                v = validators.Float(digit=attrs.get("digit"), computation=attrs.get("computation"), rounding=rounding)
+                v = validators.Float(digit=attrs.get("digit"), computation=attrs.get("computation"), rounding=rounding, en_thousand_sep=attrs.get('en_thousand_sep', True))
 
             v.not_empty = (required or False) and True
 

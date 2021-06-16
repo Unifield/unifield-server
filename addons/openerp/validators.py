@@ -77,14 +77,22 @@ class Float(formencode.validators.Number):
     digit = 2
     computation = False
     rounding = False
+    en_thousand_sep = True
 
     def _from_python(self, value, state):
         if self.rounding is not False:
-            return format.format_decimal(float(value) or 0.0, self.rounding)
-        return format.format_decimal(float(value) or 0.0, self.digit, computation=self.computation)
+            ret_value = format.format_decimal(float(value) or 0.0, self.rounding)
+        else:
+            ret_value = format.format_decimal(float(value) or 0.0, self.digit, computation=self.computation)
+
+        if ret_value and self.en_thousand_sep == 'False':
+            ret_value = ret_value.replace(',', '')
+        return ret_value
 
     def _to_python(self, value, state):
         try:
+            if self.en_thousand_sep=='False' and value and ',' in value:
+                raise formencode.api.Invalid(_('Comma character "," not accepted in this field'), value, state)
             value = format.parse_decimal(value)
         except ValueError:
             raise formencode.api.Invalid(_('Invalid literal for float'), value, state)

@@ -1685,8 +1685,14 @@ msgstr "Confirmation nouveau mot de passe :"
 msgid "You have to change your password."
 msgstr "Vous devez changer votre mot de passe."
 
-msgid "Your password has been reset by an administrator. Please choose a new password. It must be at least 6 characters long and must contain at least one number."
-msgstr "Votre mot de passe à été réinitialisé par un administrateur. Merci d'en choisir un nouveau. Celui ci doit être d'au moins 6 caractères et doit contenir au moins un chiffre."
+msgid "Your password has been reset by an administrator."
+msgstr "Votre mot de passe a été réinitialisé par un administrateur."
+
+msgid "Your password has expired."
+msgstr "Votre mot de passe a expiré."
+
+msgid "Please choose a new password. It must be at least 8 characters long and must contain at least one digit, one capital letter and one special character."
+msgstr "Merci d'en choisir un nouveau. Celui-ci doit avoir au moins 8 caractères et contenir au moins un chiffre, une majuscule et un caractère spécial."
 
 msgid "All passwords have to be filled."
 msgstr "Tous les mot de passes doivent être complétés."
@@ -1698,8 +1704,8 @@ msgid "Password changed."
 msgstr "Mot de passe modifé."
 
 #: addons/openerp/controllers/preferences.py:37
-msgid "Please choose a new password. It must be at least 6 characters long and must contain at least one number."
-msgstr "Merci de choisir un nouveau mot de passe. Celui ci doit être d'au moins 6 caractères et doit contenir au moins un chiffre."
+msgid "Please choose a new password. It must be at least 8 characters long and must contain at least one digit, one capital letter and one special character."
+msgstr "Merci de choisir un nouveau mot de passe. Celui-ci doit avoir au moins 8 caractères et contenir au moins un chiffre, une majuscule et un caractère spécial."
 
 msgid "selected record(s)"
 msgstr "enregistrement(s) sélectionné(s)"

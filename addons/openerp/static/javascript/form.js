@@ -239,6 +239,7 @@ function validate_required(form){
     }, form.elements);
 
     var result = true;
+    var err_msg = false;
 
     for (var i = 0; i < elements.length; i++) {
         var elem = elements[i];
@@ -247,7 +248,6 @@ function validate_required(form){
         var kind = jQuery(elem).attr('kind');
         // Custom message for a required field to display if it's empty
         // TODO: Improve for multiple fields with this attr
-        var err_msg = jQuery(elem).attr('required_error_msg');
 
         if (kind == 'many2many') {
             elem2 = openobject.dom.get(elem.name + '_set') || elem;
@@ -260,9 +260,15 @@ function validate_required(form){
 
         if (!value) {
             jQuery(elem2).addClass('errorfield');
+            err_msg = jQuery(elem).attr('required_error_msg');
             result = false;
-        }
-        else
+        } else if (kind == 'float' && jQuery(elem).attr('en_thousand_sep') && value.indexOf(',') !== -1) {
+            if (result) {
+                err_msg = _('Comma character "," not accepted in this field');
+            }
+            jQuery(elem2).addClass('errorfield');
+            result = false;
+        } else
             if (jQuery(elem2).hasClass('errorfield')) {
                 jQuery(elem2).removeClass('errorfield');
             }
@@ -508,8 +514,12 @@ function onBooleanClicked(name){
  */
 function getFormData(extended, include_readonly, parentNode) {
 
+    var from_evaldom_ctx = false;
     if (!parentNode) {
         var parentNode = openobject.dom.get('_terp_list') || document.forms['view_form'];
+        if (extended == 1) {
+            from_evaldom_ctx = true;
+        }
     }
 
     var frm = {};
@@ -612,6 +622,11 @@ function getFormData(extended, include_readonly, parentNode) {
 
             if (extended > 1 && $this.hasClass('requiredfield')) {
                 attrs['required'] = 1;
+            }
+
+            /* onchange: extended =1, save extended = 3 */
+            if ((extended == 3 || !from_evaldom_ctx) && kind == 'float' && $this.attr('en_thousand_sep')) {
+                attrs['en_thousand_sep'] = $this.attr('en_thousand_sep');
             }
 
             switch (kind) {

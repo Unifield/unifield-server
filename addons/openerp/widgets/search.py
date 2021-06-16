@@ -91,6 +91,8 @@ class RangeWidget(TinyInputWidget):
 
         from_attrs = dict(attrs, name=fname+'/from')
         to_attrs = dict(attrs, name=fname+'/to')
+        if kind in ('date', 'datetime'):
+            to_attrs['depends'] = fname+'/from'
 
         self.from_field = RANGE_WIDGETS[kind](**from_attrs)
         self.to_field = RANGE_WIDGETS[kind](**to_attrs)

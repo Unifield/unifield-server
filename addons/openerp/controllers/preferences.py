@@ -34,7 +34,7 @@ from .form import Form
 class PrefsPassword(database.FormPassword):
     action = "/openerp/pref/password"
     string = _('Change your password')
-    description = _("""Please choose a new password. It must be at least 6 characters long and must contain at least one number.""")
+    description = _("""Please choose a new password. It must be at least 8 characters long and must contain at least one digit, one capital letter and one special character.""")
     display_string = True
     display_description = True
     fields = [
@@ -47,7 +47,7 @@ class UpdatePassword(PrefsPassword):
     action = "/openerp/pref/update_password"
     string = _('Change your password')
     description = _("""Your password has been reset by an administrator.
-    Please choose a new password. It must be at least 6 characters long and must contain at least one number.""")
+    Please choose a new password. It must be at least 8 characters long and must contain at least one digit, one capital letter and one special character.""")
     display_string = True
     display_description = True
 
