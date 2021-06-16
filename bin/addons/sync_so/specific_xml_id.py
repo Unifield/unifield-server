@@ -414,6 +414,9 @@ class msf_instance(osv.osv):
         target_ids = [x.id for x in instance.target_cost_center_ids]
         self.pool.get('account.target.costcenter').synchronize(cr, uid, target_ids, context=context)
         cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
+        if cost_center_ids:
+            dcl_ids = self.pool.get('dest.cc.link').search(cr, uid, [('cc_id', 'in', cost_center_ids)], order='NO_ORDER', context=context)
+            self.pool.get('dest.cc.link').sql_synchronize(cr, dcl_ids, field='cc_id')
         self.pool.get('account.analytic.account').synchronize(cr, uid, cost_center_ids, context=context)
         if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
             parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
