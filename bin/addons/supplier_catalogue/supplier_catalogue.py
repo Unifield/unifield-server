@@ -99,6 +99,9 @@ class supplier_catalogue(osv.osv):
         if not context.get('cat_ids', False):
             context.update({'cat_ids': []})
 
+        if not period_from:
+            return
+
         # Add catalogues already written to avoid
         # loops in the same product
         if cat_id:
@@ -471,8 +474,11 @@ class supplier_catalogue(osv.osv):
 
         for catalogue in self.browse(cr, uid, ids, context=context):
             date_from = datetime.strptime(catalogue.period_from, '%Y-%m-%d')
-            date_to = datetime.strptime(catalogue.period_to, '%Y-%m-%d')
-            res[catalogue.id] = date_from < datetime.now() < date_to
+            if catalogue.period_to:
+                date_to = datetime.strptime(catalogue.period_to, '%Y-%m-%d')
+                res[catalogue.id] = date_from < datetime.now() < date_to
+            else:
+                res[catalogue.id] = date_from < datetime.now()
 
         return res
 
