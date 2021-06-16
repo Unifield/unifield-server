@@ -202,6 +202,6 @@ class Translator(SecuredController):
                     rpc.session.execute('object', 'execute', 'ir.translation', 'write', [int(id)], {'value': val})
 
         # Encoding fields_value to prevent escaping characters and shorten sent data
-        return dict(close_popup=True, fields_values=base64.b64encode(json.dumps(fields_values)))
+        return dict(close_popup=True, fields_values=base64.b64encode(bytes(json.dumps(fields_values), 'utf8')))
 
 # vim: ts=4 sts=4 sw=4 si et
