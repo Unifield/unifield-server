@@ -577,23 +577,23 @@ class purchase_order(osv.osv):
         res = {}
         for po in self.browse(cr, uid, ids, fields_to_fetch=['po_from_fo', 'po_from_ir'], context=context):
             if po.po_from_fo or po.po_from_ir:
-                src_type = set()
+                src_type = {}
                 sale_ids = self.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
                 if sale_ids:
                     for sale in self.pool.get('sale.order').read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
                         if sale['procurement_request'] or sale['order_type'] == 'regular':
-                            src_type.add('regular')
-                            src_type.add('purchase_list')
+                            src_type['purchase_list'] = 1
+                            src_type['regular'] = 1
 
                         if not sale['procurement_request']:
                             if sale['order_type'] == 'regular':
-                                src_type.add('direct')
+                                src_type['direct'] = 1
                             elif sale['order_type'] == 'loan':
-                                src_type.add('loan')
+                                src_type['loan'] = 1
                             elif sale['order_type'] == 'donation_exp':
-                                src_type.add('donation_exp')
+                                src_type['donation_exp'] = 1
                             elif sale['order_type'] == 'donation_st':
-                                src_type.add('donation_st')
+                                src_type['donation_st'] = 1
                 res[po.id] = json.dumps(list(src_type))
             else:
                 res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
