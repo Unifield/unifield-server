@@ -324,15 +324,18 @@ class sale_order_line(osv.osv):
        - nomenclature_code : contains the corresponding code
        - nomenclature_description : contains the corresponding description
     '''
-    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
-                          uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-                          lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0, uom=False, qty_uos=0, uos=False, name='',
+                          partner_id=False, lang=False, update_tax=True, date_order=False, packaging=False,
+                          fiscal_position=False, flag=False, context=None):
         '''
         overriden on_change function
         '''
-        result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
-                                                                uom, qty_uos, uos, name, partner_id,
-                                                                lang, update_tax, date_order, packaging, fiscal_position, flag)
+        if context is None:
+            context = {}
+
+        result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom, qty_uos, uos,
+                                                                name, partner_id, lang, update_tax, date_order, packaging,
+                                                                fiscal_position, flag, context=context)
 
         # comment is cleared
         result['value'].update({'comment':False})

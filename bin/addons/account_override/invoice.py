@@ -1277,6 +1277,8 @@ class account_invoice(osv.osv):
                 wizard_title = _('Split Stock Transfer Voucher')
             elif context.get('is_intermission') and context.get('intermission_type', '') == 'out':
                 wizard_title = _('Split Intermission Voucher OUT')
+            elif context.get('is_inkind_donation'):
+                wizard_title = _('Split Donation')
             else:
                 wizard_title = _('Split Invoice')
             return {
@@ -1842,16 +1844,17 @@ class account_invoice_line(osv.osv):
         if invoice_id:
             inv_fields = ['from_supply', 'synced', 'type', 'is_inkind_donation', 'partner_type']
             inv = inv_obj.browse(cr, uid, invoice_id, fields_to_fetch=inv_fields, context=context)
-            ivi_or_si_synced = inv.type == 'in_invoice' and not inv.is_inkind_donation and inv.synced
-            intermission_or_section_from_supply = inv.partner_type in ('intermission', 'section') and inv.from_supply
-            from_split = context.get('from_split')
-            if context.get('from_inv_form'):
-                if from_split and ivi_or_si_synced:
-                    raise osv.except_osv(_('Error'), _('This document has been generated via synchronization. '
-                                                       'You can\'t split its lines.'))
-                elif not from_split and (ivi_or_si_synced or intermission_or_section_from_supply):
-                    raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
-                                                       'You can\'t add lines manually.'))
+            if not inv.is_inkind_donation:  # never block manual line creation in Donations whatever the workflow and partner type
+                ivi_or_si_synced = inv.type == 'in_invoice' and inv.synced
+                intermission_or_section_from_supply = inv.partner_type in ('intermission', 'section') and inv.from_supply
+                from_split = context.get('from_split')
+                if context.get('from_inv_form'):
+                    if from_split and ivi_or_si_synced:
+                        raise osv.except_osv(_('Error'), _('This document has been generated via synchronization. '
+                                                           'You can\'t split its lines.'))
+                    elif not from_split and (ivi_or_si_synced or intermission_or_section_from_supply):
+                        raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
+                                                           'You can\'t add lines manually.'))
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -1983,25 +1986,30 @@ class account_invoice_line(osv.osv):
                 invoice = invl.invoice_id
                 in_invoice = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
                 supp_inv = in_invoice and not invoice.is_intermission
+                donation = invoice.is_inkind_donation
                 from_merge = context.get('from_merge')
                 from_split = context.get('from_split')
                 from_supply = invoice.from_supply
                 intermission_or_section = invoice.partner_type in ('intermission', 'section')
-                check_line_per_line = from_supply and supp_inv and not from_merge and not from_split
+                check_line_per_line = from_supply and (supp_inv or donation) and not from_merge and not from_split
                 if not check_line_per_line:
                     invoice_ids.append(invoice.id)  # check each invoice only once
                 deletion_allowed = True
                 if in_invoice and invoice.synced:
                     deletion_allowed = False
-                elif from_supply and not context.get('from_split'):  # allow deletion due to the "Split" feature (available in Draft)
-                    if intermission_or_section:
+                elif from_supply and not from_split:  # allow deletion due to the "Split" feature (available in Draft)
+                    if intermission_or_section and not donation:
                         deletion_allowed = False
-                    elif supp_inv and not from_merge and (invl.order_line_id or invl.merged_line):
+                    elif (supp_inv or donation) and not from_merge and (invl.order_line_id or invl.merged_line):
                         deletion_allowed = False
                 if not deletion_allowed:
                     # will be displayed when trying to delete lines manually / merge lines / or split invoices
-                    raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
-                                                       "Existing lines can't be deleted."))
+                    if donation:
+                        raise osv.except_osv(_('Error'),
+                                             _("This donation has been generated via a Supply workflow. Existing lines can't be deleted."))
+                    else:
+                        raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
+                                                           "Existing lines can't be deleted."))
                 if invoice.is_direct_invoice and invoice.state == 'draft':
                     direct_invoice_ids.append(invoice.id)
                     # find account_bank_statement_lines and use this to delete the account_moves and associated records

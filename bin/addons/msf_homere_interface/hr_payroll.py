@@ -43,6 +43,7 @@ class hr_payroll(osv.osv):
         # Prepare some values
         res = {}
         ad_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -82,6 +83,10 @@ class hr_payroll(osv.osv):
             if line.destination_id:
                 dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, context={'date': line.date})
                 if dest and dest.filter_active is False:
+                    res[line.id] = 'invalid'
+                    continue
+            if line.destination_id and line.cost_center_id:
+                if dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context):
                     res[line.id] = 'invalid'
                     continue
             # G Check
@@ -202,6 +207,26 @@ class hr_payroll(osv.osv):
             ])
         return to_update
 
+    def _get_trigger_state_dest_cc_link(self, cr, uid, ids, context=None):
+        """
+        Returns the list of Payroll Entries for which the AD state should be re-computed
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        cc_ids = []
+        dest_ids = []
+        payroll_obj = self.pool.get('hr.payroll.msf')
+        for dest_cc_link in self.browse(cr, uid, ids, context=context):
+            cc_ids.append(dest_cc_link.cc_id.id)
+            dest_ids.append(dest_cc_link.dest_id.id)
+        payroll_ids = payroll_obj.search(cr, uid, [('state', '=', 'draft'),
+                                                   '|',
+                                                   ('cost_center_id', 'in', cc_ids),
+                                                   ('destination_id', 'in', dest_ids)], order='NO_ORDER', context=context)
+        return payroll_ids
+
     def _has_third_party(self, cr, uid, ids, name, arg, context=None):
         """
         Returns True if the Payroll entry is linked to either an Employee or a Supplier
@@ -242,12 +267,14 @@ class hr_payroll(osv.osv):
                                               'hr.payroll.msf': (lambda self, cr, uid, ids, c=None: ids, ['account_id', 'cost_center_id', 'funding_pool_id', 'destination_id'], 10),
                                               'account.account': (_get_trigger_state_account, ['user_type_code', 'destination_ids'], 20),
                                               'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'allow_all_cc',
-                                                                                                    'dest_cc_ids', 'allow_all_cc_with_fp',
+                                                                                                    'allow_all_cc_with_fp',
                                                                                                     'cost_center_ids', 'select_accounts_only',
                                                                                                     'fp_account_ids',
                                                                                                     'tuple_destination_account_ids'],
                                                                            20),
                                               'account.destination.link': (_get_trigger_state_dest_link, ['account_id', 'destination_id'], 30),
+                                              'dest.cc.link': (_get_trigger_state_dest_cc_link,
+                                                               ['cc_id', 'dest_id', 'active_from', 'inactive_from'], 40),
                                           }
                                           ),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,

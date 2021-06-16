@@ -40,6 +40,7 @@ from tools.translate import _
 from io import StringIO
 
 from threading import RLock
+import re
 
 def all_files_under(path, startswith=False, already=None):
     """
@@ -77,12 +78,17 @@ def get_file_content(file, from_ftp=False, ftp_connec=None, sftp=None):
         ftp_connec.retrlines('RETR %s' % file, add_line)
         return ch.getvalue()
     elif sftp:
-        tmp_file_path = os.path.join(tempfile.gettempdir(), os.path.basename(file))
+        tmp_file_path = os.path.join(tempfile.gettempdir(), remove_special_chars(os.path.basename(file)))
         sftp.get(file, tmp_file_path)
         with open(tmp_file_path, 'r') as fich:
             return fich.read()
     return False
 
+def remove_special_chars(filename):
+    if os.name == 'nt' and filename:
+        return re.sub(r'[\\/:*?"<>|]', '_', filename)
+
+    return filename
 
 def move_to_process_path(import_brw, ftp_connec, sftp, file, success):
     """
@@ -98,7 +104,7 @@ def move_to_process_path(import_brw, ftp_connec, sftp, file, success):
     if dest_on_ftp:
         destname = posixpath.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
     else:
-        destname = os.path.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
+        destname = os.path.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), remove_special_chars(file)))
 
     logging.getLogger('automated.import').info(_('Moving %s to %s') % (srcname, destname))
 
@@ -430,7 +436,6 @@ class automated_import_job(osv.osv):
                         import_obj.path_is_accessible(import_data[path[0]], path[1])
             except osv.except_osv as e:
                 error = tools.ustr(e)
-                no_file = True
                 # In case of manual processing, raise the error
                 if job.file_to_import:
                     raise e
@@ -484,6 +489,7 @@ class automated_import_job(osv.osv):
                             'file_sum': md5,
                             'state': 'done' if no_file else 'error',
                         }, context=context)
+                        no_file = True
                         continue
                 else: # file to import given
                     no_file = True
@@ -509,7 +515,7 @@ class automated_import_job(osv.osv):
                         temp_file.close()
                         oldest_file = temp_file.name
                     elif import_data.ftp_source_ok and import_data.ftp_protocol == 'sftp':
-                        tmp_dest_path = os.path.join(tempfile.gettempdir(), filename)
+                        tmp_dest_path = os.path.join(tempfile.gettempdir(), remove_special_chars(filename))
                         sftp.get(oldest_file, tmp_dest_path)
                         oldest_file = tmp_dest_path
 

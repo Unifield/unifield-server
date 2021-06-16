@@ -58,6 +58,7 @@ OBJ_TO_RECREATE = [
     'account.mcdb',
     'wizard.template',
     'account.analytic.account',
+    'dest.cc.link',
 ]
 
 

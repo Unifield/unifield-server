@@ -774,6 +774,7 @@ class stock_move_processor(osv.osv):
             digits_compute=dp.get_precision('Purchase Price Computation'),
             required=True,
             help="Unit Cost for this product line",
+            en_thousand_sep=False,
         ),
         'currency': fields.many2one(
             'res.currency',

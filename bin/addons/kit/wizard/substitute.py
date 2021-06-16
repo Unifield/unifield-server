@@ -355,6 +355,7 @@ class substitute(osv.osv_memory):
                                'item_exp': item.exp_substitute_item,
                                'item_kit_id': obj.kit_id.id,
                                'item_description': 'Replacement Item from %s location.'%item.location_id_substitute_item.name,
+                               'comment': item.comment or '',
                                }
                 item_obj.create(cr, uid, item_values, context=context)
             # confirm - force availability and validate the internal picking
@@ -691,7 +692,7 @@ class substitute_item(osv.osv_memory):
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
 
-    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, composition_item_ids=False, comment=False, context=None):
         '''
         the product changes, set the hidden flag if necessary
         '''
@@ -714,6 +715,12 @@ class substitute_item(osv.osv_memory):
             result.setdefault('value', {})['hidden_batch_management_mandatory'] = product.batch_management
             result.setdefault('value', {})['hidden_perishable_mandatory'] = product.perishable
             result.setdefault('value', {})['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
+        # Set the comment of the product to substitute if there is only one in the "Products to remove from the Kit"
+        if not comment and composition_item_ids:
+            comp_item_ids = composition_item_ids[0][2]
+            if len(comp_item_ids) == 1:
+                comp_items = self.pool.get('substitute.item.mirror').browse(cr, uid, comp_item_ids, fields_to_fetch=['comment'], context=context)
+                result.setdefault('value', {})['comment'] = comp_items[0].comment or ''
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
@@ -833,6 +840,7 @@ class substitute_item(osv.osv_memory):
                 'lot_id_substitute_item': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'exp_substitute_item': fields.date(string='Expiry Date'),
                 'type_check': fields.char(string='Type Check', size=1024, readonly=True),
+                'comment': fields.char(size=256, string='Comment'),
                 # functions
                 'hidden_perishable_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='Exp', multi='get_vals_substitute_item', store=False, readonly=True),
                 'hidden_batch_management_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='B.Num', multi='get_vals_substitute_item', store=False, readonly=True),
@@ -843,8 +851,30 @@ class substitute_item(osv.osv_memory):
                 'integrity_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=INTEGRITY_STATUS_SELECTION, string=' ', multi='get_vals_substitute_item', store=False, readonly=True),
                 }
 
-    _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
-                 'type_check': 'out',
+    def _get_comment(self, cr, uid, context=None):
+        '''
+        Get the comment of the product to substitute if there is only one
+        '''
+        if context is None:
+            context = {}
+
+        comment = ''
+        if self._name == 'substitute.item' and context.get('comp_item_ids'):
+            # Strange behavior while adding a new "Products from the stock to the Kit" or changing the product of one
+            # while both treeviews are in edition
+            if 'comment' in context.get('comp_item_ids'):
+                comment = context.get('comp_item_ids').get('comment', '')
+            else:
+                comp_item_ids = context.get('comp_item_ids')[0][2]
+                if len(comp_item_ids) == 1:
+                    comp_items = self.pool.get('substitute.item.mirror').browse(cr, uid, comp_item_ids, fields_to_fetch=['comment'], context=context)
+                    comment = comp_items[0].comment or ''
+
+        return comment
+
+    _defaults = {
+        'type_check': 'out',  # in is used, meaning a new prod lot will be created if the specified expiry date does not exist
+        'comment': _get_comment,
     }
 
 substitute_item()

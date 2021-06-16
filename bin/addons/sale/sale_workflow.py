@@ -621,6 +621,13 @@ class sale_order_line(osv.osv):
 
                 to_write['supplier'] = sol.product_id.seller_id.id
                 supplier = sol.product_id.seller_id
+                # Look if the supplier is the same res_partner as Local Market
+                data_obj = self.pool.get('ir.model.data')
+                is_loc_mar = data_obj.search_exists(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'),
+                                                              ('name', '=', 'res_partner_local_market'),
+                                                              ('res_id', '=', supplier.id)], context=context)
+                if not is_loc_mar:
+                    to_write['po_cft'] = 'po'
 
             if sol.order_id.order_type == 'loan':
                 to_write['supplier'] = False

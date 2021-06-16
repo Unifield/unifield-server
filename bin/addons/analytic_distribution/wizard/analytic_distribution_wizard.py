@@ -477,10 +477,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                          el.purchase_line_id.state == 'sourced_v'):
                 res[el.id] = False
             # verify invoice state
-            if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close']:
+            if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close', 'cancel']:
                 res[el.id] = False
             # verify invoice line state
-            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
+            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in \
+                    ['open', 'paid', 'inv_close', 'cancel']:
                 res[el.id] = False
             # verify commitment state
             if el.commitment_id and el.commitment_id.state in ['done']:
@@ -791,10 +792,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                          wiz.purchase_line_id.state == 'sourced_v'):
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
-            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid', 'inv_close']:
+            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid', 'inv_close', 'cancel']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice from invoice line is in good state if necessary
-            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
+            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in \
+                    ['open', 'paid', 'inv_close', 'cancel']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that commitment is in good state if necessary
             if wiz.commitment_id and wiz.commitment_id.state in ['done']:
@@ -1006,6 +1008,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if isinstance(ids, int):
             ids = [ids]
         distrib_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         for w in self.browse(cr, uid, ids):
             # UF-1678
             # For Cost center and destination analytic accounts, check is done on POSTING date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
@@ -1019,6 +1022,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if not fpline.destination_id.filter_active:
                         raise osv.except_osv(_('Error'), _('Destination %s is either inactive at the date %s, or it allows no Cost Center.')
                                              % (fpline.destination_id.code or '', w.posting_date))
+                    if dest_cc_link_obj.is_inactive_dcl(cr, uid, fpline.destination_id.id, fpline.cost_center_id.id, w.posting_date):
+                        raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active at this date: %s") %
+                                             (fpline.destination_id.code or '', fpline.cost_center_id.code or '', w.posting_date))
             # UF-1678
             # For funding pool analytic account, check is done on DOCUMENT date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.document_date:
@@ -1079,7 +1085,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
             distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
-            if not distrib_id:
+            if not distrib_id or not self.pool.get('analytic.distribution').exists(cr, uid, distrib_id, context=context):
                 # create a new analytic distribution
                 analytic_vals = {}
                 if wiz.partner_type:#UF-2138: added the ref to partner type of FO/PO

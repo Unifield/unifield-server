@@ -114,6 +114,9 @@ class res_company(osv.osv):
             # Hide Product Status Inconsistencies in Project
             report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
             self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': level != 'project'}, context=context)
+            # Hide Consolidated Mission Stock Report in HQ and Project
+            consolidated_sm_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'mission_stock', 'consolidated_mission_stock_wizard_menu')[1]
+            self.pool.get('ir.ui.menu').write(cr, uid, consolidated_sm_report_menu_id, {'active': level == 'coordo'}, context=context)
         return ret
 
     def _get_instance_level(self, cr, uid):

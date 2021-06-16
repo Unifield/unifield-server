@@ -155,6 +155,7 @@ from . import wizard_import_picking_line
 from . import wiz_common_import
 from . import wizard_import_tender_line
 from . import wizard_delete_lines
+from . import wizard_cancel_lines
 from . import wizard_import_product_list
 from . import wizard_import_product_line
 from . import wizard_import_supplier_catalogue

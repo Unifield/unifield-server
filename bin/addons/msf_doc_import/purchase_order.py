@@ -65,12 +65,12 @@ class purchase_order_manual_export(osv.osv_memory):
         return result
 
     def export_po(self, cr, uid, ids, context=None):
-        auto_job_ids = self.pool.get('automated.export').search(cr, uid, [('function_id.method_to_call', '=', 'auto_export_validated_purchase_order'), ('active', '=', True)], context=context)
+        wiz = self.browse(cr, uid, ids[0], context)
+        auto_job_ids = self.pool.get('automated.export').search(cr, uid, [('function_id.method_to_call', '=', 'auto_export_validated_purchase_order'), ('active', '=', True), ('partner_id', '=', wiz.purchase_id.partner_id.id)], context=context)
         if not auto_job_ids:
             raise osv.except_osv(_('Warning'), _('The job to export PO is not active.'))
 
         auto_job = self.pool.get('automated.export').browse(cr, uid, auto_job_ids[0], context=context)
-        wiz = self.browse(cr, uid, ids[0], context)
 
 
         processed, rejected, trash = self.pool.get('purchase.order').auto_export_validated_purchase_order(cr, uid, auto_job, [wiz.purchase_id.id], context=context)
@@ -126,11 +126,26 @@ class purchase_order(osv.osv):
         for id in ids:
             ret[id] = False
 
-        if not self.pool.get('automated.export').search_exist(cr, uid, [('function_id.method_to_call', '=', 'auto_export_validated_purchase_order'), ('active', '=', True)], context=context):
-            return ret
+        if not ids:
+            return {}
 
-        for x in self.search(cr, uid, [('id', 'in', ids), ('partner_type', '=', 'esc'), ('state', 'in', ['validated', 'validated_p'])], context=context):
-            ret[x] = True
+        cr.execute('''
+            select o.id
+                from
+                    purchase_order o, automated_export exp, automated_export_function fnct
+                where
+                    o.id in %s and
+                    o.partner_type = 'esc' and
+                    o.state in ('validated', 'validated_p') and
+                    o.partner_id = exp.partner_id and
+                    exp.active = 't' and
+                    exp.function_id = fnct.id and
+                    fnct.method_to_call = 'auto_export_validated_purchase_order'
+        ''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            ret[x[0]] = True
+
         return ret
 
     _columns = {
@@ -390,7 +405,8 @@ class purchase_order(osv.osv):
                 ('partner_type', '=', 'esc'),
                 ('state', 'in', ['validated', 'validated_p']),
                 ('auto_exported_ok', '=', False),
-            ], context= context)
+                ('partner_id', '=', export_wiz.partner_id.id),
+            ], context=context)
 
         if not po_ids:
             msg = _('No PO to export !')

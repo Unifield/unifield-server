@@ -33,6 +33,8 @@ def is_readonly(self, inv):
         is_readonly = inv.from_supply
     elif inv.type == 'out_invoice' and not inv.is_intermission and not inv.is_debit_note:  # STV
         is_readonly = inv.from_supply and inv.partner_type == 'section'
+    elif inv.type == 'in_invoice' and inv.is_inkind_donation:  # Donation
+        is_readonly = inv.from_supply
     else:  # other inv. types are not supposed to be handled in this report
         is_readonly = True
     return is_readonly

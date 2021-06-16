@@ -932,38 +932,6 @@ class stock_picking(osv.osv):
 stock_picking()
 
 
-class stock_move(osv.osv):
-    '''
-    shipment date of sale order is updated
-    '''
-    _inherit = 'stock.move'
-
-
-    def do_partial(self, cr, uid, ids, partial_datas, context=None):
-        '''
-        update shipment date and logged
-        '''
-        if context is None:
-            context = {}
-        date_tools = self.pool.get('date.tools')
-        res = super(stock_move, self).do_partial(cr, uid, ids, partial_datas, context=context)
-
-        so_obj = self.pool.get('sale.order')
-
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.picking_id and obj.picking_id.sale_id and not obj.picking_id.sale_id.shipment_date:
-                sale_id = obj.picking_id.sale_id.id
-                date_format = date_tools.get_date_format(cr, uid, context=context)
-                db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-                today = time.strftime(date_format)
-                today_db = time.strftime(db_date_format)
-                so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (obj.picking_id.sale_id.name, today))
-        return res
-
-stock_move()
-
-
 class res_company(osv.osv):
     '''
     add time related fields

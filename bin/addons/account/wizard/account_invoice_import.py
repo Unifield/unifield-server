@@ -103,6 +103,7 @@ class account_invoice_import(osv.osv_memory):
                     'quantity': 3,
                     'unit_price': 4,
                     'description': 5,
+                    'notes': 6,
                 }
                 # number of the first line in the file containing data (not header)
                 base_num = 10
@@ -166,6 +167,7 @@ class account_invoice_import(osv.osv_memory):
                     quantity = line[cols['quantity']] or 0.0
                     unit_price = line[cols['unit_price']] or 0.0
                     description = line[cols['description']] and tools.ustr(line[cols['description']])
+                    notes = line[cols['notes']] and tools.ustr(line[cols['notes']])
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
@@ -195,6 +197,8 @@ class account_invoice_import(osv.osv_memory):
                     # restricted_area = accounts allowed. Note: the context is different for each type and used in the related fnct_search
                     if invoice.is_intermission:
                         restricted_area = 'intermission_lines'  # for IVI / IVO
+                    elif invoice.is_inkind_donation:  # for Donations
+                        restricted_area = 'donation_lines'
                     else:
                         restricted_area = 'invoice_lines'  # for SI / STV
                     if not account_obj.search_exist(cr, uid, [('id', '=', account.id), ('restricted_area', '=', restricted_area)],
@@ -226,7 +230,11 @@ class account_invoice_import(osv.osv_memory):
                             continue
                         vals['quantity'] = quantity
 
+                    if not description:
+                        errors.append(_("Line %s: the description (mandatory) is missing.") % (current_line_num,))
+                        continue
                     vals['name'] = description
+                    vals['note'] = notes
 
                     # update the line
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals, context=context)

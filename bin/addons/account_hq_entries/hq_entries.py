@@ -30,6 +30,7 @@ import netsvc
 class hq_entries(osv.osv):
     _name = 'hq.entries'
     _description = 'HQ Entries'
+    _trace = True
 
     def _get_analytic_state(self, cr, uid, ids, name, args, context=None):
         """
@@ -43,6 +44,7 @@ class hq_entries(osv.osv):
         res = {}
         logger = netsvc.Logger()
         ad_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -86,6 +88,13 @@ class hq_entries(osv.osv):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive DEST (%s)') % (line.id or '', dest.code or ''))
                     continue
+            if line.destination_id and line.cost_center_id and line.date and \
+                    dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context):
+                res[line.id] = 'invalid'
+                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING,
+                                     _('%s: inactive combination (%s - %s)') %
+                                     (line.id or '', line.destination_id.code or '', line.cost_center_id.code or ''))
+                continue
             # G Check
             if line.analytic_id:
                 fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, context={'date': line.document_date})
@@ -228,7 +237,7 @@ class hq_entries(osv.osv):
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'user_validated': fields.boolean("User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
+        'user_validated': fields.boolean("Validated", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
         'date': fields.date("Posting Date", readonly=True),
         'partner_txt': fields.char("Third Party", size=255, readonly=True),
         'period_id': fields.many2one("account.period", "Period", readonly=True),
@@ -243,7 +252,7 @@ class hq_entries(osv.osv):
         'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
                                           selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
-        'is_original': fields.boolean("Is Original HQ Entry?", help="This line was split into other one.", readonly=True),
+        'is_original': fields.boolean("Has been split", help="This line has been split into other ones.", readonly=True),
         'is_split': fields.boolean("Is split?", help="This line comes from a split.", readonly=True),
         'original_id': fields.many2one("hq.entries", "Original HQ Entry", readonly=True, help="The Original HQ Entry from which this line comes from."),
         'split_ids': fields.one2many('hq.entries', 'original_id', "Split lines", help="All lines linked to this original HQ Entry."),
@@ -484,6 +493,9 @@ class hq_entries(osv.osv):
     def _check_cc(self, cr, uid, ids, context=None):
         """
         At synchro time sets HQ entry to Not Run if the Cost Center used in the line doesn't exist or is inactive
+
+        Note: if the CC is active but the Dest/CC combination is inactive, the sync update is NOT blocked:
+              the HQ entry will be created with an invalid AD to be fixed before validation.
         """
         if isinstance(ids, int):
             ids = [ids]

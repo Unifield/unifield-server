@@ -168,6 +168,7 @@ WHITE_LIST_MODEL = [
     'cash.request.liquidity.total',
     'hr.payment.method',
     'wizard.template',
+    'dest.cc.link',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']

@@ -364,7 +364,7 @@ class BackupConfig(osv.osv):
             except Exception as e:
                 # If there is exception with the opening of the file
                 if isinstance(e, IOError):
-                    error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(e.strerror, e.filename)
+                    error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(tools.ustr(e.strerror), tools.ustr(e.filename))
                 else:
                     error = "Backup Error: %s. Please provide the correct path or deactivate the backup feature." % e
                 self._logger.exception('Cannot perform the backup %s.' % error)
@@ -373,12 +373,11 @@ class BackupConfig(osv.osv):
                 cr.commit()
 
             res = tools.pg_dump(cr.dbname, outfile)
-            version_instance_module.create(cr, uid, {'backup_path': outfile, 'backup_size': os.path.getsize(outfile), 'backup_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
 
             # check the backup file
             error = None
             if res:
-                error = "Couldn't dump database : pg_dump return an error for path %s." % outfile
+                error = "Couldn't dump database : pg_dump returns an error for path %s." % outfile
             elif not os.path.isfile(outfile):
                 error = 'The backup file could not be found on the disk with path %s' % outfile
             elif not os.stat(outfile).st_size > 0:
@@ -388,6 +387,8 @@ class BackupConfig(osv.osv):
                 # commit to not lock the sql transaction
                 cr.commit()
                 raise osv.except_osv(_('Error! Cannot perform the backup.'), error)
+            else:
+                version_instance_module.create(cr, uid, {'backup_path': outfile, 'backup_size': os.path.getsize(outfile), 'backup_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
             return "Backup done"
         raise osv.except_osv(_('Error! Cannot perform the backup'), "No backup path defined")
 
@@ -449,6 +450,7 @@ class backup_download(osv.osv):
         'name': fields.char("File name", size=128, readonly=True),
         'path': fields.text("File path", readonly=True),
         'mtime': fields.datetime("Modification Time", readonly=True),
+        'failed': fields.boolean('Failed'),
     }
 
     def _get_bck_path(self, cr, uid, context=None):
@@ -469,13 +471,14 @@ class backup_download(osv.osv):
         path = self._get_bck_path(cr, uid, context)
         if path:
             for f in os.listdir(path):
-                if f.endswith('.dump'):
+                if f.endswith('.dump') or f.endswith('.KO'):
                     full_name = os.path.join(path, f)
                     if os.path.isfile(full_name):
+                        failed = f.endswith('.KO')
                         stat = os.stat(full_name)
                         #US-653: Only list the files with size > 0 to avoid web side error
-                        if stat.st_size:
-                            data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime))}
+                        if stat.st_size or failed:
+                            data = {'mtime': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)), 'failed': failed}
                             if full_name in all_bck:
                                 self.write(cr, uid, [all_bck[full_name]], data, context=context)
                                 del all_bck[full_name]
@@ -498,14 +501,20 @@ class backup_download(osv.osv):
         }
 
     def get_content(self, cr, uid, ids, context=None):
-        name = self.read(cr, uid, ids[0], ['name'], context=context)['name']
-        name = name.replace('.dump', '')
+        f_data = self.read(cr, uid, ids[0], ['name', 'failed'], context=context)
+        if f_data['failed']:
+            raise osv.except_osv(_('Warning'), _('This is a failed backup'))
+
+        name = f_data['name'].replace('.dump', '')
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'backup.download',
             'datas': {'ids': [ids[0]], 'target_filename': name}
         }
 
+    _default = {
+        'failed': False,
+    }
 backup_download()
 
 class msf_instance_cloud_progress(osv.osv_memory):

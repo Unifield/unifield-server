@@ -101,7 +101,8 @@ class version(osv.osv):
             if not vals['patch']:
                 vals['patch_path'] = False
             else:
-                if isinstance(ids, (int, long)):
+                #if isinstance(ids, (int, long)):
+                if isinstance(ids, int):
                     name = '%s.zip' % ids
                 else:
                     name = '%s.zip' % ids[0]
@@ -118,7 +119,8 @@ class version(osv.osv):
             fields.append('patch_path')
 
         datas = super(version, self).read(cr, uid, ids, fields, context=context, load=load)
-        if isinstance(ids, (int, long)):
+        #if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             datas = [datas]
 
         if 'patch' in fields:
@@ -127,7 +129,8 @@ class version(osv.osv):
                     d['patch'] = open(d['patch_path'], 'rb').read()
                     del(d['patch_path'])
 
-        if isinstance(ids, (int, long)):
+        #if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             return datas[0]
         return datas
 
@@ -259,7 +262,7 @@ class entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         try:
             res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), self._hardware_id, current_revision)
-        except osv.except_osv, e:
+        except osv.except_osv as e:
             if all(substr in e.value
                    for substr in
                    ('sync_manager', 'object has no attribute', 'get_next_revisions')):

@@ -45,10 +45,12 @@ class automated_import_function(osv.osv):
             required=True,
         ),
         'startswith': fields.char('Starts with', size=56),
+        'multiple': fields.boolean('Allow multiple jobs'),
     }
 
     _defaults = {
         'method_to_call': lambda *a: 'import_data_from_csv',
+        'multiple': False,
     }
 
     _order = 'name'

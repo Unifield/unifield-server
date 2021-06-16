@@ -470,7 +470,8 @@ class product_product(osv.osv):
             ret.joins['"product_product"'] = [('"stock_mission_report_line_location"', 'id', 'product_id', 'LEFT JOIN')]
             ret.where_clause.append(' "stock_mission_report_line_location"."remote_instance_id" is NULL AND "stock_mission_report_line_location"."location_id" in %s ')
             ret.where_clause_params.append(tuple(location_ids))
-            ret.having = ' GROUP BY "product_product"."id" HAVING sum("stock_mission_report_line_location"."quantity") >0 '
+            ret.having_group_by = ' GROUP BY "product_product"."id" '
+            ret.having = ' HAVING sum("stock_mission_report_line_location"."quantity") >0 '
         if filter_in_any_product_list:
             ret.tables.append('"product_list_line"')
             ret.joins['"product_product"'] = [('"product_list_line"', 'id', 'name', 'INNER JOIN')]
@@ -756,7 +757,7 @@ class product_product(osv.osv):
 
         res = {}
         product_uom_obj = self.pool.get('product.uom')
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['price_margin', 'price_extra', 'uom_id', 'uos_id', ptype], context=context):
             res[product.id] = product[ptype] or 0.0
             if ptype == 'list_price':
                 res[product.id] = (res[product.id] * (product.price_margin or 1.0)) + \
@@ -770,7 +771,7 @@ class product_product(osv.osv):
                 # Take the price_type currency from the product field
                 # This is right cause a field cannot be in more than one currency
                 res[product.id] = self.pool.get('res.currency').compute(cr, uid, price_type_currency_id,
-                                                                        context['currency_id'], res[product.id],context=context)
+                                                                        context['currency_id'], res[product.id], round=False, context=context)
 
         return res
 

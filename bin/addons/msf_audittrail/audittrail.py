@@ -848,6 +848,14 @@ class audittrail_log_line(osv.osv):
     _description = "Log Line"
     _order = 'timestamp desc, log desc'
 
+    def _auto_init(self, cr, context=None):
+        super(audittrail_log_line, self)._auto_init(cr, context)
+        if not cr.index_exists('audittrail_log_line', 'audittrail_log_line_object_id_res_id_idx'):
+            cr.execute('CREATE INDEX audittrail_log_line_object_id_res_id_idx ON audittrail_log_line (object_id, res_id)')
+        if not cr.index_exists('audittrail_log_line', 'audittrail_log_line_fct_object_id_fct_res_id_idx'):
+            cr.execute('CREATE INDEX audittrail_log_line_fct_object_id_fct_res_id_idx ON audittrail_log_line (fct_object_id, fct_res_id)')
+
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Change the tracking view depending on the model_object

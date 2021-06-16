@@ -141,10 +141,16 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Currency
         <Column ss:AutoFitWidth="1" ss:Width="45.0" />
+        ## Ave. Cost Price (Functional currency)
+        <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Total Cost (PO currency)
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Total Cost (Functional currency)
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
+        ## Ave. Cost Price Total Cost (Functional currency)
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
+        ## Line Comment
+        <Column ss:AutoFitWidth="1" ss:Width="200.0" />
         ## Destination Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Final Destination Location
@@ -245,8 +251,11 @@
             _('Qty Received'),
             _('Unit Price'),
             _('Currency'),
+            _('Ave. Cost Price (Functional currency)'),
             _('Total Cost (PO currency)'),
             _('Total Cost (Functional currency)'),
+            _('Ave. Cost Price Total Cost (Functional currency)'),
+            _('Line Comment'),
             _('Destination Location'),
             _('Final Destination Location'),
             _('Expected Receipt Date'),
@@ -267,9 +276,9 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_order']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['supplier']|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'order_type')|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'categ')|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['purchase_id'], 'priority')|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'order_type') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'categ') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'priority') or ''|x}</Data></Cell>
                 % if move['dr_date'] and isDate(move['dr_date']):
                 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['dr_date'])|n}</Data></Cell>
                 % else:
@@ -286,12 +295,23 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['product_code']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['product_desc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['uom']|x}</Data></Cell>
+                % if move['purchase_id']:
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${move['qty_ordered']|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${move['qty_received']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['unit_price']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['currency']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['ave_price_func']|x}</Data></Cell>
+                % if move['purchase_id']:
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost']|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost_func']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['ave_total_cost_func']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['comment']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['dest_loc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_loc']|x}</Data></Cell>
                 % if move['exp_receipt_date'] and isDateTime(move['exp_receipt_date']):

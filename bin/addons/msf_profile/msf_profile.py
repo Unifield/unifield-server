@@ -51,6 +51,108 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+    # UF21.0
+    def us_8196_delete_default_prod_curr(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_values where key = 'default' and model='product.product' and name in ('currency_id','field_currency_id') ;")
+        self._logger.warn('Delete %d default values on product currencies' % (cr.rowcount,))
+        user_record = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'])
+        if user_record.company_id and user_record.company_id.currency_id:
+            cur_id = user_record.company_id.currency_id.id
+            cr.execute("update product_product set currency_id = %s, currency_fixed='t' where currency_id != %s", (cur_id, cur_id))
+            self._logger.warn('Changed cost price currency on %d products' % (cr.rowcount,))
+            cr.execute("update product_product set field_currency_id = %s, currency_fixed='t' where field_currency_id != %s", (cur_id, cur_id))
+            self._logger.warn('Changed field price currency on %d products' % (cr.rowcount,))
+        return True
+
+    def us_7941_auto_vi_set_partner(self, cr, uid, *a, **b):
+        cr.execute('''
+            update automated_import imp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
+                from automated_import_function function
+            where
+                function.id = imp.function_id and
+                imp.partner_id is null and
+                function.multiple='t'
+        ''')
+        self._logger.warn('APU set on %s VI import.' % (cr.rowcount,))
+
+        cr.execute('''
+            update automated_export exp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
+                from automated_export_function function
+            where
+                function.id = exp.function_id and
+                exp.partner_id is null and
+                function.multiple='t'
+        ''')
+        self._logger.warn('APU set on %s VI export.' % (cr.rowcount,))
+
+        return True
+
+    def us_8166_hide_consolidated_sm_report(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        consolidated_sm_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'mission_stock', 'consolidated_mission_stock_wizard_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, consolidated_sm_report_menu_id, {'active': instance.level == 'coordo'}, context={})
+        return True
+
+    def us_7019_force_password_expiration(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj:
+            # don't run on new instances
+            cr.execute("update res_users set last_password_change =  NOW() - interval '7 months'")
+            self._logger.warn('Force password expiration on %d users.' % (cr.rowcount,))
+            cr.execute("update res_users set never_expire='t' where login in ('unidata', 'unidata2', 'unidata_screen', 'unidatasupply', 'unidataonly')")
+            self._logger.warn('Set never expire on %d unidata users.' % (cr.rowcount,))
+            if self.pool.get('sync.server.entity'):
+                cr.execute("""
+                    update res_users u set never_expire='t' from
+                        res_groups_users_rel grp_rel, ir_model_data d
+                    where
+                        grp_rel.uid = u.id and
+                        d.res_id = grp_rel.gid and
+                        d.name = 'instance_sync_user' and
+                        d.module = 'sync_server'
+                """)
+                self._logger.warn('Sync server: set never expire on %d sync users.' % (cr.rowcount,))
+        return True
+
+    def us_7295_update_new_dest_cc_link(self, cr, uid, *a, **b):
+        """
+        CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new one "dest_cc_link_ids".
+
+        1) In all instances: deletes the old CCs, and creates the related links without activation/inactivation dates.
+
+        2) At HQ Level: sends a message to trigger the deletion of all the links created out of HQ (used at migration time only).
+
+        3) Out of HQ: prevents the sync of the links created, they are used at migration time only and will be deleted, cf 2).
+        """
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        dest_ids = analytic_acc_obj.search(cr, uid, [('category', '=', 'DEST')])
+        dcl_nb = 0
+        for dest in analytic_acc_obj.browse(cr, uid, dest_ids, fields_to_fetch=['dest_cc_ids']):
+            for cc in dest.dest_cc_ids:
+                dest_cc_link_obj.create(cr, uid, {'dest_id': dest.id, 'cc_id': cc.id})
+                dcl_nb += 1
+        self._logger.warn('Destinations: %s Dest CC Links generated.', dcl_nb)
+
+        cr.execute("DELETE FROM destination_cost_center_rel")
+        self._logger.warn('Destinations: %s CC deleted.', cr.rowcount)
+
+        if _get_instance_level(self, cr, uid) == 'hq':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-7295-delete-not-hq-links'})
+        else:
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[]', last_modification = '1980-01-01 00:00:00'
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE (SELECT instance_identifier FROM msf_instance WHERE id = (SELECT instance_id FROM res_company)) || '%'
+            """)
+        return True
 
     # UF20.0
     def us_7866_fill_in_target_cc_code(self, cr, uid, *a, **b):
@@ -2680,9 +2782,8 @@ class patch_scripts(osv.osv):
                 where
                     module='sd' and model='stock.mission.report.line' and
                     res_id in (
-                        select id from stock_mission_report_line where 
-                        """ + ' OR '.join(['%s!=0'%x for x in fields_to_reset]) + """
-                    )
+                        select id from stock_mission_report_line where
+                        """ + ' OR '.join(['%s!=0'%x for x in fields_to_reset]) + """ )
             """) # not_a_user_entry
 
         cr.execute("""
@@ -4538,7 +4639,15 @@ class sync_tigger_something_target_lower(osv.osv):
                 fp_to_coo_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), ('instance_id', '=', current_instance.id)], context=context)
                 if fp_to_coo_ids:
                     logging.getLogger('trigger').info('Touch %d fp' % (len(fp_to_coo_ids),))
-                    self.pool.get('account.analytic.account').synchronize(cr, uid, fp_to_coo_ids, context=context)
+                    # trigger a sync in SQL in order not to re-trigger sync on the o2m linked to the FP
+                    trigger_sync_sql = """
+                        UPDATE ir_model_data
+                        SET touched ='[''code'']', last_modification=NOW()
+                        WHERE module='sd'
+                        AND model='account.analytic.account'
+                        AND res_id IN %s
+                    """
+                    cr.execute(trigger_sync_sql, (tuple(fp_to_coo_ids),))
 
         return super(sync_tigger_something_target_lower, self).create(cr, uid, vals, context)
 
@@ -4576,8 +4685,7 @@ class sync_tigger_something(osv.osv):
                 and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or coalesce(res_id,0)=0) and type='model'
             """ % (unidata_id,)  # not_a_user_entry
             cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
-                select id  """ + trans_to_delete + """
-            )""")  # not_a_user_entry
+                select id  """ + trans_to_delete + """ )""")  # not_a_user_entry
             _logger.warn('Delete %d sdref linked to UD trans' % (cr.rowcount,))
             cr.execute("delete "+ trans_to_delete) # not_a_user_entry
             _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
@@ -4681,6 +4789,32 @@ class sync_tigger_something(osv.osv):
 
                 _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
+        if vals.get('name') == 'us-7295-delete-not-hq-links' and context.get('sync_update_execution'):
+            cr.execute("""
+                DELETE FROM dest_cc_link 
+                WHERE id IN (
+                    SELECT res_id
+                    FROM ir_model_data
+                    WHERE module='sd' 
+                    AND model='dest.cc.link' 
+                    AND name LIKE ANY (
+                        SELECT instance_identifier || '%'
+                        FROM msf_instance
+                        WHERE level IN ('coordo', 'project')
+                    )
+                )
+            """)
+            cr.execute("""
+                DELETE FROM ir_model_data
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE ANY (
+                    SELECT instance_identifier || '%'
+                    FROM msf_instance
+                    WHERE level IN ('coordo', 'project')
+                )
+            """)
+            _logger.warn('Deletion of %d Dest CC Links created out of HQ' % (cr.rowcount,))
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 

@@ -513,7 +513,7 @@ class purchase_order_line(osv.osv):
         'move_dest_id': fields.many2one('stock.move', 'Reservation Destination', ondelete='set null', select=True),
         'location_dest_id': fields.many2one('stock.location', 'Final Destination of move', ondelete='set null', select=True),
         'price_unit': fields.float('Unit Price', required=True,
-                                   digits_compute=dp.get_precision('Purchase Price Computation')),
+                                   digits_compute=dp.get_precision('Purchase Price Computation'), en_thousand_sep=False),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False,
                                   readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal',
@@ -649,7 +649,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         # Do not prevent modification during synchro
-        if not context.get('from_vi_import') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        if not context.get('from_vi_import') and not context.get('sync_update_execution') and not context.get('sync_message_execution') and 'cancel_only' not in context:
             error_lines = []
             linked_orders = []
             for pol in self.browse(cr, uid, ids, context=context):

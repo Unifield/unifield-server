@@ -42,7 +42,9 @@ class hq_entries_split_lines(osv.osv_memory):
         # Process
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'state_info': False, 'state': 'none'}
-            state, info = self.pool.get('analytic.distribution').analytic_state_from_info(cr, uid, line.account_id.id, line.destination_id.id, line.cost_center_id.id, line.analytic_id.id, context=context)
+            state, info = self.pool.get('analytic.distribution').analytic_state_from_info(cr, uid, line.account_id.id, line.destination_id.id,
+                                                                                          line.cost_center_id.id, line.analytic_id.id,
+                                                                                          posting_date=line.wizard_id.date, context=context)
             res[line.id].update({'state_info': info, 'state': state,})
         return res
 
