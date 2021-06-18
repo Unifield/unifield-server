@@ -618,6 +618,7 @@ class stock_move(osv.osv):
         'weight_set': fields.boolean('Weight set at PLL stage', readonly=1),
         'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
         'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
+        'in_forced': fields.boolean('IN line forced'),
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
@@ -752,6 +753,7 @@ class stock_move(osv.osv):
         'not_chained': lambda *a: False,
         'integrity_error': 'empty',
         'included_in_mission_stock': False,
+        'in_forced': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -917,6 +919,8 @@ class stock_move(osv.osv):
         prod_obj = self.pool.get('product.product')
 
         default = default.copy()
+        if 'in_forced' not in default:
+            default['in_forced'] = False
         if 'qty_processed' not in default:
             default['qty_processed'] = 0
         if default.get('picking_id') and 'reason_type_id' not in default:
@@ -954,6 +958,8 @@ class stock_move(osv.osv):
         defaults['procurements'] = []
         defaults['original_from_process_stock_move'] = False
         defaults['included_in_mission_stock'] = False
+        if 'in_forced' not in defaults:
+            defaults['in_forced'] = False
 
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in defaults and not context.get('keepLineNumber', False):

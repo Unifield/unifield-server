@@ -761,6 +761,14 @@ class stock_picking(osv.osv):
             if wizard.register_a_claim and wizard.claim_type in ['return', 'missing']:
                 in_out_updated = False
             picking_id = wizard.picking_id.id
+
+            in_forced = wizard.picking_id.state == 'assigned' and \
+                not wizard.register_a_claim and \
+                process_avg_sysint and \
+                wizard.picking_id.purchase_id and \
+                wizard.picking_id.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
+                wizard.picking_id.purchase_id.order_type != 'direct'
+
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
                                                                   'type',
                                                                   'purchase_id',
@@ -1083,6 +1091,9 @@ class stock_picking(osv.osv):
                             'purchase_line_id': bo_move.purchase_line_id and bo_move.purchase_line_id.id or False,
                         }
                         bo_values.update(av_values)
+                        if in_forced:
+                            bo_values['in_forced'] = True
+
                         context['keepLineNumber'] = True
                         context['from_button'] = False
                         new_bo_move_id = move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
@@ -1150,6 +1161,7 @@ class stock_picking(osv.osv):
                     backorder_id, bo_name, picking_id, picking_dict['name'],
                 ))
             else:
+                # no BO to create
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'create_bo': _('N/A'),
                     'close_in': _('In progress'),
