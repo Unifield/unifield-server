@@ -473,12 +473,22 @@ class supplier_catalogue(osv.osv):
         res = {}
 
         for catalogue in self.browse(cr, uid, ids, context=context):
-            date_from = datetime.strptime(catalogue.period_from, '%Y-%m-%d')
+            date_from = False
+            date_to = False
+
+            if catalogue.period_from:
+                date_from = datetime.strptime(catalogue.period_from, '%Y-%m-%d')
             if catalogue.period_to:
                 date_to = datetime.strptime(catalogue.period_to, '%Y-%m-%d')
+
+            if date_from and date_to:
                 res[catalogue.id] = date_from < datetime.now() < date_to
-            else:
+            elif date_from:
                 res[catalogue.id] = date_from < datetime.now()
+            elif date_to:
+                res[catalogue.id] = datetime.now() < date_to
+            else:
+                res[catalogue.id] = True
 
         return res
 
