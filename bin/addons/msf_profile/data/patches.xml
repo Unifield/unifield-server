@@ -668,5 +668,9 @@
             <field name="method">us_8196_delete_default_prod_curr</field>
         </record>
 
+        <record id="us_8753_admin_never_expire_password" model="patch.scripts">
+            <field name="method">us_8753_admin_never_expire_password</field>
+        </record>
+
     </data>
 </openerp>

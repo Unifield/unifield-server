@@ -51,6 +51,11 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def us_8753_admin_never_expire_password(self, cr, uid, *a, **b):
+        cr.execute("update res_users set never_expire='t' where login='admin'")
+        return True
+
     # UF21.0
     def us_8196_delete_default_prod_curr(self, cr, uid, *a, **b):
         cr.execute("delete from ir_values where key = 'default' and model='product.product' and name in ('currency_id','field_currency_id') ;")
