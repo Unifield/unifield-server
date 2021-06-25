@@ -24,6 +24,7 @@ import tools
 
 import traceback
 import logging
+from log_sale_purchase import SyncException
 
 from tools.safe_eval import safe_eval as eval
 
@@ -381,6 +382,8 @@ class message_received(osv.osv):
         'manually_ran': fields.boolean('Has been manually tried', readonly=True),
         'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
         'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
+        'target_object': fields.char('Target Object', size=254, readonly=1, select=1),
+        'target_id': fields.integer('Target Id', size=254, readonly=1, select=1),
     }
 
     _sql_constraints = [
@@ -482,11 +485,17 @@ class message_received(osv.osv):
                         error_msg = e.value
                     else:
                         error_msg = e
-                    self.write(cr, uid, message.id, {
+                    msg_data = {
                         'execution_date' : execution_date,
                         'run' : False,
                         'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
-                    }, context=context)
+                    }
+                    if isinstance(e, SyncException):
+                        msg_data['target_object'] = e.target_object
+                        msg_data['target_id'] = e.target_id
+
+
+                    self.write(cr, uid, message.id, msg_data, context=context)
                 else:
                     self.write(cr, uid, message.id, {
                         'execution_date' : execution_date,
