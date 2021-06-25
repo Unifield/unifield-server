@@ -1882,7 +1882,6 @@ class purchase_order_line(osv.osv):
                     raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
                 commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], cv_date=pol.confirmed_delivery_date, context=context)
 
-            # group PO line by account_id:
             expense_account = pol.account_4_distribution and pol.account_4_distribution.id or False
             if not expense_account:
                 raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
@@ -1896,18 +1895,23 @@ class purchase_order_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
                                      % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
-
+            # in CV in version 1, PO lines are grouped by account_id
             commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
-            if not commit_line_id: # create new commitment line
+            cv = self.pool.get('account.commitment').browse(cr, uid, commitment_voucher_id, fields_to_fetch=['version'], context=context)
+            if cv.version > 1 or not commit_line_id:  # create new commitment line
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
-                commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, {
+                commit_line_vals = {
                     'commit_id': commitment_voucher_id,
                     'account_id': expense_account,
                     'amount': pol.price_subtotal,
                     'initial_amount': pol.price_subtotal,
-                    'purchase_order_line_ids': [(4, pol.id)],
                     'analytic_distribution_id': distrib_id,
-                }, context=context)
+                }
+                if cv.version > 1:
+                    commit_line_vals.update({'po_line_id': pol.id, })
+                else:
+                    commit_line_vals.update({'purchase_order_line_ids': [(4, pol.id)], })
+                commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, commit_line_vals, context=context)
                 for aline in cc_lines:
                     vals = {
                         'distribution_id': distrib_id,

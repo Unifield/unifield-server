@@ -85,12 +85,14 @@ class account_commitment(osv.osv):
         'notes': fields.text(string="Comment"),
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
         'description': fields.char(string="Description", size=256),
+        'version': fields.integer('Version', help="Technical field to distinguish old CV from new ones which have a different behavior."),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
+        'version': 2,
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
                                                                                                     ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0]
     }
