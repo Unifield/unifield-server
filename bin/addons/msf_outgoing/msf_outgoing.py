@@ -4485,8 +4485,9 @@ class pack_family_memory(osv.osv):
                 'total_volume': 0.0,
                 'move_lines': []
             }
-        for pf_memory in self.browse(cr, uid, ids, fields_to_fetch=['num_of_packs', 'total_amount', 'weight', 'length',
-                                                                    'width', 'height', 'state', 'shipment_id'], context=context):
+        new_ids = self.search(cr, uid, [('id', 'in', ids)], context=context)
+        for pf_memory in self.browse(cr, uid, new_ids, fields_to_fetch=['num_of_packs', 'total_amount', 'weight', 'length',
+                                                                        'width', 'height', 'state', 'shipment_id'], context=context):
             values = {
                 'amount': 0.0,
                 'total_weight': 0.0,
