@@ -515,6 +515,12 @@ class account_commitment_line(osv.osv):
                                 readonly=True),
         'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id',
                                                     string="Purchase Order Lines", readonly=True),
+        'po_line_id': fields.many2one('purchase.order.line', "PO line"),
+        'po_line_product_id': fields.related('po_line_id', 'product_id', type='many2one', relation='product.product',
+                                             string='Product', readonly=True, store=False, write_relate=False),
+        # the type "char" is used to display an empty line number in case there is no related PO line
+        'po_line_number': fields.related('po_line_id', 'line_number', type='char', string='PO Line', readonly=True,
+                                         store=False, write_relate=False),
     }
 
     _defaults = {
