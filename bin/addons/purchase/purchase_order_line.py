@@ -1895,7 +1895,7 @@ class purchase_order_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
                                      % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
-            # in CV in version 1, PO lines are grouped by account_id
+            # in CV in version 1, PO lines are grouped by account_id. Else 1 PO line generates 1 CV line.
             new_cv_line = False
             cv = self.pool.get('account.commitment').browse(cr, uid, commitment_voucher_id, fields_to_fetch=['version'], context=context)
             if cv.version > 1:
