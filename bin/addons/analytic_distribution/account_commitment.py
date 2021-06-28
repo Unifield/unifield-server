@@ -67,13 +67,19 @@ class account_commitment(osv.osv):
                 res.append(cvl.commit_id.id)
         return res
 
+    def _get_cv_state(self, cr, uid, context=None):
+        return [('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')]
+
+    def _get_cv_type(self, cr, uid, context=None):
+        return [('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')]
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
         'partner_id': fields.many2one('res.partner', string="Supplier", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
+        'state': fields.selection(_get_cv_state, readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total",
@@ -81,7 +87,7 @@ class account_commitment(osv.osv):
                                  'account.commitment.line': (_get_cv, ['amount'],10),
                                  }),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
-        'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
+        'type': fields.selection(_get_cv_type, string="Type", readonly=True),
         'notes': fields.text(string="Comment"),
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
         'description': fields.char(string="Description", size=256),
@@ -499,6 +505,12 @@ class account_commitment_line(osv.osv):
                 res[co.id] = False
         return res
 
+    def _get_cv_state(self, cr, uid, context=None):
+        return self.pool.get('account.commitment')._get_cv_state(cr, uid, context)
+
+    def _get_cv_type(self, cr, uid, context=None):
+        return self.pool.get('account.commitment')._get_cv_type(cr, uid, context)
+
     _columns = {
         'account_id': fields.many2one('account.account', string="Account", required=True),
         'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=False),
@@ -506,6 +518,10 @@ class account_commitment_line(osv.osv):
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", on_delete="cascade"),
         'commit_number': fields.related('commit_id', 'name', type='char', size=64,
                                         readonly=True, store=False, string="Commitment Voucher Number"),
+        'commit_state': fields.related('commit_id', 'state', string="State", type='selection', readonly=True,
+                                       store=False, selection=_get_cv_state),
+        'commit_type': fields.related('commit_id', 'type', string="Type", type='selection', readonly=True,
+                                      store=False, selection=_get_cv_type),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
@@ -519,8 +535,8 @@ class account_commitment_line(osv.osv):
                                                     string="Purchase Order Lines", readonly=True),
         'po_line_id': fields.many2one('purchase.order.line', "PO line"),
         'po_line_product_id': fields.related('po_line_id', 'product_id', type='many2one', relation='product.product',
-                                             string='Product', readonly=True, store=True, write_relate=False),
-        'po_line_number': fields.related('po_line_id', 'line_number', type='integer_null', string='PO Line', readonly=True,
+                                             string="Product", readonly=True, store=True, write_relate=False),
+        'po_line_number': fields.related('po_line_id', 'line_number', type='integer_null', string="PO Line", readonly=True,
                                          store=True, write_relate=False),
     }
 
