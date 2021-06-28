@@ -1896,9 +1896,17 @@ class purchase_order_line(osv.osv):
                                      % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
             # in CV in version 1, PO lines are grouped by account_id
-            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
+            new_cv_line = False
             cv = self.pool.get('account.commitment').browse(cr, uid, commitment_voucher_id, fields_to_fetch=['version'], context=context)
-            if cv.version > 1 or not commit_line_id:  # create new commitment line
+            if cv.version > 1:
+                new_cv_line = True
+            else:
+                commit_line_id = self.pool.get('account.commitment.line').search(cr, uid,
+                                                                                 [('commit_id', '=', commitment_voucher_id),
+                                                                                  ('account_id', '=', expense_account)], context=context)
+                if not commit_line_id:
+                    new_cv_line = True
+            if new_cv_line:  # create new commitment line
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 commit_line_vals = {
                     'commit_id': commitment_voucher_id,
