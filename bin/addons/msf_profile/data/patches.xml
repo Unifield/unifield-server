@@ -668,5 +668,10 @@
             <field name="method">us_8196_delete_default_prod_curr</field>
         </record>
 
+        <!-- UF22.0 -->
+        <record id="us_7449_set_cv_version" model="patch.scripts">
+            <field name="method">us_7449_set_cv_version</field>
+        </record>
+
     </data>
 </openerp>
