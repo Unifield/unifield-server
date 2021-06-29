@@ -76,7 +76,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'"
-                      hide_new_button="context.get('external_cv')">
+                      hide_new_button="context.get('external_cv')" hide_delete_button="context.get('external_cv')">
                     <field name="commit_type"/>
                     <field name="po_line_product_id"/>
                     <field name="po_line_number"/>
