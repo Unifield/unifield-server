@@ -123,6 +123,7 @@ PRINT_FORMATS = {
     'odt' : 'application/vnd.oasis.opendocument.text',
     'ods' : 'application/vnd.oasis.opendocument.spreadsheet',
     'xls' : 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'xml' : 'application/force-download',
     'csv' : 'text/csv',
     'rtf' : 'application/rtf',
@@ -261,7 +262,6 @@ def execute_report(name, **data):
             report_name = unicodedata.normalize('NFKD', report_name).encode('ascii','ignore')
         val['filename'] =  attachment + report_name + '.' + report_type
         cherrypy.response.headers['Content-Disposition'] = '%sfilename="' % attachment + report_name + '.' + report_type + '"'
-
         return _print_data(val)
 
     except rpc.RPCException, e:
