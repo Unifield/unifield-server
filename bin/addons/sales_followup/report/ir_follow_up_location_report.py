@@ -329,16 +329,15 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 fl_index = m_index
                             m_index += 1
             else:  # No move found
-                # Look for received qty in the IN(s) linked to a non-stockable product
-                if line.product_id and line.product_id.type in ['consu', 'service_recep']:
-                    self.cr.execute("""
-                        SELECT m.product_qty FROM stock_move m 
-                        LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
-                        LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
-                        WHERE m.state = 'done' AND m.type = 'in' AND sl.id = %s
-                    """, (line.id,))
-                    for move in self.cr.fetchall():
-                        received_qty += move[0]
+                # Look for received qty in the IN(s)
+                self.cr.execute("""
+                    SELECT m.product_qty FROM stock_move m 
+                    LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                    LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
+                    WHERE m.state = 'done' AND m.type = 'in' AND sl.id = %s
+                """, (line.id,))
+                for move in self.cr.fetchall():
+                    received_qty += move[0]
 
                 if first_line:
                     data = {
