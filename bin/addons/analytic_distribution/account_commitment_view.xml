@@ -34,7 +34,9 @@
                     <field name="analytic_distribution_id" invisible="1"/>
                     <notebook colspan="4">
                         <page string="Commitment voucher lines">
-                            <field name="line_ids" nolabel="1" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                            <field name="line_ids" nolabel="1" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"
+                                   context="{'external_cv': type == 'external'}"
+                            />
                         </page>
                     </notebook>
                     <field name="notes" colspan="4"/>
@@ -73,7 +75,8 @@
             <field name="model">account.commitment.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'">
+                <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'"
+                      hide_new_button="context.get('external_cv')">
                     <field name="commit_type"/>
                     <field name="po_line_product_id"/>
                     <field name="po_line_number"/>
