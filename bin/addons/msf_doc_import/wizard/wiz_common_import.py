@@ -244,8 +244,6 @@ class wizard_common_import_line(osv.osv_memory):
         for wiz in self.read(cr, uid, ids, fields_to_read, context=context):
             if wiz['already_running']:
                 return True
-            else:
-                self.write(cr, uid, wiz['id'], {'already_running': True}, context=context)
             parent_id = wiz['parent_id']
             line_obj = self.pool.get(wiz['line_model'])
             product_ids = wiz['product_ids']
@@ -253,6 +251,9 @@ class wizard_common_import_line(osv.osv_memory):
             context['wizard_id'] = wiz['id']
 
             ret = line_obj.create_multiple_lines(cr, uid, parent_id, product_ids, context=context)
+
+            if not wiz['already_running']:
+                self.write(cr, uid, wiz['id'], {'already_running': True}, context=context)
 
             if isinstance(ret, dict) and ret.get('msg'):
                 self.write(cr, uid, wiz['id'], {'msg': ret['msg'], 'product_ids': [(6, 0, [])], 'display_error': True}, context=context)
