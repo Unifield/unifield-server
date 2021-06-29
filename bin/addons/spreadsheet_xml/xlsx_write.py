@@ -12,16 +12,22 @@ from openpyxl.styles import NamedStyle
 
 class XlsxReport(report_int):
 
-    def __init__(self, name, parser, template=False):
+    def __init__(self, name, parser, write_only=False, template=False):
         super(XlsxReport, self).__init__(name)
         self.parser = parser
-        self.template = template
+        self.write_only = write_only
+        self.template = False
+        if not write_only:
+            self.template = template
         if not netsvc.Service._services.get(self.name2):
             netsvc.Service._services[self.name2] = parser
 
     def create(self, cr, uid, ids, datas, context):
         if self.template:
             wb = openpyxl.load_workbook(file_open(self.template))
+        elif self.write_only:
+            wb = openpyxl.Workbook(write_only=True)
+            wb.create_sheet()
         else:
             wb = openpyxl.Workbook()
         wb.iso_dates = True
