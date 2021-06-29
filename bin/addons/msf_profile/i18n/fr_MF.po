@@ -80110,6 +80110,7 @@ msgstr "You cannot validate this document in the given period: %s because it's n
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:981
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:131
 #, python-format
 msgid "N/A"
 msgstr "N/A"
@@ -95929,6 +95930,7 @@ msgstr "Analyse Journal"
 #: field:stock.warehouse.order.cycle,order_coverage:0
 #: field:order.cycle.rules.report,order_coverage:0
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:837
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:62
 msgid "Order coverage"
 msgstr "Couverture de la Commande"
 
@@ -106944,11 +106946,13 @@ msgstr "%s, PCM DE %d doit être le dernier jour du mois"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:847
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:76
 msgid "(RR-AMC) Projected stock"
 msgstr "(RR-CMM) Stock Projeté"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:846
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:75
 msgid "(RR-FMC)Projected stock Qty"
 msgstr "(RR-PCM) Qté projetée du stock"
 
@@ -107016,11 +107020,13 @@ msgstr "Qté réappro. auto"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:833
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:58
 msgid "Automatic Supply order  qty"
 msgstr "Qté d'appro auto"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:839
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:64
 msgid "Buffer (Qty)"
 msgstr "Tampon (Qté)"
 
@@ -107107,6 +107113,7 @@ msgstr "Date de dernière génération"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:857
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:87
 msgid "Date to start preparing the next order"
 msgstr "Date de début de préparation de la prochaine commande"
 
@@ -107143,6 +107150,7 @@ msgstr "Afficher la Revue d'Inventaire"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:715
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:37
 msgid "Display durations in"
 msgstr "Afficher les durées en"
 
@@ -107261,6 +107269,7 @@ msgstr "PCM invalide"
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:636
 #: field:replenishment.inventory.review,final_date_projection:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:35
 msgid "Final day of projection"
 msgstr "Denier jour de la projection"
 
@@ -107378,6 +107387,7 @@ msgstr "Générer la Demande et Fermer"
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:470
 #: field:replenishment.inventory.review,generation_date:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:31
 msgid "Generated"
 msgstr "Généré"
 
@@ -107438,6 +107448,7 @@ msgstr "Dans liste prod."
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,internal_lt:0
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:935
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:59
 msgid "Internal LT"
 msgstr "Délai Interne"
 
@@ -107464,6 +107475,7 @@ msgstr "PCM Invalide"
 #: model:ir.model,name:procurement_cycle.model_replenishment_inventory_review
 #: model:ir.ui.menu,name:procurement_cycle.replenishment_inventory_review_menu
 #: view:replenishment.inventory.review:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:20
 msgid "Inventory Review"
 msgstr "Revue d'Inventaire"
 
@@ -107664,6 +107676,7 @@ msgstr "Instance Principale"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:832
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:920
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:933
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:57
 msgid "Max"
 msgstr "Max"
 
@@ -107681,6 +107694,7 @@ msgstr "Qté Max"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:919
 #: code:addons/procurement_cycle/replenishment.py:812
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:932
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:56
 #, python-format
 msgid "Min"
 msgstr "Min"
@@ -107714,6 +107728,7 @@ msgstr "Prochaine Date Programmée"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:858
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:88
 msgid "Next order to be generated/issued by date"
 msgstr "Prochaine commande à générer / émise par date"
 
@@ -107761,6 +107776,7 @@ msgstr "Prêt en cours"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:850
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:79
 msgid "Open Loan on product (Yes/No)"
 msgstr "Prêt en cours ?"
 
@@ -107900,6 +107916,7 @@ msgstr "Liste de produits principale"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:826
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:51
 msgid "Primary Product list"
 msgstr "Liste de produits principale"
 
@@ -107957,6 +107974,7 @@ msgstr "Zones du Projet"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line.pas,projected:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:119
 msgid "Projected"
 msgstr "Projeté"
 
@@ -107980,6 +107998,7 @@ msgstr "Utilisation prévue du stock de sécurité / du tampon"
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:598
 #: field:replenishment.inventory.review,projected_view:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:34
 msgid "Projected view (months from generation date)"
 msgstr "Vue projectée (mois depuis la date de génération)"
 
@@ -108012,6 +108031,7 @@ msgstr "Qté expirées sans conso."
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:849
 #: field:replenishment.inventory.review.line,total_expired_qty:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:78
 msgid "Qty expiring within period"
 msgstr "Qté d'expirés dans la période"
 
@@ -108030,27 +108050,32 @@ msgstr "Qté manquante avant prochain TAE"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:855
 #: field:replenishment.inventory.review.line,qty_lacking_needed_by:0
 #: field:replenishment.order_calc.line,qty_lacking_needed_by:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:85
 msgid "Qty lacking needed by"
 msgstr "Qté manquante requise pour"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:848
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:77
 msgid "Qty of Projected Expiries before consumption"
 msgstr "Qté projetée d'expirés avant conso"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:859
 #: field:replenishment.inventory.review.line,date_next_order_rdd:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:89
 msgid "RDD for next order"
 msgstr "DLS prochaine commande"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:830
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:55
 msgid "RR (qty) applied"
 msgstr "RR (qté) appliqué"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:829
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:54
 msgid "RR (threshold) applied"
 msgstr "RR (seuil) appliqué"
 
@@ -108173,6 +108198,7 @@ msgstr "RR-CMM"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:842
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:67
 msgid "RR-AMC (average for AMC period)"
 msgstr "RR-CMM (moyenne sur la période CMM)"
 
@@ -108188,22 +108214,26 @@ msgstr "Période RR-CMM (mois)"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:512
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:32
 msgid "RR-AMC periodicity (1st month)"
 msgstr "Période RR-CMM (1er mois)"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:555
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:33
 msgid "RR-AMC periodicity (last month)"
 msgstr "Périodicité RR-CMM (dernier mois)"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line.pas,rr_fmc:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:114
 msgid "RR-FMC"
 msgstr "RR-PCM"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:841
 #: field:replenishment.inventory.review.line,rr_fmc_avg:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:66
 msgid "RR-FMC (average for period)"
 msgstr "RR-PCM (moyenne de la période)"
 
@@ -108224,6 +108254,7 @@ msgstr "RR-CMM doit être positive ou nulle"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:843
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:72
 msgid "Real Stock in location(s)"
 msgstr "Stock Réel en zone(s)"
 
@@ -108256,6 +108287,7 @@ msgstr "Stock Réservé"
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:414
 #: field:replenishment.inventory.review.line,reserved_stock_qty:0
 #: field:replenishment.order_calc.line,reserved_stock_qty:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:74
 msgid "Reserved Stock Qty"
 msgstr "Qté Réservée en stock"
 
@@ -108308,6 +108340,7 @@ msgstr "Stock de Sécurité et Couverture de Commande doivent être positives ou
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:434
 #: field:replenishment.inventory.review,frequence_name:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:30
 msgid "Scheduled reviews periodicity"
 msgstr "Périodicité programmée des revues"
 
@@ -108350,6 +108383,7 @@ msgstr "Segment Ref/Nom"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:828
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:53
 msgid "Segment Ref/name"
 msgstr "Segment Ref/Nom"
 
@@ -108390,6 +108424,7 @@ msgstr "Qté dormante"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:851
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:81
 msgid "Sleeping stock Qty"
 msgstr "Qté dormante stock "
 
@@ -108400,6 +108435,7 @@ msgstr "Paramètre d'alerte du stock dormant  (mois)"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:678
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:36
 msgid "Sleeping stock alert parameter (months)"
 msgstr "Paramètre d'alerte du stock dormant (mois)"
 
@@ -108441,6 +108477,7 @@ msgstr "Stock par instance"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:398
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:29
 msgid "Stock location configuration description"
 msgstr "Description de la configuration de la Zone de stock"
 
@@ -108606,6 +108643,7 @@ msgstr "Délai Total (jours)"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:836
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:61
 msgid "Total lead time"
 msgstr "Delai total"
 
@@ -108634,6 +108672,7 @@ msgstr "Attention: la configuration de la zone est inactive"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:827
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:52
 msgid "Warnings Recap"
 msgstr "Avertissements"
 
@@ -108657,11 +108696,13 @@ msgstr "Vous ne pouvez pas activer une revue sans fréquence"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:852
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:82
 msgid "of supply (RR-AMC)"
 msgstr "d'approvisionnement (RR-CMM)"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:853
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:83
 msgid "of supply (RR-FMC)"
 msgstr "d'approvisionnement (RR-PCM)"
 
@@ -108866,6 +108907,7 @@ msgstr "Zones des autres instances"
 #. module: procurement_cycle
 #: field:replenishment.segment.line,status:0
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:914
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:49
 msgid "RR Lifecycle"
 msgstr "Cycle RR"
 
@@ -109724,11 +109766,13 @@ msgstr "Uniquement Fermer"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:935
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:71
 msgid "Coefficient of Variant of HMC and FMC"
 msgstr "Coefficient de Variation de HCM et PCM"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:933
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:69
 msgid "Coefficient of Variation of HMC"
 msgstr "Coefficient de Variation de HCM"
 
@@ -109773,6 +109817,7 @@ msgstr "Donations en cours"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:947
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:80
 msgid "Donations pending (Yes/No)"
 msgstr "Donations en cours (Oui/Non)"
 
@@ -109783,6 +109828,7 @@ msgstr "Donations en cours"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:953
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:86
 msgid "ETA date of next pipeline"
 msgstr "Date TAE du prochain pipeline"
 
@@ -109946,6 +109992,7 @@ msgstr "Qté expirée avant DLS"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:951
 #: field:replenishment.inventory.review.line,qty_lacking:0
 #: field:replenishment.order_calc.line,qty_lacking:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:84
 msgid "Qty lacking before next RDD"
 msgstr "Qty manquante avant prochaine DLS"
 
@@ -110026,12 +110073,14 @@ msgstr "Définir le produit lié"
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:932
 #: field:replenishment.inventory.review.line,std_dev_hmc:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:68
 msgid "Standard Deviation HMC"
 msgstr "Déviation Standard HCM"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:934
 #: field:replenishment.inventory.review.line,std_dev_hmc_fmc:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:70
 msgid "Standard Deviation of HMC vs FMC"
 msgstr "Déviation Standard de HCM vs PCM"
 
@@ -110650,6 +110699,7 @@ msgstr "Suppression"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:915
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:50
 msgid "Replaced/Replacing"
 msgstr "Remplacé/Remplaçant"
 
@@ -110677,6 +110727,7 @@ msgstr "Délai"
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,external_lt:0
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:936
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:60
 msgid "External LT"
 msgstr "Délai Externe"
 
@@ -111499,6 +111550,7 @@ msgstr "Arrondir Qté Convenue à la QcS"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:939
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:63
 msgid "SS (Qty)"
 msgstr "SS (Qté)"
 
@@ -112058,7 +112110,6 @@ msgstr "11 semaines"
 msgid "12 weeks"
 msgstr "12 semaines"
 
-
 #. module: stock
 #: model:ir.model,name:stock.model_view_expired_expiring_stock
 #: field:view.expired.expiring.stock.lines,v_mng_exp_id:0
@@ -112387,3 +112438,16 @@ msgstr "L'Adresse ne peut pas être désactivée. Il y a des Éxpéditions ouver
 #, python-format
 msgid "The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process."
 msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée (%s). Veuillez en sélectionner une autre pour pouvoir continuer le traitement."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:19
+#, python-format
+msgid "Inv. Review"
+msgstr "Revue Inv."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1792
+#, python-format
+msgid "Line %d: FMC %s cannot be empty"
+msgstr "Ligne %d: PCM %s ne peut être vide"
+
