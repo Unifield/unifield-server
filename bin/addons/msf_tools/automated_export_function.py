@@ -45,11 +45,13 @@ class automated_export_function(osv.osv):
             required=True,
         ),
         'disable_cron': fields.boolean('No cron'),
+        'multiple': fields.boolean('Allow multiple jobs'),
     }
 
     _defaults = {
         'method_to_call': lambda *a: 'export_data_from_csv',
         'disable_cron': False,
+        'multiple': False,
     }
 
     _order = 'name'

@@ -3732,7 +3732,13 @@ class stock_picking(osv.osv):
             )
 
         ppl_processor = self.pool.get('ppl.processor')
-        picking = self.browse(cr, uid, ids[0], context=context)
+        picking = self.browse(cr, uid, ids[0], fields_to_fetch=['move_lines', 'address_id'], context=context)
+        if picking.address_id and picking.address_id.active is False:  # Check the Delivery Address
+            addr_name = self.pool.get('res.partner.address').name_get(cr, uid, [picking.address_id.id])[0][1]
+            raise osv.except_osv(
+                _('Error'),
+                _('The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process.')
+                % (addr_name))
         rounding_issues = []
         for move in picking.move_lines:
             if move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
@@ -3760,7 +3766,6 @@ class stock_picking(osv.osv):
                 'view_type': 'form',
                 'context': context,
             }
-
 
         return self.ppl_step2_run_wiz(cr, uid, ids, context)
 
@@ -4480,9 +4485,9 @@ class pack_family_memory(osv.osv):
                 'total_volume': 0.0,
                 'move_lines': []
             }
-        for pf_memory in self.read(cr, uid, ids, ['num_of_packs',
-                                                  'total_amount', 'weight', 'length', 'width', 'height', 'state'],
-                                   context=context):
+        new_ids = self.search(cr, uid, [('id', 'in', ids)], context=context)
+        for pf_memory in self.browse(cr, uid, new_ids, fields_to_fetch=['num_of_packs', 'total_amount', 'weight', 'length',
+                                                                        'width', 'height', 'state', 'shipment_id'], context=context):
             values = {
                 'amount': 0.0,
                 'total_weight': 0.0,
@@ -4490,14 +4495,15 @@ class pack_family_memory(osv.osv):
             }
             if compute_moves:
                 values['move_lines'] = []
-            num_of_packs = pf_memory['num_of_packs']
+            num_of_packs = pf_memory.num_of_packs
             if num_of_packs:
-                values['amount'] = pf_memory['total_amount'] / num_of_packs
-            values['total_weight'] = pf_memory['weight'] * num_of_packs
-            values['total_volume'] = round((pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0, 4)
-            values['fake_state'] = pf_memory['state']
+                values['amount'] = pf_memory.total_amount / num_of_packs
+            values['total_weight'] = pf_memory.weight * num_of_packs
+            values['total_volume'] = round((pf_memory.length * pf_memory.width * pf_memory.height * num_of_packs) / 1000.0, 4)
+            values['fake_state'] = pf_memory.state
+            values['ship_state'] = pf_memory.shipment_id.state
 
-            result[pf_memory['id']] = values
+            result[pf_memory.id] = values
 
         if compute_moves and ids:
             if isinstance(ids, (int, long)):
@@ -4548,6 +4554,9 @@ class pack_family_memory(osv.osv):
         'volume_set': fields.boolean('Volume set at PPL'),
         'weight_set': fields.boolean('Weight set at PPL'),
         'quick_flow': fields.boolean('From quick flow'),
+        'ship_state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
+                                                                                           ('shipped', 'Ready to ship'), ('done', 'Dispatched'),  ('delivered', 'Received'),
+                                                                                           ('cancel', 'Cancelled')], string='Ship State', multi='get_vals'),
     }
 
     _defaults = {

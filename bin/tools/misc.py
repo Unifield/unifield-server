@@ -281,6 +281,10 @@ def pg_dump(db_name, outfile=False):
         cmd.append(db_name)
         if outfile:
             res = exec_pg_command(*tuple(cmd))
+            if res != 0:
+                error_txt = 'pg_dump return code %s, outfile: %s' % (res, outfile)
+                _logger.error(error_txt)
+                raise Exception(error_txt)
         else:
             # TODO: current pg_dump method do not return the same type of
             # variable depending of outfile, if outfile, it return an int, else
@@ -295,6 +299,7 @@ def pg_dump(db_name, outfile=False):
         if outfile:
             try:
                 os.remove(outfile)
+                open('%s.KO' % outfile, 'a').close()
             except:
                 pass
             res = -1
@@ -1887,6 +1892,8 @@ class Path():
         self.delete = delete
 
 def use_prod_sync(cr, uid=False, pool=False):
+    if not cr.table_exists('sync_client_sync_server_connection'):
+        return False
     cr.execute('''SELECT host, database
             FROM sync_client_sync_server_connection''')
     host, database = cr.fetchone()

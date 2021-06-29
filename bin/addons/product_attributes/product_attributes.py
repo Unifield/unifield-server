@@ -949,8 +949,8 @@ class product_attributes(osv.osv):
         'removal_time': fields.integer('Product Removal Time',
                                        help='The number of months before a production lot should be removed.'),
         'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
-        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
-        'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
+        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True, hide_default_menu=True),
+        'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True, hide_default_menu=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                                      type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.selection(
@@ -1046,6 +1046,7 @@ class product_attributes(osv.osv):
         'uf_create_date': fields.datetime(_('Creation date')),
         'instance_level': fields.function(_get_product_instance_level, method=True, string='Instance Level', internal=1, type='char'),
         'show_ud': fields.function(_get_dummy, fnct_search=_search_show_ud, method=True, type='boolean', string='Search UD NSL or ST/NS', internal=1),
+        'currency_fixed': fields.boolean('Currency Changed by US-8196'),
     }
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
@@ -1259,7 +1260,8 @@ class product_attributes(osv.osv):
                 error = True
                 msg = _('be exchanged')
                 st_cond = product.state.no_external or product.state.no_esc or product.state.no_internal
-            elif product.no_external and 'external' in constraints:
+            elif product.no_external and 'external' in constraints and \
+                    (not sale_obj or (sale_obj and product.state and product.state.code != 'phase_out')):
                 error = True
                 msg = _('be %s externally') % (sale_obj and _('shipped') or _('purchased'))
                 st_cond = product.state.no_external
@@ -1769,14 +1771,13 @@ class product_attributes(osv.osv):
 
                         prod_code = self.read(cr, uid, ids[0], ['default_code'], context=context)
                         error_msg = []
-
                         wiz_error = self.pool.get('product.deactivation.error').browse(cr, uid, deactivate_result['error'], context=context)
                         if wiz_error.stock_exist:
                             error_msg.append('Stock exists (internal locations)')
 
                         doc_errors = []
                         for error in wiz_error.error_lines:
-                            doc_errors.append(error.doc_ref)
+                            doc_errors.append("%s : %s" % (error.type or '', error.doc_ref or ''))
 
                         if doc_errors:
                             error_msg.append('Product is contained in opened documents :\n - %s'  % ' \n - '.join(doc_errors))
@@ -2140,7 +2141,7 @@ class product_attributes(osv.osv):
                             type_name = 'Debit Note'
                         # Donation (in-kind donation)
                         elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
-                            type_name = 'In-kind Donation'
+                            type_name = 'Finance document In-kind Donation'
                         # Intermission voucher out
                         elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
                             type_name = 'Intermission Voucher Out'
@@ -2160,7 +2161,7 @@ class product_attributes(osv.osv):
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': type_name,
                                                         'internal_type': 'account.invoice',
-                                                        'doc_ref': invoice.invoice_id.number,
+                                                        'doc_ref': invoice.invoice_id.number or invoice.invoice_id.name or '',
                                                         'doc_id': invoice.invoice_id.id}, context=context)
 
 
@@ -2281,7 +2282,7 @@ class product_attributes(osv.osv):
         if default is None:
             default = {}
 
-        for to_reset in ['replace_product_id', 'replaced_by_product_id']:
+        for to_reset in ['replace_product_id', 'replaced_by_product_id', 'currency_fixed']:
             if to_reset not in default:
                 default[to_reset] = False
 
@@ -2962,7 +2963,7 @@ class product_deactivation_error_line(osv.osv_memory):
         'error_id': fields.many2one('product.deactivation.error', string='Error', readonly=True),
         'type': fields.char(size=64, string='Documents type'),
         'internal_type': fields.char(size=64, string='Internal document type'),
-        'doc_ref': fields.char(size=64, string='Reference'),
+        'doc_ref': fields.char(size=128, string='Reference'),
         'doc_id': fields.integer(string='Internal Reference'),
         'view_id': fields.integer(string='Reference of the view to open'),
     }

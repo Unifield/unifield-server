@@ -1703,21 +1703,28 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['type_change'] = 'error'
 
             # Stock Take Date
-            stock_take_date = values[9]
-            if stock_take_date and type(stock_take_date) == type(DateTime.now()):
-                write_vals['imp_stock_take_date'] = stock_take_date.strftime('%Y-%m-%d')
-            elif stock_take_date and isinstance(stock_take_date, str):
-                try:
-                    time.strptime(stock_take_date, '%Y-%m-%d')
-                    write_vals['imp_stock_take_date'] = stock_take_date
-                except ValueError:
+            if import_type in ('new', 'split'):
+                stock_take_date = values[9]
+                if stock_take_date and type(stock_take_date) == type(DateTime.now()):
+                    if stock_take_date.strftime('%Y-%m-%d') <= line.simu_id.order_id.date_order:
+                        write_vals['imp_stock_take_date'] = stock_take_date.strftime('%Y-%m-%d')
+                    else:
+                        err_msg = _('The  \'Stock Take Date\' is not consistent! It should not be later than %s\'s creation date') \
+                            % (line.simu_id.order_id.name,)
+                        errors.append(err_msg)
+                        write_vals['type_change'] = 'error'
+                elif stock_take_date and isinstance(stock_take_date, str):
+                    try:
+                        time.strptime(stock_take_date, '%Y-%m-%d')
+                        write_vals['imp_stock_take_date'] = stock_take_date
+                    except ValueError:
+                        err_msg = _('Incorrect date value for field \'Stock Take Date\'')
+                        errors.append(err_msg)
+                        write_vals['type_change'] = 'error'
+                elif stock_take_date:
                     err_msg = _('Incorrect date value for field \'Stock Take Date\'')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
-            elif stock_take_date:
-                err_msg = _('Incorrect date value for field \'Stock Take Date\'')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
 
             # Delivery Requested Date
             drd_value = values[10]
@@ -1916,7 +1923,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 elif line.po_line_id:
                     if line.esc_conf:
                         line_vals['esc_confirmed'] = line.esc_conf
-                    if context.get('auto_import_ok') and line.simu_id.order_id.stock_take_date:
+                    if context.get('auto_import_ok') and not line.po_line_id.stock_take_date and line.simu_id.order_id.stock_take_date:
                         line_vals['stock_take_date'] = line.simu_id.order_id.stock_take_date
 
                     line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)

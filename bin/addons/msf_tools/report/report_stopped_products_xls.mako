@@ -54,7 +54,7 @@
 </Styles>
 
 
-<ss:Worksheet ss:Name="${_('Stopped products')|x}">
+<ss:Worksheet ss:Name="${_('Phase Out products')|x}">
 
   <Table x:FullColumns="1" x:FullRows="1">
 
@@ -64,13 +64,13 @@
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # standardization level
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # unidata status
 
-    ##### Table with all stopped products #####
+    ##### Table with all phase out products #####
 
     <% stopped_products = get_uf_stopped_products() %>
     % if not stopped_products:
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_content"><Data ss:Type="String"></Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${_('There is no stopped products to report')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${_('There is no phase out products to report')|x}</Data></Cell>
         </Row>
     % endif
     

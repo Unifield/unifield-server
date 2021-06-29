@@ -159,6 +159,9 @@ class stock_location(osv.osv):
         @param field_names: Name of field
         @return: Dictionary of values
         """
+        if context is None:
+            context = {}
+
         prod_id = context and context.get('product_id', False)
 
         product_product_obj = self.pool.get('product.product')
@@ -171,7 +174,9 @@ class stock_location(osv.osv):
         products_by_location = dict((k, [v['product_id'] for v in itr]) for k, itr in groupby(res_products_by_location, itemgetter('location_id')))
 
         lang_obj = self.pool.get('res.lang')
-        lang_ids = lang_obj.search(cr, uid, [('code', '=', context.get('lang', 'en_US'))])
+        lang_ids = lang_obj.search(cr, uid, [('code', '=', context.get('lang', 'en_MF'))])
+        if not lang_ids:
+            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
         lang = lang_obj.browse(cr, uid, lang_ids[0])
 
         result = dict([(i, {}.fromkeys(field_names, 0.0)) for i in ids])
@@ -997,7 +1002,7 @@ class stock_picking(osv.osv):
         # TODO: Check locations to see if in the same location ?
         return True
 
-    def action_assign(self, cr, uid, ids, lefo=False, context=None):
+    def action_assign(self, cr, uid, ids, lefo=False, assign_expired=False, context=None):
         """ Changes state of picking to available if all moves are confirmed.
         @return: True
         """
@@ -1009,7 +1014,7 @@ class stock_picking(osv.osv):
         for pick in self.read(cr, uid, ids, ['name']):
             move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick['id']),
                                                  ('state', 'in', ('waiting', 'confirmed'))], order='prodlot_id, product_qty desc')
-            move_obj.action_assign(cr, uid, move_ids, lefo=lefo)
+            move_obj.action_assign(cr, uid, move_ids, lefo=lefo, assign_expired=assign_expired)
             self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s (%s)' % (
                 pick['id'], pick['name'],
             ))

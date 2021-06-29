@@ -328,9 +328,14 @@ class Cursor(object):
 
     @check
     def drop_index_if_exists(self, table, indexname):
-        self.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, table))
-        if self.fetchone():
+        if self.index_exists(table, indexname):
             self.execute('DROP INDEX "%s"' % (indexname,))
+
+    @check
+    def index_exists(self, table, indexname):
+        self.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, table))
+        return self.fetchone()
+
 
 class PsycoConnection(psycopg2.extensions.connection):
     pass

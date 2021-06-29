@@ -411,7 +411,7 @@
     % if objects[0].rule == 'cycle':
         <% i = 0 %>
         <% styles = ['s143', 's149'] %>
-        % for fmc in range(1, 13):
+        % for fmc in range(1, 19):
         <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR FMC %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
         % if fmc == 1:
             <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
@@ -461,7 +461,7 @@
         <!-- s144+s145 / s165/s151 -->
         <% i = 0 %>
         <% styles = [('s144', 's145'), ('s165', 's151')] %>
-         % for fmc in range(1, 13):
+         % for fmc in range(1, 19):
             <Cell ss:StyleID="${styles[i][0]}">
             % if getattr(prod, 'rr_fmc_%d'%fmc) is False:
                 <Data ss:Type="String" />

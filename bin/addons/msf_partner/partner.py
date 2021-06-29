@@ -994,7 +994,6 @@ class res_partner_address(osv.osv):
         """
         Check if the deleted address is not a system one
         """
-
         res = super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
         #US-1344: treat deletion of partner

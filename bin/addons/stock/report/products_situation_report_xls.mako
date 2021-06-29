@@ -90,7 +90,7 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <NumberFormat ss:Format="#,##0.00"/>
+        <NumberFormat ss:Format="#,##0.00000"/>
     </Style>
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1" />

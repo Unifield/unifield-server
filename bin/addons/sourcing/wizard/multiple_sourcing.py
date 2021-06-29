@@ -202,6 +202,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
             res['location_id'] = loc
         if supplier != -1:
             res['supplier_id'] = supplier
+            local_market_id = 0
+            try:
+                local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
+            except ValueError:
+                pass
+            if supplier == local_market_id:
+                res['po_cft'] = 'pli'
         if group is not None:
             res['related_sourcing_id'] = group
 
@@ -438,7 +445,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             },
         }
 
-    def change_po_cft(self, cr, uid, ids, po_cft, context=None):
+    def change_po_cft(self, cr, uid, ids, po_cft, supplier_id, context=None):
         """
         Unset the supplier if tender is choose
         :param cr: Cursor to the database
@@ -450,6 +457,17 @@ class multiple_sourcing_wizard(osv.osv_memory):
         """
         if po_cft == 'cft':
             return {'value': {'supplier_id': False}}
+
+        if supplier_id:
+            suppl_type = self.pool.get('res.partner').read(cr, uid, supplier_id, ['partner_type'], context=context)['partner_type']
+            if po_cft == 'pli' and suppl_type != 'external':
+                return {
+                    'value': {'po_cft': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _("""You can't source with 'Purchase List' to a non-external partner."""),
+                    },
+                }
 
         return {}
 
@@ -486,6 +504,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 'supplier_type': partner and partner.partner_type or False,
                 'supplier_split_po': partner and partner.split_po or False,
             })
+
+            # Look if the partner is the same res_partner as Local Market
+            data_obj = self.pool.get('ir.model.data')
+            is_loc_mar = data_obj.search_exists(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'),
+                                                          ('name', '=', 'res_partner_local_market'), ('res_id', '=', partner.id)], context=context)
+            if is_loc_mar:
+                result['value'].update({'po_cft': 'pli'})
         else:
             result['value'].update({
                 'supplier_type': False,

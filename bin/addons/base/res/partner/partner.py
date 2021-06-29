@@ -372,7 +372,61 @@ class res_partner_address(osv.osv):
     def get_city(self, cr, uid, id):
         return self.browse(cr, uid, id).city
 
+    def on_change_active_addr(self, cr, uid, ids, active, context=None):
+        """
+        If the address is linked to a open Shipment, prevent the deactivation
+        """
+        # some verifications
+        if not ids:
+            return {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        if not active:
+            ship_obj = self.pool.get('shipment')
+            ship_domain = [('state', 'in', ['draft', 'shipped']), ('address_id', 'in', ids)]
+            open_ship_ids = ship_obj.search(cr, uid, ship_domain, context=context)
+            if open_ship_ids:
+                ship_names = [s.name for s in ship_obj.browse(cr, uid, open_ship_ids, fields_to_fetch=['name'], context=context)]
+                return {'value': {'active': True},
+                        'warning': {'title': _('Error'),
+                                    'message': _('The Address can not be deactivated. There are open SHIPs for this address: %s.\nPlease process them first or change their delivery address.')
+                                    % (', '.join(ship_names),)}}
+        return {}
+
+    def unlink_web(self, cr, uid, ids, context=None):
+        '''
+        Added in US-7003 to prevent changing the unlink method
+        If the address is linked to a Shipment, deactivate it instead of deleting but only if the document isn't opened
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        ship_obj = self.pool.get('shipment')
+        ship_ids = ship_obj.search(cr, uid, [('address_id', 'in', ids)], context=context)
+        if ship_ids:
+            ship_names = []
+            for ship in ship_obj.browse(cr, uid, ship_ids, fields_to_fetch=['state', 'name'], context=context):
+                if ship.state in ['draft', 'shipped']:
+                    ship_names.append(ship.name)
+            if ship_names:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The Address can not be deactivated. There are open SHIPs for this address: %s.\nPlease process them first or change their delivery address.')
+                    % (', '.join(ship_names),))
+            else:
+                return self.write(cr, uid, ids, {'active': False}, context=context)
+
+        return super(res_partner_address, self).unlink_web(cr, uid, ids, context=context)
+
+
 res_partner_address()
+
 
 class res_partner_bank_type(osv.osv):
     _description='Bank Account Type'

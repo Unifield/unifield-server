@@ -36,13 +36,16 @@ class analytic_distribution(osv.osv):
         if context is None:
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        ret = True   # by default if either dest or cc is missing
         if destination_id and cost_center_id:
-            dest = analytic_acc_obj.browse(cr, uid, destination_id, fields_to_fetch=['category', 'allow_all_cc', 'dest_cc_ids'], context=context)
-            cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category'], context=context)
-            if dest and cc and dest.category == 'DEST' and cc.category == 'OC' and not dest.allow_all_cc and \
-                    cc.id not in [c.id for c in dest.dest_cc_ids]:
-                return False
-        return True
+            if analytic_acc_obj.search_exist(cr, uid, [('id', '=', destination_id), ('allow_all_cc', '=', True)], context=context):
+                ret = True
+            elif dest_cc_link_obj.search_exist(cr, uid, [('dest_id', '=', destination_id), ('cc_id', '=', cost_center_id)], context=context):
+                ret = True
+            else:
+                ret = False
+        return ret
 
     def check_fp_cc_compatibility(self, cr, uid, fp_id, cost_center_id, context=None):
         """
@@ -146,6 +149,7 @@ class analytic_distribution(osv.osv):
         if context is None:
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         # Have an analytic distribution on another account than analytic-a-holic account make no sense. So their analytic distribution is valid
         if account_id:
             account =  self.pool.get('account.account').read(cr, uid, account_id, ['is_analytic_addicted'])
@@ -153,7 +157,8 @@ class analytic_distribution(osv.osv):
                 return 'valid'
         if not distrib_id:
             if parent_id:
-                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context, amount=amount)
+                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context=context,
+                                                    doc_date=doc_date, posting_date=posting_date, manual=manual, amount=amount)
             return 'none'
         distrib = self.browse(cr, uid, distrib_id)
         if not distrib.funding_pool_lines:
@@ -183,6 +188,9 @@ class analytic_distribution(osv.osv):
                         return 'invalid'
                     if not analytic_acc_obj.is_account_active(fp_line.cost_center_id, posting_date):
                         return 'invalid'
+                    if dest_cc_link_obj.is_inactive_dcl(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id,
+                                                        posting_date, context=context):
+                        return 'invalid'
                 if doc_date and fp_line.analytic_id and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
                     return 'invalid'
             if fp_line.destination_id.id not in account.get('destination_ids', []):
@@ -206,7 +214,7 @@ class analytic_distribution(osv.osv):
                     return 'invalid'
         return 'valid'
 
-    def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, context=None):
+    def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, posting_date=False, context=None):
         """
         Give analytic state from the given information.
         Return result and some info if needed.
@@ -217,6 +225,7 @@ class analytic_distribution(osv.osv):
         # Prepare some values
         res = 'valid'
         info = ''
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
         # DISTRIBUTION VERIFICATION
         # Check that destination is compatible with account
@@ -225,6 +234,9 @@ class analytic_distribution(osv.osv):
         # Check that Destination and Cost Center are compatible
         if not self.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
             return 'invalid', _('Cost Center not compatible with destination')
+        # Check that their combination is active
+        if posting_date and dest_cc_link_obj.is_inactive_dcl(cr, uid, destination_id, cost_center_id, posting_date, context=context):
+            return 'invalid', _('Inactive DEST/CC combination')
         # Check that cost center is compatible with FP
         if not self.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id, context=context):
             return 'invalid', _('Cost Center not compatible with FP')
@@ -236,10 +248,11 @@ class analytic_distribution(osv.osv):
     def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False, prefix='', from_supply=False):
         """
         Checks the Cost Center Distribution Lines of the distribution in param.:
-        raises an error if the CC or the Dest. used is not active at the posting date selected (or today's date)
+        raises an error if the CC, the Dest., or their combination is not active at the posting date selected (or today's date)
         If needed a "prefix" can be added to the error message.
         """
         cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         if distrib_br:
             if not posting_date:
                 posting_date = time.strftime('%Y-%m-%d')
@@ -257,6 +270,11 @@ class analytic_distribution(osv.osv):
                     else:
                         raise osv.except_osv(_('Error'), _('%sDestination %s is either inactive at the date %s, or it allows no Cost Center.') %
                                              (prefix, cline.destination_id.code or '', posting_date))
+                if cline.destination_id and cline.analytic_id and \
+                        dest_cc_link_obj.is_inactive_dcl(cr, uid, cline.destination_id.id, cline.analytic_id.id, posting_date):
+                    raise osv.except_osv(_('Error'), _("%sThe combination \"%s - %s\" is not active at this date: %s") %
+                                         (prefix, cline.destination_id.code or '', cline.analytic_id.code or '', posting_date))
+
 
 
 analytic_distribution()

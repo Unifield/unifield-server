@@ -757,7 +757,7 @@ class po_follow_up_mixin(object):
         po = []
         self.cr.execute("""
             SELECT p.id, p.state, p.name, p.date_order, ad.id, ppar.name, p.partner_ref, p.order_type, c.name, 
-                p.delivery_confirmed_date
+                p.delivery_confirmed_date, p.details
             FROM purchase_order p
                 LEFT JOIN analytic_distribution ad ON p.analytic_distribution_id = ad.id
                 LEFT JOIN res_partner ppar ON p.partner_id = ppar.id
@@ -827,6 +827,7 @@ class po_follow_up_mixin(object):
                     'currency': po[8] or '',
                     'total_currency': '',
                     'total_func_currency': '',
+                    'po_details': po[10] or '',
                 }
                 report_lines.append(report_line)
                 if export_format != 'xls':
@@ -872,6 +873,7 @@ class po_follow_up_mixin(object):
                         spsul.get('price_unit', 0.0),
                         spsul.get('state') == 'done' and spsul.get('product_qty', 0.0) or 0.0
                     ),
+                    'po_details': po[10] or '',
                 }
 
                 report_lines.append(report_line)
@@ -923,6 +925,7 @@ class po_follow_up_mixin(object):
                         spl.get('price_unit', 0.0),
                         spl.get('state') == 'done' and spl.get('product_qty', 0.0) or 0.0
                     ),
+                    'po_details': po[10] or '',
                 }
                 report_lines.append(report_line)
 
@@ -975,6 +978,7 @@ class po_follow_up_mixin(object):
                         ol.get('price_unit', 0.0),
                         ol.get('state') == 'done' and ol.get('product_qty', 0.0) or 0.0
                     ),
+                    'po_details': po[10] or '',
                 }
                 report_lines.append(report_line)
 
@@ -1057,6 +1061,7 @@ class po_follow_up_mixin(object):
             _('Delivery Confirmed Date'),
             _('PO Line Status'),
             _('PO Document Status'),
+            _('PO Details'),
             _('Customer'),
             _('Customer Reference'),
             _('Source Document'),
