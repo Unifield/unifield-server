@@ -19,7 +19,7 @@ class inventory_parser(XlsxReportParser):
         sheet['A1'] = _('Inventory Review')
 
 
-        row_index =3
+        row_index = 3
 
         inventory = self.pool.get('replenishment.inventory.review').browse(self.cr, self.uid, self.ids[0], context=context)
 
@@ -126,78 +126,78 @@ class inventory_parser(XlsxReportParser):
         row = 16
         for line in inventory.line_ids:
             sheet.row_dimensions[row].height = 40
-            sheet.cell(row=row, column=1, value=line.product_id.default_code).style=default_style
-            sheet.cell(row=row, column=2, value=line.product_id.name).style=default_style
-            sheet.cell(row=row, column=3, value=line.segment_ref_name and self.getSel(line, 'status') or _('N/A')).style=default_style
-            sheet.cell(row=row, column=4, value=line.paired_product_id and line.paired_product_id.default_code or '').style=default_style
-            sheet.cell(row=row, column=5, value=line.primay_product_list or '').style=default_style
-            sheet.cell(row=row, column=6, value=line.warning or '').style=default_style
-            sheet.cell(row=row, column=7, value=line.segment_ref_name or '').style=default_style
-            sheet.cell(row=row, column=8, value=line.rule=='cycle' and 'PAS' or '').style=default_style
-            sheet.cell(row=row, column=9, value=line.segment_ref_name and self.getSel(line, 'rule') or '').style=default_style
+            sheet.cell(row=row, column=1, value=line.product_id.default_code).style = default_style
+            sheet.cell(row=row, column=2, value=line.product_id.name).style = default_style
+            sheet.cell(row=row, column=3, value=line.segment_ref_name and self.getSel(line, 'status') or _('N/A')).style = default_style
+            sheet.cell(row=row, column=4, value=line.paired_product_id and line.paired_product_id.default_code or '').style = default_style
+            sheet.cell(row=row, column=5, value=line.primay_product_list or '').style = default_style
+            sheet.cell(row=row, column=6, value=line.warning or '').style = default_style
+            sheet.cell(row=row, column=7, value=line.segment_ref_name or '').style = default_style
+            sheet.cell(row=row, column=8, value=line.rule == 'cycle' and 'PAS' or '').style = default_style
+            sheet.cell(row=row, column=9, value=line.segment_ref_name and self.getSel(line, 'rule') or '').style = default_style
             if line.rule == 'minmax':
-                sheet.cell(row=row, column=10, value=line.min_qty).style=default_style
-                sheet.cell(row=row, column=11, value=line.max_qty).style=default_style
+                sheet.cell(row=row, column=10, value=line.min_qty).style = default_style
+                sheet.cell(row=row, column=11, value=line.max_qty).style = default_style
             else:
-                sheet.cell(row=row, column=10).style=grey_style
-                sheet.cell(row=row, column=11).style=grey_style
+                sheet.cell(row=row, column=10).style = grey_style
+                sheet.cell(row=row, column=11).style = grey_style
 
             if line.rule == 'auto':
-                sheet.cell(row=row, column=12, value=line.auto_qty).style=default_style
+                sheet.cell(row=row, column=12, value=line.auto_qty).style = default_style
             else:
-                sheet.cell(row=row, column=12).style=grey_style
+                sheet.cell(row=row, column=12).style = grey_style
 
-            sheet.cell(row=row, column=13, value=line.internal_lt).style=default_style # float vs int
-            sheet.cell(row=row, column=14, value=line.external_lt).style=default_style # float vs int
-            sheet.cell(row=row, column=15, value=line.total_lt).style=default_style # float vs int
-            sheet.cell(row=row, column=16, value=line.order_coverage).style=default_style # float vs int
-            sheet.cell(row=row, column=17, value=line.safety_stock_qty).style=default_style
+            sheet.cell(row=row, column=13, value=line.internal_lt).style = default_style # float vs int
+            sheet.cell(row=row, column=14, value=line.external_lt).style = default_style # float vs int
+            sheet.cell(row=row, column=15, value=line.total_lt).style = default_style # float vs int
+            sheet.cell(row=row, column=16, value=line.order_coverage).style = default_style # float vs int
+            sheet.cell(row=row, column=17, value=line.safety_stock_qty).style = default_style
             if line.rule == 'cycle':
-                sheet.cell(row=row, column=18, value=line.buffer_qty).style=default_style
+                sheet.cell(row=row, column=18, value=line.buffer_qty).style = default_style
             else:
-                sheet.cell(row=row, column=18).style=grey_style
+                sheet.cell(row=row, column=18).style = grey_style
 
-            sheet.cell(row=row, column=19, value=line.valid_rr_fmc and _('Yes') or _('No')).style=default_style
-            sheet.cell(row=row, column=20, value=line.rr_fmc_avg).style=float_style
-            sheet.cell(row=row, column=21, value=line.rr_amc).style=float_style
-            sheet.cell(row=row, column=22, value=line.std_dev_hmc).style=float_style
-            sheet.cell(row=row, column=23, value=line.coef_var_hmc/100.).style=precent_style
+            sheet.cell(row=row, column=19, value=line.valid_rr_fmc and _('Yes') or _('No')).style = default_style
+            sheet.cell(row=row, column=20, value=line.rr_fmc_avg).style = float_style
+            sheet.cell(row=row, column=21, value=line.rr_amc).style = float_style
+            sheet.cell(row=row, column=22, value=line.std_dev_hmc).style = float_style
+            sheet.cell(row=row, column=23, value=line.coef_var_hmc/100.).style = precent_style
 
             if line.rule == 'cycle':
-                sheet.cell(row=row, column=24, value=line.std_dev_hmc_fmc).style=float_style
-                sheet.cell(row=row, column=25, value=line.coef_var_hmc_fmc).style=float_style
+                sheet.cell(row=row, column=24, value=line.std_dev_hmc_fmc).style = float_style
+                sheet.cell(row=row, column=25, value=line.coef_var_hmc_fmc).style = float_style
             else:
-                sheet.cell(row=row, column=24).style=grey_style
-                sheet.cell(row=row, column=25).style=grey_style
+                sheet.cell(row=row, column=24).style = grey_style
+                sheet.cell(row=row, column=25).style = grey_style
 
-            sheet.cell(row=row, column=26, value=line.real_stock).style=default_style
-            sheet.cell(row=row, column=27, value=line.pipeline_qty).style=default_style
-            sheet.cell(row=row, column=28, value=line.reserved_stock_qty).style=default_style
+            sheet.cell(row=row, column=26, value=line.real_stock).style = default_style
+            sheet.cell(row=row, column=27, value=line.pipeline_qty).style = default_style
+            sheet.cell(row=row, column=28, value=line.reserved_stock_qty).style = default_style
 
-            sheet.cell(row=row, column=29).style=default_style
+            sheet.cell(row=row, column=29).style = default_style
             if line.projected_stock_qty and line.rule == 'cycle':
                 sheet.cell(row=row, column=29, value=line.projected_stock_qty)
 
-            sheet.cell(row=row, column=30).style=default_style
+            sheet.cell(row=row, column=30).style = default_style
             if line.projected_stock_qty_amc and (line.rule == 'cycle' or not line.segment_ref_name):
                 sheet.cell(row=row, column=30, value=line.projected_stock_qty_amc)
 
-            sheet.cell(row=row, column=31).style=date_style
+            sheet.cell(row=row, column=31).style = date_style
             if line.expired_qty_before_cons:
                 sheet.cell(row=row, column=31, value=line.expired_qty_before_cons)
 
-            sheet.cell(row=row, column=32).style=date_style
+            sheet.cell(row=row, column=32).style = date_style
             if line.total_expired_qty:
                 sheet.cell(row=row, column=32, value=line.total_expired_qty)
 
-            sheet.cell(row=row, column=33, value=line.open_loan and _('Yes') or _('No')).style=default_style
-            sheet.cell(row=row, column=34, value=line.open_donation and _('Yes') or _('No')).style=default_style
+            sheet.cell(row=row, column=33, value=line.open_loan and _('Yes') or _('No')).style = default_style
+            sheet.cell(row=row, column=34, value=line.open_donation and _('Yes') or _('No')).style = default_style
 
-            sheet.cell(row=row, column=35, value=line.sleeping_qty).style=default_style
-            sheet.cell(row=row, column=36, value=line.unit_of_supply_amc).style=default_style
+            sheet.cell(row=row, column=35, value=line.sleeping_qty).style = default_style
+            sheet.cell(row=row, column=36, value=line.unit_of_supply_amc).style = default_style
 
-            sheet.cell(row=row, column=37, value=line.unit_of_supply_fmc).style=default_style
-            sheet.cell(row=row, column=38, value=line.qty_lacking).style=default_style
+            sheet.cell(row=row, column=37, value=line.unit_of_supply_fmc).style = default_style
+            sheet.cell(row=row, column=38, value=line.qty_lacking).style = default_style
             sheet.cell(row=row, column=39, value=self.to_datetime(line.qty_lacking_needed_by)).style = date_style
             sheet.cell(row=row, column=40, value=self.to_datetime(line.eta_for_next_pipeline)).style = date_style
             sheet.cell(row=row, column=41, value=self.to_datetime(line.date_preparing)).style = date_style
