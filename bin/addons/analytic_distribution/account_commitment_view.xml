@@ -76,20 +76,16 @@
                 <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'">
                     <field name="commit_state"/>
                     <field name="commit_type"/>
-                    <field name="po_line_product_id"
-                           attrs="{'readonly': ['|', ('commit_state', '=', 'done'), ('commit_type', '=', 'external')]}"/>
-                    <field name="po_line_number"
-                           attrs="{'readonly': ['|', ('commit_state', '=', 'done'), ('commit_type', '=', 'external')]}"/>
+                    <field name="po_line_product_id"/>
+                    <field name="po_line_number"/>
                     <field name="account_id" domain="[('restricted_area', '=', 'commitment_lines')]"
                            attrs="{'readonly': [('commit_state', '=', 'done')]}"/>
                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
                             icon="terp-stock_symbol-selection" context="context"
                             attrs="{'readonly': ['|', ('commit_state', '=', 'done'), ('commit_type', '=', 'external')]}"
                     />
-                    <field name="analytic_distribution_state"
-                           attrs="{'readonly': ['|', ('commit_state', '=', 'done'), ('commit_type', '=', 'external')]}"/>
-                    <field name="have_analytic_distribution_from_header"
-                           attrs="{'readonly': ['|', ('commit_state', '=', 'done'), ('commit_type', '=', 'external')]}"/>
+                    <field name="analytic_distribution_state" readonly="1"/>
+                    <field name="have_analytic_distribution_from_header" readonly="1"/>
                     <field name="first" invisible="1"/>
                     <field name="initial_amount" on_change="onchange_initial_amount(first, initial_amount)"
                            attrs="{'readonly': ['|', ('commit_state', '=', 'done'), ('commit_type', '=', 'external')]}"

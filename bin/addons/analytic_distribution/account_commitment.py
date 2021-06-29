@@ -67,10 +67,16 @@ class account_commitment(osv.osv):
                 res.append(cvl.commit_id.id)
         return res
 
-    def _get_cv_state(self, cr, uid, context=None):
+    def get_cv_state(self, cr, uid, context=None):
+        """
+        Returns the list of possible states for the Commitment Vouchers
+        """
         return [('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')]
 
-    def _get_cv_type(self, cr, uid, context=None):
+    def get_cv_type(self, cr, uid, context=None):
+        """
+        Returns the list of possible types for the Commitment Vouchers
+        """
         return [('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')]
 
     _columns = {
@@ -79,7 +85,7 @@ class account_commitment(osv.osv):
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
         'partner_id': fields.many2one('res.partner', string="Supplier", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
-        'state': fields.selection(_get_cv_state, readonly=True, string="State", required=True),
+        'state': fields.selection(get_cv_state, readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total",
@@ -87,7 +93,7 @@ class account_commitment(osv.osv):
                                  'account.commitment.line': (_get_cv, ['amount'],10),
                                  }),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
-        'type': fields.selection(_get_cv_type, string="Type", readonly=True),
+        'type': fields.selection(get_cv_type, string="Type", readonly=True),
         'notes': fields.text(string="Comment"),
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
         'description': fields.char(string="Description", size=256),
@@ -505,11 +511,17 @@ class account_commitment_line(osv.osv):
                 res[co.id] = False
         return res
 
-    def _get_cv_state(self, cr, uid, context=None):
-        return self.pool.get('account.commitment')._get_cv_state(cr, uid, context)
+    def get_cv_state(self, cr, uid, context=None):
+        """
+        Gets the possible CV states
+        """
+        return self.pool.get('account.commitment').get_cv_state(cr, uid, context)
 
-    def _get_cv_type(self, cr, uid, context=None):
-        return self.pool.get('account.commitment')._get_cv_type(cr, uid, context)
+    def get_cv_type(self, cr, uid, context=None):
+        """
+        Gets the possible CV types
+        """
+        return self.pool.get('account.commitment').get_cv_type(cr, uid, context)
 
     _columns = {
         'account_id': fields.many2one('account.account', string="Account", required=True),
@@ -519,9 +531,9 @@ class account_commitment_line(osv.osv):
         'commit_number': fields.related('commit_id', 'name', type='char', size=64,
                                         readonly=True, store=False, string="Commitment Voucher Number"),
         'commit_state': fields.related('commit_id', 'state', string="State", type='selection', readonly=True,
-                                       store=False, selection=_get_cv_state),
+                                       store=False, selection=get_cv_state),
         'commit_type': fields.related('commit_id', 'type', string="Type", type='selection', readonly=True,
-                                      store=False, selection=_get_cv_type),
+                                      store=False, selection=get_cv_type),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
