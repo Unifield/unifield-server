@@ -1550,7 +1550,11 @@ class stock_picking(osv.osv):
         else:
             name = move_line.name
 
-        if inv_type in ('out_invoice', 'out_refund'):
+        cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_id or False
+        cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
+        if cv_version > 1:
+            account_id = cv_line.account_id.id
+        elif inv_type in ('out_invoice', 'out_refund'):
             account_id = move_line.product_id.product_tmpl_id.\
                 property_account_income.id
             if not account_id:
@@ -1573,7 +1577,8 @@ class stock_picking(osv.osv):
         uos_id = move_line.product_uos and move_line.product_uos.id or False
         if not uos_id and inv_type in ('out_invoice', 'out_refund'):
             uos_id = move_line.product_uom.id
-        account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
+        if cv_version < 2:
+            account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
         invoice_line_id = invoice_line_obj.create(cr, uid, {
             'name': name,
             'origin': origin,

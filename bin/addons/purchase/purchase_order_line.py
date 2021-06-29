@@ -587,6 +587,7 @@ class purchase_order_line(osv.osv):
         'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
+        'cv_line_id': fields.one2many('account.commitment.line', 'po_line_id', string="Commitment Voucher Line"),
     }
 
     _defaults = {
