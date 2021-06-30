@@ -72,8 +72,8 @@ class XlsxReportParser():
         for x in row_range:
             self.workbook.active.row_dimensions[x].height = self.workbook_template.active.row_dimensions[x].height
 
-    def apply_template_style(self, src, target):
-        self.duplicate_cell_style(self.workbook_template.active[src], target)
+    def apply_template_style(self, cell_index, target):
+        self.duplicate_cell_style(self.workbook_template.active[cell_index], target)
 
     def duplicate_cell_style(self, src, target):
         target.style = copy(src.style)

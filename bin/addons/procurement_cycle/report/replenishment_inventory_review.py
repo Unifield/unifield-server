@@ -12,17 +12,17 @@ from openpyxl.cell import WriteOnlyCell
 class inventory_parser(XlsxReportParser):
 
     def add_cell(self, value=None, style='default_style'):
-        # None value set empty cell
-        # False value set False() cell
+        # None value set an xls empty cell
+        # False value set the xls False()
         new_cell = WriteOnlyCell(self.workbook.active, value=value)
         new_cell.style = style
         self.rows.append(new_cell)
 
     def generate(self, context=None):
         inventory = self.pool.get('replenishment.inventory.review').browse(self.cr, self.uid, self.ids[0], context=context)
+        inventory_line_obj = self.pool.get('replenishment.inventory.review.line')
 
-        workbook = self.workbook
-        sheet = workbook.active
+        sheet = self.workbook.active
         sheet.freeze_panes = 'D16'
 
         sub_title_style = self.create_style_from_template('sub_title_style', 'A3')
@@ -64,7 +64,7 @@ class inventory_parser(XlsxReportParser):
         doc_headers = [
             (_('Stock location configuration description'), inventory.location_config_id.description, ''),
             (_('Scheduled reviews periodicity'), inventory.frequence_name or '', ''),
-            (_('Generated'), datetime.now(), 'dt'), # TODO
+            (_('Generated'), datetime.now(), 'dt'),
             (_('RR-AMC periodicity (1st month)'), self.to_datetime(inventory.amc_first_date), 'd'),
             (_('RR-AMC periodicity (last month)'), self.to_datetime(inventory.amc_last_date), 'd'),
             (_('Projected view (months from generation date)'), inventory.projected_view, ''),
@@ -77,13 +77,15 @@ class inventory_parser(XlsxReportParser):
         for title, value, v_type in doc_headers:
             cell_t = WriteOnlyCell(sheet, value=title)
             cell_t.style = sub_title_style
+            cell_e =  WriteOnlyCell(sheet)
+            cell_e.style = sub_title_style
             cell_v = WriteOnlyCell(sheet, value=value)
             cell_v.style = sub_value_style
             if v_type == 'd':
                 cell_v.number_format = 'DD/MM/YYYY'
             elif v_type == 'dt':
                 cell_v.number_format = 'DD/MM/YYYY HH:MM'
-            sheet.append([cell_t, '', cell_v])
+            sheet.append([cell_t, cell_e, cell_v])
             sheet.merged_cells.ranges.append("A%(row_index)d:B%(row_index)d" % {'row_index':row_index})
             row_index += 1
 
@@ -120,7 +122,7 @@ class inventory_parser(XlsxReportParser):
             (_('Real Stock in location(s)'), blue_header_style),
             (_('Pipeline Qty'), blue_header_style),
             (_('Reserved Stock Qty'), blue_header_style),
-            (_('(RR-FMC)Projected stock Qty'), blue_header_style),
+            (_('(RR-FMC) Projected stock Qty'), blue_header_style),
             (_('(RR-AMC) Projected stock'), blue_header_style),
             (_('Qty of Projected Expiries before consumption'), blue_header_style),
             (_('Qty expiring within period'), blue_header_style),
@@ -152,112 +154,117 @@ class inventory_parser(XlsxReportParser):
         sheet.append(row_header)
 
         new_row = 16
-        for line in inventory.line_ids:
-            self.rows = []
-            sheet.row_dimensions[new_row].height = 40
+        inventory_line_ids = inventory_line_obj.search(self.cr, self.uid, [('review_id', '=', inventory.id)], context=context)
+        browse_size = 1
+        browse_index = 0
+        while browse_index < len(inventory_line_ids):
+            for line in inventory_line_obj.browse(self.cr, self.uid, inventory_line_ids[browse_index:browse_index+browse_size], context=context):
+                browse_index += browse_size
+                self.rows = []
+                sheet.row_dimensions[new_row].height = 40
 
-            self.add_cell(line.product_id.default_code)
-            self.add_cell(line.product_id.name)
-            self.add_cell(line.segment_ref_name and self.getSel(line, 'status') or _('N/A'))
-            self.add_cell(line.paired_product_id and line.paired_product_id.default_code or '')
-            self.add_cell(line.primay_product_list or '')
-            self.add_cell(line.warning or '')
-            self.add_cell(line.segment_ref_name or '')
-            self.add_cell(line.rule == 'cycle' and 'PAS' or '')
-            self.add_cell(line.segment_ref_name and self.getSel(line, 'rule') or '')
-            if line.rule == 'minmax':
-                self.add_cell(line.min_qty)
-                self.add_cell(line.max_qty)
-            else:
-                self.add_cell('', grey_style)
-                self.add_cell('', grey_style)
-
-            if line.rule == 'auto':
-                self.add_cell(line.auto_qty)
-            else:
-                self.add_cell('', grey_style)
-
-            if inventory.time_unit == 'd':
-                lt_style = default_style
-            else:
-                lt_style = float_style
-            self.add_cell(line.internal_lt or None, lt_style)
-            self.add_cell(line.external_lt or None, lt_style)
-            self.add_cell(line.total_lt or None, lt_style)
-            self.add_cell(line.order_coverage or None, lt_style)
-            self.add_cell(line.safety_stock_qty or None)
-            if line.rule == 'cycle':
-                self.add_cell(line.buffer_qty or None)
-            else:
-                self.add_cell('', grey_style)
-
-            self.add_cell(line.valid_rr_fmc and _('Yes') or _('No'))
-            self.add_cell(line.rr_fmc_avg or None, float_style)
-            self.add_cell(line.rr_amc or None, float_style)
-            self.add_cell(line.std_dev_hmc or None, float_style)
-            self.add_cell(line.coef_var_hmc/100. or None, precent_style)
-
-            if line.rule == 'cycle':
-                self.add_cell(line.std_dev_hmc_fmc or None, float_style)
-                self.add_cell(line.coef_var_hmc_fmc/100. or None, float_style)
-            else:
-                self.add_cell('', grey_style)
-                self.add_cell('', grey_style)
-
-            self.add_cell(line.real_stock or None)
-            self.add_cell(line.pipeline_qty or None)
-            self.add_cell(line.reserved_stock_qty or None)
-
-            if line.projected_stock_qty and line.rule == 'cycle':
-                self.add_cell(line.projected_stock_qty)
-            else:
-                self.add_cell()
-
-            if line.projected_stock_qty_amc and (line.rule == 'cycle' or not line.segment_ref_name):
-                self.add_cell(line.projected_stock_qty_amc)
-            else:
-                self.add_cell()
-
-            if line.expired_qty_before_cons:
-                self.add_cell(line.expired_qty_before_cons, date_style)
-            else:
-                self.add_cell()
-
-            if line.total_expired_qty:
-                self.add_cell(line.total_expired_qty, date_style)
-            else:
-                self.add_cell()
-
-            self.add_cell(line.open_loan and _('Yes') or _('No'))
-            self.add_cell(line.open_donation and _('Yes') or _('No'))
-
-            self.add_cell(line.sleeping_qty or None)
-            self.add_cell(line.unit_of_supply_amc or None)
-
-            self.add_cell(line.unit_of_supply_fmc or None)
-            self.add_cell(line.qty_lacking or None)
-            self.add_cell(self.to_datetime(line.qty_lacking_needed_by), date_style)
-            self.add_cell(self.to_datetime(line.eta_for_next_pipeline), date_style)
-            self.add_cell(self.to_datetime(line.date_preparing), date_style)
-            self.add_cell(self.to_datetime(line.date_next_order_validated), date_style)
-            self.add_cell(self.to_datetime(line.date_next_order_rdd), date_style)
-
-            for detail_pas in line.pas_ids:
-                if detail_pas.rr_fmc is not None and detail_pas.rr_fmc is not False:
-                    self.add_cell(detail_pas.rr_fmc)
+                self.add_cell(line.product_id.default_code)
+                self.add_cell(line.product_id.name)
+                self.add_cell(line.segment_ref_name and self.getSel(line, 'status') or _('N/A'))
+                self.add_cell(line.paired_product_id and line.paired_product_id.default_code or None)
+                self.add_cell(line.primay_product_list or None)
+                self.add_cell(line.warning or None)
+                self.add_cell(line.segment_ref_name or None)
+                self.add_cell(line.rule == 'cycle' and 'PAS' or None)
+                self.add_cell(line.segment_ref_name and self.getSel(line, 'rule') or None)
+                if line.rule == 'minmax':
+                    self.add_cell(line.min_qty)
+                    self.add_cell(line.max_qty)
                 else:
-                    self.add_cell(_('Invalid FMC'))
+                    self.add_cell('', grey_style)
+                    self.add_cell('', grey_style)
 
-            for detail_pas in line.pas_ids:
-                if detail_pas.projected is not None and detail_pas.projected is not False:
-                    self.add_cell(detail_pas.projected)
-            if not line.pas_ids:
-                for nb_month in range(0, inventory.projected_view):
-                    self.add_cell()
+                if line.rule == 'auto':
+                    self.add_cell(line.auto_qty)
+                else:
+                    self.add_cell('', grey_style)
+
+                if inventory.time_unit == 'd':
+                    lt_style = default_style
+                else:
+                    lt_style = float_style
+                self.add_cell(line.internal_lt or None, lt_style)
+                self.add_cell(line.external_lt or None, lt_style)
+                self.add_cell(line.total_lt or None, lt_style)
+                self.add_cell(line.order_coverage or None, lt_style)
+                self.add_cell(line.safety_stock_qty or None)
+                if line.rule == 'cycle':
+                    self.add_cell(line.buffer_qty or None)
+                else:
+                    self.add_cell('', grey_style)
+
+                self.add_cell(line.valid_rr_fmc and _('Yes') or _('No'))
+                self.add_cell(line.rr_fmc_avg or None, float_style)
+                self.add_cell(line.rr_amc or None, float_style)
+                self.add_cell(line.std_dev_hmc or None, float_style)
+                self.add_cell(line.coef_var_hmc/100. or None, precent_style)
+
+                if line.rule == 'cycle':
+                    self.add_cell(line.std_dev_hmc_fmc or None, float_style)
+                    self.add_cell(line.coef_var_hmc_fmc/100. or None, precent_style)
+                else:
+                    self.add_cell('', grey_style)
+                    self.add_cell('', grey_style)
+
+                self.add_cell(line.real_stock or None)
+                self.add_cell(line.pipeline_qty or None)
+                self.add_cell(line.reserved_stock_qty or None)
+
+                if line.projected_stock_qty and line.rule == 'cycle':
+                    self.add_cell(line.projected_stock_qty)
+                else:
                     self.add_cell()
 
-            new_row += 1
-            sheet.append(self.rows)
+                if line.projected_stock_qty_amc and (line.rule == 'cycle' or not line.segment_ref_name):
+                    self.add_cell(line.projected_stock_qty_amc)
+                else:
+                    self.add_cell()
+
+                if line.expired_qty_before_cons:
+                    self.add_cell(line.expired_qty_before_cons, date_style)
+                else:
+                    self.add_cell()
+
+                if line.total_expired_qty:
+                    self.add_cell(line.total_expired_qty, date_style)
+                else:
+                    self.add_cell()
+
+                self.add_cell(line.open_loan and _('Yes') or _('No'))
+                self.add_cell(line.open_donation and _('Yes') or _('No'))
+
+                self.add_cell(line.sleeping_qty or None)
+                self.add_cell(line.unit_of_supply_amc or None)
+
+                self.add_cell(line.unit_of_supply_fmc or None)
+                self.add_cell(line.qty_lacking or None)
+                self.add_cell(self.to_datetime(line.qty_lacking_needed_by), date_style)
+                self.add_cell(self.to_datetime(line.eta_for_next_pipeline), date_style)
+                self.add_cell(self.to_datetime(line.date_preparing), date_style)
+                self.add_cell(self.to_datetime(line.date_next_order_validated), date_style)
+                self.add_cell(self.to_datetime(line.date_next_order_rdd), date_style)
+
+                for detail_pas in line.pas_ids:
+                    if detail_pas.rr_fmc is not None and detail_pas.rr_fmc is not False:
+                        self.add_cell(detail_pas.rr_fmc)
+                    else:
+                        self.add_cell(_('Invalid FMC'))
+
+                for detail_pas in line.pas_ids:
+                    if detail_pas.projected is not None and detail_pas.projected is not False:
+                        self.add_cell(detail_pas.projected)
+                if not line.pas_ids:
+                    for nb_month in range(0, inventory.projected_view):
+                        self.add_cell()
+                        self.add_cell()
+
+                sheet.append(self.rows)
+                new_row += 1
 
     def get_month(self, start, nb_month):
         return _(misc.month_abbr[(datetime.strptime(start, '%Y-%m-%d %H:%M:%S') + relativedelta(hour=0, minute=0, second=0, months=nb_month)).month])

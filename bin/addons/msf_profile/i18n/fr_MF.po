@@ -106953,7 +106953,7 @@ msgstr "(RR-CMM) Stock Projeté"
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:846
 #: code:addons/procurement_cycle/report/replenishment_inventory_review.py:75
-msgid "(RR-FMC)Projected stock Qty"
+msgid "(RR-FMC) Projected stock Qty"
 msgstr "(RR-PCM) Qté projetée du stock"
 
 #. module: procurement_cycle
