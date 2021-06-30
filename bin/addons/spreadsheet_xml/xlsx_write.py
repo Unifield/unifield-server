@@ -13,8 +13,20 @@ from openpyxl.utils.cell import get_column_letter
 
 
 class XlsxReport(report_int):
+    def __init__(self, name, parser, write_only=True, template=False):
+        """
+            Manage xlsx document
+            Recommended usage:
+                write_only=True, to create a memory improved workbook, but with some restrictions:
+                    https://openpyxl.readthedocs.io/en/stable/optimized.html#write-only-mode
 
-    def __init__(self, name, parser, write_only=False, template=False):
+            :param template: path to an existing xlsx file
+                if write_only == True: the template can be used to copy styles, row height, column width
+                if write_only == False: a copy of the template is returned, ready for reading and writing
+
+
+        """
+
         super(XlsxReport, self).__init__(name)
         self.parser = parser
         self.write_only = write_only
@@ -56,6 +68,8 @@ class XlsxReportParser():
         self.pool = pooler.get_pool(cr.dbname)
 
     def duplicate_column_dimensions(self, default_width=None):
+        assert self.workbook_template, "duplicate_column_dimensions can be used only with a tempate"
+
         for x in range(1, self.workbook_template.active.max_column+1):
             letter = get_column_letter(x)
             tmp_column = self.workbook_template.active.column_dimensions[letter]
@@ -69,13 +83,23 @@ class XlsxReportParser():
                 self.workbook.active.column_dimensions[letter].width = width
 
     def duplicate_row_dimensions(self, row_range):
+        assert self.workbook_template, "duplicate_row_dimensions can be used only with a tempate"
+
         for x in row_range:
             self.workbook.active.row_dimensions[x].height = self.workbook_template.active.row_dimensions[x].height
 
     def apply_template_style(self, cell_index, target):
+        """
+            :param cell_index: index of the cell, example A1
+            :param target: cell object
+        """
         self.duplicate_cell_style(self.workbook_template.active[cell_index], target)
 
     def duplicate_cell_style(self, src, target):
+        """
+            :param src: cell object
+            :param target: object cell or workbook
+        """
         target.style = copy(src.style)
         target.font = copy(src.font)
         target.fill = copy(src.fill)
@@ -84,18 +108,23 @@ class XlsxReportParser():
         target.number_format = copy(src.number_format)
 
     def create_style_from_cell(self, name, src):
+        """
+            :param src: cell object
+        """
         new_style = NamedStyle(name=name)
         self.duplicate_cell_style(src, new_style)
         return new_style
 
     def create_style_from_template(self, name, cell_index):
+        """
+            :param cell_index: index of the cell, example A1
+        """
         new_style = self.create_style_from_cell(name, self.workbook_template.active[cell_index])
         self.workbook.add_named_style(new_style)
         return new_style
 
     def getSel(self, o, field):
         return self.pool.get('ir.model.fields').get_browse_selection(self.cr, self.uid, o, field, self.context)
-
 
     def to_datetime(self, value):
         if not value:
