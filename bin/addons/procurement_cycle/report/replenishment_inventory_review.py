@@ -40,6 +40,7 @@ class inventory_parser(XlsxReportParser):
         precent_style = self.create_style_from_template('precent_style', 'H4')
         float_style = self.create_style_from_template('float_style', 'H5')
         date_style = self.create_style_from_template('date_style', 'H6')
+        red_cell_style = self.create_style_from_template('red_cell_style', 'H7')
 
         self.duplicate_row_dimensions(range(1, 16))
         self.duplicate_column_dimensions(default_width=10.75)
@@ -179,7 +180,7 @@ class inventory_parser(XlsxReportParser):
                     self.add_cell('', grey_style)
                     self.add_cell('', grey_style)
 
-                if line.rule == 'auto':
+                if line.segment_ref_name and line.rule == 'auto':
                     self.add_cell(line.auto_qty)
                 else:
                     self.add_cell('', grey_style)
@@ -188,11 +189,20 @@ class inventory_parser(XlsxReportParser):
                     lt_style = default_style
                 else:
                     lt_style = float_style
-                self.add_cell(line.internal_lt or None, lt_style)
-                self.add_cell(line.external_lt or None, lt_style)
-                self.add_cell(line.total_lt or None, lt_style)
-                self.add_cell(line.order_coverage or None, lt_style)
-                self.add_cell(line.safety_stock_qty or None)
+
+                if line.segment_ref_name:
+                    self.add_cell(line.internal_lt or None, lt_style)
+                    self.add_cell(line.external_lt or None, lt_style)
+                    self.add_cell(line.total_lt or None, lt_style)
+                    self.add_cell(line.order_coverage or None, lt_style)
+                    self.add_cell(line.safety_stock_qty or None)
+                else:
+                    self.add_cell()
+                    self.add_cell()
+                    self.add_cell()
+                    self.add_cell()
+                    self.add_cell()
+
                 if line.rule == 'cycle':
                     self.add_cell(line.buffer_qty or None)
                 else:
@@ -257,7 +267,12 @@ class inventory_parser(XlsxReportParser):
 
                 for detail_pas in line.pas_ids:
                     if detail_pas.projected is not None and detail_pas.projected is not False:
-                        self.add_cell(detail_pas.projected)
+                        if detail_pas.projected:
+                            self.add_cell(detail_pas.projected)
+                        else:
+                            self.add_cell(detail_pas.projected, red_cell_style)
+                    else:
+                        self.add_cell()
                 if not line.pas_ids:
                     for nb_month in range(0, inventory.projected_view):
                         self.add_cell()
