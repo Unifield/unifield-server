@@ -677,6 +677,19 @@ class account_commitment_line(osv.osv):
                         self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), account_id, context=context)
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
 
+    def copy(self, cr, uid, cv_line_id, default=None, context=None):
+        """
+        Duplicates a CV line: resets the link to PO line
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'po_line_id': False,
+        })
+        return super(account_commitment_line, self).copy(cr, uid, cv_line_id, default, context=context)
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a commitment voucher line

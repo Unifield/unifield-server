@@ -566,8 +566,12 @@ class purchase_order_line(osv.osv):
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
+        # for CV in version 1
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
                                                 string="Commitment Voucher Lines", readonly=True),
+        # for CV starting from version 2
+        # note: cv_line_ids is a o2m because of the related m2o on CV lines but it should only contain one CV line
+        'cv_line_ids': fields.one2many('account.commitment.line', 'po_line_id', string="Commitment Voucher Lines"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
@@ -587,7 +591,6 @@ class purchase_order_line(osv.osv):
         'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
-        'cv_line_id': fields.one2many('account.commitment.line', 'po_line_id', string="Commitment Voucher Line"),
     }
 
     _defaults = {
@@ -1294,7 +1297,7 @@ class purchase_order_line(osv.osv):
             self.pool.get('product.product')._get_restriction_error(cr, uid, [pol.product_id.id],
                                                                     {'partner_id': pol.order_id.partner_id.id}, context=context)
 
-        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], })
+        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], 'cv_line_ids': [], })
 
         for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref']:
             if field not in default:

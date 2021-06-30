@@ -1550,16 +1550,17 @@ class stock_picking(osv.osv):
         else:
             name = move_line.name
 
-        cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_id or False
+        cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
+            move_line.purchase_line_id.cv_line_ids[0] or False
         cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
-        if cv_version > 1:
-            account_id = cv_line.account_id.id
-        elif inv_type in ('out_invoice', 'out_refund'):
+        if inv_type in ('out_invoice', 'out_refund'):
             account_id = move_line.product_id.product_tmpl_id.\
                 property_account_income.id
             if not account_id:
                 account_id = move_line.product_id.categ_id.\
                     property_account_income_categ.id
+        elif cv_version > 1:
+            account_id = cv_line.account_id.id
         else:
             account_id = move_line.product_id.product_tmpl_id.\
                 property_account_expense.id
