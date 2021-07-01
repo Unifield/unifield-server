@@ -1716,7 +1716,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 elif stock_take_date and isinstance(stock_take_date, str):
                     try:
                         time.strptime(stock_take_date, '%Y-%m-%d')
-                        write_vals['imp_stock_take_date'] = stock_take_date
+                        if stock_take_date <= line.simu_id.order_id.date_order:
+                            write_vals['imp_stock_take_date'] = stock_take_date
+                        else:
+                            err_msg = _('The  \'Stock Take Date\' is not consistent! It should not be later than %s\'s creation date') \
+                                      % (line.simu_id.order_id.name,)
+                            errors.append(err_msg)
+                            write_vals['type_change'] = 'error'
                     except ValueError:
                         err_msg = _('Incorrect date value for field \'Stock Take Date\'')
                         errors.append(err_msg)
