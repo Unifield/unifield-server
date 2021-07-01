@@ -531,7 +531,7 @@ class account_commitment_line(osv.osv):
                                 readonly=True),
         'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id',
                                                     string="Purchase Order Lines", readonly=True),
-        'po_line_id': fields.many2one('purchase.order.line', "PO line"),
+        'po_line_id': fields.many2one('purchase.order.line', "PO Line"),
         'po_line_product_id': fields.related('po_line_id', 'product_id', type='many2one', relation='product.product',
                                              string="Product", readonly=True, store=True, write_relate=False),
         'po_line_number': fields.related('po_line_id', 'line_number', type='integer_null', string="PO Line", readonly=True,

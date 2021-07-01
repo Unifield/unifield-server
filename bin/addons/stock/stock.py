@@ -1587,6 +1587,7 @@ class stock_picking(osv.osv):
             'uos_id': uos_id,
             'product_id': move_line.product_id.id,
             'account_id': account_id,
+            'cv_line_id': cv_version > 1 and cv_line.id or False,
             'price_unit': price_unit,
             'discount': discount,
             'quantity': move_line.product_uos_qty or move_line.product_qty,
