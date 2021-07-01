@@ -38,9 +38,9 @@ class XlsxReport(report_int):
         wb_t = False
         if self.template:
             if self.write_only:
-                wb_t = openpyxl.load_workbook(file_open(self.template))
+                wb_t = openpyxl.load_workbook(file_open(self.template, mode='rb'))
             else:
-                wb = openpyxl.load_workbook(file_open(self.template))
+                wb = openpyxl.load_workbook(file_open(self.template, mode='rb'))
 
         if self.write_only:
             wb = openpyxl.Workbook(write_only=True)
