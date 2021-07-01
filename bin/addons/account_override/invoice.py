@@ -1944,7 +1944,7 @@ class account_invoice_line(osv.osv):
         """
         Copy an invoice line without its move lines,
         without the link to a reversed invoice line,
-        and without link to PO/FO lines when the duplication is manual
+        and without link to PO/FO/CV lines when the duplication is manual
         Reset the merged_line tag.
         """
         if context is None:
@@ -1956,13 +1956,14 @@ class account_invoice_line(osv.osv):
                         'merged_line': False,
                         })
         # Manual duplication should generate a "manual document not created through the supply workflow"
-        # so we don't keep the link to PO/FO at line level
+        # so we don't keep the link to PO/FO/CV at line level
         if context.get('from_button') and not context.get('from_split'):
             default.update({
                 'order_line_id': False,
                 'sale_order_line_id': False,
                 'sale_order_lines': False,
                 'purchase_order_line_ids': [],
+                'cv_line_id': False,
             })
         return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 
