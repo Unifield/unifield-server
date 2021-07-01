@@ -568,7 +568,7 @@ class purchase_order_line(osv.osv):
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
         # for CV in version 1
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
-                                                string="Commitment Voucher Lines", readonly=True),
+                                                string="Commitment Voucher Lines (deprecated)", readonly=True),
         # for CV starting from version 2
         # note: cv_line_ids is a o2m because of the related m2o on CV lines but it should only contain one CV line
         'cv_line_ids': fields.one2many('account.commitment.line', 'po_line_id', string="Commitment Voucher Lines"),
