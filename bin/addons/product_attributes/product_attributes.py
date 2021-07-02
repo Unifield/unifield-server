@@ -1768,22 +1768,19 @@ class product_attributes(osv.osv):
             if vals.get('active', None) is False:
                 deactivate_result =  self.deactivate_product(cr, uid, ids, context=context, try_only=True)
                 if not deactivate_result['ok']:
-                    vals['active'] = True
-                    if unidata_product:
+                    prod_code = self.read(cr, uid, ids[0], ['default_code'], context=context)
+                    error_msg = []
+                    wiz_error = self.pool.get('product.deactivation.error').browse(cr, uid, deactivate_result['error'], context=context)
+                    if wiz_error.stock_exist:
+                        error_msg.append('Stock exists (internal locations)')
 
-                        prod_code = self.read(cr, uid, ids[0], ['default_code'], context=context)
-                        error_msg = []
-                        wiz_error = self.pool.get('product.deactivation.error').browse(cr, uid, deactivate_result['error'], context=context)
-                        if wiz_error.stock_exist:
-                            error_msg.append('Stock exists (internal locations)')
+                    doc_errors = []
+                    for error in wiz_error.error_lines:
+                        doc_errors.append("%s : %s" % (error.type or '', error.doc_ref or ''))
 
-                        doc_errors = []
-                        for error in wiz_error.error_lines:
-                            doc_errors.append("%s : %s" % (error.type or '', error.doc_ref or ''))
-
-                        if doc_errors:
-                            error_msg.append('Product is contained in opened documents :\n - %s'  % ' \n - '.join(doc_errors))
-                        raise osv.except_osv('Warning', 'Product %s cannot be deactivated: \n * %s ' % (prod_code['default_code'], "\n * ".join(error_msg)))
+                    if doc_errors:
+                        error_msg.append('Product is contained in opened documents :\n - %s'  % ' \n - '.join(doc_errors))
+                    raise osv.except_osv('Warning', 'Product %s cannot be deactivated: \n * %s ' % (prod_code['default_code'], "\n * ".join(error_msg)))
 
                 elif unidata_product:
                     # unidata product inactive must also be archived: 1st set as phase out by the update one
@@ -1918,6 +1915,8 @@ class product_attributes(osv.osv):
 
         internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
 
+        ud_prod = []
+        other_prod = []
         for product in self.browse(cr, uid, ids, context=context):
             # Raise an error if the product is already inactive
             if not product.active and not context.get('sync_update_execution'):
@@ -2010,7 +2009,12 @@ class product_attributes(osv.osv):
                     break
 
             opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line or has_product_list
-            if has_stock or opened_object:
+            if not has_stock and not opened_object:
+                if product.international_status.code == 'unidata':
+                    ud_prod.append(product.id)
+                else:
+                    other_prod.append(product.id)
+            else:
                 # Create the error wizard
                 wizard_id = error_obj.create(cr, uid, {'product_id': product.id,
                                                        'stock_exist': has_stock and True or False,
@@ -2189,7 +2193,11 @@ class product_attributes(osv.osv):
             context['bypass_sync_update'] = True
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-        self.write(cr, real_uid, ids, {'active': False}, context=context)
+        if ud_prod:
+            self.write(cr, real_uid, ud_prod, {'active': False}, context=context)
+        if other_prod:
+            phase_out_id = self.pool.get('product.status').search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
+            self.write(cr, real_uid, other_prod, {'active': False, 'state': phase_out_id}, context=context)
 
         return True
 
