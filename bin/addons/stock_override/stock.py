@@ -310,7 +310,7 @@ class stock_picking(osv.osv):
         inactive_lines = self.pool.get('stock.move').search(cr, uid, [('product_id.active', '=', False),
                                                                       ('product_id', '!=', product_tbd),
                                                                       ('picking_id', 'in', ids),
-                                                                      ('picking_id.state', 'not in', ['draft', 'cancel', 'done'])],
+                                                                      ('state', 'not in', ['draft', 'cancel', 'done', 'hidden'])],
                                                             count=True, context=context)
 
         if inactive_lines:

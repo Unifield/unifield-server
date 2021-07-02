@@ -63,8 +63,8 @@ class tender(osv.osv):
         Check if the tender contains a line with an inactive products
         '''
         inactive_lines = self.pool.get('tender.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                       ('tender_id', 'in', ids),
-                                                                       ('tender_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+                                                                       ('tender_id', 'in', ids), ('state', '!=', 'done'),
+                                                                       ('line_state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context)
         
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')

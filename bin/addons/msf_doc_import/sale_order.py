@@ -73,7 +73,7 @@ class sale_order(osv.osv):
         '''
         inactive_lines = self.pool.get('sale.order.line').search(cr, uid, [('product_id.active', '=', False),
                                                                            ('order_id', 'in', ids),
-                                                                           ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context={'procurement_request': True})
+                                                                           ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context={'procurement_request': True})
 
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
