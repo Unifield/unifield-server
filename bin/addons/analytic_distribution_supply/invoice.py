@@ -124,7 +124,8 @@ class account_invoice(osv.osv):
 
         # Browse invoices
         for inv in self.browse(cr, uid, ids, context=context):
-            grouped_invl = {}
+            grouped_invl_by_acc = {}
+            grouped_invl_by_cvl = {}
             co_ids = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', 'in', [x.id for x in inv.purchase_ids]), ('state', 'in', ['open', 'draft'])], order='date desc', context=context)
             if not co_ids:
                 continue
@@ -134,26 +135,35 @@ class account_invoice(osv.osv):
                 if not invl.order_line_id and not inv.is_merged_by_account:
                     continue
 
-                # Fetch purchase order line account
-                if inv.is_merged_by_account:
-                    if not invl.account_id:
-                        continue
-                    # US-357: lines without product (get directly account)
-                    a = invl.account_id.id
+                cv_version = invl.cv_line_id and invl.cv_line_id.commit_id and invl.cv_line_id.commit_id.version or 1
+                if cv_version > 1:
+                    cv_line_id = invl.cv_line_id.id
+                    if cv_line_id not in grouped_invl_by_cvl:
+                        grouped_invl_by_cvl[cv_line_id] = 0
+                    grouped_invl_by_cvl[cv_line_id] += invl.price_subtotal
                 else:
-                    pol = invl.order_line_id
-                    a = self._get_expense_account(cr, uid, pol, context=context)
-                    if pol.product_id and not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id))
-                    elif not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this PO line: "%s" (id:%d)') % (pol.line_number, pol.id))
-                if a not in grouped_invl:
-                    grouped_invl[a] = 0
-
-                grouped_invl[a] += invl.price_subtotal
+                    # Fetch purchase order line account
+                    if inv.is_merged_by_account:
+                        if not invl.account_id:
+                            continue
+                        # US-357: lines without product (get directly account)
+                        a = invl.account_id.id
+                    else:
+                        pol = invl.order_line_id
+                        a = self._get_expense_account(cr, uid, pol, context=context)
+                        if pol.product_id and not a:
+                            raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') %
+                                                 (pol.product_id.name, pol.product_id.id))
+                        elif not a:
+                            raise osv.except_osv(_('Error !'), _('There is no expense account defined for this PO line: "%s" (id:%d)') %
+                                                 (pol.line_number, pol.id))
+                    if a not in grouped_invl_by_acc:
+                        grouped_invl_by_acc[a] = 0
+                    grouped_invl_by_acc[a] += invl.price_subtotal
 
             po_ids = [x.id for x in inv.purchase_ids]
-            self._update_commitments_lines(cr, uid, po_ids, grouped_invl, from_cancel=False, context=context)
+            self._update_commitments_lines(cr, uid, po_ids, grouped_invl_by_acc, from_cancel=False, context=context,
+                                           cvl_amount_dic=grouped_invl_by_cvl)
 
         return True
 
@@ -170,14 +180,14 @@ class account_invoice(osv.osv):
 
         return account_id
 
-    def _update_commitments_lines(self, cr, uid, po_ids, account_amount_dic, from_cancel=False, context=None):
+    def _update_commitments_lines(self, cr, uid, po_ids, account_amount_dic, from_cancel=False, context=None, cvl_amount_dic=None):
         """
             po_ids: list of PO ids
             account_amount_dic: dict, keys are G/L account_id, values are amount to deduce
 
 
         """
-        if not po_ids or not account_amount_dic:
+        if not po_ids or not account_amount_dic and not cvl_amount_dic:
             return True
 
         if context is None:
@@ -185,15 +195,19 @@ class account_invoice(osv.osv):
 
         # po is state=cancel on last IN cancel
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        cr.execute('''select l.id, l.account_id, l.commit_id, c.state, l.amount, l.analytic_distribution_id, c.analytic_distribution_id, c.id, c.currency_id, c.type from
+        # avoids empty lists so that the SQL request can be executed
+        account_list = account_amount_dic.keys() or [0]
+        cv_list = cvl_amount_dic.keys() or [0]
+        cr.execute('''select l.id, l.account_id, l.commit_id, c.state, l.amount, l.analytic_distribution_id, c.analytic_distribution_id, 
+            c.id, c.currency_id, c.type, c.version from
             account_commitment_line l, account_commitment c
             where l.commit_id = c.id and
             l.amount > 0 and
             c.purchase_id in %s and
-            l.account_id in %s and
+            (c.version < 2 and l.account_id in %s or c.version >= 2 and l.id in %s) and
             c.state in ('open', 'draft')
             order by c.date asc
-            ''', (tuple(po_ids), tuple(account_amount_dic.keys()))
+            ''', (tuple(po_ids), tuple(account_list), tuple(cv_list))
         )
         # sort all cv lines by account / cv date
         cv_info = {}
