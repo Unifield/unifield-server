@@ -668,5 +668,9 @@
             <field name="method">us_8196_delete_default_prod_curr</field>
         </record>
 
+        <record id="us_8818_fake_updates" model="patch.scripts">
+            <field name="method">us_8818_fake_updates</field>
+        </record>
+
     </data>
 </openerp>
