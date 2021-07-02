@@ -230,9 +230,8 @@ class account_invoice(osv.osv):
         # deduce amount on oldest cv lines
         # NOTE: account_amount_dic is for CV in version 1 based on accounts (acc),
         #       cvl_amount_dic is for CV from version 2 based on CV lines (cvl)
-        for amount_list in [("acc", account_amount_dic.keys()), ("cvl", cvl_amount_dic.keys())]:
-            acc = amount_list[0] == "acc"
-            if acc:
+        for c_type in ("acc", "cvl"):
+            if c_type == "acc":
                 cv_info = account_info.copy()
                 amount_dic = account_amount_dic.copy()
             else:
