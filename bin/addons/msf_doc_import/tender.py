@@ -57,25 +57,6 @@ class tender(osv.osv):
 #                                                """ % MAX_LINES_NB),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
-    
-    def _check_active_product(self, cr, uid, ids, context=None):
-        '''
-        Check if the tender contains a line with an inactive products
-        '''
-        inactive_lines = self.pool.get('tender.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                       ('tender_id', 'in', ids), ('state', '!=', 'done'),
-                                                                       ('line_state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context)
-        
-        if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')          
-            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
-            return False
-        return True
-    
-    _constraints = [
-        (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['tender_line_ids', 'state'])
-    ]
 
 # UTP-113 THE METHOD BELOW WAS RETAKEN IN THE WIZARD
 #    def import_file(self, cr, uid, ids, context=None):
@@ -237,6 +218,24 @@ class tender_line(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
+
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if a tender line has an inactive products
+        '''
+        inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('id', 'in', ids), ('state', '!=', 'done'),
+                                               ('line_state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context)
+
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            raise osv.except_osv(_('Error'),
+                                 _('%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+        return True
+
+    _constraints = [
+        (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['id', 'state'])
+    ]
     
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']

@@ -484,7 +484,6 @@ class purchase_order(osv.osv):
 
         return processed, rejected, ['PO id', 'PO name']
 
-
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''
         Remove the import_in_progress flag
@@ -500,25 +499,6 @@ class purchase_order(osv.osv):
             defaults['import_filenames'] = False
 
         return super(purchase_order, self).copy(cr, uid, id, defaults, context=context)
-
-    def _check_active_product(self, cr, uid, ids, context=None):
-        '''
-        Check if the Purchase order contains a line with an inactive products
-        '''
-        inactive_lines = self.pool.get('purchase.order.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                               ('order_id', 'in', ids),
-                                                                               ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context=context)
-
-        if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
-            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
-            return False
-        return True
-
-    _constraints = [
-        (_check_active_product, "You cannot validate this purchase order because it contains a line with an inactive product", ['order_line', 'state'])
-    ]
 
     def wizard_import_file(self, cr, uid, ids, context=None):
         '''
@@ -753,6 +733,23 @@ class purchase_order_line(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
+
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the Purchase order line has an inactive product
+        '''
+        inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('id', 'in', ids),
+                                               ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context=context)
+
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this line you have to remove/correct the line containing the inactive product (see red %s of the document)') % (plural, l_plural))
+        return True
+
+    _constraints = [
+        (_check_active_product, "You cannot validate this purchase order line because it has an inactive product", ['id', 'state'])
+    ]
 
     def check_line_consistency(self, cr, uid, ids, *args, **kwargs):
         """
