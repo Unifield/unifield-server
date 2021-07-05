@@ -1733,12 +1733,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['type_change'] = 'error'
                 elif not stock_take_date and import_type == 'new' and line.simu_id.order_id.partner_type == 'esc' \
                         and not line.simu_id.order_id.stock_take_date:
-                    # If the partner is ESC and the PO has no STD, take the most recent STD from the PO lines for a new line
-                    cr.execute('''SELECT stock_take_date FROM purchase_order_line WHERE order_id = %s 
-                        AND stock_take_date IS NOT NULL ORDER BY stock_take_date DESC LIMIT 1''', (line.simu_id.order_id.id,))
-                    n_std = cr.fetchone()
-                    if n_std:
-                        write_vals['imp_stock_take_date'] = n_std
+                    # If the partner is ESC and the PO has no STD, take the PO's creation date as STD for the line
+                    write_vals['imp_stock_take_date'] = line.simu_id.order_id.date_order
 
             # Delivery Requested Date
             drd_value = values[10]
