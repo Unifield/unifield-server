@@ -51,6 +51,29 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def us_8805_product_set_archived(self, cr, uid, *a, **b):
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            if instance and instance.level in ['project', 'coordo']:
+                st_obj = self.pool.get('product.status')
+                phase_out_ids = st_obj.search(cr, uid, [('code', '=', 'phase_out')])
+                archived_ids = st_obj.search(cr, uid, [('code', '=', 'archived')])
+                cr.execute('''
+                    update product_template t set
+                        state=%(archived_id)s
+                    from product_product p, product_international_status st
+                    where
+                        st.id = p.international_status and
+                        p.product_tmpl_id = t.id and
+                        p.oc_subscription = 'f' and
+                        p.active = 'f' and
+                        st.code = 'unidata' and
+                        t.state=%(phase_out_id)s
+                    ''', {'archived_id': archived_ids[0], 'phase_out_id': phase_out_ids[0]})
+                self.log(cr, uid, 'US-8805: %d products' % cr.rowcount)
+        return True
+
     # UF21.0
     def us_8196_delete_default_prod_curr(self, cr, uid, *a, **b):
         cr.execute("delete from ir_values where key = 'default' and model='product.product' and name in ('currency_id','field_currency_id') ;")
@@ -4180,6 +4203,12 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    def log(self, cr, uid, msg, context=None):
+        self._logger.warn(msg)
+        self.pool.get('res.log').create(cr, uid, {
+            'name': msg,
+            'read': True,
+        }, context=context)
 patch_scripts()
 
 
