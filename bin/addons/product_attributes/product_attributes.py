@@ -1706,39 +1706,36 @@ class product_attributes(osv.osv):
             del(vals['active'])
 
 
-        check_reactivate = False
-        prod_state = ''
-        if 'state_ud' in vals:
-            if not context.get('sync_update_execution'):
-                if self.mapping_ud.get(vals['state_ud']):
-                    prod_state =  self.mapping_ud[vals['state_ud']]
-                    vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', prod_state)], context=context)[0]
-
-                if vals['state_ud'] == 'archived':
-                    vals['active'] = False
-                elif 'oc_subscription' not in vals:
-                    check_reactivate = True
-
         if not intstat_code:
             unidata_product = self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context)
 
-
+        check_reactivate = False
         reactivated_by_oc_subscription = False
-        if unidata_product and not context.get('sync_update_execution') and 'oc_subscription' in vals:
-            if 'international_status' not in vals:
+        prod_state = ''
+        if unidata_product and not context.get('sync_update_execution'):
+            if 'international_status' not in vals and 'oc_subscription' in vals:
                 if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
                     raise osv.except_osv(_('Waning'), _("You can write the oc_subscription field on multiple products only if all products are UniData !"))
 
-            if not vals['oc_subscription']:
-                vals['active'] = False
-                # to fix in US-7883: oc_subscription=False must preval on vals['state_ud'], so vals['state'] must be set to 'archived' or 'phase_out' ?
+            if 'oc_subscription' in vals and not vals['oc_subscription']:
+                # oc_subscription=False must preval on vals['state_ud']
                 prod_state = 'archived'
-            elif prod_state != 'archived':
-                if not prod_state and 'state' not in vals:
-                    # uf state is archived or phase_out, we must map it with uf state
-                    reactivated_by_oc_subscription = True
+            elif 'state_ud' in vals and self.mapping_ud.get(vals['state_ud']):
+                prod_state = self.mapping_ud[vals['state_ud']]
 
+            if prod_state:
+                vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', prod_state)], context=context)[0]
+
+            if prod_state == 'archived':
+                vals['active'] = False
+            elif prod_state and 'oc_subscription' not in vals:
+                # this will compute active
+                check_reactivate = True
+            elif vals.get('oc_subscription'):
                 vals['active'] = True
+                if 'state' not in vals:
+                    # only oc_subscription = True sent but no info on state / state_ud, we must recompute the mapping
+                    reactivated_by_oc_subscription = True
 
         if not prod_state and 'state' in vals:
             if vals['state']:
@@ -1787,10 +1784,10 @@ class product_attributes(osv.osv):
                     vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'archived')], context=context)[0]
 
             if prod_state == 'archived' and unidata_product:
-                # received archived: set as phase out, when the "active" update is processed it will set archived state if inactivation is allowed
-                #if vals.get('active') or self.search(cr, uid, [('id', 'in', ids), ('active', '=', True)]):
+                # received archived: set as phase out, when the "active" update will be processed, it will set archive if inactivation is allowed
                 # this must be done only if the product is not already inactive (US-7883)
-                vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
+                if vals.get('active') or self.search(cr, uid, [('id', 'in', ids), ('active', '=', True)]):
+                    vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
 
         ud_unable_to_inactive = []
         if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product:
@@ -1807,6 +1804,9 @@ class product_attributes(osv.osv):
             if context.get('sync_update_execution'):
                 fields_to_update += ['active_sync_change_date=%(now)s']
             cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
+        elif vals.get('standard_ok') in ('standard', 'non_standard'):
+            # active update must be trigger if product is active and was NSL (because created as inactive on lower instance)
+            cr.execute("update product_product set active_change_date=%(now)s where id in %(ids)s and active = 't' and standard_ok='non_standard_local'", {'now': fields.datetime.now(), 'ids': tuple(ids)})
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
