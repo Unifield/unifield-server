@@ -673,5 +673,9 @@
             <field name="method">us_8810_fake_updates</field>
         </record>
 
+        <record id="us_8753_admin_never_expire_password" model="patch.scripts">
+            <field name="method">us_8753_admin_never_expire_password</field>
+        </record>
+
     </data>
 </openerp>
