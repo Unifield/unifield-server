@@ -51,6 +51,23 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    # UF21.1
+    def us_8810_fake_updates(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.entity'):
+            cr.execute("""
+                update sync_client_update_received set
+                    manually_ran='t', run='t', execution_date=now(),
+                    manually_set_run_date=now(), editable='f',
+                    log='Set manually to run without execution'
+                where
+                    run='f' and
+                    sequence_number=1071578 and
+                    source='OCG_HQ'
+            """);
+            self._logger.warn('US-8810: %d updates set as Run' % (cr.rowcount,))
+        return True
+
     # UF21.0
     def us_8196_delete_default_prod_curr(self, cr, uid, *a, **b):
         cr.execute("delete from ir_values where key = 'default' and model='product.product' and name in ('currency_id','field_currency_id') ;")
