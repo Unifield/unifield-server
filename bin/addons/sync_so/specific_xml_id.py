@@ -404,30 +404,37 @@ class msf_instance(osv.osv):
 
     _inherit = 'msf.instance'
 
+    def _synchronize_cc_related_fields(self, cr, uid, instance, context=None):
+        """
+        "Touch" the CC, Target CC, and Dest CC Links linked to the instance, in order to include them in the next synchro.
+        For Target CC (unique by CC/Inst) those from the parent instance and from other projects are also re-sent if applicable.
+        """
+        if context is None:
+            context = {}
+        target_ids = [x.id for x in instance.target_cost_center_ids]
+        self.pool.get('account.target.costcenter').synchronize(cr, uid, target_ids, context=context)
+        cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
+        self.pool.get('account.analytic.account').synchronize(cr, uid, cost_center_ids, context=context)
+        if cost_center_ids:
+            dcl_ids = self.pool.get('dest.cc.link').search(cr, uid, [('cc_id', 'in', cost_center_ids)], order='NO_ORDER', context=context)
+            self.pool.get('dest.cc.link').sql_synchronize(cr, dcl_ids, field='cc_id')
+        if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
+            parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
+            self.pool.get('account.target.costcenter').synchronize(cr, uid, parent_target_ids, context=context)
+            if instance.parent_id.child_ids:
+                sibling_target_ids = []
+                for sibling in instance.parent_id.child_ids:
+                    if sibling != instance and sibling.state == 'active':
+                        sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
+                self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
+        return True
+
     def create(self, cr, uid, vals, context=None):
         res_id = super(msf_instance, self).create(cr, uid, vals, context=context)
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if 'state' in vals and 'parent_id' in vals and vals['state'] == 'active' and current_instance.level == 'section':
             instance = self.browse(cr, uid, res_id, context=context)
-            # touch cost centers and account_Target_cc lines in order to sync them
-            target_ids = [x.id for x in instance.target_cost_center_ids]
-            self.pool.get('account.target.costcenter').synchronize(cr, uid, target_ids, context=context)
-
-            cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
-            self.pool.get('account.analytic.account').synchronize(cr, uid, cost_center_ids, context=context)
-
-            # also touch parent instance and lines from parent, since those were already sent to other instances
-            if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
-                parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
-                self.pool.get('account.target.costcenter').synchronize(cr, uid, parent_target_ids, context=context)
-                # also also, re-send other projects' lines
-                if instance.parent_id.child_ids:
-                    sibling_target_ids = []
-                    for sibling in instance.parent_id.child_ids:
-                        if sibling != instance and sibling.state == 'active':
-                            sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
-                    self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
-
+            self._synchronize_cc_related_fields(cr, uid, instance, context=context)
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -440,25 +447,7 @@ class msf_instance(osv.osv):
             for instance in self.browse(cr, uid, ids, context=context):
                 if instance.state != 'active':
                     # only for now-activated instances (first push)
-                    # touch cost centers and account_Target_cc lines in order to sync them
-                    target_ids = [x.id for x in instance.target_cost_center_ids]
-                    self.pool.get('account.target.costcenter').synchronize(cr, uid, target_ids, context=context)
-
-                    cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
-                    self.pool.get('account.analytic.account').synchronize(cr, uid, cost_center_ids, context=context)
-
-                    # also touch parent instance and lines from parent, since those were already sent to other instances
-                    if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
-                        parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
-                        self.pool.get('account.target.costcenter').synchronize(cr, uid, parent_target_ids, context=context)
-                        # also also, re-send other projects' lines
-                        if instance.parent_id.child_ids:
-                            sibling_target_ids = []
-                            for sibling in instance.parent_id.child_ids:
-                                if sibling != instance and sibling.state == 'active':
-                                    sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
-                            self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
-
+                    self._synchronize_cc_related_fields(cr, uid, instance, context=context)
                     if instance.level == 'project' and instance.parent_id:
                         self.pool.get('sync.trigger.something.target.lower').create(cr, uid, {'name': 'sync_fp', 'destination': instance.parent_id.instance}, context={})
         return super(msf_instance, self).write(cr, uid, ids, vals, context=context)

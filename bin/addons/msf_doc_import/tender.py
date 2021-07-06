@@ -23,9 +23,9 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import base64
+from msf_doc_import import GENERIC_MESSAGE
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_tender_line_import
-from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import TENDER_COLUMNS_FOR_IMPORT as columns_for_tender_line_import
 
 
@@ -43,120 +43,9 @@ class tender(osv.osv):
         return res
 
     _columns = {
-        # The field below were replaced by the wizard_import_fo_line (utp-113)
-        #        'file_to_import': fields.binary(string='File to import',
-        #                                        help="""* You can use the template of the export for the format that you need to use.
-        #                                                * The file should be in XML Spreadsheet 2003 format.
-        #                                                * You can import up to %s lines each time,
-        #                                                else you have to split the lines in several files and import each one by one.
-        #                                                """ % MAX_LINES_NB),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
 
-    def _check_active_product(self, cr, uid, ids, context=None):
-        '''
-        Check if the tender contains a line with an inactive products
-        '''
-        inactive_lines = self.pool.get('tender.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                       ('tender_id', 'in', ids),
-                                                                       ('tender_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
-
-        if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
-            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
-            return False
-        return True
-
-    _constraints = [
-        (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['tender_line_ids', 'state'])
-    ]
-
-# UTP-113 THE METHOD BELOW WAS RETAKEN IN THE WIZARD
-#    def import_file(self, cr, uid, ids, context=None):
-#        '''
-#        Import lines from Excel file (in xml)
-#        '''
-#        if not context:
-#            context = {}
-#        if isinstance(ids, int):
-#            ids = [ids]
-#        product_obj = self.pool.get('product.product')
-#        uom_obj = self.pool.get('product.uom')
-#        obj_data = self.pool.get('ir.model.data')
-#        tender_line_obj = self.pool.get('tender.line')
-#        view_id = obj_data.get_object_reference(cr, uid, 'tender_flow', 'tender_form')[1]
-#        vals = {}
-#        vals['tender_line_ids'] = []
-#        obj = self.browse(cr, uid, ids, context=context)[0]
-#        if not obj.file_to_import:
-#            raise osv.except_osv(_('Error'), _('Nothing to import.'))
-#        fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
-#        # check that the max number of lines is not excedeed
-#        if check_nb_of_lines(fileobj=fileobj):
-#            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
-#        # iterator on rows
-#        rows = fileobj.getRows()
-#        # ignore the first row
-#        line_num = 1
-#        rows.next()
-#        to_write = {}
-#        for row in rows:
-#            # default values
-#            nb_lines_error = 0
-#            to_write = {
-#                'error_list': [],
-#                'warning_list': [],
-#                'to_correct_ok': False,
-#                'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
-#                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1],
-#                'product_qty': 1,
-#            }
-#            line_num += 1
-#            col_count = len(row)
-#            if col_count != 6:
-#                raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
-#Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
-#            try:
-#                if not check_empty_line(row=row, col_count=col_count):
-#                    continue
-#                # for each cell we check the value
-#                # Cell 0: Product Code
-#                p_value = {}
-#                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-#                to_write.update({'product_id': p_value['default_code'], 'error_list': p_value['error_list']})
-#
-#                # Cell 2: Quantity
-#                qty_value = {}
-#                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
-#                to_write.update({'qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
-#
-#                # Cell 3: UoM
-#                uom_value = {}
-#                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-#                to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
-#
-#                to_write.update({
-#                    'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
-#                    'text_error': '\n'.join(to_write['error_list']),
-#                    'tender_id': obj.id,
-#                })
-#                # we check consistency of uom and product values
-#                tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-#                vals['tender_line_ids'].append((0, 0, to_write))
-#            except IndexError:
-#                print "The line num %s in the Excel file got element outside the defined 6 columns" % line_num
-#
-#        # write tender line on tender
-#        context['import_in_progress'] = True
-#        self.write(cr, uid, ids, vals, context=context)
-#        nb_lines_error = self.pool.get('tender.line').search_count(cr, uid, [('to_correct_ok', '=', True),
-#                                                                             ('tender_id', '=', ids[0])], context=context)
-#        # log message
-#        msg_to_return = get_log_message(to_write=to_write, tender=True, nb_lines_error=nb_lines_error)
-#        if msg_to_return:
-#            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id})
-#        return True
 
     def wizard_import_tender_line(self, cr, uid, ids, context=None):
         '''
@@ -232,6 +121,24 @@ class tender_line(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
+
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if a tender line has an inactive products
+        '''
+        inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('id', 'in', ids), ('state', '!=', 'done'),
+                                               ('line_state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context)
+
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            raise osv.except_osv(_('Error'),
+                                 _('%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+        return True
+
+    _constraints = [
+        (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['id', 'state'])
+    ]
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']
