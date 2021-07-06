@@ -59,7 +59,7 @@ class patch_scripts(osv.osv):
         """
         if self.pool.get('sync.client.entity'):  # existing instances
             cr.execute("UPDATE account_commitment SET version = 1")
-            self._logger.warn('Commitment Vouchers: %s CV updated to version 1.', cr.rowcount)
+            self._logger.warn('Commitment Vouchers: %s CV(s) set to version 1.', cr.rowcount)
         return True
 
     # UF21.0

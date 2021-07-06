@@ -91,7 +91,8 @@ class account_commitment(osv.osv):
         'notes': fields.text(string="Comment"),
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
         'description': fields.char(string="Description", size=256),
-        'version': fields.integer('Version', help="Technical field to distinguish old CV from new ones which have a different behavior."),
+        'version': fields.integer('Version', required=True,
+                                  help="Technical field to distinguish old CV from new ones which have a different behavior."),
     }
 
     _defaults = {

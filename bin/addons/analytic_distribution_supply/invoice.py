@@ -135,7 +135,7 @@ class account_invoice(osv.osv):
                 if not invl.order_line_id and not inv.is_merged_by_account:
                     continue
 
-                cv_version = invl.cv_line_id and invl.cv_line_id.commit_id and invl.cv_line_id.commit_id.version or 1
+                cv_version = invl.cv_line_id and invl.cv_line_id.commit_id and invl.cv_line_id.commit_id.version
                 if cv_version > 1:
                     cv_line_id = invl.cv_line_id.id
                     if cv_line_id not in grouped_invl_by_cvl:
