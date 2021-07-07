@@ -402,7 +402,7 @@ class List(TinyWidget):
                 self.edit_inline in self.data_dict:
             values = self.data_dict[self.edit_inline]
         else:
-            values = dict(proxy.default_get(fields, ctx))
+            values = dict(proxy.default_get(fields, ctx, True))
 
             # update values according to domain
             list_of_tuple = [x for x in self.domain if isinstance(x, tuple)]
