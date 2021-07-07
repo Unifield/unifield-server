@@ -73,6 +73,12 @@ class account_commitment(osv.osv):
         """
         return [('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')]
 
+    def get_current_cv_version(self, cr, uid, context=None):
+        """
+        Version 2 since US-7449
+        """
+        return 2
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
@@ -99,7 +105,7 @@ class account_commitment(osv.osv):
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
-        'version': 2,
+        'version': get_current_cv_version,
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
                                                                                                     ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0]
     }
@@ -242,6 +248,7 @@ class account_commitment(osv.osv):
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'account.commitment'),
             'state': 'draft',
+            'version': self.get_current_cv_version(cr, uid, context=context),
         })
         # Default method
         res = super(account_commitment, self).copy(cr, uid, c_id, default, context)
@@ -678,7 +685,7 @@ class account_commitment_line(osv.osv):
                         self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), account_id, context=context)
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
 
-    def copy(self, cr, uid, cv_line_id, default=None, context=None):
+    def copy_data(self, cr, uid, cv_line_id, default=None, context=None):
         """
         Duplicates a CV line: resets the link to PO line
         """
@@ -689,7 +696,7 @@ class account_commitment_line(osv.osv):
         default.update({
             'po_line_id': False,
         })
-        return super(account_commitment_line, self).copy(cr, uid, cv_line_id, default, context=context)
+        return super(account_commitment_line, self).copy_data(cr, uid, cv_line_id, default, context)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
