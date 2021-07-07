@@ -33,12 +33,12 @@ class field_orders_setup(osv.osv_memory):
         'field_orders_ok': fields.boolean(string='Activate the Field Orders feature ?'),
     }
     
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for delivery process
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(field_orders_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(field_orders_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         res['field_orders_ok'] = setup_id.field_orders_ok
         
         return res

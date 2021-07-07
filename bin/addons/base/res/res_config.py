@@ -407,11 +407,11 @@ class res_config_installer(osv.osv_memory):
         return (base | hooks_results | additionals) - set(
             map(attrgetter('name'), self._already_installed(cr, uid, context)))
 
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         ''' If an addon is already installed, check it by default
         '''
         defaults = super(res_config_installer, self).default_get(
-            cr, uid, fields_list, context=context)
+            cr, uid, fields_list, context=context, from_web=from_web)
 
         return dict(defaults,
                     **dict.fromkeys(

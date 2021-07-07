@@ -618,7 +618,7 @@ class user_access_results(osv.osv_memory):
                 'menu_ids_user_access_results': fields.one2many('user.access.results.menus.line', 'wizard_id_user_access_results_line', string='Menus Info'),
                 }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         fill the lines with default create_values
         '''
@@ -628,7 +628,7 @@ class user_access_results(osv.osv_memory):
         # data structure
         data_structure = context['data_structure']
         # super
-        res = super(user_access_results, self).default_get(cr, uid, fields, context=context)
+        res = super(user_access_results, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         # wizard id
         wizard_id = context['active_ids'][0]
         # model

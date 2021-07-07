@@ -4385,8 +4385,8 @@ class base_setup_company(osv.osv_memory):
     _inherit = 'base.setup.company'
     _name = 'base.setup.company'
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
-        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context)
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
+        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context, from_web=from_web)
         if not ret.get('name'):
             ret.update({'name': 'MSF', 'street': 'Rue de Lausanne 78', 'street2': 'CP 116', 'city': 'Geneva', 'zip': '1211', 'phone': '+41 (22) 849.84.00'})
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id

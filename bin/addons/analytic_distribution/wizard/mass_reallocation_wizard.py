@@ -69,7 +69,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'process_in_progress': lambda *a: False,
     }
 
-    def default_get(self, cr, uid, fields=None, context=None):
+    def default_get(self, cr, uid, fields=None, context=None, from_web=False):
         """
         Fetch display_fp in context
         """
@@ -79,7 +79,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         if not context:
             context = {}
         # Default behaviour
-        res = super(mass_reallocation_verification_wizard, self).default_get(cr, uid, fields, context=context)
+        res = super(mass_reallocation_verification_wizard, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         # Populate line_ids field
         res['display_fp'] = context.get('display_fp', False)
         return res
@@ -208,7 +208,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             view['arch'] = etree.tostring(tree)
         return view
 
-    def default_get(self, cr, uid, fields=None, context=None):
+    def default_get(self, cr, uid, fields=None, context=None, from_web=False):
         """
         Fetch context active_ids to populate line_ids wizard field
         """
@@ -219,7 +219,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             context = {}
         gl_acc_obj = self.pool.get('account.account')
         # Default behaviour
-        res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context)
+        res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if context.get('search_domain', False):
             # account.analytic.line: as soon as a search has been made the search_domain contains the criteria selected

@@ -1005,11 +1005,11 @@ class purchase_order(osv.osv):
 
         return True
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Fill the unallocated_ok field according to Unifield setup
         '''
-        res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+        res = super(purchase_order, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})

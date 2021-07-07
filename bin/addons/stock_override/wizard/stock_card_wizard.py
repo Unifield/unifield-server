@@ -51,8 +51,8 @@ class stock_card_wizard(osv.osv_memory):
                                       string='Card lines'),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(stock_card_wizard, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(stock_card_wizard, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         product_id = context.get('product_id', False)
         perishable = False
         if product_id:

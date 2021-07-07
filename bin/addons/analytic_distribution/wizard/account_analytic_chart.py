@@ -76,9 +76,9 @@ class account_analytic_chart(osv.osv_memory):
         'granularity': 'parent',
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         res = super(account_analytic_chart, self).default_get(cr, uid, fields,
-                                                              context=context)
+                                                              context=context, from_web=from_web)
 
         fy_id = res.get('fiscalyear', False)
         if fy_id:

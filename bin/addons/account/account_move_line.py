@@ -153,8 +153,8 @@ class account_move_line(osv.osv):
         query += company_clause
         return query
 
-    def default_get(self, cr, uid, fields, context=None):
-        data = self._default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        data = self._default_get(cr, uid, fields, context=context, from_web=from_web)
         for f in data.keys():
             if f not in fields:
                 del data[f]
@@ -206,7 +206,7 @@ class account_move_line(osv.osv):
                 })
         return context
 
-    def _default_get(self, cr, uid, fields, context=None):
+    def _default_get(self, cr, uid, fields, context=None, from_web=False):
         if context is None:
             context = {}
         if not context.get('journal_id', False) and context.get('search_default_journal_id', False):
@@ -220,7 +220,7 @@ class account_move_line(osv.osv):
         partner_obj = self.pool.get('res.partner')
         context = self.convert_to_period(cr, uid, context)
         # Compute simple values
-        data = super(account_move_line, self).default_get(cr, uid, fields, context=context)
+        data = super(account_move_line, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         # Starts: Manual entry from account.move form
         if context.get('lines',[]):
             total_new = 0.00

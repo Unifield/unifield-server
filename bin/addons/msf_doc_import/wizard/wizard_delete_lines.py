@@ -434,13 +434,13 @@ class wizard_delete_lines(osv.osv_memory):
         'line_ids': fields.text(string='Line ids'),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Check if the wizard has been overrided
         '''
         context = context is None and {} or context
 
-        res = super(wizard_delete_lines, self).default_get(cr, uid, fields, context=context)
+        res = super(wizard_delete_lines, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         # Set the different data which are coming from the context
         if 'active_id' in context:

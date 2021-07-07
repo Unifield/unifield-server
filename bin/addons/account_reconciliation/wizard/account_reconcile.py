@@ -42,7 +42,7 @@ class account_move_line_reconcile(osv.osv_memory):
         'different_currencies': lambda *a: False,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Add state field in res
         """
@@ -50,7 +50,7 @@ class account_move_line_reconcile(osv.osv_memory):
         if not context:
             context = {}
         # Default value
-        res = super(account_move_line_reconcile, self).default_get(cr, uid, fields, context=context)
+        res = super(account_move_line_reconcile, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         # Retrieve some value
         data = self.trans_rec_get(cr, uid, context['active_ids'], context=context)
         # Get different currencies state

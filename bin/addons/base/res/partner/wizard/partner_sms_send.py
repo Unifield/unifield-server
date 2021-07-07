@@ -38,7 +38,7 @@ class partner_sms_send(osv.osv_memory):
         'text': fields.text('SMS Message',required=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         This function gets default values
         @param self: The object pointer

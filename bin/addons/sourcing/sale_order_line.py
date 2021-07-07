@@ -654,7 +654,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     """
     Model methods
     """
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         """
         Set default values (location_id) for sale_order_line
 
@@ -670,7 +670,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Objects
         warehouse_obj = self.pool.get('stock.warehouse')
 
-        res = super(sale_order_line, self).default_get(cr, uid, fields_list, context=context)
+        res = super(sale_order_line, self).default_get(cr, uid, fields_list, context=context, from_web=from_web)
 
         if res is None:
             res = {}
