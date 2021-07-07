@@ -536,7 +536,7 @@ class account_commitment_line(osv.osv):
         'po_line_product_id': fields.related('po_line_id', 'product_id', type='many2one', relation='product.product',
                                              string="Product", readonly=True, store=True, write_relate=False),
         'po_line_number': fields.related('po_line_id', 'line_number', type='integer_null', string="PO Line", readonly=True,
-                                         store=True, write_relate=False),
+                                         store=True, write_relate=False, _fnct_migrate=lambda *a: True),
     }
 
     _defaults = {
