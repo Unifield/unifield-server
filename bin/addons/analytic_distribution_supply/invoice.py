@@ -135,7 +135,7 @@ class account_invoice(osv.osv):
                 if not invl.order_line_id and not inv.is_merged_by_account:
                     continue
 
-                cv_version = invl.cv_line_id and invl.cv_line_id.commit_id and invl.cv_line_id.commit_id.version
+                cv_version = invl.cv_line_id and invl.cv_line_id.commit_id and invl.cv_line_id.commit_id.version or 1
                 if cv_version > 1:
                     cv_line_id = invl.cv_line_id.id
                     if cv_line_id not in grouped_invl_by_cvl:
@@ -192,6 +192,8 @@ class account_invoice(osv.osv):
 
         if context is None:
             context = {}
+        if cvl_amount_dic is None:
+            cvl_amount_dic = {}
 
         # po is state=cancel on last IN cancel
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id

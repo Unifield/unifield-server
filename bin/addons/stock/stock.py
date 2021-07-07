@@ -1552,7 +1552,7 @@ class stock_picking(osv.osv):
 
         cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
             move_line.purchase_line_id.cv_line_ids[0] or False
-        cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version
+        cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
         if inv_type in ('out_invoice', 'out_refund'):
             account_id = move_line.product_id.product_tmpl_id.\
                 property_account_income.id

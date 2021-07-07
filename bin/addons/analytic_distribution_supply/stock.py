@@ -64,6 +64,7 @@ class stock_move(osv.osv):
 
         inv_obj = self.pool.get('account.invoice')
         account_amount = {}
+        cvl_amount = {}
         po_ids = {}
         for move in self.browse(cr, uid, ids, context=context):
             # Fetch all necessary elements
@@ -80,14 +81,21 @@ class stock_move(osv.osv):
                 continue
 
             po_ids[move.purchase_line_id.order_id.id] = True
-            account_id = inv_obj._get_expense_account(cr, uid, move.purchase_line_id, context=context)
-            if account_id:
-                if account_id not in account_amount:
-                    account_amount[account_id] = 0
-                account_amount[account_id] += round(qty * price_unit, 2)
-
-        if account_amount and po_ids:
-            inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, from_cancel=ids, context=context)
+            cv_line = move.purchase_line_id.cv_line_ids and move.purchase_line_id.cv_line_ids[0] or False
+            cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
+            if cv_version > 1:
+                if cv_line.id not in cvl_amount:
+                    cvl_amount[cv_line.id] = 0
+                cvl_amount[cv_line.id] += round(qty * price_unit, 2)
+            else:
+                account_id = inv_obj._get_expense_account(cr, uid, move.purchase_line_id, context=context)
+                if account_id:
+                    if account_id not in account_amount:
+                        account_amount[account_id] = 0
+                    account_amount[account_id] += round(qty * price_unit, 2)
+        if (account_amount or cvl_amount) and po_ids:
+            inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, from_cancel=ids, context=context,
+                                              cvl_amount_dic=cvl_amount)
 
         return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
