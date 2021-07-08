@@ -52,6 +52,18 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_8597_set_custom_default_from_web(self, cr, uid, *a, **b):
+        cr.execute("update sale_order set location_requestor_id=NULL where location_requestor_id is not null and procurement_request='f'")
+        self._logger.warn('US-8597: Location removed on %d FO' % (cr.rowcount,))
+
+        cr.execute("""
+            update ir_values set meta='web' where
+                key='default' and
+                (name, model) not in (('shop_id', 'sale.order'), ('warehouse_id', 'purchase.order'), ('lang', 'res.partner'))
+            """)
+        self._logger.warn('US-8597: web default value set on %d records' % (cr.rowcount,))
+        return True
+
     # UF21.1
     def us_8810_fake_updates(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.entity'):

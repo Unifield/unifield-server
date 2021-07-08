@@ -677,5 +677,8 @@
             <field name="method">us_8753_admin_never_expire_password</field>
         </record>
 
+        <record id="us_8597_set_custom_default_from_web" model="patch.scripts">
+            <field name="method">us_8597_set_custom_default_from_web</field>
+        </record>
     </data>
 </openerp>
