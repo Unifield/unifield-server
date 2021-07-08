@@ -162,8 +162,8 @@ class account_invoice(osv.osv):
                     grouped_invl_by_acc[a] += invl.price_subtotal
 
             po_ids = [x.id for x in inv.purchase_ids]
-            self._update_commitments_lines(cr, uid, po_ids, grouped_invl_by_acc, from_cancel=False, context=context,
-                                           cvl_amount_dic=grouped_invl_by_cvl)
+            self._update_commitments_lines(cr, uid, po_ids, account_amount_dic=grouped_invl_by_acc,
+                                           cvl_amount_dic=grouped_invl_by_cvl, from_cancel=False, context=context)
 
         return True
 
@@ -180,7 +180,7 @@ class account_invoice(osv.osv):
 
         return account_id
 
-    def _update_commitments_lines(self, cr, uid, po_ids, account_amount_dic, from_cancel=False, context=None, cvl_amount_dic=None):
+    def _update_commitments_lines(self, cr, uid, po_ids, account_amount_dic=None, cvl_amount_dic=None, from_cancel=False, context=None):
         """
             po_ids: list of PO ids
             account_amount_dic: dict, keys are G/L account_id, values are amount to deduce
@@ -192,6 +192,8 @@ class account_invoice(osv.osv):
 
         if context is None:
             context = {}
+        if account_amount_dic is None:
+            account_amount_dic = {}
         if cvl_amount_dic is None:
             cvl_amount_dic = {}
 
@@ -301,7 +303,6 @@ class account_invoice(osv.osv):
                     if abs(cv_line[4] - amount_dic[k]) < 0.001:
                         # check next G/L account or CV line
                         break
-                    # check next CV
                     amount_dic[k] -= cv_line[4]
 
         if auto_cv and from_cancel:
