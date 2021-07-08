@@ -1529,6 +1529,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         stock_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if not sourcing_line.order_id.procurement_request:
+                continue
             if sourcing_line.order_id.location_requestor_id.id in (med_loc_id, log_loc_id) and sourcing_line.location_id.id == stock_loc_id:
                 raise osv.except_osv(
                     _('Error'),
