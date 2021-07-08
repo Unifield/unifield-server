@@ -1563,7 +1563,7 @@ function on_context_menu(evt, target){
     if (sidebar) {
         makeListContextMenu(grid.attr('record'), checked);
     } else {
-        makeContextMenu(src, kind, $src.attr('relation'), $src.val(), $src.attr('hide_default_menu'));
+        makeContextMenu(src, kind, $src.attr('relation'), $src.val(), $src.attr('hide_default_menu')||$src.is(':disabled'));
     }
     stopEventDammit(evt);
 }
