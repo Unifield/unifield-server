@@ -1423,6 +1423,8 @@ class account_invoice(osv.osv):
                     vals = by_account_vals[l.account_id.id]
                     if l.order_line_id:
                         vals.setdefault('purchase_order_line_ids', []).append(l.order_line_id.id)
+                    if l.cv_line_ids:
+                        vals.setdefault('cv_line_ids', []).extend([cvl.id for cvl in l.cv_line_ids])
                 else:
                     # new account to merge
                     vals = vals_template.copy()
@@ -1430,9 +1432,12 @@ class account_invoice(osv.osv):
                         '_index_': index,
                         'account_id': l.account_id.id,
                         'purchase_order_line_ids': [],
+                        'cv_line_ids': [],
                     })
                     if l.order_line_id:
                         vals['purchase_order_line_ids'].append(l.order_line_id.id)
+                    if l.cv_line_ids:
+                        vals['cv_line_ids'].extend([cvl.id for cvl in l.cv_line_ids])
                     index += 1
 
                 '''
@@ -1514,6 +1519,8 @@ class account_invoice(osv.osv):
                     and [(6, 0, vals['invoice_line_tax_id'])] or False
 
                 vals['purchase_order_line_ids'] = vals['purchase_order_line_ids'] and [(6, 0, vals['purchase_order_line_ids'])] or False
+
+                vals['cv_line_ids'] = vals['cv_line_ids'] and [(6, 0, vals['cv_line_ids'])] or False
 
                 # create merge line
                 vals.update({'merged_line': True})
