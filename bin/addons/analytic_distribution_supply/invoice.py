@@ -140,7 +140,8 @@ class account_invoice(osv.osv):
                     old_cv_version = False  # the field cv_line_ids exist for CVs starting from version 2
                     if cv_line.id not in grouped_invl_by_cvl:
                         grouped_invl_by_cvl[cv_line.id] = 0
-                    grouped_invl_by_cvl[cv_line.id] += invl.price_subtotal
+                    # TODO: adapt the following line to better handle the computation for inv. lines merged by account
+                    grouped_invl_by_cvl[cv_line.id] += round(invl.price_subtotal / len(invl.cv_line_ids), 2)
                 # CV IN VERSION 1
                 if old_cv_version:
                     # Fetch purchase order line account
