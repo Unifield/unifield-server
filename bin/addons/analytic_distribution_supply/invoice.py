@@ -134,14 +134,15 @@ class account_invoice(osv.osv):
                 # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
                 if not invl.order_line_id and not inv.is_merged_by_account:
                     continue
-
-                cv_version = invl.cv_line_id and invl.cv_line_id.commit_id and invl.cv_line_id.commit_id.version or 1
-                if cv_version > 1:
-                    cv_line_id = invl.cv_line_id.id
-                    if cv_line_id not in grouped_invl_by_cvl:
-                        grouped_invl_by_cvl[cv_line_id] = 0
-                    grouped_invl_by_cvl[cv_line_id] += invl.price_subtotal
-                else:
+                old_cv_version = True
+                # CV STARTING FROM VERSION 2
+                for cv_line in invl.cv_line_ids:
+                    old_cv_version = False  # the field cv_line_ids exist for CVs starting from version 2
+                    if cv_line.id not in grouped_invl_by_cvl:
+                        grouped_invl_by_cvl[cv_line.id] = 0
+                    grouped_invl_by_cvl[cv_line.id] += invl.price_subtotal
+                # CV IN VERSION 1
+                if old_cv_version:
                     # Fetch purchase order line account
                     if inv.is_merged_by_account:
                         if not invl.account_id:
