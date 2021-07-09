@@ -1580,20 +1580,22 @@ class stock_picking(osv.osv):
             uos_id = move_line.product_uom.id
         if cv_version < 2:
             account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
-        invoice_line_id = invoice_line_obj.create(cr, uid, {
+        inv_vals = {
             'name': name,
             'origin': origin,
             'invoice_id': invoice_id,
             'uos_id': uos_id,
             'product_id': move_line.product_id.id,
             'account_id': account_id,
-            'cv_line_id': cv_version > 1 and cv_line.id or False,
             'price_unit': price_unit,
             'discount': discount,
             'quantity': move_line.product_uos_qty or move_line.product_qty,
             'invoice_line_tax_id': [(6, 0, tax_ids)],
             'account_analytic_id': account_analytic_id,
-        }, context=context)
+        }
+        if cv_version > 1:
+            inv_vals.update({'cv_line_ids': [(4, cv_line.id)],})
+        invoice_line_id = invoice_line_obj.create(cr, uid, inv_vals, context=context)
         self._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
 
         if picking.sale_id:
