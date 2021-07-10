@@ -670,7 +670,6 @@ class stock_picking(osv.osv):
 
         if not values:
             return prog_id
-
         prog_obj.write(cr, uid, [prog_id], values, context=context)
 
         return prog_id
@@ -741,6 +740,10 @@ class stock_picking(osv.osv):
         sync_in = context.get('sync_message_execution', False)
         if context.get('rw_sync', False):
             sync_in = False
+
+        context['bypass_store_function'] = [
+            ('stock.picking', ['overall_qty', 'line_state'])
+        ]
 
         in_out_updated = True
         if sync_in or context.get('do_not_process_incoming'):
