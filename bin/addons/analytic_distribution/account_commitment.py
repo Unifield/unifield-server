@@ -79,19 +79,19 @@ class account_commitment(osv.osv):
         """
         return 2
 
-    def _can_be_set_to_done(self, cr, uid, ids, name, arg, context=None):
+    def _display_super_done_button(self, cr, uid, ids, name, arg, context=None):
         """
-        True if the Commitment Voucher meets the conditions to be set to Done
+        For now the "Super" Done button, which allows to always set a CV to Done whatever its state and origin,
+        is visible only by the Admin user. It is displayed only when the standard Done button isn't usable.
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
-        for cv in self.browse(cr, uid, ids, context=context):
-            res[cv.id] = False
-            if uid == 1 or (cv.state == 'open' and cv.type == 'external'):
-                res[cv.id] = True
+        for cv in self.read(cr, uid, ids, ['state', 'type'], context=context):
+            other_done_button_usable = cv['state'] == 'open' and cv['type'] != 'external'
+            res[cv['id']] = not other_done_button_usable and uid == 1 and cv['state'] != 'done'
         return res
 
     _columns = {
@@ -114,7 +114,9 @@ class account_commitment(osv.osv):
         'description': fields.char(string="Description", size=256),
         'version': fields.integer('Version', required=True,
                                   help="Technical field to distinguish old CV from new ones which have a different behavior."),
-        'can_be_set_to_done': fields.function(_can_be_set_to_done, method=True, type='boolean', string='Can be set to Done'),
+        'display_super_done_button': fields.function(_display_super_done_button, method=True, type='boolean',
+                                                     store=False, invisible=True,
+                                                     string='Display the button allowing to always set a CV to Done'),
     }
 
     _defaults = {
