@@ -478,10 +478,11 @@ class account_commitment(osv.osv):
             # Search analytic lines that have commitment line ids
             search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', 'in', [x.id for x in c.line_ids])], context=context)
             # Delete them
-            res = self.pool.get('account.analytic.line').unlink(cr, uid, search_ids, context=context)
+            if search_ids:
+                res = self.pool.get('account.analytic.line').unlink(cr, uid, search_ids, context=context)
+                if not res:
+                    raise osv.except_osv(_('Error'), _('An error occurred on engagement lines deletion.'))
             # And finally update commitment voucher state and lines amount
-            if not res:
-                raise osv.except_osv(_('Error'), _('An error occurred on engagement lines deletion.'))
             self.pool.get('account.commitment.line').write(cr, uid, [x.id for x in c.line_ids], {'amount': 0}, context=context)
             self.write(cr, uid, [c.id], {'state':'done'}, context=context)
         return True

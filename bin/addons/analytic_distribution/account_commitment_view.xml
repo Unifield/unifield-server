@@ -44,8 +44,10 @@
                         <button name="button_compute" string="Compute total" icon="gtk-execute" colspan="2"/>
                         <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft" colspan="2"/>
                         <field name="display_super_done_button"/>
-                        <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" states="open" colspan="2"
-                                attrs="{'readonly': [('type', '=', 'external')], 'invisible': [('display_super_done_button', '=', True)]}"/>
+                        <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" colspan="2"
+                                attrs="{'invisible': ['|', ('state', '!=', 'open'), ('display_super_done_button', '=', True)],
+                                        'readonly': [('type', '=', 'external')]}"
+                        />
                         <!-- button which allows to always set a CV to Done (whatever its state and origin) -->
                         <button name="commitment_always_validate" string="Done (for Administrator only)"
                                 icon="terp-gtk-go-back-rtl" colspan="4"
