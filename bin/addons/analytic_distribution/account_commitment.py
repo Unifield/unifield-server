@@ -79,6 +79,21 @@ class account_commitment(osv.osv):
         """
         return 2
 
+    def _can_be_set_to_done(self, cr, uid, ids, name, arg, context=None):
+        """
+        True if the Commitment Voucher meets the conditions to be set to Done
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for cv in self.browse(cr, uid, ids, context=context):
+            res[cv.id] = False
+            if uid == 1 or (cv.state == 'open' and cv.type == 'external'):
+                res[cv.id] = True
+        return res
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
@@ -99,6 +114,7 @@ class account_commitment(osv.osv):
         'description': fields.char(string="Description", size=256),
         'version': fields.integer('Version', required=True,
                                   help="Technical field to distinguish old CV from new ones which have a different behavior."),
+        'can_be_set_to_done': fields.function(_can_be_set_to_done, method=True, type='boolean', string='Can be set to Done'),
     }
 
     _defaults = {
