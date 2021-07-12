@@ -50,7 +50,7 @@
                         />
                         <!-- button which allows to always set a CV to Done (whatever its state and origin) -->
                         <button name="commitment_always_validate" string="Done (for Administrator only)"
-                                icon="terp-gtk-go-back-rtl" colspan="4"
+                                icon="terp-gtk-go-back-rtl" colspan="6"
                                 confirm='You are about to set this Commitment Voucher to the state "Done". Do you want to proceed?'
                                 attrs="{'invisible': [('display_super_done_button', '=', False)]}"/>
                     </group>
