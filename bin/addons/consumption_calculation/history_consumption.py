@@ -53,6 +53,7 @@ class product_history_consumption(osv.osv):
         'month_ids': fields.one2many('product.history.consumption.month', 'history_id', string='Months'),
         'consumption_type': fields.selection([('rac', 'Real Average Consumption'), ('amc', 'Average Monthly Consumption')],
                                              string='Consumption type'),
+        'remove_negative_amc': fields.boolean('Remove Negative AMCs'),
         'location_id': fields.many2one('stock.location', string='Source Location', domain="[('usage', '=', 'internal')]"),
         'location_dest_id': fields.many2one('stock.location', string='Destination Location', domain="[('usage', '=', 'customer')]"),
         'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
@@ -73,6 +74,26 @@ class product_history_consumption(osv.osv):
         'requestor_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'status': 'draft',
     }
+
+    def clean_remove_negative_amc(self, cr, uid, vals, context=None):
+        if vals and vals.get('consumption_type') == 'rac':
+            vals['remove_negative_amc'] = False
+
+    def create(self, cr, uid, vals, context=None):
+        self.clean_remove_negative_amc(cr, uid, vals, context)
+        return super(product_history_consumption, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        self.clean_remove_negative_amc(cr, uid, vals, context)
+        if vals.get('sublist_id',False):
+            vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
+        if vals.get('nomen_manda_0',False):
+            vals.update({'sublist_id':False})
+        if vals.get('nomen_manda_1',False):
+            vals.update({'sublist_id':False})
+        return super(product_history_consumption, self).write(cr, uid, ids, vals, context=context)
 
     def open_history_consumption(self, cr, uid, ids, context=None):
         if not context:
@@ -151,6 +172,7 @@ class product_history_consumption(osv.osv):
                                            'location_id',
                                            'location_dest_id',
                                            'id',
+                                           'remove_negative_amc',
                                            'nomen_manda_0',
                                            'sublist_id'],
                           context=context)
@@ -202,6 +224,8 @@ class product_history_consumption(osv.osv):
 
         new_context = context.copy()
         new_context.update({'months': [], 'amc': obj.consumption_type == 'amc' and 'AMC' or 'RAC', 'obj_id': obj.id, 'history_cons': True, 'need_thread': True})
+        if obj.consumption_type == 'amc' and obj.remove_negative_amc:
+            new_context['remove_negative_amc'] = True
 
         # For each month, compute the RAC
         for month in self.pool.get('product.history.consumption.month').browse(cr, uid, months, context=context):
@@ -355,17 +379,6 @@ class product_history_consumption(osv.osv):
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        if vals.get('sublist_id',False):
-            vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
-        if vals.get('nomen_manda_0',False):
-            vals.update({'sublist_id':False})
-        if vals.get('nomen_manda_1',False):
-            vals.update({'sublist_id':False})
-        ret = super(product_history_consumption, self).write(cr, uid, ids, vals, context=context)
-        return ret
 ##############################################################################
 # END of the definition of the product filters and nomenclatures
 ##############################################################################
@@ -590,8 +603,9 @@ class product_product(osv.osv):
                         if cons_id:
                             consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
                         else:
-                            # TODO TEST JFB
                             consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context)[r['id']] or 0.00
+                            if context.get('remove_negative_amc') and consumption < 0:
+                                consumption = 0
                             cons_prod_obj.create(cr, uid, {'name': field_name,
                                                            'product_id': r['id'],
                                                            'consumption_id': obj_id,

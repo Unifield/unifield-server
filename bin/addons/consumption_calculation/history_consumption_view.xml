@@ -25,6 +25,12 @@
                 <field name="consumption_type" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                 <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                 <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
+                <group colspan="2" col="2" attrs="{'invisible': [('consumption_type', '=', 'rac')]}">
+                    <field name="remove_negative_amc" colspan="2"/>
+                    <html colspan="2">
+                        <i><translate>If ticked it means that for periods/months where there are more returns (via return INs) than Outs, the standard calculation would display a negative Consumption/AMC quantity, but in this case (if ticked) the figure is set to zero.</translate></i>
+                    </html>
+                </group>
 			<separator colspan="2" string="Product parameters" />
             <field name="sublist_id" attrs="{'readonly': ['|', ('nomen_manda_0', '!=', False), ('status', '!=', 'draft')]}" />
             <group colspan="2" col="4">
@@ -57,8 +63,12 @@
                 />
             </group>
 			<separator colspan="2" string="Actions" />
-			<button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')], 'invisible': [('status', '=', 'ready')]}" />
-			<button name="open_report" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'invisible': [('status', '!=', 'ready')]}" />
+            <group colspan="2" attrs="{'invisible': [('consumption_type', '=', 'amc'), ('remove_negative_amc', '=', True)]}">
+                <button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')], 'invisible': [('status', '=', 'ready')]}" />
+                <button name="open_report" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'invisible': [('status', '!=', 'ready')]}" />
+            </group>
+            <button name="amc_with_negative" type="object" string="Historical data report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', False)]}" />
+            <button name="amc_no_negative" type="object" string="Generate historical report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', True)]}" />
 		    </group>
 		</form>
 	    </field>
@@ -128,8 +138,11 @@
                 <field name="nomen_manda_1" />
                 <field name="nomen_manda_2" />
                 <field name="nomen_manda_3" />
+                <field name="remove_negative_amc" invisible="1" />
                 <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
-                <button name="open_report" type="object" icon="terp-check" string="Open report" attrs="{'invisible': [('status', '!=', 'ready')]}"/>
+                <button name="open_report" type="object" icon="terp-check" string="Open report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', True)]}"/>
+                <button name="amc_with_negative" type="object" icon="xlsx.png" string="Generate historical report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', True)]}"/>
+                <button name="amc_no_negative" type="object" icon="xlsx.png" string="Generate historical report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', False)]}"/>
                 <field name="fake_status" />
                 <field name="status" invisible="1" />
             </tree>
