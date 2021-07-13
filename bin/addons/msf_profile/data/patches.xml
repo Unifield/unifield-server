@@ -668,6 +668,15 @@
             <field name="method">us_8196_delete_default_prod_curr</field>
         </record>
 
+        <!-- UF21.1 -->
+        <record id="us_8810_fake_updates" model="patch.scripts">
+            <field name="method">us_8810_fake_updates</field>
+        </record>
+
+        <record id="us_8753_admin_never_expire_password" model="patch.scripts">
+            <field name="method">us_8753_admin_never_expire_password</field>
+        </record>
+
         <record id="us_8805_product_set_archived" model="patch.scripts">
             <field name="method">us_8805_product_set_archived</field>
         </record>

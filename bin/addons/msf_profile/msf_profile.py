@@ -71,7 +71,28 @@ class patch_scripts(osv.osv):
                         st.code = 'unidata' and
                         t.state=%(phase_out_id)s
                     ''', {'archived_id': archived_ids[0], 'phase_out_id': phase_out_ids[0]})
-                self.log(cr, uid, 'US-8805: %d products' % cr.rowcount)
+                self.log_info(cr, uid, 'US-8805: %d products' % cr.rowcount)
+        return True
+
+    # UF21.1
+    def us_8810_fake_updates(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.entity'):
+            cr.execute("""
+                update sync_client_update_received set
+                    manually_ran='t', run='t', execution_date=now(),
+                    manually_set_run_date=now(), editable='f',
+                    log='Set manually to run without execution'
+                where
+                    run='f' and
+                    sequence_number=1071578 and
+                    source='OCG_HQ'
+            """);
+            self._logger.warn('US-8810: %d updates set as Run' % (cr.rowcount,))
+        return True
+
+    def us_8753_admin_never_expire_password(self, cr, uid, *a, **b):
+        # do not deactivate, to be executed on each new instances
+        cr.execute("update res_users set never_expire='t' where login='admin'")
         return True
 
     # UF21.0
@@ -4203,10 +4224,10 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
-    def log(self, cr, uid, msg, context=None):
+    def log_info(self, cr, uid, msg, context=None):
         self._logger.warn(msg)
         self.pool.get('res.log').create(cr, uid, {
-            'name': msg,
+            'name': '[AUTO] %s ' % msg,
             'read': True,
         }, context=context)
 patch_scripts()
