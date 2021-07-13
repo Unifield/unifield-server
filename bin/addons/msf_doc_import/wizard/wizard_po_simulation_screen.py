@@ -1736,14 +1736,15 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     # If the partner is ESC and the PO has no STD, take the PO's creation date as STD for the line
                     write_vals['imp_stock_take_date'] = line.simu_id.order_id.date_order
 
-            # Delivery Requested Date
+            # Delivery Requested Date/Estimated Delivery Date
+            rdd = False
             drd_value = values[10]
             if drd_value and type(drd_value) == type(DateTime.now()):
-                write_vals['imp_drd'] = drd_value.strftime('%Y-%m-%d')
+                rdd = drd_value.strftime('%Y-%m-%d')
             elif drd_value and isinstance(drd_value, str):
                 try:
                     time.strptime(drd_value, '%Y-%m-%d')
-                    write_vals['imp_drd'] = drd_value
+                    rdd = drd_value
                 except ValueError:
                     err_msg = _('Incorrect date value for field \'Delivery Requested Date\'')
                     errors.append(err_msg)
@@ -1752,7 +1753,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 err_msg = _('Incorrect date value for field \'Delivery Requested Date\'')
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
-
+            # Update the Estimated Delivery Date if the Delivery Requested Date is changed
+            if rdd and (line.type_change in ['new', 'split'] or rdd != line.po_line_id.date_planned):
+                write_vals['imp_drd'] = rdd
 
             # ESC Confirmed
             if write_vals.get('imp_dcd') and line.simu_id.order_id.partner_type == 'esc':
@@ -1858,7 +1861,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
                 has_delivery = False
                 if line.imp_drd:
-                    line_vals['date_planned'] = line.imp_drd
+                    line_vals['esti_dd'] = line.imp_drd
                 if line.imp_project_ref:
                     line_vals['project_ref'] = line.imp_project_ref
                 if line.imp_origin:
@@ -1883,6 +1886,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         'line_number': line.in_line_number,
                         'esc_confirmed': True if line.imp_dcd else False,
                         'original_line_id': line.parent_line_id.po_line_id.id,
+                        'date_planned': line.imp_drd,
                     })
                     if 'confirmed_delivery_date' not in line_vals:
                         line_vals['confirmed_delivery_date'] = False
@@ -1913,6 +1917,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         'set_as_validated_n': True,
                         'display_sync_ref': True,
                         'created_by_vi_import': True,
+                        'date_planned': line.imp_drd,
                     })
                     if not line_vals.get('date_planned'):
                         line_vals['date_planned'] = line.simu_id.order_id.delivery_requested_date

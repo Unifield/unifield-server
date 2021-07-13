@@ -543,9 +543,11 @@ class purchase_order_line(osv.osv):
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
-        'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
+        'date_planned': fields.date(string='Requested DD', required=True, select=True,
                                     help='Header level dates has to be populated by default with the possibility of manual updates'),
-        'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
+        'esti_dd': fields.date(string='Estimated DD', select=True,
+                               help='Header level dates has to be populated by default with the possibility of manual updates'),
+        'confirmed_delivery_date': fields.date(string='Confirmed DD',
                                                help='Header level dates has to be populated by default with the possibility of manual updates.'),
         # not replacing the po_state from sale_followup - should ?
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),

@@ -25568,18 +25568,23 @@ msgstr "Détermine les restrictions pour le pays."
 #: field:wizard.import.po.simulation.screen.line,in_drd:0
 #: field:wizard.simu.import.po.line,initial_req_date:0
 #: field:sale.order,delivery_requested_date:0
-#: field:sale.order.line,date_planned:0
 #: field:update.lines,delivery_requested_date:0
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:110
 #: field:purchase.order,delivery_requested_date:0
-#: field:purchase.order.line,date_planned:0
 #: field:purchase.order.merged.line,date_planned:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:232
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:897
 #, python-format
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Souhaitée"
+
+#. modules: purchase, msf_order_date
+#: field:purchase.order.line,date_planned:0
+#: field:sale.order.line,date_planned:0
+#, python-format
+msgid "Requested DD"
+msgstr "DL Souhaitée"
 
 #. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:78
@@ -58750,8 +58755,8 @@ msgstr "OPEN ADVANCES"
 #: code:addons/msf_order_date/order_dates.py:693
 #: code:addons/purchase/purchase_order.py:1162
 #, python-format
-msgid "Do you want to update the Requested Date of all/selected Order lines ?"
-msgstr "Voulez-vous mettre à jour la Date de Livraison Souhaitée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+msgid "Do you want to update the Estimated Date of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Estimée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
 
 #. modules: account, finance
 #: field:account.partner.ledger,tax:0
@@ -66215,10 +66220,8 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #. modules: msf_order_date, msf_doc_import, transport_mgmt, purchase, tender_flow, purchase_override, stock, msf_supply_doc_export
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:74
 #: field:sale.order,delivery_confirmed_date:0
-#: field:sale.order.line,confirmed_delivery_date:0
 #: field:update.lines,delivery_confirmed_date:0
 #: field:purchase.order,delivery_confirmed_date:0
-#: field:purchase.order.line,confirmed_delivery_date:0
 #: field:international.transport.cost.report,delivery_confirmed_date:0
 #: field:local.transport.cost.report,delivery_confirmed_date:0
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:236
@@ -66234,6 +66237,13 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #, python-format
 msgid "Delivery Confirmed Date"
 msgstr "Date de Livraison Confirmée"
+
+#. modules: purchase, msf_order_date
+#: field:purchase.order.line,confirmed_delivery_date:0
+#: field:sale.order.line,confirmed_delivery_date:0
+#, python-format
+msgid "Confirmed DD"
+msgstr "DL Confirmée"
 
 #. modules: threshold_value, procurement_report
 #: view:procurement.purchase.compute.all:0
@@ -92278,8 +92288,8 @@ msgstr "Parent Gauche"
 
 #. module: sourcing
 #: field:sale.order.line,estimated_delivery_date:0
-msgid "Estimated DD"
-msgstr "DL Estimée"
+msgid "Calculated DD"
+msgstr "DL Calculée"
 
 #. module: register_accounting
 #: model:ir.actions.report.xml,name:register_accounting.pending_cheque
@@ -110759,13 +110769,13 @@ msgstr "À colis"
 #. module: purchase
 #: code:addons/purchase/purchase_order.py:1393
 #, python-format
-msgid "Please fill the \"Delivery Requested Date (modified)\" field."
-msgstr "Veuillez remplir le champ \"Date de Livraison Souhaitée (modifiée)\"."
+msgid "Please fill the \"Estimated Delivery Date\" field."
+msgstr "Veuillez remplir le champ \"Date de Livraison Estimée\"."
 
 #. module: purchase
 #: field:purchase.order,delivery_requested_date_modified:0
-msgid "Delivery Requested Date (modified)"
-msgstr "Date de Livraison Souhaitée (modifiée)"
+msgid "Estimated Delivery Date"
+msgstr "Date de Livraison Estimée"
 
 #. modules: purchase, sale, procurement_request
 #: view:sale.order:0
@@ -112393,3 +112403,10 @@ msgstr "L'Adresse ne peut pas être désactivée. Il y a des Éxpéditions ouver
 #, python-format
 msgid "The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process."
 msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée (%s). Veuillez en sélectionner une autre pour pouvoir continuer le traitement."
+
+#. modules: purchase, msf_order_date
+#: field:purchase.order.line,esti_dd:0
+#: field:sale.order.line,esti_dd:0
+#, python-format
+msgid "Estimated DD"
+msgstr "DL Estimée"

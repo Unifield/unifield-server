@@ -693,7 +693,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
+        return {'name': _('Do you want to update the Estimated Date of all/selected Order lines ?'), }
 
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
@@ -779,9 +779,11 @@ class sale_order_line(osv.osv):
             return ids[1]
         return False
 
-    _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
+    _columns = {'date_planned': fields.date(string='Requested DD', required=True, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
-                'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
+                'esti_dd': fields.date(string='Estimated DD', select=True,
+                                       help='Header level dates has to be populated by default with the possibility of manual updates'),
+                'confirmed_delivery_date': fields.date(string='Confirmed DD',
                                                        help='Header level dates has to be populated by default with the possibility of manual updates.'),
                 'so_state_stored': fields.related('order_id', 'state', type='selection', selection=SALE_ORDER_STATE_SELECTION, string='So State', readonly=True,),
                 }
