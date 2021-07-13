@@ -26,7 +26,6 @@ from lxml import etree
 import tools
 from datetime import datetime
 import logging
-#import pooler TODO
 
 
 class product_section_code(osv.osv):
@@ -1926,10 +1925,7 @@ class product_attributes(osv.osv):
             has_product_list = [x[0] for x in cr.fetchall()]
             if context.get('sync_update_execution') and has_product_list:
                 prod_list_line_ids = prod_list_line_obj.search(cr, uid, [('name', '=', product.id)], context=context)
-                #new_cr = pooler.get_db(cr.dbname).cursor() TODO
                 prod_list_line_obj.unlink(cr, uid, prod_list_line_ids, context=context, extra_comment='Product got deactivated')
-                #new_cr.commit()
-                #new_cr.close(True)
                 has_product_list = []
 
 
