@@ -176,8 +176,8 @@ class product_history_consumption(osv.osv):
                                            'nomen_manda_0',
                                            'sublist_id'],
                           context=context)
-        product_ids = []
 
+        domain = []
         # Update the locations in context
         if obj.consumption_type == 'rac':
             location_ids = []
@@ -194,7 +194,6 @@ class product_history_consumption(osv.osv):
 
         if obj.nomen_manda_0:
             for report in self.browse(cr, uid, ids, context=context):
-                product_ids = []
                 nom = False
                 # Get all products for the defined nomenclature
                 if report.nomen_manda_3:
@@ -210,17 +209,11 @@ class product_history_consumption(osv.osv):
                     nom = report.nomen_manda_0.id
                     field = 'nomen_manda_0'
                 if nom:
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+                    domain.append([(field, '=', nom)])
 
         if obj.sublist_id:
             context.update({'search_default_list_ids': obj.sublist_id.id})
-            for line in obj.sublist_id.product_ids:
-                product_ids.append(line.name.id)
-
-        domain = [('id', 'in', product_ids)]
-
-        if not obj.nomen_manda_0 and not obj.sublist_id:
-            domain = []
+            domain.append(('in_any_product_list', '=', obj.sublist_id.id))
 
         new_context = context.copy()
         new_context.update({'months': [], 'amc': obj.consumption_type == 'amc' and 'AMC' or 'RAC', 'obj_id': obj.id, 'history_cons': True, 'need_thread': True})
@@ -232,7 +225,7 @@ class product_history_consumption(osv.osv):
             new_context['months'].append({'date_from': month.date_from, 'date_to': month.date_to})
 
 
-        return product_ids, domain, new_context
+        return domain, new_context
 
     def create_lines(self, cr, uid, ids, context=None):
         '''
@@ -241,15 +234,12 @@ class product_history_consumption(osv.osv):
         if not context:
             context = {}
 
-        product_ids, domain, new_context = self.get_data(cr, uid, ids, context=context)
-
-        if not product_ids:
-            product_ids = self.pool.get('product.product').search(cr, uid, [], context=new_context)
+        domain, new_context = self.get_data(cr, uid, ids, context=context)
 
         import threading
         self.write(cr, uid, ids, {'status': 'in_progress'}, context=context)
         cr.commit()
-        new_thread = threading.Thread(target=self._create_lines, args=(cr, uid, ids, product_ids, new_context))
+        new_thread = threading.Thread(target=self._create_lines, args=(cr, uid, ids, domain, new_context))
         new_thread.start()
         new_thread.join(10.0)
         if new_thread.isAlive():
@@ -265,13 +255,14 @@ class product_history_consumption(osv.osv):
 
         return self.open_report(cr, uid, ids, context=new_context)
 
-    def _create_lines(self, cr, uid, ids, product_ids, context=None):
+    def _create_lines(self, cr, uid, ids, domain, context=None):
         '''
         Create lines in background
         '''
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
 
+        prod_obj = self.pool.get('product.product')
         res = self.browse(cr, uid, ids[0], context=context)
         if res.consumption_type == 'rac':
             if res.location_dest_id:
@@ -294,6 +285,8 @@ class product_history_consumption(osv.osv):
               WHERE l.usage in ('customer', 'internal')
             ''')
         product_ids = [x[0] for x in cr.fetchall()]
+        if domain:
+            product_ids = prod_obj.search(cr, uid, domain + [('id', 'in', product_ids)], context=context)
 
         # split ids into slices to not read a lot record in the same time (memory)
         ids_len = len(product_ids)
@@ -309,7 +302,7 @@ class product_history_consumption(osv.osv):
 
         for slice_ids in slices:
             try:
-                self.pool.get('product.product').read(new_cr, uid, slice_ids, ['average'], context=context)
+                prod_obj.read(new_cr, uid, slice_ids, ['average'], context=context)
             except Exception:
                 logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
                 new_cr.rollback()
@@ -328,7 +321,7 @@ class product_history_consumption(osv.osv):
         if context is None:
             context = {}
 
-        product_ids, domain, new_context = self.get_data(cr, uid, ids, context=context)
+        domain, new_context = self.get_data(cr, uid, ids, context=context)
         if new_context is None:
             new_context = {}
         new_context['search_default_average'] = 1  # UTP-501 positive Av.AMC/Av.RAC filter set to on by default
@@ -525,9 +518,7 @@ class product_product(osv.osv):
             new_separator = """<separator orientation="vertical" />"""
             separator_node = etree.fromstring(new_separator)
             xml_view.insert(0, separator_node)
-            product_ids = self.pool.get('product.history.consumption').get_data(cr, uid, [context.get('obj_id')], context=context)[0]
-            product_ids = self.pool.get('product.product').search(cr, uid, [('id', 'in', product_ids), ('average', '>', 0)], context=context)
-            new_filter = """<filter string="%s%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('id', 'in', %s)]" />""" % (_('Av.'), _(context.get('amc', 'AMC')), product_ids)
+            new_filter = """<filter string="%s%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('average', '>', 0)]" />""" % (_('Av.'), _(context.get('amc', 'AMC')))
             # generate new xml form$
             filter_node = etree.fromstring(new_filter)
             xml_view.insert(0, filter_node)
