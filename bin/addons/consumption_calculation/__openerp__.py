@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -38,6 +38,7 @@
         'consumption_view.xml',
         'expiry_calculation_view.xml',
         'history_consumption_view.xml',
+        'history_consumption_report.xml',
         'consumption_calculation_report.xml',
         'expiry_calculation_report.xml',
         'weekly_forecast_report_view.xml',

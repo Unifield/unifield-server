@@ -26,7 +26,7 @@
                 <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                 <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                 <group colspan="2" col="2" attrs="{'invisible': [('consumption_type', '=', 'rac')]}">
-                    <field name="remove_negative_amc" colspan="2"/>
+                    <field name="remove_negative_amc" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <html colspan="2">
                         <i><translate>If ticked it means that for periods/months where there are more returns (via return INs) than Outs, the standard calculation would display a negative Consumption/AMC quantity, but in this case (if ticked) the figure is set to zero.</translate></i>
                     </html>
@@ -67,8 +67,8 @@
                 <button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')], 'invisible': [('status', '=', 'ready')]}" />
                 <button name="open_report" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'invisible': [('status', '!=', 'ready')]}" />
             </group>
-            <button name="amc_with_negative" type="object" string="Historical data report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', False)]}" />
-            <button name="amc_no_negative" type="object" string="Generate historical report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', True)]}" />
+            <button name="report_amc_with_negative" type="object" string="Historical data report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', False)]}" />
+            <button name="report_amc_no_negative" type="object" string="Generate historical report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', True)]}" />
 		    </group>
 		</form>
 	    </field>

@@ -1841,7 +1841,7 @@ class product_product(osv.osv):
 
         return domain
 
-    def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False):
+    def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False, remove_negative_amc=False):
         '''
         Compute the Average Monthly Consumption with this formula :
             AMC = (sum(OUTGOING (except reason types Loan, Donation, Loss, Discrepancy))
@@ -1959,6 +1959,14 @@ class product_product(osv.osv):
                 from_date = move['date']
             if not context.get('to_date') and (not to_date or move['date'] > to_date):
                 to_date = move['date']
+
+        if remove_negative_amc:
+            for prod in amc_by_month:
+                for period in amc_by_month[prod]:
+                    qty = amc_by_month[prod][period]
+                    if qty < 0:
+                        amc_by_month[prod][period] = 0
+                        res[prod] -= qty
 
         if not to_date or not from_date or not res:
             return 0.00
