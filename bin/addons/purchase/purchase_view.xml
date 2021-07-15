@@ -261,7 +261,7 @@
                                     <field name="change_price_ok" invisible="1"/>
                                     <field name="old_price_unit" invisible="1"/>
                                     <field name="date_planned"/>
-                                    <field name="esti_dd"/>
+                                    <field name="esti_dd" attrs="{'readonly': [('fake_state', 'not in', ['validated', 'validated_n'])]}"/>
                                     <field name="confirmed_delivery_date"/>
                                     <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                                     <button name="button_analytic_distribution" string="Analytical distribution" type="object" context="{'partner_type': parent.partner_type}" icon="terp-stock_symbol-selection"/>
