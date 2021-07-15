@@ -134,6 +134,10 @@ function doLoadingSuccess(app, url) {
             } else {
                 _openAction = openAction;
             }
+            is_new_doc = xhr.getResponseHeader('is_new_doc');
+            if (is_new_doc) {
+                editRecord(is_new_doc);
+            }
             _openAction(xhr.getResponseHeader('Location'), target, active_id, keep_open, xhr.getResponseHeader('height'), xhr.getResponseHeader('width'));
             return;
         }

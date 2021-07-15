@@ -526,6 +526,7 @@ class Form(SecuredController):
 
         Model = rpc.RPCProxy(params.model)
         # bypass save, for button action in non-editable view
+        params.is_new_doc = False
         if params.editable:
             if not params.id:
                 if params.default_o2m:
@@ -536,6 +537,7 @@ class Form(SecuredController):
                 params.id = int(Model.create(data, ctx))
                 params.ids = (params.ids or []) + [params.id]
                 params.count += 1
+                params.is_new_doc = True
             else:
                 ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
                 ctx['from_web_interface'] = True
@@ -668,7 +670,7 @@ class Form(SecuredController):
             rpc.session.context_reload()
         if isinstance(res, dict):
             import actions
-            return actions.execute(res, ids=[id], context=ctx)
+            return actions.execute(res, ids=[id], context=ctx, is_new_doc=params.is_new_doc)
         params.button = None
 
     def button_action_action(self, name, params):
