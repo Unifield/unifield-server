@@ -166,7 +166,7 @@ class update_lines(osv.osv_memory):
             estimated_date = obj.delivery_requested_date
             if obj_type == 'purchase.order' and obj.state != 'draft':
                 estimated_date = obj.delivery_requested_date_modified
-            dom = [('order_id', '=', obj.id), ('state', 'in',['draft', 'validated', 'validated_n'])]
+            dom = [('order_id', '=', obj.id), ('state', 'in', ['validated', 'validated_n'])]
             if selected and context.get('button_selected_ids'):
                 dom += [('id', 'in', context['button_selected_ids'])]
             line_ids = line_obj.search(cr, uid, dom, context=context)
