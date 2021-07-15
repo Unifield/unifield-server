@@ -1886,7 +1886,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         'line_number': line.in_line_number,
                         'esc_confirmed': True if line.imp_dcd else False,
                         'original_line_id': line.parent_line_id.po_line_id.id,
-                        'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
+                        'date_planned': line.imp_drd or line.in_drd or line.simu_id.order_id.delivery_requested_date,
                     })
                     if 'confirmed_delivery_date' not in line_vals:
                         line_vals['confirmed_delivery_date'] = False
