@@ -95,7 +95,7 @@ class account_invoice(osv.osv):
             for invl in inv.invoice_line:
                 line_distrib_id = False
                 if invl.cv_line_ids:
-                    #  CV STARTING FROM VERSION 2
+                    # CV STARTING FROM VERSION 2
                     # the first CV line found is used since there can be only one at this step (merging lines by account could
                     # generate an invoice line linked to several CV lines but this action can only be done later in the process)
                     line_distrib_id = invl.cv_line_ids[0].analytic_distribution_id and invl.cv_line_ids[0].analytic_distribution_id.id or False
