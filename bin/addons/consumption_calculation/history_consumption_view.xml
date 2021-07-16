@@ -141,8 +141,8 @@
                 <field name="remove_negative_amc" invisible="1" />
                 <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
                 <button name="open_report" type="object" icon="terp-check" string="Open report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', True)]}"/>
-                <button name="amc_with_negative" type="object" icon="xlsx.png" string="Generate historical report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', True)]}"/>
-                <button name="amc_no_negative" type="object" icon="xlsx.png" string="Generate historical report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', False)]}"/>
+                <button name="report_amc_with_negative" type="object" icon="xlsx.png" string="Generate historical report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', True)]}"/>
+                <button name="report_amc_no_negative" type="object" icon="xlsx.png" string="Generate historical report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', False)]}"/>
                 <field name="fake_status" />
                 <field name="status" invisible="1" />
             </tree>

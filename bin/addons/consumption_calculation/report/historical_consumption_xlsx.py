@@ -35,7 +35,7 @@ class historical_parser(XlsxReportParser):
             self.duplicate_row_dimensions(range(2, 3))
             row_index = 2
         self.duplicate_column_dimensions(default_width=10.75)
-        sheet.freeze_panes = 'A%d' % (row_index+1)
+        sheet.freeze_panes = 'D%d' % (row_index+1)
 
         sheet.title = _('Historical Consumption')
         if h_amc.remove_negative_amc:
@@ -48,7 +48,11 @@ class historical_parser(XlsxReportParser):
         row_index += 1
 
         header = ['', '', self.cell_ro(_('Entire Period'), 'header_style')]
+        col = 3
+        col_width = self.workbook_template.active.column_dimensions['C'].width
         for month in list_months:
+            col += 1
+            sheet.column_dimensions[get_column_letter(col)].width = col_width
             dt_month = datetime.strptime(month.get('date_from'), '%Y-%m-%d')
             header.append(self.cell_ro(dt_month, 'header_date_style'))
             month_fields_to_read.append(dt_month.strftime('%m_%Y'))
@@ -64,13 +68,14 @@ class historical_parser(XlsxReportParser):
             sub_header.append(self.cell_ro(_('MC'), 'sub_header_style'))
         sheet.append(sub_header)
 
-        prod_ids = product_obj.search(self.cr, self.uid, prod_dom, context=context)
+        prod_dom.append(('average', '>', 0))
+        prod_ids = product_obj.search(self.cr, self.uid, prod_dom, context=history_ctx)
         max_read = 500
         prod_ctx = context.copy()
         prod_ctx.update(history_ctx)
         offset = 0
 
-        row_height = self.workbook_template.active.row_dimensions[row_index].height
+        row_height = self.workbook_template.active.row_dimensions[4].height
         while offset <= len(prod_ids):
             for prod in product_obj.read(self.cr, self.uid, prod_ids[offset:max_read+offset], ['default_code', 'name', 'average'], context=prod_ctx):
                 prod_data = [self.cell_ro(prod['default_code'], 'prod_style'), self.cell_ro(prod['name'], 'prod_style'), self.cell_ro(prod.get('average', 0), 'amc_style')]
