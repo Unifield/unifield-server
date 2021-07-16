@@ -59,13 +59,20 @@ class historical_parser(XlsxReportParser):
 
         sheet.append(header)
 
+        if h_amc.consumption_type == 'amc':
+            full_title = _('AMC')
+            sub_title = _('MC')
+        else:
+            full_title = _('RAC')
+            sub_title = _('RC')
+
         sub_header = [
             self.cell_ro(_('CODE'), 'sub_header_style'),
             self.cell_ro(_('DESCRIPTION'), 'sub_header_style'),
-            self.cell_ro(_('AMC'), 'sub_header_style'),
+            self.cell_ro(full_title, 'sub_header_style'),
         ]
         for month in list_months:
-            sub_header.append(self.cell_ro(_('MC'), 'sub_header_style'))
+            sub_header.append(self.cell_ro(sub_title, 'sub_header_style'))
         sheet.append(sub_header)
 
         prod_dom.append(('average', '>', 0))

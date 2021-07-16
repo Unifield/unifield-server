@@ -347,12 +347,12 @@ class product_history_consumption(osv.osv):
                     for month in all_months:
                         cons_context['from_date'] = month.get('date_from')
                         cons_context['to_date'] = month.get('date_to')
+                        month_dt = datetime.strptime(month.get('date_from'), '%Y-%m-%d').strftime('%m_%Y')
                         for product in self.pool.get('product.product').browse(cr, uid, slice_ids, fields_to_fetch=['monthly_consumption'], context=cons_context):
                             total_by_prod.setdefault(product.id, 0)
-                            total_by_prod[product.id] = product.monthly_consumption or 0
-                            month_dt = datetime.strptime(month.get('date_from'), '%Y-%m-%d')
+                            total_by_prod[product.id] += product.monthly_consumption or 0
                             cons_prod_obj.create(cr, uid, {
-                                'name': month_dt.strftime('%m_%Y'),
+                                'name': month_dt,
                                 'product_id': product.id,
                                 'consumption_id': res.id,
                                 'cons_type': 'fmc',
@@ -370,27 +370,6 @@ class product_history_consumption(osv.osv):
             except Exception:
                 logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
                 cr.rollback()
-
-        all_found = product_ids
-        other_prod = prod_obj.search(cr, uid, domain, context=context)
-        for empty_prod in set(other_prod) - set(all_found):
-            # populate with 0, used for sorting on tree view
-            cons_prod_obj.create(cr, uid, {
-                'name': 'average',
-                'product_id': empty_prod,
-                'consumption_id': res.id,
-                'cons_type': res.consumption_type == 'amc' and 'amc' or 'fmc',
-                'value': 0}, context=context)
-
-            for month in all_months:
-                month_dt = datetime.strptime(month.get('date_from'), '%Y-%m-%d')
-                cons_prod_obj.create(cr, uid, {
-                    'name': month_dt.strftime('%m_%Y'),
-                    'product_id': empty_prod,
-                    'consumption_id': res.id,
-                    'cons_type': res.consumption_type == 'amc' and 'amc' or 'fmc',
-                    'value': 0}, context=context)
-
 
         self.write(cr, uid, ids, {'status': 'ready'}, context=context)
 
