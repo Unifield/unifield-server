@@ -1244,6 +1244,10 @@ class stock_picking(osv.osv):
         @param type: Type of invoice
         @return: Taxes Ids for the move line
         """
+        if move_line.sale_line_id and move_line.sale_line_id.product_id.id == move_line.product_id.id:
+            return [x.id for x in move_line.sale_line_id.tax_id]
+        if move_line.purchase_line_id:
+            return [x.id for x in move_line.purchase_line_id.taxes_id]
         if type in ('in_invoice', 'in_refund'):
             taxes = move_line.product_id.supplier_taxes_id
         else:

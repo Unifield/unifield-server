@@ -71,11 +71,6 @@ class stock_picking(osv.osv):
             return 0.0
         return super(stock_picking, self)._get_discount_invoice(cursor, user, move_line)
 
-    def _get_taxes_invoice(self, cursor, user, move_line, type):
-        if move_line.purchase_line_id:
-            return [x.id for x in move_line.purchase_line_id.taxes_id]
-        return super(stock_picking, self)._get_taxes_invoice(cursor, user, move_line, type)
-
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         purchase_obj = self.pool.get('purchase.order')
         if picking.purchase_id:
