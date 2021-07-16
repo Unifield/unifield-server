@@ -89,7 +89,9 @@ class stock_picking(osv.osv):
     def _get_account_analytic_invoice(self, cursor, user, picking, move_line):
         if picking.sale_id:
             return picking.sale_id.project_id.id
-        return super(stock_picking, self)._get_account_analytic_invoice(cursor, user, picking, move_line)
+        if move_line.purchase_line_id:
+            return move_line.purchase_line_id.account_analytic_id.id
+        return False
 
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         sale_obj = self.pool.get('sale.order')
