@@ -1799,7 +1799,7 @@ class product_product(osv.osv):
                 if not nb_months: nb_months = 1
 
                 uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
-                res[id] = res[id]/nb_months
+                res[id] = res[id]/float(nb_months)
                 res[id] = round(self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res[id], uom_id), 2)
 
         return res
@@ -2024,7 +2024,7 @@ class product_product(osv.osv):
             nb_months = ((to_date_str-from_date_str).days + 1)/30.44
 
         for p_id in res:
-            p_nb_nb_months = nb_months
+            p_nb_nb_months = float(nb_months)
             if p_id in adjusted_day:
                 p_nb_nb_months += adjusted_day[p_id]/30.44
 

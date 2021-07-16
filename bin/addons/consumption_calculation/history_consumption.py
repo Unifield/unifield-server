@@ -248,7 +248,7 @@ class product_history_consumption(osv.osv):
         import threading
         self.write(cr, uid, ids, {'status': 'in_progress'}, context=context)
         cr.commit()
-        new_thread = threading.Thread(target=self._create_lines, args=(cr, uid, ids, domain, new_context))
+        new_thread = threading.Thread(target=self._create_lines, args=(cr.dbname, uid, ids, domain, new_context))
         new_thread.start()
         new_thread.join(10.0)
         if new_thread.isAlive():
@@ -268,12 +268,12 @@ class product_history_consumption(osv.osv):
         return self.return_waiting_screen(cr, uid, ids, context=context)
 
 
-    def _create_lines(self, cr, uid, ids, domain, context=None):
+    def _create_lines(self, dbname, uid, ids, domain, context=None):
         '''
         Create lines in background
         '''
         import pooler
-        new_cr = pooler.get_db(cr.dbname).cursor()
+        cr = pooler.get_db(dbname).cursor()
 
         prod_obj = self.pool.get('product.product')
         cons_prod_obj = self.pool.get('product.history.consumption.product')
@@ -362,13 +362,13 @@ class product_history_consumption(osv.osv):
                             'product_id': product.id,
                             'consumption_id': res.id,
                             'cons_type': 'fmc',
-                            'value': round(total_by_prod.get(product,0)/len(all_months), 2)}, context=context)
+                            'value': round(total_by_prod.get(product,0)/float(len(all_months)), 2)}, context=context)
 
 
 
             except Exception:
                 logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
-                new_cr.rollback()
+                cr.rollback()
 
         all_found = product_ids
         other_prod = prod_obj.search(cr, uid, domain, context=context)
@@ -391,10 +391,10 @@ class product_history_consumption(osv.osv):
                     'value': 0}, context=context)
 
 
-        self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
+        self.write(cr, uid, ids, {'status': 'ready'}, context=context)
 
-        new_cr.commit()
-        new_cr.close(True)
+        cr.commit()
+        cr.close(True)
 
         return
 
@@ -409,6 +409,7 @@ class product_history_consumption(osv.osv):
         if new_context is None:
             new_context = {}
         new_context['search_default_average'] = 1  # UTP-501 positive Av.AMC/Av.RAC filter set to on by default
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'product_history_consumption_tree_view')[1]
 
         return {
             'type': 'ir.actions.act_window',
@@ -417,7 +418,8 @@ class product_history_consumption(osv.osv):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'context': new_context,
-            'target': 'dummy'
+            'target': 'dummy',
+            'view_id': [view_id],
         }
 
     def report_amc_no_negative(self, cr, uid, ids, context=None):
@@ -658,7 +660,6 @@ class product_product(osv.osv):
         if context is None:
             context = {}
 
-
         res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
 
         if not context.get('history_cons', False):
@@ -694,68 +695,6 @@ class product_product(osv.osv):
         for r in res:
             ret.append(prod_data[r['id']])
         return ret
-
-
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        '''
-        Update the search method to sort by fictive fields if needed
-        '''
-        if not context:
-            context = {}
-
-        average_domain = False
-        if context.get('history_cons', False):
-            """UTP-501 'average' filter (filter button generated in fields_view_get)
-            if found, grab it, and remove it
-            (bc 'average' field is unknown in super(product_product, self))
-            """
-            new_args = []
-            for a in args:
-                if len(a) == 3 and a[0] == 'average':
-                    average_domain = a
-                else:
-                    new_args.append(a)
-            args = new_args
-
-        hist_obj = self.pool.get('product.history.consumption.product')
-
-        res = super(product_product, self).search(cr, uid, args, offset, limit,
-                                                  order, context, count)
-
-        if context.get('history_cons', False) and context.get('obj_id', False):
-            if order and order != 'NO_ORDER' or average_domain:
-                hist_domain = [('consumption_id', '=', context.get('obj_id'))]
-                if context.get('amc') == 'AMC':
-                    hist_domain.append(('cons_type', '=', 'amc'))
-                else:
-                    hist_domain.append(('cons_type', '=', 'fmc'))
-
-            if average_domain:
-                # UTP-501 'average' filter
-                hist_domain += [
-                    ('name', '=', 'average'),
-                    ('value', average_domain[1], average_domain[2])
-                ]
-
-            if order and order != 'NO_ORDER':
-                # sorting with or without average_domain
-                for order_part in order.split(','):
-                    order_split = order_part.strip().split(' ')
-                    order_field = order_split[0]
-                    order_direction = order_split[1].strip() if len(order_split) == 2 else ''
-                    if order_field != 'id' and order_field not in self._columns and order_field not in self._inherit_fields:
-                        hist_domain.append(('name', '=', order_field))
-                        hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset, limit=limit, order='value %s' % order_direction, context=context)
-                        res = list(x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context))
-                        break
-            elif average_domain:
-                # UTP-501 'average' filter without sorting
-                hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset,
-                                           limit=limit, order=order,
-                                           context=context)
-                res = [x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context)]
-
-        return res
 
 product_product()
 

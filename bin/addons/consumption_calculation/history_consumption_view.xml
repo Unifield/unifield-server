@@ -162,6 +162,19 @@
 		  name="Historical consumption"
 		  parent="warehouse_consumption_menu" />
 
+    <record id="product_history_consumption_tree_view" model="ir.ui.view">
+        <field name="name">product.history.consumption.search.view</field>
+        <field name="model">product.product</field>
+        <field name="type">tree</field>
+        <field name="priority">200</field>
+        <field name="arch" type="xml">
+            <tree string="Historical consumptions">
+                <field name="default_code" />
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+
     <!--
 	<record id="action_open_history_consumption_view" model="ir.actions.server">
             <field name="name">History consumption</field>
