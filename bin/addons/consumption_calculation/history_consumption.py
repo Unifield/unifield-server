@@ -341,7 +341,7 @@ class product_history_consumption(osv.osv):
                 else:
                     total_by_prod = {}
                     cons_context = {
-                        'location_id': res.location_id,
+                        'location_id': res.location_id.id,
                         'location_dest_id': res.location_dest_id.id,
                     }
                     for month in all_months:
@@ -350,6 +350,7 @@ class product_history_consumption(osv.osv):
                         for product in self.pool.get('product.product').browse(cr, uid, slice_ids, fields_to_fetch=['monthly_consumption'], context=cons_context):
                             total_by_prod.setdefault(product.id, 0)
                             total_by_prod[product.id] = product.monthly_consumption or 0
+                            month_dt = datetime.strptime(month.get('date_from'), '%Y-%m-%d')
                             cons_prod_obj.create(cr, uid, {
                                 'name': month_dt.strftime('%m_%Y'),
                                 'product_id': product.id,
@@ -359,7 +360,7 @@ class product_history_consumption(osv.osv):
                     for product in slice_ids:
                         cons_prod_obj.create(cr, uid, {
                             'name': 'average',
-                            'product_id': product.id,
+                            'product_id': product,
                             'consumption_id': res.id,
                             'cons_type': 'fmc',
                             'value': round(total_by_prod.get(product,0)/float(len(all_months)), 2)}, context=context)
