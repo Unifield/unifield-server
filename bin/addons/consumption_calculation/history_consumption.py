@@ -88,6 +88,10 @@ class product_history_consumption(osv.osv):
         if not ids:
             return True
 
+        if vals.get('status') == 'draft' and vals.get('consumption_type'):
+            # remove sent by UI if data already generated
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('status', '!=', 'draft')], context=context):
+                vals = {}
         # click on the report button in draft mode, must lock the fields
         self.clean_remove_negative_amc(cr, uid, vals, context)
 

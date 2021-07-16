@@ -37,10 +37,16 @@ class historical_parser(XlsxReportParser):
         self.duplicate_column_dimensions(default_width=10.75)
         sheet.freeze_panes = 'D%d' % (row_index+1)
 
+        col = 3
+        col_width = self.workbook_template.active.column_dimensions['C'].width
+        for month in list_months:
+            col += 1
+            sheet.column_dimensions[get_column_letter(col)].width = col_width
+
         sheet.title = _('Historical Consumption')
         if h_amc.remove_negative_amc:
             sheet.append([self.cell_ro(_('This report hides negative AMC / MCs (they are set to 0)'), 'title_style')])
-            sheet.merged_cells.ranges.append("A1:D1")
+            sheet.merged_cells.ranges.append("A1:C1")
 
         nb_month = len(list_months) + 3
         sheet.auto_filter.ref = "A%(idx)d:%(last_month)s%(idx)d" % {'idx': row_index, 'last_month': get_column_letter(nb_month)}
@@ -48,11 +54,7 @@ class historical_parser(XlsxReportParser):
         row_index += 1
 
         header = ['', '', self.cell_ro(_('Entire Period'), 'header_style')]
-        col = 3
-        col_width = self.workbook_template.active.column_dimensions['C'].width
         for month in list_months:
-            col += 1
-            sheet.column_dimensions[get_column_letter(col)].width = col_width
             dt_month = datetime.strptime(month.get('date_from'), '%Y-%m-%d')
             header.append(self.cell_ro(dt_month, 'header_date_style'))
             month_fields_to_read.append(dt_month.strftime('%m_%Y'))
