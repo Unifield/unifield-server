@@ -217,7 +217,7 @@ class product_history_consumption(osv.osv):
                     domain.append((field, '=', nom))
 
         if obj.sublist_id:
-            domain.append(('in_any_product_list', '=', obj.sublist_id.id))
+            domain.append(('in_product_list', '=', obj.sublist_id.id))
 
         new_context = context.copy()
         new_context.update({'amc': obj.consumption_type == 'amc' and 'AMC' or 'RAC', 'obj_id': obj.id, 'history_cons': True, 'need_thread': True})

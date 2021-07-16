@@ -450,7 +450,8 @@ class product_product(osv.osv):
                     query.joins.setdefault('"product_product"', [])
                     query.tables.append('"product_history_consumption_product" phcp')
                     query.joins['"product_product"'] += [('"product_history_consumption_product" phcp', 'id', "product_id", 'LEFT JOIN')]
-                    query.where_clause.append(''' phcp.name='%s' AND phcp.consumption_id=%s ''' % (order_detail[0], context.get('obj_id')))
+                    query.where_clause.append(''' phcp.name=%s AND phcp.consumption_id=%s ''')
+                    query.where_clause_params += [order_detail[0], context.get('obj_id')]
                     order_by_clause = ('ORDER BY "phcp"."value" %s' % spec, [])
                     if query.having:
                         query.having_group_by = '%s, %s' % (query.having_group_by, '"phcp"."value"')
@@ -464,6 +465,7 @@ class product_product(osv.osv):
         filter_qty = False
         filter_average = False
         filter_in_any_product_list = False
+        filter_in_product_list = False
         for x in domain:
             if x[0] == 'location_id':
                 location_id = x[2]
@@ -473,6 +475,9 @@ class product_product(osv.osv):
 
             elif x[0] == 'in_any_product_list':
                 filter_in_any_product_list = True
+
+            elif x[0] == 'in_product_list':
+                filter_in_product_list = x[2]
 
             elif x[0] == 'average':
                 if context.get('history_cons') and context.get('obj_id'):
@@ -506,6 +511,12 @@ class product_product(osv.osv):
             ret.tables.append('"product_list_line"')
             ret.joins.setdefault('"product_product"', [])
             ret.joins['"product_product"'] += [('"product_list_line"', 'id', 'name', 'INNER JOIN')]
+        if filter_in_product_list:
+            ret.tables.append('"product_list_line"')
+            ret.joins.setdefault('"product_product"', [])
+            ret.joins['"product_product"'] += [('"product_list_line"', 'id', 'name', 'INNER JOIN')]
+            ret.where_clause.append(''' "product_list_line"."list_id" = %s  ''')
+            ret.where_clause_params.append(filter_in_product_list)
         if filter_average:
             ret.tables.append('"product_history_consumption_product" phc1')
             ret.joins.setdefault('"product_product"', [])
