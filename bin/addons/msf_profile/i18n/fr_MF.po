@@ -14881,6 +14881,7 @@ msgstr "Pas de journal de type %s trouvé en essayant de créer une facture pour
 #: report:stock.forecast.report:0
 #: report:addons/consumption_calculation/report/expiry_report.mako:154
 #: report:addons/consumption_calculation/report/expiry_report.mako:207
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:72
 msgid "CODE"
 msgstr "CODE"
 
@@ -16865,6 +16866,7 @@ msgstr "Noeud Pack %s, mauvais attribut %s"
 #: report:msf.sale.order:0
 #: report:addons/consumption_calculation/report/expiry_report.mako:155
 #: report:addons/consumption_calculation/report/expiry_report.mako:208
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:73
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
@@ -27815,6 +27817,7 @@ msgstr "Installe un ensemble d'applications OpenERP présélectionnées pour vou
 
 #. module: consumption_calculation
 #: view:product.history.consumption:0
+#: view:product.product:0
 msgid "Historical consumptions"
 msgstr "Historique des consommations"
 
@@ -112349,3 +112352,53 @@ msgstr "Revue Inv."
 msgid "Line %d: FMC %s cannot be empty"
 msgstr "Ligne %d: PCM %s ne peut être vide"
 
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:56
+#, python-format
+msgid "Entire Period"
+msgstr "Période Entière"
+
+#. module: consumption_calculation
+#: view:product.history.consumption:0
+msgid "Generate historical report"
+msgstr "Générer le rapport des historiques"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:46
+#: model:ir.actions.report.xml,name:consumption_calculation.report_historical_consumption_xlsx
+#, python-format
+msgid "Historical Consumption"
+msgstr "Historique des Consommations"
+
+#. module: consumption_calculation
+#: view:product.history.consumption:0
+msgid "Historical data report"
+msgstr "Rapport des Consommations"
+
+#. module: consumption_calculation
+#: view:product.history.consumption:0
+msgid "If ticked it means that for periods/months where there are more returns (via return INs) than Outs, the standard calculation would display a negative Consumption/AMC quantity, but in this case (if ticked) the figure is set to zero."
+msgstr "Les périodes/mois où il y a plus de retours que d'expéditions génèrent des AMC négatives, quand cochée ces AMC négatives sont remplacées par zéro."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:66
+#, python-format
+msgid "MC"
+msgstr "CM"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:69
+#, python-format
+msgid "RC"
+msgstr "CR"
+
+#. module: consumption_calculation
+#: field:product.history.consumption,remove_negative_amc:0
+msgid "Remove Negative AMCs"
+msgstr "Supprimer les CMM négatives "
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:48
+#, python-format
+msgid "This report hides negative AMC / MCs (they are set to 0)"
+msgstr "Ce rapport cache les CMM/ CM négatives (elles sont mises à 0)"
