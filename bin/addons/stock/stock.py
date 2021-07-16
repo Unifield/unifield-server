@@ -1263,6 +1263,13 @@ class stock_picking(osv.osv):
         else:
             return map(lambda x: x.id, taxes)
 
+    def _get_account_analytic_invoice(self, cursor, user, picking, move_line):
+        if picking.sale_id:
+            return picking.sale_id.project_id.id
+        if move_line.purchase_line_id:
+            return move_line.purchase_line_id.account_analytic_id.id
+        return False
+
     def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id, account_id):
         """
         Create a link between invoice_line and purchase_order_line. This piece of information is available on move_line.order_line_id
