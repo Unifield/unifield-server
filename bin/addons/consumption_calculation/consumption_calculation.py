@@ -1841,7 +1841,7 @@ class product_product(osv.osv):
 
         return domain
 
-    def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False, remove_negative_amc=False):
+    def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False, remove_negative_amc=False, rounding=True):
         '''
         Compute the Average Monthly Consumption with this formula :
             AMC = (sum(OUTGOING (except reason types Loan, Donation, Loss, Discrepancy))
@@ -2031,11 +2031,11 @@ class product_product(osv.osv):
             if p_id in adjusted_qty:
                 res[p_id] += adjusted_qty[p_id]
 
-            if p_id in product_dict:
+            if p_id in product_dict and rounding:
                 prod_uom = product_dict[p_id]['uom_id'][0]
                 res[p_id] = uom_obj._compute_qty(cr, uid, prod_uom, res[p_id]/p_nb_nb_months, prod_uom)
             else:
-                res[p_id] = res[p_id]/p_nb_nb_months
+                res[p_id] = round(res[p_id]/p_nb_nb_months, 4)
 
         if compute_amc_by_month:
             for p_id in amc_by_month:

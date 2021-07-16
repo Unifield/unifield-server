@@ -321,7 +321,7 @@ class product_history_consumption(osv.osv):
         for slice_ids in slices:
             try:
                 if res.consumption_type == 'amc':
-                    avg, month_amc = self.pool.get('product.product').compute_amc(cr, uid, slice_ids, context=context, compute_amc_by_month=True, remove_negative_amc=res.remove_negative_amc)
+                    avg, month_amc = self.pool.get('product.product').compute_amc(cr, uid, slice_ids, context=context, compute_amc_by_month=True, remove_negative_amc=res.remove_negative_amc, rounding=False)
                     for product in slice_ids:
                         cons_prod_obj.create(cr, uid, {
                             'name': 'average',
