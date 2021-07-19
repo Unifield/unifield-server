@@ -1236,7 +1236,9 @@ class stock_picking(osv.osv):
 
     def _get_discount_invoice(self, cr, uid, move_line):
         '''Return the discount for the move line'''
-        return 0.0
+        if move_line.sale_line_id:
+            return move_line.sale_line_id.discount
+        return 0.0  # including if move_line.purchase_line_id
 
     def _get_taxes_invoice(self, cr, uid, move_line, type):
         """ Gets taxes on invoice
