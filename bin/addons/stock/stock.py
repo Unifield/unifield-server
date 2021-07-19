@@ -1206,10 +1206,19 @@ class stock_picking(osv.osv):
         """ Gets invoice address of a partner
         @return {'contact': address, 'invoice': address} for invoice
         """
+        res = {}
         partner_obj = self.pool.get('res.partner')
+        if picking.sale_id:
+            res['contact'] = picking.sale_id.partner_order_id.id
+            res['invoice'] = picking.sale_id.partner_invoice_id.id
+            return res
         partner = picking.address_id.partner_id
-        return partner_obj.address_get(cr, uid, [partner.id],
-                                       ['contact', 'invoice'])
+        res = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+        if picking.purchase_id:
+            partner = picking.purchase_id.partner_id or picking.address_id.partner_id
+            data = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+            res.update(data)
+        return res
 
     def _get_comment_invoice(self, cr, uid, picking):
         """

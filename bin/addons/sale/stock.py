@@ -51,14 +51,6 @@ class stock_picking(osv.osv):
             return picking.sale_id.payment_term.id
         return super(stock_picking, self)._get_payment_term(cursor, user, picking)
 
-    def _get_address_invoice(self, cursor, user, picking):
-        res = {}
-        if picking.sale_id:
-            res['contact'] = picking.sale_id.partner_order_id.id
-            res['invoice'] = picking.sale_id.partner_invoice_id.id
-            return res
-        return super(stock_picking, self)._get_address_invoice(cursor, user, picking)
-
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         sale_obj = self.pool.get('sale.order')
         if picking.sale_id:
