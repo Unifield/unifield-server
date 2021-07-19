@@ -34,11 +34,6 @@ class stock_picking(osv.osv):
         'purchase_id': False,
     }
 
-    def _invoice_hook(self, cursor, user, picking, invoice_id):
-        purchase_obj = self.pool.get('purchase.order')
-        if picking.purchase_id:
-            purchase_obj.write(cursor, user, [picking.purchase_id.id], {'invoice_id': invoice_id,})
-        return super(stock_picking, self)._invoice_hook(cursor, user, picking, invoice_id)
 
 stock_picking()
 

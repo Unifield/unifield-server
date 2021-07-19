@@ -23,30 +23,6 @@
 
 from osv import osv
 
-class stock_picking(osv.osv):
-    _name = 'stock.picking'
-    _inherit = 'stock.picking'
-
-
-    def _invoice_hook(self, cr, uid, picking, invoice_id):
-        """
-        Create a link between invoice and purchase_order.
-        Copy analytic distribution from purchase order to invoice (or from commitment voucher if exists)
-        """
-        if invoice_id and picking:
-            po_id = picking.purchase_id and picking.purchase_id.id or False
-            so_id = picking.sale_id and picking.sale_id.id or False
-            if po_id:
-                self.pool.get('purchase.order').write(cr, uid, [po_id], {'invoice_ids': [(4, invoice_id)]})
-            if so_id:
-                self.pool.get('sale.order').write(cr, uid, [so_id], {'invoice_ids': [(4, invoice_id)]})
-            # Copy analytic distribution from purchase order or commitment voucher (if exists) or sale order
-            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [invoice_id])
-        return super(stock_picking, self)._invoice_hook(cr, uid, picking, invoice_id)
-
-# action_invoice_create method have been removed because of impossibility to retrieve DESTINATION from SO.
-
-stock_picking()
 
 class stock_move(osv.osv):
     _name = 'stock.move'
