@@ -61,11 +61,6 @@ class stock_picking(osv.osv):
                 return picking.purchase_id.notes
         return super(stock_picking, self)._get_comment_invoice(cursor, user, picking)
 
-    def _get_price_unit_invoice(self, cursor, user, move_line, type):
-        if move_line.purchase_line_id:
-            return move_line.purchase_line_id.price_unit
-        return super(stock_picking, self)._get_price_unit_invoice(cursor, user, move_line, type)
-
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         purchase_obj = self.pool.get('purchase.order')
         if picking.purchase_id:

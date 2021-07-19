@@ -1219,20 +1219,50 @@ class stock_picking(osv.osv):
 
     def _get_price_unit_invoice(self, cr, uid, move_line, type, context=None):
         """ Gets price unit for invoice
+        Updates the Unit price according to the UoM received and the UoM ordered
         @param move_line: Stock move lines
         @param type: Type of invoice
         @return: The price unit for the move line
         """
         if context is None:
             context = {}
-
-        if type in ('in_invoice', 'in_refund'):
-            # Take the user company and pricetype
-            context['currency_id'] = move_line.company_id.currency_id.id
-            amount_unit = move_line.product_id.price_get('standard_price', context)[move_line.product_id.id]
-            return amount_unit
-        else:
-            return move_line.product_id.list_price
+        res = None
+        if move_line.sale_line_id and move_line.sale_line_id.product_id.id == move_line.product_id.id:
+            uom_id = move_line.product_id.uom_id.id
+            uos_id = move_line.product_id.uos_id and move_line.product_id.uos_id.id or False
+            price = move_line.sale_line_id.price_unit
+            coeff = move_line.product_id.uos_coeff
+            if uom_id != uos_id and coeff != 0:
+                price_unit = price / coeff
+                res = price_unit
+            else:
+                res = move_line.sale_line_id.price_unit
+        if res is None:
+            if move_line.purchase_line_id:
+                res = move_line.purchase_line_id.price_unit
+            else:
+                if type in ('in_invoice', 'in_refund'):
+                    # Take the user company and pricetype
+                    context['currency_id'] = move_line.company_id.currency_id.id
+                    amount_unit = move_line.product_id.price_get('standard_price', context)[move_line.product_id.id]
+                    res = amount_unit
+                else:
+                    res = move_line.product_id.list_price
+        if type == 'in_refund':
+            if move_line.picking_id and move_line.picking_id.purchase_id:
+                po_line_obj = self.pool.get('purchase.order.line')
+                po_line_id = po_line_obj.search(cr, uid, [('order_id', '=', move_line.picking_id.purchase_id.id),
+                                                          ('product_id', '=', move_line.product_id.id),
+                                                          ('state', '!=', 'cancel')
+                                                          ], limit=1)
+                if po_line_id:
+                    return po_line_obj.read(cr, uid, po_line_id[0], ['price_unit'])['price_unit']
+        if move_line.purchase_line_id:
+            po_uom_id = move_line.purchase_line_id.product_uom.id
+            move_uom_id = move_line.product_uom.id
+            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, move_uom_id, 1, po_uom_id)
+            return res / uom_ratio
+        return res
 
     def _get_discount_invoice(self, cr, uid, move_line):
         '''Return the discount for the move line'''

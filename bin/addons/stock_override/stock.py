@@ -895,29 +895,6 @@ class stock_picking(osv.osv):
 
         return res
 
-    def _get_price_unit_invoice(self, cr, uid, move_line, type):
-        '''
-        Update the Unit price according to the UoM received and the UoM ordered
-        '''
-        res = super(stock_picking, self)._get_price_unit_invoice(cr, uid, move_line, type)
-        if type == 'in_refund':
-            if move_line.picking_id and move_line.picking_id.purchase_id:
-                po_line_obj = self.pool.get('purchase.order.line')
-                po_line_id = po_line_obj.search(cr, uid, [('order_id', '=', move_line.picking_id.purchase_id.id),
-                                                          ('product_id', '=', move_line.product_id.id),
-                                                          ('state', '!=', 'cancel')
-                                                          ], limit=1)
-                if po_line_id:
-                    return po_line_obj.read(cr, uid, po_line_id[0], ['price_unit'])['price_unit']
-
-        if move_line.purchase_line_id:
-            po_uom_id = move_line.purchase_line_id.product_uom.id
-            move_uom_id = move_line.product_uom.id
-            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, move_uom_id, 1, po_uom_id)
-            return res / uom_ratio
-
-        return res
-
     def action_confirm(self, cr, uid, ids, context=None):
         """
             stock.picking: action confirm
