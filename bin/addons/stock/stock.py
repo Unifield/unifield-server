@@ -1205,6 +1205,8 @@ class stock_picking(osv.osv):
         """ Gets payment term from partner.
         @return: Payment term
         """
+        if picking.sale_id and picking.sale_id.payment_term:
+            return picking.sale_id.payment_term.id
         partner = picking.address_id.partner_id
         return partner.property_payment_term and partner.property_payment_term.id or False
 

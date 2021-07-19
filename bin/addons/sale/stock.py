@@ -40,11 +40,6 @@ class stock_picking(osv.osv):
         'sale_id': False
     }
 
-    def _get_payment_term(self, cursor, user, picking):
-        if picking.sale_id and picking.sale_id.payment_term:
-            return picking.sale_id.payment_term.id
-        return super(stock_picking, self)._get_payment_term(cursor, user, picking)
-
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         sale_obj = self.pool.get('sale.order')
         if picking.sale_id:
