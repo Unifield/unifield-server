@@ -34,12 +34,6 @@ class stock_picking(osv.osv):
         'purchase_id': False,
     }
 
-    def get_currency_id(self, cursor, user, picking):
-        if picking.purchase_id:
-            return picking.purchase_id.pricelist_id.currency_id.id
-        else:
-            return super(stock_picking, self).get_currency_id(cursor, user, picking)
-
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         purchase_obj = self.pool.get('purchase.order')
         if picking.purchase_id:

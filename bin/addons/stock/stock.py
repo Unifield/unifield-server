@@ -1193,7 +1193,13 @@ class stock_picking(osv.osv):
         return True
 
     def get_currency_id(self, cr, uid, picking):
-        return False
+        if picking.sale_id:
+            return picking.sale_id.pricelist_id.currency_id.id
+        else:
+            if picking.purchase_id:
+                return picking.purchase_id.pricelist_id.currency_id.id
+            else:
+                return False
 
     def _get_payment_term(self, cr, uid, picking):
         """ Gets payment term from partner.
