@@ -977,29 +977,14 @@ class stock_picking(osv.osv):
            or not (context.get('InShipOut', "") in ["IN", "OUT"]):  # log only for the 2 cases IN and OUT, not for SHIP
             return
 
-        # create a useful mapping purchase.order ->
-        #    dict_of_stock.move_changes
-        lines = {}
-        if 'stock.move' in context['changes']:
-            for rec_line in self.pool.get('stock.move').browse(
-                    cr, uid,
-                    context['changes']['stock.move'].keys(),
-                    context=context):
-                if self.pool.get('stock.move').exists(cr, uid, rec_line.id, context):  # check the line exists
-                    lines.setdefault(rec_line.picking_id.id, {})[rec_line.id] = context['changes']['stock.move'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
                                               context=context)
-            if 'move_lines' in changes:
-                old_lines, new_lines = map(set, changes['move_lines'])
-                logger.is_product_added |= (len(new_lines - old_lines) > 0)
-                logger.is_product_removed |= (len(old_lines - new_lines) > 0)
-            logger.is_date_modified |= ('date' in changes)
-            logger.is_status_modified |= ('state' in changes) | ('delivered' in changes)
-            # handle line's changes
-            for line_id, line_changes in lines.get(id, {}).items():
-                logger.is_quantity_modified |= ('product_qty' in line_changes)
+            logger.is_date_modified |= 'date' in changes
+            logger.is_status_modified |= 'state' in changes or 'delivered' in changes
+            logger.is_quantity_modified |= 'backorder_id' in changes
+            logger.is_product_price_modified |= 'price_unit' in changes
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
                               group=False, type='out_invoice', context=None):
@@ -1258,20 +1243,9 @@ class shipment(osv.osv):
            or not context.get('sync_message_execution') \
            or context.get('no_store_function'):
             return
-        # create a useful mapping purchase.order ->
-        #    dict_of_stock.move_changes
-        lines = {}
-        if 'shipment' in context['changes']:
-            for rec_line in self.pool.get('shipment').browse(
-                    cr, uid,
-                    context['changes']['shipment'].keys(),
-                    context=context):
-                lines.setdefault(rec_line.id, {})[rec_line.id] = \
-                    context['changes']['shipment'][rec_line.id]
-        # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
                                               context=context)
-            logger.is_status_modified |= True
+            logger.is_status_modified = True
 
 shipment()

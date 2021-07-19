@@ -1411,9 +1411,10 @@ class stock_move(osv.osv):
                 vals['state'] = 'done'
 
         # Change the reason type of the picking if it is not the same
+        other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
         if picking and not context.get('from_claim') and not context.get('from_chaining') \
+                and picking['reason_type_id'][0] != other_type_id \
                 and vals.get('reason_type_id', False) != picking['reason_type_id'][0]:
-            other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
             pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
