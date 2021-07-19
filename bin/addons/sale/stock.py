@@ -59,11 +59,6 @@ class stock_picking(osv.osv):
             return res
         return super(stock_picking, self)._get_address_invoice(cursor, user, picking)
 
-    def _get_comment_invoice(self, cursor, user, picking):
-        if picking.note or (picking.sale_id and picking.sale_id.note):
-            return picking.note or picking.sale_id.note
-        return super(stock_picking, self)._get_comment_invoice(cursor, user, picking)
-
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         sale_obj = self.pool.get('sale.order')
         if picking.sale_id:

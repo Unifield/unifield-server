@@ -1215,6 +1215,13 @@ class stock_picking(osv.osv):
         """
         @return: comment string for invoice
         """
+        if picking.note or (picking.sale_id and picking.sale_id.note):
+            return picking.note or picking.sale_id.note
+        if picking.purchase_id and picking.purchase_id.notes:
+            if picking.note:
+                return picking.note + '\n' + picking.purchase_id.notes
+            else:
+                return picking.purchase_id.notes
         return picking.note or ''
 
     def _get_price_unit_invoice(self, cr, uid, move_line, type, context=None):
