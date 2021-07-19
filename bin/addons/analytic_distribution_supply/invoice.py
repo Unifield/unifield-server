@@ -284,6 +284,9 @@ class account_invoice(osv.osv):
                                 for i in range(0,len(engagement_lines)):
                                     if engagement_lines[i]:
                                         eng_line = engagement_lines[i]
+                                        # restrict to the current CV line only
+                                        if eng_line.commitment_line_id and eng_line.commitment_line_id.id != cv_line[0]:
+                                            continue
                                         cmp_vals = {
                                             'account_id': eng_line.account_id.id,
                                             'general_account_id': eng_line.general_account_id.id,
