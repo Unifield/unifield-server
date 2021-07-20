@@ -53,7 +53,7 @@ class patch_scripts(osv.osv):
     }
 
     def us_8869_remove_ir_import(self, cr, uid, *a, **b):
-        cr.execute("update internal_request_import set error_file=NULL, file_to_import=NULL");
+        cr.execute("update internal_request_import set file_to_import=NULL");
         return True
 
     # UF21.1
