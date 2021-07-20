@@ -113,7 +113,7 @@ class account_commitment(osv.osv):
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
         'description': fields.char(string="Description", size=256),
         'version': fields.integer('Version', required=True,
-                                  help="Technical field to distinguish old CV from new ones which have a different behavior."),
+                                  help="Technical field to distinguish old CVs from new ones which have a different behavior."),
         'display_super_done_button': fields.function(_display_super_done_button, method=True, type='boolean',
                                                      store=False, invisible=True,
                                                      string='Display the button allowing to always set a CV to Done'),

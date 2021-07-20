@@ -281,7 +281,7 @@ class account_invoice(osv.osv):
                                 if distrib_line._name == 'funding.pool.distribution.line':
                                     vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
                                 # Browse engagement lines to found out matching elements
-                                for i in range(0,len(engagement_lines)):
+                                for i in range(0, len(engagement_lines)):
                                     if engagement_lines[i]:
                                         eng_line = engagement_lines[i]
                                         # restrict to the current CV line only

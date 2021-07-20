@@ -1319,7 +1319,7 @@ class stock_picking(osv.osv):
         else:
             return map(lambda x: x.id, taxes)
 
-    def _get_account_analytic_invoice(self, cursor, user, picking, move_line):
+    def _get_account_analytic_invoice(self, cr, uid, picking, move_line):
         if picking.sale_id:
             return picking.sale_id.project_id.id
         if move_line.purchase_line_id:
