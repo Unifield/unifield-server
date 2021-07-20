@@ -228,10 +228,10 @@ class account_invoice(osv.osv):
         auto_cv = True
         for cv in cr.fetchall():
             if cv[10] < 2:
-                # CV in version before 2
+                # CV IN VERSION 1
                 account_info.setdefault(cv[1], []).append(cv)  # key = account id
             else:
-                # CV from version 2
+                # CV STARTING FROM VERSION 2
                 cvl_info.setdefault(cv[0], []).append(cv)  # key = CV line id
             if cv[9] == 'manual':
                 auto_cv = False

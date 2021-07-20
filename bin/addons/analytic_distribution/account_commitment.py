@@ -556,8 +556,10 @@ class account_commitment_line(osv.osv):
         'analytic_lines': fields.one2many('account.analytic.line', 'commitment_line_id', string="Analytic Lines"),
         'first': fields.boolean(string="Is not created?", help="Useful for onchange method for views. Should be False after line creation.",
                                 readonly=True),
+        # for CV in version 1
         'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id',
-                                                    string="Purchase Order Lines", readonly=True),
+                                                    string="Purchase Order Lines (deprecated)", readonly=True),
+        # for CV starting from version 2
         'po_line_id': fields.many2one('purchase.order.line', "PO Line"),
         'po_line_product_id': fields.related('po_line_id', 'product_id', type='many2one', relation='product.product',
                                              string="Product", readonly=True, store=True, write_relate=False),
