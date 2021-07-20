@@ -1319,7 +1319,7 @@ class stock_picking(osv.osv):
         else:
             return map(lambda x: x.id, taxes)
 
-    def _get_account_analytic_invoice(self, cr, uid, picking, move_line):
+    def _get_account_analytic_invoice(self, picking, move_line):
         if picking.sale_id:
             return picking.sale_id.project_id.id
         if move_line.purchase_line_id:
@@ -1660,7 +1660,7 @@ class stock_picking(osv.osv):
                                                   move_line, inv_type)
         discount = self._get_discount_invoice(cr, uid, move_line)
         tax_ids = self._get_taxes_invoice(cr, uid, move_line, inv_type)
-        account_analytic_id = self._get_account_analytic_invoice(cr, uid, picking, move_line)
+        account_analytic_id = self._get_account_analytic_invoice(picking, move_line)
 
         #set UoS if it's a sale and the picking doesn't have one
         uos_id = move_line.product_uos and move_line.product_uos.id or False
@@ -1710,7 +1710,7 @@ class stock_picking(osv.osv):
                     tax_ids = sale_line.tax_id
                     tax_ids = map(lambda x: x.id, tax_ids)
 
-                    account_analytic_id = self._get_account_analytic_invoice(cr, uid, picking, sale_line)
+                    account_analytic_id = self._get_account_analytic_invoice(picking, sale_line)
 
                     account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, picking.sale_id.partner_id.property_account_position, account_id)
                     invoice_line_id = invoice_line_obj.create(cr, uid, {
