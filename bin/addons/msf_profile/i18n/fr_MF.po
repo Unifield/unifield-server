@@ -112393,3 +112393,35 @@ msgstr "L'Adresse ne peut pas être désactivée. Il y a des Éxpéditions ouver
 #, python-format
 msgid "The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process."
 msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée (%s). Veuillez en sélectionner une autre pour pouvoir continuer le traitement."
+
+#. module: sync_client
+#: code:addons/sync_client/wizard/view_entity_id.py:69
+#, python-format
+msgid ""
+"Last update sequence pulled by this instance does not match the sequence on "
+"the sync server. Please do not use this instance and contact UF Support."
+msgstr "Dernière séquence récupérée par cette instance ne correspond pas à la séquence du serveur de sync."
+"Veuillez ne pas utiliser cette instance et contacter le support UF"
+
+#. module: sync_client
+#: code:addons/sync_client/wizard/view_entity_id.py:68
+#, python-format
+msgid ""
+"Last update sequence pulled by this instance matches the sequence on the "
+"sync server."
+msgstr "Dernière séquence récupérée par cette instance correspond à la séquence du serveur de sync."
+
+#. module: sync_client
+#: code:addons/sync_client/wizard/view_entity_id.py:53
+#, python-format
+msgid "Last update sequence pulled: %s"
+msgstr "Dernière séquence récupérée: %s"
+
+#. module: sync_client
+#: code:addons/sync_client/wizard/view_entity_id.py:67
+#, python-format
+msgid ""
+"Unable to retrieve the update sequence from the sync server, please check "
+"the Connection Manager."
+msgstr "Impossible de récupérer la dernière séquence depuis le serveur de sync, "
+"veuillez vérifier le Gestionnaire de Connexion."

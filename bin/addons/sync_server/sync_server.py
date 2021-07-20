@@ -433,6 +433,14 @@ class entity(osv.osv):
             'group': ', '.join([group.name for group in entity.group_ids]),
         })
 
+    def get_last_update(self, cr, uid, uuid, context=None):
+        entity_pool = self.pool.get("sync.server.entity")
+        id = entity_pool.get(cr, 1, uuid=uuid)
+        if not id:
+            return (False, "Error: Instance does not exist in the server database")
+        entity = entity_pool.browse(cr, 1, id[0], fields_to_fetch=['last_sequence'])
+        return (True, entity.last_sequence)
+
     @check_validated
     def get_children(self, cr, uid, entity, context=None):
         res = []

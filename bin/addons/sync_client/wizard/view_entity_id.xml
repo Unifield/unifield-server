@@ -8,8 +8,16 @@
             <field name="arch" type="xml">
                 <form string="Entity Id" col="4">
                     <html>
-                        <h1><label string="name" align="0.0" colspan="4"/></h1>
-                        <h1><label string="sequence" align="0.0" colspan="4"/></h1>
+                        <div style="font-size: 14px; font-weight: bold;">
+                        <p id="name" />
+                        <p id="sequence" />
+                        <br />
+                        <br />
+                        <div>
+                            <img style="vertical-align:middle;"/>
+                            <span id="sync-text"/>
+                        </div>
+                        </div>
                     </html>
                 </form>
             </field>
