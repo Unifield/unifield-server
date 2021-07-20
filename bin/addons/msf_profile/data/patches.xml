@@ -677,5 +677,9 @@
             <field name="method">us_8753_admin_never_expire_password</field>
         </record>
 
+        <record id="us_8869_remove_ir_import" model="patch.scripts">
+            <field name="method">us_8869_remove_ir_import</field>
+        </record>
+
     </data>
 </openerp>

@@ -52,6 +52,10 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_8869_remove_ir_import(self, cr, uid, *a, **b):
+        cr.execute("update internal_request_import set error_file=NULL, file_to_import=NULL");
+        return True
+
     # UF21.1
     def us_8810_fake_updates(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.entity'):
