@@ -1597,6 +1597,7 @@ class stock_move(osv.osv):
         move_to_done = []
         pick_to_check = set()
         sol_ids_to_check = {}
+        pickings = {}
 
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_qty == 0.00:
@@ -1648,6 +1649,7 @@ class stock_move(osv.osv):
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
                 else:
                     if move.product_qty != 0.00:
+                        pickings[move.picking_id.id] = True
                         self.write(cr, uid, move.id, {'state': 'cancel'}, context=context)
                     signal = 'cancel_r' if resource else 'cancel'
                     wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
@@ -1718,7 +1720,6 @@ class stock_move(osv.osv):
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
 
-        pickings = {}
         for move in self.browse(cr, uid, ids, context=context):
             if move.state in ('confirmed', 'waiting', 'assigned', 'draft'):
                 if move.picking_id:
