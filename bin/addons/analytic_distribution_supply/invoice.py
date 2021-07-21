@@ -26,6 +26,7 @@ from osv import orm
 from osv import fields
 from tools.translate import _
 from base import currency_date
+import netsvc
 
 
 class account_invoice_line(osv.osv):
@@ -205,6 +206,7 @@ class account_invoice(osv.osv):
             account_amount_dic = {}
         if cvl_amount_dic is None:
             cvl_amount_dic = {}
+        wf_service = netsvc.LocalService("workflow")
 
         # po is state=cancel on last IN cancel
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -256,10 +258,11 @@ class account_invoice(osv.osv):
                 for cv_line in cv_info[k]:
                     if cv_line[3] == 'draft' and cv_line[2] not in draft_opened and not from_cancel:
                         draft_opened.append(cv_line[2])
-                        # If Commitment voucher in draft state we change it to 'validated' without using workflow and
-                        # engagement lines generation
-                        # NB: This permits to avoid modification on commitment voucher when receiving some goods
-                        self.pool.get('account.commitment').write(cr, uid, [cv_line[2]], {'state': 'open'}, context=context)
+                        # Change Draft CV to Validated State, in order to avoid CV modification when receiving some goods.
+                        # The workflow is used so that all the engagement lines are generated, even those which are not
+                        # affected by the current update (e.g. partial reception + SI validation on one in 2 products).
+                        wf_service.trg_validate(uid, 'account.commitment', cv_line[2], 'commitment_open', cr)
+
                     if cv_line[4] - amount_dic[k] > 0.001:
                         # update amount left on CV line
                         amount_left = cv_line[4] - amount_dic[k]
