@@ -1647,6 +1647,8 @@ class stock_move(osv.osv):
                     if move.purchase_line_id.order_id.order_type == 'direct' and abs(pol_info['in_qty_remaining']) < 0.001:
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
                 else:
+                    if move.product_qty != 0.00:
+                        self.write(cr, uid, move.id, {'state': 'cancel'}, context=context)
                     signal = 'cancel_r' if resource else 'cancel'
                     wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
                 if move.purchase_line_id.order_id.order_type == 'direct':
