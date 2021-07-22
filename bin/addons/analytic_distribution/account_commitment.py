@@ -546,7 +546,7 @@ class account_commitment_line(osv.osv):
         'commit_number': fields.related('commit_id', 'name', type='char', size=64,
                                         readonly=True, store=False, string="Commitment Voucher Number"),
         'commit_type': fields.related('commit_id', 'type', string="Type", type='selection', readonly=True,
-                                      store=False, invisible=True, selection=get_cv_type),
+                                      store=False, invisible=True, selection=get_cv_type, write_relate=False),
         'commit_state': fields.related('commit_id', 'state', string="CV State", type='char', readonly=True,
                                        store=False, invisible=True, write_relate=False),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),

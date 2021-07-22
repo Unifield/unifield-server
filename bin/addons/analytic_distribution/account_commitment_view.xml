@@ -89,7 +89,7 @@
                       hide_delete_button="1"
                       >
                     <field name="commit_type"/>
-                    <field name="commit_state" invisible="1" />
+                    <field name="commit_state"/>
                     <field name="po_line_product_id"/>
                     <field name="po_line_number"/>
                     <field name="account_id" domain="[('restricted_area', '=', 'commitment_lines')]"/>
