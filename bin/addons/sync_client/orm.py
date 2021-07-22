@@ -428,6 +428,26 @@ SELECT res_id, touched
         self.touch(cr, uid, ids, None, True, context=context)
         return True
 
+    def sql_synchronize(self, cr, ids, field='name'):
+        """
+        Includes in the next synchro the records with the ids in param on the current object.
+
+        This is done via a "touch" in SQL in order to synch only the selected objects and not their related o2m.
+        A specific "field" to synchronize can be given ("name" by default).
+        """
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            trigger_sync_sql = """
+                                  UPDATE ir_model_data
+                                  SET touched ='[''%s'']', last_modification=NOW()
+                                  WHERE module='sd'
+                                  AND model='%s'
+                                  AND res_id IN %%s
+                               """ % (field, self._name) # not_a_user_entry
+            cr.execute(trigger_sync_sql, (tuple(ids),))
+        return True
+
     def clear_synchronization(self, cr, uid, ids, context=None):
         data_ids = self.get_sd_ref(cr, uid, ids, field='id', context=context)
         return self.pool.get('ir.model.data').write(cr, uid, data_ids.values(),

@@ -1304,14 +1304,13 @@
                             <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])], 'notselectable': [('state', '!=', 'draft')]}" o2m_selectable="2">
                                 <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new" noteditable="fake_state not in ['draft','assigned']">
                                     <field name="fake_state" invisible="True" />
-                                    <field name="ship_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
                                     <field name="ppl_id" readonly="1"/>
                                     <field name="packing_list" readonly="1" />
                                     <field name="description_ppl" readonly="1" />
                                     <button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="from_pack" readonly="1" />
-                                    <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('ship_state', '!=', 'draft')]}" readonly="0"/>
+                                    <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" readonly="0"/>
                                     <field name="num_of_packs" readonly="1" />
                                     <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0" on_change="change_selected_number(selected_number)"/>
                                     <field name="pack_type" readonly="1" />
@@ -1334,7 +1333,7 @@
                                     <field name="description_ppl" readonly="1" />
                                     <newline />
                                     <field name="from_pack" readonly="1" />
-                                    <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('ship_state', '!=', 'draft')]}" />
+                                    <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" />
                                     <field name="num_of_packs" readonly="1"/>
                                     <field name="selected_number" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" on_change="change_selected_number(selected_number)" />
                                     <field name="pack_type" readonly="1" />
@@ -1352,7 +1351,6 @@
                                     <field name="quick_flow" invisible="1" />
                                     <field name="pack_state" invisible="1" />
                                     <field name="fake_state" invisible="1" />
-                                    <field name="ship_state" invisible="1" />
                                     <field name="move_lines" nolabel="True" colspan="4" mode="tree" readonly="True">
                                         <tree colors="red: inactive_product==True">
                                             <field name="line_number" />

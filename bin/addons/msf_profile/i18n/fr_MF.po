@@ -65700,18 +65700,23 @@ msgstr "lignes"
 msgid "Budget Lines"
 msgstr "Budget - Lignes"
 
-#. modules: msf_doc_import, stock_override, consumption_calculation, kit, analytic_distribution
+#. modules: msf_doc_import, consumption_calculation, kit, analytic_distribution
 #: code:addons/consumption_calculation/consumption_calculation.py:69
 #: code:addons/kit/kit.py:860
 #: code:addons/msf_doc_import/initial_stock_inventory.py:70
 #: code:addons/msf_doc_import/initial_stock_inventory.py:611
-#: code:addons/stock_override/stock.py:436
 #: code:addons/msf_doc_import/purchase_order.py:395
 #: code:addons/msf_doc_import/sale_order.py:81
 #: code:addons/analytic_distribution/invoice.py:48
 #, python-format
 msgid "%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez supprimer/corriger les %s contenant %s (voir les %s en rouge)"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:1181
+#, python-format
+msgid "%s been inactivated. If you want to validate this line you have to remove/correct the %s containing %s (see red %s of the document)"
+msgstr "%s a été désactivé. Si vous voulez valider cette ligne vous devez supprimer/corriger les %s contenant %s (voir les %s en rouge)"
 
 #. modules: account, finance
 #: model:ir.model,name:account.model_account_balance_report
@@ -103576,11 +103581,11 @@ msgstr "\n"
 ""
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/purchase_order.py:406
-#: code:addons/msf_doc_import/sale_order.py:81
+#: code:addons/msf_doc_import/purchase_order.py:747
+#: code:addons/msf_doc_import/sale_order.py:200
 #, python-format
-msgid "%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
-msgstr "%s a eté inactivé. Pour valider ce document vous supprimer ou corriger la ligne qui contient le produit inactif (%s en rouge du document)"
+msgid "%s been inactivated. If you want to validate this line you have to remove/correct the line containing the inactive product (see red %s of the document)"
+msgstr "%s a eté inactivé. Pour valider cette ligne, il faut supprimer ou corriger la ligne qui contient le produit inactif (%s en rouge du document)"
 
 #. module: msf_doc_import
 #: field:wizard.import.po.simulation.screen.line,type_change:0
@@ -105787,6 +105792,7 @@ msgstr "La Date de Prise de Stock de %s n'est pas cohérente! Elle ne devrait pa
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1712
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1722
 #, python-format
 msgid "The  'Stock Take Date' is not consistent! It should not be later than %s's creation date"
 msgstr "La  'Date de Prise de Stock' n'est pas cohérente! Elle ne devrait pas être ultérieure à la date de création de %s"
