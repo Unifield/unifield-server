@@ -162,6 +162,15 @@ class purchase_order_line_sync(osv.osv):
                 # link our resourced PO line with corresponding resourced FO line:
             if pol_values.get('resourced_original_line'):
                 orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['linked_sol_id', 'analytic_distribution_id', 'origin'], context=context)
+                in_lines_ids = self.pool.get('stock.move').search(cr, uid, [
+                    ('purchase_line_id', '=', orig_po_line.id),
+                    ('type', '=', 'in'),
+                    ('in_forced', '=', True)
+                ], context=context)
+                if in_lines_ids:
+                    orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['line_number', 'order_id'], context=context)
+                    in_forced = self.pool.get('stock.move').browse(cr, uid, in_lines_ids[0:4], fields_to_fetch=['picking_id'], context=context)
+                    raise  Exception, "%s: Line %s forced on %s, unable to C/R" % (orig_po_line.order_id.name, orig_po_line.line_number, ','.join([x.picking_id.backorder_id.name for x in in_forced]))
                 if orig_po_line.linked_sol_id:
                     resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
                     ress_fo = orig_po_line.linked_sol_id.order_id.id
@@ -329,6 +338,8 @@ class purchase_order_line_sync(osv.osv):
             logger.info('other pol: %s' % self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty', 'linked_sol_id', 'product_id']))
             logger.info('pol_state %s' % pol_state)
 
+
+        cancel_type = False
         # Wkf action:
         if sol_dict['state'] in ('sourced', 'sourced_v'):
             if pol_state in 'sourced_n':
@@ -349,12 +360,24 @@ class purchase_order_line_sync(osv.osv):
             else:
                 wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
         elif sol_dict['state'] == 'cancel' or (sol_dict['state'] == 'done' and sol_dict.get('from_cancel_out')):
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
+            cancel_type = 'cancel'
         elif sol_dict['state'] == 'cancel_r':
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel_r', cr)
+            cancel_type = 'cancel_r'
         elif debug:
             logger.info('No wkf trigger')
 
+        if cancel_type:
+            in_lines_ids = self.pool.get('stock.move').search(cr, uid, [
+                ('purchase_line_id', '=', pol_updated),
+                ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                ('type', '=', 'in'),
+                ('in_forced', '=', True)
+            ], context=context)
+            if in_lines_ids:
+                if cancel_type == 'cancel':
+                    self.pool.get('stock.move').action_cancel(cr, uid, in_lines_ids, context=context)
+            else:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, cancel_type, cr)
         pol_data = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['order_id', 'line_number'], context=context)
         message = "+++ Purchase Order %s %s: line number %s (id:%s) has been updated +++" % (kind, pol_data['order_id'][1], pol_data['line_number'], pol_updated)
         logger.info(message)
