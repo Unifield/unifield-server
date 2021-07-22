@@ -87,7 +87,6 @@
                       hide_delete_button="1"
                       >
                     <field name="commit_type"/>
-                    <field name="commit_state"/>
                     <field name="po_line_product_id"/>
                     <field name="po_line_number"/>
                     <field name="account_id" domain="[('restricted_area', '=', 'commitment_lines')]"/>
@@ -104,7 +103,7 @@
                            attrs="{'readonly': ['|', ('first', '=', True), ('commit_type', '=', 'external')]}"
                     />
                     <button name="unlink" string="Delete" icon="gtk-del" type="object"
-                            attrs="{'invisible': ['|', ('commit_type', '=', 'external'), ('commit_state', '=', 'done')]}"
+                            attrs="{'invisible': ['|', ('commit_type', '=', 'external'), ('state', '=', 'done')]}"
                             confirm="Do you really want to delete this line?" />
                 </tree>
             </field>
