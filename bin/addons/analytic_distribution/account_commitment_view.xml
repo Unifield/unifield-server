@@ -85,7 +85,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'"
-                      button_attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '=', 'external')]}"
+                      button_attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"
                       hide_delete_button="1"
                       >
                     <field name="commit_type"/>
@@ -106,7 +106,9 @@
                     <field name="amount"
                            attrs="{'readonly': ['|', ('first', '=', True), ('commit_type', '=', 'external')]}"
                     />
-                    <button name="unlink" string="Delete" icon="gtk-del" type="object" attrs="{'invisible': ['|', ('commit_type', '=', 'external'), ('commit_state', '!=', 'draft')]}" confirm="Do you really want to delete this line ?" />
+                    <button name="unlink" string="Delete" icon="gtk-del" type="object"
+                            attrs="{'invisible': ['|', ('commit_type', '=', 'external'), ('commit_state', '=', 'done')]}"
+                            confirm="Do you really want to delete this line?" />
                 </tree>
             </field>
         </record>
