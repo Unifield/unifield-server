@@ -82,6 +82,7 @@
             <field name="model">account.commitment.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
+                <!-- display the "New" button or not depending on the state and type of the CV itself -->
                 <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'"
                       button_attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"
                       hide_delete_button="1"
@@ -102,9 +103,11 @@
                     <field name="amount"
                            attrs="{'readonly': ['|', ('first', '=', True), ('commit_type', '=', 'external')]}"
                     />
+                    <!-- display the "Delete" button or not depending on the state and type of the CV itself -->
                     <button name="unlink" string="Delete" icon="gtk-del" type="object"
-                            attrs="{'invisible': ['|', ('commit_type', '=', 'external'), ('state', '=', 'done')]}"
-                            confirm="Do you really want to delete this line?" />
+                            attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"
+                            confirm="Do you really want to delete this line?"
+                    />
                 </tree>
             </field>
         </record>
