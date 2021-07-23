@@ -34,7 +34,9 @@
                     <field name="analytic_distribution_id" invisible="1"/>
                     <notebook colspan="4">
                         <page string="Commitment voucher lines">
-                            <field name="line_ids" nolabel="1" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                            <field name="line_ids" nolabel="1" colspan="4"
+                                   attrs="{'readonly': ['|', ('state', '=', 'done'),
+                                                        '&amp;', ('type', '=', 'external'), ('state', '!=', 'draft')]}"/>
                         </page>
                     </notebook>
                     <field name="notes" colspan="4"/>
