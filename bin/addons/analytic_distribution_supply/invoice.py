@@ -275,27 +275,18 @@ class account_invoice(osv.osv):
                         distrib = self.pool.get('analytic.distribution').browse(cr, uid, [distrib_id], context=context)[0]
                         engagement_lines = distrib.analytic_lines
                         for distrib_line in distrib.funding_pool_lines:
-                            vals = {
-                                'cost_center_id': distrib_line.cost_center_id.id,
-                                'destination_id': distrib_line.destination_id.id,
-                                'account_id': distrib_line.analytic_id.id,
-                                'general_account_id': cv_line[1],
-                            }
                             # Browse engagement lines to found out matching elements
                             for i in range(0, len(engagement_lines)):
                                 if engagement_lines[i]:
                                     eng_line = engagement_lines[i]
                                     # restrict to the current CV line only
                                     if eng_line.commitment_line_id and eng_line.commitment_line_id.id == cv_line[0]:
-                                        cmp_vals = {
-                                            'cost_center_id': eng_line.cost_center_id.id,
-                                            'destination_id': eng_line.destination_id.id,
-                                            'account_id': eng_line.account_id.id,
-                                            'general_account_id': eng_line.general_account_id.id,
-                                        }
+                                        eng_line_distrib = eng_line.distrib_line_id and \
+                                                           eng_line.distrib_line_id._name == 'funding.pool.distribution.line' and \
+                                                           eng_line.distrib_line_id.id or False
                                         # in case of an AD with several lines, several AJIs are linked to the same CV line:
                                         # the comparison is used to decrement the right one
-                                        if cmp_vals == vals:
+                                        if eng_line_distrib == distrib_line.id:
                                             # Update analytic line with new amount
                                             anal_amount = (distrib_line.percentage * amount_left) / 100
                                             curr_date = currency_date.get_date(self, cr, eng_line.document_date, eng_line.date,
