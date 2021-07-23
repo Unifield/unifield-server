@@ -281,12 +281,12 @@ class account_invoice(osv.osv):
                                     eng_line = engagement_lines[i]
                                     # restrict to the current CV line only
                                     if eng_line.commitment_line_id and eng_line.commitment_line_id.id == cv_line[0]:
-                                        eng_line_distrib = eng_line.distrib_line_id and \
-                                                           eng_line.distrib_line_id._name == 'funding.pool.distribution.line' and \
-                                                           eng_line.distrib_line_id.id or False
+                                        eng_line_distrib_id = eng_line.distrib_line_id and \
+                                                              eng_line.distrib_line_id._name == 'funding.pool.distribution.line' and \
+                                                              eng_line.distrib_line_id.id or False
                                         # in case of an AD with several lines, several AJIs are linked to the same CV line:
                                         # the comparison is used to decrement the right one
-                                        if eng_line_distrib == distrib_line.id:
+                                        if eng_line_distrib_id == distrib_line.id:
                                             # Update analytic line with new amount
                                             anal_amount = (distrib_line.percentage * amount_left) / 100
                                             curr_date = currency_date.get_date(self, cr, eng_line.document_date, eng_line.date,
