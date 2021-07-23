@@ -181,6 +181,7 @@ class stock_picking(osv.osv):
             'note': data.get('note', False),
             'comment': data.get('comment'),
             'sale_line_id': data.get('sale_line_id', False) and data['sale_line_id'].get('id', False) or False,
+            'resourced_original_remote_line': data.get('sale_line_id', False) and data['sale_line_id'].get('resourced_original_remote_line', False) or False,
 
         }
         for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width']:
@@ -487,6 +488,19 @@ class stock_picking(osv.osv):
                                     already_closed = move_obj.search_exists(cr, uid, [('picking_id', 'in', closed_pick_ids), ('line_number', '=', data.get('line_number'))], context=context)
 
                             if not already_closed:
+                                if data.get('resourced_original_remote_line'):
+                                    resourced_po_line_id = data['resourced_original_remote_line'].split('/')[-1]
+                                    if resourced_po_line_id:
+                                        move_forced_id = self.pool.get('stock.move').search(cr, uid, [
+                                            ('purchase_line_id', '=', int(resourced_po_line_id)),
+                                            ('type', '=', 'in'),
+                                            ('in_forced', '=', True)
+                                        ], limit=1, order='state desc', context=context)
+                                        if move_forced_id:
+                                            move_forced = move_obj.browse(cr, uid, move_forced_id[0], fields_to_fetch=['picking_id', 'purchase_line_id'], context=context)
+                                            ignored_lines.append('Line %s ignored because orignal line number %s forced in %s' % (data.get('line_number'), move_forced.purchase_line_id.line_number, move_forced.picking_id.name))
+                                            continue
+
                                 message = "Line number " + str(ln) + " is not found in the original IN or PO"
                                 self._logger.info(message)
                                 raise Exception(message)
