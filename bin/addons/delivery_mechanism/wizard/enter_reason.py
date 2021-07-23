@@ -66,10 +66,16 @@ class enter_reason(osv.osv_memory):
         # update the object
         for obj in picking_obj.browse(cr, uid, picking_ids, context=context):
             # set the reason
+            cancel_forced = self.pool.get('stock.move.cancel.wizard').is_in_forced(cr, uid, obj, context=context)
             obj.write({'change_reason': change_reason}, context=context)
 
             if context.get('do_resource', False):
-                self.pool.get('stock.move').write(cr, uid, [move.id for move in obj.move_lines], {'has_to_be_resourced': True}, context=context)
+                to_write = {'has_to_be_resourced': True}
+                if cancel_forced:
+                    to_write['in_forced'] = True
+                self.pool.get('stock.move').write(cr, uid, [move.id for move in obj.move_lines], to_write, context=context)
+            elif cancel_forced:
+                self.pool.get('stock.move').write(cr, uid, [move.id for move in obj.move_lines], {'in_forced': True}, context=context)
 
             context['allow_cancelled_pol_copy'] = True
             self.pool.get('stock.move').action_cancel(cr, uid, [move.id for move in obj.move_lines], context=context)

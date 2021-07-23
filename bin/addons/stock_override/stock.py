@@ -2015,6 +2015,13 @@ class stock_move_cancel_wizard(osv.osv_memory):
                 'res_id': wiz_id,
                 'context': context}
 
+    def is_in_forced(self, cr, uid, picking_browse, context=None):
+        return picking_browse.state == 'assigned' and \
+            picking_browse.purchase_id and \
+            picking_browse.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
+            picking_browse.purchase_id.order_type != 'direct'
+
+
     def just_cancel(self, cr, uid, ids, context=None):
         '''
         Just call the cancel of stock.move (re-sourcing flag not set)
@@ -2033,6 +2040,10 @@ class stock_move_cancel_wizard(osv.osv_memory):
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
             move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
                                        limit=1, order='NO_ORDER', context=context)
+
+            if move_ids and self.is_in_forced(cr, uid, wiz.move_id.picking_id, context=context):
+                move_obj.write(cr, uid, move_ids, {'in_forced': True}, context=context)
+
             if move_ids and  wiz.move_id.has_to_be_resourced:
                 self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled and resourced" % (
                     move_id,

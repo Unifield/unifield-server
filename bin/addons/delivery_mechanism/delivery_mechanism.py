@@ -1092,6 +1092,7 @@ class stock_picking(osv.osv):
                         }
                         bo_values.update(av_values)
                         if in_forced:
+                            # set in_forced on remaining (assigned qty): used for future sync msg processing
                             bo_values['in_forced'] = True
 
                         context['keepLineNumber'] = True
@@ -1104,6 +1105,8 @@ class stock_picking(osv.osv):
 
                 # Put the done moves in this new picking
                 done_values = {'picking_id': backorder_id}
+                if in_forced:
+                    done_values['in_forced'] = True
                 move_obj.write(cr, uid, done_moves, done_values, context=context)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'create_bo': _('Done'),
@@ -1190,6 +1193,10 @@ class stock_picking(osv.osv):
                         self.action_cancel(cr, uid, [picking_id], context=context)
                     else:
                         return_goods = wizard.register_a_claim and wizard.claim_type in ('return', 'surplus')
+                        if not return_goods and in_forced:
+                            move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id), ('state', '=', 'assigned')])
+                            if move_ids:
+                                move_obj.write(cr, uid, move_ids, {'in_forced': True}, context=context)
                         self.action_move(cr, uid, [picking_id], return_goods=return_goods, context=context)
                         if return_goods:
                             out_domain = [('backorder_id', '=', picking_id), ('type', '=', 'out')]
