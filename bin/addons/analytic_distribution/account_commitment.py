@@ -214,29 +214,30 @@ class account_commitment(osv.osv):
                     fctal_currency = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.currency_id.id
                     for cl in c.line_ids:
                         # Verify that date is compatible with all analytic account from distribution
+                        distrib = False
                         if cl.analytic_distribution_id:
                             distrib = cl.analytic_distribution_id
                         elif cl.commit_id and cl.commit_id.analytic_distribution_id:
                             distrib = cl.commit_id.analytic_distribution_id
-                        else:
-                            raise osv.except_osv(_('Warning'), _('No analytic distribution found for %s %s') % (cl.account_id.code, cl.initial_amount))
-                        for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
-                            for distrib_line in distrib_lines:
-                                if distrib_line.analytic_id and \
-                                    (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start or
-                                     distrib_line.analytic_id.date and date >= distrib_line.analytic_id.date):
-                                    raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') %
-                                                         (distrib_line.analytic_id.name,))
-                        dest_cc_tuples = set()  # check each Dest/CC combination only once
-                        for distrib_cc_l in distrib.cost_center_lines:
-                            if distrib_cc_l.analytic_id:  # non mandatory field
-                                dest_cc_tuples.add((distrib_cc_l.destination_id, distrib_cc_l.analytic_id))
-                        for distrib_fp_l in distrib.funding_pool_lines:
-                            dest_cc_tuples.add((distrib_fp_l.destination_id, distrib_fp_l.cost_center_id))
-                        for dest, cc in dest_cc_tuples:
-                            if dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
-                                raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active at this date: %s") %
-                                                     (dest.code or '', cc.code or '', date))
+                        if distrib:
+                            for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines,
+                                                  distrib.free_1_lines, distrib.free_2_lines]:
+                                for distrib_line in distrib_lines:
+                                    if distrib_line.analytic_id and \
+                                        (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start or
+                                         distrib_line.analytic_id.date and date >= distrib_line.analytic_id.date):
+                                        raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') %
+                                                             (distrib_line.analytic_id.name,))
+                            dest_cc_tuples = set()  # check each Dest/CC combination only once
+                            for distrib_cc_l in distrib.cost_center_lines:
+                                if distrib_cc_l.analytic_id:  # non mandatory field
+                                    dest_cc_tuples.add((distrib_cc_l.destination_id, distrib_cc_l.analytic_id))
+                            for distrib_fp_l in distrib.funding_pool_lines:
+                                dest_cc_tuples.add((distrib_fp_l.destination_id, distrib_fp_l.cost_center_id))
+                            for dest, cc in dest_cc_tuples:
+                                if dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
+                                    raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active at this date: %s") %
+                                                         (dest.code or '', cc.code or '', date))
                         # update the dates and fctal amounts of the related analytic lines
                         context.update({'currency_date': date})  # same date used for doc, posting and source date of all lines
                         for aal in cl.analytic_lines:
