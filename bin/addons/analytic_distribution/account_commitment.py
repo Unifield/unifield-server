@@ -347,6 +347,12 @@ class account_commitment(osv.osv):
             'context': context,
         }
 
+    def button_analytic_distribution_2(self, cr, uid, ids, context=None):
+        """
+        This is just an alias for button_analytic_distribution (used to have different names and attrs on both buttons)
+        """
+        return self.button_analytic_distribution(cr, uid, ids, context=context)
+
     def button_reset_distribution(self, cr, uid, ids, context=None):
         """
         Reset analytic distribution on all commitment lines.
