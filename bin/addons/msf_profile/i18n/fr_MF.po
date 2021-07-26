@@ -104956,6 +104956,11 @@ msgstr "\n"
 "                                    Attention: Les lignes suivantes ont des qté ou des montants sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                "
 
+#. module: sale
+#: view:sale.order:0
+msgid "WARNING: Order line(s) not synchronized, code(s) does not exist"
+msgstr "ATTENTION: Ligne(s) non sychronisée(s), code(s) inexistant(s)"
+
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_wizard_import_product_line
 msgid "Import Products data from Excel sheet"

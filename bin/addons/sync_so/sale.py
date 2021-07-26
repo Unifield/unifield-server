@@ -26,6 +26,7 @@ import so_po_common
 assert so_po_common # needed by rw
 import time
 from sync_client import get_sale_purchase_logger
+from sync_client import SyncException
 
 
 class sale_order_line_sync(osv.osv):
@@ -59,21 +60,30 @@ class sale_order_line_sync(osv.osv):
             raise Exception, "Cannot find the parent FO with client order ref = %s" % order_ref
         so_name = self.pool.get('sale.order').read(cr, uid, sale_order_ids[0], ['name'], context=context)['name'] or ''
 
-        # from purchase.order.line to sale.order.line:
-        sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
-        sol_values['order_id'] = sale_order_ids[0]
-        sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
-        sol_values['ir_name_from_sync'] = pol_dict.get('ir_name_for_sync', False)
-        if sol_values.get('product_id'):
-            sol_values['original_product'] = sol_values['product_id']
-        if sol_values.get('product_qty') or sol_values.get('product_uom_qty'):
-            sol_values['original_qty'] = sol_values.get('product_qty', False) or sol_values.get('product_uom_qty', False)
-        new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
+        try:
+            # from purchase.order.line to sale.order.line:
+            sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
+            sol_values['order_id'] = sale_order_ids[0]
+            sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
+            sol_values['ir_name_from_sync'] = pol_dict.get('ir_name_for_sync', False)
+            if line_info.product_id and not sol_values.get('product_id'):
+                raise Exception('FO: %s , Product %s not found' % (so_name, line_info.default_code or ''))
+            if sol_values.get('product_id'):
+                sol_values['original_product'] = sol_values['product_id']
+            if sol_values.get('product_qty') or sol_values.get('product_uom_qty'):
+                sol_values['original_qty'] = sol_values.get('product_qty', False) or sol_values.get('product_uom_qty', False)
+            new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
-        message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)
-        self._logger.info(message)
+            message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)
+            self._logger.info(message)
 
-        return message
+            return message
+        except Exception, e:
+            if hasattr(e, 'value'):
+                msg = e.value
+            else:
+                msg = '%s' % e
+            raise SyncException(msg, target_object='sale.order', target_id=sale_order_ids[0])
 
 
 sale_order_line_sync()
