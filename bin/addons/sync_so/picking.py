@@ -500,6 +500,12 @@ class stock_picking(osv.osv):
                                             move_forced = move_obj.browse(cr, uid, move_forced_id[0], fields_to_fetch=['picking_id', 'purchase_line_id'], context=context)
                                             ignored_lines.append('Line %s ignored because orignal line number %s forced in %s' % (data.get('line_number'), move_forced.purchase_line_id.line_number, move_forced.picking_id.name))
                                             continue
+                                elif data.get('sale_line_id'):
+                                    identifier = data.get('sale_line_id').split('.')[-1]
+                                    prev_nr_id = self.pool.get('sync.client.message_received').search(cr, uid, [('target_id', '=', po_id), ('target_object', '=', 'in_forced_cr'), ('identifier', '=like', '%s_%%' % identifier)], limit=1, context=context)
+                                    if prev_nr_id:
+                                        ignored_lines.append('Line %s ignored because orignal line number forced, see NR id: %s_XX' % (data.get('line_number'), identifier))
+                                        continue
 
                                 message = "Line number " + str(ln) + " is not found in the original IN or PO"
                                 self._logger.info(message)
