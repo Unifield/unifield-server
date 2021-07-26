@@ -23,7 +23,7 @@
                     </group>
                     <group name="buttons" colspan="4" col="6">
                         <button name="go_to_in" string="Return to the IN" icon="gtk-cancel" type="object" />
-                        <button name="import_in" string="Import File" icon="gtk-go-forward" type="object" states="draft" />
+                        <button name="import_in" string="Import file" icon="gtk-go-forward" type="object" states="draft" />
                     </group>
                 </form>
             </field>

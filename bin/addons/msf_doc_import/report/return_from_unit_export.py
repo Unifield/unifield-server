@@ -28,13 +28,13 @@ class return_from_unit_parser(XlsxReportParser):
         img.anchor = 'A1'
         sheet.add_image(img)
 
-        sheet.column_dimensions['A'].width = 5.0
+        sheet.column_dimensions['A'].width = 7.0
         sheet.column_dimensions['B'].width = 20.0
         sheet.column_dimensions['C'].width = 65.0
         sheet.column_dimensions['D'].width = 15.0
         sheet.column_dimensions['E'].width = 10.0
         sheet.column_dimensions['F'].width = 20.0
-        sheet.column_dimensions['G'].width = 15.0
+        sheet.column_dimensions['G'].width = 20.0
         sheet.column_dimensions['H'].width = 65.0
 
         sheet.append([])

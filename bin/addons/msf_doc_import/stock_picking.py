@@ -441,7 +441,7 @@ class stock_picking(osv.osv):
         return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves',
                                                                                     'reason_type_return_from_unit')[1]
 
-        ftf =['reason_type_id', 'ext_cu', 'purchase_id', 'move_lines']
+        ftf = ['reason_type_id', 'ext_cu', 'purchase_id', 'move_lines']
         picking = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
         if picking.reason_type_id.id != return_reason_type_id:
             raise osv.except_osv(_('Error'), _('The reason type does not correspond to the expected “Return from Unit”, please check this'))

@@ -58,6 +58,7 @@ class wizard_return_from_unit_import(osv.osv_memory):
         pick = wiz.picking_id
         if not wiz.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        self.write(cr, uid, wiz.id, {'state': 'in_progress'}, context=context)
 
         wb = load_workbook(filename=BytesIO(base64.decodestring(wiz.file_to_import)), read_only=True)
         sheet = wb.active
@@ -160,7 +161,7 @@ class wizard_return_from_unit_import(osv.osv_memory):
                 if cell[3].data_type == 'n':
                     line.update({'product_qty': qty})
                 else:
-                    line_err += _('The quantity must be a number. ')
+                    line_err += _('The Quantity must be a number. ')
                     error = True
             else:
                 line_err += _('The Quantity is mandatory for each line. ')
@@ -196,6 +197,8 @@ class wizard_return_from_unit_import(osv.osv_memory):
             for line in lines:
                 self.pool.get('stock.move').create(cr, uid, line, context=context)
         else:
+            if len(lines) == 0:
+                message = _('\nNo line to import.')
             wiz_state = 'error'
 
         end_time = time.time()
@@ -206,8 +209,7 @@ Importation completed in %s!
 # of lines to correct: %s
 
 %s
-%s
-    ''') % (total_time, len(lines), lns_to_fix, header_message, message)
+%s''') % (total_time, len(lines), lns_to_fix, header_message, message)
         self.write(cr, uid, wiz.id, {'state': wiz_state, 'message': final_message}, context=context)
 
         wb.close()  # Close manually because of readonly
