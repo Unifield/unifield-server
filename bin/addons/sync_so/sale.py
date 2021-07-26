@@ -343,43 +343,4 @@ class sale_order_sync(osv.osv):
         logger.action_type = 'creation'
         logger.is_product_added |= (len(values.get('order_line', [])) > 0)
 
-    def on_change(self, cr, uid, changes, context=None):
-        if context is None \
-           or not context.get('sync_message_execution') \
-           or context.get('no_store_function'):
-            return
-        # create a useful mapping purchase.order ->
-        #    dict_of_purchase.order.line_changes
-        lines = {}
-        if 'sale.order.line' in context['changes']:
-            for rec_line in self.pool.get('sale.order.line').browse(
-                    cr, uid,
-                    context['changes']['sale.order.line'].keys(),
-                    context=context):
-                if self.pool.get('sale.order.line').exists(cr, uid, rec_line.id, context): # check the line exists
-                    lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = context['changes']['sale.order.line'][rec_line.id]
-        # monitor changes on purchase.order
-        for id, changes in changes.items():
-            logger = get_sale_purchase_logger(cr, uid, self, id, \
-                                              context=context)
-            if 'order_line' in changes:
-                old_lines, new_lines = map(set, changes['order_line'])
-                logger.is_product_added |= (len(new_lines - old_lines) > 0)
-                logger.is_product_removed |= (len(old_lines - new_lines) > 0)
-
-            #UFTP-242: Log if there is lines deleted for this SO
-            if context.get('deleted_line_so_id', -1) == id:
-                logger.is_product_removed = True
-                del context['deleted_line_so_id']
-
-            logger.is_date_modified |= ('date_order' in changes)
-            logger.is_status_modified |= ('state' in changes)
-            # handle line's changes
-            for line_id, line_changes in lines.get(id, {}).items():
-                logger.is_quantity_modified |= \
-                    ('product_uom_qty' in line_changes)
-                logger.is_product_price_modified |= \
-                    ('price_unit' in line_changes)
-
-
 sale_order_sync()

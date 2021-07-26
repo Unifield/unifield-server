@@ -449,7 +449,6 @@ class message_received(osv.osv):
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
         context = dict((context or {}),
-                       changes={},
                        sync_message_execution=True,
                        sale_purchase_logger={})
         context['lang'] = 'en_US'
