@@ -144,12 +144,21 @@ class account_invoice(osv.osv):
                     continue
                 old_cv_version = True
                 # CV STARTING FROM VERSION 2
+                amount_to_subtract = invl.price_subtotal or 0.0
                 for cv_line in invl.cv_line_ids:
                     old_cv_version = False  # the field cv_line_ids exist for CVs starting from version 2
-                    if cv_line.id not in grouped_invl_by_cvl:
-                        grouped_invl_by_cvl[cv_line.id] = 0
-                    # TODO: adapt the following line to better handle the computation for inv. lines merged by account
-                    grouped_invl_by_cvl[cv_line.id] += round(invl.price_subtotal / len(invl.cv_line_ids), 2)
+                    if abs(amount_to_subtract) <= 10**-3:
+                        break
+                    cvl_amount_left = cv_line.amount or 0.0
+                    if cvl_amount_left:
+                        if cv_line.id not in grouped_invl_by_cvl:
+                            grouped_invl_by_cvl[cv_line.id] = 0
+                        if amount_to_subtract >= cvl_amount_left:
+                            grouped_invl_by_cvl[cv_line.id] += cvl_amount_left
+                            amount_to_subtract -= cvl_amount_left
+                        else:
+                            grouped_invl_by_cvl[cv_line.id] += amount_to_subtract
+                            amount_to_subtract = 0
                 # CV IN VERSION 1
                 if old_cv_version:
                     # Fetch purchase order line account
