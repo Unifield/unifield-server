@@ -5,6 +5,7 @@ from tools.translate import _
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.drawing import image
 from PIL import Image as PILImage
+from tools import file_open
 
 
 class return_from_unit_parser(XlsxReportParser):
@@ -24,7 +25,7 @@ class return_from_unit_parser(XlsxReportParser):
         sheet.sheet_view.showGridLines = False
 
         # MSF logo
-        img = image.Image(PILImage.open('addons/msf_doc_import/report/images/msf-logo.png'))
+        img = image.Image(PILImage.open(file_open('addons/msf_doc_import/report/images/msf-logo.png')))
         img.anchor = 'A1'
         sheet.add_image(img)
 
