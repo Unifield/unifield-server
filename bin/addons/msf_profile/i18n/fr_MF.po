@@ -99833,10 +99833,11 @@ msgid "\n"
 msgstr "\n"
 "PROD"
 
-#. module: stock, msf_supply_doc_export
+#. module: stock, msf_supply_doc_export, msf_outgoing
 #: field:stock.picking,physical_reception_date:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:249
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:256
+#: field:stock.incoming.processor,physical_reception_date:0
 msgid "Physical Reception Date"
 msgstr "Date de Réception Physique"
 
@@ -112400,3 +112401,8 @@ msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée
 #, python-format
 msgid "Cannot process Document/line due to Product Code %s which does not exist in this instance"
 msgstr "Impossible de traiter le Document/la ligne. Le Code Produit %s n'existe pas dans cette instance"
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "Physical Reception Date :"
+msgstr "Date de Réception Physique :"

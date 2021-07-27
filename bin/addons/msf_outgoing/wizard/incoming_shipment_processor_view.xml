@@ -86,6 +86,14 @@
                             </page>
                         </notebook>
                     </group>
+                    <group colspan="4" col="4">
+                        <html>
+                            <div style="font-weight: bold; text-align: right;">
+                                <translate>Physical Reception Date :</translate>
+                            </div>
+                        </html>
+                        <field name="physical_reception_date" nolabel="1" colspan="1" />
+                    </group>
                     <group colspan="9" col="10" name="actions">
                         <separator string="Actions" colspan="9" />
                         <field name="dest_type"
