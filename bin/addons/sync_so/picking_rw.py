@@ -496,7 +496,7 @@ class stock_picking(osv.osv):
                 partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
             header_result['partner_id'] = partner_id
             header_result['partner_id2'] = partner_id
-            address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, target=False, context=context)
+            address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
             header_result['address_id'] = address_id
 
         location_id = so_po_common.get_location(cr, uid, partner_id, context)
