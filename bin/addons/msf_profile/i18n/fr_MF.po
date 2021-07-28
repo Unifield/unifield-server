@@ -3925,6 +3925,7 @@ msgstr "Modele Catalogue Fournisseur.xls"
 #: field:account.invoice.tax,manual:0
 #: view:account.commitment:0
 #: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
 #: selection:purchase.order,invoice_method:0
 #: model:ir.ui.menu,name:sync_client.sync_wiz_menu
 msgid "Manual"
@@ -9631,6 +9632,7 @@ msgstr "Annuler Picking"
 
 #. module: analytic_distribution
 #: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
 msgid "Manual - ESC supplier"
 msgstr "Manuel - Fournisseur ESC"
 
@@ -30286,7 +30288,7 @@ msgstr "ALGERIAN DINAR"
 #: code:addons/purchase/purchase_order_line.py:1795
 #, python-format
 msgid "There is no expense account defined for this product: \"%s\" (id:%d)"
-msgstr "Il n'y a pas de compte de charge définit pour ce produit : \"%s\" (id. : %d)"
+msgstr "Il n'y a pas de compte de charge défini pour ce produit : \"%s\" (id. : %d)"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -30663,7 +30665,7 @@ msgstr "Disponible pour mouvements sortants ?"
 #: code:addons/analytic_distribution_supply/invoice.py:147
 #, python-format
 msgid "There is no expense account defined for this PO line: \"%s\" (id:%d)"
-msgstr "There is no expense account defined for this PO line: \"%s\" (id:%d)"
+msgstr "Il n'y a pas de compte de charge défini pour cette ligne de BC : \"%s\" (id. : %d)"
 
 #. module: msf_doc_import
 #: view:msf.import.export:0
@@ -44504,12 +44506,6 @@ msgstr "Prêt/Emprunt"
 msgid "Choose day"
 msgstr "Choisir un jour"
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/account_commitment.py:161
-#, python-format
-msgid "No analytic distribution found for %s %s"
-msgstr "Pas de distribution analytique trouvée pour %s %s"
-
 #. modules: sync_so, analytic_distribution_supply, analytic_override, analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:322
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:352
@@ -47480,6 +47476,7 @@ msgstr "ID Enfants"
 #: view:account.bank.statement.line:0
 #: view:sale.order.line:0
 #: view:free.allocation.wizard:0
+#: view:account.commitment.line:0
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -68092,7 +68089,7 @@ msgstr "Veuillez d'abord sélectionner une ligne de Registre."
 #: code:addons/analytic_distribution_supply/invoice.py:227
 #, python-format
 msgid "No analytic distribution found."
-msgstr "Pas de disribution analytique trouvée."
+msgstr "Pas de distribution analytique trouvée."
 
 #. module: base
 #: model:res.currency,currency_name:base.CHF
@@ -69404,6 +69401,7 @@ msgstr "Erythrée"
 
 #. module: analytic_distribution
 #: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
 msgid "Automatic - External supplier"
 msgstr "Automatique - Fournisseur Externe"
 
@@ -82163,7 +82161,7 @@ msgstr "Créer / Ecrire / Copier"
 msgid "SFTP connection succeeded"
 msgstr "SFTP connection succeeded"
 
-#. modules: tender_flow, product_nomenclature, product_asset, account_override, product_attributes, register_accounting, product_expiry, procurement_cycle, return_claim, supplier_catalogue, import_data, mission_stock, unifield_setup, stock_forecast, stock_batch_recall, order_types, msf_doc_import, purchase_followup, product, stock_override, stock_schedule, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, base, product_list, product_manufacturer, procurement_report, threshold_value, purchase, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, purchase_msf, stock, sync_so, msf_tools
+#. modules: tender_flow, product_nomenclature, product_asset, account_override, product_attributes, register_accounting, product_expiry, procurement_cycle, return_claim, supplier_catalogue, import_data, mission_stock, unifield_setup, stock_forecast, stock_batch_recall, order_types, msf_doc_import, purchase_followup, product, stock_override, stock_schedule, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, base, product_list, product_manufacturer, procurement_report, threshold_value, purchase, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, purchase_msf, stock, sync_so, msf_tools, analytic_distribution
 #: field:account.analytic.line,product_id:0
 #: view:account.entries.report:0
 #: field:account.entries.report,product_id:0
@@ -82369,6 +82367,7 @@ msgstr "SFTP connection succeeded"
 #: view:replenishment.segment.line.amc.past_fmc:0
 #: view:replenishment.segment.line.min_max_auto_supply.history:0
 #: field:view.expired.expiring.stock.lines,product_id:0
+#: field:account.commitment.line,po_line_product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -87487,7 +87486,7 @@ msgid "This is used only if you select a chained location type.\n"
 msgstr "Ceci est utilisé uniquement si vous sélectionnez une localisation de type chainée.\n"
 "La valeur 'Mouvement automatique' créera un mouvement de stock après le mouvement actuel qui sera validé automatiquement. La valeur 'Opération manuelle', le mouvement de stock devra être validé par un opérateur. La valeur 'Automatique sans étape supplémentaire', la localisation est remplacée sur le mouvement d'origine."
 
-#. modules: msf_budget, sync_client, update_client, kit, base, msf_profile
+#. modules: msf_budget, sync_client, update_client, kit, base, msf_profile, analytic_distribution
 #: view:ir.module.module:0
 #: report:ir.module.reference:0
 #: view:composition.kit:0
@@ -87505,6 +87504,7 @@ msgstr "Ceci est utilisé uniquement si vous sélectionnez une localisation de t
 #: field:sync.client.update_to_send,version:0
 #: field:sync.version.instance.monitor,version:0
 #: field:sync_client.version,name:0
+#: field:account.commitment,version:0
 msgid "Version"
 msgstr "Version"
 
@@ -91230,13 +91230,21 @@ msgstr "Zone - Adresse"
 msgid "Purchase Orders Waiting Confirmation"
 msgstr "Bons de Commandes en attente de Confirmation"
 
-#. modules: purchase, analytic_distribution, purchase_override
+#. modules: purchase, analytic_distribution, purchase_override, account_override, register_accounting
 #: field:account.commitment,line_ids:0
 #: view:account.commitment.line:0
-#: field:purchase.order.line,commitment_line_ids:0
-#: field:purchase.order.merged.line,commitment_line_ids:0
+#: field:purchase.order.line,cv_line_ids:0
+#: field:purchase.order.merged.line,cv_line_ids:0
+#: field:account.invoice.line,cv_line_ids:0
+#: field:wizard.account.invoice.line,cv_line_ids:0
 msgid "Commitment Voucher Lines"
 msgstr "Lignes de Bon d'Engagement"
+
+#. modules: purchase, purchase_override
+#: field:purchase.order.line,commitment_line_ids:0
+#: field:purchase.order.merged.line,commitment_line_ids:0
+msgid "Commitment Voucher Lines (deprecated)"
+msgstr "Lignes de Bon d'Engagement (obsolète)"
 
 #. module: sync_client
 #: code:addons/sync_client/hq_monitor.py:48
@@ -98325,12 +98333,16 @@ msgid "Note type"
 msgstr "Type de note"
 
 #. modules: purchase, analytic_distribution, msf_doc_import, finance
-#: field:account.commitment.line,purchase_order_line_ids:0
 #: view:purchase.order.line:0
 #: field:wizard.import.po,line_ids:0
 #: field:account.invoice.line,purchase_order_line_ids:0
 msgid "Purchase Order Lines"
 msgstr "Lignes Bon de Commande"
+
+#. module: analytic_distribution
+#: field:account.commitment.line,purchase_order_line_ids:0
+msgid "Purchase Order Lines (deprecated)"
+msgstr "Lignes Bon de Commande (obsolète)"
 
 #. module: specific_rules
 #: field:unconsistent.stock.report.line,product_bn:0
@@ -112400,3 +112412,39 @@ msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée
 #, python-format
 msgid "Cannot process Document/line due to Product Code %s which does not exist in this instance"
 msgstr "Impossible de traiter le Document/la ligne. Le Code Produit %s n'existe pas dans cette instance"
+
+#. module: analytic_distribution
+#: help:account.commitment,version:0
+msgid "Technical field to distinguish old CVs from new ones which have a different behavior."
+msgstr "Champ technique pour distinguer les anciens Bons d'Engagement des nouveaux qui ont un comportement différent."
+
+#. module: analytic_distribution
+#: field:account.commitment,display_super_done_button:0
+msgid "Display the button allowing to always set a CV to Done"
+msgstr "Afficher le bouton permettant de toujours passer un Bon d'Engagement en Terminé"
+
+#. module: analytic_distribution
+#: field:account.commitment.line,commit_type:0
+msgid "Commitment Voucher Type"
+msgstr "Type de Bon d'Engagement"
+
+#. module: analytic_distribution
+#: field:account.commitment.line,po_line_id:0
+#: field:account.commitment.line,po_line_number:0
+msgid "PO Line"
+msgstr "Ligne du BC"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Done (for Administrator only)"
+msgstr "Terminé (pour l'Administrateur uniquement)"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "You are about to set this Commitment Voucher to the state \"Done\". Do you want to proceed?"
+msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Terminé\". Voulez-vous continuer ?"
+
+#. module: analytic_distribution
+#: view:account.commitment.line:0
+msgid "Do you really want to delete this line?"
+msgstr "Voulez-vous vraiment supprimer cette ligne ?"

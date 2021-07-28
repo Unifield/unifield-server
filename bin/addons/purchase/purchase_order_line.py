@@ -566,8 +566,12 @@ class purchase_order_line(osv.osv):
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
+        # for CV in version 1
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
-                                                string="Commitment Voucher Lines", readonly=True),
+                                                string="Commitment Voucher Lines (deprecated)", readonly=True),
+        # for CV starting from version 2
+        # note: cv_line_ids is a o2m because of the related m2o on CV lines but it should only contain one CV line
+        'cv_line_ids': fields.one2many('account.commitment.line', 'po_line_id', string="Commitment Voucher Lines"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
@@ -1293,7 +1297,7 @@ class purchase_order_line(osv.osv):
             self.pool.get('product.product')._get_restriction_error(cr, uid, [pol.product_id.id],
                                                                     {'partner_id': pol.order_id.partner_id.id}, context=context)
 
-        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], })
+        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], 'cv_line_ids': [], })
 
         for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref']:
             if field not in default:
@@ -1882,42 +1886,63 @@ class purchase_order_line(osv.osv):
                     raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
                 commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], cv_date=pol.confirmed_delivery_date, context=context)
 
-            # group PO line by account_id:
             expense_account = pol.account_4_distribution and pol.account_4_distribution.id or False
             if not expense_account:
                 raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
 
+            # in CV in version 1, PO lines are grouped by account_id. Else 1 PO line generates 1 CV line.
+            cv_version = self.pool.get('account.commitment').read(cr, uid, commitment_voucher_id, ['version'], context=context)['version']
+            cc_lines = []
+            ad_header = []  # if filled in, the line itself has no AD but uses the one at header level
             if pol.analytic_distribution_id:
                 cc_lines = pol.analytic_distribution_id.cost_center_lines
-            else:
+            elif cv_version < 2:
+                # in CV in version 1, if there is no AD on the PO line, the AD at PO header level is used at CV line level
                 cc_lines = pol.order_id.analytic_distribution_id.cost_center_lines
+            else:
+                ad_header = pol.order_id.analytic_distribution_id.cost_center_lines
 
-            if not cc_lines:
+            if not cc_lines and not ad_header:
                 raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
                                      % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
-
-            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
-            if not commit_line_id: # create new commitment line
-                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
-                commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, {
+            new_cv_line = False
+            if cv_version > 1:
+                new_cv_line = True
+            else:
+                commit_line_id = self.pool.get('account.commitment.line').search(cr, uid,
+                                                                                 [('commit_id', '=', commitment_voucher_id),
+                                                                                  ('account_id', '=', expense_account)], context=context)
+                if not commit_line_id:
+                    new_cv_line = True
+            if new_cv_line:  # create new commitment line
+                if ad_header:  # the line has no AD itself, it uses the AD at header level
+                    distrib_id = False
+                else:
+                    distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
+                commit_line_vals = {
                     'commit_id': commitment_voucher_id,
                     'account_id': expense_account,
                     'amount': pol.price_subtotal,
                     'initial_amount': pol.price_subtotal,
-                    'purchase_order_line_ids': [(4, pol.id)],
                     'analytic_distribution_id': distrib_id,
-                }, context=context)
-                for aline in cc_lines:
-                    vals = {
-                        'distribution_id': distrib_id,
-                        'analytic_id': aline.analytic_id.id,
-                        'currency_id': pol.order_id.currency_id.id,
-                        'destination_id': aline.destination_id.id,
-                        'percentage': aline.percentage,
-                    }
-                    self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
-                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], expense_account, context=context)
+                }
+                if cv_version > 1:
+                    commit_line_vals.update({'po_line_id': pol.id, })
+                else:
+                    commit_line_vals.update({'purchase_order_line_ids': [(4, pol.id)], })
+                commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, commit_line_vals, context=context)
+                if distrib_id:
+                    for aline in cc_lines:
+                        vals = {
+                            'distribution_id': distrib_id,
+                            'analytic_id': aline.analytic_id.id,
+                            'currency_id': pol.order_id.currency_id.id,
+                            'destination_id': aline.destination_id.id,
+                            'percentage': aline.percentage,
+                        }
+                        self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], expense_account, context=context)
 
             else: # update existing commitment line:
                 commit_line_id = commit_line_id[0]

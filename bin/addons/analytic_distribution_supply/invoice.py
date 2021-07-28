@@ -26,6 +26,7 @@ from osv import orm
 from osv import fields
 from tools.translate import _
 from base import currency_date
+import netsvc
 
 
 class account_invoice_line(osv.osv):
@@ -93,20 +94,27 @@ class account_invoice(osv.osv):
                         self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
             # Then set distribution on invoice line regarding purchase order line distribution
             for invl in inv.invoice_line:
-                if invl.order_line_id:
+                line_distrib_id = False
+                if invl.cv_line_ids:
+                    # CV STARTING FROM VERSION 2
+                    # the first CV line found is used since there can be only one at this step (merging lines by account could
+                    # generate an invoice line linked to several CV lines but this action can only be done later in the process)
+                    line_distrib_id = invl.cv_line_ids[0].analytic_distribution_id and invl.cv_line_ids[0].analytic_distribution_id.id or False
+                elif invl.order_line_id:
                     # Fetch PO line analytic distribution or nothing (that implies it take those from PO)
-                    distrib_id = invl.order_line_id.analytic_distribution_id and invl.order_line_id.analytic_distribution_id.id or False
+                    line_distrib_id = invl.order_line_id.analytic_distribution_id and invl.order_line_id.analytic_distribution_id.id or False
                     # Attempt to fetch commitment line analytic distribution or commitment voucher analytic distribution or default distrib_id
+                    # CV IN VERSION 1
                     if invl.order_line_id.commitment_line_ids:
-                        distrib_id = invl.order_line_id.commitment_line_ids[0].analytic_distribution_id \
-                            and invl.order_line_id.commitment_line_ids[0].analytic_distribution_id.id or distrib_id
-                    if distrib_id:
-                        new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
-                        if not new_invl_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occurred for analytic distribution copy for invoice.'))
-                        # create default funding pool lines
-                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id], invl.account_id.id)
-                        invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
+                        line_distrib_id = invl.order_line_id.commitment_line_ids[0].analytic_distribution_id \
+                            and invl.order_line_id.commitment_line_ids[0].analytic_distribution_id.id or line_distrib_id
+                if line_distrib_id:
+                    new_invl_distrib_id = ana_obj.copy(cr, uid, line_distrib_id, {})
+                    if not new_invl_distrib_id:
+                        raise osv.except_osv(_('Error'), _('An error occurred for analytic distribution copy for invoice.'))
+                    # create default funding pool lines
+                    ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id], invl.account_id.id)
+                    invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
                 # Fetch SO line analytic distribution
                     # sol AD copy moved into _invoice_line_hook
         return True
@@ -124,7 +132,8 @@ class account_invoice(osv.osv):
 
         # Browse invoices
         for inv in self.browse(cr, uid, ids, context=context):
-            grouped_invl = {}
+            grouped_invl_by_acc = {}
+            grouped_invl_by_cvl = {}
             co_ids = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', 'in', [x.id for x in inv.purchase_ids]), ('state', 'in', ['open', 'draft'])], order='date desc', context=context)
             if not co_ids:
                 continue
@@ -133,27 +142,47 @@ class account_invoice(osv.osv):
                 # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
                 if not invl.order_line_id and not inv.is_merged_by_account:
                     continue
-
-                # Fetch purchase order line account
-                if inv.is_merged_by_account:
-                    if not invl.account_id:
-                        continue
-                    # US-357: lines without product (get directly account)
-                    a = invl.account_id.id
-                else:
-                    pol = invl.order_line_id
-                    a = self._get_expense_account(cr, uid, pol, context=context)
-                    if pol.product_id and not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id))
-                    elif not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this PO line: "%s" (id:%d)') % (pol.line_number, pol.id))
-                if a not in grouped_invl:
-                    grouped_invl[a] = 0
-
-                grouped_invl[a] += invl.price_subtotal
+                old_cv_version = True
+                # CV STARTING FROM VERSION 2
+                amount_to_subtract = invl.price_subtotal or 0.0
+                for cv_line in invl.cv_line_ids:
+                    old_cv_version = False  # the field cv_line_ids exist for CVs starting from version 2
+                    if abs(amount_to_subtract) <= 10**-3:
+                        break
+                    cvl_amount_left = cv_line.amount or 0.0
+                    if cvl_amount_left:
+                        if cv_line.id not in grouped_invl_by_cvl:
+                            grouped_invl_by_cvl[cv_line.id] = 0
+                        if amount_to_subtract >= cvl_amount_left:
+                            grouped_invl_by_cvl[cv_line.id] += cvl_amount_left
+                            amount_to_subtract -= cvl_amount_left
+                        else:
+                            grouped_invl_by_cvl[cv_line.id] += amount_to_subtract
+                            amount_to_subtract = 0
+                # CV IN VERSION 1
+                if old_cv_version:
+                    # Fetch purchase order line account
+                    if inv.is_merged_by_account:
+                        if not invl.account_id:
+                            continue
+                        # US-357: lines without product (get directly account)
+                        a = invl.account_id.id
+                    else:
+                        pol = invl.order_line_id
+                        a = self._get_expense_account(cr, uid, pol, context=context)
+                        if pol.product_id and not a:
+                            raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') %
+                                                 (pol.product_id.name, pol.product_id.id))
+                        elif not a:
+                            raise osv.except_osv(_('Error !'), _('There is no expense account defined for this PO line: "%s" (id:%d)') %
+                                                 (pol.line_number, pol.id))
+                    if a not in grouped_invl_by_acc:
+                        grouped_invl_by_acc[a] = 0
+                    grouped_invl_by_acc[a] += invl.price_subtotal
 
             po_ids = [x.id for x in inv.purchase_ids]
-            self._update_commitments_lines(cr, uid, po_ids, grouped_invl, from_cancel=False, context=context)
+            self._update_commitments_lines(cr, uid, po_ids, account_amount_dic=grouped_invl_by_acc,
+                                           cvl_amount_dic=grouped_invl_by_cvl, from_cancel=False, context=context)
 
         return True
 
@@ -170,38 +199,51 @@ class account_invoice(osv.osv):
 
         return account_id
 
-    def _update_commitments_lines(self, cr, uid, po_ids, account_amount_dic, from_cancel=False, context=None):
+    def _update_commitments_lines(self, cr, uid, po_ids, account_amount_dic=None, cvl_amount_dic=None, from_cancel=False, context=None):
         """
             po_ids: list of PO ids
             account_amount_dic: dict, keys are G/L account_id, values are amount to deduce
 
 
         """
-        if not po_ids or not account_amount_dic:
+        if not po_ids or not account_amount_dic and not cvl_amount_dic:
             return True
 
         if context is None:
             context = {}
+        if account_amount_dic is None:
+            account_amount_dic = {}
+        if cvl_amount_dic is None:
+            cvl_amount_dic = {}
+        wf_service = netsvc.LocalService("workflow")
 
         # po is state=cancel on last IN cancel
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        cr.execute('''select l.id, l.account_id, l.commit_id, c.state, l.amount, l.analytic_distribution_id, c.analytic_distribution_id, c.id, c.currency_id, c.type from
+        # avoids empty lists so that the SQL request can be executed
+        account_list = account_amount_dic.keys() or [0]
+        cvl_list = cvl_amount_dic.keys() or [0]
+        cr.execute('''select l.id, l.account_id, l.commit_id, c.state, l.amount, l.analytic_distribution_id, c.analytic_distribution_id, 
+            c.id, c.currency_id, c.type, c.version from
             account_commitment_line l, account_commitment c
             where l.commit_id = c.id and
             l.amount > 0 and
             c.purchase_id in %s and
-            l.account_id in %s and
+            (c.version < 2 and l.account_id in %s or c.version >= 2 and l.id in %s) and
             c.state in ('open', 'draft')
             order by c.date asc
-            ''', (tuple(po_ids), tuple(account_amount_dic.keys()))
+            ''', (tuple(po_ids), tuple(account_list), tuple(cvl_list))
         )
         # sort all cv lines by account / cv date
-        cv_info = {}
+        account_info = {}
+        cvl_info = {}
         auto_cv = True
         for cv in cr.fetchall():
-            if cv[1] not in cv_info:
-                cv_info[cv[1]] = []
-            cv_info[cv[1]].append(cv)
+            if cv[10] < 2:
+                # CV IN VERSION 1
+                account_info.setdefault(cv[1], []).append(cv)  # key = account id
+            else:
+                # CV STARTING FROM VERSION 2
+                cvl_info.setdefault(cv[0], []).append(cv)  # key = CV line id
             if cv[9] == 'manual':
                 auto_cv = False
 
@@ -210,74 +252,72 @@ class account_invoice(osv.osv):
         cv_to_close = {}
 
         # deduce amount on oldest cv lines
-        for account in account_amount_dic.keys():
-            if account not in cv_info:
-                continue
-            for cv_line in cv_info[account]:
-                if cv_line[3] == 'draft' and cv_line[2] not in draft_opened and not from_cancel:
-                    draft_opened.append(cv_line[2])
-                    # If Commitment voucher in draft state we change it to 'validated' without using workflow and engagement lines generation
-                    # NB: This permits to avoid modification on commitment voucher when receiving some goods
-                    self.pool.get('account.commitment').write(cr, uid, [cv_line[2]], {'state': 'open'}, context=context)
+        # NOTE: account_amount_dic is for CV in version 1 based on accounts (acc),
+        #       cvl_amount_dic is for CV from version 2 based on CV lines (cvl)
+        for c_type in ("acc", "cvl"):
+            if c_type == "acc":
+                cv_info = account_info.copy()
+                amount_dic = account_amount_dic.copy()
+            else:
+                cv_info = cvl_info.copy()
+                amount_dic = cvl_amount_dic.copy()
+            for k in amount_dic.keys():  # account id or CV line id
+                if k not in cv_info:
+                    continue
+                for cv_line in cv_info[k]:
+                    if cv_line[3] == 'draft' and cv_line[2] not in draft_opened and not from_cancel:
+                        draft_opened.append(cv_line[2])
+                        # Change Draft CV to Validated State, in order to avoid CV modification when receiving some goods.
+                        # The workflow is used so that all the engagement lines are generated, even those which are not
+                        # affected by the current update (e.g. partial reception + SI validation on one in 2 products).
+                        wf_service.trg_validate(uid, 'account.commitment', cv_line[2], 'commitment_open', cr)
 
-                if cv_line[4] - account_amount_dic[account] > 0.001:
-                    # update amount left on CV line
-                    amount_left = cv_line[4] - account_amount_dic[account]
-                    self.pool.get('account.commitment.line').write(cr, uid, [cv_line[0]], {'amount': amount_left}, context=context)
-
-                    # update AAL
-                    distrib_id = cv_line[5] or cv_line[6]
-                    if not distrib_id:
-                        raise osv.except_osv(_('Error'), _('No analytic distribution found.'))
-
-                    # Browse distribution
-                    distrib = self.pool.get('analytic.distribution').browse(cr, uid, [distrib_id], context=context)[0]
-                    engagement_lines = distrib.analytic_lines
-                    for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
-                        for distrib_line in distrib_lines:
-                            vals = {
-                                'account_id': distrib_line.analytic_id.id,
-                                'general_account_id': account,
-                            }
-                            if distrib_line._name == 'funding.pool.distribution.line':
-                                vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
+                    if cv_line[4] - amount_dic[k] > 0.001:
+                        # update amount left on CV line
+                        amount_left = cv_line[4] - amount_dic[k]
+                        self.pool.get('account.commitment.line').write(cr, uid, [cv_line[0]], {'amount': amount_left}, context=context)
+                        # update AAL
+                        distrib_id = cv_line[5] or cv_line[6]
+                        if not distrib_id:
+                            raise osv.except_osv(_('Error'), _('No analytic distribution found.'))
+                        # Browse distribution
+                        distrib = self.pool.get('analytic.distribution').browse(cr, uid, [distrib_id], context=context)[0]
+                        engagement_lines = distrib.analytic_lines
+                        for distrib_line in distrib.funding_pool_lines:
                             # Browse engagement lines to found out matching elements
-                            for i in range(0,len(engagement_lines)):
+                            for i in range(0, len(engagement_lines)):
                                 if engagement_lines[i]:
                                     eng_line = engagement_lines[i]
-                                    cmp_vals = {
-                                        'account_id': eng_line.account_id.id,
-                                        'general_account_id': eng_line.general_account_id.id,
-                                    }
-                                    if eng_line.cost_center_id:
-                                        cmp_vals.update({'cost_center_id': eng_line.cost_center_id.id})
-                                    if cmp_vals == vals:
-                                        # Update analytic line with new amount
-                                        anal_amount = (distrib_line.percentage * amount_left) / 100
-                                        curr_date = currency_date.get_date(self, cr, eng_line.document_date, eng_line.date,
-                                                                           source_date=eng_line.source_date)
-                                        context.update({'currency_date': curr_date})
-                                        amount = -1 * self.pool.get('res.currency').compute(cr, uid, cv_line[8], company_currency,
-                                                                                            anal_amount, round=False, context=context)
-
-                                        # write new amount to corresponding engagement line
-                                        self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id],
-                                                                                     {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
-
-                    # check next G/L account
-                    break
-
-                cv_to_close[cv_line[2]] = True
-                eng_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cv_line[0])], context=context)
-                if eng_ids:
-                    self.pool.get('account.analytic.line').unlink(cr, uid, eng_ids, context=context)
-                self.pool.get('account.commitment.line').write(cr, uid, [cv_line[0]], {'amount': 0.0}, context=context)
-                if abs(cv_line[4] - account_amount_dic[account]) < 0.001:
-                    # check next G/L account
-                    break
-
-                # check next CV on this account
-                account_amount_dic[account] -= cv_line[4]
+                                    # restrict to the current CV line only
+                                    if eng_line.commitment_line_id and eng_line.commitment_line_id.id == cv_line[0]:
+                                        eng_line_distrib_id = eng_line.distrib_line_id and \
+                                                              eng_line.distrib_line_id._name == 'funding.pool.distribution.line' and \
+                                                              eng_line.distrib_line_id.id or False
+                                        # in case of an AD with several lines, several AJIs are linked to the same CV line:
+                                        # the comparison is used to decrement the right one
+                                        if eng_line_distrib_id == distrib_line.id:
+                                            # Update analytic line with new amount
+                                            anal_amount = (distrib_line.percentage * amount_left) / 100
+                                            curr_date = currency_date.get_date(self, cr, eng_line.document_date, eng_line.date,
+                                                                               source_date=eng_line.source_date)
+                                            context.update({'currency_date': curr_date})
+                                            amount = -1 * self.pool.get('res.currency').compute(cr, uid, cv_line[8], company_currency,
+                                                                                                anal_amount, round=False, context=context)
+                                            # write new amount to corresponding engagement line
+                                            self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id],
+                                                                                         {'amount': amount,
+                                                                                          'amount_currency': -1 * anal_amount}, context=context)
+                        # check next G/L account or CV line
+                        break
+                    cv_to_close[cv_line[2]] = True
+                    eng_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cv_line[0])], context=context)
+                    if eng_ids:
+                        self.pool.get('account.analytic.line').unlink(cr, uid, eng_ids, context=context)
+                    self.pool.get('account.commitment.line').write(cr, uid, [cv_line[0]], {'amount': 0.0}, context=context)
+                    if abs(cv_line[4] - amount_dic[k]) < 0.001:
+                        # check next G/L account or CV line
+                        break
+                    amount_dic[k] -= cv_line[4]
 
         if auto_cv and from_cancel:
             # we cancel the last IN from PO and no draft invoice exist
