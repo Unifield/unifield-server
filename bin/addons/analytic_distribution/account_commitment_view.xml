@@ -129,8 +129,8 @@
                     <group col='6' colspan='4'>
                         <filter icon="terp-tools" string="Manual" domain="[('type','=','manual')]" help="Manual Commitment Voucher"/>
                         <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
-                        <filter icon="gtk-home" string="Intermission" domain="[('type', '=', 'intermission')]" help="Intermission Commitment Voucher"/>
-                        <filter icon="gtk-network" string="Intersection" domain="[('type', '=', 'intersection')]" help="Intersection Commitment Voucher"/>
+                        <filter icon="gtk-refresh" string="Intersection" domain="[('type', '=', 'intersection')]" help="Intersection Commitment Voucher"/>
+                        <filter icon="gtk-ok" string="Intermission" domain="[('type', '=', 'intermission')]" help="Intermission Commitment Voucher"/>
                         <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Voucher"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state" name="draft"/>
