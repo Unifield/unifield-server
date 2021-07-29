@@ -38,7 +38,10 @@
                         <page string="Commitment voucher lines">
                             <field name="line_ids" nolabel="1" colspan="4"
                                    attrs="{'readonly': ['|', ('state', '=', 'done'),
-                                                        '&amp;', ('type', '=', 'external'), ('state', '!=', 'draft')]}"/>
+                                                        '&amp;',
+                                                        ('type', 'in', ['external', 'intermission', 'intersection']),
+                                                        ('state', '!=', 'draft')]}"
+                            />
                         </page>
                     </notebook>
                     <field name="notes" colspan="4"/>
@@ -48,7 +51,7 @@
                         <field name="display_super_done_button"/>
                         <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" colspan="2"
                                 attrs="{'invisible': ['|', ('state', '!=', 'open'), ('display_super_done_button', '=', True)],
-                                        'readonly': [('type', '=', 'external')]}"
+                                        'readonly': [('type', 'in', ['external', 'intermission', 'intersection'])]}"
                         />
                         <!-- button which allows to always set a CV to Done (whatever its state and origin) -->
                         <button name="commitment_always_validate" string="Done (for Administrator only)"
@@ -88,7 +91,7 @@
             <field name="arch" type="xml">
                 <!-- display the "New" button or not depending on the state and type of the CV itself -->
                 <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'"
-                      button_attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"
+                      button_attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', 'in', ['external', 'intermission', 'intersection'])]}"
                       hide_delete_button="1"
                       >
                     <field name="commit_type"/>
@@ -102,14 +105,14 @@
                     <field name="have_analytic_distribution_from_header" readonly="1"/>
                     <field name="first" invisible="1"/>
                     <field name="initial_amount" on_change="onchange_initial_amount(first, initial_amount)"
-                           attrs="{'readonly': [('commit_type', '=', 'external')]}"
+                           attrs="{'readonly': [('commit_type', 'in', ['external', 'intermission', 'intersection'])]}"
                     />
                     <field name="amount"
-                           attrs="{'readonly': ['|', ('first', '=', True), ('commit_type', '=', 'external')]}"
+                           attrs="{'readonly': ['|', ('first', '=', True), ('commit_type', 'in', ['external', 'intermission', 'intersection'])]}"
                     />
                     <!-- display the "Delete" button or not depending on the state and type of the CV itself -->
                     <button name="unlink" string="Delete" icon="gtk-del" type="object"
-                            attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"
+                            attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', 'in', ['external', 'intermission', 'intersection'])]}"
                             confirm="Do you really want to delete this line?"
                     />
                 </tree>
@@ -126,6 +129,8 @@
                     <group col='6' colspan='4'>
                         <filter icon="terp-tools" string="Manual" domain="[('type','=','manual')]" help="Manual Commitment Voucher"/>
                         <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
+                        <filter icon="gtk-home" string="Intermission" domain="[('type', '=', 'intermission')]" help="Intermission Commitment Voucher"/>
+                        <filter icon="gtk-network" string="Intersection" domain="[('type', '=', 'intersection')]" help="Intersection Commitment Voucher"/>
                         <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Voucher"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state" name="draft"/>

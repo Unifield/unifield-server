@@ -69405,6 +69405,28 @@ msgstr "Erythrée"
 msgid "Automatic - External supplier"
 msgstr "Automatique - Fournisseur Externe"
 
+#. module: analytic_distribution
+#: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
+msgid "Automatic - Intermission"
+msgstr "Automatique - Intermission"
+
+#. module: analytic_distribution
+#: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
+msgid "Automatic - Intersection"
+msgstr "Automatique - Intersection"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Intermission Commitment Voucher"
+msgstr "Bon d'Engagement Intermission"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Intersection Commitment Voucher"
+msgstr "Bon d'Engagement Intersection"
+
 #. module: procurement
 #: field:procurement.order,close_move:0
 msgid "Close Move at end"
