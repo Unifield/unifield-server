@@ -158,6 +158,7 @@ class account_invoice_sync(osv.osv):
                 if po_line_ids:
                     matching_po_line = pol_obj.browse(cr, uid, po_line_ids[0],
                                                       fields_to_fetch=['analytic_distribution_id', 'cv_line_ids'], context=context)
+                    inv_line_vals.update({'order_line_id': matching_po_line.id})
                     if matching_po_line.cv_line_ids:
                         inv_line_vals.update({'cv_line_ids': [(6, 0, [cvl.id for cvl in matching_po_line.cv_line_ids])]})
                     po_line_distrib = matching_po_line.analytic_distribution_id
