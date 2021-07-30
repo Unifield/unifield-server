@@ -156,7 +156,10 @@ class account_invoice_sync(osv.osv):
                 # search the matching between PO line and invoice line
                 po_line_ids = pol_obj.search(cr, uid, [('order_id', '=', inv_linked_po.id), ('sync_linked_sol', '=', inv_line['sale_order_line_id']['sync_local_id'])], context=context)
                 if po_line_ids:
-                    matching_po_line = pol_obj.browse(cr, uid, po_line_ids[0], fields_to_fetch=['analytic_distribution_id'], context=context)
+                    matching_po_line = pol_obj.browse(cr, uid, po_line_ids[0],
+                                                      fields_to_fetch=['analytic_distribution_id', 'cv_line_ids'], context=context)
+                    if matching_po_line.cv_line_ids:
+                        inv_line_vals.update({'cv_line_ids': [(6, 0, [cvl.id for cvl in matching_po_line.cv_line_ids])]})
                     po_line_distrib = matching_po_line.analytic_distribution_id
                     self._create_analytic_distrib(cr, uid, inv_line_vals, po_line_distrib, context=context)  # update inv_line_vals
             inv_line_obj.create(cr, uid, inv_line_vals, context=context)
