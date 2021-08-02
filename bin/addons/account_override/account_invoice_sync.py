@@ -65,7 +65,7 @@ class account_invoice_sync(osv.osv):
             fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        if distrib:  # original distrib from PO or PO line
+        if distrib:  # original distrib from PO, PO line, CV or CV line
             # create the Analytic Distribution
             distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
             for cc_line in distrib.cost_center_lines:
@@ -159,10 +159,12 @@ class account_invoice_sync(osv.osv):
                     matching_po_line = pol_obj.browse(cr, uid, po_line_ids[0],
                                                       fields_to_fetch=['analytic_distribution_id', 'cv_line_ids'], context=context)
                     inv_line_vals.update({'order_line_id': matching_po_line.id})
+                    cv_line_distrib = False
                     if matching_po_line.cv_line_ids:
                         inv_line_vals.update({'cv_line_ids': [(6, 0, [cvl.id for cvl in matching_po_line.cv_line_ids])]})
-                    po_line_distrib = matching_po_line.analytic_distribution_id
-                    self._create_analytic_distrib(cr, uid, inv_line_vals, po_line_distrib, context=context)  # update inv_line_vals
+                        # only one CV line can be linked to the PO line
+                        cv_line_distrib = matching_po_line.cv_line_ids[0].analytic_distribution_id
+                    self._create_analytic_distrib(cr, uid, inv_line_vals, cv_line_distrib, context=context)  # update inv_line_vals
             inv_line_obj.create(cr, uid, inv_line_vals, context=context)
 
     def create_invoice_from_sync(self, cr, uid, source, invoice_data, context=None):
