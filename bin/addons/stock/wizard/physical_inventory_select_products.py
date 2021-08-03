@@ -375,13 +375,17 @@ class physical_inventory_select_products(osv.osv_memory):
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
 
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
         def write(model, id_, vals):
             return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
 
         assert isinstance(wizard_id, int)
 
-        inventory_id = read_single(self._name, wizard_id, "inventory_id")
-        product_ids = read_single(self._name, wizard_id, "products_preview")
+        wiz_data = read_many(self._name, wizard_id, ["inventory_id", "products_preview", "first_filter", "recent_moves_months"])
+        inventory_id = wiz_data["inventory_id"]
+        product_ids = wiz_data["products_preview"]
 
         # Redo a search to force order according to default order
         previously_selected_product_ids = read_single("physical.inventory", inventory_id, "product_ids")
@@ -390,6 +394,18 @@ class physical_inventory_select_products(osv.osv_memory):
 
         # '6' is the code for 'replace all'
         vals = {'product_ids': [(6, 0, product_ids)]}
+
+        # Check if 'recent_movements' has been used
+        if wiz_data["first_filter"] == 'recent_movements':
+            vals.update({'first_filter_months': wiz_data['recent_moves_months']})
+            list_first_filter_months = read_single("physical.inventory", inventory_id, "list_first_filter_months")
+            str_recent_moves_months = str(wiz_data['recent_moves_months'])
+            if list_first_filter_months:
+                if str_recent_moves_months not in list_first_filter_months.split(';'):
+                    vals.update({'list_first_filter_months': list_first_filter_months + ';' + str_recent_moves_months})
+            else:
+                vals.update({'list_first_filter_months': str_recent_moves_months})
+
         write('physical.inventory', inventory_id, vals)
 
 

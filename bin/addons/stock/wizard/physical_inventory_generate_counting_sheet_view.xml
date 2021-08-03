@@ -7,9 +7,22 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Generate Counting Sheet">
-                    <field name="prefill_bn" colspan="4"/>
-                    <field name="prefill_ed" colspan="4"/>
-                    <field name="only_with_stock_level" colspan="4"/>
+                    <field name="first_filter_months" invisible="1"/>
+                    <field name="prefill_bn" colspan="4" on_change="onchange_prefill_bn(prefill_bn, only_with_stock_level)"/>
+                    <field name="prefill_ed" colspan="4" on_change="onchange_prefill_ed(prefill_ed, only_with_stock_level)"/>
+                    <field name="only_with_stock_level" colspan="4" on_change="onchange_only_with_stock_level(only_with_stock_level, only_with_pos_move)"/>
+                    <field name="only_with_pos_move" colspan="2" on_change="onchange_only_with_pos_move(only_with_pos_move, only_with_stock_level)" attrs="{'readonly': ['|', '|', ('prefill_bn', '=', False), ('prefill_ed', '=', False), ('first_filter_months', '=', 0)]}"/>
+                    <group colspan="2" col="2" attrs="{'invisible': [('only_with_pos_move', '=', False)]}">
+                        <group attrs="{'invisible': [('multi_recent_moves_months', '!=', False)]}">
+                            <html>
+                                <div id="label_recent_moves_months" style="text-align: right; font-style: italic;">
+                                    <translate>Products moved in the last : </translate>
+                                </div>
+                            </html>
+                            <field name="recent_moves_months" colspan="2" nolabel="1" attrs="{'required': [('only_with_pos_move', '=', True)]}"/>
+                        </group>
+                        <field name="multi_recent_moves_months" colspan="2" readonly="1" attrs="{'invisible': [('multi_recent_moves_months', '=', False)]}"/>
+                    </group>
                     <button name="generate_counting_sheet" string="Generate counting sheet" icon="gtk-go-forward" colspan="4" type="object" />
                 </form>
             </field>
