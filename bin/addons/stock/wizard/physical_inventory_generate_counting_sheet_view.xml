@@ -19,7 +19,7 @@
                                     <translate>Products moved in the last : </translate>
                                 </div>
                             </html>
-                            <field name="recent_moves_months" nolabel="1" class="readonly_color" attrs="{'required': [('only_with_pos_move', '=', True)]}"/>
+                            <field name="recent_moves_months" nolabel="1" class="required_color" attrs="{'required': [('only_with_pos_move', '=', True)]}"/>
                         </group>
                         <field name="multi_recent_moves_months" colspan="2" readonly="1" attrs="{'invisible': [('multi_recent_moves_months', '=', False)]}"/>
                     </group>
