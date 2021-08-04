@@ -65,7 +65,7 @@ class account_invoice_sync(osv.osv):
             fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        if distrib:  # original distrib from PO, PO line, CV or CV line
+        if distrib:  # original distrib from PO or PO line
             # create the Analytic Distribution
             distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
             for cc_line in distrib.cost_center_lines:
@@ -159,17 +159,10 @@ class account_invoice_sync(osv.osv):
                     matching_po_line = pol_obj.browse(cr, uid, po_line_ids[0],
                                                       fields_to_fetch=['analytic_distribution_id', 'cv_line_ids'], context=context)
                     inv_line_vals.update({'order_line_id': matching_po_line.id})
-                    line_distrib = False
                     if matching_po_line.cv_line_ids:
                         inv_line_vals.update({'cv_line_ids': [(6, 0, [cvl.id for cvl in matching_po_line.cv_line_ids])]})
-                        # only one CV line can be linked to the PO line
-                        if matching_po_line.cv_line_ids[0].analytic_distribution_id:
-                            line_distrib = matching_po_line.cv_line_ids[0].analytic_distribution_id
-                        # else: the AD will be set header level
-                    else:
-                        # use the PO line distrib if there is no linked CV (e.g. for the docs created before US-7903)
-                        line_distrib = matching_po_line.analytic_distribution_id
-                    self._create_analytic_distrib(cr, uid, inv_line_vals, line_distrib, context=context)  # update inv_line_vals
+                    po_line_distrib = matching_po_line.analytic_distribution_id
+                    self._create_analytic_distrib(cr, uid, inv_line_vals, po_line_distrib, context=context)  # update inv_line_vals
             inv_line_obj.create(cr, uid, inv_line_vals, context=context)
 
     def create_invoice_from_sync(self, cr, uid, source, invoice_data, context=None):
@@ -299,9 +292,8 @@ class account_invoice_sync(osv.osv):
                         vals.update({'picking_id': main_in.id})
                 # fill in the Analytic Distribution
                 # at header level if applicable
-                if not po.commitment_ids:
-                    po_distrib = po.analytic_distribution_id
-                    self._create_analytic_distrib(cr, uid, vals, po_distrib, context=context)  # update vals
+                po_distrib = po.analytic_distribution_id
+                self._create_analytic_distrib(cr, uid, vals, po_distrib, context=context)  # update vals
             # note: in case a FO would have been manually created the PO and IN would be missing in the ref/source doc,
             # but the same codification is used so it's visible that sthg is missing
             description = "%s.%s : %s" % (source, fo_number, main_in and main_in.name or '')  # e.g. se_HQ1C1.19/se_HQ1/HT101/FO00008 : IN/00009
