@@ -15,11 +15,11 @@
                     <group colspan="2" col="2" attrs="{'invisible': [('only_with_pos_move', '=', False)]}">
                         <group attrs="{'invisible': [('multi_recent_moves_months', '!=', False)]}">
                             <html>
-                                <div id="label_recent_moves_months" style="text-align: right; font-style: italic;">
+                                <div style="text-align: right; font-style: italic;">
                                     <translate>Products moved in the last : </translate>
                                 </div>
                             </html>
-                            <field name="recent_moves_months" colspan="2" nolabel="1" attrs="{'required': [('only_with_pos_move', '=', True)]}"/>
+                            <field name="recent_moves_months" nolabel="1" class="readonly_color" attrs="{'required': [('only_with_pos_move', '=', True)]}"/>
                         </group>
                         <field name="multi_recent_moves_months" colspan="2" readonly="1" attrs="{'invisible': [('multi_recent_moves_months', '=', False)]}"/>
                     </group>
