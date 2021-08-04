@@ -384,11 +384,7 @@ SELECT res_id, touched
                             _previous_calls=_previous_calls,
                             context=context)
 
-        # store changes in the context
-        if context is not None and 'changes' in context:
-            changes = context['changes'].setdefault(self._name, {})
-        else:
-            changes = {}
+        changes = {}
 
         # do not track changes if the dict are the same
         if previous_values == current_values:

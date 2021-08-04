@@ -705,6 +705,8 @@ class purchase_order(osv.osv):
         return [('id', operator, list(po_ids))]
 
     def _get_msg_big_qty(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
         res = {}
         max_qty = self.pool.get('purchase.order.line')._max_qty
         max_amount = self.pool.get('purchase.order.line')._max_amount

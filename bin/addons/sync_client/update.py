@@ -683,6 +683,8 @@ class update_received(osv.osv,fv_formatter):
                     # Re-start import_data on rows that succeeds before
                     if value_index > 0:
                         # Try to import the beginning of the values and permit the import of the rest
+                        # db rollback, previous updates will be replayed, clear the id cache
+                        self.pool.get('ir.model.data')._get_id.clear_cache(cr.dbname)
                         try:
                             res = secure_import_data(obj, import_fields, values[:value_index])
                             assert res[0] == value_index, res[2]

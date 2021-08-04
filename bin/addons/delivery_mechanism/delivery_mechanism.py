@@ -670,7 +670,6 @@ class stock_picking(osv.osv):
 
         if not values:
             return prog_id
-
         prog_obj.write(cr, uid, [prog_id], values, context=context)
 
         return prog_id
@@ -741,6 +740,10 @@ class stock_picking(osv.osv):
         sync_in = context.get('sync_message_execution', False)
         if context.get('rw_sync', False):
             sync_in = False
+
+        context['bypass_store_function'] = [
+            ('stock.picking', ['overall_qty', 'line_state'])
+        ]
 
         in_out_updated = True
         if sync_in or context.get('do_not_process_incoming'):
@@ -1214,6 +1217,7 @@ class stock_picking(osv.osv):
             }, context=context)
 
 
+        overall_to_compute = list(out_picks)
         # Create the first picking ticket if we are on a draft picking ticket
         if all_pack_info:
             for picking_id in list(out_picks):
@@ -1232,7 +1236,7 @@ class stock_picking(osv.osv):
                     if move_to_process_ids:
                         # sub pick creation
                         new_pick = self.do_create_picking(cr, uid, [picking_id], context=context, only_pack_ids=pack_ids).get('res_id')
-
+                        overall_to_compute.append(new_pick)
                         if  pack['packing_list']:
                             self.write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
 
@@ -1256,6 +1260,8 @@ class stock_picking(osv.osv):
                     'prepare_pick': _('Done'),
                 }, context=context)
 
+        if overall_to_compute:
+            self._store_set_values(cr, uid, overall_to_compute, ['overall_qty', 'line_state'], context)
         for picking_id in picking_ids:
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')

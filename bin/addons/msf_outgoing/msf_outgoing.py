@@ -3002,6 +3002,7 @@ class stock_picking(osv.osv):
                 move_obj.write(cr, uid, [move.id], {
                     'location_dest_id': pack_loc_id,
                     'old_out_location_dest_id': move.location_dest_id.id,
+                    'qty_to_process': move.product_qty,
                 }, context=context)
 
         # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
@@ -3133,6 +3134,7 @@ class stock_picking(osv.osv):
                     wr_vals = {
                         'product_qty': move_data[move.id]['total_qty'],
                         'product_uos_qty': move_data[move.id]['total_qty'],
+                        'qty_to_process': move_data[move.id]['total_qty'],
                     }
                     move_obj.write(cr, uid, [move.id], wr_vals, context=context)
                 else:
