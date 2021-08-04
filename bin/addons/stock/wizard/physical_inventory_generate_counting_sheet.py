@@ -21,7 +21,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         'only_with_pos_move': fields.boolean('Only count lines with stock & moves different than 0'),
         'first_filter_months': fields.related('inventory_id', 'first_filter_months', type="integer", string='Months selected in "Products with recent movement at location" during Product Selecction', readonly=1, store=False),
         'recent_moves_months': fields.selection(MOVED_IN_LAST_X_MONTHS, 'Products moved in the last', select=True),
-        'multi_recent_moves_months': fields.selection(MOVED_IN_LAST_X_MONTHS, 'Multiple selections up to X months', select=True),
+        'multi_recent_moves_months': fields.selection(MOVED_IN_LAST_X_MONTHS, 'Multiple selections up to', select=True),
     }
 
     _defaults = {

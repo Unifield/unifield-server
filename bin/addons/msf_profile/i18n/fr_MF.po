@@ -31257,7 +31257,7 @@ msgstr "Financing contract line code"
 #. module: stock
 #: field:physical.inventory.generate.counting.sheet,only_with_stock_level:0
 msgid "Only count lines with stock different than 0"
-msgstr "Compter uniquement les produits avec un niveau de stock différent de 0."
+msgstr "Compter uniquement les produits avec un niveau de stock différent de 0"
 
 #. module: account
 #: help:account.move.line,amount_residual:0
@@ -100659,6 +100659,7 @@ msgstr "Association Compte/Destination \"%s\" non trouvée."
 #: code:addons/stock/wizard/physical_inventory_select_products.py:10
 #: code:addons/stock/wizard/physical_inventory_select_products.py:11
 #: code:addons/specific_rules/report/report_stock_inventory.py:36
+#: code:addons/stock/wizard/physical_inventory_generate_counting_sheet.py:10
 #, python-format
 msgid "%s months"
 msgstr "%s mois"
@@ -112400,3 +112401,23 @@ msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée
 #, python-format
 msgid "Cannot process Document/line due to Product Code %s which does not exist in this instance"
 msgstr "Impossible de traiter le Document/la ligne. Le Code Produit %s n'existe pas dans cette instance"
+
+#. module: stock
+#: field:physical.inventory.generate.counting.sheet,only_with_pos_move:0
+msgid "Only count lines with stock & moves different than 0"
+msgstr "Compter uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0"
+
+#. module: stock
+#: view:physical.inventory.generate.counting.sheet:0
+msgid "Products moved in the last : "
+msgstr "Produits avec des mouvements dans les derniers : "
+
+#. module: stock
+#: field:physical.inventory.generate.counting.sheet,recent_moves_months:0
+msgid "Products moved in the last"
+msgstr "Produits avec des mouvements dans les derniers"
+
+#. module: stock
+#: field:physical.inventory.generate.counting.sheet,multi_recent_moves_months:0
+msgid "Multiple selections up to"
+msgstr "Sélection multiple jusqu'à"
