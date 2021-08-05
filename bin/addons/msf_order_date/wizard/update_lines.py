@@ -26,8 +26,8 @@ class update_lines(osv.osv_memory):
     _name = "update.lines"
     _description = "Update Lines from order"
     _columns = {
-        'delivery_requested_date': fields.date('Delivery Requested Date', readonly=True,),
-        'delivery_confirmed_date': fields.date('Delivery Confirmed Date', readonly=True,),
+        'delivery_estimated_date': fields.date('Estimated Delivery Date', readonly=True,),
+        'delivery_confirmed_date': fields.date('Confirmed Delivery Date', readonly=True,),
         'stock_take_date': fields.date('Date of Stock Take', readonly=True,),
     }
 
@@ -52,14 +52,14 @@ class update_lines(osv.osv_memory):
             return res
 
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
-            delivery_requested_date = obj.delivery_requested_date
+            delivery_estimated_date = obj.delivery_requested_date_modified
             if type == 'purchase.order' and obj.state != 'draft':
-                delivery_requested_date = obj.delivery_requested_date_modified
+                delivery_estimated_date = obj.delivery_requested_date_modified
             delivery_confirmed_date = obj.delivery_confirmed_date
             stock_take_date = obj.stock_take_date
 
-        if 'delivery_requested_date' in fields:
-            res.update({'delivery_requested_date': delivery_requested_date})
+        if 'delivery_estimated_date' in fields:
+            res.update({'delivery_estimated_date': delivery_estimated_date})
 
         if 'delivery_confirmed_date' in fields:
             res.update({'delivery_confirmed_date': delivery_confirmed_date})
@@ -139,13 +139,13 @@ class update_lines(osv.osv_memory):
         result['fields'] = _moves_fields
         return result
 
-    def update_delivery_requested_date_select(self, cr, uid, ids, context=None):
+    def update_delivery_estimated_date_select(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
 
-        return self.update_delivery_requested_date(cr, uid, ids, context=context, selected=True)
+        return self.update_delivery_estimated_date(cr, uid, ids, context=context, selected=True)
 
-    def update_delivery_requested_date(self, cr, uid, ids, context=None, selected=False):
+    def update_delivery_estimated_date(self, cr, uid, ids, context=None, selected=False):
         '''
         update all corresponding lines
         '''
@@ -163,15 +163,15 @@ class update_lines(osv.osv_memory):
             line_obj = self.pool.get('sale.order.line')
 
         for obj in obj_obj.browse(cr, uid, obj_ids, fields_to_fetch=ftf, context=context):
-            requested_date = obj.delivery_requested_date
+            estimated_date = obj.delivery_requested_date
             if obj_type == 'purchase.order' and obj.state != 'draft':
-                requested_date = obj.delivery_requested_date_modified
-            dom = [('order_id', '=', obj.id), ('state', 'in',['draft', 'validated', 'validated_n'])]
+                estimated_date = obj.delivery_requested_date_modified
+            dom = [('order_id', '=', obj.id), ('state', 'in', ['validated', 'validated_n'])]
             if selected and context.get('button_selected_ids'):
                 dom += [('id', 'in', context['button_selected_ids'])]
             line_ids = line_obj.search(cr, uid, dom, context=context)
             if line_ids:
-                line_obj.write(cr, uid, line_ids, {'date_planned': requested_date}, context=context)
+                line_obj.write(cr, uid, line_ids, {'esti_dd': estimated_date}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

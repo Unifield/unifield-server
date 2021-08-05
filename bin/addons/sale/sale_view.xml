@@ -238,6 +238,7 @@
                                             <field name="type" on_change="requested_type_change(product_id, type)"/>
                                             <field name="so_state_stored" invisible="True"/>
                                             <field name="date_planned" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
+                                            <field name="esti_dd" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
                                             <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
                                             <field name="stock_take_date"/>
                                             <field name="display_resourced_orig_line"/>
