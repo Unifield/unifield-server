@@ -52,6 +52,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF22.0
     def us_8805_product_set_archived(self, cr, uid, *a, **b):
         if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
             instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
@@ -72,6 +73,10 @@ class patch_scripts(osv.osv):
                         t.state=%(phase_out_id)s
                     ''', {'archived_id': archived_ids[0], 'phase_out_id': phase_out_ids[0]})
                 self.log_info(cr, uid, 'US-8805: %d products' % cr.rowcount)
+        return True
+
+    def us_8869_remove_ir_import(self, cr, uid, *a, **b):
+        cr.execute("update internal_request_import set file_to_import=NULL");
         return True
 
     # UF21.1
