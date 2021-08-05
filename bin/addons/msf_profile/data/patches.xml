@@ -677,5 +677,9 @@
             <field name="method">us_8753_admin_never_expire_password</field>
         </record>
 
+        <record id="us_8805_product_set_archived" model="patch.scripts">
+            <field name="method">us_8805_product_set_archived</field>
+        </record>
+
     </data>
 </openerp>
