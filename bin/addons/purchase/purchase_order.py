@@ -71,7 +71,7 @@ class purchase_order(osv.osv):
             else:
                 ret.where_clause.append(' "res_partner"."name" ilike %s ')
             ret.where_clause_params.append('%%%s%%'%dest_partner_names)
-            ret.having = ' GROUP BY "purchase_order"."id" '
+            ret.having_group_by = ' GROUP BY "purchase_order"."id" '
         return ret
 
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
