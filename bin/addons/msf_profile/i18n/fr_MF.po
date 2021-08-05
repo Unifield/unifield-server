@@ -112408,11 +112408,6 @@ msgid "Only count lines with stock & moves different than 0"
 msgstr "Compter uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0"
 
 #. module: stock
-#: view:physical.inventory.generate.counting.sheet:0
-msgid "Products moved in the last : "
-msgstr "Produits avec des mouvements dans les derniers : "
-
-#. module: stock
 #: field:physical.inventory.generate.counting.sheet,recent_moves_months:0
 msgid "Products moved in the last"
 msgstr "Produits avec des mouvements dans les derniers"
