@@ -374,6 +374,8 @@ class message_received(osv.osv):
         'arguments':fields.text('Arguments of the method', required = True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
         'run' : fields.boolean("Run", readonly=True),
+        'partial_run': fields.boolean("Partial Run", readonly=True),
+        'manually_set_total_run_date': fields.datetime('Manually to total-run Date', readonly=True),
         'log' : fields.text("Execution Messages",readonly=True),
         'execution_date' :fields.datetime('Execution Date', readonly=True),
         'create_date' :fields.datetime('Receive Date', readonly=True),
@@ -449,6 +451,10 @@ class message_received(osv.osv):
         self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
         return True
 
+    def manual_set_total_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'partial_run': False, 'manually_set_total_run_date': fields.datetime.now()}, context=context)
+        return True
+
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
         context = dict((context or {}),
@@ -501,6 +507,7 @@ class message_received(osv.osv):
                         'execution_date' : execution_date,
                         'run' : True,
                         'log' : tools.ustr(res),
+                        'partial_run': new_ctx.get('partial_sync_run', False),
                     }, context=context)
             except BaseException, e1:
                 ### This should never be reachable, but nobody knows!

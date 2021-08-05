@@ -610,6 +610,7 @@ class stock_picking(osv.osv):
                 message = "The INcoming " + in_name + "(no PO) is now become shipped available!"
             if ignored_lines:
                 message = "\n".join([message]+ignored_lines)
+                context['partial_sync_run'] = True
             self._logger.info(message)
             return message
         else:
