@@ -1877,6 +1877,9 @@ class purchase_order_line(osv.osv):
             if pol.order_id.order_type in ['loan', 'in_kind', 'donation_st', 'donation_exp']:
                 return False
 
+            if pol.order_id.push_fo:  # exclude push flow
+                return False
+
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)
             if commitment_voucher_id:
                 commitment_voucher_id = commitment_voucher_id[0]
