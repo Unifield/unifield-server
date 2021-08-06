@@ -291,8 +291,8 @@ class account_invoice(osv.osv):
                                     # restrict to the current CV line only
                                     if eng_line.commitment_line_id and eng_line.commitment_line_id.id == cv_line[0]:
                                         eng_line_distrib_id = eng_line.distrib_line_id and \
-                                                              eng_line.distrib_line_id._name == 'funding.pool.distribution.line' and \
-                                                              eng_line.distrib_line_id.id or False
+                                            eng_line.distrib_line_id._name == 'funding.pool.distribution.line' and \
+                                            eng_line.distrib_line_id.id or False
                                         # in case of an AD with several lines, several AJIs are linked to the same CV line:
                                         # the comparison is used to decrement the right one
                                         if eng_line_distrib_id == distrib_line.id:
@@ -319,7 +319,7 @@ class account_invoice(osv.osv):
                         break
                     amount_dic[k] -= cv_line[4]
 
-        if auto_cv and from_cancel:
+        if auto_cv and from_cancel and from_cancel is not True:
             # we cancel the last IN from PO and no draft invoice exist
             if not self.pool.get('account.invoice').search_exist(cr, uid, [('purchase_ids', 'in', po_ids), ('state', '=', 'draft')], context=context):
                 dpo_ids = self.pool.get('purchase.order').search(cr, uid, [('id', 'in', po_ids), ('po_version', '!=', 1), ('order_type', '=', 'direct')], context=context)

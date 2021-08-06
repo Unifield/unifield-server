@@ -308,7 +308,7 @@ class purchase_order_line_sync(osv.osv):
             kind = 'update'
             pol_to_update = [pol_updated]
             confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], 'confirmed', context=context)
-            po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state', 'product_qty'], context=context)
+            po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state', 'product_qty', 'price_unit', 'cv_line_ids'], context=context)
             pol_state = po_line.state
             if sol_dict['state'] in ['cancel', 'cancel_r']:
                 pol_values['cancelled_by_sync'] = True
@@ -316,6 +316,12 @@ class purchase_order_line_sync(osv.osv):
                 # if the state is less than confirmed we update the PO line
                 if debug:
                     logger.info("Write pol id: %s, values: %s" % (pol_to_update, pol_values))
+                if po_line.cv_line_ids and po_line.cv_line_ids[0] and po_line.state == 'confirmed' and po_line.product_qty - pol_values.get('product_qty', po_line.product_qty) > 0.01:
+                    # update qty on confirmed po line: update CV line if any
+                    # from_cancel = True : do not trigger wkf transition draft -> open
+                    self.pool.get('account.invoice')._update_commitments_lines(cr, uid, [po_ids[0]], cvl_amount_dic={
+                        po_line.cv_line_ids[0].id: round((po_line.product_qty - pol_values['product_qty'])*po_line.price_unit, 2)
+                    }, from_cancel=True, context=context)
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
 
         if debug:
