@@ -464,6 +464,7 @@ class product_product(osv.osv):
         location_id = False
         filter_qty = False
         filter_average = False
+        cond_average = '>'
         filter_in_any_product_list = False
         filter_in_product_list = False
         for x in domain:
@@ -482,6 +483,8 @@ class product_product(osv.osv):
             elif x[0] == 'average':
                 if context.get('history_cons') and context.get('obj_id'):
                     filter_average = context['obj_id']
+                    if x[1] == '!=':
+                        cond_average = '!='
             else:
                 new_dom.append(x)
 
@@ -521,7 +524,7 @@ class product_product(osv.osv):
             ret.tables.append('"product_history_consumption_product" phc1')
             ret.joins.setdefault('"product_product"', [])
             ret.joins['"product_product"'] += [('"product_history_consumption_product" phc1', 'id', 'product_id', 'INNER JOIN')]
-            ret.where_clause.append(''' "phc1"."consumption_id" = %s and "phc1"."name" = 'average' and "phc1"."value" > 0 ''')
+            ret.where_clause.append(''' "phc1"."consumption_id" = %%s and "phc1"."name" = 'average' and "phc1"."value" %s 0 ''' % (cond_average, ))
             ret.where_clause_params.append(filter_average)
 
         return ret

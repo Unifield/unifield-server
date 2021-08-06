@@ -77,7 +77,10 @@ class historical_parser(XlsxReportParser):
             sub_header.append(self.cell_ro(sub_title, 'sub_header_style'))
         sheet.append(sub_header)
 
-        prod_dom.append(('average', '>', 0))
+        if not h_amc.remove_negative_amc:
+            prod_dom.append(('average', '!=', 0))
+        else:
+            prod_dom.append(('average', '>', 0))
         prod_ids = product_obj.search(self.cr, self.uid, prod_dom, context=history_ctx)
         max_read = 500
         prod_ctx = context.copy()
