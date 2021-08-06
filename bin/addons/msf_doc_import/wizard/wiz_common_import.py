@@ -176,7 +176,7 @@ class wizard_common_import_line(osv.osv_memory):
         'search_default_not_restricted': fields.integer('Search default not restricted', invisible=True),  # UFTP-15 (for context reinject in product_ids m2m for 'add multiple lines' button)
         'current_id': fields.function(_get_current_id, method=True, type='integer', string='ID'),
         'msg': fields.text('Msg'),
-        'display_error': fields.boolean('Error'),
+        'display_error': fields.boolean('Error', readonly=1),
         'already_running': fields.boolean('Already running'),
     }
 
