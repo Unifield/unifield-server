@@ -104951,8 +104951,9 @@ msgstr "\n"
 "                                    Attention: Les lignes suivantes ont des qté ou des montants sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                "
 
-#. module: sale
+#. modules: sale, purchase
 #: view:sale.order:0
+#: view:purchase.order:0
 msgid "WARNING: Order line(s) not synchronized, code(s) does not exist"
 msgstr "ATTENTION: Ligne(s) non sychronisée(s), code(s) inexistant(s)"
 
