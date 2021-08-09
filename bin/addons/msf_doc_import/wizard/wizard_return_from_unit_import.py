@@ -180,7 +180,8 @@ class wizard_return_from_unit_import(osv.osv_memory):
             for line in lines:
                 self.pool.get('stock.move').create(cr, uid, line, context=context)
         else:
-            message = '%s:\n%s' % (_('Errors'), "\n".join(line_err))
+            if line_err:
+                message = '%s:\n%s' % (_('Errors'), "\n".join(line_err))
             wiz_state = 'error'
 
         end_time = time.time()
