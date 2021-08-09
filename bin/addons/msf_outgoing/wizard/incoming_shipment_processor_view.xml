@@ -86,22 +86,21 @@
                             </page>
                         </notebook>
                     </group>
-                    <group colspan="4" col="4">
-                        <html>
-                            <div style="font-weight: bold; text-align: right;">
-                                <translate>Physical Reception Date :</translate>
-                            </div>
-                        </html>
-                        <field name="physical_reception_date" nolabel="1" colspan="1" />
-                    </group>
                     <group colspan="9" col="10" name="actions">
+                        <label colspan="2" string=" " />
+                        <group colspan="1" col="2">
+                            <field name="physical_reception_date" bold="1" />
+                        </group>
+                        <label colspan="4" string=" " />
                         <separator string="Actions" colspan="9" />
-                        <field name="dest_type"
-                            on_change="onchange_dest_type(dest_type, picking_id)"
-                            />
-                        <field name="direct_incoming"
-                            attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])], 'readonly': [('register_a_claim', '=', True)]}"
-                            />
+                        <group colspan="2" col="4">
+                            <field name="dest_type"
+                                on_change="onchange_dest_type(dest_type, picking_id)"
+                                />
+                            <field name="direct_incoming"
+                                attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])], 'readonly': [('register_a_claim', '=', True)]}"
+                                />
+                        </group>
                         <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
