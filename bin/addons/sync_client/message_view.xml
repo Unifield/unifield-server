@@ -34,6 +34,9 @@
             <field name="run"/>
             <field name="create_date"/>
             <field name="execution_date"/>
+            <newline />
+            <field name="target_object"/>
+            <field name="target_id"/>
           </group>
           <separator string="Execution log" colspan="4"/>
           <field name="log" nolabel="1" colspan="4"/>

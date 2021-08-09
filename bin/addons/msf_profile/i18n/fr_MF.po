@@ -104963,6 +104963,12 @@ msgstr "\n"
 "                                    Attention: Les lignes suivantes ont des qté ou des montants sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                "
 
+#. modules: sale, purchase
+#: view:sale.order:0
+#: view:purchase.order:0
+msgid "WARNING: Order line(s) not synchronized, code(s) does not exist"
+msgstr "ATTENTION: Ligne(s) non sychronisée(s), code(s) inexistant(s)"
+
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_wizard_import_product_line
 msgid "Import Products data from Excel sheet"
@@ -105798,7 +105804,6 @@ msgid "The Stock Take Date of %s is not consistent! It should not be later than 
 msgstr "La Date de Prise de Stock de %s n'est pas cohérente! Elle ne devrait pas être ultérieure à sa date de création"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1712
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1722
 #, python-format
 msgid "The  'Stock Take Date' is not consistent! It should not be later than %s's creation date"

@@ -28,6 +28,7 @@ from tools.translate import _
 import uuid
 
 from sync_client import get_sale_purchase_logger
+from sync_client import SyncException
 
 
 class purchase_order_line_sync(osv.osv):
@@ -117,8 +118,25 @@ class purchase_order_line_sync(osv.osv):
         if not po_ids:
             raise Exception, "Cannot find the parent PO with partner ref %s" % partner_ref
 
-        # retrieve data:
-        pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
+        # search the PO line to update:
+        pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
+        if not pol_id and sol_dict.get('sync_linked_pol'):
+            pol_id_msg = sol_dict['sync_linked_pol'].split('/')[-1]
+            pol_id = self.search(cr, uid, [('order_id', '=', po_ids[0]), ('id', '=', int(pol_id_msg))], context=context)
+
+        # retrieve data
+        try:
+            pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
+        except Exception as e:
+            if not pol_id:
+                if hasattr(e, 'value'):
+                    msg = e.value
+                else:
+                    msg = '%s' % e
+                raise SyncException(msg, target_object='purchase.order', target_id=po_ids[0])
+            else:
+                raise
+
         order_name = sol_dict['order_id']['name']
         pol_values['order_id'] = po_ids[0]
         pol_values['sync_linked_sol'] = sol_dict['sync_local_id']
@@ -129,11 +147,6 @@ class purchase_order_line_sync(osv.osv):
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
 
-        # search the PO line to update:
-        pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
-        if not pol_id and sol_dict.get('sync_linked_pol'):
-            pol_id_msg = sol_dict['sync_linked_pol'].split('/')[-1]
-            pol_id = self.search(cr, uid, [('order_id', '=', pol_values['order_id']), ('id', '=', int(pol_id_msg))], context=context)
 
 
         if debug:
