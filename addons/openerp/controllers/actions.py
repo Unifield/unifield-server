@@ -616,5 +616,7 @@ def report_link(report_name, **kw):
     cherrypy.response.headers['X-Target'] = 'download'
     cherrypy.response.headers['Location'] = tools.url(
         '/openerp/report', report_name=report_name, **kw)
+    if kw.get('is_new_doc') and kw.get('ids'):
+        cherrypy.response.headers['is_new_doc'] = kw['ids'][0]
     return dict(name=report_name, data=kw)
 
