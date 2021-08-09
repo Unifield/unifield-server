@@ -61,7 +61,8 @@ if os.name == 'nt':
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
                 "psutil", "formencode", "cryptography", "requests",
-                "office365", "certifi", "chardet", "ipaddress", "urllib3", "fileinput", "pysftp"
+                "office365", "certifi", "chardet", "ipaddress", "urllib3", "fileinput", "pysftp",
+                "openpyxl"
             ],
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
@@ -257,6 +258,7 @@ setup(name=name,
           'PyNaCl==1.2.1',
           'paramiko==2.4.1',
           'pysftp==0.2.9',
+          'openpyxl==2.6.4',
       ],
       **py2exe_keywords
       )
