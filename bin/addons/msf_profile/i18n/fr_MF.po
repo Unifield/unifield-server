@@ -112392,3 +112392,9 @@ msgstr "L'Adresse ne peut pas être désactivée. Il y a des Éxpéditions ouver
 #, python-format
 msgid "The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process."
 msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée (%s). Veuillez en sélectionner une autre pour pouvoir continuer le traitement."
+
+#. module: sync_so
+#: code:addons/sync_so/so_po_common.py:491
+#, python-format
+msgid "Cannot process Document/line due to Product Code %s which does not exist in this instance"
+msgstr "Impossible de traiter le Document/la ligne. Le Code Produit %s n'existe pas dans cette instance"
