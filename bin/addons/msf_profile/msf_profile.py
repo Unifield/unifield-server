@@ -38,6 +38,7 @@ from msf_field_access_rights.osv_override import _get_instance_level
 import cStringIO
 import csv
 
+
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
     _logger = logging.getLogger('patch_scripts')

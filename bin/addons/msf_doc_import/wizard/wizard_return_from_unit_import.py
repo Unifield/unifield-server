@@ -64,7 +64,6 @@ class wizard_return_from_unit_import(osv.osv_memory):
         sheet = wb.active
 
         header_message = ''
-        error = False
         # From (Ext CU)
         from_loc_id = False
         if sheet['C9'].value:
@@ -75,85 +74,76 @@ class wizard_return_from_unit_import(osv.osv_memory):
                     from_loc_id = loc_ids[0]
                 else:
                     header_message += _('\nThe imported Ext. C.U. must be the same as in the IN (%s).') % (pick.ext_cu.name,)
-                    error = True
             else:
                 header_message += _('\nThere is no Ext. C.U. with the name %s.') % (ext_cu,)
-                error = True
         else:
             header_message += _('\nYou must fill "From" with an Ext. C.U. location.')
-            error = True
 
         # To (Internal Location)
         to_loc_id = False
         if sheet['F9'].value:
             to_loc = sheet['F9'].value
-            loc_ids = loc_obj.search(cr, uid, [('name', '=ilike', to_loc), ('usage', '=', 'internal'), ('location_category', '=', 'stock')], context=context)
+            loc_ids = loc_obj.search(cr, uid, [('name', '=ilike', to_loc), ('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit'])], context=context)
             if loc_ids:
                 to_loc_id = loc_ids[0]
             else:
                 header_message += _('\nThere is no Internal Location with the name %s.') % (to_loc,)
-                error = True
         else:
             header_message += _('\nYou must fill "To" with an Internal location.')
-            error = True
 
         lines = []
+        line_warn = []
+        line_err = []
         message = ''
         db_datetime_format = self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context)
         today = time.strftime(db_datetime_format)
         def_line = {'picking_id': pick.id, 'location_id': from_loc_id, 'location_dest_id': to_loc_id,
                     'reason_type_id': pick.reason_type_id.id, 'date': today, 'date_expected': today}
-        lns_to_fix = 0
         for cell in sheet.iter_rows(min_row=13, min_col=1, max_col=8):
-            line_err = ''
             if not cell[1].value:  # Stop looking at lines if there is no product
                 break
             line = def_line.copy()
+
+            line_num = cell[0].row or ''
 
             # Product Code and BN/ED
             prod = False
             prod_name = cell[1].value
             prod_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', prod_name)], context=context)
-            if prod_ids:
-                ftf = ['name', 'list_price', 'uom_id', 'perishable', 'batch_management']
-                prod = prod_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=ftf, context=context)
-                line.update({'product_id': prod.id, 'name': prod.name, 'price_unit': prod.list_price})
-                # BN/ED
-                if prod.batch_management or prod.perishable:
-                    bn_name = cell[5].value
-                    ed = cell[6].value
-                    if prod.batch_management and not bn_name:
-                        line_err += _('The Batch Number is mandatory for %s. ') % (prod_name, )
-                        error = True
-                    if prod.perishable and not ed:
-                        line_err += _('The Expiry Date is mandatory for %s. ') % (prod_name, )
-                        error = True
-                    if cell[6].data_type == 'd' and cell[6].is_date:
-                        if bn_name or ed:
-                            ed = ed.strftime('%Y-%m-%d')  # Fix format
-                            if prod.batch_management and prod.perishable:
-                                bn_ids = lot_obj.search(cr, uid, [('product_id', '=', prod.id), ('name', '=ilike', bn_name),
-                                                                  ('life_date', '=', ed)], context=context)
-                                if bn_ids:
-                                    line.update({'prodlot_id': bn_ids[0], 'expired_date': ed})
-                                else:
-                                    line_err += _('No Batch Number was found with the name %s and the expiry date %s. ') % (bn_name, cell[6].value.strftime('%d/%m/%Y'))
-                                    error = True
-                            elif not prod.batch_management and prod.perishable:
-                                bn_ids = lot_obj.search(cr, uid, [('product_id', '=', prod.id), ('life_date', '=', ed)], context=context)
-                                ed_bn_id = False
-                                if not bn_ids:
-                                    # Create the internal batch number if not exists
-                                    ed_bn_id = lot_obj.create(cr, uid, {'type': 'internal', 'product_id': prod.id,
-                                        'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial'), 'life_date': ed,
-                                    }, context=context)
-                                line.update({'prodlot_id': bn_ids and bn_ids[0] or ed_bn_id, 'expired_date': ed})
-                    else:
-                        line_err += _('The Expiry Date must be a date. ')
-                        error = True
-            else:
-                line_err += _('There is no active product %s. ') % (prod_name,)
-                error = True
+            if not prod_ids:
+                line_err.append(_('Line %s: There is no active product %s. ') % (line_num, prod_name))
+                continue
+
+            ftf = ['name', 'list_price', 'uom_id', 'perishable', 'batch_management']
+            prod = prod_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=ftf, context=context)
+            line.update({'product_id': prod.id, 'name': prod.name, 'price_unit': prod.list_price})
+
+            # BN/ED
+            if prod.batch_management or prod.perishable:
+                bn_name = cell[5].value
+                ed = cell[6].value
+                if prod.batch_management and not bn_name:
+                    line_err.append(_('Line: %s: The Batch Number is mandatory for %s. ') % (line_num, prod_name))
+                    continue
+                if prod.perishable:
+                    if not ed:
+                        line_err.append(_('Line %s: The Expiry Date is mandatory for %s. ') % (line_num, prod_name))
+                        continue
+                    elif cell[6].data_type != 'd' or not cell[6].is_date:
+                        line_err.append(_('Line %s %s: The Expiry Date must be a date.') % (line_num, prod_name))
+                        continue
+                    if not prod.batch_management and bn_name:
+                        line_warn.append(_("Line %s %s: a batch number is defined on the imported file but the product doesn't require batch number - Batch ignored") % (line_num, prod_name))
+                        bn_name = False
+                    try:
+                        ed = ed.strftime('%Y-%m-%d')  # Fix format
+                    except ValueError:
+                        line_err.append(_('Line %s %s the Expiry Date %s is not correct.') % (line_num, prod_name, ed))
+                        continue
+
+                if bn_name or ed:
+                    bn_id = lot_obj._get_or_create_lot(cr, uid, bn_name, ed, prod.id, context=context)
+                    line.update({'prodlot_id': bn_id, 'expired_date': ed})
 
             # Quantity
             qty = cell[3].value
@@ -161,11 +151,9 @@ class wizard_return_from_unit_import(osv.osv_memory):
                 if cell[3].data_type == 'n':
                     line.update({'product_qty': qty})
                 else:
-                    line_err += _('The Quantity must be a number. ')
-                    error = True
+                    line_err.append(_('Line %s: The Quantity must be a number. ') % (line_num, ))
             else:
-                line_err += _('The Quantity is mandatory for each line. ')
-                error = True
+                line_err.append(_('Line %s: The Quantity is mandatory for each line. ') % (line_num, ))
 
             # UoM
             uom_name = cell[4].value
@@ -176,29 +164,23 @@ class wizard_return_from_unit_import(osv.osv_memory):
                     # Check the uom category consistency
                     if prod and not self.pool.get('uom.tools').check_uom(cr, uid, prod.id, uom_id, context):
                         uom_id = prod.uom_id.id
-                        line_err += _('The UoM imported was not in the same category than the UoM of the product. The UoM of the product was taken instead. ')
+                        line_err.append(_('Line %s: The UoM imported was not in the same category than the UoM of the product. The UoM of the product was taken instead. ') % (line_num, ))
                     line.update({'product_uom': uom_id})
             else:
-                line_err += _('The UoM is mandatory for each line. ')
-                error = True
+                line_err.append(_('Line %s: The UoM is mandatory for each line. ') % (line_num, ))
 
             # Comment
             if cell[7].value:
                 line.update({'comment': tools.ustr(cell[7].value)})
 
-            if line_err:
-                lns_to_fix += 1
-                message += _('\nLine %s: %s') % (cell[0].row, line_err)
-
             lines.append(line)
 
         wiz_state = 'done'
-        if not error:
+        if not line_err and not header_message:
             for line in lines:
                 self.pool.get('stock.move').create(cr, uid, line, context=context)
         else:
-            if len(lines) == 0:
-                message = _('\nNo line to import.')
+            message = '%s:\n%s' % (_('Errors'), "\n".join(line_err))
             wiz_state = 'error'
 
         end_time = time.time()
@@ -206,10 +188,13 @@ class wizard_return_from_unit_import(osv.osv_memory):
         final_message = _(''' 
 Importation completed in %s!
 # of imported lines : %s lines
-# of lines to correct: %s
+# of errors to correct: %s
 
 %s
-%s''') % (total_time, len(lines), lns_to_fix, header_message, message)
+%s''') % (total_time, len(lines), len(line_err), header_message, message)
+        if line_warn:
+            final_message += "\n%s:\n%s" % (_('Warning'), "\n".join(line_warn))
+
         self.write(cr, uid, wiz.id, {'state': wiz_state, 'message': final_message}, context=context)
 
         wb.close()  # Close manually because of readonly
