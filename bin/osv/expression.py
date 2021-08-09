@@ -360,7 +360,7 @@ class expression(object):
                 if field.translate:
                     if operator in ('like', 'ilike', 'not like', 'not ilike'):
                         right = '%%%s%%' % right
-                    if operator in ('like', 'ilike', 'not like', 'not ilike', '=like', '=ilike'):
+                    if right and operator in ('like', 'ilike', 'not like', 'not ilike', '=like', '=ilike'):
                         right = right.replace('\\', '\\\\').replace('_', '\\_')
 
                     operator = {'=like':'like','=ilike':'ilike'}.get(operator,operator)
@@ -486,7 +486,7 @@ class expression(object):
                     elif left in table._columns:
                         params = table._columns[left]._symbol_set[1](right)
 
-                    if operator in ('like', 'ilike', 'not like', 'not ilike', '=like', '=ilike'):
+                    if params and operator in ('like', 'ilike', 'not like', 'not ilike', '=like', '=ilike'):
                         params = params.replace('\\', '\\\\').replace('_', '\\_')
                     if add_null:
                         query = '(%s OR %s IS NULL)' % (query, left)
