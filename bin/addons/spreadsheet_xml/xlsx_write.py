@@ -10,6 +10,7 @@ import pooler
 import datetime
 from openpyxl.styles import NamedStyle
 from openpyxl.utils.cell import get_column_letter
+from openpyxl.cell import WriteOnlyCell
 
 
 class XlsxReport(report_int):
@@ -134,4 +135,11 @@ class XlsxReportParser():
         else:
             str_date = value
         return datetime.datetime.strptime(str_date, "%Y-%m-%d %H:%M:%S")
+
+    def cell_ro(self, value, style=None):
+        new_cell = WriteOnlyCell(self.workbook.active, value=value)
+        if style:
+            new_cell.style = style
+        return new_cell
+
 
