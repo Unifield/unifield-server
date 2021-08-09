@@ -99843,10 +99843,11 @@ msgid "\n"
 msgstr "\n"
 "PROD"
 
-#. module: stock, msf_supply_doc_export
+#. module: stock, msf_supply_doc_export, msf_outgoing
 #: field:stock.picking,physical_reception_date:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:249
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:256
+#: field:stock.incoming.processor,physical_reception_date:0
 msgid "Physical Reception Date"
 msgstr "Date de Réception Physique"
 
@@ -112417,3 +112418,8 @@ msgstr "Impossible de traiter le Document/la ligne. Le Code Produit %s n'existe 
 #, python-format
 msgid "Estimated DD"
 msgstr "DL Estimée"
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "Physical Reception Date :"
+msgstr "Date de Réception Physique :"

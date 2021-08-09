@@ -763,6 +763,8 @@ class stock_picking(osv.osv):
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
             if wizard.register_a_claim and wizard.claim_type in ['return', 'missing']:
                 in_out_updated = False
+            if not wizard.physical_reception_date:
+                wizard.physical_reception_date = time.strftime('%Y-%m-%d %H:%M:%S')
             picking_id = wizard.picking_id.id
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
                                                                   'type',
@@ -1013,6 +1015,7 @@ class stock_picking(osv.osv):
                     'state':'draft',
                     'in_dpo': context.get('for_dpo', False), # TODO used ?
                     'dpo_incoming': wizard.picking_id.dpo_incoming,
+                    'physical_reception_date': wizard.physical_reception_date or False,
                 }
 
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -1157,6 +1160,9 @@ class stock_picking(osv.osv):
                     'create_bo': _('N/A'),
                     'close_in': _('In progress'),
                 }, context=context)
+
+                if wizard.physical_reception_date:
+                    self.write(cr, uid, picking_id, {'physical_reception_date': wizard.physical_reception_date})
 
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking_id, context=context)
