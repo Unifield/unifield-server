@@ -52,7 +52,7 @@ class update_lines(osv.osv_memory):
             return res
 
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
-            delivery_estimated_date = obj.delivery_requested_date_modified
+            delivery_estimated_date = obj.delivery_requested_date
             if type == 'purchase.order' and obj.state != 'draft':
                 delivery_estimated_date = obj.delivery_requested_date_modified
             delivery_confirmed_date = obj.delivery_confirmed_date
