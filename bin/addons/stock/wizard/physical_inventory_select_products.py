@@ -388,23 +388,19 @@ class physical_inventory_select_products(osv.osv_memory):
         product_ids = wiz_data["products_preview"]
 
         # Redo a search to force order according to default order
-        previously_selected_product_ids = read_single("physical.inventory", inventory_id, "product_ids")
-        product_ids = previously_selected_product_ids + product_ids
+        inventory_data= self.pool.get('physical.inventory').read(cr, uid, inventory_id, ['product_ids', 'max_filter_months', 'multiple_filter_months'], context=context)
+        product_ids = inventory_data['product_ids'] + product_ids
         product_ids = self.pool.get("product.product").search(cr, uid, [("id", 'in', product_ids)], context=context)
 
         # '6' is the code for 'replace all'
         vals = {'product_ids': [(6, 0, product_ids)]}
 
         # Check if 'recent_movements' has been used
-        if wiz_data["first_filter"] == 'recent_movements':
-            vals.update({'first_filter_months': wiz_data['recent_moves_months']})
-            list_first_filter_months = read_single("physical.inventory", inventory_id, "list_first_filter_months")
-            str_recent_moves_months = str(wiz_data['recent_moves_months'])
-            if list_first_filter_months:
-                if str_recent_moves_months not in list_first_filter_months.split(';'):
-                    vals.update({'list_first_filter_months': list_first_filter_months + ';' + str_recent_moves_months})
-            else:
-                vals.update({'list_first_filter_months': str_recent_moves_months})
+        if wiz_data['products_preview'] and wiz_data['first_filter'] == 'recent_movements':
+            if wiz_data['recent_moves_months'] > inventory_data['max_filter_months']:
+                vals['max_filter_months'] = wiz_data['recent_moves_months']
+            if not inventory_data['multiple_filter_months'] and inventory_data['max_filter_months'] and wiz_data['recent_moves_months'] != inventory_data['max_filter_months']:
+                vals['multiple_filter_months'] = True
 
         write('physical.inventory', inventory_id, vals)
 

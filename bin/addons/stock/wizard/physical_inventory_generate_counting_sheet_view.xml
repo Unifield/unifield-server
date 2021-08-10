@@ -7,15 +7,12 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Generate Counting Sheet">
-                    <field name="first_filter_months" invisible="1"/>
-                    <field name="prefill_bn" colspan="4" on_change="onchange_prefill_bn(prefill_bn, only_with_stock_level)"/>
-                    <field name="prefill_ed" colspan="4" on_change="onchange_prefill_ed(prefill_ed, only_with_stock_level)"/>
-                    <field name="only_with_stock_level" colspan="4" on_change="onchange_only_with_stock_level(only_with_stock_level, only_with_pos_move)"/>
-                    <field name="only_with_pos_move" colspan="2" on_change="onchange_only_with_pos_move(only_with_pos_move, only_with_stock_level)" attrs="{'readonly': ['|', '|', ('prefill_bn', '=', False), ('prefill_ed', '=', False), ('first_filter_months', '=', 0)]}"/>
-                    <group colspan="2" attrs="{'invisible': [('only_with_pos_move', '=', False)]}">
-                        <field name="recent_moves_months" colspan="2" attrs="{'invisible': [('multi_recent_moves_months', '!=', False)], 'required': [('only_with_pos_move', '=', True)]}"/>
-                        <field name="multi_recent_moves_months" colspan="2" readonly="1" attrs="{'invisible': [('multi_recent_moves_months', '=', False)]}"/>
-                    </group>
+                    <field name="prefill_bn" on_change="onchange_prefill_bn(prefill_bn, only_with_stock_level)" width="1%%"/><newline />
+                    <field name="prefill_ed" on_change="onchange_prefill_ed(prefill_ed, only_with_stock_level)" width="1%%"/><newline />
+                    <field name="only_with_stock_level" on_change="onchange_only_with_stock_level(only_with_stock_level, only_with_pos_move)" width="1%%"/><newline />
+                    <field name="only_with_pos_move" on_change="onchange_only_with_pos_move(only_with_pos_move, only_with_stock_level)" attrs="{'readonly': ['|', '|', ('prefill_bn', '=', False), ('prefill_ed', '=', False), ('recent_moves_months', '=', False)]}" width="1%%"/>
+                    <field name="recent_moves_months" nolabel="1" readonly="1" widget="full_text" italic="1" attrs="{'invisible': [('only_with_pos_move', '=', False)]}"/>
+                    <label string=" " colspan="1" width="100%%"/>
                     <button name="generate_counting_sheet" string="Generate counting sheet" icon="gtk-go-forward" colspan="4" type="object" />
                 </form>
             </field>
