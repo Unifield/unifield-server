@@ -142,6 +142,9 @@ class account_invoice(osv.osv):
                 # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
                 if not invl.order_line_id and not inv.is_merged_by_account:
                     continue
+                # exclude push flow
+                if invl.order_line_id and (invl.order_line_id.order_id.push_fo or invl.order_line_id.set_as_sourced_n):
+                    continue
                 old_cv_version = True
                 # CV STARTING FROM VERSION 2
                 amount_to_subtract = invl.price_subtotal or 0.0
