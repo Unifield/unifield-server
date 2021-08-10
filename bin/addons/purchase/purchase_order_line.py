@@ -1319,6 +1319,8 @@ class purchase_order_line(osv.osv):
                 default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
             if 'analytic_distribution_id' not in default:
                 default['analytic_distribution_id'] = False
+            if 'esti_dd' not in default:
+                default['esti_dd'] = False
 
         if default.get('analytic_distribution_id'):
             default['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, default['analytic_distribution_id'], {}, context=context)

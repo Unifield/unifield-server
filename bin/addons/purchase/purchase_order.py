@@ -1498,6 +1498,14 @@ class purchase_order(osv.osv):
         res = common_onchange_transport_type(self, cr, uid, ids, part=part, transport_type=transport_type, requested_date=requested_date, type=get_type(self), res=res, context=context)
         return res
 
+    def requested_data(self, cr, uid, ids, context=None):
+        '''
+        data for requested
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
+
     def estimated_data(self, cr, uid, ids, context=None):
         '''
         data for requested
@@ -1531,8 +1539,11 @@ class purchase_order(osv.osv):
             context = {}
         # field name
         field_name = context.get('field_name', False)
-        if field_name == 'estimated' and self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
-            raise osv.except_osv(_('Warning'), _('Please fill the "Estimated Delivery Date" field.'))
+        if field_name == 'estimated':
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
+                raise osv.except_osv(_('Warning'), _('Please fill the "Estimated Delivery Date" field.'))
+            elif self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context):
+                field_name = 'requested'
         assert field_name, 'The button is not correctly set.'
         # data
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)

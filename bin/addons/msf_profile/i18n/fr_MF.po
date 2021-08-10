@@ -112600,9 +112600,7 @@ msgstr "Ligne %s: La Quantité est obligatoire pour chaque ligne. "
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:178
 #, python-format
-msgid ""
-"Line %s: The UoM imported was not in the same category than the UoM of the "
-"product. The UoM of the product was taken instead. "
+msgid "Line %s: The UoM imported was not in the same category than the UoM of the product. The UoM of the product was taken instead. "
 msgstr "Ligne %s: l'UdM importée n'a pas la même catégorie que l'UdM du produit. L'UdM du produit sera utilisée à la place. "
 
 #. module: msf_doc_import
@@ -112694,8 +112692,12 @@ msgstr "Ligne %s %s la Date d'Expiration %s est incorrecte."
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:136
 #, python-format
-msgid ""
-"Line %s %s: a batch number is defined on the imported file but the product "
-"doesn't require batch number - Batch ignored"
+msgid "Line %s %s: a batch number is defined on the imported file but the product doesn't require batch number - Batch ignored"
 msgstr "Ligne %s %s: un NL est défini dans le fichier, mais le produit ne nécissite pas de lot - Lot ignoré"
 
+#. modules: msf_order_date, purchase
+#: code:addons/msf_order_date/order_dates.py:696
+#: code:addons/purchase/purchase_order.py:1507
+#, python-format
+msgid "Do you want to update the Requested Date of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Souhaitée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
