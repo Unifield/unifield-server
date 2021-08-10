@@ -112408,11 +112408,13 @@ msgid "Only count lines with stock & moves different than 0"
 msgstr "Compter uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0"
 
 #. module: stock
-#: field:physical.inventory.generate.counting.sheet,recent_moves_months:0
-msgid "Products moved in the last"
-msgstr "Produits avec des mouvements dans les derniers"
+#: code:addons/addons/stock/physical_inventory.py:265
+#, python-format
+msgid "Multiple selections up to: %s months"
+msgstr "Sélections multiples jusqu'à: %s mois"
 
 #. module: stock
-#: field:physical.inventory.generate.counting.sheet,multi_recent_moves_months:0
-msgid "Multiple selections up to"
-msgstr "Sélection multiple jusqu'à"
+#: code:addons/addons/stock/physical_inventory.py:265
+#, python-format
+msgid "Products moved in the last: %s month%s"
+msgstr "Mouvements de stock dans: %s dernier%s mois"

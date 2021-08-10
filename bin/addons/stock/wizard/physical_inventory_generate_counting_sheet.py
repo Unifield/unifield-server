@@ -7,7 +7,6 @@ from dateutil.relativedelta import relativedelta
 import itertools
 assert _
 
-MOVED_IN_LAST_X_MONTHS = tuple([(i, _("%s months") % str(i)) for i in range(1, 13)])
 
 class physical_inventory_generate_counting_sheet(osv.osv_memory):
     _name = "physical.inventory.generate.counting.sheet"
