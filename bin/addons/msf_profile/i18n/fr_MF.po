@@ -31268,7 +31268,7 @@ msgstr "Financing contract line code"
 #. module: stock
 #: field:physical.inventory.generate.counting.sheet,only_with_stock_level:0
 msgid "Only count lines with stock different than 0"
-msgstr "Compter uniquement les produits avec un niveau de stock différent de 0."
+msgstr "Compter uniquement les produits avec un niveau de stock différent de 0"
 
 #. module: account
 #: help:account.move.line,amount_residual:0
@@ -100687,6 +100687,7 @@ msgstr "Association Compte/Destination \"%s\" non trouvée."
 #: code:addons/stock/wizard/physical_inventory_select_products.py:10
 #: code:addons/stock/wizard/physical_inventory_select_products.py:11
 #: code:addons/specific_rules/report/report_stock_inventory.py:36
+#: code:addons/stock/wizard/physical_inventory_generate_counting_sheet.py:10
 #, python-format
 msgid "%s months"
 msgstr "%s mois"
@@ -112701,3 +112702,20 @@ msgstr "Ligne %s %s: un NL est défini dans le fichier, mais le produit ne néci
 #, python-format
 msgid "Do you want to update the Requested Date of all/selected Order lines ?"
 msgstr "Voulez-vous mettre à jour la Date de Livraison Souhaitée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+
+#. module: stock
+#: field:physical.inventory.generate.counting.sheet,only_with_pos_move:0
+msgid "Only count lines with stock & moves different than 0"
+msgstr "Compter uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0"
+
+#. module: stock
+#: code:addons/addons/stock/physical_inventory.py:265
+#, python-format
+msgid "Multiple selections up to: %s months"
+msgstr "Sélections multiples jusqu'à: %s mois"
+
+#. module: stock
+#: code:addons/addons/stock/physical_inventory.py:265
+#, python-format
+msgid "Products moved in the last: %s month%s"
+msgstr "Mouvements de stock dans: %s dernier%s mois"
