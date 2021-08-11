@@ -58,7 +58,7 @@ class patch_scripts(osv.osv):
         # trigger sync updates
         cr.execute('''
             update
-                ir_model_data set last_modification=NOW(), touched='cold_chain'
+                ir_model_data set last_modification=NOW(), touched='[''cold_chain'']'
             where
                 model='product.product' and
                 module='sd' and
