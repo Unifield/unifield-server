@@ -748,8 +748,9 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Thermosensitivity" editable="top" >
-	            <field name="name" />
-	            <field name="cold_chain" />
+                <field name="name" />
+                <field name="cold_chain" />
+                <field name="mapped_to" />
                 </tree>
             </field>
         </record>

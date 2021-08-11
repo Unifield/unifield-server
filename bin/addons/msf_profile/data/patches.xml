@@ -686,5 +686,9 @@
             <field name="method">us_8869_remove_ir_import</field>
         </record>
 
+        <record id="us_8944_cold_chain_migration" model="patch.scripts">
+            <field name="method">us_8944_cold_chain_migration</field>
+        </record>
+
     </data>
 </openerp>
