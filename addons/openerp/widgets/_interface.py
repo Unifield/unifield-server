@@ -113,9 +113,10 @@ class TinyWidget(Widget):
 
 class InputWidgetLabel(Widget):
     template = "/openerp/widgets/templates/label.mako"
-    params = ['string', 'help']
+    params = ['string', 'help', 'bold']
 
     def __init__(self, name, string, help=None):
+        self.bold = False
         super(InputWidgetLabel, self).__init__(name=name, string=string, help=help)
 
 class TinyInputWidget(TinyWidget, InputWidget):
@@ -181,6 +182,8 @@ class TinyInputWidget(TinyWidget, InputWidget):
         self.default_focus = attrs.get('default_focus', False)
         self.required_error_msg = attrs.get('required_error_msg', False)
         self.label = self.label_type(self.name, self.string, self.help)
+        if attrs.get('bold'):
+            self.label.bold = True
         self.filters = []
 
     def set_state(self, state):

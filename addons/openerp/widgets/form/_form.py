@@ -600,6 +600,7 @@ register_widget(Selection, ["selection"])
 class FullText(TinyInputWidget):
     template = "/openerp/widgets/form/templates/full_text.mako"
 
+    params = ['italic']
     def set_value(self, value):
         if value:
             super(FullText, self).set_value(value)
