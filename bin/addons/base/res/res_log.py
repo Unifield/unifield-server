@@ -55,6 +55,8 @@ class res_log(osv.osv):
         create_context = context and dict(context) or {}
         if 'res_log_read' in create_context:
             vals['read'] = create_context.pop('res_log_read')
+        if '__copy_data_seen' in create_context:
+            create_context.pop('__copy_data_seen')
         if create_context and not vals.get('context'):
             vals['context'] = create_context
         return super(res_log, self).create(cr, uid, vals, context=context)

@@ -34,13 +34,29 @@
         <record id="commit_t1" model="workflow.transition">
             <field name="act_from" ref="act_draft"/>
             <field name="act_to" ref="act_open"/>
+            <field name="sequence">10</field>
             <field name="signal">commitment_open</field>
         </record>
 
         <record id="commit_t2" model="workflow.transition">
             <field name="act_from" ref="act_open"/>
             <field name="act_to" ref="act_done"/>
+            <field name="sequence">10</field>
             <field name="signal">commitment_validate</field>
+        </record>
+
+        <record id="commit_t3" model="workflow.transition">
+            <field name="act_from" ref="act_open"/>
+            <field name="act_to" ref="act_done"/>
+            <field name="sequence">15</field>  <!-- (sequence, act_from) must be unique -->
+            <field name="signal">commitment_always_validate</field>
+        </record>
+
+        <record id="commit_t4" model="workflow.transition">
+            <field name="act_from" ref="act_draft"/>
+            <field name="act_to" ref="act_done"/>
+            <field name="sequence">15</field>  <!-- (sequence, act_from) must be unique -->
+            <field name="signal">commitment_always_validate</field>
         </record>
 
     </data>

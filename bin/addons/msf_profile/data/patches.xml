@@ -686,5 +686,8 @@
             <field name="method">us_8869_remove_ir_import</field>
         </record>
 
+        <record id="us_7449_set_cv_version" model="patch.scripts">
+            <field name="method">us_7449_set_cv_version</field>
+        </record>
     </data>
 </openerp>

@@ -80,6 +80,15 @@ class patch_scripts(osv.osv):
         cr.execute("update internal_request_import set file_to_import=NULL");
         return True
 
+    def us_7449_set_cv_version(self, cr, uid, *a, **b):
+        """
+        Sets the existing Commitment Vouchers in version 1.
+        """
+        if self.pool.get('sync.client.entity'):  # existing instances
+            cr.execute("UPDATE account_commitment SET version = 1")
+            self._logger.warn('Commitment Vouchers: %s CV(s) set to version 1.', cr.rowcount)
+        return True
+
     # UF21.1
     def us_8810_fake_updates(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.entity'):

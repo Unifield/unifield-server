@@ -40,65 +40,6 @@ class stock_picking(osv.osv):
         'sale_id': False
     }
 
-    def get_currency_id(self, cursor, user, picking):
-        if picking.sale_id:
-            return picking.sale_id.pricelist_id.currency_id.id
-        else:
-            return super(stock_picking, self).get_currency_id(cursor, user, picking)
-
-    def _get_payment_term(self, cursor, user, picking):
-        if picking.sale_id and picking.sale_id.payment_term:
-            return picking.sale_id.payment_term.id
-        return super(stock_picking, self)._get_payment_term(cursor, user, picking)
-
-    def _get_address_invoice(self, cursor, user, picking):
-        res = {}
-        if picking.sale_id:
-            res['contact'] = picking.sale_id.partner_order_id.id
-            res['invoice'] = picking.sale_id.partner_invoice_id.id
-            return res
-        return super(stock_picking, self)._get_address_invoice(cursor, user, picking)
-
-    def _get_comment_invoice(self, cursor, user, picking):
-        if picking.note or (picking.sale_id and picking.sale_id.note):
-            return picking.note or picking.sale_id.note
-        return super(stock_picking, self)._get_comment_invoice(cursor, user, picking)
-
-    def _get_price_unit_invoice(self, cursor, user, move_line, type):
-        if move_line.sale_line_id and move_line.sale_line_id.product_id.id == move_line.product_id.id:
-            uom_id = move_line.product_id.uom_id.id
-            uos_id = move_line.product_id.uos_id and move_line.product_id.uos_id.id or False
-            price = move_line.sale_line_id.price_unit
-            coeff = move_line.product_id.uos_coeff
-            if uom_id != uos_id  and coeff != 0:
-                price_unit = price / coeff
-                return price_unit
-            return move_line.sale_line_id.price_unit
-        return super(stock_picking, self)._get_price_unit_invoice(cursor, user, move_line, type)
-
-    def _get_discount_invoice(self, cursor, user, move_line):
-        if move_line.sale_line_id:
-            return move_line.sale_line_id.discount
-        return super(stock_picking, self)._get_discount_invoice(cursor, user, move_line)
-
-    def _get_taxes_invoice(self, cursor, user, move_line, type):
-        if move_line.sale_line_id and move_line.sale_line_id.product_id.id == move_line.product_id.id:
-            return [x.id for x in move_line.sale_line_id.tax_id]
-        return super(stock_picking, self)._get_taxes_invoice(cursor, user, move_line, type)
-
-    def _get_account_analytic_invoice(self, cursor, user, picking, move_line):
-        if picking.sale_id:
-            return picking.sale_id.project_id.id
-        return super(stock_picking, self)._get_account_analytic_invoice(cursor, user, picking, move_line)
-
-    def _invoice_hook(self, cursor, user, picking, invoice_id):
-        sale_obj = self.pool.get('sale.order')
-        if picking.sale_id:
-            sale_obj.write(cursor, user, [picking.sale_id.id], {
-                'invoice_ids': [(4, invoice_id)],
-            })
-        return super(stock_picking, self)._invoice_hook(cursor, user, picking, invoice_id)
-
 
 stock_picking()
 
