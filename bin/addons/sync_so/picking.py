@@ -181,6 +181,7 @@ class stock_picking(osv.osv):
             'note': data.get('note', False),
             'comment': data.get('comment'),
             'sale_line_id': data.get('sale_line_id', False) and data['sale_line_id'].get('id', False) or False,
+            'resourced_original_remote_line': data.get('sale_line_id', False) and data['sale_line_id'].get('resourced_original_remote_line', False) or False,
 
         }
         for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width']:
@@ -240,18 +241,12 @@ class stock_picking(osv.osv):
         return self.partial_shipped_fo_updates_in_po(cr, uid, source, out_info, context=context)
 
 
-    # US-1294: Add the shipped amount into the move lines
+    # US-1294: Add the shipped qty into the move lines
     def _add_to_shipped_moves(self, already_shipped_moves, move_id, quantity):
-        found = False
-        for elem in already_shipped_moves:
-            if move_id in elem:
-                # If the move line exists, then add the new shipped amount into line
-                elem[move_id] += quantity
-                found = True
-                break
-
-        if not found:
-            already_shipped_moves.append({move_id: quantity})
+        if move_id in already_shipped_moves:
+            already_shipped_moves[move_id] += quantity
+        else:
+            already_shipped_moves[move_id] = quantity
 
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, *pick_info, **kwargs):
         '''
@@ -395,13 +390,14 @@ class stock_picking(osv.osv):
             context['InShipOut'] = "IN"  # asking the IN object to be logged
             already_set_moves = []
             line_processed = 0
+            ignored_lines = []
             line_found = False
             for line in pack_data:
                 line_processed += 1
                 line_data = pack_data[line]
 
                 #US-1294: Keep this list of pair (move_line: shipped_qty) as amount already shipped
-                already_shipped_moves = []
+                already_shipped_moves = {}
                 split_processed = 0
                 # get the corresponding picking line ids
                 for data in line_data['data']:
@@ -435,15 +431,19 @@ class stock_picking(osv.osv):
                         self._logger.info(message)
                         continue
 
-                    search_move = [('id', 'not in', already_set_moves), ('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('state', '!=', 'cancel')]
+                    # JFB: already_set_moves not useful ?
+                    search_move = [('id', 'not in', already_set_moves), ('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('state', '!=', 'cancel'), ('in_forced', '=', False)]
 
                     original_qty_partial = data.get('original_qty_partial')
                     orig_qty = data.get('quantity')
+
+                    # JFB: original_qty_partial is always set except the stock move is cancelled
                     if original_qty_partial != -1:
                         search_move.append(('product_qty', '=', original_qty_partial))
                         orig_qty = original_qty_partial
 
                     move_ids = move_obj.search(cr, uid, search_move, context=context)
+                    # JFB: already_set_moves not useful ?
                     if not move_ids:
                         #US-1294: Reduce the search condition
                         del search_move[0]
@@ -452,21 +452,20 @@ class stock_picking(osv.osv):
                     #US-1294: If there is only one move line found, must check if this has already all taken in shipped moves list
                     if move_ids and len(move_ids) == 1:  # if there is only one move, take it for process
                         move = move_obj.read(cr, uid, move_ids[0], ['product_qty'], context=context)
-                        for elem in already_shipped_moves:
-                            # If this move has already all shipped, do not take it anymore
-                            if move['id'] in elem and move['product_qty'] == elem[move['id']]:
-                                move_ids = False # search again
-                                break
+                        if already_shipped_moves.get(move['id']) == move['product_qty']:
+                            move_ids = False # search again
+                            break
 
                     if not move_ids and original_qty_partial != -1:
                         #US-1294: Reduce the search condition
-                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial), ('state', '!=', 'cancel')]
+                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial), ('state', '!=', 'cancel'), ('in_forced', '=', False)]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
 
                     #US-1294: But still no move line with exact qty as the amount shipped
+                    already_closed = False
                     if not move_ids:
                         #US-1294: Now search all moves of the given IN and line number
-                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('state', '!=', 'cancel')]
+                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('state', '!=', 'cancel'), ('in_forced', '=', False)]
                         move_ids = move_obj.search(cr, uid, search_move, order='product_qty ASC', context=context)
                         if not move_ids:
                             # SLL edit, if move cannot be found, then use sync_linked_sol to find it:
@@ -478,19 +477,43 @@ class stock_picking(osv.osv):
                                     ('sync_linked_sol', 'ilike', '%%/%s' % sol_id),
                                 ], context=context)
                                 if pol_id:
-                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id), ('state', 'not in', ['done', 'cancel'])], context=context)
+                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id), ('state', 'not in', ['done', 'cancel']), ('in_forced', '=', False)], context=context)
+                                if not move_ids:
+                                    already_closed = move_obj.search_exists(cr, uid, [('purchase_line_id', 'in', pol_id), ('state', 'in', ['done', 'cancel'])], context=context)
                         if not move_ids:
                             #US-1294: absolutely no moves -> probably they are closed, just show the error message then ignore
-                            closed_pick_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', ['done', 'cancel'])], context=context)
-                            if closed_pick_ids:
-                                move_ids = move_obj.search(cr, uid, [('picking_id', 'in', closed_pick_ids), ('line_number', '=', data.get('line_number'))], context=context)
-                            if not move_ids:
+                            if not already_closed:
+                                closed_pick_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', ['done', 'cancel'])], context=context)
+                                if closed_pick_ids:
+                                    already_closed = move_obj.search_exists(cr, uid, [('picking_id', 'in', closed_pick_ids), ('line_number', '=', data.get('line_number'))], context=context)
+
+                            if not already_closed:
+                                if data.get('resourced_original_remote_line'):
+                                    resourced_po_line_id = data['resourced_original_remote_line'].split('/')[-1]
+                                    if resourced_po_line_id:
+                                        move_forced_id = self.pool.get('stock.move').search(cr, uid, [
+                                            ('purchase_line_id', '=', int(resourced_po_line_id)),
+                                            ('type', '=', 'in'),
+                                            ('in_forced', '=', True)
+                                        ], limit=1, order='state desc', context=context)
+                                        if move_forced_id:
+                                            move_forced = move_obj.browse(cr, uid, move_forced_id[0], fields_to_fetch=['picking_id', 'purchase_line_id'], context=context)
+                                            ignored_lines.append('Line %s ignored because orignal line number %s forced in %s' % (data.get('line_number'), move_forced.purchase_line_id.line_number, move_forced.picking_id.name))
+                                            continue
+                                elif data.get('sale_line_id'):
+                                    identifier = data.get('sale_line_id').split('.')[-1]
+                                    prev_nr_id = self.pool.get('sync.client.message_received').search(cr, uid, [('target_id', '=', po_id), ('target_object', '=', 'in_forced_cr'), ('identifier', '=like', '%s_%%' % identifier)], limit=1, context=context)
+                                    if prev_nr_id:
+                                        ignored_lines.append('Line %s ignored because orignal line number forced, see NR id: %s_XX' % (data.get('line_number'), identifier))
+                                        continue
+
                                 message = "Line number " + str(ln) + " is not found in the original IN or PO"
                                 self._logger.info(message)
                                 raise Exception(message)
                             else:
                                 # do not set the whole msg as NR if there are other lines to process
                                 if len(pack_data) > line_processed or len(line_data['data']) > split_processed or line_found:
+                                    ignored_lines.append('Line %s ignored because already processed (forced)' % (data.get('line_number')))
                                     continue
                                 message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
                                     in_name, po_name,
@@ -512,11 +535,8 @@ class stock_picking(osv.osv):
                             if line_proc_ids:
                                 diff = move['product_qty'] - orig_qty
                                 # US-1294: If the same move has already been chosen in the previous round, then the shipped amount must be taken into account
-                                for elem in already_shipped_moves:
-                                    if move['id'] in elem:
-                                        # taken into account the amount already shipped previously
-                                        diff -= elem[move['id']]
-                                        break
+                                if move['id'] in already_shipped_moves:
+                                    diff -= already_shipped_moves[move['id']]
 
                                 if diff >= 0 and (not best_diff or diff < best_diff):
                                     best_diff = diff
@@ -588,6 +608,9 @@ class stock_picking(osv.osv):
                 message = "The INcoming " + in_name + "(" + po_name + ") is now become shipped available!"
             else:
                 message = "The INcoming " + in_name + "(no PO) is now become shipped available!"
+            if ignored_lines:
+                message = "\n".join([message]+ignored_lines)
+                context['partial_sync_run'] = True
             self._logger.info(message)
             return message
         else:
@@ -977,29 +1000,14 @@ class stock_picking(osv.osv):
            or not (context.get('InShipOut', "") in ["IN", "OUT"]):  # log only for the 2 cases IN and OUT, not for SHIP
             return
 
-        # create a useful mapping purchase.order ->
-        #    dict_of_stock.move_changes
-        lines = {}
-        if 'stock.move' in context['changes']:
-            for rec_line in self.pool.get('stock.move').browse(
-                    cr, uid,
-                    context['changes']['stock.move'].keys(),
-                    context=context):
-                if self.pool.get('stock.move').exists(cr, uid, rec_line.id, context):  # check the line exists
-                    lines.setdefault(rec_line.picking_id.id, {})[rec_line.id] = context['changes']['stock.move'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
                                               context=context)
-            if 'move_lines' in changes:
-                old_lines, new_lines = map(set, changes['move_lines'])
-                logger.is_product_added |= (len(new_lines - old_lines) > 0)
-                logger.is_product_removed |= (len(old_lines - new_lines) > 0)
-            logger.is_date_modified |= ('date' in changes)
-            logger.is_status_modified |= ('state' in changes) | ('delivered' in changes)
-            # handle line's changes
-            for line_id, line_changes in lines.get(id, {}).items():
-                logger.is_quantity_modified |= ('product_qty' in line_changes)
+            logger.is_date_modified |= 'date' in changes
+            logger.is_status_modified |= 'state' in changes or 'delivered' in changes
+            logger.is_quantity_modified |= 'backorder_id' in changes
+            logger.is_product_price_modified |= 'price_unit' in changes
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
                               group=False, type='out_invoice', context=None):
@@ -1258,20 +1266,9 @@ class shipment(osv.osv):
            or not context.get('sync_message_execution') \
            or context.get('no_store_function'):
             return
-        # create a useful mapping purchase.order ->
-        #    dict_of_stock.move_changes
-        lines = {}
-        if 'shipment' in context['changes']:
-            for rec_line in self.pool.get('shipment').browse(
-                    cr, uid,
-                    context['changes']['shipment'].keys(),
-                    context=context):
-                lines.setdefault(rec_line.id, {})[rec_line.id] = \
-                    context['changes']['shipment'][rec_line.id]
-        # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
                                               context=context)
-            logger.is_status_modified |= True
+            logger.is_status_modified = True
 
 shipment()

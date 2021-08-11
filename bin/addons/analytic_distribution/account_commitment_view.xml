@@ -28,20 +28,36 @@
                             <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
                         </group>
                         <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                            <button name="button_analytic_distribution_2" string="Analytical Distribution"
+                                    type="object" icon="terp-emblem-important" context="context" colspan="4"
+                                    attrs="{'readonly': [('state', '=', 'open'), ('type', '=', 'manual')]}"/>
                             <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
                     </group>
                     <field name="analytic_distribution_id" invisible="1"/>
                     <notebook colspan="4">
                         <page string="Commitment voucher lines">
-                            <field name="line_ids" nolabel="1" colspan="4" attrs="{'readonly': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"/>
+                            <field name="line_ids" nolabel="1" colspan="4"
+                                   attrs="{'readonly': ['|', ('state', '=', 'done'),
+                                                        '&amp;',
+                                                        ('type', 'in', ['external', 'intermission', 'intersection']),
+                                                        ('state', '!=', 'draft')]}"
+                            />
                         </page>
                     </notebook>
                     <field name="notes" colspan="4"/>
                     <group col="6" colspan="4">
                         <button name="button_compute" string="Compute total" icon="gtk-execute" colspan="2"/>
                         <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft" colspan="2"/>
-                        <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" states="open" colspan="2" attrs="{'readonly': [('type', '=', 'external')]}"/>
+                        <field name="display_super_done_button"/>
+                        <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" colspan="2"
+                                attrs="{'invisible': ['|', ('state', '!=', 'open'), ('display_super_done_button', '=', True)],
+                                        'readonly': [('type', 'in', ['external', 'intermission', 'intersection'])]}"
+                        />
+                        <!-- button which allows to always set a CV to Done (whatever its state and origin) -->
+                        <button name="commitment_always_validate" string="Done (for Administrator only)"
+                                icon="terp-gtk-go-back-rtl" colspan="6"
+                                confirm='You are about to set this Commitment Voucher to the state "Done". Do you want to proceed?'
+                                attrs="{'invisible': [('display_super_done_button', '=', False)]}"/>
                     </group>
                     <field name="state"/>
                     <field name="total"/>
@@ -73,14 +89,32 @@
             <field name="model">account.commitment.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'">
+                <!-- display the "New" button or not depending on the state and type of the CV itself -->
+                <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'"
+                      button_attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', 'in', ['external', 'intermission', 'intersection'])]}"
+                      hide_delete_button="1"
+                      >
+                    <field name="commit_type"/>
+                    <field name="po_line_product_id"/>
+                    <field name="po_line_number"/>
                     <field name="account_id" domain="[('restricted_area', '=', 'commitment_lines')]"/>
-                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
-                    <field name="analytic_distribution_state"/>
-                    <field name="have_analytic_distribution_from_header"/>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
+                            icon="terp-stock_symbol-selection" context="context"
+                    />
+                    <field name="analytic_distribution_state" readonly="1"/>
+                    <field name="have_analytic_distribution_from_header" readonly="1"/>
                     <field name="first" invisible="1"/>
-                    <field name="initial_amount" on_change="onchange_initial_amount(first, initial_amount)"/>
-                    <field name="amount" attrs="{'readonly': [('first', '=', True)]}"/>
+                    <field name="initial_amount" on_change="onchange_initial_amount(first, initial_amount)"
+                           attrs="{'readonly': [('commit_type', 'in', ['external', 'intermission', 'intersection'])]}"
+                    />
+                    <field name="amount"
+                           attrs="{'readonly': ['|', ('first', '=', True), ('commit_type', 'in', ['external', 'intermission', 'intersection'])]}"
+                    />
+                    <!-- display the "Delete" button or not depending on the state and type of the CV itself -->
+                    <button name="unlink" string="Delete" icon="gtk-del" type="object"
+                            attrs="{'invisible': ['|', ('state', '=', 'done'), ('type', 'in', ['external', 'intermission', 'intersection'])]}"
+                            confirm="Do you really want to delete this line?"
+                    />
                 </tree>
             </field>
         </record>
@@ -95,6 +129,8 @@
                     <group col='6' colspan='4'>
                         <filter icon="terp-tools" string="Manual" domain="[('type','=','manual')]" help="Manual Commitment Voucher"/>
                         <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
+                        <filter icon="gtk-refresh" string="Intersection" domain="[('type', '=', 'intersection')]" help="Intersection Commitment Voucher"/>
+                        <filter icon="gtk-ok" string="Intermission" domain="[('type', '=', 'intermission')]" help="Intermission Commitment Voucher"/>
                         <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Voucher"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state" name="draft"/>

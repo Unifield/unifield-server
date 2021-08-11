@@ -75,6 +75,8 @@ class picking_ticket(report_sxw.rml_parse):
     def get_pdf_title(self):
         if self.objects[0].is_subpick:
             return _('Picking Ticket')
+        elif self.objects[0].subtype == 'ppl':
+            return _('PPL')
         return _('Picking List')
 
     def get_consignee(self, picking):

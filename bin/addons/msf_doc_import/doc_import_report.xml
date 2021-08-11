@@ -67,5 +67,16 @@
             auto="False"
             string="Export User Access" />
 
+        <report
+            id="report_return_from_unit_xls"
+            string="Return from Unit Export"
+            model="wizard.return.from.unit.import"
+            name="report_return_from_unit_xls"
+            report_type="openpyxl"
+            auto="False"
+            target_filename="Return from Unit Export"
+            menu="False"
+            />
+
     </data>
 </openerp>

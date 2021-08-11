@@ -100,10 +100,43 @@ class account_invoice_sync(osv.osv):
             line_name = inv_line.get('name', '')
             if not line_name:  # required field
                 raise osv.except_osv(_('Error'), _("Impossible to retrieve the line description."))
+            uom_id = False
+            uom_data = inv_line.get('uos_id', {})
+            if uom_data:
+                uom_name = uom_data.get('name', '')
+                uom_ids = product_uom_obj.search(cr, uid, [('name', '=', uom_name)], limit=1, context=context)
+                if not uom_ids:
+                    raise osv.except_osv(_('Error'), _("Unit of Measure %s not found.") % uom_name)
+                uom_id = uom_ids[0]
+            quantity = inv_line.get('quantity', 0.0)
+            inv_line_vals = {
+                'invoice_id': inv_id,
+                'name': line_name,
+                'quantity': quantity,
+                'price_unit': inv_line.get('price_unit', 0.0),
+                'discount': inv_line.get('discount', 0.0),
+                'uos_id': uom_id,
+            }
+            line_account_id = False
+            fo_line_dict = inv_line.get('sale_order_line_id') or {}
+            if from_supply and inv_linked_po and fo_line_dict.get('sync_local_id'):
+                # fill in the AD at line level if applicable
+                # search the matching between PO line and invoice line
+                po_line_ids = pol_obj.search(cr, uid, [('order_id', '=', inv_linked_po.id), ('sync_linked_sol', '=', inv_line['sale_order_line_id']['sync_local_id'])], context=context)
+                if po_line_ids:
+                    matching_po_line = pol_obj.browse(cr, uid, po_line_ids[0],
+                                                      fields_to_fetch=['analytic_distribution_id', 'cv_line_ids'], context=context)
+                    inv_line_vals.update({'order_line_id': matching_po_line.id})
+                    if matching_po_line.cv_line_ids:
+                        inv_line_vals.update({'cv_line_ids': [(6, 0, [cvl.id for cvl in matching_po_line.cv_line_ids])]})
+                        # cv_line_ids only contains one CV line: get its account
+                        line_account_id = matching_po_line.cv_line_ids[0].account_id.id
+                    po_line_distrib = matching_po_line.analytic_distribution_id
+                    self._create_analytic_distrib(cr, uid, inv_line_vals, po_line_distrib, context=context)  # update inv_line_vals
             product_id = False
             product_data = inv_line.get('product_id', {})
-            line_account_id = False
-            # for the lines related to a product: use the account of the product / else use the one of the source invoice line
+            # for the lines linked to a CV: the CV line account is used (handled above)
+            # for the other lines related to a product: use the account of the product / else use the one of the source invoice line
             if product_data:
                 default_code = product_data.get('default_code', '')
                 product_id = so_po_common_obj.get_product_id(cr, uid, product_data, default_code=default_code, context=context) or False
@@ -113,10 +146,11 @@ class account_invoice_sync(osv.osv):
                                              context=context)
                 if not product.active:
                     raise osv.except_osv(_('Error'), _("The product %s is inactive.") % product.default_code or '')
-                line_account_id = product.product_tmpl_id.property_account_expense and product.product_tmpl_id.property_account_expense.id
+                if not line_account_id:
+                    line_account_id = product.product_tmpl_id.property_account_expense and product.product_tmpl_id.property_account_expense.id
                 if not line_account_id:
                     line_account_id = product.categ_id and product.categ_id.property_account_expense_categ and product.categ_id.property_account_expense_categ.id
-            else:
+            elif not line_account_id:
                 account_code = inv_line.get('account_id', {}).get('code', '')
                 if not account_code:
                     raise osv.except_osv(_('Error'), _("Impossible to retrieve the account code at line level."))
@@ -131,34 +165,9 @@ class account_invoice_sync(osv.osv):
             if inv_posting_date < line_account.activation_date or \
                     (line_account.inactivation_date and inv_posting_date >= line_account.inactivation_date):
                 raise osv.except_osv(_('Error'), _('The account "%s - %s" is inactive.') % (line_account.code, line_account.name))
-            uom_id = False
-            uom_data = inv_line.get('uos_id', {})
-            if uom_data:
-                uom_name = uom_data.get('name', '')
-                uom_ids = product_uom_obj.search(cr, uid, [('name', '=', uom_name)], limit=1, context=context)
-                if not uom_ids:
-                    raise osv.except_osv(_('Error'), _("Unit of Measure %s not found.") % uom_name)
-                uom_id = uom_ids[0]
-            quantity = inv_line.get('quantity', 0.0)
-            inv_line_vals = {
-                'invoice_id': inv_id,
-                'account_id': line_account_id,
-                'name': line_name,
-                'quantity': quantity,
-                'price_unit': inv_line.get('price_unit', 0.0),
-                'discount': inv_line.get('discount', 0.0),
-                'product_id': product_id,
-                'uos_id': uom_id,
-            }
-            fo_line_dict = inv_line.get('sale_order_line_id') or {}
-            if from_supply and inv_linked_po and fo_line_dict.get('sync_local_id'):
-                # fill in the AD at line level if applicable
-                # search the matching between PO line and invoice line
-                po_line_ids = pol_obj.search(cr, uid, [('order_id', '=', inv_linked_po.id), ('sync_linked_sol', '=', inv_line['sale_order_line_id']['sync_local_id'])], context=context)
-                if po_line_ids:
-                    matching_po_line = pol_obj.browse(cr, uid, po_line_ids[0], fields_to_fetch=['analytic_distribution_id'], context=context)
-                    po_line_distrib = matching_po_line.analytic_distribution_id
-                    self._create_analytic_distrib(cr, uid, inv_line_vals, po_line_distrib, context=context)  # update inv_line_vals
+            inv_line_vals.update({'account_id': line_account_id,
+                                  'product_id': product_id,
+                                  })
             inv_line_obj.create(cr, uid, inv_line_vals, context=context)
 
     def create_invoice_from_sync(self, cr, uid, source, invoice_data, context=None):
@@ -270,7 +279,9 @@ class account_invoice_sync(osv.osv):
                 if po_ids:
                     po_id = po_ids[0]
             if po_id:
-                vals.update({'main_purchase_id': po_id})
+                vals.update({'main_purchase_id': po_id,
+                             'purchase_ids': [(6, 0, [po_id])],
+                             })
                 po_fields = ['picking_ids', 'analytic_distribution_id', 'order_line', 'name']
                 po = po_obj.browse(cr, uid, po_id, fields_to_fetch=po_fields, context=context)
                 po_number = po.name

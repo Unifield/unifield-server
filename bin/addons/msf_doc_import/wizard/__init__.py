@@ -162,6 +162,7 @@ import wizard_import_supplier_catalogue
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen
 import wizard_import_ppl_to_create_ship
+import wizard_return_from_unit_import
 
 import abstract_wizard_import
 import wizard_import_batch

@@ -670,7 +670,6 @@ class stock_picking(osv.osv):
 
         if not values:
             return prog_id
-
         prog_obj.write(cr, uid, [prog_id], values, context=context)
 
         return prog_id
@@ -742,6 +741,10 @@ class stock_picking(osv.osv):
         if context.get('rw_sync', False):
             sync_in = False
 
+        context['bypass_store_function'] = [
+            ('stock.picking', ['overall_qty', 'line_state'])
+        ]
+
         in_out_updated = True
         if sync_in or context.get('do_not_process_incoming'):
             in_out_updated = False
@@ -760,7 +763,17 @@ class stock_picking(osv.osv):
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
             if wizard.register_a_claim and wizard.claim_type in ['return', 'missing']:
                 in_out_updated = False
+            if not wizard.physical_reception_date:
+                wizard.physical_reception_date = time.strftime('%Y-%m-%d %H:%M:%S')
             picking_id = wizard.picking_id.id
+
+            in_forced = wizard.picking_id.state == 'assigned' and \
+                not wizard.register_a_claim and \
+                process_avg_sysint and \
+                wizard.picking_id.purchase_id and \
+                wizard.picking_id.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
+                wizard.picking_id.purchase_id.order_type != 'direct'
+
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
                                                                   'type',
                                                                   'purchase_id',
@@ -1010,6 +1023,7 @@ class stock_picking(osv.osv):
                     'state':'draft',
                     'in_dpo': context.get('for_dpo', False), # TODO used ?
                     'dpo_incoming': wizard.picking_id.dpo_incoming,
+                    'physical_reception_date': wizard.physical_reception_date or False,
                 }
 
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -1083,6 +1097,10 @@ class stock_picking(osv.osv):
                             'purchase_line_id': bo_move.purchase_line_id and bo_move.purchase_line_id.id or False,
                         }
                         bo_values.update(av_values)
+                        if in_forced:
+                            # set in_forced on remaining (assigned qty): used for future sync msg processing
+                            bo_values['in_forced'] = True
+
                         context['keepLineNumber'] = True
                         context['from_button'] = False
                         new_bo_move_id = move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
@@ -1093,6 +1111,8 @@ class stock_picking(osv.osv):
 
                 # Put the done moves in this new picking
                 done_values = {'picking_id': backorder_id}
+                if in_forced:
+                    done_values['in_forced'] = True
                 move_obj.write(cr, uid, done_moves, done_values, context=context)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'create_bo': _('Done'),
@@ -1150,10 +1170,14 @@ class stock_picking(osv.osv):
                     backorder_id, bo_name, picking_id, picking_dict['name'],
                 ))
             else:
+                # no BO to create
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'create_bo': _('N/A'),
                     'close_in': _('In progress'),
                 }, context=context)
+
+                if wizard.physical_reception_date:
+                    self.write(cr, uid, picking_id, {'physical_reception_date': wizard.physical_reception_date})
 
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking_id, context=context)
@@ -1178,6 +1202,10 @@ class stock_picking(osv.osv):
                         self.action_cancel(cr, uid, [picking_id], context=context)
                     else:
                         return_goods = wizard.register_a_claim and wizard.claim_type in ('return', 'surplus')
+                        if not return_goods and in_forced:
+                            move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id), ('state', '=', 'assigned')])
+                            if move_ids:
+                                move_obj.write(cr, uid, move_ids, {'in_forced': True}, context=context)
                         self.action_move(cr, uid, [picking_id], return_goods=return_goods, context=context)
                         if return_goods:
                             out_domain = [('backorder_id', '=', picking_id), ('type', '=', 'out')]
@@ -1214,6 +1242,7 @@ class stock_picking(osv.osv):
             }, context=context)
 
 
+        overall_to_compute = list(out_picks)
         # Create the first picking ticket if we are on a draft picking ticket
         if all_pack_info:
             for picking_id in list(out_picks):
@@ -1232,7 +1261,7 @@ class stock_picking(osv.osv):
                     if move_to_process_ids:
                         # sub pick creation
                         new_pick = self.do_create_picking(cr, uid, [picking_id], context=context, only_pack_ids=pack_ids).get('res_id')
-
+                        overall_to_compute.append(new_pick)
                         if  pack['packing_list']:
                             self.write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
 
@@ -1256,6 +1285,8 @@ class stock_picking(osv.osv):
                     'prepare_pick': _('Done'),
                 }, context=context)
 
+        if overall_to_compute:
+            self._store_set_values(cr, uid, overall_to_compute, ['overall_qty', 'line_state'], context)
         for picking_id in picking_ids:
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')

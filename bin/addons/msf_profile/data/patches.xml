@@ -677,8 +677,21 @@
             <field name="method">us_8753_admin_never_expire_password</field>
         </record>
 
+        <!-- UF22.0 -->
         <record id="us_8597_set_custom_default_from_web" model="patch.scripts">
             <field name="method">us_8597_set_custom_default_from_web</field>
+        </record>
+
+        <record id="us_8805_product_set_archived" model="patch.scripts">
+            <field name="method">us_8805_product_set_archived</field>
+        </record>
+
+        <record id="us_8869_remove_ir_import" model="patch.scripts">
+            <field name="method">us_8869_remove_ir_import</field>
+        </record>
+
+        <record id="us_7449_set_cv_version" model="patch.scripts">
+            <field name="method">us_7449_set_cv_version</field>
         </record>
     </data>
 </openerp>

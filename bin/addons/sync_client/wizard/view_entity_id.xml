@@ -7,13 +7,16 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Entity Id" col="4">
-                    <label string="name" align="0.0"/>
+                    <html>
+                        <h1><label string="name" align="0.0" colspan="4"/></h1>
+                        <h1><label string="sequence" align="0.0" colspan="4"/></h1>
+                    </html>
                 </form>
             </field>
         </record>
 
-     
-     	<record model="ir.actions.act_window" id="view_entity_id_action" >
+
+        <record model="ir.actions.act_window" id="view_entity_id_action" >
             <field name="name">Entity Id</field>
             <field name="res_model">sync.client.view_entity_id</field>
             <field name="view_type">form</field>

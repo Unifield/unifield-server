@@ -96,8 +96,6 @@ class internal_request_import(osv.osv):
         'file_to_import': fields.binary(string='File to import'),
         'filename': fields.char(size=64, string='Filename'),
         'message': fields.text(string='Import general message for html display', readonly=True),
-        'error_file': fields.binary(string='File with errors'),
-        'error_filename': fields.char(size=64, string='Lines with errors'),
         'nb_file_lines': fields.integer(string='Total of file lines', readonly=True),
         'nb_treated_lines': fields.integer(string='Nb treated lines', readonly=True),
         'percent_completed': fields.float(string='Percent completed', readonly=True),
@@ -399,7 +397,7 @@ class internal_request_import(osv.osv):
                     for err in file_format_errors:
                         message += '%s\n' % err
 
-                    self.write(cr, uid, [ir_imp.id], {'message': message, 'state': 'error'}, context)
+                    self.write(cr, uid, [ir_imp.id], {'message': message, 'state': 'error', 'file_to_import': False}, context)
                     res = self.go_to_simulation(cr, uid, [ir_imp.id], context=context)
                     cr.commit()
                     cr.close(True)
@@ -792,6 +790,7 @@ class internal_request_import(osv.osv):
                     'percent_completed': 100.0,
                     'import_error_ok': import_error_ok,
                     'nb_treated_lines': nb_treated_lines,
+                    'file_to_import': False,
                 })
                 self.write(cr, uid, [ir_imp.id], header_values, context=context)
 
@@ -800,7 +799,7 @@ class internal_request_import(osv.osv):
 
         except Exception, e:
             logging.getLogger('internal.request.import').warn('Exception', exc_info=True)
-            self.write(cr, uid, ids, {'message': e}, context=context)
+            self.write(cr, uid, ids, {'message': e, 'file_to_import': False}, context=context)
             cr.commit()
             cr.close(True)
 

@@ -24,6 +24,7 @@ import tools
 
 import traceback
 import logging
+from log_sale_purchase import SyncException
 
 from tools.safe_eval import safe_eval as eval
 
@@ -373,6 +374,8 @@ class message_received(osv.osv):
         'arguments':fields.text('Arguments of the method', required = True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
         'run' : fields.boolean("Run", readonly=True),
+        'partial_run': fields.boolean("Partial Run", readonly=True),
+        'manually_set_total_run_date': fields.datetime('Manually to total-run Date', readonly=True),
         'log' : fields.text("Execution Messages",readonly=True),
         'execution_date' :fields.datetime('Execution Date', readonly=True),
         'create_date' :fields.datetime('Receive Date', readonly=True),
@@ -381,6 +384,8 @@ class message_received(osv.osv):
         'manually_ran': fields.boolean('Has been manually tried', readonly=True),
         'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
         'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
+        'target_object': fields.char('Target Object', size=254, readonly=1, select=1),
+        'target_id': fields.integer('Target Id', size=254, readonly=1, select=1),
     }
 
     _sql_constraints = [
@@ -446,10 +451,13 @@ class message_received(osv.osv):
         self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
         return True
 
+    def manual_set_total_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'partial_run': False, 'manually_set_total_run_date': fields.datetime.now()}, context=context)
+        return True
+
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
         context = dict((context or {}),
-                       changes={},
                        sync_message_execution=True,
                        sale_purchase_logger={})
         context['lang'] = 'en_US'
@@ -482,16 +490,23 @@ class message_received(osv.osv):
                         error_msg = e.value
                     else:
                         error_msg = e
-                    self.write(cr, uid, message.id, {
+                    msg_data = {
                         'execution_date' : execution_date,
                         'run' : False,
                         'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
-                    }, context=context)
+                    }
+                    if isinstance(e, SyncException):
+                        msg_data['target_object'] = e.target_object
+                        msg_data['target_id'] = e.target_id
+
+
+                    self.write(cr, uid, message.id, msg_data, context=context)
                 else:
                     self.write(cr, uid, message.id, {
                         'execution_date' : execution_date,
                         'run' : True,
                         'log' : tools.ustr(res),
+                        'partial_run': new_ctx.get('partial_sync_run', False),
                     }, context=context)
             except BaseException, e1:
                 ### This should never be reachable, but nobody knows!

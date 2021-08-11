@@ -1799,7 +1799,7 @@ class product_product(osv.osv):
                 if not nb_months: nb_months = 1
 
                 uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
-                res[id] = res[id]/nb_months
+                res[id] = res[id]/float(nb_months)
                 res[id] = round(self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res[id], uom_id), 2)
 
         return res
@@ -1841,7 +1841,7 @@ class product_product(osv.osv):
 
         return domain
 
-    def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False):
+    def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False, remove_negative_amc=False, rounding=True):
         '''
         Compute the Average Monthly Consumption with this formula :
             AMC = (sum(OUTGOING (except reason types Loan, Donation, Loss, Discrepancy))
@@ -1960,6 +1960,14 @@ class product_product(osv.osv):
             if not context.get('to_date') and (not to_date or move['date'] > to_date):
                 to_date = move['date']
 
+        if remove_negative_amc:
+            for prod in amc_by_month:
+                for period in amc_by_month[prod]:
+                    qty = amc_by_month[prod][period]
+                    if qty < 0:
+                        amc_by_month[prod][period] = 0
+                        res[prod] -= qty
+
         if not to_date or not from_date or not res:
             return 0.00
 
@@ -2016,18 +2024,18 @@ class product_product(osv.osv):
             nb_months = ((to_date_str-from_date_str).days + 1)/30.44
 
         for p_id in res:
-            p_nb_nb_months = nb_months
+            p_nb_nb_months = float(nb_months)
             if p_id in adjusted_day:
                 p_nb_nb_months += adjusted_day[p_id]/30.44
 
             if p_id in adjusted_qty:
                 res[p_id] += adjusted_qty[p_id]
 
-            if p_id in product_dict:
+            if p_id in product_dict and rounding:
                 prod_uom = product_dict[p_id]['uom_id'][0]
                 res[p_id] = uom_obj._compute_qty(cr, uid, prod_uom, res[p_id]/p_nb_nb_months, prod_uom)
             else:
-                res[p_id] = res[p_id]/p_nb_nb_months
+                res[p_id] = round(res[p_id]/p_nb_nb_months, 4)
 
         if compute_amc_by_month:
             for p_id in amc_by_month:

@@ -138,11 +138,19 @@
                                     WARNING: The Total amount of the following lines is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:
                                 </translate>
                             </p>
+                            <p id="nr_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                <translate>WARNING: Order line(s) not synchronized, code(s) does not exist</translate>
+                            </p>
                             <script language="javascript">
                                 var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
                                 if (is_big_amount) {
                                     $('#big_amount').append('&lt;span&gt;'+is_big_amount+'&lt;/span&gt;&lt;br/&gt;');
                                     $('#big_amount').show();
+                                }
+
+                                var has_nr = $('#nb_creation_message_nr').val() || $('#nb_creation_message_nr').text();
+                                if (has_nr &amp;&amp; has_nr!= '0') {
+                                    $('#nr_lines').show();
                                 }
                             </script>
                         </html>
@@ -156,6 +164,7 @@
                         <field name="short_client_ref" readonly="1" />
                         <field name="shipped" invisible="1"/>
                         <field name="msg_big_qty" invisible="1"/>
+                        <field name="nb_creation_message_nr" invisible="1"/>
                         <field name="internal_type" invisible="1"/>
                         <field name="picked_rate" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
@@ -238,6 +247,7 @@
                                             <field name="type" on_change="requested_type_change(product_id, type)"/>
                                             <field name="so_state_stored" invisible="True"/>
                                             <field name="date_planned" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
+                                            <field name="esti_dd" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
                                             <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
                                             <field name="stock_take_date"/>
                                             <field name="display_resourced_orig_line"/>

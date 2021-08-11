@@ -2,8 +2,11 @@
 
 from osv import fields, osv
 from tools.translate import _
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import itertools
 assert _
+
 
 class physical_inventory_generate_counting_sheet(osv.osv_memory):
     _name = "physical.inventory.generate.counting.sheet"
@@ -14,12 +17,16 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         'prefill_bn': fields.boolean('Prefill Batch Numbers'),
         'prefill_ed': fields.boolean('Prefill Expiry Dates'),
         'only_with_stock_level': fields.boolean('Only count lines with stock different than 0'),
+        'only_with_pos_move': fields.boolean('Only count lines with stock & moves different than 0'),
+        'recent_moves_months': fields.char('Recent Moves', size=256),
     }
 
     _defaults = {
         'prefill_bn': True,
         'prefill_ed': True,
         'only_with_stock_level': False,
+        'only_with_pos_move': False,
+        'recent_moves_months': False,
     }
 
     def create(self, cr, user, vals, context=None):
@@ -30,6 +37,29 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         return super(physical_inventory_generate_counting_sheet, self).create(cr, user, vals, context=context)
 
+    def onchange_prefill_bn(self, cr, uid, ids, prefill_bn, only_with_stock_level):
+        if not prefill_bn and not only_with_stock_level:
+            return {'value': {'only_with_pos_move': False}}
+        else:
+            return True
+
+    def onchange_prefill_ed(self, cr, uid, ids, prefill_ed, only_with_stock_level):
+        if not prefill_ed and not only_with_stock_level:
+            return {'value': {'only_with_pos_move': False}}
+        else:
+            return True
+
+    def onchange_only_with_stock_level(self, cr, uid, ids, only_with_stock_level, only_with_pos_move):
+        if only_with_stock_level and only_with_pos_move:
+            return {'value': {'only_with_pos_move': False}}
+        else:
+            return True
+
+    def onchange_only_with_pos_move(self, cr, uid, ids, only_with_pos_move, only_with_stock_level):
+        if only_with_pos_move and only_with_stock_level:
+            return {'value': {'only_with_stock_level': False}}
+        else:
+            return True
 
     def generate_counting_sheet(self, cr, uid, wizard_ids, context=None):
         context = context if context else {}
@@ -44,25 +74,29 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         assert len(wizard_ids) == 1
         wizard_id = wizard_ids[0]
 
-        # Get the selected option
-        prefill_bn = read_single(self._name, wizard_id, 'prefill_bn')
-        prefill_ed = read_single(self._name, wizard_id, 'prefill_ed')
-        only_with_stock_level = read_single(self._name, wizard_id, 'only_with_stock_level')
+        # Get the options
+        wiz_data = read_many(self._name, wizard_id, ['prefill_bn', 'prefill_ed', 'only_with_stock_level',
+                                                     'only_with_pos_move'])
 
         # Get location, products selected, and existing inventory lines
         inventory_id = read_single(self._name, wizard_id, "inventory_id")
         inventory = read_many("physical.inventory", [inventory_id], ['location_id',
                                                                      'counting_line_ids',
-                                                                     'product_ids'])[0]
+                                                                     'product_ids', 'max_filter_months'])[0]
 
         # Get relevant info for products to be able to create the inventory
         # lines
         location_id = inventory["location_id"][0]
         product_ids = inventory["product_ids"]
 
+        # Get the month used if "Only count lines with stock & moves different than 0" has been selected
+        months = 0
+        if  wiz_data['only_with_pos_move']:
+            months = inventory['max_filter_months']
+
         # Prepare the inventory lines to be created
         inventory_counting_lines_to_create = []
-        if not prefill_bn and not prefill_ed:
+        if not wiz_data['prefill_bn'] and not wiz_data['prefill_ed']:
             prods = self.pool.get('product.product').browse(cr, uid, product_ids, fields_to_fetch=['batch_management', 'perishable'], context=context)
             for prod in prods:
                 if prod.batch_management or prod.perishable:
@@ -75,7 +109,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                             "expiry_date": False
                         }
                         inventory_counting_lines_to_create.append(values)
-                elif not only_with_stock_level or (only_with_stock_level and self.not_zero_stock_on_location(cr, uid, location_id, prod.id, False, context=context)):
+                elif not wiz_data['only_with_stock_level'] or (wiz_data['only_with_stock_level'] and self.not_zero_stock_on_location(cr, uid, location_id, prod.id, False, False, context=context)):
                     values = {
                         "line_no": len(inventory_counting_lines_to_create) + 1,
                         "inventory_id": inventory_id,
@@ -93,7 +127,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                 # If no bn / ed related to this product, create a single inventory
                 # line
                 if bn_and_eds_for_this_product == (False, False, False):
-                    if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, False, context=context):
+                    if wiz_data['only_with_stock_level'] and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, False, False, context=context):
                         continue
                     else:
                         values = {
@@ -106,7 +140,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                         inventory_counting_lines_to_create.append(values)
                 elif not bn_and_eds_for_this_product:
                     # BN/ED product with no stock move in this location
-                    if not only_with_stock_level:
+                    if not wiz_data['only_with_stock_level'] and not wiz_data['only_with_pos_move']:
                         values = {
                             "line_no": len(inventory_counting_lines_to_create) + 1,
                             "inventory_id": inventory_id,
@@ -119,16 +153,16 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                     # Otherwise, create an inventory line for this product ~and~ for
                     # each BN/ED
                     for bn_and_ed in sorted(bn_and_eds_for_this_product, key=lambda x: x[1] or x[0]):
-                        if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id,
-                                                                                         bn_and_ed[2], context=context):
+                        if (wiz_data['only_with_stock_level'] and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, bn_and_ed[2], False, context=context)) or\
+                                (wiz_data['only_with_pos_move'] and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, bn_and_ed[2], months, context=context)):
                             continue
                         else:
                             values = {
                                 "line_no": len(inventory_counting_lines_to_create) + 1,
                                 "inventory_id": inventory_id,
                                 "product_id": product_id,
-                                "batch_number": bn_and_ed[0] if prefill_bn else False,
-                                "expiry_date": bn_and_ed[1] if prefill_ed else False
+                                "batch_number": bn_and_ed[0] if wiz_data['prefill_bn'] else False,
+                                "expiry_date": bn_and_ed[1] if wiz_data['prefill_ed'] else False
                             }
                             inventory_counting_lines_to_create.append(values)
 
@@ -203,7 +237,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         return BN_and_ED
 
-    def not_zero_stock_on_location(self, cr, uid, location_id, product_id, prodlot_id, context=False):
+    def not_zero_stock_on_location(self, cr, uid, location_id, product_id, prodlot_id, months, context=False):
         '''
         Check if the product's stock on the inventory's location is != 0
         '''
@@ -212,14 +246,19 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
-        not_zero = True
 
         domain = [('product_id', '=', product_id), ('prodlot_id', '=', prodlot_id), ('state', '=', 'done'),
                   '|', ('location_id', '=', location_id), ('location_dest_id', '=', location_id)]
+
+        max_date = False
+        if months:
+            max_date =  (datetime.today() + relativedelta(months=-months)).strftime('%Y-%m-%d 00:00:00')
+
         move_ids = move_obj.search(cr, uid, domain, context=context)
 
         product_qty = 0.00
-        used_fields = ['location_id', 'location_dest_id', 'product_id', 'product_qty', 'product_uom']
+        used_fields = ['location_id', 'location_dest_id', 'product_id', 'product_qty', 'product_uom', 'date']
+        last_move = False
         for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=used_fields, context=context):
             # If the move is from the same location as destination
             if move.location_dest_id.id == move.location_id.id or move.product_qty == 0.00:
@@ -235,11 +274,16 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                 product_qty += qty
             elif move.location_id.id == location_id:  # OUT qty
                 product_qty -= qty
+            if not last_move or move.date > last_move:
+                last_move = move.date
 
         if product_qty == 0:
-            not_zero = False
+            if max_date and last_move >= max_date:
+                return True
 
-        return not_zero
+            return False
+
+        return True
 
 
 physical_inventory_generate_counting_sheet()

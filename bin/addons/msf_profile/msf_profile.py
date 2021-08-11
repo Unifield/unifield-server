@@ -38,6 +38,7 @@ from msf_field_access_rights.osv_override import _get_instance_level
 import cStringIO
 import csv
 
+
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
     _logger = logging.getLogger('patch_scripts')
@@ -52,6 +53,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF22.0
     def us_8597_set_custom_default_from_web(self, cr, uid, *a, **b):
         cr.execute("update sale_order set location_requestor_id=NULL where location_requestor_id is not null and procurement_request='f'")
         self._logger.warn('US-8597: Location removed on %d FO' % (cr.rowcount,))
@@ -62,6 +64,41 @@ class patch_scripts(osv.osv):
                 (name, model) not in (('shop_id', 'sale.order'), ('warehouse_id', 'purchase.order'), ('lang', 'res.partner'))
             """)
         self._logger.warn('US-8597: web default value set on %d records' % (cr.rowcount,))
+        return True
+
+    def us_8805_product_set_archived(self, cr, uid, *a, **b):
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            if instance and instance.level in ['project', 'coordo']:
+                st_obj = self.pool.get('product.status')
+                phase_out_ids = st_obj.search(cr, uid, [('code', '=', 'phase_out')])
+                archived_ids = st_obj.search(cr, uid, [('code', '=', 'archived')])
+                cr.execute('''
+                    update product_template t set
+                        state=%(archived_id)s
+                    from product_product p, product_international_status st
+                    where
+                        st.id = p.international_status and
+                        p.product_tmpl_id = t.id and
+                        p.oc_subscription = 'f' and
+                        p.active = 'f' and
+                        st.code = 'unidata' and
+                        t.state=%(phase_out_id)s
+                    ''', {'archived_id': archived_ids[0], 'phase_out_id': phase_out_ids[0]})
+                self.log_info(cr, uid, 'US-8805: %d products' % cr.rowcount)
+        return True
+
+    def us_8869_remove_ir_import(self, cr, uid, *a, **b):
+        cr.execute("update internal_request_import set file_to_import=NULL");
+        return True
+
+    def us_7449_set_cv_version(self, cr, uid, *a, **b):
+        """
+        Sets the existing Commitment Vouchers in version 1.
+        """
+        if self.pool.get('sync.client.entity'):  # existing instances
+            cr.execute("UPDATE account_commitment SET version = 1")
+            self._logger.warn('Commitment Vouchers: %s CV(s) set to version 1.', cr.rowcount)
         return True
 
     # UF21.1
@@ -4214,6 +4251,12 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    def log_info(self, cr, uid, msg, context=None):
+        self._logger.warn(msg)
+        self.pool.get('res.log').create(cr, uid, {
+            'name': '[AUTO] %s ' % msg,
+            'read': True,
+        }, context=context)
 patch_scripts()
 
 

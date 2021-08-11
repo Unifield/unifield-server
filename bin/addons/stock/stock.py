@@ -879,7 +879,7 @@ class stock_picking(osv.osv):
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
         'claim': fields.boolean('Claim'),
         'claim_name': fields.char(string='Claim name', size=512),
-        'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
+        'physical_reception_date': fields.datetime('Physical Reception Date'),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
         'packing_list': fields.char('Supplier Packing List', size=30),
         'is_subpick': fields.boolean('Main or Sub PT'),
@@ -1193,12 +1193,20 @@ class stock_picking(osv.osv):
         return True
 
     def get_currency_id(self, cr, uid, picking):
-        return False
+        if picking.sale_id:
+            return picking.sale_id.pricelist_id.currency_id.id
+        else:
+            if picking.purchase_id:
+                return picking.purchase_id.pricelist_id.currency_id.id
+            else:
+                return False
 
     def _get_payment_term(self, cr, uid, picking):
         """ Gets payment term from partner.
         @return: Payment term
         """
+        if picking.sale_id and picking.sale_id.payment_term:
+            return picking.sale_id.payment_term.id
         partner = picking.address_id.partner_id
         return partner.property_payment_term and partner.property_payment_term.id or False
 
@@ -1206,37 +1214,85 @@ class stock_picking(osv.osv):
         """ Gets invoice address of a partner
         @return {'contact': address, 'invoice': address} for invoice
         """
+        res = {}
         partner_obj = self.pool.get('res.partner')
+        if picking.sale_id:
+            res['contact'] = picking.sale_id.partner_order_id.id
+            res['invoice'] = picking.sale_id.partner_invoice_id.id
+            return res
         partner = picking.address_id.partner_id
-        return partner_obj.address_get(cr, uid, [partner.id],
-                                       ['contact', 'invoice'])
+        res = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+        if picking.purchase_id:
+            partner = picking.purchase_id.partner_id or picking.address_id.partner_id
+            data = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+            res.update(data)
+        return res
 
     def _get_comment_invoice(self, cr, uid, picking):
         """
         @return: comment string for invoice
         """
+        if picking.note or (picking.sale_id and picking.sale_id.note):
+            return picking.note or picking.sale_id.note
+        if picking.purchase_id and picking.purchase_id.notes:
+            if picking.note:
+                return picking.note + '\n' + picking.purchase_id.notes
+            else:
+                return picking.purchase_id.notes
         return picking.note or ''
 
     def _get_price_unit_invoice(self, cr, uid, move_line, type, context=None):
         """ Gets price unit for invoice
+        Updates the Unit price according to the UoM received and the UoM ordered
         @param move_line: Stock move lines
         @param type: Type of invoice
         @return: The price unit for the move line
         """
         if context is None:
             context = {}
-
-        if type in ('in_invoice', 'in_refund'):
-            # Take the user company and pricetype
-            context['currency_id'] = move_line.company_id.currency_id.id
-            amount_unit = move_line.product_id.price_get('standard_price', context)[move_line.product_id.id]
-            return amount_unit
-        else:
-            return move_line.product_id.list_price
+        res = None
+        if move_line.sale_line_id and move_line.sale_line_id.product_id.id == move_line.product_id.id:
+            uom_id = move_line.product_id.uom_id.id
+            uos_id = move_line.product_id.uos_id and move_line.product_id.uos_id.id or False
+            price = move_line.sale_line_id.price_unit
+            coeff = move_line.product_id.uos_coeff
+            if uom_id != uos_id and coeff != 0:
+                price_unit = price / coeff
+                res = price_unit
+            else:
+                res = move_line.sale_line_id.price_unit
+        if res is None:
+            if move_line.purchase_line_id:
+                res = move_line.purchase_line_id.price_unit
+            else:
+                if type in ('in_invoice', 'in_refund'):
+                    # Take the user company and pricetype
+                    context['currency_id'] = move_line.company_id.currency_id.id
+                    amount_unit = move_line.product_id.price_get('standard_price', context)[move_line.product_id.id]
+                    res = amount_unit
+                else:
+                    res = move_line.product_id.list_price
+        if type == 'in_refund':
+            if move_line.picking_id and move_line.picking_id.purchase_id:
+                po_line_obj = self.pool.get('purchase.order.line')
+                po_line_id = po_line_obj.search(cr, uid, [('order_id', '=', move_line.picking_id.purchase_id.id),
+                                                          ('product_id', '=', move_line.product_id.id),
+                                                          ('state', '!=', 'cancel')
+                                                          ], limit=1)
+                if po_line_id:
+                    return po_line_obj.read(cr, uid, po_line_id[0], ['price_unit'])['price_unit']
+        if move_line.purchase_line_id:
+            po_uom_id = move_line.purchase_line_id.product_uom.id
+            move_uom_id = move_line.product_uom.id
+            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, move_uom_id, 1, po_uom_id)
+            return res / uom_ratio
+        return res
 
     def _get_discount_invoice(self, cr, uid, move_line):
         '''Return the discount for the move line'''
-        return 0.0
+        if move_line.sale_line_id:
+            return move_line.sale_line_id.discount
+        return 0.0  # including if move_line.purchase_line_id
 
     def _get_taxes_invoice(self, cr, uid, move_line, type):
         """ Gets taxes on invoice
@@ -1244,6 +1300,10 @@ class stock_picking(osv.osv):
         @param type: Type of invoice
         @return: Taxes Ids for the move line
         """
+        if move_line.sale_line_id and move_line.sale_line_id.product_id.id == move_line.product_id.id:
+            return [x.id for x in move_line.sale_line_id.tax_id]
+        if move_line.purchase_line_id:
+            return [x.id for x in move_line.purchase_line_id.taxes_id]
         if type in ('in_invoice', 'in_refund'):
             taxes = move_line.product_id.supplier_taxes_id
         else:
@@ -1259,7 +1319,11 @@ class stock_picking(osv.osv):
         else:
             return map(lambda x: x.id, taxes)
 
-    def _get_account_analytic_invoice(self, cr, uid, picking, move_line):
+    def _get_account_analytic_invoice(self, picking, move_line):
+        if picking.sale_id:
+            return picking.sale_id.project_id.id
+        if move_line.purchase_line_id:
+            return move_line.purchase_line_id.account_analytic_id.id
         return False
 
     def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id, account_id):
@@ -1294,8 +1358,32 @@ class stock_picking(osv.osv):
         return True
 
     def _invoice_hook(self, cr, uid, picking, invoice_id):
-        '''Call after the creation of the invoice'''
+        """
+        Create a link between invoice and purchase_order.
+        Copy analytic distribution from purchase order to invoice (or from commitment voucher if it exists)
+
+        To call after the creation of the invoice
+        """
+        sale_obj = self.pool.get('sale.order')
+        purchase_obj = self.pool.get('purchase.order')
+        if invoice_id and picking:
+            po_id = picking.purchase_id and picking.purchase_id.id or False
+            so_id = picking.sale_id and picking.sale_id.id or False
+            if po_id:
+                self.pool.get('purchase.order').write(cr, uid, [po_id], {'invoice_ids': [(4, invoice_id)]})
+            if so_id:
+                self.pool.get('sale.order').write(cr, uid, [so_id], {'invoice_ids': [(4, invoice_id)]})
+            # Copy analytic distribution from purchase order or commitment voucher (if it exists) or sale order
+            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [invoice_id])
+        if picking.sale_id:
+            sale_obj.write(cr, uid, [picking.sale_id.id], {
+                'invoice_ids': [(4, invoice_id)],
+            })
+        if picking.purchase_id:
+            purchase_obj.write(cr, uid, [picking.purchase_id.id], {'invoice_id': invoice_id, })
         return
+
+    # action_invoice_create method has been removed because of the impossibility to retrieve DESTINATION from SO.
 
     def _get_invoice_type(self, pick):
         src_usage = dest_usage = None
@@ -1550,12 +1638,17 @@ class stock_picking(osv.osv):
         else:
             name = move_line.name
 
+        cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
+            move_line.purchase_line_id.cv_line_ids[0] or False
+        cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
         if inv_type in ('out_invoice', 'out_refund'):
             account_id = move_line.product_id.product_tmpl_id.\
                 property_account_income.id
             if not account_id:
                 account_id = move_line.product_id.categ_id.\
                     property_account_income_categ.id
+        elif cv_version > 1:
+            account_id = cv_line.account_id.id
         else:
             account_id = move_line.product_id.product_tmpl_id.\
                 property_account_expense.id
@@ -1567,14 +1660,15 @@ class stock_picking(osv.osv):
                                                   move_line, inv_type)
         discount = self._get_discount_invoice(cr, uid, move_line)
         tax_ids = self._get_taxes_invoice(cr, uid, move_line, inv_type)
-        account_analytic_id = self._get_account_analytic_invoice(cr, uid, picking, move_line)
+        account_analytic_id = self._get_account_analytic_invoice(picking, move_line)
 
         #set UoS if it's a sale and the picking doesn't have one
         uos_id = move_line.product_uos and move_line.product_uos.id or False
         if not uos_id and inv_type in ('out_invoice', 'out_refund'):
             uos_id = move_line.product_uom.id
-        account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
-        invoice_line_id = invoice_line_obj.create(cr, uid, {
+        if cv_version < 2:
+            account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
+        inv_vals = {
             'name': name,
             'origin': origin,
             'invoice_id': invoice_id,
@@ -1586,7 +1680,10 @@ class stock_picking(osv.osv):
             'quantity': move_line.product_uos_qty or move_line.product_qty,
             'invoice_line_tax_id': [(6, 0, tax_ids)],
             'account_analytic_id': account_analytic_id,
-        }, context=context)
+        }
+        if cv_version > 1:
+            inv_vals.update({'cv_line_ids': [(4, cv_line.id)],})
+        invoice_line_id = invoice_line_obj.create(cr, uid, inv_vals, context=context)
         self._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
 
         if picking.sale_id:
@@ -1613,7 +1710,7 @@ class stock_picking(osv.osv):
                     tax_ids = sale_line.tax_id
                     tax_ids = map(lambda x: x.id, tax_ids)
 
-                    account_analytic_id = self._get_account_analytic_invoice(cr, uid, picking, sale_line)
+                    account_analytic_id = self._get_account_analytic_invoice(picking, sale_line)
 
                     account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, picking.sale_id.partner_id.property_account_position, account_id)
                     invoice_line_id = invoice_line_obj.create(cr, uid, {

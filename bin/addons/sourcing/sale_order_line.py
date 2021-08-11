@@ -532,7 +532,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             _get_line_values,
             method=True,
             type='date',
-            string='Estimated DD',
+            string='Calculated DD',
             store=False,
             readonly=True,
             multi='line_info',

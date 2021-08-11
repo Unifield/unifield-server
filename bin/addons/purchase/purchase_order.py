@@ -71,7 +71,7 @@ class purchase_order(osv.osv):
             else:
                 ret.where_clause.append(' "res_partner"."name" ilike %s ')
             ret.where_clause_params.append('%%%s%%'%dest_partner_names)
-            ret.having = ' GROUP BY "purchase_order"."id" '
+            ret.having_group_by = ' GROUP BY "purchase_order"."id" '
         return ret
 
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
@@ -705,6 +705,8 @@ class purchase_order(osv.osv):
         return [('id', operator, list(po_ids))]
 
     def _get_msg_big_qty(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
         res = {}
         max_qty = self.pool.get('purchase.order.line')._max_qty
         max_amount = self.pool.get('purchase.order.line')._max_amount
@@ -736,6 +738,27 @@ class purchase_order(osv.osv):
             res[po.id] = not_beyond_validated
 
         return res
+
+    def _get_nb_creation_message_nr(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = 0
+
+        cr.execute("""select target_id, count(*)
+            from sync_client_message_received
+            where
+                run='f' and
+                target_object='purchase.order' and
+                target_id in %s
+            group by target_id""", (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+
+        return ret
+
 
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
@@ -862,7 +885,7 @@ class purchase_order(osv.osv):
         },
         ),
         'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
-        'delivery_requested_date_modified': fields.date(string='Delivery Requested Date (modified)'),
+        'delivery_requested_date_modified': fields.date(string='Estimated Delivery Date'),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
@@ -902,6 +925,7 @@ class purchase_order(osv.osv):
         'show_default_msg': fields.boolean(string='Show PO Default Message'),
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
+        'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
     }
     _defaults = {
         'po_version': 2,
@@ -1482,6 +1506,14 @@ class purchase_order(osv.osv):
             context = {}
         return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
 
+    def estimated_data(self, cr, uid, ids, context=None):
+        '''
+        data for requested
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Estimated Date of all/selected Order lines ?'), }
+
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
         data for confirmed
@@ -1507,8 +1539,11 @@ class purchase_order(osv.osv):
             context = {}
         # field name
         field_name = context.get('field_name', False)
-        if field_name == 'requested' and self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
-            raise osv.except_osv(_('Warning'), _('Please fill the "Delivery Requested Date (modified)" field.'))
+        if field_name == 'estimated':
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
+                raise osv.except_osv(_('Warning'), _('Please fill the "Estimated Delivery Date" field.'))
+            elif self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context):
+                field_name = 'requested'
         assert field_name, 'The button is not correctly set.'
         # data
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
@@ -2852,12 +2887,21 @@ class purchase_order(osv.osv):
                 ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id)
             ], limit=1, context=context)
 
+            po_partner_type = po.partner_id.partner_type
+            if po_partner_type == 'external':
+                cv_type = 'external'
+            elif po_partner_type == 'section':
+                cv_type = 'intersection'
+            elif po_partner_type == 'intermission':
+                cv_type = 'intermission'
+            else:
+                cv_type = 'manual'
             vals = {
                 'journal_id': engagement_ids and engagement_ids[0] or False,
                 'currency_id': po.currency_id and po.currency_id.id or False,
                 'partner_id': po.partner_id and po.partner_id.id or False,
                 'purchase_id': po.id or False,
-                'type': 'external' if po.partner_id.partner_type == 'external' else 'manual',
+                'type': cv_type,
             }
             # prepare some values
             period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)

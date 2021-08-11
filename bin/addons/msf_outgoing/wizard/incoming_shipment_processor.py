@@ -222,6 +222,7 @@ class stock_incoming_processor(osv.osv):
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
         'fields_as_ro': fields.boolean('Hide split/change prod', internal=True),
         'sequence_issue': fields.boolean('Issue with To ship'),
+        'physical_reception_date': fields.datetime('Physical Reception Date'),
     }
 
     _defaults = {

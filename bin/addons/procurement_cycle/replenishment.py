@@ -1785,34 +1785,47 @@ class replenishment_segment(osv.osv):
                         line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
                     else:
                         data_towrite['buffer_qty'] = row.cells[col_buffer_min_qty].data
+                    no_data = False
                     for fmc in range(1, 19):
-                        if cells_nb - 1 >=  col_first_fmc and row.cells[col_first_fmc].data:
+                        if cells_nb - 1 >=  col_first_fmc and row.cells[col_first_fmc].data is not None:
+                            if no_data:
+                                line_error.append(_('Line %d: FMC %s cannot be empty') % (idx+1, no_data))
+                                col_first_fmc += 2
+                                continue
+
                             from_data = False
                             fmc_data = row.cells[col_first_fmc].data
                             if fmc == 1:
                                 if cells_nb - 1 < col_first_fmc+1:
                                     line_error.append(_('Line %d: FMC FROM %d, date expected') % (idx+1, fmc))
+                                    col_first_fmc += 2
                                     continue
                                 if not row.cells[col_first_fmc+1].type == 'datetime':
                                     line_error.append(_('Line %d: FMC FROM %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+1].data))
+                                    col_first_fmc += 2
                                     continue
                                 from_data = row.cells[col_first_fmc+1].data.strftime('%Y-%m-%d')
                                 col_first_fmc += 1
 
                             if cells_nb - 1 < col_first_fmc+1:
                                 line_error.append(_('Line %d: FMC TO %d, date expected') % (idx+1, fmc))
+                                col_first_fmc += 2
                                 continue
                             if not row.cells[col_first_fmc+1].data or row.cells[col_first_fmc+1].type != 'datetime':
                                 line_error.append(_('Line %d: FMC TO %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+1].data))
+                                col_first_fmc += 2
                                 continue
                             if not isinstance(fmc_data, (int, long, float)):
                                 line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, fmc_data))
+                                col_first_fmc += 2
                                 continue
                             data_towrite.update({
                                 'rr_fmc_%d' % fmc: fmc_data,
                                 'rr_fmc_from_%d' % fmc:from_data,
                                 'rr_fmc_to_%d' % fmc: row.cells[col_first_fmc+1].data.strftime('%Y-%m-%d'),
                             })
+                        else:
+                            no_data = fmc
                         col_first_fmc += 2
                 elif cells_nb > col_buffer_min_qty and seg.rule == 'minmax':
                     if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float, type(None))):
@@ -2182,14 +2195,10 @@ class replenishment_segment_line(osv.osv):
                 for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'to_date': segment[seg_id]['to_date_rdd'], 'location': segment[seg_id]['location_ids']}):
                     ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_before_rdd'] =  prod_id.incoming_qty
 
-                for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, segment[seg_id]['prod_seg_line'].keys(), to_date=segment[seg_id]['to_date_rdd'], location_ids=segment[seg_id]['location_ids']).iteritems():
-                    ret[segment[seg_id]['prod_seg_line'][prod_id]]['pipeline_before_rdd'] += qty
 
             if not inv_review and 'pipeline_between_rdd_oc' in field_name:
                 for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'from_strict_date': segment[seg_id]['to_date_rdd'], 'to_date': segment[seg_id]['to_date_oc'], 'location': segment[seg_id]['location_ids']}):
                     ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_between_rdd_oc'] = prod_id.incoming_qty
-                    for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, segment[seg_id]['prod_seg_line'].keys(), from_date=segment[seg_id]['to_date_rdd'], to_date=segment[seg_id]['to_date_oc'], location_ids=segment[seg_id]['location_ids']).iteritems():
-                        ret[segment[seg_id]['prod_seg_line'][prod_id]]['pipeline_between_rdd_oc'] += qty
 
         return ret
 

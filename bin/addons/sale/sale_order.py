@@ -577,6 +577,25 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def _get_nb_creation_message_nr(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = 0
+
+        cr.execute("""select target_id, count(*)
+            from sync_client_message_received
+            where
+                run='f' and
+                target_object='sale.order' and
+                target_id in %s
+            group by target_id""", (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+
+        return ret
 
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
@@ -692,6 +711,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'draft_cancelled': fields.boolean(string='State', readonly=True),
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
+        'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
     }
 
     _defaults = {

@@ -767,6 +767,8 @@ class users(osv.osv):
         copydef = dict(login=(copy_pattern % user2copy['login']),
                        name=(copy_pattern % user2copy['name']),
                        address_id=False, # avoid sharing the address of the copied user!
+                       synchronize=False,
+                       is_synchronizable=False,
                        )
         copydef.update(default)
         return super(users, self).copy(cr, uid, id, copydef, context)

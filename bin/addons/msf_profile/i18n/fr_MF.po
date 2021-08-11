@@ -3925,6 +3925,7 @@ msgstr "Modele Catalogue Fournisseur.xls"
 #: field:account.invoice.tax,manual:0
 #: view:account.commitment:0
 #: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
 #: selection:purchase.order,invoice_method:0
 #: model:ir.ui.menu,name:sync_client.sync_wiz_menu
 msgid "Manual"
@@ -4733,6 +4734,7 @@ msgstr "Mois :"
 #: report:addons/procurement_cycle/report/product_stock_out.mako:468
 #: field:product.stock_out.line,line_number:0
 #: report:kitting.order.report:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:117
 #, python-format
 msgid "Line"
 msgstr "Ligne"
@@ -8320,6 +8322,7 @@ msgstr "Générer les écarts"
 #: report:addons/account/report/export_invoice.mako:122
 #: report:kitting.order.report:0
 #: field:view.expired.expiring.stock.lines,product_qty:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:120
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -8593,6 +8596,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: view:replenishment.parent.segment:0
 #: selection:replenishment.parent.segment,state_parent:0
 #: view:composition.item:0
+#: selection:wizard.return.from.unit.import,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -9631,6 +9635,7 @@ msgstr "Annuler Picking"
 
 #. module: analytic_distribution
 #: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
 msgid "Manual - ESC supplier"
 msgstr "Manuel - Fournisseur ESC"
 
@@ -13204,6 +13209,7 @@ msgstr "Line %s of the imported file: UoM [%s] not found ! Details: %s"
 #: code:addons/msf_doc_import/wizard/stock_partial_picking.py:785
 #: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:89
 #: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:162
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:60
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:597
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:509
 #: code:addons/register_accounting/wizard/wizard_register_import.py:260
@@ -14881,6 +14887,7 @@ msgstr "Pas de journal de type %s trouvé en essayant de créer une facture pour
 #: report:stock.forecast.report:0
 #: report:addons/consumption_calculation/report/expiry_report.mako:154
 #: report:addons/consumption_calculation/report/expiry_report.mako:207
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:72
 msgid "CODE"
 msgstr "CODE"
 
@@ -16548,8 +16555,6 @@ msgstr "%s update%s"
 #: code:addons/stock_override/report/report_stock_move.py:747
 #: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:160
 #: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:161
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:945
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:991
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
 #: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
@@ -16867,6 +16872,7 @@ msgstr "Noeud Pack %s, mauvais attribut %s"
 #: report:msf.sale.order:0
 #: report:addons/consumption_calculation/report/expiry_report.mako:155
 #: report:addons/consumption_calculation/report/expiry_report.mako:208
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:73
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
@@ -17233,6 +17239,7 @@ msgstr "object.query.wizard.values"
 #: view:stock.picking:0
 #: selection:stock.picking,subtype:0
 #: selection:stock.move,picking_subtype:0
+#: code:addons/msf_outgoing/report/picking_ticket.py:79
 msgid "PPL"
 msgstr "LPC"
 
@@ -22371,6 +22378,7 @@ msgstr "Le message d'enregistrement"
 #: view:automated.import.job:0
 #: view:wizard.import.ppl.to.create.ship:0
 #: view:wizard.import.product.line:0
+#: view:wizard.return.from.unit.import:0
 msgid "Import file"
 msgstr "Importer le fichier"
 
@@ -23957,6 +23965,7 @@ msgstr "Zone Interne"
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:148
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:177
 #: field:view.expired.expiring.stock.lines,prodlot_id:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:122
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -24577,6 +24586,7 @@ msgstr "Produits Supprimés"
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:77
 #: field:substitute.item,comment:0
 #: field:substitute.item.mirror,comment:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:124
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -24758,8 +24768,6 @@ msgstr "Europe/Bucharest"
 #: code:addons/stock_override/report/report_stock_move.py:747
 #: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:160
 #: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:161
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:945
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:991
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
 #: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
@@ -25568,18 +25576,23 @@ msgstr "Détermine les restrictions pour le pays."
 #: field:wizard.import.po.simulation.screen.line,in_drd:0
 #: field:wizard.simu.import.po.line,initial_req_date:0
 #: field:sale.order,delivery_requested_date:0
-#: field:sale.order.line,date_planned:0
 #: field:update.lines,delivery_requested_date:0
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:110
 #: field:purchase.order,delivery_requested_date:0
-#: field:purchase.order.line,date_planned:0
 #: field:purchase.order.merged.line,date_planned:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:232
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:897
 #, python-format
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Souhaitée"
+
+#. modules: purchase, msf_order_date
+#: field:purchase.order.line,date_planned:0
+#: field:sale.order.line,date_planned:0
+#, python-format
+msgid "Requested DD"
+msgstr "DL Souhaitée"
 
 #. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:78
@@ -27819,6 +27832,7 @@ msgstr "Installe un ensemble d'applications OpenERP présélectionnées pour vou
 
 #. module: consumption_calculation
 #: view:product.history.consumption:0
+#: view:product.product:0
 msgid "Historical consumptions"
 msgstr "Historique des consommations"
 
@@ -30285,7 +30299,7 @@ msgstr "ALGERIAN DINAR"
 #: code:addons/purchase/purchase_order_line.py:1795
 #, python-format
 msgid "There is no expense account defined for this product: \"%s\" (id:%d)"
-msgstr "Il n'y a pas de compte de charge définit pour ce produit : \"%s\" (id. : %d)"
+msgstr "Il n'y a pas de compte de charge défini pour ce produit : \"%s\" (id. : %d)"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -30662,7 +30676,7 @@ msgstr "Disponible pour mouvements sortants ?"
 #: code:addons/analytic_distribution_supply/invoice.py:147
 #, python-format
 msgid "There is no expense account defined for this PO line: \"%s\" (id:%d)"
-msgstr "There is no expense account defined for this PO line: \"%s\" (id:%d)"
+msgstr "Il n'y a pas de compte de charge défini pour cette ligne de BC : \"%s\" (id. : %d)"
 
 #. module: msf_doc_import
 #: view:msf.import.export:0
@@ -31256,7 +31270,7 @@ msgstr "Financing contract line code"
 #. module: stock
 #: field:physical.inventory.generate.counting.sheet,only_with_stock_level:0
 msgid "Only count lines with stock different than 0"
-msgstr "Compter uniquement les produits avec un niveau de stock différent de 0."
+msgstr "Compter uniquement les produits avec un niveau de stock différent de 0"
 
 #. module: account
 #: help:account.move.line,amount_residual:0
@@ -34170,7 +34184,6 @@ msgstr "IR/FO Order"
 #: model:product.status,name:product_attributes.status_1
 #: selection:product.mass.update,product_state:0
 #: selection:msf.accrual.line,analytic_distribution_state:0
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:930
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:505
 #: field:replenishment.inventory.review.line,valid_rr_fmc:0
 #: field:replenishment.order_calc.line,valid_rr_fmc:0
@@ -39106,6 +39119,7 @@ msgstr "Modèle"
 #: field:stock.forecast.export,filename:0
 #: field:export.report.stock.move,file_name:0
 #: field:internal.request.import,filename:0
+#: field:wizard.return.from.unit.import,filename:0
 msgid "Filename"
 msgstr "Nom du fichier"
 
@@ -40192,6 +40206,7 @@ msgstr "De confirmé à attribué."
 #: field:product.stock_out.line,uom_id:0
 #: report:kitting.order.report:0
 #: field:view.expired.expiring.stock.lines,product_uom:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:121
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -43233,12 +43248,12 @@ msgstr "Contient des Produits Dangereux"
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/stock/report/stock_delivery_report_xls.mako:216
 #: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:143
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:824
 #: field:replenishment.inventory.review.line,product_id:0
 #: field:replenishment.order_calc.line,product_id:0
 #: field:replenishment.product.list,default_code:0
 #: field:replenishment.segment.line,product_id:0
 #: report:kitting.order.report:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:118
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -44502,12 +44517,6 @@ msgstr "Prêt/Emprunt"
 #: field:stock.frequence,yearly_choose_day:0
 msgid "Choose day"
 msgstr "Choisir un jour"
-
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/account_commitment.py:161
-#, python-format
-msgid "No analytic distribution found for %s %s"
-msgstr "Pas de distribution analytique trouvée pour %s %s"
 
 #. modules: sync_so, analytic_distribution_supply, analytic_override, analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:322
@@ -47479,6 +47488,7 @@ msgstr "ID Enfants"
 #: view:account.bank.statement.line:0
 #: view:sale.order.line:0
 #: view:free.allocation.wizard:0
+#: view:account.commitment.line:0
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -57294,6 +57304,7 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:178
 #: report:kitting.order.report:0
 #: field:view.expired.expiring.stock.lines,expired_date:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:123
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -58750,8 +58761,8 @@ msgstr "OPEN ADVANCES"
 #: code:addons/msf_order_date/order_dates.py:693
 #: code:addons/purchase/purchase_order.py:1162
 #, python-format
-msgid "Do you want to update the Requested Date of all/selected Order lines ?"
-msgstr "Voulez-vous mettre à jour la Date de Livraison Souhaitée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+msgid "Do you want to update the Estimated Date of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Estimée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
 
 #. modules: account, finance
 #: field:account.partner.ledger,tax:0
@@ -65965,6 +65976,7 @@ msgstr "Listes Produits"
 #: field:wizard.import.in.simulation.screen,picking_id:0
 #: field:purchase.order.followup.from.menu,incoming_id:0
 #: field:purchase.order.followup.line,picking_id:0
+#: field:wizard.return.from.unit.import,picking_id:0
 msgid "Incoming shipment"
 msgstr "Livraison entrante"
 
@@ -66215,10 +66227,8 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #. modules: msf_order_date, msf_doc_import, transport_mgmt, purchase, tender_flow, purchase_override, stock, msf_supply_doc_export
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:74
 #: field:sale.order,delivery_confirmed_date:0
-#: field:sale.order.line,confirmed_delivery_date:0
 #: field:update.lines,delivery_confirmed_date:0
 #: field:purchase.order,delivery_confirmed_date:0
-#: field:purchase.order.line,confirmed_delivery_date:0
 #: field:international.transport.cost.report,delivery_confirmed_date:0
 #: field:local.transport.cost.report,delivery_confirmed_date:0
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:236
@@ -66234,6 +66244,13 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #, python-format
 msgid "Delivery Confirmed Date"
 msgstr "Date de Livraison Confirmée"
+
+#. modules: purchase, msf_order_date
+#: field:purchase.order.line,confirmed_delivery_date:0
+#: field:sale.order.line,confirmed_delivery_date:0
+#, python-format
+msgid "Confirmed DD"
+msgstr "DL Confirmée"
 
 #. modules: threshold_value, procurement_report
 #: view:procurement.purchase.compute.all:0
@@ -68091,7 +68108,7 @@ msgstr "Veuillez d'abord sélectionner une ligne de Registre."
 #: code:addons/analytic_distribution_supply/invoice.py:227
 #, python-format
 msgid "No analytic distribution found."
-msgstr "Pas de disribution analytique trouvée."
+msgstr "Pas de distribution analytique trouvée."
 
 #. module: base
 #: model:res.currency,currency_name:base.CHF
@@ -69403,8 +69420,31 @@ msgstr "Erythrée"
 
 #. module: analytic_distribution
 #: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
 msgid "Automatic - External supplier"
 msgstr "Automatique - Fournisseur Externe"
+
+#. module: analytic_distribution
+#: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
+msgid "Automatic - Intermission"
+msgstr "Automatique - Intermission"
+
+#. module: analytic_distribution
+#: selection:account.commitment,type:0
+#: selection:account.commitment.line,commit_type:0
+msgid "Automatic - Intersection"
+msgstr "Automatique - Intersection"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Intermission Commitment Voucher"
+msgstr "Bon d'Engagement Intermission"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Intersection Commitment Voucher"
+msgstr "Bon d'Engagement Intersection"
 
 #. module: procurement
 #: field:procurement.order,close_move:0
@@ -73261,6 +73301,7 @@ msgstr "Date Prévue de Colisage"
 #: field:wizard.common.import.line,display_error:0
 #: field:replenishment.consolidated_oc.import,error:0
 #: selection:replenishment.consolidated_oc.import,state:0
+#: selection:wizard.return.from.unit.import,state:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -75456,9 +75497,9 @@ msgstr "Sorte de Node"
 #: report:addons/stock/report/stock_delivery_report_xls.mako:217
 #: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:144
 #: report:addons/procurement_cycle/report/replenishment_product_list.mako:125
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:825
 #: field:replenishment.product.list,product_description:0
 #: report:kitting.order.report:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:119
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -80114,7 +80155,7 @@ msgstr "You cannot validate this document in the given period: %s because it's n
 #: code:addons/sales_followup/sale_followup.py:489
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:981
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:131
 #, python-format
 msgid "N/A"
 msgstr "N/A"
@@ -81430,6 +81471,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:kitting.order.report:0
 #: field:replenishment.consolidated_oc.import,state:0
 #: field:replenishment.parent.segment,state_parent:0
+#: field:wizard.return.from.unit.import,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -82162,7 +82204,7 @@ msgstr "Créer / Ecrire / Copier"
 msgid "SFTP connection succeeded"
 msgstr "SFTP connection succeeded"
 
-#. modules: tender_flow, product_nomenclature, product_asset, account_override, product_attributes, register_accounting, product_expiry, procurement_cycle, return_claim, supplier_catalogue, import_data, mission_stock, unifield_setup, stock_forecast, stock_batch_recall, order_types, msf_doc_import, purchase_followup, product, stock_override, stock_schedule, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, base, product_list, product_manufacturer, procurement_report, threshold_value, purchase, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, purchase_msf, stock, sync_so, msf_tools
+#. modules: tender_flow, product_nomenclature, product_asset, account_override, product_attributes, register_accounting, product_expiry, procurement_cycle, return_claim, supplier_catalogue, import_data, mission_stock, unifield_setup, stock_forecast, stock_batch_recall, order_types, msf_doc_import, purchase_followup, product, stock_override, stock_schedule, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, base, product_list, product_manufacturer, procurement_report, threshold_value, purchase, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, purchase_msf, stock, sync_so, msf_tools, analytic_distribution
 #: field:account.analytic.line,product_id:0
 #: view:account.entries.report:0
 #: field:account.entries.report,product_id:0
@@ -82368,6 +82410,7 @@ msgstr "SFTP connection succeeded"
 #: view:replenishment.segment.line.amc.past_fmc:0
 #: view:replenishment.segment.line.min_max_auto_supply.history:0
 #: field:view.expired.expiring.stock.lines,product_id:0
+#: field:account.commitment.line,po_line_product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -82542,6 +82585,7 @@ msgstr "Sélectionner un fournisseur"
 #: view:account.model:0
 #: selection:account.model,state:0
 #: selection:account.subscription,state:0
+#: selection:wizard.return.from.unit.import,state:0
 #, python-format
 msgid "Done"
 msgstr "Terminé"
@@ -86798,6 +86842,7 @@ msgstr "Date - Début de Contrat"
 #: field:replenishment.segment,file_to_import:0
 #: field:product.stock_out,file_to_import:0
 #: field:replenishment.consolidated_oc.import,file_to_import:0
+#: field:wizard.return.from.unit.import,file_to_import:0
 msgid "File to import"
 msgstr "Fichier à importer"
 
@@ -87486,7 +87531,7 @@ msgid "This is used only if you select a chained location type.\n"
 msgstr "Ceci est utilisé uniquement si vous sélectionnez une localisation de type chainée.\n"
 "La valeur 'Mouvement automatique' créera un mouvement de stock après le mouvement actuel qui sera validé automatiquement. La valeur 'Opération manuelle', le mouvement de stock devra être validé par un opérateur. La valeur 'Automatique sans étape supplémentaire', la localisation est remplacée sur le mouvement d'origine."
 
-#. modules: msf_budget, sync_client, update_client, kit, base, msf_profile
+#. modules: msf_budget, sync_client, update_client, kit, base, msf_profile, analytic_distribution
 #: view:ir.module.module:0
 #: report:ir.module.reference:0
 #: view:composition.kit:0
@@ -87504,6 +87549,7 @@ msgstr "Ceci est utilisé uniquement si vous sélectionnez une localisation de t
 #: field:sync.client.update_to_send,version:0
 #: field:sync.version.instance.monitor,version:0
 #: field:sync_client.version,name:0
+#: field:account.commitment,version:0
 msgid "Version"
 msgstr "Version"
 
@@ -90153,6 +90199,7 @@ msgstr "Signe Code de Base"
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:215
 #: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:235
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:469
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:202
 #, python-format
 msgid " second(s)"
 msgstr " seconde(s)"
@@ -91229,13 +91276,21 @@ msgstr "Zone - Adresse"
 msgid "Purchase Orders Waiting Confirmation"
 msgstr "Bons de Commandes en attente de Confirmation"
 
-#. modules: purchase, analytic_distribution, purchase_override
+#. modules: purchase, analytic_distribution, purchase_override, account_override, register_accounting
 #: field:account.commitment,line_ids:0
 #: view:account.commitment.line:0
-#: field:purchase.order.line,commitment_line_ids:0
-#: field:purchase.order.merged.line,commitment_line_ids:0
+#: field:purchase.order.line,cv_line_ids:0
+#: field:purchase.order.merged.line,cv_line_ids:0
+#: field:account.invoice.line,cv_line_ids:0
+#: field:wizard.account.invoice.line,cv_line_ids:0
 msgid "Commitment Voucher Lines"
 msgstr "Lignes de Bon d'Engagement"
+
+#. modules: purchase, purchase_override
+#: field:purchase.order.line,commitment_line_ids:0
+#: field:purchase.order.merged.line,commitment_line_ids:0
+msgid "Commitment Voucher Lines (deprecated)"
+msgstr "Lignes de Bon d'Engagement (obsolète)"
 
 #. module: sync_client
 #: code:addons/sync_client/hq_monitor.py:48
@@ -92278,8 +92333,8 @@ msgstr "Parent Gauche"
 
 #. module: sourcing
 #: field:sale.order.line,estimated_delivery_date:0
-msgid "Estimated DD"
-msgstr "DL Estimée"
+msgid "Calculated DD"
+msgstr "DL Calculée"
 
 #. module: register_accounting
 #: model:ir.actions.report.xml,name:register_accounting.pending_cheque
@@ -95734,11 +95789,12 @@ msgstr "In - brouillon"
 msgid "New value"
 msgstr "Nouvelle valeur"
 
-#. module: product_asset, msf_supply_doc_export, order_types
+#. module: product_asset, msf_supply_doc_export, order_types, msf_doc_import
 #: report:product.asset:0
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:95
 #: report:certificate.free.gift:0
 #: report:order.type.donation.certificate:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:89
 msgid "To:"
 msgstr "Vers:"
 
@@ -95933,7 +95989,7 @@ msgstr "Analyse Journal"
 #. modules: procurement_cycle, procurement_report
 #: field:stock.warehouse.order.cycle,order_coverage:0
 #: field:order.cycle.rules.report,order_coverage:0
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:837
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:62
 msgid "Order coverage"
 msgstr "Couverture de la Commande"
 
@@ -97946,6 +98002,7 @@ msgstr "PO line to delete"
 #: selection:stock.forecast.line,state:0
 #: selection:internal.request.import,state:0
 #: code:addons/stock_override/report/delivery_order.py:66
+#: selection:wizard.return.from.unit.import,state:0
 msgid "Import in progress"
 msgstr "Import en cours"
 
@@ -98324,12 +98381,16 @@ msgid "Note type"
 msgstr "Type de note"
 
 #. modules: purchase, analytic_distribution, msf_doc_import, finance
-#: field:account.commitment.line,purchase_order_line_ids:0
 #: view:purchase.order.line:0
 #: field:wizard.import.po,line_ids:0
 #: field:account.invoice.line,purchase_order_line_ids:0
 msgid "Purchase Order Lines"
 msgstr "Lignes Bon de Commande"
+
+#. module: analytic_distribution
+#: field:account.commitment.line,purchase_order_line_ids:0
+msgid "Purchase Order Lines (deprecated)"
+msgstr "Lignes Bon de Commande (obsolète)"
 
 #. module: specific_rules
 #: field:unconsistent.stock.report.line,product_bn:0
@@ -99692,8 +99753,9 @@ msgstr "Voir l'erreur"
 msgid "Simulation screen"
 msgstr "Écran de simulation"
 
-#. module: sale
+#. module: sale, msf_doc_import
 #: view:internal.request.import:0
+#: view:wizard.return.from.unit.import:0
 msgid "Import data"
 msgstr "Données d'import"
 
@@ -99832,10 +99894,11 @@ msgid "\n"
 msgstr "\n"
 "PROD"
 
-#. module: stock, msf_supply_doc_export
+#. module: stock, msf_supply_doc_export, msf_outgoing
 #: field:stock.picking,physical_reception_date:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:249
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:256
+#: field:stock.incoming.processor,physical_reception_date:0
 msgid "Physical Reception Date"
 msgstr "Date de Réception Physique"
 
@@ -100658,6 +100721,7 @@ msgstr "Association Compte/Destination \"%s\" non trouvée."
 #: code:addons/stock/wizard/physical_inventory_select_products.py:10
 #: code:addons/stock/wizard/physical_inventory_select_products.py:11
 #: code:addons/specific_rules/report/report_stock_inventory.py:36
+#: code:addons/stock/wizard/physical_inventory_generate_counting_sheet.py:10
 #, python-format
 msgid "%s months"
 msgstr "%s mois"
@@ -102034,7 +102098,6 @@ msgstr "Nombre de"
 #. module: consumption_calculation, msf_tools, procurement_cycle
 #: code:addons/consumption_calculation/weekly_forecast_report.py:510
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:100
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:844
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:412
 #: field:replenishment.inventory.review.line,pipeline_qty:0
 #: field:replenishment.order_calc.line,pipeline_qty:0
@@ -104956,6 +105019,12 @@ msgstr "\n"
 "                                    Attention: Les lignes suivantes ont des qté ou des montants sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                "
 
+#. modules: sale, purchase
+#: view:sale.order:0
+#: view:purchase.order:0
+msgid "WARNING: Order line(s) not synchronized, code(s) does not exist"
+msgstr "ATTENTION: Ligne(s) non sychronisée(s), code(s) inexistant(s)"
+
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_wizard_import_product_line
 msgid "Import Products data from Excel sheet"
@@ -105343,8 +105412,9 @@ msgstr "Ligne %s. Il manque la Période."
 msgid "CERTIFICATE of DONATION"
 msgstr "CERTIFICAT de DONATION"
 
-#. module: order_types
+#. module: order_types, msf_doc_import
 #: report:order.type.donation.certificate:0
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:87
 msgid "From:"
 msgstr "De:"
 
@@ -105791,7 +105861,6 @@ msgid "The Stock Take Date of %s is not consistent! It should not be later than 
 msgstr "La Date de Prise de Stock de %s n'est pas cohérente! Elle ne devrait pas être ultérieure à sa date de création"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1712
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1722
 #, python-format
 msgid "The  'Stock Take Date' is not consistent! It should not be later than %s's creation date"
@@ -106949,13 +107018,13 @@ msgid "%s, FMC TO %d must be the last day of the month"
 msgstr "%s, PCM DE %d doit être le dernier jour du mois"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:847
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:76
 msgid "(RR-AMC) Projected stock"
 msgstr "(RR-CMM) Stock Projeté"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:846
-msgid "(RR-FMC)Projected stock Qty"
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:75
+msgid "(RR-FMC) Projected stock Qty"
 msgstr "(RR-PCM) Qté projetée du stock"
 
 #. module: procurement_cycle
@@ -107021,12 +107090,12 @@ msgid "Auto. Supply Qty"
 msgstr "Qté réappro. auto"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:833
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:58
 msgid "Automatic Supply order  qty"
 msgstr "Qté d'appro auto"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:839
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:64
 msgid "Buffer (Qty)"
 msgstr "Tampon (Qté)"
 
@@ -107112,7 +107181,7 @@ msgid "Date of last Generation"
 msgstr "Date de dernière génération"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:857
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:87
 msgid "Date to start preparing the next order"
 msgstr "Date de début de préparation de la prochaine commande"
 
@@ -107148,7 +107217,7 @@ msgid "Display Inventory Review"
 msgstr "Afficher la Revue d'Inventaire"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:715
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:37
 msgid "Display durations in"
 msgstr "Afficher les durées en"
 
@@ -107156,11 +107225,6 @@ msgstr "Afficher les durées en"
 #: field:replenishment.inventory.review,time_unit:0
 msgid "Display variable durations in"
 msgstr "Afficher les durées en"
-
-#. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:856
-msgid "ETA date of next incoming delivery"
-msgstr "TAE du prochain arrivage"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,eta_for_next_pipeline:0
@@ -107233,11 +107297,6 @@ msgid "Export Product List Consistency Report"
 msgstr "Rapport de cohérence de la liste des produits"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:835
-msgid "External LT (days)"
-msgstr "Délai Externe (jours)"
-
-#. module: procurement_cycle
 #: field:replenishment.inventory.review.line,external_lt:0
 msgid "External LT)"
 msgstr "Délai Externe"
@@ -107265,8 +107324,8 @@ msgid "FMC is invalid"
 msgstr "PCM invalide"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:636
 #: field:replenishment.inventory.review,final_date_projection:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:35
 msgid "Final day of projection"
 msgstr "Denier jour de la projection"
 
@@ -107382,8 +107441,8 @@ msgid "Generate Requisition & Close"
 msgstr "Générer la Demande et Fermer"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:470
 #: field:replenishment.inventory.review,generation_date:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:31
 msgid "Generated"
 msgstr "Généré"
 
@@ -107443,14 +107502,9 @@ msgstr "Dans liste prod."
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,internal_lt:0
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:935
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:59
 msgid "Internal LT"
 msgstr "Délai Interne"
-
-#. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:834
-msgid "Internal LT (days)"
-msgstr "Délai interne (jours)"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,internal_lt:0
@@ -107459,17 +107513,16 @@ msgstr "Délai Interne (jours)"
 
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:765
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:1018
 #, python-format
 msgid "Invalid FMC"
 msgstr "PCM Invalide"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:328
 #: model:ir.actions.act_window,name:procurement_cycle.replenishment_inventory_review_action
 #: model:ir.model,name:procurement_cycle.model_replenishment_inventory_review
 #: model:ir.ui.menu,name:procurement_cycle.replenishment_inventory_review_menu
 #: view:replenishment.inventory.review:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:20
 msgid "Inventory Review"
 msgstr "Revue d'Inventaire"
 
@@ -107667,9 +107720,7 @@ msgid "Main Instance"
 msgstr "Instance Principale"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:832
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:920
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:933
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:57
 msgid "Max"
 msgstr "Max"
 
@@ -107682,11 +107733,9 @@ msgstr "Qté Max"
 
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:336
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:831
 #: code:addons/procurement_cycle/replenishment.py:445
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:919
 #: code:addons/procurement_cycle/replenishment.py:812
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:932
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:56
 #, python-format
 msgid "Min"
 msgstr "Min"
@@ -107699,8 +107748,6 @@ msgid "Min Qty"
 msgstr "Min Qté"
 
 #. module: procurement_cycle, msf_supply_doc_export
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:921
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:967
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:399
@@ -107719,7 +107766,7 @@ msgid "Next Scheduled Date"
 msgstr "Prochaine Date Programmée"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:858
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:88
 msgid "Next order to be generated/issued by date"
 msgstr "Prochaine commande à générer / émise par date"
 
@@ -107766,7 +107813,7 @@ msgid "Open Loan"
 msgstr "Prêt en cours"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:850
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:79
 msgid "Open Loan on product (Yes/No)"
 msgstr "Prêt en cours ?"
 
@@ -107905,7 +107952,7 @@ msgid "Primary Product List"
 msgstr "Liste de produits principale"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:826
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:51
 msgid "Primary Product list"
 msgstr "Liste de produits principale"
 
@@ -107963,13 +108010,9 @@ msgstr "Zones du Projet"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line.pas,projected:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:119
 msgid "Projected"
 msgstr "Projeté"
-
-#. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:864
-msgid "Projected M%s"
-msgstr "Projeté M%s"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:415
@@ -107984,8 +108027,8 @@ msgid "Projected use of safety stock/buffer"
 msgstr "Utilisation prévue du stock de sécurité / du tampon"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:598
 #: field:replenishment.inventory.review,projected_view:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:34
 msgid "Projected view (months from generation date)"
 msgstr "Vue projectée (mois depuis la date de génération)"
 
@@ -108016,8 +108059,8 @@ msgid "Qty expiring no cons."
 msgstr "Qté expirées sans conso."
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:849
 #: field:replenishment.inventory.review.line,total_expired_qty:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:78
 msgid "Qty expiring within period"
 msgstr "Qté d'expirés dans la période"
 
@@ -108028,35 +108071,30 @@ msgid "Qty lacking before next ETA"
 msgstr "Qté manquante avant prochain TAE"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:854
-msgid "Qty lacking before next ETA date"
-msgstr "Qté manquante avant prochain TAE"
-
-#. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:855
 #: field:replenishment.inventory.review.line,qty_lacking_needed_by:0
 #: field:replenishment.order_calc.line,qty_lacking_needed_by:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:85
 msgid "Qty lacking needed by"
 msgstr "Qté manquante requise pour"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:848
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:77
 msgid "Qty of Projected Expiries before consumption"
 msgstr "Qté projetée d'expirés avant conso"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:859
 #: field:replenishment.inventory.review.line,date_next_order_rdd:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:89
 msgid "RDD for next order"
 msgstr "DLS prochaine commande"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:830
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:55
 msgid "RR (qty) applied"
 msgstr "RR (qté) appliqué"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:829
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:54
 msgid "RR (threshold) applied"
 msgstr "RR (seuil) appliqué"
 
@@ -108178,7 +108216,7 @@ msgid "RR-AMC"
 msgstr "RR-CMM"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:842
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:67
 msgid "RR-AMC (average for AMC period)"
 msgstr "RR-CMM (moyenne sur la période CMM)"
 
@@ -108193,30 +108231,26 @@ msgid "RR-AMC period (months)"
 msgstr "Période RR-CMM (mois)"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:512
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:32
 msgid "RR-AMC periodicity (1st month)"
 msgstr "Période RR-CMM (1er mois)"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:555
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:33
 msgid "RR-AMC periodicity (last month)"
 msgstr "Périodicité RR-CMM (dernier mois)"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line.pas,rr_fmc:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:114
 msgid "RR-FMC"
 msgstr "RR-PCM"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:841
 #: field:replenishment.inventory.review.line,rr_fmc_avg:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:66
 msgid "RR-FMC (average for period)"
 msgstr "RR-PCM (moyenne de la période)"
-
-#. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:861
-msgid "RR-FMC M%s"
-msgstr "RR-PCM M%s"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,projected_stock_qty:0
@@ -108229,7 +108263,7 @@ msgid "RR_AMC must be not null and positive"
 msgstr "RR-CMM doit être positive ou nulle"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:843
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:72
 msgid "Real Stock in location(s)"
 msgstr "Stock Réel en zone(s)"
 
@@ -108258,10 +108292,10 @@ msgid "Reserved Stock"
 msgstr "Stock Réservé"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:845
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:414
 #: field:replenishment.inventory.review.line,reserved_stock_qty:0
 #: field:replenishment.order_calc.line,reserved_stock_qty:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:74
 msgid "Reserved Stock Qty"
 msgstr "Qté Réservée en stock"
 
@@ -108290,12 +108324,6 @@ msgid "Review Line"
 msgstr "Line de Revue"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:838
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:926
-msgid "SS"
-msgstr "SS"
-
-#. module: procurement_cycle
 #: field:replenishment.inventory.review.line,safety_stock:0
 #: field:replenishment.segment,safety_stock:0
 msgid "Safety Stock"
@@ -108312,8 +108340,8 @@ msgid "Safety Stock and Order Coverage must be positive or 0"
 msgstr "Stock de Sécurité et Couverture de Commande doivent être positives ou nulles"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:434
 #: field:replenishment.inventory.review,frequence_name:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:30
 msgid "Scheduled reviews periodicity"
 msgstr "Périodicité programmée des revues"
 
@@ -108355,7 +108383,7 @@ msgid "Segment Ref/Name"
 msgstr "Segment Ref/Nom"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:828
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:53
 msgid "Segment Ref/name"
 msgstr "Segment Ref/Nom"
 
@@ -108395,7 +108423,7 @@ msgid "Sleeping Qty"
 msgstr "Qté dormante"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:851
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:81
 msgid "Sleeping stock Qty"
 msgstr "Qté dormante stock "
 
@@ -108405,7 +108433,7 @@ msgid "Sleeping stock alert parameter (month)"
 msgstr "Paramètre d'alerte du stock dormant  (mois)"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:678
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:36
 msgid "Sleeping stock alert parameter (months)"
 msgstr "Paramètre d'alerte du stock dormant (mois)"
 
@@ -108446,7 +108474,7 @@ msgid "Stock by instance"
 msgstr "Stock par instance"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:398
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:29
 msgid "Stock location configuration description"
 msgstr "Description de la configuration de la Zone de stock"
 
@@ -108611,7 +108639,7 @@ msgid "Total Lead Time (days)"
 msgstr "Délai Total (jours)"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:836
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:61
 msgid "Total lead time"
 msgstr "Delai total"
 
@@ -108620,11 +108648,6 @@ msgstr "Delai total"
 #: field:replenishment.order_calc.line,valid_rr_fmc:0
 msgid "Valid FMC"
 msgstr "PCM Valide"
-
-#. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:840
-msgid "Valid RR-FMC(s)"
-msgstr "RR-PCM Valides"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
@@ -108639,13 +108662,11 @@ msgid "Warning: location config is inactive"
 msgstr "Attention: la configuration de la zone est inactive"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:827
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:52
 msgid "Warnings Recap"
 msgstr "Avertissements"
 
 #. module: procurement_cycle, msf_supply_doc_export
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:921
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:967
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:461
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:399
@@ -108662,12 +108683,12 @@ msgid "You can't activate a review w/o any frequency"
 msgstr "Vous ne pouvez pas activer une revue sans fréquence"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:852
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:82
 msgid "of supply (RR-AMC)"
 msgstr "d'approvisionnement (RR-CMM)"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:853
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:83
 msgid "of supply (RR-FMC)"
 msgstr "d'approvisionnement (RR-PCM)"
 
@@ -108871,7 +108892,7 @@ msgstr "Zones des autres instances"
 
 #. module: procurement_cycle
 #: field:replenishment.segment.line,status:0
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:914
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:49
 msgid "RR Lifecycle"
 msgstr "Cycle RR"
 
@@ -109729,12 +109750,12 @@ msgid "Close only"
 msgstr "Uniquement Fermer"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:935
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:71
 msgid "Coefficient of Variant of HMC and FMC"
 msgstr "Coefficient de Variation de HCM et PCM"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:933
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:69
 msgid "Coefficient of Variation of HMC"
 msgstr "Coefficient de Variation de HCM"
 
@@ -109778,7 +109799,7 @@ msgid "Donations pending"
 msgstr "Donations en cours"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:947
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:80
 msgid "Donations pending (Yes/No)"
 msgstr "Donations en cours (Oui/Non)"
 
@@ -109788,7 +109809,7 @@ msgid "Donations Pending"
 msgstr "Donations en cours"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:953
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:86
 msgid "ETA date of next pipeline"
 msgstr "Date TAE du prochain pipeline"
 
@@ -109949,9 +109970,9 @@ msgid "Qty expiring before RDD"
 msgstr "Qté expirée avant DLS"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:951
 #: field:replenishment.inventory.review.line,qty_lacking:0
 #: field:replenishment.order_calc.line,qty_lacking:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:84
 msgid "Qty lacking before next RDD"
 msgstr "Qty manquante avant prochaine DLS"
 
@@ -110030,14 +110051,14 @@ msgid "Set Paired Product"
 msgstr "Définir le produit lié"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:932
 #: field:replenishment.inventory.review.line,std_dev_hmc:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:68
 msgid "Standard Deviation HMC"
 msgstr "Déviation Standard HCM"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:934
 #: field:replenishment.inventory.review.line,std_dev_hmc_fmc:0
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:70
 msgid "Standard Deviation of HMC vs FMC"
 msgstr "Déviation Standard de HCM vs PCM"
 
@@ -110655,7 +110676,7 @@ msgid "Phasing Out"
 msgstr "Suppression"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:915
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:50
 msgid "Replaced/Replacing"
 msgstr "Remplacé/Remplaçant"
 
@@ -110682,7 +110703,7 @@ msgstr "Délai"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,external_lt:0
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:936
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:60
 msgid "External LT"
 msgstr "Délai Externe"
 
@@ -110759,13 +110780,13 @@ msgstr "À colis"
 #. module: purchase
 #: code:addons/purchase/purchase_order.py:1393
 #, python-format
-msgid "Please fill the \"Delivery Requested Date (modified)\" field."
-msgstr "Veuillez remplir le champ \"Date de Livraison Souhaitée (modifiée)\"."
+msgid "Please fill the \"Estimated Delivery Date\" field."
+msgstr "Veuillez remplir le champ \"Date de Livraison Estimée\"."
 
 #. module: purchase
 #: field:purchase.order,delivery_requested_date_modified:0
-msgid "Delivery Requested Date (modified)"
-msgstr "Date de Livraison Souhaitée (modifiée)"
+msgid "Estimated Delivery Date"
+msgstr "Date de Livraison Estimée"
 
 #. modules: purchase, sale, procurement_request
 #: view:sale.order:0
@@ -111504,7 +111525,7 @@ msgid "Round Agreed Qty to SoQ"
 msgstr "Arrondir Qté Convenue à la QcS"
 
 #. module: procurement_cycle
-#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:939
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:63
 msgid "SS (Qty)"
 msgstr "SS (Qté)"
 
@@ -112064,7 +112085,6 @@ msgstr "11 semaines"
 msgid "12 weeks"
 msgstr "12 semaines"
 
-
 #. module: stock
 #: model:ir.model,name:stock.model_view_expired_expiring_stock
 #: field:view.expired.expiring.stock.lines,v_mng_exp_id:0
@@ -112393,3 +112413,379 @@ msgstr "L'Adresse ne peut pas être désactivée. Il y a des Éxpéditions ouver
 #, python-format
 msgid "The Pre-Packing List is using a deactivated Delivery Address (%s). Please select another one to be able to process."
 msgstr "La Liste de Pré-Colisage utilise une Addresse de Livraison désactivée (%s). Veuillez en sélectionner une autre pour pouvoir continuer le traitement."
+
+#. module: sync_so
+#: code:addons/sync_so/so_po_common.py:491
+#, python-format
+msgid "Cannot process Document/line due to Product Code %s which does not exist in this instance"
+msgstr "Impossible de traiter le Document/la ligne. Le Code Produit %s n'existe pas dans cette instance"
+
+#. modules: purchase, msf_order_date
+#: field:purchase.order.line,esti_dd:0
+#: field:sale.order.line,esti_dd:0
+#, python-format
+msgid "Estimated DD"
+msgstr "DL Estimée"
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "Physical Reception Date :"
+msgstr "Date de Réception Physique :"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/report/replenishment_inventory_review.py:19
+#, python-format
+msgid "Inv. Review"
+msgstr "Revue Inv."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1792
+#, python-format
+msgid "Line %d: FMC %s cannot be empty"
+msgstr "Ligne %d: PCM %s ne peut être vide"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:56
+#, python-format
+msgid "Entire Period"
+msgstr "Période Entière"
+
+#. module: consumption_calculation
+#: view:product.history.consumption:0
+msgid "Generate historical report"
+msgstr "Générer le rapport des historiques"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:46
+#: model:ir.actions.report.xml,name:consumption_calculation.report_historical_consumption_xlsx
+#, python-format
+msgid "Historical Consumption"
+msgstr "Historique des Consommations"
+
+#. module: consumption_calculation
+#: view:product.history.consumption:0
+msgid "Historical data report"
+msgstr "Rapport des Consommations"
+
+#. module: consumption_calculation
+#: view:product.history.consumption:0
+msgid "If ticked it means that for periods/months where there are more returns (via return INs) than Outs, the standard calculation would display a negative Consumption/AMC quantity, but in this case (if ticked) the figure is set to zero."
+msgstr "Les périodes/mois où il y a plus de retours que d'expéditions génèrent des AMC négatives, quand cochée ces AMC négatives sont remplacées par zéro."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:66
+#, python-format
+msgid "MC"
+msgstr "CM"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:69
+#, python-format
+msgid "RC"
+msgstr "CR"
+
+#. module: consumption_calculation
+#: field:product.history.consumption,remove_negative_amc:0
+msgid "Remove Negative AMCs"
+msgstr "Supprimer les CMM négatives "
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:48
+#, python-format
+msgid "This report hides negative AMC / MCs (they are set to 0)"
+msgstr "Ce rapport cache les CMM/ CM négatives (elles sont mises à 0)"
+
+#. module: msf_doc_import
+#: view:stock.picking:0
+#: view:wizard.return.from.unit.import:0
+msgid "Import Return from Unit"
+msgstr "Importer Retour d'UdC"
+
+#. module: msf_doc_import
+#: model:ir.actions.report.xml,name:msf_doc_import.report_return_from_unit_xls
+msgid "Return from Unit Export"
+msgstr "Export de Retour d'UdC"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/stock_picking.py:447
+#, python-format
+msgid "The reason type does not correspond to the expected “Return from Unit”, please check this"
+msgstr "Le type de raison n'est pas “Retour d'UdC”, veuillez régler ça"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/stock_picking.py:449
+#, python-format
+msgid "The header field “Ext. CU” must be filled for this import, please check this"
+msgstr "Le champ d'entête “Ext. CU” doit être rempli pour cet import, veuillez régler ça"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/stock_picking.py:451
+#, python-format
+msgid "This type of import is only available for INs from scratch"
+msgstr "Ce type d'import est uniquement disponible pour les INs créés à partir de rien"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/stock_picking.py:453
+#, python-format
+msgid "Lines already exist for this IN, this import is not possible"
+msgstr "Il y a déjà des lignes pour cet IN, cet import n'est pas possible"
+
+#. module: msf_doc_import
+#: view:wizard.return.from.unit.import:0
+msgid "Incoming Shipment Information"
+msgstr "Informations de la Livraison Entrante"
+
+#. module: msf_doc_import
+#: view:wizard.return.from.unit.import:0
+msgid "Save as"
+msgstr "Enregistrer sous"
+
+#. module: msf_doc_import
+#: view:wizard.return.from.unit.import:0
+msgid "Import Information"
+msgstr "Informations sur l'import"
+
+#. module: msf_doc_import
+#: view:wizard.return.from.unit.import:0
+msgid "Return to the IN"
+msgstr "Retourner à l'IN"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:76
+#, python-format
+msgid "\n"
+"The imported Ext. C.U. must be the same as in the IN (%s)."
+msgstr "\n"
+"L'Ext. C.U. doit être la même que celle de l'IN (%s)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:79
+#, python-format
+msgid "\n"
+"There is no Ext. C.U. with the name %s."
+msgstr "\n"
+"Il n'y a aucune Ext. C.U. avec le nom %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:82
+#, python-format
+msgid "\n"
+"You must fill \"From\" with an Ext. C.U. location."
+msgstr "\n"
+"Vous devez remplir \"De\" avec une zone Ext. C.U."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:93
+#, python-format
+msgid "\n"
+"There is no Internal Location with the name %s."
+msgstr "\n"
+"Il n'y a aucune Zone Interne avec le nom %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:96
+#, python-format
+msgid "\n"
+"You must fill \"To\" with an Internal location."
+msgstr "\n"
+"Vous devez remplir \"Vers\" avec une zone Interne."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:125
+#, python-format
+msgid "Line: %s: The Batch Number is mandatory for %s. "
+msgstr "Ligne %s: Le Numéro de Lot est obligatoire pour %s. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:128
+#, python-format
+msgid "Line %s: The Expiry Date is mandatory for %s. "
+msgstr "Ligne %s: La Date d'Expiration est obligatoire pour %s. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:139
+#, python-format
+msgid "No Batch Number was found with the name %s and the expiry date %s. "
+msgstr "Aucun Numéro de Lot a été trouvé avec le nom %s et la date d'expiration %s. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:151
+#, python-format
+msgid "Line %s %s: The Expiry Date must be a date."
+msgstr "Ligne %s %s: La Date d'Expiration doit être une date. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:154
+#, python-format
+msgid "Line %s: There is no active product %s. "
+msgstr "Ligne %s: Il n'y a aucun produit actif %s. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:163
+#, python-format
+msgid "Line %s: The Quantity must be a number. "
+msgstr "Ligne %s: La Quantité doit être un nombre. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:166
+#, python-format
+msgid "Line %s: The Quantity is mandatory for each line. "
+msgstr "Ligne %s: La Quantité est obligatoire pour chaque ligne. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:178
+#, python-format
+msgid "Line %s: The UoM imported was not in the same category than the UoM of the product. The UoM of the product was taken instead. "
+msgstr "Ligne %s: l'UdM importée n'a pas la même catégorie que l'UdM du produit. L'UdM du produit sera utilisée à la place. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:181
+#, python-format
+msgid "Line %s: The UoM is mandatory for each line. "
+msgstr "Ligne %s: L'UdM est obligatoire pour chaque ligne. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:201
+#, python-format
+msgid "\n"
+"No line to import."
+msgstr "\n"
+"Aucune ligne à importer."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:203
+#, python-format
+msgid " \n"
+"Importation completed in %s!\n"
+"# of imported lines : %s lines\n"
+"# of errors to correct: %s\n"
+"\n"
+"%s\n"
+"%s"
+msgstr " \n"
+"Import effectué en %s!\n"
+"# de lignes importées : %s lignes\n"
+"# d'erreurs à corriger: %s\n"
+"\n"
+"%s\n"
+"%s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:65
+#, python-format
+msgid "Return from Unit"
+msgstr "Retour d'UdC"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:75
+#, python-format
+msgid "Return of Products"
+msgstr "Retour de Produits"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:78
+#, python-format
+msgid "Ref:"
+msgstr "Réf:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:110
+#, python-format
+msgid "Sending date:"
+msgstr "Date d'envoi:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:112
+#, python-format
+msgid "Delivery date:"
+msgstr "Date de livraison:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:155
+#, python-format
+msgid "Executive name and signature:"
+msgstr "Nom de l'executif et signature:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:157
+#, python-format
+msgid "Name and signature of the person in charge of the delivery:"
+msgstr "Nom et signature de la personne en charge de la livraison:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/report/return_from_unit_export.py:169
+#, python-format
+msgid "Date and place:"
+msgstr "Date et lieu:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:141
+#, python-format
+msgid "Line %s %s the Expiry Date %s is not correct."
+msgstr "Ligne %s %s la Date d'Expiration %s est incorrecte."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:136
+#, python-format
+msgid "Line %s %s: a batch number is defined on the imported file but the product doesn't require batch number - Batch ignored"
+msgstr "Ligne %s %s: un NL est défini dans le fichier, mais le produit ne nécissite pas de lot - Lot ignoré"
+
+#. modules: msf_order_date, purchase
+#: code:addons/msf_order_date/order_dates.py:696
+#: code:addons/purchase/purchase_order.py:1507
+#, python-format
+msgid "Do you want to update the Requested Date of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Souhaitée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+
+#. module: stock
+#: field:physical.inventory.generate.counting.sheet,only_with_pos_move:0
+msgid "Only count lines with stock & moves different than 0"
+msgstr "Compter uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0"
+
+#. module: stock
+#: code:addons/addons/stock/physical_inventory.py:265
+#, python-format
+msgid "Multiple selections up to: %s months"
+msgstr "Sélections multiples jusqu'à: %s mois"
+
+#. module: stock
+#: code:addons/addons/stock/physical_inventory.py:265
+#, python-format
+msgid "Products moved in the last: %s month%s"
+msgstr "Mouvements de stock dans: %s dernier%s mois"
+
+#. module: analytic_distribution
+#: help:account.commitment,version:0
+msgid "Technical field to distinguish old CVs from new ones which have a different behavior."
+msgstr "Champ technique pour distinguer les anciens Bons d'Engagement des nouveaux qui ont un comportement différent."
+
+#. module: analytic_distribution
+#: field:account.commitment,display_super_done_button:0
+msgid "Display the button allowing to always set a CV to Done"
+msgstr "Afficher le bouton permettant de toujours passer un Bon d'Engagement en Terminé"
+
+#. module: analytic_distribution
+#: field:account.commitment.line,commit_type:0
+msgid "Commitment Voucher Type"
+msgstr "Type de Bon d'Engagement"
+
+#. module: analytic_distribution
+#: field:account.commitment.line,po_line_id:0
+#: field:account.commitment.line,po_line_number:0
+msgid "PO Line"
+msgstr "Ligne du BC"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Done (for Administrator only)"
+msgstr "Terminé (pour l'Administrateur uniquement)"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "You are about to set this Commitment Voucher to the state \"Done\". Do you want to proceed?"
+msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Terminé\". Voulez-vous continuer ?"
+
+#. module: analytic_distribution
+#: view:account.commitment.line:0
+msgid "Do you really want to delete this line?"
+msgstr "Voulez-vous vraiment supprimer cette ligne ?"
