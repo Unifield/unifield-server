@@ -142,6 +142,9 @@ class account_invoice(osv.osv):
                 # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
                 if not invl.order_line_id and not inv.is_merged_by_account:
                     continue
+                # exclude push flow
+                if invl.order_line_id and (invl.order_line_id.order_id.push_fo or invl.order_line_id.set_as_sourced_n):
+                    continue
                 old_cv_version = True
                 # CV STARTING FROM VERSION 2
                 amount_to_subtract = invl.price_subtotal or 0.0
@@ -319,7 +322,7 @@ class account_invoice(osv.osv):
                         break
                     amount_dic[k] -= cv_line[4]
 
-        if auto_cv and from_cancel:
+        if auto_cv and from_cancel and from_cancel is not True:
             # we cancel the last IN from PO and no draft invoice exist
             if not self.pool.get('account.invoice').search_exist(cr, uid, [('purchase_ids', 'in', po_ids), ('state', '=', 'draft')], context=context):
                 dpo_ids = self.pool.get('purchase.order').search(cr, uid, [('id', 'in', po_ids), ('po_version', '!=', 1), ('order_type', '=', 'direct')], context=context)

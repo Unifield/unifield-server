@@ -1872,14 +1872,17 @@ class purchase_order_line(osv.osv):
 
         import_commitments = self.pool.get('unifield.setup.configuration').get_config(cr, uid).import_commitments
         for pol in self.browse(cr, uid, ids, context=context):
-            # only create CV for external and ESC partners:
-            if pol.order_id.partner_id.partner_type not in ['external', 'esc']:
+            if pol.order_id.partner_id.partner_type == 'internal':
                 return False
 
             if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
-            if pol.order_id.order_type in ['loan', 'in_kind']:
+            if pol.order_id.order_type in ['loan', 'in_kind', 'donation_st', 'donation_exp']:
+                return False
+
+            # exclude push flow (FO or FO line created first)
+            if pol.order_id.push_fo or pol.set_as_sourced_n:
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)

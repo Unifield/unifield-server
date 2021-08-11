@@ -2887,12 +2887,21 @@ class purchase_order(osv.osv):
                 ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id)
             ], limit=1, context=context)
 
+            po_partner_type = po.partner_id.partner_type
+            if po_partner_type == 'external':
+                cv_type = 'external'
+            elif po_partner_type == 'section':
+                cv_type = 'intersection'
+            elif po_partner_type == 'intermission':
+                cv_type = 'intermission'
+            else:
+                cv_type = 'manual'
             vals = {
                 'journal_id': engagement_ids and engagement_ids[0] or False,
                 'currency_id': po.currency_id and po.currency_id.id or False,
                 'partner_id': po.partner_id and po.partner_id.id or False,
                 'purchase_id': po.id or False,
-                'type': 'external' if po.partner_id.partner_type == 'external' else 'manual',
+                'type': cv_type,
             }
             # prepare some values
             period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)

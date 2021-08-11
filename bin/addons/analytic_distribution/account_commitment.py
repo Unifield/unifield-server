@@ -71,7 +71,12 @@ class account_commitment(osv.osv):
         """
         Returns the list of possible types for the Commitment Vouchers
         """
-        return [('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')]
+        return [('manual', 'Manual'),
+                ('external', 'Automatic - External supplier'),
+                ('esc', 'Manual - ESC supplier'),
+                ('intermission', 'Automatic - Intermission'),
+                ('intersection', 'Automatic - Intersection'),
+                ]
 
     def get_current_cv_version(self, cr, uid, context=None):
         """
@@ -90,7 +95,7 @@ class account_commitment(osv.osv):
             ids = [ids]
         res = {}
         for cv in self.read(cr, uid, ids, ['state', 'type'], context=context):
-            other_done_button_usable = cv['state'] == 'open' and cv['type'] != 'external'
+            other_done_button_usable = cv['state'] == 'open' and cv['type'] not in ('external', 'intermission', 'intersection')
             res[cv['id']] = not other_done_button_usable and uid == 1 and cv['state'] != 'done'
         return res
 
