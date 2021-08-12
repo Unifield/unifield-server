@@ -25,7 +25,7 @@ class return_from_unit_parser(XlsxReportParser):
         sheet.sheet_view.showGridLines = False
 
         # MSF logo
-        img = image.Image(PILImage.open(file_open('addons/msf_doc_import/report/images/msf-logo.png')))
+        img = image.Image(PILImage.open(file_open('addons/msf_doc_import/report/images/msf-logo.png', 'rb')))
         img.anchor = 'A1'
         sheet.add_image(img)
 
