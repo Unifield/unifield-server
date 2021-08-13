@@ -750,7 +750,6 @@
                 <tree string="Thermosensitivity" editable="top" >
                 <field name="name" />
                 <field name="cold_chain" />
-                <field name="mapped_to" />
                 </tree>
             </field>
         </record>
