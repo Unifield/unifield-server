@@ -753,6 +753,17 @@
                 </tree>
             </field>
         </record>
+    <record id="product_cold_chain_form" model="ir.ui.view">
+        <field name="name">product.cold_chain.form</field>
+        <field name="model">product.cold_chain</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Thermosensitivity">
+                    <field name="name" />
+                    <field name="cold_chain" />
+                </form>
+            </field>
+    </record>
 	<record id="product_cold_chain_action" model="ir.actions.act_window">
             <field name="name">Thermosensitivity</field>
             <field name="type">ir.actions.act_window</field>
