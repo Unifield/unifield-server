@@ -1219,6 +1219,10 @@ class stock_move(osv.osv):
                     vals['cancel_only'] = True
                     if move.dpo_line_id:
                         vals['from_dpo'] = True
+
+                if move.state == 'assigned' and move.partner_id.partner_type not in ('esc', 'external') and not move.in_forced:
+                    vals['display_warning'] = True
+
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -1969,6 +1973,7 @@ class stock_move_cancel_wizard(osv.osv_memory):
                                                       string='Is the move from the Cross docking Location ?',
                                                       store=False, readonly=True),
         'from_dpo': fields.boolean(string='Sourced on remote to DPO ?'),
+        'display_warning': fields.boolean(string='Display forced warning?'),
     }
 
     _defaults = {
@@ -1976,6 +1981,7 @@ class stock_move_cancel_wizard(osv.osv_memory):
         'cancel_only': False,
         'is_move_from_cross_docking': False,
         'from_dpo': False,
+        'display_warning': False,
     }
 
     def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):
