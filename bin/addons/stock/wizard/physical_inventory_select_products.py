@@ -402,7 +402,7 @@ class physical_inventory_select_products(osv.osv_memory):
             else:
                 nb_months = wiz_data['recent_moves_months']
             if nb_months > inventory_data['max_filter_months']:
-                vals['max_filter_months'] = wiz_data['recent_moves_months']
+                vals['max_filter_months'] = nb_months
             if not inventory_data['multiple_filter_months'] and inventory_data['max_filter_months'] != -1  and nb_months != inventory_data['max_filter_months']:
                 vals['multiple_filter_months'] = True
 
