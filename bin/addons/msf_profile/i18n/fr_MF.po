@@ -107544,7 +107544,7 @@ msgid "Inventory Review Line Details"
 msgstr "Détails des lignes de Revue"
 
 #. module: procurement_cycle
-#: model:ir.actions.report.xml,name:procurement_cycle.report_replenishment_inventory_review_xls
+#: model:ir.actions.report.xml,name:procurement_cycle.report_replenishment_inventory_review_xls2
 msgid "Inventory Review xls"
 msgstr "Revue d'Inventaire xls"
 
