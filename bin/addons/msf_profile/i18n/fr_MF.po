@@ -78014,8 +78014,8 @@ msgstr "Check data"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/account_commitment.py:349
 #, python-format
-msgid "Analytic distribution is not valid for account \"%s %s\"."
-msgstr "Allocation Analytique non valide pour le compte \"%s %s\"."
+msgid "Commitment Voucher %s: the Analytic Distribution is not valid for the account \"%s %s\"."
+msgstr "Bon d'Engagement %s : la Distribution Analytique n'est pas valide pour le compte \"%s %s\"."
 
 #. module: base
 #: view:res.lang:0
