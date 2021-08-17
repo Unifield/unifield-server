@@ -21,7 +21,7 @@
                     </group>
                     <group name="buttons" colspan="4" col="6">
                         <button name="go_to_ir" string="Cancel Import" icon="gtk-cancel" type="object" />
-                        <button name="launch_simulate" string="Import File" icon="gtk-go-forward" type="object" states="draft,error" />
+                        <button name="launch_simulate" string="Import File" icon="gtk-go-forward" type="object" states="draft" />
                         <button name="export_ir_import_overview" string="Export Import Overview" icon="gtk-execute" type="object" states="error,simu_done" />
                         <button name="launch_import" string="Validate Import" icon="terp-check" type="object" states="simu_done" />
                         <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object"
