@@ -33,14 +33,14 @@ class previous_fy_dates_setup(osv.osv_memory):
         'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates on previous Fiscal Year?'),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Display the default/current value regarding the allowing of previous FY dates
         """
         if context is None:
             context = {}
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(previous_fy_dates_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(previous_fy_dates_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         res['previous_fy_dates_allowed'] = setup.previous_fy_dates_allowed
         return res
 

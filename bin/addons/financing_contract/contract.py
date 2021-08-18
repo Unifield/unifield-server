@@ -555,9 +555,9 @@ class financing_contract_contract(osv.osv):
             'context': context,
         }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         res = super(financing_contract_contract, self).default_get(cr, uid,
-                                                                   fields, context=context)
+                                                                   fields, context=context, from_web=from_web)
 
         instance_id, instance_level = self.__get_instance_level(cr, uid,
                                                                 context=context)

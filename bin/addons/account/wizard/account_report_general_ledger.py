@@ -93,11 +93,11 @@ class account_report_general_ledger(osv.osv_memory):
         'display_account': 'bal_movement',  # by default only result with JIs
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         if context is None:
             context = {}
         context['report_cross_fy'] = True
-        res = super(account_report_general_ledger, self).default_get(cr, uid, fields, context=context)
+        res = super(account_report_general_ledger, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         # get company default currency
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
         if user and user[0] and user[0].company_id:

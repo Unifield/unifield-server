@@ -678,6 +678,10 @@
         </record>
 
         <!-- UF22.0 -->
+        <record id="us_8597_set_custom_default_from_web" model="patch.scripts">
+            <field name="method">us_8597_set_custom_default_from_web</field>
+        </record>
+
         <record id="us_8805_product_set_archived" model="patch.scripts">
             <field name="method">us_8805_product_set_archived</field>
         </record>

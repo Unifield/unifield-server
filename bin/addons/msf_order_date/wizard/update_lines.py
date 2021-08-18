@@ -32,7 +32,7 @@ class update_lines(osv.osv_memory):
         'stock_take_date': fields.date('Date of Stock Take', readonly=True,),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """ To get default values for the object.
          @param self: The object pointer.
          @param cr: A database cursor
@@ -47,7 +47,7 @@ class update_lines(osv.osv_memory):
         # switch according to type
         type = context['type']
         obj_obj = self.pool.get(type)
-        res = super(update_lines, self).default_get(cr, uid, fields, context=context)
+        res = super(update_lines, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         obj_ids = context.get('active_ids', [])
         if not obj_ids:
             return res

@@ -1076,8 +1076,8 @@ class product_attributes(osv.osv):
         """
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(product_attributes, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if 'heat_sensitive_item' in fields or not fields:
             res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
 

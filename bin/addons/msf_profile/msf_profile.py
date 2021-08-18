@@ -74,7 +74,6 @@ class patch_scripts(osv.osv):
                 )
         ''')
         self.log_info(cr, uid, 'US-8944 thermo: %d products touched' % cr.rowcount)
-
         cr.execute('''
             update
                 product_product p
@@ -90,6 +89,18 @@ class patch_scripts(osv.osv):
                 cold.mapped_to is not null
         ''')
         self.log_info(cr, uid, 'US-8944 thermo: %d products updated' % cr.rowcount)
+        return True
+
+    def us_8597_set_custom_default_from_web(self, cr, uid, *a, **b):
+        cr.execute("update sale_order set location_requestor_id=NULL where location_requestor_id is not null and procurement_request='f'")
+        self._logger.warn('US-8597: Location removed on %d FO' % (cr.rowcount,))
+
+        cr.execute("""
+            update ir_values set meta='web' where
+                key='default' and
+                (name, model) not in (('shop_id', 'sale.order'), ('warehouse_id', 'purchase.order'), ('lang', 'res.partner'))
+            """)
+        self._logger.warn('US-8597: web default value set on %d records' % (cr.rowcount,))
         return True
 
     def us_8805_product_set_archived(self, cr, uid, *a, **b):
@@ -4466,8 +4477,8 @@ class base_setup_company(osv.osv_memory):
     _inherit = 'base.setup.company'
     _name = 'base.setup.company'
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
-        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context)
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
+        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context, from_web=from_web)
         if not ret.get('name'):
             ret.update({'name': 'MSF', 'street': 'Rue de Lausanne 78', 'street2': 'CP 116', 'city': 'Geneva', 'zip': '1211', 'phone': '+41 (22) 849.84.00'})
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id

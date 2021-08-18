@@ -880,10 +880,10 @@ class supplier_catalogue(osv.osv):
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
         return True
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """[utp-746] ESC supplier catalogue default value
         and catalogue create not allowed in a not HQ instance"""
-        res = super(supplier_catalogue, self).default_get(cr, uid, fields, context=context)
+        res = super(supplier_catalogue, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if 'partner_id' in context:
             res['is_esc'] = self._is_esc_from_partner_id(cr, uid,
                                                          context['partner_id'],
@@ -1398,7 +1398,7 @@ class from_supplier_choose_catalogue(osv.osv_memory):
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Fill partner_id from context
         '''
@@ -1414,7 +1414,7 @@ class from_supplier_choose_catalogue(osv.osv_memory):
                                                           limit=1, context=context, order='NO_ORDER'):
             raise osv.except_osv(_('Error'), _('No catalogue found !'))
 
-        res = super(from_supplier_choose_catalogue, self).default_get(cr, uid, fields, context=context)
+        res = super(from_supplier_choose_catalogue, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res.update({'partner_id': partner_id})
 

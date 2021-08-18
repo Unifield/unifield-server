@@ -65,7 +65,7 @@ class stock_warehouse(osv.osv):
         ),
     }
 
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         """
         Get the default locations
         """
@@ -75,7 +75,7 @@ class stock_warehouse(osv.osv):
         if context is None:
             context = {}
 
-        res = super(stock_warehouse, self).default_get(cr, uid, fields_list, context=context)
+        res = super(stock_warehouse, self).default_get(cr, uid, fields_list, context=context, from_web=from_web)
 
         res['lot_packing_id'] = data_get(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
         res['lot_dispatch_id'] = data_get(cr, uid, 'msf_outgoing', 'stock_location_dispatch')[1]
@@ -394,7 +394,7 @@ class shipment(osv.osv):
         ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
         return self.pool.get('ir.model.data').browse(cr, uid, ir_id).res_id
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         The 'Shipper' fields must be filled automatically with the
         default address of the current instance
@@ -403,7 +403,7 @@ class shipment(osv.osv):
         partner_obj = self.pool.get('res.partner')
         addr_obj = self.pool.get('res.partner.address')
 
-        res = super(shipment, self).default_get(cr, uid, fields, context=context)
+        res = super(shipment, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         instance_partner = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id
         instance_addr_id = partner_obj.address_get(cr, uid, instance_partner.id)['default']

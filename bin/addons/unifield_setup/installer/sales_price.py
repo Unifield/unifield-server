@@ -60,13 +60,13 @@ class sale_price_setup(osv.osv_memory):
 
         return res
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for sale price
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
 
-        res = super(sale_price_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(sale_price_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res['sale_price'] = setup_id.sale_price
 

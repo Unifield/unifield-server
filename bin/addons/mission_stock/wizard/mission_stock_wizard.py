@@ -119,11 +119,11 @@ class mission_stock_wizard(osv.osv_memory):
         'full_view': False,
     }
 
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         '''
         Choose the first local report as default
         '''
-        res = super(mission_stock_wizard, self).default_get(cr, uid, fields_list, context=context)
+        res = super(mission_stock_wizard, self).default_get(cr, uid, fields_list, context=context, from_web=from_web)
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if not instance_id:
