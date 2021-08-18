@@ -444,8 +444,9 @@ class account_commitment(osv.osv):
             for cl in c.line_ids:
                 # Verify that analytic distribution is present
                 if cl.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".') %
-                                         (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name))
+                    raise osv.except_osv(_('Error'), _('Commitment Voucher %s: the Analytic Distribution is not valid '
+                                                       'for the account "%s %s".') %
+                                         (c.name, cl.account_id.code, cl.account_id.name))
                 # Take analytic distribution either from line or from commitment voucher
                 distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or c.analytic_distribution_id and c.analytic_distribution_id.id or False
                 if not distrib_id:
