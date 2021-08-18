@@ -210,7 +210,9 @@ class account_bank_statement(osv.osv):
             if not self._equal_balance(cr, uid, register_id, context):
                 raise osv.except_osv(_('Error !'), _('CashBox Balance is not matching with Calculated Balance !'))
         st = self.browse(cr, uid, register_id, context=context)
-        if abs((st.balance_end or 0.0) - st.balance_end_real) > 10**-3:
+        balance_end_real = round(st.balance_end_real or 0.0, 2)
+        balance_end = round(st.balance_end or 0.0, 2)
+        if abs(balance_end_real - balance_end) > 10**-3:
             raise osv.except_osv(_('Error !'),
                                  _('The statement balance is incorrect !\n') +
                                  _('The expected balance (%.2f) is different than the computed one. (%.2f)') % (st.balance_end_real, st.balance_end))
