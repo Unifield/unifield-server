@@ -65723,6 +65723,12 @@ msgstr "Budget - Lignes"
 msgid "%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez supprimer/corriger les %s contenant %s (voir les %s en rouge)"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:395
+#, python-format
+msgid "%s has been inactivated. Please correct the line containing the inactive product."
+msgstr "%s a été désactivé. Veuillez corriger la ligne contenant le produit inactif."
+
 #. module: stock_override
 #: code:addons/stock_override/stock.py:1181
 #, python-format
