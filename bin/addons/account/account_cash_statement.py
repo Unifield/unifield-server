@@ -242,7 +242,9 @@ class account_cash_statement(osv.osv):
         context.update({'from_cash_statement_equal_balance': True})
         self.write(cr, uid, [cash_id], {'balance_end_real': statement.balance_end}, context=context)
         statement.balance_end_real = statement.balance_end
-        if abs(statement.balance_end - statement.balance_end_cash) > 10**-4:
+        balance_end = round(statement.balance_end or 0.0, 2)
+        balance_end_cash = round(statement.balance_end_cash or 0.0, 2)
+        if abs(balance_end - balance_end_cash) > 10**-3:
             return False
         return True
 
