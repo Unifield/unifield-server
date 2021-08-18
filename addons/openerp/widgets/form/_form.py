@@ -1151,7 +1151,7 @@ class Form(TinyInputWidget):
     def get_defaults(self, fields, domain=[], context={}):
         if len(fields):
             proxy = rpc.RPCProxy(self.model)
-            default_values = proxy.default_get(fields.keys(), context)
+            default_values = proxy.default_get(fields.keys(), context, True)
             for d in domain:
                 if d[0] in fields and not fields.get(d[0], {}).get('readonly',False):
                     if d[1] == '=':
