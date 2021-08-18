@@ -698,8 +698,8 @@
             <field name="method">us_8944_cold_chain_migration</field>
         </record>
 
-        <record id="us_9003_partner_im_currencies" model="patch.scripts">
-            <field name="method">us_9003_partner_im_currencies</field>
+        <record id="us_9003_partner_im_is_currencies" model="patch.scripts">
+            <field name="method">us_9003_partner_im_is_currencies</field>
         </record>
     </data>
 </openerp>
