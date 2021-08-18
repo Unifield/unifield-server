@@ -54,6 +54,44 @@ class patch_scripts(osv.osv):
     }
 
     # UF22.0
+    def us_8944_cold_chain_migration(self, cr, uid, *a, **b):
+        # trigger sync updates
+        cr.execute('''
+            update
+                ir_model_data set last_modification=NOW(), touched='[''cold_chain'']'
+            where
+                model='product.product' and
+                module='sd' and
+                res_id in (
+                    select p.id from
+                        product_product p , product_cold_chain cold, product_international_status int, product_heat_sensitive heat
+                    where
+                        heat.id = p.heat_sensitive_item and
+                        int.id=p.international_status and
+                        cold.id=p.cold_chain and
+                        int.name in ('Local', 'Temporary') and
+                        cold.mapped_to is not null
+                )
+        ''')
+        self.log_info(cr, uid, 'US-8944 thermo: %d products touched' % cr.rowcount)
+
+        cr.execute('''
+            update
+                product_product p
+            set
+                cold_chain = cold.mapped_to
+            from
+                product_cold_chain cold, product_international_status int, product_heat_sensitive heat
+            where
+                heat.id = p.heat_sensitive_item and
+                int.id=p.international_status and
+                cold.id=p.cold_chain and
+                int.name in ('Local', 'Temporary') and
+                cold.mapped_to is not null
+        ''')
+        self.log_info(cr, uid, 'US-8944 thermo: %d products updated' % cr.rowcount)
+        return True
+
     def us_8805_product_set_archived(self, cr, uid, *a, **b):
         if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
             instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id

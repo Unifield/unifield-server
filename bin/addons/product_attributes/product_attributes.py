@@ -182,6 +182,7 @@ class product_cold_chain(osv.osv):
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True, translate=1),
         'cold_chain': fields.boolean('Cold Chain'),
+        'mapped_to': fields.many2one('product.cold_chain', string='Mapped to', readonly=1),
     }
 
     _defaults = {

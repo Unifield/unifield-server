@@ -689,5 +689,10 @@
         <record id="us_7449_set_cv_version" model="patch.scripts">
             <field name="method">us_7449_set_cv_version</field>
         </record>
+
+        <record id="us_8944_cold_chain_migration" model="patch.scripts">
+            <field name="method">us_8944_cold_chain_migration</field>
+        </record>
+
     </data>
 </openerp>
