@@ -59,6 +59,10 @@ class patch_scripts(osv.osv):
         return True
 
     def us_8944_cold_chain_migration(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+
         # trigger sync updates
         cr.execute('''
             update
