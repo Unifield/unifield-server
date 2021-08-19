@@ -54,6 +54,10 @@ class patch_scripts(osv.osv):
     }
 
     # UF22.0
+    def us_9003_partner_im_is_currencies(self, cr, uid, *a, **b):
+        self.us_5559_set_pricelist(cr, uid, *a, **b)
+        return True
+
     def us_8944_cold_chain_migration(self, cr, uid, *a, **b):
         # trigger sync updates
         cr.execute('''
