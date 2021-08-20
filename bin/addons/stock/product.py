@@ -244,7 +244,7 @@ class product_product(osv.osv):
         date_values = False
         where = [tuple(location_ids), tuple(location_ids), tuple(ids), tuple(states)]
 
-        pol_query_date = 'coalesce(pol.confirmed_delivery_date, pol.date_planned)'
+        pol_query_date = 'coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)'
         date_pol_str = ''
         date_pol_cond = {}
         if from_strict_date and to_date:
