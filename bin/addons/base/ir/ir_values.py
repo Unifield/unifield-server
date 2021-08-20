@@ -221,6 +221,9 @@ class ir_values(osv.osv):
                     where.append("coalesce(meta,'')!='web'")
                 if context.get('sync_update_execution') or context.get('sync_message_execution'):
                     where.append('user_id IS NULL order by sequence,id')
+                else:
+                    where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
+                    params.append(uid)
             else:
                 where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
                 params.append(uid)
