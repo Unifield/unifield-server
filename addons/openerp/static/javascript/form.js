@@ -1353,7 +1353,12 @@ function set_to_default(field_id, model){
         jQuery('[id="' + field_id + '"]')
                 .val(obj.value);
         // jQuery().change doesn't trigger Mochikit's handler?
-        signal(field_id, "onchange");
+        f = $('#'+field_id)
+        if (f && f.attr('kind') == 'many2one') {
+            ManyToOne(field_id).on_change();
+        } else {
+            signal(field_id, "onchange");
+        }
     });
 }
 

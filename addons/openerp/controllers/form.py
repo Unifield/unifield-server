@@ -1396,7 +1396,7 @@ class Form(SecuredController):
 
         field = field.split('/')[-1]
 
-        res = rpc.RPCProxy(model).default_get([field])
+        res = rpc.RPCProxy(model).default_get([field], {}, True)
         value = res.get(field)
 
         return dict(value=value)
