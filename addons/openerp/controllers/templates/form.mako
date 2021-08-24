@@ -75,7 +75,7 @@
                         <br style="clear: both"/>
                     </div>
                 % endif
-                % if form.screen.view_type == 'form' and form.logs.logs:
+                % if form.screen.view_type == 'form' and form.logs and form.logs.logs:
                     ${form.logs.display()}
                 % endif
                 <div id="body_form">
@@ -107,7 +107,7 @@
                             <small>Help</small>
                         </a>
                     % endif
-                    % if form.screen.view_type == 'form' and form.logs.logs:
+                    % if form.screen.view_type == 'form' and form.logs and form.logs.logs:
                       <a id="show_server_logs" class="logs" href="javascript: void(0)"
                           title="${_('Show Logs...')}">
                           <small>Logs</small>
