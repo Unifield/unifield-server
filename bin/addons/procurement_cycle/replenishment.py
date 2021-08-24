@@ -898,7 +898,7 @@ class replenishment_segment(osv.osv):
 
 
     _columns = {
-        'parent_id': fields.many2one('replenishment.parent.segment', 'Parent', required=1, ondelete='cascade', select=1, domain="[('hidden', '=', False), ('state_parent', 'in', ['complete', 'draft'])]"),
+        'parent_id': fields.many2one('replenishment.parent.segment', 'Parent', required=1, ondelete='cascade', select=1, domain="[('hidden', '=', False), ('state_parent', 'in', ['complete', 'draft']), ('is_current_instance', '=', True)]"),
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
         'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
 
@@ -1712,6 +1712,7 @@ class replenishment_segment(osv.osv):
             updated = 0
             ignored = 0
             for row in file_data.getRows():
+                cr.execute("SAVEPOINT seg_line")
                 idx += 1
                 if idx < 8:
                     # header
@@ -1863,12 +1864,19 @@ class replenishment_segment(osv.osv):
                     error += line_error
                     ignored += 1
                     continue
-                if 'product_id' in data_towrite:
-                    seg_line_obj.create(cr, uid, data_towrite, context=context)
-                    created += 1
-                else:
-                    seg_line_obj.write(cr, uid, line_id, data_towrite, context=context)
-                    updated += 1
+                try:
+                    if 'product_id' in data_towrite:
+                        seg_line_obj.create(cr, uid, data_towrite, context=context)
+                        created += 1
+                    else:
+                        seg_line_obj.write(cr, uid, line_id, data_towrite, context=context)
+                        updated += 1
+                except osv.except_osv as e:
+                    error.append(_('Line %d: %s' % (idx+1, misc.ustr(e.value))))
+                    ignored += 1
+                    cr.execute("ROLLBACK TO SAVEPOINT seg_line")
+                    continue
+                cr.execute("RELEASE SAVEPOINT seg_line")
 
         except Exception, e:
             cr.rollback()
@@ -2378,6 +2386,7 @@ class replenishment_segment_line(osv.osv):
 
     def _valid_fmc(self, cr, uid, ids, context=None):
         error = []
+        has_error = False
         line_ids = self.search(cr, uid, [('id', 'in', ids), ('segment_id.rule', '=', 'cycle')], context=context)
         if not line_ids:
             return True
@@ -2392,7 +2401,11 @@ class replenishment_segment_line(osv.osv):
                 if rr_from:
                     rr_from = datetime.strptime(rr_from, '%Y-%m-%d')
                     if rr_from.day != 1:
-                        error.append(_('%s, FMC FROM %d must start the 1st day of the month') % (line.product_id.default_code, x))
+                        if x == 1:
+                            error.append(_('%s, FMC FROM %d must start the 1st day of the month') % (line.product_id.default_code, x))
+                        else:
+                            # do not display error for computed value
+                            has_error = True
                     if not rr_to:
                         if not rr_fmc:
                             continue
@@ -2410,7 +2423,7 @@ class replenishment_segment_line(osv.osv):
                             if prev_to > rr_from:
                                 error.append(_("%s, FMC FROM %d must be later than FMC TO %d") % (line.product_id.default_code, x, x-1))
                     prev_to = rr_to
-            if error:
+            if error or has_error:
                 raise osv.except_osv(_('Error'), _('Please correct the following FMC values:\n%s') % ("\n".join(error)))
 
             fmc_version = hashlib.md5(''.join(md5_data)).hexdigest()
