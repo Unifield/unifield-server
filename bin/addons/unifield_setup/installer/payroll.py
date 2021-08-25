@@ -33,12 +33,12 @@ class payroll_setup(osv.osv_memory):
         'payroll_ok': fields.boolean(string='Does the system manage Payrolls import from Homere ?'),
     }
     
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for payroll
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(payroll_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(payroll_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         
         res['payroll_ok'] = setup_id.payroll_ok
         

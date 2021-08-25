@@ -37,8 +37,8 @@ class account_move_line_reconcile(osv.osv_memory):
         'writeoff': fields.float('Write-Off amount', readonly=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(account_move_line_reconcile, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(account_move_line_reconcile, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         data = self.trans_rec_get(cr, uid, context['active_ids'], context)
         if 'trans_nbr' in fields:
             res.update({'trans_nbr':data['trans_nbr']})

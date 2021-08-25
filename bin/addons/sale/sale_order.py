@@ -2960,7 +2960,7 @@ class sale_order_line(osv.osv):
 
         return res
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Default procurement method is 'on order' if no product selected
         """
@@ -2988,7 +2988,7 @@ class sale_order_line(osv.osv):
             if data:
                 self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
-        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
         sale_id = context.get('sale_id', [])
         if not sale_id:

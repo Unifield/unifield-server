@@ -349,14 +349,14 @@ class wizard_cash_return(osv.osv_memory):
         'advance_linked_po_auto_invoice': False,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Give the initial amount to the wizard. If no amount is given to the wizard, raise an error.
         It also keep the bank statement line origin (the advance line) for many treatments.
         """
         if context is None:
             context = {}
-        res = super(wizard_cash_return, self).default_get(cr, uid, fields, context=context)
+        res = super(wizard_cash_return, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if 'statement_line_id' in context:
             amount = self.pool.get('account.bank.statement.line').read(cr, uid, context.get('statement_line_id'), \
                                                                        ['amount'], context=context).get('amount', False)

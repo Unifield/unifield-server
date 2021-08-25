@@ -159,6 +159,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
         'with_pack': fields.boolean('With Pack Info'),
         'pack_found': fields.boolean('Pack Found'),
+        'physical_reception_date': fields.datetime('Physical Reception Date'),
 
     }
 
@@ -167,6 +168,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'filetype': 'excel',
         'with_pack': False,
         'pack_found': False,
+        'physical_reception_date': False,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1178,7 +1180,10 @@ Nothing has been imported because of %s. See below:
         context['active_id'] = simu_id.picking_id.id
         context['active_ids'] = [simu_id.picking_id.id]
         fields_as_ro = simu_id.picking_id.partner_id.partner_type == 'esc' and simu_id.picking_id.state == 'updated'
-        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}, context=context)
+        to_write = {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}
+        if simu_id.physical_reception_date:
+            to_write['physical_reception_date'] = simu_id.physical_reception_date
+        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, to_write, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
         mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, fields_as_ro=fields_as_ro, context=context)

@@ -182,6 +182,7 @@ class product_cold_chain(osv.osv):
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True, translate=1),
         'cold_chain': fields.boolean('Cold Chain'),
+        'mapped_to': fields.many2one('product.cold_chain', string='Mapped to', readonly=1),
     }
 
     _defaults = {
@@ -1075,8 +1076,8 @@ class product_attributes(osv.osv):
         """
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(product_attributes, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if 'heat_sensitive_item' in fields or not fields:
             res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
 

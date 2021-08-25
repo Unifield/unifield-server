@@ -756,12 +756,12 @@ class stock_move(osv.osv):
         'in_forced': False,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """ To get default values for the object:
         If cross docking is checked on the purchase order, we set "cross docking" to the destination location
         else we keep the default values i.e. "Input"
         """
-        default_data = super(stock_move, self).default_get(cr, uid, fields, context=context)
+        default_data = super(stock_move, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         default_data.update({'allocation_setup': setup.allocation_setup})
         if context is None:

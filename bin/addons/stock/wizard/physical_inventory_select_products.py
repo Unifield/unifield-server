@@ -383,7 +383,7 @@ class physical_inventory_select_products(osv.osv_memory):
 
         assert isinstance(wizard_id, int)
 
-        wiz_data = read_many(self._name, wizard_id, ["inventory_id", "products_preview", "first_filter", "recent_moves_months"])
+        wiz_data = read_many(self._name, wizard_id, ["inventory_id", "products_preview", "first_filter", "recent_moves_months", "recent_moves_months_fullinvo", "full_inventory"])
         inventory_id = wiz_data["inventory_id"]
         product_ids = wiz_data["products_preview"]
 
@@ -396,10 +396,14 @@ class physical_inventory_select_products(osv.osv_memory):
         vals = {'product_ids': [(6, 0, product_ids)]}
 
         # Check if 'recent_movements' has been used
-        if wiz_data['products_preview'] and wiz_data['first_filter'] == 'recent_movements':
-            if wiz_data['recent_moves_months'] > inventory_data['max_filter_months']:
-                vals['max_filter_months'] = wiz_data['recent_moves_months']
-            if not inventory_data['multiple_filter_months'] and inventory_data['max_filter_months'] and wiz_data['recent_moves_months'] != inventory_data['max_filter_months']:
+        if wiz_data['products_preview'] and (wiz_data['first_filter'] == 'recent_movements' or wiz_data['full_inventory'] and wiz_data['recent_moves_months_fullinvo']):
+            if wiz_data['full_inventory']:
+                nb_months = int(wiz_data['recent_moves_months_fullinvo'])
+            else:
+                nb_months = wiz_data['recent_moves_months']
+            if nb_months > inventory_data['max_filter_months']:
+                vals['max_filter_months'] = nb_months
+            if not inventory_data['multiple_filter_months'] and inventory_data['max_filter_months'] != -1  and nb_months != inventory_data['max_filter_months']:
                 vals['multiple_filter_months'] = True
 
         write('physical.inventory', inventory_id, vals)

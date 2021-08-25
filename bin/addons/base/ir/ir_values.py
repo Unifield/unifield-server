@@ -128,7 +128,7 @@ class ir_values(osv.osv):
             value = value.encode('utf8')
         if not isobject:
             value = pickle.dumps(value)
-        if meta:
+        if key != 'default' and meta:
             meta = pickle.dumps(meta)
         ids_res = []
 
@@ -216,8 +216,14 @@ class ir_values(osv.osv):
                 join = 'left join actions_view_rel r on r.action_id=ir_values.id'
                 where.append('(view_id is NULL or view_id=%s)')
                 params.append(view_id)
-            if key == 'default' and (context.get('sync_update_execution') or context.get('sync_message_execution')):
-                where.append('user_id IS NULL order by sequence,id')
+            if key == 'default':
+                if meta != 'web':
+                    where.append("coalesce(meta,'')!='web'")
+                if context.get('sync_update_execution') or context.get('sync_message_execution'):
+                    where.append('user_id IS NULL order by sequence,id')
+                else:
+                    where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
+                    params.append(uid)
             else:
                 where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
                 params.append(uid)
@@ -262,7 +268,7 @@ class ir_values(osv.osv):
                     return False
             else:
                 datas = pickle.loads(x[2].encode('utf-8'))
-            if meta:
+            if meta and meta != 'web':
                 return (x[0], x[1], datas, pickle.loads(x[4]))
             return (x[0], x[1], datas)
         keys = []

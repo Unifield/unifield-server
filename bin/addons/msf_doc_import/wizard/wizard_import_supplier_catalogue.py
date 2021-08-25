@@ -33,6 +33,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT as columns_for_supplier_catalogue_import
+from tools.misc import ustr
 
 help_message = _("""
 You can use the template of the export for the format that you need to use.
@@ -176,6 +177,15 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                 to_correct_ok = False
                 row_len = len(row)
                 if row_len != 9:
+                    all_empty = True
+                    for x in range(0, row_len):
+                        if row.cells[x].data:
+                            all_empty = False
+                            break
+
+                    if all_empty:
+                        continue
+
                     error_list_line.append(_("You should have exactly 9 columns in this order: Product code*, Product description, Supplier Code, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment."))
                 comment = []
                 p_comment = False
@@ -279,7 +289,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
 
                     #Product Comment
                     if len(row.cells)>=9 and row.cells[8].data:
-                        comment.append(str(row.cells[8].data))
+                        comment.append(ustr(row.cells[8].data))
                     if comment:
                         p_comment = ', '.join(comment)
 
@@ -411,7 +421,7 @@ Importation completed in %s!
 # of ignored lines: %s
 %s
 ''') % (total_time, complete_lines, line_num-1, ignore_lines, error_log)
-        wizard_vals = {'message': final_message, 'state': 'done'}
+        wizard_vals = {'message': final_message, 'state': 'done', 'percent_completed': 100}
         if line_with_error:
             file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=context.get('header_index'))
             wizard_vals.update(file_to_export)

@@ -155,7 +155,7 @@ class PhysicalInventory(osv.osv):
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c),
         'has_bad_stock': False,
         'discrepancies_generated': False,
-        'max_filter_months': 0,
+        'max_filter_months': -1,
         'multiple_filter_months': False,
     }
 
@@ -272,13 +272,13 @@ class PhysicalInventory(osv.osv):
         filter_months_data = self.read(cr, uid, inventory_id, ['max_filter_months', 'multiple_filter_months'], context=context)
         wiz_vals = {
             'inventory_id': inventory_id,
-            'only_with_stock_level': filter_months_data['max_filter_months'] == 0,
-            'only_with_pos_move': filter_months_data['max_filter_months'] != 0,
+            'only_with_stock_level': filter_months_data['max_filter_months'] == -1,
+            'only_with_pos_move': filter_months_data['max_filter_months'] != -1,
         }
 
         # Check if the 4th bool needs to be checked: if the 2 first are checked (default) and the recent filter has been used
         # If 'Moved in the last' has not been used ('first_filter_months' is 0), set 'only_with_stock_level' to True by default
-        if filter_months_data['max_filter_months']:
+        if filter_months_data['max_filter_months'] != -1:
             if filter_months_data['multiple_filter_months']:
                 wiz_vals['recent_moves_months'] = _('Multiple selections up to: %s months') % (filter_months_data['max_filter_months'], )
             else:

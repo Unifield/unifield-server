@@ -39,7 +39,7 @@ class hq_analytic_reallocation(osv.osv_memory):
         'free_2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         # BKLG-77: check transation before showing wizard
         line_ids = context and context.get('active_ids', []) or []
         if isinstance(line_ids, (int, long)):
@@ -47,7 +47,7 @@ class hq_analytic_reallocation(osv.osv_memory):
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
                                                                line_ids, self._name, context=context)
         return super(hq_analytic_reallocation, self).default_get(cr, uid, fields,
-                                                                 context=context)
+                                                                 context=context, from_web=from_web)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -120,7 +120,7 @@ class hq_reallocation(osv.osv_memory):
                                       domain="[('restricted_area', '=', 'hq_lines_correction')]"),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         # BKLG-77: check transation before showing wizard
         line_ids = context and context.get('active_ids', []) or []
         if isinstance(line_ids, (int, long)):
@@ -128,7 +128,7 @@ class hq_reallocation(osv.osv_memory):
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
                                                                line_ids, self._name, context=context)
         return super(hq_reallocation, self).default_get(cr, uid, fields,
-                                                        context=context)
+                                                        context=context, from_web=from_web)
 
     def button_validate(self, cr, uid ,ids, context=None):
         """

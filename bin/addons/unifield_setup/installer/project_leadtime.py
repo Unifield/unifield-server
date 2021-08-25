@@ -33,11 +33,11 @@ class project_leadtime_setup(osv.osv_memory):
         'shipment_leadtime': fields.integer(string='Shipment lead time', help='In days.'),
     }
     
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Load data in company
         '''
-        res = super(project_leadtime_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(project_leadtime_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         res.update({'preparation_leadtime': company.preparation_lead_time,
                     'shipment_leadtime': company.shipment_lead_time})
