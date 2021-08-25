@@ -339,6 +339,19 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 for move in self.cr.fetchall():
                     received_qty += move[0]
 
+                # Get the name of the linked INT
+                int_name = False
+                if not from_stock:
+                    self.cr.execute("""
+                        SELECT p.name FROM stock_move m 
+                        LEFT JOIN stock_picking p ON m.picking_id = p.id
+                        LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                        LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
+                        WHERE m.state = 'done' AND p.type = 'internal' AND p.subtype = 'standard' AND sl.id = %s
+                        LIMIT 1
+                    """, (line.id,))
+                    int_name = self.cr.fetchone()[0]
+
                 if first_line:
                     data = {
                         'state': line.state,
@@ -353,7 +366,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
                         'delivered_qty': received_qty,
                         'delivered_uom': received_qty and line.product_uom.name or '-',
-                        'delivery_order': '-',
+                        'delivery_order': int_name or '-',
                         'backordered_qty': line.order_id.state != 'cancel' and line.product_uom_qty - received_qty or 0.00,
                         'cdd': cdd,
                     }
