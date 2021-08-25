@@ -350,7 +350,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         WHERE m.state = 'done' AND p.type = 'internal' AND p.subtype = 'standard' AND sl.id = %s
                         LIMIT 1
                     """, (line.id,))
-                    int_name = self.cr.fetchone()[0]
+                    int_info = self.cr.fetchone()
+                    if int_info:
+                        int_name = int_info[0]
 
                 if first_line:
                     data = {
