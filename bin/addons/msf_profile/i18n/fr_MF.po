@@ -22719,11 +22719,6 @@ msgstr "Installation de la Langue"
 msgid "sync.sale.order.line.split"
 msgstr "sync.sale.order.line.split"
 
-#. module: analytic_distribution
-#: view:account.commitment:0
-msgid "Commitment Voucher not in Done state"
-msgstr "Commitment Voucher not in Done state"
-
 #. module: account
 #: help:account.fiscalyear.close.state,fy_id:0
 msgid "Select a fiscal year to close"
@@ -55406,11 +55401,6 @@ msgstr "Emplois"
 #: model:ir.module.module,shortdesc:decimal_precision.module_meta_information
 msgid "Decimal Precision Configuration"
 msgstr "Decimal Precision Configuration"
-
-#. module: analytic_distribution
-#: view:account.commitment:0
-msgid "Except Done"
-msgstr "Exclure Terminé "
 
 #. module: object_query
 #: view:object.query:0

@@ -732,8 +732,8 @@ class account_period(osv.osv):
         period_domain = [('date_stop', '<=', period['date_stop'])]
         period_ids = self.pool.get('account.period').search(cr, uid, period_domain,
                                                             context=context)
-        # Update context to set "Except Done" button by default
-        context.update({'search_default_exceptdone': 1, 'search_default_draft': 0, 'search_default_open': 0, 'search_default_done': 0})
+        # Update context to set "Draft" and "Validated" buttons by default
+        context.update({'search_default_draft': 1, 'search_default_validated': 1, 'search_default_done': 0})
         return {
             'name': _('Commitments'),
             'type': 'ir.actions.act_window',
