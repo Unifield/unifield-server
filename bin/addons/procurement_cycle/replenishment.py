@@ -906,7 +906,7 @@ class replenishment_segment(osv.osv):
         'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char'),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
         'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'State', readonly=1),
-        'fake_state': fields.related('state', string='State internal', readonly=1, write_relate=False),
+        'fake_state': fields.related('state', string='State internal', readonly=1, write_relate=False, type='char'),
         'safety_stock': fields.float_null('Safety Stock', computation=-1),
         'safety_stock_month': fields.function(_get_ss_month, type='float', method=True, string='Safety Stock in months'),
         'line_ids': fields.one2many('replenishment.segment.line', 'segment_id', 'Products', context={'default_code_only': 1}),
