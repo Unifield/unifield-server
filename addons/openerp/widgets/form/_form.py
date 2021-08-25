@@ -803,6 +803,10 @@ class HtmlView(TinyWidget):
         super(HtmlView, self).__init__(**attrs)
         self.tag_name = attrs.get('tag_name')
 
+        # RR special case: field include in html tag
+        if attrs.get('widget') in ('order_preparation_lt', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt'):
+            self.frame = Frame(**attrs)
+
         self.args = attrs.get('args', {})
 
         if attrs.get('value'):
