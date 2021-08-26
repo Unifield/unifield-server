@@ -1934,11 +1934,19 @@ class stock_move(osv.osv):
 
         ctx = context.copy()
         for move in self.read(cr, uid, ids, ['state'], context=context):
-            if move['state'] != 'draft' and not ctx.get('call_unlink',False)\
-                    and not ctx.get('sync_update_execution')\
-                    and not force:
-                raise osv.except_osv(_('UserError'),
-                                     _('You can only delete draft moves.'))
+            if move['state'] != 'draft' and not ctx.get('call_unlink', False)\
+                    and not ctx.get('sync_update_execution') and not force:
+                self.action_cancel(cr, uid, ids, context=ctx)
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking',
+                    'view_type': 'form',
+                    'view_mode': 'form, tree',
+                    'target': 'crush',
+                    'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_form')[1]],
+                    'res_id': self.read(cr, uid, ids[0], ['picking_id'], context=ctx)['picking_id'][0],
+                    'context': ctx,
+                }
         return super(stock_move, self).unlink(cr, uid, ids, context=ctx)
 
     def allow_resequencing(self, cr, uid, ids, context=None):

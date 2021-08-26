@@ -12092,12 +12092,6 @@ msgstr "0=Très Urgent\n"
 msgid "Account Template"
 msgstr "Modèle de Compte"
 
-#. module: stock
-#: code:addons/stock/stock.py:2819
-#, python-format
-msgid "You can only delete draft moves."
-msgstr "Vous ne pouvez supprimer que les mouvements sous statut brouillon."
-
 #. module: resource
 #: code:addons/resource/wizard_template.py:160
 #, python-format
