@@ -1021,7 +1021,7 @@ class replenishment_segment(osv.osv):
             loc_ids = [x.id for x in seg.local_location_ids]
             cr.execute('''
               select prod_id, min(date) from (
-                  select pol.product_id as prod_id, min(coalesce(pol.confirmed_delivery_date, pol.date_planned)) as date
+                  select pol.product_id as prod_id, min(coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)) as date
                         from
                           purchase_order_line pol, replenishment_segment_line l
                         where
@@ -1195,15 +1195,15 @@ class replenishment_segment(osv.osv):
 
                     cr.execute('''
                     select date, sum(qty) from (
-                        select coalesce(pol.confirmed_delivery_date, pol.date_planned) as date, sum(pol.product_qty) as qty
+                        select coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned) as date, sum(pol.product_qty) as qty
                         from
                           purchase_order_line pol
                         where
                           pol.product_id=%(product_id)s and
                           pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                           location_dest_id in %(location_id)s and
-                          coalesce(pol.confirmed_delivery_date, pol.date_planned) <= %(date)s
-                        group by coalesce(pol.confirmed_delivery_date, pol.date_planned)
+                          coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned) <= %(date)s
+                        group by coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)
                         UNION
 
                         select date(m.date) as date, sum(product_qty) as product_qty from stock_move m, stock_picking p
