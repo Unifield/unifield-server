@@ -605,9 +605,9 @@ class stock_picking(osv.osv):
 
             in_name = self.browse(cr, uid, new_picking, context=context)['name']
             if po_id:
-                message = "The INcoming " + in_name + "(" + po_name + ") is now become shipped available!"
+                message = "The INcoming " + in_name + "(" + po_name + ") has now become shipped available!"
             else:
-                message = "The INcoming " + in_name + "(no PO) is now become shipped available!"
+                message = "The INcoming " + in_name + "(no PO) has now become shipped available!"
             if ignored_lines:
                 message = "\n".join([message]+ignored_lines)
                 context['partial_sync_run'] = True

@@ -136,7 +136,6 @@
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state" name="draft"/>
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Voucher in Validated state" name="validated"/>
                         <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Voucher in Done state" name="done"/>
-                        <filter icon="terp-emblem-important" string="Except Done" domain="[('state','!=','done')]" help="Commitment Voucher not in Done state" name="exceptdone"/>
                         <newline/>
                         <field name="currency_id" select="1"/>
                         <field name="date" select='1'/>
@@ -261,7 +260,7 @@
             <field name="view_id" ref="account_commitment_tree"/>
             <field name="search_view_id" ref="account_commitment_search"/>
             <!-- US-2704 if a domain is added here, do not forget to update the domain of account_board_commitment_voucher in finance/board_account_view.xml -->
-            <field name="context">{'search_default_exceptdone': 1, 'target_filename_prefix': 'Commitment Vouchers'}</field>
+            <field name="context">{'search_default_draft': 1, 'search_default_validated': 1, 'target_filename_prefix': 'Commitment Vouchers'}</field>
         </record>
 
         <!-- next 2 views: duplicate AJI form/tree for commitment Lines (only used to link dedicated sidebar entries -->
