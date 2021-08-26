@@ -1042,6 +1042,7 @@
                     <field name="product_qty"/>
                     <field name="product_uom"/>
                     <field name="date_planned" widget="date" />
+                    <field name="esti_dd" widget="date" />
                     <field name="confirmed_delivery_date" widget="date" />
                     <field name="state" />
                     <button type="object" name="open_po_form" icon="terp-gtk-go-back-rtl" string="View PO" />

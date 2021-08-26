@@ -799,7 +799,7 @@ class weekly_forecast_report(osv.osv):
             SELECT
                pol.product_id AS product_id,
                sum(pol.product_qty/u1.factor/u2.factor) AS qty,
-               coalesce(pol.confirmed_delivery_date, pol.date_planned) AS date
+               coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned) AS date
             FROM
                purchase_order_line pol
                LEFT JOIN product_product p ON p.id = pol.product_id
@@ -810,8 +810,8 @@ class weekly_forecast_report(osv.osv):
                pol.location_dest_id IN %(location_ids)s AND
                pol.product_id IN %(product_ids)s  AND
                pol.state IN ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') AND
-               coalesce(pol.confirmed_delivery_date, pol.date_planned) <= %(max_date)s
-            GROUP BY pol.product_id, coalesce(pol.confirmed_delivery_date, pol.date_planned)
+               coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned) <= %(max_date)s
+            GROUP BY pol.product_id, coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)
         UNION
             SELECT
                p.id AS product_id,
