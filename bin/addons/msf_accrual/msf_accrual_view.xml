@@ -9,7 +9,7 @@
                 <field name="arch" type="xml">
                     <form>
                         <group col="6">
-                            <field name="journal_id" domain="[('is_current_instance', '=', True)]" readonly="1"/>
+                            <field name="journal_id" readonly="1"/>
                             <field name="entry_sequence" readonly="1"/>
                             <field name="currency_id" string="Booking Currency" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="third_party_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
