@@ -7,31 +7,38 @@
                 <field name="model">msf.accrual.line</field>
                 <field name="type">form</field>
                 <field name="arch" type="xml">
-                    <form string="Accrual Line">
-                        <group colspan="2" col="4">
-                            <field name="period_id" colspan="2" on_change="onchange_period(period_id)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="date" colspan="2" readonly="1"/>
-                            <field name="document_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                            <newline/>
-                            <field name="description" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="reference" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <newline/>
+                    <form>
+                        <group col="6">
+                            <field name="journal_id" domain="[('is_current_instance', '=', True)]" readonly="1"/>
+                            <field name="entry_sequence" readonly="1"/>
+                            <field name="currency_id" string="Booking Currency" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="third_party_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="partner_id" nolabel="1" 
-                                attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('third_party_type', '=', 'res.partner')], 'invisible': [('third_party_type', '!=', 'res.partner')]}"/>
+                            <field name="partner_id" nolabel="1"
+                                   attrs="{'readonly': [('state', '!=', 'draft')],
+                                           'required': [('third_party_type', '=', 'res.partner')],
+                                           'invisible': [('third_party_type', '!=', 'res.partner')]}"/>
                             <field name="employee_id" nolabel="1" context="{'search_default_active': True}"
-                                attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('third_party_type', '=', 'hr.employee')], 'invisible': [('third_party_type', '!=', 'hr.employee')]}"/>
+                                   attrs="{'readonly': [('state', '!=', 'draft')],
+                                           'required': [('third_party_type', '=', 'hr.employee')],
+                                           'invisible': [('third_party_type', '!=', 'hr.employee')]}"/>
+                            <field name="period_id" on_change="onchange_period(period_id)"
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="document_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="date" string="Posting Date" readonly="1"/>
+                            <field name="accrual_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="accrual_account_id" domain="[('restricted_area', '=', 'accruals_accrual')]"
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="reference" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+
+                        <newline/>
+                        <group colspan="2" col="4">
+                            <field name="description" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <newline/>
                             <field name="expense_account_id" colspan="2" domain="[('restricted_area', '=', 'accruals')]" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="accrual_account_id" colspan="2" domain="[('restricted_area', '=', 'accruals_accrual')]" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <newline/>
-                            <field name="journal_id" domain="[('is_current_instance','=',True)]" colspan="2" readonly="1"/>
                             <newline/>
                             <field name="accrual_amount" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="currency_id" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <newline/>
-                            <field name="accrual_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <newline />
                             <field name="state" colspan="2" readonly="1"/>
                         </group>
                         <newline />
