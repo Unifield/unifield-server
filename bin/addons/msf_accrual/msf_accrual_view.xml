@@ -12,7 +12,7 @@
                             <field name="journal_id" readonly="1"/>
                             <field name="entry_sequence" readonly="1"/>
                             <field name="currency_id" string="Booking Currency" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <group col="6" colspan="4">
+                            <group col="8" colspan="4">
                                 <field name="third_party_type" string="Third Party Type"
                                        attrs="{'readonly': [('state', '!=', 'draft')]}"
                                        colspan="2"
@@ -30,6 +30,9 @@
                                                'invisible': [('third_party_type', '!=', 'hr.employee')]}"
                                        colspan="2"
                                 />
+                                <group colspan="2" col="1" attrs="{'invisible': [('third_party_type', 'in', ['res.partner', 'hr.employee'])]}">
+                                    <label string="" colspan="1"/>
+                                </group>
                             </group>
                             <field name="period_id" on_change="onchange_period(period_id)"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}"/>
