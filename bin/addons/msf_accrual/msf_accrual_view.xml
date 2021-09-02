@@ -12,15 +12,25 @@
                             <field name="journal_id" readonly="1"/>
                             <field name="entry_sequence" readonly="1"/>
                             <field name="currency_id" string="Booking Currency" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="third_party_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="partner_id" nolabel="1"
-                                   attrs="{'readonly': [('state', '!=', 'draft')],
-                                           'required': [('third_party_type', '=', 'res.partner')],
-                                           'invisible': [('third_party_type', '!=', 'res.partner')]}"/>
-                            <field name="employee_id" nolabel="1" context="{'search_default_active': True}"
-                                   attrs="{'readonly': [('state', '!=', 'draft')],
-                                           'required': [('third_party_type', '=', 'hr.employee')],
-                                           'invisible': [('third_party_type', '!=', 'hr.employee')]}"/>
+                            <group col="6" colspan="4">
+                                <field name="third_party_type" string="Third Party Type"
+                                       attrs="{'readonly': [('state', '!=', 'draft')]}"
+                                       colspan="2"
+                                />
+                                <field name="partner_id" string="Third Party"
+                                       attrs="{'readonly': [('state', '!=', 'draft')],
+                                               'required': [('third_party_type', '=', 'res.partner'), ('state', '=', 'draft')],
+                                               'invisible': [('third_party_type', '!=', 'res.partner')]}"
+                                       colspan="2"
+                                />
+                                <field name="employee_id" string="Third Party"
+                                       context="{'search_default_active': True}"
+                                       attrs="{'readonly': [('state', '!=', 'draft')],
+                                               'required': [('third_party_type', '=', 'hr.employee'), ('state', '=', 'draft')],
+                                               'invisible': [('third_party_type', '!=', 'hr.employee')]}"
+                                       colspan="2"
+                                />
+                            </group>
                             <field name="period_id" on_change="onchange_period(period_id)"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="document_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
