@@ -89,6 +89,19 @@ class msf_accrual_line(osv.osv):
                                                                context=context, amount=line.accrual_amount or 0.0)
         return res
 
+    def _get_accrual_journal(self, cr, uid, context=None):
+        """
+        Returns the Accrual journal of the current instance
+        """
+        if context is None:
+            context = {}
+        acc_journal_ids = self.pool.get('account.journal').search(cr, uid,
+                                                                  [('type', '=', 'accrual'), ('is_current_instance', '=', True)],
+                                                                  order='id', limit=1, context=context)
+        if not acc_journal_ids:
+            raise osv.except_osv(_('Warning !'), _("No journal of type Accrual has been found for the current instance."))
+        return acc_journal_ids[0]
+
     _columns = {
         'date': fields.date("Date"),
         'document_date': fields.date("Document Date", required=True),
@@ -132,8 +145,7 @@ class msf_accrual_line(osv.osv):
 
     _defaults = {
         'third_party_type': 'res.partner',
-        'journal_id': lambda self,cr,uid,c: self.pool.get('account.journal').search(cr, uid, [('type', '=', 'accrual'),
-                                                                                              ('is_current_instance', '=', True)])[0],
+        'journal_id': _get_accrual_journal,
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
         'accrual_type' : 'reversing_accrual',
