@@ -962,18 +962,23 @@ class finance_tools(osv.osv):
                     msg = _('Document date should be in posting date FY')
                 raise osv.except_osv(_('Error'), msg)
 
-    def check_correction_date(self, original_date, correction_date):
+    def check_correction_date(self, original_date, correction_date, raise_error=True):
         """
-        Raises an error if the correction entry isn't booked within the same Fiscal Year as the original entry
+        Checks that the correction entry is booked within the same Fiscal Year as the original entry.
+        If they are in different FY, raises an error if raise_error is set to True (by default), else returns False.
         """
+        res = True
         date_tools_obj = self.pool.get('date.tools')
         if original_date and correction_date:
             orig_date_obj = date_tools_obj.orm2date(original_date)
             corr_date_obj = date_tools_obj.orm2date(correction_date)
             if isinstance(orig_date_obj, date) and isinstance(corr_date_obj, date) and orig_date_obj.year != corr_date_obj.year:
-                raise osv.except_osv(_('Error'), _('The correction entry (posting date: %s) should be in the same fiscal year '
-                                                   'as the original entry (posting date: %s).') % (correction_date, original_date))
-        return True
+                if raise_error:
+                    raise osv.except_osv(_('Error'), _('The correction entry (posting date: %s) should be in the same fiscal year '
+                                                       'as the original entry (posting date: %s).') % (correction_date, original_date))
+                else:
+                    res = False
+        return res
 
     def truncate_amount(self, amount, digits):
         stepper = pow(10.0, digits)
