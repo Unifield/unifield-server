@@ -674,7 +674,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             if ml.corrected:
                 continue
 
-            self.pool.get('finance.tools').check_correction_date_fy(ml.date, date)
+            self.pool.get('finance.tools').check_correction_date_fy(ml.date, date, context=context)
 
             # UTP-1187 check corrected line has an AD if need one
             # + BKLG-19/3: search only for fp ones as 'free' are not synced to

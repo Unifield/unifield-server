@@ -962,10 +962,12 @@ class finance_tools(osv.osv):
                     msg = _('Document date should be in posting date FY')
                 raise osv.except_osv(_('Error'), msg)
 
-    def check_correction_date_fy(self, original_date, correction_date, raise_error=True):
+    def check_correction_date_fy(self, original_date, correction_date, raise_error=True, context=None):
         """
         Checks that the correction entry is booked within the same Fiscal Year as the original entry.
         If they are in different FY, raises an error if raise_error is set to True (by default), else returns False.
+
+        NOTE: the CONTEXT in parameter is not directly used in this method but enables the message translation.
         """
         res = True
         date_tools_obj = self.pool.get('date.tools')
