@@ -2140,7 +2140,7 @@ class ir_values(osv.osv):
     def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         """
         Hides the reports:
-        - "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        - "Invoice Excel Export" in the menu of other invoices than IVO/IVI/STV
         - "FO Follow-up Finance" in the menu of other invoices than IVO/STV
         - "STV/IVO lines follow-up" in the menu of other invoices than IVO/STV (+ renames it depending on the inv. type)
         """
@@ -2162,7 +2162,8 @@ class ir_values(osv.osv):
                     elif context_stv:
                         v[2]['name'] = _('STV lines follow-up')
                 # display
-                if not context.get('is_intermission') and len(v) > 2 and v[2].get('report_name', '') == 'invoice.excel.export':
+                if not context.get('is_intermission') and not context_stv and len(v) > 2 and \
+                        v[2].get('report_name', '') == 'invoice.excel.export':
                     continue
                 elif not context_ivo and not context_stv and len(v) > 1 and v[1] in ('fo_follow_up_finance', 'invoice_lines_follow_up'):
                     continue
