@@ -77,10 +77,11 @@ class invoice_excel_export(report_sxw.rml_parse):
             return self.invoices[inv.id]['shipment']
         ship_or_out_ref = ''
         if inv.from_supply:
-            if inv.type == 'out_invoice' and not inv.is_debit_note:  # IVO/STV
+            inv_type = self.pool.get('account.invoice').get_account_invoice_type(self.cr, self.uid, inv.id)
+            if inv_type in ('ivo', 'stv'):
                 if inv.name:
                     ship_or_out_ref = inv.name.split()[-1]
-            elif inv.is_intermission and inv.type == 'in_invoice':  # IVI
+            elif inv_type == 'ivi':
                 if inv.picking_id:
                     ship_or_out_ref = inv.picking_id.shipment_ref or ''
         self.invoices.setdefault(inv.id, {}).update({'shipment': ship_or_out_ref})
@@ -96,12 +97,13 @@ class invoice_excel_export(report_sxw.rml_parse):
             return self.invoices[inv.id]['fo']
         fo_number = ''
         if inv.from_supply:
-            if inv.type == 'out_invoice' and not inv.is_debit_note:  # IVO/STV
+            inv_type = self.pool.get('account.invoice').get_account_invoice_type(self.cr, self.uid, inv.id)
+            if inv_type in ('ivo', 'stv'):
                 if inv.origin:
                     inv_source_doc_split = inv.origin.split(':')
                     if inv_source_doc_split:
                         fo_number = inv_source_doc_split[-1]
-            elif inv.is_intermission and inv.type == 'in_invoice':  # IVI
+            elif inv_type == 'ivi':
                 if inv.main_purchase_id:
                     fo_number = inv.main_purchase_id.short_partner_ref or ''
         self.invoices.setdefault(inv.id, {}).update({'fo': fo_number})
