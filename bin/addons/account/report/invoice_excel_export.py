@@ -88,20 +88,20 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_fo_number(self, inv):
         """
-        Returns the FO number related to the IVO if any.
-        Displayed for both the IVO and the IVI.
+        Returns the FO number related to the IVO/STV if any.
+        Displayed for both the IVO/STV and the IVI.
         """
         if self.invoices.get(inv.id, {}).get('fo', None) is not None:
             # process only once per invoice
             return self.invoices[inv.id]['fo']
         fo_number = ''
-        if inv.from_supply and inv.is_intermission:
-            if inv.type == 'out_invoice':  # IVO
+        if inv.from_supply:
+            if inv.type == 'out_invoice' and not inv.is_debit_note:  # IVO/STV
                 if inv.origin:
                     inv_source_doc_split = inv.origin.split(':')
                     if inv_source_doc_split:
                         fo_number = inv_source_doc_split[-1]
-            elif inv.type == 'in_invoice':  # IVI
+            elif inv.is_intermission and inv.type == 'in_invoice':  # IVI
                 if inv.main_purchase_id:
                     fo_number = inv.main_purchase_id.short_partner_ref or ''
         self.invoices.setdefault(inv.id, {}).update({'fo': fo_number})
