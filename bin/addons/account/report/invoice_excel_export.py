@@ -37,8 +37,10 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_distribution_lines(self, inv_line):
         """
-        Returns distrib. line data related to the invoice line in parameter, as a list of dicts
-        Note: it gives a result even for lines without AD: the line subtotal is retrieved in any cases
+        Returns distrib. line data related to the invoice line in parameter, as a list of dicts.
+        Notes:
+            - it gives a result even for lines without AD: the line subtotal is retrieved in any cases
+            - only CC and Dest are retrieved, FP is excluded.
         """
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_lines = []
