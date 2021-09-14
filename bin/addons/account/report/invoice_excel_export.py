@@ -69,18 +69,18 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_shipment_number(self, inv):
         """
-        Returns the "shipment" or "simple OUT" number having generated the IVO if linked to a supply workflow
-        Displayed for both the IVO and the IVI.
+        Returns the "shipment" or "simple OUT" number having generated the IVO/STV if linked to a supply workflow
+        Displayed for both the IVO/STV and the IVI.
         """
         if self.invoices.get(inv.id, {}).get('shipment', None) is not None:
             # process only once per invoice
             return self.invoices[inv.id]['shipment']
         ship_or_out_ref = ''
-        if inv.from_supply and inv.is_intermission:
-            if inv.type == 'out_invoice':  # IVO
+        if inv.from_supply:
+            if inv.type == 'out_invoice' and not inv.is_debit_note:  # IVO/STV
                 if inv.name:
                     ship_or_out_ref = inv.name.split()[-1]
-            elif inv.type == 'in_invoice':  # IVI
+            elif inv.is_intermission and inv.type == 'in_invoice':  # IVI
                 if inv.picking_id:
                     ship_or_out_ref = inv.picking_id.shipment_ref or ''
         self.invoices.setdefault(inv.id, {}).update({'shipment': ship_or_out_ref})
