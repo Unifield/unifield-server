@@ -86,8 +86,9 @@ class account_commitment(osv.osv):
 
     def _display_super_done_button(self, cr, uid, ids, name, arg, context=None):
         """
-        For now the "Super" Done button, which allows to always set a CV to Done whatever its state and origin,
-        is visible only by the Admin user. It is displayed only when the standard Done button isn't usable.
+        The "Super" Done button, which allows to always set a CV to Done whatever its state and origin, is displayed:
+        - when the standard Done button isn't usable.
+        - only for some "admin" users (the restriction is made by User Rights).
         """
         if context is None:
             context = {}
@@ -96,7 +97,7 @@ class account_commitment(osv.osv):
         res = {}
         for cv in self.read(cr, uid, ids, ['state', 'type'], context=context):
             other_done_button_usable = cv['state'] == 'open' and cv['type'] not in ('external', 'intermission', 'intersection')
-            res[cv['id']] = not other_done_button_usable and uid == 1 and cv['state'] != 'done'
+            res[cv['id']] = not other_done_button_usable and cv['state'] != 'done'
         return res
 
     _columns = {
