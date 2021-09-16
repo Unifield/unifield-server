@@ -74021,12 +74021,6 @@ msgstr "Genre"
 msgid "The model this field belongs to"
 msgstr "Le modèle auquel ce champ appartient"
 
-#. module: account_override
-#: code:addons/account_override/invoice.py:904
-#, python-format
-msgid "The type of the document %s is unknown."
-msgstr "Le type du document %s est inconnu."
-
 #. module: product_attributes, msf_tools
 #: selection:product.product,standard_ok:0
 #: selection:stock.pipe.per.product.instance.prod.lines,standard_ok:0

@@ -234,6 +234,58 @@ class account_invoice(osv.osv):
             res[inv.id] = len(inv.invoice_line)
         return res
 
+    def _get_invoice_type_list(self, cr, uid, context=None):
+        """
+        Returns the list of possible types for the account.invoice document.
+        """
+        return [('dn', 'Debit Note'),
+                ('donation', 'Donation'),
+                ('ivi',' Intermission Voucher IN'),
+                ('ivo', 'Intermission Voucher OUT'),
+                ('di', 'Direct Invoice'),
+                ('si', 'Supplier Invoice'),
+                ('sr', 'Supplier Refund'),
+                ('stv', 'Stock Transfer Voucher'),
+                ('cr', 'Customer Refund'),
+                ('unknown', 'Unknown'),
+                ]
+
+    def _get_doc_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns a dict with key = id of the account.invoice, and value = doc type (see the list of types in _get_invoice_type_list).
+        If a "real_doc_type" exists: it is used. Otherwise: the doc type is deduced from the other fields.
+        """
+        res = {}
+        fields = ['real_doc_type', 'type', 'is_debit_note', 'is_inkind_donation', 'is_intermission', 'is_direct_invoice']
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=fields, context=context):
+            inv_type = 'unknown'
+            if inv.real_doc_type:
+                inv_type = inv.real_doc_type
+            elif inv.is_debit_note:
+                if inv.type == 'out_invoice':
+                    inv_type = 'dn'  # Debit Note
+            elif inv.is_inkind_donation:
+                if inv.type == 'in_invoice':
+                    inv_type = 'donation'
+            elif inv.is_intermission:
+                if inv.type == 'in_invoice':
+                    inv_type = 'ivi'  # Intermission Voucher In
+                elif inv.type == 'out_invoice':
+                    inv_type = 'ivo'  # Intermission Voucher Out
+            elif inv.type == 'in_invoice':
+                if inv.is_direct_invoice:
+                    inv_type = 'di'  # Direct Invoice
+                else:
+                    inv_type = 'si'  # Supplier Invoice
+            elif inv.type == 'in_refund':
+                inv_type = 'sr'  # Supplier Refund
+            elif inv.type == 'out_invoice':
+                inv_type = 'stv'  # Stock Transfer Voucher
+            elif inv.type == 'out_refund':
+                inv_type = 'cr'  # Customer Refund
+            res[inv.id] = inv_type
+        return res
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -271,6 +323,9 @@ class account_invoice(osv.osv):
         'refunded_invoice_id': fields.many2one('account.invoice', string='Refunded Invoice', readonly=True,
                                                help='The refunded invoice which has generated this document'),  # 2 inv types for Refund Modify
         'line_count': fields.function(_get_line_count, string='Line count', method=True, type='integer', store=False),
+        'real_doc_type': fields.selection(_get_invoice_type_list, 'Real Document Type', readonly=True),
+        'doc_type': fields.function(_get_doc_type, method=True, type='selection', selection=_get_invoice_type_list,
+                                    string='Document Type', store=False),
     }
 
     _defaults = {
@@ -1041,43 +1096,6 @@ class account_invoice(osv.osv):
         self._check_document_date(cr, uid, ids)
         return res
 
-    def get_account_invoice_type(self, cr, uid, inv_id, context=None):
-        """
-        Returns the type of the account.invoice document as a string
-        It can be: 'si', 'sr', 'di', 'ivi', 'ivo', 'stv', 'dn', 'cr', 'donation'
-        Raises an error if the type is not recognized.
-        """
-        if context is None:
-            context = {}
-        inv_type = False
-        fields = ['type', 'is_debit_note', 'is_inkind_donation', 'is_intermission', 'is_direct_invoice', 'internal_number']
-        inv = self.browse(cr, uid, inv_id, fields_to_fetch=fields, context=context)
-        if inv.is_debit_note:
-            if inv.type == 'out_invoice':
-                inv_type = 'dn'  # Debit Note
-        elif inv.is_inkind_donation:
-            if inv.type == 'in_invoice':
-                inv_type = 'donation'
-        elif inv.is_intermission:
-            if inv.type == 'in_invoice':
-                inv_type = 'ivi'  # Intermission Voucher In
-            elif inv.type == 'out_invoice':
-                inv_type = 'ivo'  # Intermission Voucher Out
-        elif inv.type == 'in_invoice':
-            if inv.is_direct_invoice:
-                inv_type = 'di'  # Direct Invoice
-            else:
-                inv_type = 'si'  # Supplier Invoice
-        elif inv.type == 'in_refund':
-            inv_type = 'sr'  # Supplier Refund
-        elif inv.type == 'out_invoice':
-            inv_type = 'stv'  # Stock Transfer Voucher'
-        elif inv.type == 'out_refund':
-            inv_type = 'cr'  # Customer Refund'
-        if not inv_type:
-            raise osv.except_osv(_('Error'), _('The type of the document %s is unknown.') % inv.internal_number or '')
-        return inv_type
-
     def _check_journal(self, cr, uid, inv_id, inv_type=None, context=None):
         """
         Raises an error if the type of the account.invoice and the journal used are not compatible
@@ -1087,7 +1105,7 @@ class account_invoice(osv.osv):
         journal = self.browse(cr, uid, inv_id, fields_to_fetch=['journal_id'], context=context).journal_id
         j_type = journal.type
         if inv_type is None:
-            inv_type = self.get_account_invoice_type(cr, uid, inv_id, context=context)
+            inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         if inv_type in ('si', 'di') and j_type != 'purchase' or inv_type == 'sr' and j_type != 'purchase_refund' or \
             inv_type in ('ivi', 'ivo') and j_type != 'intermission' or inv_type in ('stv', 'dn') and j_type != 'sale' or \
                 inv_type == 'cr' and j_type != 'sale_refund' or inv_type == 'donation' and j_type not in ('inkind', 'extra'):
@@ -1102,7 +1120,7 @@ class account_invoice(osv.osv):
         partner = self.browse(cr, uid, inv_id, fields_to_fetch=['partner_id'], context=context).partner_id
         p_type = partner.partner_type
         if inv_type is None:
-            inv_type = self.get_account_invoice_type(cr, uid, inv_id, context=context)
+            inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         # if a supplier/customer is expected for the doc: check that the partner used has the right flag
         supplier_ko = inv_type in ('si', 'di', 'sr', 'ivi', 'donation') and not partner.supplier
         customer_ko = inv_type in ('ivo', 'stv', 'dn', 'cr') and not partner.customer
@@ -1120,7 +1138,7 @@ class account_invoice(osv.osv):
         account_obj = self.pool.get('account.account')
         account = self.browse(cr, uid, inv_id, fields_to_fetch=['account_id'], context=context).account_id
         if inv_type is None:
-            inv_type = self.get_account_invoice_type(cr, uid, inv_id, context=context)
+            inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         account_domain = []
         if inv_type in ('si', 'di', 'sr'):
             account_domain.append(('restricted_area', '=', 'in_invoice'))
@@ -1152,7 +1170,7 @@ class account_invoice(osv.osv):
         inv_line_obj = self.pool.get('account.invoice.line')
         lines = inv_line_obj.search(cr, uid, [('invoice_id', '=', inv_id)], context=context, order='NO_ORDER')
         if inv_type is None:
-            inv_type = self.get_account_invoice_type(cr, uid, inv_id, context=context)
+            inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         account_domain = []
         if inv_type in ('si', 'di', 'sr', 'cr'):
             account_domain.append(('restricted_area', '=', 'invoice_lines'))
@@ -1175,7 +1193,7 @@ class account_invoice(osv.osv):
         if context is None:
             context = {}
         for inv_id in ids:
-            inv_type = self.get_account_invoice_type(cr, uid, inv_id, context=context)
+            inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
             self._check_journal(cr, uid, inv_id, inv_type=inv_type, context=context)
             self._check_partner(cr, uid, inv_id, inv_type=inv_type, context=context)
             self._check_header_account(cr, uid, inv_id, inv_type=inv_type, context=context)
