@@ -247,6 +247,9 @@ class account_invoice(osv.osv):
                 ('sr', 'Supplier Refund'),
                 ('stv', 'Stock Transfer Voucher'),
                 ('cr', 'Customer Refund'),
+                ('str', 'Stock Transfer Refund'),
+                ('isi', 'Intersection Supplier Invoice'),
+                ('isr', 'Intersection Supplier Refund'),
                 ('unknown', 'Unknown'),
                 ]
 
@@ -259,7 +262,7 @@ class account_invoice(osv.osv):
         fields = ['real_doc_type', 'type', 'is_debit_note', 'is_inkind_donation', 'is_intermission', 'is_direct_invoice']
         for inv in self.browse(cr, uid, ids, fields_to_fetch=fields, context=context):
             inv_type = 'unknown'
-            if inv.real_doc_type:
+            if inv.real_doc_type:  # str, isi, isr...
                 inv_type = inv.real_doc_type
             elif inv.is_debit_note:
                 if inv.type == 'out_invoice':
@@ -285,6 +288,69 @@ class account_invoice(osv.osv):
                 inv_type = 'cr'  # Customer Refund
             res[inv.id] = inv_type
         return res
+
+    def _search_doc_type(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain to get all invoices matching the selected doc type (see the list of types in _get_invoice_type_list).
+        """
+        if not args:
+            return []
+        if not args[0] or len(args[0]) < 3 or args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error'), _('Filter not implemented yet.'))
+        doc_type = args[0][2]
+        if doc_type in ('str', 'isi', 'isr'):
+            dom = [('real_doc_type', '=', doc_type)]
+        elif doc_type == 'dn':  # Debit Note
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', '&', '&',
+                   ('real_doc_type', '=', False), ('type', '=', 'out_invoice'),
+                   ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False)]
+        elif doc_type == 'donation':
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', '&', '&',
+                   ('real_doc_type', '=', False), ('type', '=', 'in_invoice'),
+                   ('is_debit_note', '=', False), ('is_inkind_donation', '=', True)]
+        elif doc_type == 'ivi':  # Intermission Voucher In
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', '&', '&', '&',
+                   ('real_doc_type', '=', False), ('type', '=', 'in_invoice'), ('is_debit_note', '=', False),
+                   ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]
+        elif doc_type == 'ivo':  # Intermission Voucher Out
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', '&', '&', '&',
+                   ('real_doc_type', '=', False), ('type', '=', 'out_invoice'), ('is_debit_note', '=', False),
+                   ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]
+        elif doc_type == 'di':  # Direct Invoice
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', '&', ('real_doc_type', '=', False), ('type', '=', 'in_invoice'), ('is_direct_invoice', '!=', False)]
+        elif doc_type == 'si':  # Supplier Invoice
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', '&', '&', '&', '&',
+                   ('real_doc_type', '=', False), ('type', '=', 'in_invoice'), ('is_direct_invoice', '=', False),
+                   ('is_inkind_donation', '=', False), ('is_debit_note', '=', False), ('is_intermission', '=', False)]
+        elif doc_type == 'sr':  # Supplier Refund
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', ('real_doc_type', '=', False), ('type', '=', 'in_refund')]
+        elif doc_type == 'stv':  # Stock Transfer Voucher
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', '&', '&', '&',
+                   ('real_doc_type', '=', False), ('type', '=', 'out_invoice'), ('is_debit_note', '=', False),
+                   ('is_inkind_donation', '=', False), ('is_intermission', '=', False)]
+        elif doc_type == 'cr':  # Customer Refund
+            dom = ['|',
+                   ('real_doc_type', '=', doc_type),
+                   '&', ('real_doc_type', '=', False), ('type', '=', 'out_refund')]
+        else:  # "unknown" or any undefined type
+            dom = [('id', '=', 0)]
+        return dom
 
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
@@ -325,7 +391,7 @@ class account_invoice(osv.osv):
         'line_count': fields.function(_get_line_count, string='Line count', method=True, type='integer', store=False),
         'real_doc_type': fields.selection(_get_invoice_type_list, 'Real Document Type', readonly=True),
         'doc_type': fields.function(_get_doc_type, method=True, type='selection', selection=_get_invoice_type_list,
-                                    string='Document Type', store=False),
+                                    string='Document Type', store=False, fnct_search=_search_doc_type),
     }
 
     _defaults = {
