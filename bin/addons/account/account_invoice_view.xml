@@ -578,7 +578,8 @@
             <field name="act_window_id" ref="action_invoice_tree1"/>
         </record>
 
-        <menuitem action="action_invoice_tree1" id="menu_action_invoice_tree1" parent="menu_finance_receivables"/>
+        <!-- STV -->
+        <menuitem action="action_invoice_tree1" id="menu_action_invoice_tree1" parent="menu_finance_receivables" sequence="3"/>
 
         <record id="action_invoice_tree2" model="ir.actions.act_window">
             <field name="name">Supplier Invoices</field>
@@ -617,7 +618,8 @@
             <field name="view_id" ref="invoice_form"/>
             <field name="act_window_id" ref="action_invoice_tree3"/>
         </record>
-        <menuitem action="action_invoice_tree3" id="menu_action_invoice_tree3" parent="menu_finance_receivables"/>
+        <!-- Customer Refunds Menu -->
+        <menuitem action="action_invoice_tree3" id="menu_action_invoice_tree3" parent="menu_finance_receivables" sequence="6"/>
 
         <record id="action_invoice_tree4" model="ir.actions.act_window">
             <field name="name">Supplier Refunds</field>
