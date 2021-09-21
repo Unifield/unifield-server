@@ -112785,3 +112785,9 @@ msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Termi
 #: view:account.commitment.line:0
 msgid "Do you really want to delete this line?"
 msgstr "Voulez-vous vraiment supprimer cette ligne ?"
+
+#. module: specific_rules
+#: code:addons/specific_rules/specific_rules.py:1252
+#, python-format
+msgid "Several products have been selected (ticked). This report can only be displayed for one product"
+msgstr "Plusieurs produits ont été sélectionnés (cochés). Ce rapport est uniquement utilisable avec un seul produit"
