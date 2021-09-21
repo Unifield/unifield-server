@@ -1940,7 +1940,7 @@ class product_product(osv.osv):
 
         for move in move_result:
             sign = False
-            if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id) and location_dict[move['location_id'][0]]['usage'] == 'customer':
+            if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id):
                 sign = -1
 
             elif location_dict[move['location_dest_id'][0]]['usage'] == 'customer':
