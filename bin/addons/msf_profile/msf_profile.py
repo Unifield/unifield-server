@@ -57,6 +57,7 @@ class patch_scripts(osv.osv):
     def us_9044_add_location_colors(self, cr, uid, *a, **b):
         '''
         Add the search_color to each location which needs one
+        Changes the name 'Quarantine (before scrap)' into 'Expired / Damaged / For Scrap' where it is necessary
         '''
         obj_data = self.pool.get('ir.model.data')
         # Get the locations ids
@@ -88,6 +89,10 @@ class patch_scripts(osv.osv):
 
         # Expired / Damaged / For Scrap: sandybrown
         cr.execute("""UPDATE stock_location SET name = 'Expired / Damaged / For Scrap', search_color = 'sandybrown' WHERE id = %s""", (exp,))
+
+        # Fix the remote_location_name in stock_mission_report_line_location
+        cr.execute("""UPDATE stock_mission_report_line_location SET remote_location_name = 'Expired / Damaged / For Scrap' 
+            WHERE id IN (SELECT id FROM stock_mission_report_line_location WHERE remote_location_name = 'Quarantine (before scrap)')""")
 
         return True
 
