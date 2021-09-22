@@ -53,6 +53,44 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF23.0
+    def us_9044_add_location_colors(self, cr, uid, *a, **b):
+        '''
+        Add the search_color to each location which needs one
+        '''
+        obj_data = self.pool.get('ir.model.data')
+        # Get the locations ids
+        stock = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        med = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+        log = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+        cd = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        inp = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        conf = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
+        interm = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
+        iconsu = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
+        qua = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+        exp = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+
+        # Main stocks (Stock, LOG, MED): dimgray
+        cr.execute("""UPDATE stock_location SET search_color = 'dimgray' WHERE id IN %s""", (tuple([stock, med, log]),))
+
+        # Cross docking & Input: darkorchid
+        cr.execute("""UPDATE stock_location SET search_color = 'darkorchid' WHERE id IN %s""", (tuple([cd, inp]),))
+
+        # Configurable intermediate stocks & Internal Consumption Units: royalblue
+        cr.execute("""UPDATE stock_location SET search_color = 'royalblue' WHERE id IN %s""", (tuple([conf, interm, iconsu]),))
+
+        # Configurable External Consumption Units: yellowgreen
+        cr.execute("""UPDATE stock_location SET search_color = 'yellowgreen' WHERE usage = 'customer' AND location_category = 'consumption_unit'""")
+
+        # Quarantine (analyze): darkorange
+        cr.execute("""UPDATE stock_location SET search_color = 'darkorange' WHERE id = %s""", (qua,))
+
+        # Expired / Damaged / For Scrap: sandybrown
+        cr.execute("""UPDATE stock_location SET name = 'Expired / Damaged / For Scrap', search_color = 'sandybrown' WHERE id = %s""", (exp,))
+
+        return True
+
     # UF22.0
     def us_9003_partner_im_is_currencies(self, cr, uid, *a, **b):
         self.us_5559_set_pricelist(cr, uid, *a, **b)

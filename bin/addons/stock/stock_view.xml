@@ -600,11 +600,12 @@
             <field name="type">tree</field>
             <field name="priority" eval="25"/>
             <field name="arch" type="xml">
-                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" hide_new_button="not context.get('from_advanced_menu')">
-                    <field name="complete_name"/>
+                <tree string="Stock Location" colors="dimgray:search_color=='dimgray';darkorchid:search_color=='darkorchid';lightpink:search_color=='lightpink';royalblue:search_color=='royalblue';yellowgreen:search_color=='yellowgreen';darkorange:search_color=='darkorange';sandybrown:search_color=='sandybrown'" hide_new_button="not context.get('from_advanced_menu')">
+                    <field name="name"/>
                     <field name="usage"/>
                     <field name="location_category" />
                     <field name="active" invisible="'display_active' not in context" />
+                    <field name="search_color" invisible="1" />
                 </tree>
             </field>
         </record>

@@ -701,5 +701,10 @@
         <record id="us_9003_partner_im_is_currencies" model="patch.scripts">
             <field name="method">us_9003_partner_im_is_currencies</field>
         </record>
+
+        <!-- UF23.0 -->
+        <record id="us_9044_add_location_colors" model="patch.scripts">
+            <field name="method">us_9044_add_location_colors</field>
+        </record>
     </data>
 </openerp>

@@ -6536,8 +6536,8 @@ msgstr "Daté avant :"
 
 #. module: msf_config_locations
 #: model:stock.location,name:msf_config_locations.stock_location_quarantine_view
-msgid "Quarantine"
-msgstr "Quarantaine"
+msgid "Quarantine / For Scrap"
+msgstr "Quarantaine / Pour Rebus"
 
 #. module: account
 #: model:process.transition,name:account.process_transition_analyticinvoice0
@@ -41660,8 +41660,8 @@ msgstr "Line of the wizard to return products from a PPL"
 
 #. module: stock_override
 #: model:stock.location,name:stock_override.stock_location_quarantine_scrap
-msgid "Quarantine (before scrap)"
-msgstr "Quarantaine (avant rebut)"
+msgid "Expired / Damaged / For Scrap"
+msgstr "Expiré / Endommagé / Pour Rebus"
 
 #. module: export_import_lang
 #: code:addons/export_import_lang/data_import.py:161
