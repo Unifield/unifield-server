@@ -160,6 +160,44 @@
             </tree>
         </field>
     </record>
+    
+    <record id="mission_stock_line_form_view" model="ir.ui.view">
+        <field name="name">mission.stock.product.form.view</field>
+        <field name="model">stock.mission.report.line</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Mission Stock Report" noteditable="1" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                <field name="product_id" />
+                <field name="default_code" />
+                <field name="name" />
+                <field name="product_active" />
+                <field name="uom_id" />
+                <field name="cost_price" invisible="not context.get('with_valuation')" />
+                <field name="currency_id" invisible="not context.get('with_valuation')" />
+                <field name="internal_qty" />
+                <field name="internal_val" invisible="not context.get('with_valuation')" />
+                <!-- field name="in_pipe_coor_qty" />
+                <field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" / -->
+                <field name="stock_qty" />
+                <field name="cross_qty" />
+                <!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
+                <field name="secondary_qty" />
+                <!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
+                <field name="cu_qty" />
+                <field name="quarantine_qty" />
+                <field name="input_qty" />
+                <field name="opdd_qty" />
+                <!-- <field name="cu_val" invisible="not context.get('with_valuation')" /> -->
+                <field name="product_amc" invisible="context.get('hide_amc_fmc')"/>
+                <field name="product_consumption" invisible="context.get('hide_amc_fmc')" />
+                <field name="used_in_transaction" />
+                <field name="in_pipe_qty" />
+                <field name="categ_id" invisible="1" />
+                <field name="type" invisible="1" />
+            </form>
+        </field>
+    </record>
+
 
     <record id="consolidated_mission_stock_wizard_view" model="ir.ui.view">
         <field name="name">consolidated.mission.stock.wizard.view</field>

@@ -1063,13 +1063,16 @@ class stock_mission_report(osv.osv):
                 ('composition_item', 'item_product_id'),
             ]
 
+            timer_used = time.time()
+            # record the current value in transaction_updated
+            cr.execute("update stock_mission_report_line set transaction_updated=coalesce(used_in_transaction, 'f'), used_in_transaction='f' where mission_report_id=%s", (report_id, ))
             for table, foreign_field in doc_field_error_dom:
+                # set used_in_transaction='t'
                 cr.execute('''
                     update
                         stock_mission_report_line l
                     set
-                        used_in_transaction='t',
-                        transaction_updated='t'
+                        used_in_transaction='t'
                     from
                         ''' + table + ''' ft
                     where
@@ -1078,18 +1081,20 @@ class stock_mission_report(osv.osv):
                         ft.''' + foreign_field + ''' = l.product_id
                     ''', (report_id, )) # not_a_user_entry
 
-                cr.execute('''
-                    update ir_model_data d
-                        set last_modification=NOW(), touched='[''used_in_transaction'']'
-                    from
-                        stock_mission_report_line l
-                    where
-                        l.id = d.res_id and
-                        l.transaction_updated='t' and
-                        d.model='stock.mission.report.line'
-                ''')
+            # trigger sync update
+            cr.execute('''
+                update ir_model_data d
+                    set last_modification=NOW(), touched='[''used_in_transaction'']'
+                from
+                    stock_mission_report_line l
+                where
+                    l.id = d.res_id and
+                    l.transaction_updated!=used_in_transaction and
+                    d.model='stock.mission.report.line' and
+                    l.mission_report_id = %s
+            ''', (report_id, ))
+            logging.getLogger('MSR').info("""___ computation of used in transaction in %.2f sec.""" % (time.time() - timer_used))
 
-                cr.execute("update stock_mission_report_line set transaction_updated='f' where transaction_updated='t'")
             for move in res:
                 all_move_ids.append(move[0])
                 product = product_obj.browse(cr, uid, move[1],
@@ -1545,8 +1550,8 @@ class stock_mission_report_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade", select=1),
         'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True, write_relate=False),
         'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True, write_relate=False, _fnct_migrate=xmlid_code_migration),
-        'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
-        'name': fields.related('product_id', 'name', string='Name', type='char'),
+        'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char', write_relate=False),
+        'name': fields.related('product_id', 'name', string='Name', type='char', write_relate=False),
         'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
                                    store={'product.template': (_get_template, ['type'], 10),
                                           'stock.mission.report.line': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 10)},
@@ -1571,17 +1576,17 @@ class stock_mission_report_line(osv.osv):
         ),
         'product_state': fields.char(size=128, string='Unifield state'),
         # mandatory nomenclature levels
-        'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type'),
-        'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group'),
-        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', type='many2one', relation='product.nomenclature', string='Family'),
-        'nomen_manda_3': fields.related('product_id', 'nomen_manda_3', type='many2one', relation='product.nomenclature', string='Root'),
+        'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type', write_relate=False),
+        'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group', write_relate=False),
+        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', type='many2one', relation='product.nomenclature', string='Family', write_relate=False),
+        'nomen_manda_3': fields.related('product_id', 'nomen_manda_3', type='many2one', relation='product.nomenclature', string='Root', write_relate=False),
         # optional nomenclature levels
-        'nomen_sub_0': fields.related('product_id', 'nomen_sub_0', type='many2one', relation='product.nomenclature', string='Sub Class 1'),
-        'nomen_sub_1': fields.related('product_id', 'nomen_sub_1', type='many2one', relation='product.nomenclature', string='Sub Class 2'),
-        'nomen_sub_2': fields.related('product_id', 'nomen_sub_2', type='many2one', relation='product.nomenclature', string='Sub Class 3'),
-        'nomen_sub_3': fields.related('product_id', 'nomen_sub_3', type='many2one', relation='product.nomenclature', string='Sub Class 4'),
-        'nomen_sub_4': fields.related('product_id', 'nomen_sub_4', type='many2one', relation='product.nomenclature', string='Sub Class 5'),
-        'nomen_sub_5': fields.related('product_id', 'nomen_sub_5', type='many2one', relation='product.nomenclature', string='Sub Class 6'),
+        'nomen_sub_0': fields.related('product_id', 'nomen_sub_0', type='many2one', relation='product.nomenclature', string='Sub Class 1', write_relate=False),
+        'nomen_sub_1': fields.related('product_id', 'nomen_sub_1', type='many2one', relation='product.nomenclature', string='Sub Class 2', write_relate=False),
+        'nomen_sub_2': fields.related('product_id', 'nomen_sub_2', type='many2one', relation='product.nomenclature', string='Sub Class 3', write_relate=False),
+        'nomen_sub_3': fields.related('product_id', 'nomen_sub_3', type='many2one', relation='product.nomenclature', string='Sub Class 4', write_relate=False),
+        'nomen_sub_4': fields.related('product_id', 'nomen_sub_4', type='many2one', relation='product.nomenclature', string='Sub Class 5', write_relate=False),
+        'nomen_sub_5': fields.related('product_id', 'nomen_sub_5', type='many2one', relation='product.nomenclature', string='Sub Class 6', write_relate=False),
         'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
@@ -1597,8 +1602,8 @@ class stock_mission_report_line(osv.osv):
         'product_amc': fields.float('AMC'),
         'product_consumption': fields.float('FMC'),
 
-        'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
-        'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
+        'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.', write_relate=False),
+        'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price', write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
                                  store={
                                      'product.template': (_get_template, ['type'], 10),
@@ -1627,7 +1632,7 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'updated': fields.boolean(string='Updated'),
-        'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
+        'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True, write_relate=False),
         'instance_id': fields.many2one(
             'msf.instance',
             string='HQ Instance',
