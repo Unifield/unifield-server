@@ -80,6 +80,7 @@
                <field name="default_code"/>
                <field name="name"/>
                <field name="categ_id" widget="selection" operator="child_of"/>
+               <field name="used_in_transaction" />
                <newline/>
                <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
@@ -152,6 +153,7 @@
                 <!-- <field name="cu_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="product_amc" invisible="context.get('hide_amc_fmc')"/>
                 <field name="product_consumption" invisible="context.get('hide_amc_fmc')" />
+                <field name="used_in_transaction" />
                 <field name="in_pipe_qty" />
                 <field name="categ_id" invisible="1" />
                 <field name="type" invisible="1" />

@@ -2737,6 +2737,7 @@ class product_attributes(osv.osv):
             ('composition.kit', 'composition_product_id', _('Composition Kit(s)'), []),
             ('composition.item', 'item_product_id', _('Composition Kit line(s)'), []),
         ]
+        # please update also doc_field_error_dom in bin/addons/mission_stock/mission_stock.py
 
         for obj, field, msg, dom in doc_field_error_dom:
             nb = self.pool.get(obj).search(cr, uid, [(field, '=', prod_id)]+dom, count=True, context=context)
