@@ -2756,7 +2756,7 @@ class product_attributes(osv.osv):
 
         cr.execute('''
                     select
-                        l.product_id
+                        l.product_id, array_agg(i.code)
                     from
                         stock_mission_report r, msf_instance i, stock_mission_report_line l
                     where
@@ -2765,10 +2765,10 @@ class product_attributes(osv.osv):
                         l.mission_report_id = r.id and
                         l.product_id in %s and
                         r.full_view = 'f' and
-                        ( l.internal_qty > 0 or l.in_pipe_qty > 0)
+                        ( l.internal_qty > 0 or l.in_pipe_qty > 0 or l.used_in_transaction='t')
                     group by l.product_id
                 ''' , (tuple(ids), ))
-        return [x[0] for x in cr.fetchall()]
+        return [(x[0],', '.join(x[1])) for x in cr.fetchall()]
 
 
     def merge_product(self, cr, uid, nsl_prod_id, local_id, context=None):
@@ -2783,8 +2783,9 @@ class product_attributes(osv.osv):
         if error_used:
             raise osv.except_osv(_('Warning'), _('The selected UD product %s has already been used in the past. Merge cannot be done for this product') % (new_data['default_code'], ))
 
-        if self._has_pipe(cr, uid, nsl_prod_id):
-            raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore the product cannot be merged') % (new_data['default_code'], ))
+        has_pipe = self._has_pipe(cr, uid, nsl_prod_id)
+        if has_pipe:
+            raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore the product cannot be merged. Instance(s): %s') % (has_pipe[0][1], ))
 
         local_dom = [('id', '=', local_id), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False)]
         if not context.get('sync_update_execution'):
