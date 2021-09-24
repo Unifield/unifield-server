@@ -314,6 +314,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         having = ['having round(sum(product_qty), 6) != 0']
 
         full_prod_list = []
+        date_prod_list = []  # List of products with moves within the date range of months selected
         batch_list = []
 
         cond.append('location_id in %(location_ids)s')
@@ -363,6 +364,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                             (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
                 full_prod_list.append(x[0])
+                date_prod_list.append(x[0])
                 if report.product_id and x[1]:
                     batch_list.append(x[1])
 
@@ -388,7 +390,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         product_data = {}
         # fetch data with db id: for uom, product, bn ...
         for line in self.cr.fetchall():
-            if report.display_0 and line[1] not in full_prod_list and line[0] == 0:
+            if report.display_0 and line[1] not in date_prod_list and line[0] == 0:
                 continue
             all_product_ids[line[1]] = True
             all_bn_ids[line[3]] = True
@@ -458,6 +460,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                 'uom': product_data[product_id].uom_id.name,
                 'sum_value':  cost_price * rounded_qty,
                 'with_zero': with_zero,
+                'moves_in_months': product_id in date_prod_list,
                 'lines': {},
             }
             total_value += final_result[product_code]['sum_value']
