@@ -2180,7 +2180,7 @@ class purchase_order_line(osv.osv):
                 elif pol_record['state'] in ('confirmed', 'done', 'cancel', 'cancel_r'):
                     return "Message ignored %s line number %s (id:%s), state: %s" % (pol_record.order_id.name, pol_record.line_number, pol_record.id, pol_record['state'])
                 else:
-                    raise Exception, "%s line number %s (id:%s), dates not updates due to wrong state: %s"
+                    raise Exception, "%s line number %s (id:%s), dates not updated due to wrong state: %s" % (pol_record.order_id.name, pol_record.line_number, pol_record.id, pol_record['state'])
 
             raise Exception, "PO line not found."
 
