@@ -318,7 +318,6 @@ class message_to_send(osv.osv):
             'sent' : sent,
             'generate_message' : False,
         }
-        print identifier, remote_call, allow_duplicates
         if allow_duplicates:
             ids = []
         else:
@@ -326,8 +325,6 @@ class message_to_send(osv.osv):
         if not ids:
             ids = [self.create(cr, uid, data, context=context)]
         return ids[0]
-        #else:
-        #sync_log(self, "Message %s already exist" % identifier)
 
     """
         Sending Part

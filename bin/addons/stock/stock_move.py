@@ -905,7 +905,8 @@ class stock_move(osv.osv):
                             m.type = 'in' and
                             m.date_expected != %s and
                             m.id in %s and
-                            sol.state = 'confirmed'
+                            sol.state = 'confirmed' and
+                            so.procurement_request = 'f'
                 ''', (vals['date_expected'], tuple(ids)))
                 for x in cr.fetchall():
                     self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', x[0], {},

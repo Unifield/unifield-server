@@ -176,11 +176,11 @@ class purchase_order_line(osv.osv):
             select
                 pol.id, p.name
             from
-                purchase_order_line pol, sale_order_line sol, sale_order so, res_partner p
+                purchase_order_line pol
+            left join sale_order_line sol on pol.linked_sol_id = sol.id
+            left join sale_order so on sol.order_id = so.id
+            left join res_partner p on so.partner_id = p.id
             where
-                pol.linked_sol_id = sol.id and
-                sol.order_id = so.id and
-                so.partner_id = p.id and
                 pol.id in %s
         ''', (tuple(ids),))
 
@@ -1417,8 +1417,9 @@ class purchase_order_line(osv.osv):
                 elif vals.get('origin'):
                     new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), po_obj=line.order_id, context=context))
 
-            if line.state == 'validated' and \
+            if line.state in ('validated', 'validated_n') and \
                     line.linked_sol_id and \
+                    not line.linked_sol_id.order_id.procurement_request and \
                     line.linked_sol_id.order_id.partner_type not in ('external', 'esc') and \
                     ('esti_dd' in vals and vals['esti_dd'] != line.esti_dd or 'confirmed_delivery_date' in vals and vals['confirmed_delivery_date'] != line.confirmed_delivery_date):
                 new_vals['dates_modified'] = True
@@ -2166,15 +2167,22 @@ class purchase_order_line(osv.osv):
     def update_dates_from_pol(self, cr, uid, source, data, context=None):
         line_info = data.to_dict()
         if line_info.get('linked_sol_id', {}).get('sync_local_id') and (line_info.get('esti_dd') or line_info.get('confirmed_delivery_date')):
-            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', line_info['linked_sol_id']['sync_local_id']), ('state', '=', 'sourced_v')], limit=1, context=context)
+            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', line_info['linked_sol_id']['sync_local_id'])], limit=1, context=context)
             if pol_id:
-                to_write = {}
-                for date in ['confirmed_delivery_date', 'esti_dd']:
-                    if line_info.get(date):
-                        to_write[date] = line_info[date]
-                self.write(cr, uid, pol_id, to_write, context)
-            else:
-                raise Exception, "PO line not found."
+                pol_record = self.browse(cr, uid, pol_id[0], fields_to_fetch=['line_number', 'order_id', 'state'], context=context)
+                if pol_record['state'] in ('sourced_v', 'sourced_n'):
+                    to_write = {}
+                    for date in ['confirmed_delivery_date', 'esti_dd']:
+                        if line_info.get(date):
+                            to_write[date] = line_info[date]
+                    self.write(cr, uid, pol_id, to_write, context)
+                    return "Dates updated on %s line number %s (id:%s)" % (pol_record.order_id.name, pol_record.line_number, pol_record.id)
+                elif pol_record['state'] in ('confirmed', 'done', 'cancel', 'cancel_r'):
+                    return "Message ignored %s line number %s (id:%s), state: %s" % (pol_record.order_id.name, pol_record.line_number, pol_record.id, pol_record['state'])
+                else:
+                    raise Exception, "%s line number %s (id:%s), dates not updates due to wrong state: %s"
+
+            raise Exception, "PO line not found."
 
         return True
 
