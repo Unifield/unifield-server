@@ -604,6 +604,7 @@ class shipment(osv.osv):
                 'keepLineNumber': True,
                 'allow_copy': True,
                 'non_stock_noupdate': True,
+                'wkf_copy': True,
             })
 
             new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
@@ -699,6 +700,7 @@ class shipment(osv.osv):
             'allow_copy': False,
             'non_stock_noupdate': False,
             'draft_packing_id': False,
+            'wkf_copy': False,
         })
         picking_obj.write(cr, uid, [shadow_pack_id], {'state': 'done'}, context=context)
         # confirm the new packing
@@ -2009,7 +2011,8 @@ class stock_picking(osv.osv):
 
         if context.get('from_button'):
             default.update(purchase_id=False)
-            default.update(sale_id=False)
+            if not context.get('wkf_copy', False):
+                default.update(sale_id=False)
         if not context.get('wkf_copy'):
             context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, copy_id, default=default, context=context)
@@ -3568,6 +3571,7 @@ class stock_picking(osv.osv):
             }
             context.update({
                 'keep_prodlot': True,
+                'wkf_copy': True,
                 'allow_copy': True,
                 'keepLineNumber': True,
             })
@@ -3579,6 +3583,7 @@ class stock_picking(osv.osv):
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
             context.update({
                 'keep_prodlot': False,
+                'wkf_copy': False,
                 'allow_copy': False,
                 'keepLineNumber': False,
             })
@@ -3657,11 +3662,13 @@ class stock_picking(osv.osv):
                     context.update({
                         'keepLineNumber': True,
                         'non_stock_noupdate': True,
+                        'wkf_copy': True,
                     })
                     move_obj.copy(cr, uid, line.id, values, context=context)
                     context.update({
                         'keepLineNumber': False,
                         'non_stock_noupdate': False,
+                        'wkf_copy': False,
                     })
 
             wf_service = netsvc.LocalService("workflow")
@@ -3933,6 +3940,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': True,
                 'keepLineNumber': True,
                 'allow_copy': True,
+                'wkf_copy': True,
             })
             context['offline_synchronization'] = False
             # Create the packing with pack_values and the updated context
@@ -3945,6 +3953,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': False,
                 'keepLineNumber': False,
                 'allow_copy': False,
+                'wkf_copy': False,
             })
 
             # Set default values for packing move creation
@@ -3979,12 +3988,14 @@ class stock_picking(osv.osv):
                 context.update({
                     'keepLineNumber': True,
                     'non_stock_noupdate': True,
+                    'wkf_copy': True,
                 })
                 for move_to_copy in move_to_write:
                     move_obj.copy(cr, uid, move_to_copy, pack_move_data, context=context)
                 context.update({
                     'keepLineNumber': False,
                     'non_stock_noupdate': False,
+                    'wkf_copy': False,
                 })
 
                 nb_processed += 1

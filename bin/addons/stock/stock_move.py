@@ -973,7 +973,7 @@ class stock_move(osv.osv):
             # UF-1797: when we duplicate a doc we delete the link with the poline
             if 'purchase_line_id' not in defaults and not context.get('keepPoLine', False):
                 defaults.update(purchase_line_id=False)
-            if 'sale_line_id' not in defaults:
+            if not context.get('wkf_copy', False) and 'sale_line_id' not in defaults:
                 defaults.update(sale_line_id=False)
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
