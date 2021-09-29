@@ -1889,6 +1889,36 @@ class replenishment_segment(osv.osv):
 
         return wizard_obj.message_box_noclose(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
 
+    def remove_outdated_fmcs(self, cr, uid, ids, context=None):
+        seg_line_obj = self.pool.get('replenishment.segment.line')
+
+        now = datetime.now().strftime('%Y-%m-%d')
+        outdated_line_ids = seg_line_obj.search(cr, uid, [('segment_id', 'in', ids), ('rr_fmc_to_1', '<', now)], context=context)
+        if not outdated_line_ids:
+            return True
+        new_data_tmpl = {}
+        for x in range(1, 19):
+            new_data_tmpl.update({
+                'rr_fmc_%d' % x : False,
+                'rr_fmc_from_%d' % x: False,
+                'rr_fmc_to_%d' % x: False,
+            })
+        for line in seg_line_obj.browse(cr, uid, outdated_line_ids, context=context):
+            new_data = new_data_tmpl.copy()
+            index = 1
+            for x in range(1, 19):
+                if not getattr(line, 'rr_fmc_from_%d' % x):
+                    break
+                if getattr(line, 'rr_fmc_to_%d' % x) >= now:
+                    new_data.update({
+                        'rr_fmc_%d' % index : getattr(line, 'rr_fmc_%d' % x),
+                        'rr_fmc_from_%d' % index: getattr(line, 'rr_fmc_from_%d' % x),
+                        'rr_fmc_to_%d' % index: getattr(line, 'rr_fmc_to_%d' % x),
+                    })
+                    index += 1
+            seg_line_obj.write(cr, uid, line.id, new_data, context=context)
+        return True
+
     def completed(self, cr, uid, ids, context=None):
         for x in self.read(cr, uid, ids, ['name_seg', 'date_next_order_received_modified', 'date_next_order_received', 'rule'], context=context):
             if not x['date_next_order_received_modified'] and not x['date_next_order_received']:
