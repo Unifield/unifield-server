@@ -1193,7 +1193,7 @@ class stock_move(osv.osv):
             if move.type == 'in' and move.purchase_line_id and \
                     move.picking_id.state == 'assigned' and \
                     move.picking_id.partner_id.partner_type not in ('esc', 'external') and \
-                    not move.picking_id.pick.in_dpo and \
+                    not move.picking_id.in_dpo and \
                     not move.in_forced:
                 vals['display_warning'] = True
 
