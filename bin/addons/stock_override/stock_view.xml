@@ -1116,7 +1116,7 @@
                     </group>
                     <group colspan="4" col="1" attrs="{'invisible': [('display_warning', '=', False)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px"><translate>Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status "Available Shipped" after synchronization.</translate></h4>
+                            <h2 style="text-align: center; margin: 10px"><translate>Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status "Available Shipped" after synchronization.</translate></h2>
                         </html>
                     </group>
                     <newline />

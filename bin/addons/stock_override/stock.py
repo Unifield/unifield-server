@@ -1188,8 +1188,16 @@ class stock_move(osv.osv):
                 )
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
+            vals = {'move_id': ids[0]}
+
+            if move.type == 'in' and move.purchase_line_id and \
+                    move.picking_id.state == 'assigned' and \
+                    move.picking_id.partner_id.partner_type not in ('esc', 'external') and \
+                    not move.picking_id.pick.in_dpo and \
+                    not move.in_forced:
+                vals['display_warning'] = True
+
             if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and move.purchase_line_id.linked_sol_id):
-                vals = {'move_id': ids[0]}
                 if 'from_int' in context:
                     """UFTP-29: we are in a INT stock move - line by line cancel
                     do not allow Cancel and Resource if move linked to a PO line
@@ -1204,7 +1212,6 @@ class stock_move(osv.osv):
                     vals['cancel_only'] = True
 
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
-
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'stock.move.cancel.wizard',
                         'view_type': 'form',
@@ -1213,15 +1220,10 @@ class stock_move(osv.osv):
                         'res_id': wiz_id,
                         'context': context}
             if move.type == 'in' and move.purchase_line_id:
-                vals = {'move_id': ids[0]}
-
                 if not move.purchase_line_id.linked_sol_id:
                     vals['cancel_only'] = True
                     if move.dpo_line_id:
                         vals['from_dpo'] = True
-
-                if move.state == 'assigned' and move.partner_id.partner_type not in ('esc', 'external') and not move.in_forced:
-                    vals['display_warning'] = True
 
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
