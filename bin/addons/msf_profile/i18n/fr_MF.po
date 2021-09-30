@@ -112785,3 +112785,21 @@ msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Termi
 #: view:account.commitment.line:0
 msgid "Do you really want to delete this line?"
 msgstr "Voulez-vous vraiment supprimer cette ligne ?"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1926
+#, python-format
+msgid "%d FMC(s) removed on %d line(s)"
+msgstr "%d PMC(s) supprimées sur %d ligne(s)"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1898
+#, python-format
+msgid "No outdated FMC"
+msgstr "Aucune PMC dépassée"
+
+#. module: procurement_cycle
+#: view:replenishment.segment:0
+msgid "Remove outdated FMCs"
+msgstr "Supprimer les PMCs dépassées"
+
