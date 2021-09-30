@@ -742,8 +742,12 @@ class purchase_order_line(osv.osv):
                                                ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context=context)
 
         if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            if len(inactive_lines) == 1:
+                line = self.browse(cr, uid, inactive_lines[0], fields_to_fetch=['product_id'], context=context)
+                raise osv.except_osv(_('Error'), _('%s has been inactivated. Please correct the line containing the inactive product.') % (line.product_id.default_code, ))
+
+            plural = _('Some products have')
+            l_plural = _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this line you have to remove/correct the line containing the inactive product (see red %s of the document)') % (plural, l_plural))
         return True
 

@@ -1231,7 +1231,7 @@ class orm_template(object):
         else:
             self._invalids.clear()
 
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         """
         Returns default values for the fields in fields_list.
 
@@ -1258,7 +1258,7 @@ class orm_template(object):
         # get the default values for the inherited fields
         for t in self._inherits.keys():
             defaults.update(self.pool.get(t).default_get(cr, uid, fields_list,
-                                                         context))
+                                                         context, from_web=from_web))
 
         # get the default values defined in the object
         for f in fields_list:
@@ -1287,7 +1287,10 @@ class orm_template(object):
         # get the default values set by the user and override the default
         # values defined in the object
         ir_values_obj = self.pool.get('ir.values')
-        res = ir_values_obj.get(cr, uid, 'default', False, [self._name], context=context)
+        meta = False
+        if from_web:
+            meta = 'web'
+        res = ir_values_obj.get(cr, uid, 'default', False, [self._name], meta=meta, context=context)
         for id, field, field_value in res:
             if field in fields_list:
                 fld_def = (field in self._columns) and self._columns[field] or self._inherit_fields[field][2]
@@ -2320,7 +2323,7 @@ class orm_template(object):
 
         if len(missing_defaults):
             # override defaults with the provided values, never allow the other way around
-            defaults = self.default_get(cr, uid, missing_defaults, context)
+            defaults = self.default_get(cr, uid, missing_defaults, context, from_web=False)
             for dv in defaults:
                 if ((dv in self._columns and self._columns[dv]._type == 'many2many') \
                         or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'many2many')) \

@@ -314,8 +314,8 @@ class account_move_line(osv.osv):
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
-        'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry."),
-        'document_date': fields.date('Document Date', size=255, required=True, readonly=True),
+        'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry.", select=1),
+        'document_date': fields.date('Document Date', size=255, required=True, readonly=True, select=1),
         'date': fields.related('move_id','date', string='Posting date', type='date', required=True, select=True,
                                store = {
                                    'account.move': (_get_move_lines, ['date'], 20)
@@ -376,13 +376,13 @@ class account_move_line(osv.osv):
 
     _order = 'move_id DESC'
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         UFTP-262: As we permit user to define its own reference for a journal item in a Manual Journal Entry, we display the reference from the Journal Entry as default value for Journal Item.
         """
         if context is None:
             context = {}
-        res = super(account_move_line, self).default_get(cr, uid, fields, context=context)
+        res = super(account_move_line, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if context.get('move_reference', False) and context.get('from_web_menu', False):
             if not 'reference' in res:
                 res.update({'reference': context.get('move_reference')})

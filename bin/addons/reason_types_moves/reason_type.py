@@ -262,14 +262,14 @@ class stock_picking(osv.osv):
             context = {}
         return super(stock_picking, self).create(cr, uid, vals, context)
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Set the reason type according to the picking type
         '''
         if not context:
             context = {}
 
-        res = super(stock_picking, self).default_get(cr, uid, fields, context=context)
+        res = super(stock_picking, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if 'picking_type' in context:
             if context.get('picking_type') == 'incoming_shipment':

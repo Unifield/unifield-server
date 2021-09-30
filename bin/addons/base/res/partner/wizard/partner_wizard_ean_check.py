@@ -46,7 +46,7 @@ class partner_wizard_ean_check(osv.osv_memory):
                 sum = sum + 3*int(string[i])
         return str(int(math.ceil(sum/10.0)*10-sum))
 
-    def default_get(self, cr, fields, context):
+    def default_get(self, cr, fields, context, from_web=False):
         partner_table = self.pool.get('res.partner')
         ids = context.get('active_ids')
         partners = partner_table.browse(cr, uid, ids)

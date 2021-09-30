@@ -67,7 +67,7 @@ class base_module_upgrade(osv.osv_memory):
             ('state', 'in', ['to upgrade', 'to remove', 'to install'])])
         return ids
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         This function checks for precondition before wizard executes
         @param self: The object pointer

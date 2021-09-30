@@ -90,8 +90,8 @@ class purchase_order_group(osv.osv_memory):
             'context': {'search_default_draft': 1, 'search_default_approved': 0,'search_default_create_uid':uid, 'purchase_order': True},
         }
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
             raise osv.except_osv(_('Warning'),
                                  _('Please select multiple order to merge in the list view.'))

@@ -74,7 +74,7 @@ class process_to_consume(osv.osv_memory):
         to_consume_obj.unlink(cr, uid, to_consume_ids, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         fill the lines with default values:
         - context contains to_consume_id, only the selected line
@@ -87,7 +87,7 @@ class process_to_consume(osv.osv_memory):
         kit_creation_obj = self.pool.get('kit.creation')
         to_consume_obj = self.pool.get('kit.creation.to.consume')
 
-        res = super(process_to_consume, self).default_get(cr, uid, fields, context=context)
+        res = super(process_to_consume, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         kit_creation_ids = context.get('active_ids', False)
         if not kit_creation_ids:
             return res

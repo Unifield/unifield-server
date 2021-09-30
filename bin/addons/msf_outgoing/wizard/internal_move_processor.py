@@ -88,7 +88,7 @@ class internal_picking_processor(osv.osv):
         'draft': fields.boolean('Draft'),
     }
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
         """
         Get default value for the object
         """
@@ -98,7 +98,7 @@ class internal_picking_processor(osv.osv):
         if fields_list is None:
             fields_list = []
 
-        res = super(internal_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context)
+        res = super(internal_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context, from_web=from_web)
 
         res.update({
             'register_a_claim': False,

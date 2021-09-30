@@ -28,7 +28,7 @@ class split_in_production_lot(osv.osv_memory):
     _name = "stock.move.split"
     _description = "Split in Production lots"
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """ Get default values
         @param self: The object pointer.
         @param cr: A database cursor
@@ -39,7 +39,7 @@ class split_in_production_lot(osv.osv_memory):
         """
         if context is None:
             context = {}
-        res = super(split_in_production_lot, self).default_get(cr, uid, fields, context=context)
+        res = super(split_in_production_lot, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if context.get('active_id'):
             move = self.pool.get('stock.move').browse(cr, uid, context['active_id'], context=context)
             if 'product_id' in fields:

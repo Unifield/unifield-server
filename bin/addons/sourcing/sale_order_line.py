@@ -654,7 +654,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     """
     Model methods
     """
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         """
         Set default values (location_id) for sale_order_line
 
@@ -670,7 +670,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Objects
         warehouse_obj = self.pool.get('stock.warehouse')
 
-        res = super(sale_order_line, self).default_get(cr, uid, fields_list, context=context)
+        res = super(sale_order_line, self).default_get(cr, uid, fields_list, context=context, from_web=from_web)
 
         if res is None:
             res = {}
@@ -1529,6 +1529,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         stock_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if not sourcing_line.order_id.procurement_request:
+                continue
             if sourcing_line.order_id.location_requestor_id.id in (med_loc_id, log_loc_id) and sourcing_line.location_id.id == stock_loc_id:
                 raise osv.except_osv(
                     _('Error'),

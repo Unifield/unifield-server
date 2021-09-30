@@ -37,12 +37,12 @@ class commitment_import_setup(osv.osv_memory):
         'import_commitments': lambda *a: True,
     }
     
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for commitment import
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(commitment_import_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(commitment_import_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         res['import_commitments'] = setup_id.import_commitments
         
         return res

@@ -54,12 +54,12 @@ class base_setup_company(osv.osv_memory):
         return self.pool.get('ir.model.data').get_object(cr, uid, 'base', 'module_meta_information').demo
 
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
         """ get default company if any, and the various other fields
         from the company's fields
         """
         defaults = super(base_setup_company, self)\
-            .default_get(cr, uid, fields_list=fields_list, context=context)
+            .default_get(cr, uid, fields_list=fields_list, context=context, from_web=from_web)
         companies = self.pool.get('res.company')
         company_id = companies.search(cr, uid, [], limit=1, order="id")
         if not company_id or 'company_id' not in fields_list:

@@ -44045,11 +44045,6 @@ msgstr "¡La fecha de publicación de \"%s\" está fuera del periodo de validez 
 msgid "Pacific/Wake"
 msgstr "Pacífico / Wake"
 
-#. module: analytic_distribution
-#: view:account.commitment:0
-msgid "Except Done"
-msgstr "Excepcción realizada"
-
 #. module: consumption_calculation
 #: field:monthly.review.consumption,nomen_id:0
 #: field:product.history.consumption,nomen_id:0

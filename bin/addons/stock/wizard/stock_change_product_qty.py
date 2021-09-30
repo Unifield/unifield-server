@@ -47,7 +47,7 @@ class stock_change_product_qty(osv.osv_memory):
                 result['fields']['prodlot_id']['required'] = False
         return result
 
-    def default_get(self, cr, uid, fields, context):
+    def default_get(self, cr, uid, fields, context, from_web=False):
         """ To get default values for the object.
          @param self: The object pointer.
          @param cr: A database cursor
@@ -57,7 +57,7 @@ class stock_change_product_qty(osv.osv_memory):
          @return: A dictionary which of fields with values.
         """
         product_id = context and context.get('active_id', False) or False
-        res = super(stock_change_product_qty, self).default_get(cr, uid, fields, context=context)
+        res = super(stock_change_product_qty, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if 'new_quantity' in fields:
             res.update({'new_quantity': 1})

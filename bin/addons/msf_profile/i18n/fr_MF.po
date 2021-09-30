@@ -22719,11 +22719,6 @@ msgstr "Installation de la Langue"
 msgid "sync.sale.order.line.split"
 msgstr "sync.sale.order.line.split"
 
-#. module: analytic_distribution
-#: view:account.commitment:0
-msgid "Commitment Voucher not in Done state"
-msgstr "Commitment Voucher not in Done state"
-
 #. module: account
 #: help:account.fiscalyear.close.state,fy_id:0
 msgid "Select a fiscal year to close"
@@ -55407,11 +55402,6 @@ msgstr "Emplois"
 msgid "Decimal Precision Configuration"
 msgstr "Decimal Precision Configuration"
 
-#. module: analytic_distribution
-#: view:account.commitment:0
-msgid "Except Done"
-msgstr "Exclure Terminé "
-
 #. module: object_query
 #: view:object.query:0
 msgid "Next Step"
@@ -65722,6 +65712,12 @@ msgstr "Budget - Lignes"
 #, python-format
 msgid "%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez supprimer/corriger les %s contenant %s (voir les %s en rouge)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:395
+#, python-format
+msgid "%s has been inactivated. Please correct the line containing the inactive product."
+msgstr "%s a été désactivé. Veuillez corriger la ligne contenant le produit inactif."
 
 #. module: stock_override
 #: code:addons/stock_override/stock.py:1181
@@ -78014,8 +78010,8 @@ msgstr "Check data"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/account_commitment.py:349
 #, python-format
-msgid "Analytic distribution is not valid for account \"%s %s\"."
-msgstr "Allocation Analytique non valide pour le compte \"%s %s\"."
+msgid "Commitment Voucher %s: the Analytic Distribution is not valid for the account \"%s %s\"."
+msgstr "Bon d'Engagement %s : la Distribution Analytique n'est pas valide pour le compte \"%s %s\"."
 
 #. module: base
 #: view:res.lang:0
@@ -107544,7 +107540,7 @@ msgid "Inventory Review Line Details"
 msgstr "Détails des lignes de Revue"
 
 #. module: procurement_cycle
-#: model:ir.actions.report.xml,name:procurement_cycle.report_replenishment_inventory_review_xls
+#: model:ir.actions.report.xml,name:procurement_cycle.report_replenishment_inventory_review_xls2
 msgid "Inventory Review xls"
 msgstr "Revue d'Inventaire xls"
 

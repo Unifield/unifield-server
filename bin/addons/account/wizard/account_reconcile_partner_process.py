@@ -65,8 +65,8 @@ class account_partner_reconcile_process(osv.osv_memory):
     def data_get(self, cr, uid, to_reconcile, today_reconciled, context=None):
         return {'progress': (100 / (float(to_reconcile + today_reconciled) or 1.0)) * today_reconciled}
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(account_partner_reconcile_process, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(account_partner_reconcile_process, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if 'to_reconcile' in res and 'today_reconciled' in res:
             data = self.data_get(cr, uid, res['to_reconcile'], res['today_reconciled'], context)
             res.update(data)

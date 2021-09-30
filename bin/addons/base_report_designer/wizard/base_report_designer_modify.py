@@ -61,7 +61,7 @@ class base_report_file_sxw(osv.osv_memory):
     """Base Report File sxw """
     _name = 'base.report.file.sxw'
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
              To get default values for the object.
 
@@ -74,7 +74,7 @@ class base_report_file_sxw(osv.osv_memory):
              @return: A dictionary which of fields with values.
 
         """
-        res = super(base_report_file_sxw, self).default_get(cr, uid, fields, context=context)
+        res = super(base_report_file_sxw, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         report_id1 = self.pool.get('base.report.sxw').search(cr,uid,[])
         data = self.pool.get('base.report.sxw').read(cr, uid, report_id1, context=context)[0]
         report = self.pool.get('ir.actions.report.xml').browse(cr, uid, data['report_id'], context=context)
@@ -122,7 +122,7 @@ base_report_file_sxw()
 class base_report_rml_save(osv.osv_memory):
     """Base Report file Save"""
     _name = 'base.report.rml.save'
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
              To get default values for the object.
 
@@ -135,7 +135,7 @@ class base_report_rml_save(osv.osv_memory):
 
         """
         
-        res = super(base_report_rml_save, self).default_get(cr, uid, fields, context=context)
+        res = super(base_report_rml_save, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         report_id = self.pool.get('base.report.sxw').search(cr,uid,[])
         data = self.pool.get('base.report.file.sxw').read(cr, uid, report_id, context=context)[0]
         report = self.pool.get('ir.actions.report.xml').browse(cr, uid, data['report_id'], context=context)

@@ -574,11 +574,11 @@ class account_invoice(osv.osv):
             res['arch'] = etree.tostring(doc)
         return res
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Fill in account and journal for intermission invoice
         """
-        defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
+        defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if context and context.get('is_intermission', False):
             intermission_type = context.get('intermission_type', False)
             if intermission_type in ('in', 'out'):
