@@ -29,7 +29,7 @@ from time import strptime
 import decimal_precision as dp
 from account_override.period import get_period_from_date
 from tools.misc import flatten
-
+import netsvc
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
@@ -116,6 +116,7 @@ class account_commitment(osv.osv):
         'type': fields.selection(get_cv_type, string="Type", readonly=True),
         'notes': fields.text(string="Comment"),
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
+        'sale_id': fields.many2one('sale.order', string="Source document", readonly=True),
         'description': fields.char(string="Description", size=256),
         'version': fields.integer('Version', required=True,
                                   help="Technical field to distinguish old CVs from new ones which have a different behavior."),
@@ -574,6 +575,7 @@ class account_commitment_line(osv.osv):
                                                     string="Purchase Order Lines (deprecated)", readonly=True),
         # for CV starting from version 2
         'po_line_id': fields.many2one('purchase.order.line', "PO Line"),
+        'so_line_id': fields.many2one('sale.order.line', "SO Line"),
         'po_line_product_id': fields.related('po_line_id', 'product_id', type='many2one', relation='product.product',
                                              string="Product", readonly=True, store=True, write_relate=False),
         'po_line_number': fields.related('po_line_id', 'line_number', type='integer_null', string="PO Line", readonly=True,
@@ -647,10 +649,16 @@ class account_commitment_line(osv.osv):
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot create a commitment voucher line on a 'view' account type!"))
         # Verify amount validity
-        if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-            raise osv.except_osv(_('Warning'), _('Total amount should be equal or superior to 0!'))
-        if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
-            raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
+        if vals.get('so_line_id'):
+            if 'amount' in vals and vals.get('amount', 0.0) > 0.0:
+                raise osv.except_osv(_('Warning'), _('Total amount should be negative or zero!'))
+            if 'initial_amount' in vals and vals.get('initial_amount', 0.0) >= 0.0:
+                raise osv.except_osv(_('Warning'), _('Initial Amount should be negative !'))
+        else:
+            if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
+                raise osv.except_osv(_('Warning'), _('Total amount should be equal or superior to 0!'))
+            if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
+                raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
         if 'initial_amount' in vals and 'amount' in vals:
             if vals.get('initial_amount') < vals.get('amount'):
                 raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to Amount Left'))
@@ -678,23 +686,32 @@ class account_commitment_line(osv.osv):
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot write a commitment voucher line on a 'view' account type!"))
-        # Verify amount validity
-        if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-            raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
-        if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
-            raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
         # Update analytic distribution if needed and initial_amount
         for line in self.browse(cr, uid, ids, context=context):
+            # Verify amount validity
+            if not line.so_line_id:
+                if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
+                    raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
+                if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
+                    raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
+                message = _('Initial Amount should be superior to Amount Left')
+            else:
+                if 'amount' in vals and vals.get('amount', 0.0) > 0.0:
+                    raise osv.except_osv(_('Warning'), _('Amount Left should be equal or inferior to 0!'))
+                if 'initial_amount' in vals and vals.get('initial_amount', 0.0) >= 0.0:
+                    raise osv.except_osv(_('Warning'), _('Initial Amount should be inferior to 0!'))
+
+                message = _('Initial Amount should be inferior to Amount Left')
+
             # verify that initial amount is superior to amount left
-            message = _('Initial Amount should be superior to Amount Left')
             if 'amount' in vals and 'initial_amount' in vals:
-                if vals.get('initial_amount') < vals.get('amount'):
+                if abs(vals.get('initial_amount')) < abs(vals.get('amount')):
                     raise osv.except_osv(_('Warning'), message)
             elif 'amount' in vals:
-                if line.initial_amount < vals.get('amount'):
+                if abs(line.initial_amount) < abs(vals.get('amount')):
                     raise osv.except_osv(_('Warning'), message)
             elif 'initial_amount' in vals:
-                if vals.get('initial_amount') < line.amount:
+                if abs(vals.get('initial_amount')) < abs(line.amount):
                     raise osv.except_osv(_('Warning'), message)
             # verify analytic distribution only on 'open' commitments
             if line.commit_id and line.commit_id.state and line.commit_id.state == 'open':
@@ -782,6 +799,124 @@ class account_commitment_line(osv.osv):
             'res_id': [wiz_id],
             'context': context,
         }
+
+    def _update_so_commitment_line(self, cr, uid, id, amount, from_cancel=True, context=None):
+        """
+            reduce amount on CV line from SO
+            called by cancel FO line or SI
+        """
+        if context is None:
+            context = {}
+        wf_service = netsvc.LocalService("workflow")
+        aji_obj = self.pool.get('account.analytic.line')
+        cv_obj = self.pool.get('account.commitment')
+
+        # po is state=cancel on last IN cancel
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        cv_line = self.browse(cr, uid, id, context=context)
+        if not from_cancel and cv_line.commit_id.state == 'draft':
+            wf_service.trg_validate(uid, 'account.commitment', cv_line.commit_id.id, 'commitment_open', cr)
+        amount_left = round(cv_line.amount + amount, 2)
+        self.write(cr, uid, [id], {'amount': amount_left}, context=context)
+
+        cv = cv_obj.read(cr, uid, cv_line.commit_id.id, ['total'], context=context)
+        if abs(cv['total']) < 0.001:
+            cv_obj.action_commitment_done(cr, uid, [cv_line.commit_id.id], context=context)
+
+        # set line to 0
+        return True
+
+        draft_opened = []
+        cv_to_close = {}
+
+        # deduce amount on oldest cv lines
+        # NOTE: account_amount_dic is for CV in version 1 based on accounts (acc),
+        #       cvl_amount_dic is for CV from version 2 based on CV lines (cvl)
+        for c_type in ("acc", "cvl"):
+            if c_type == "acc":
+                cv_info = account_info.copy()
+                amount_dic = account_amount_dic.copy()
+            else:
+                cv_info = cvl_info.copy()
+                amount_dic = cvl_amount_dic.copy()
+            for k in amount_dic.keys():  # account id or CV line id
+                if k not in cv_info:
+                    continue
+                for cv_line in cv_info[k]:
+                    if cv_line[3] == 'draft' and cv_line[2] not in draft_opened and not from_cancel:
+                        draft_opened.append(cv_line[2])
+                        # Change Draft CV to Validated State, in order to avoid CV modification when receiving some goods.
+                        # The workflow is used so that all the engagement lines are generated, even those which are not
+                        # affected by the current update (e.g. partial reception + SI validation on one in 2 products).
+                        wf_service.trg_validate(uid, 'account.commitment', cv_line[2], 'commitment_open', cr)
+
+                    if cv_line[4] - amount_dic[k] > 0.001:
+                        # update amount left on CV line
+                        amount_left = cv_line[4] - amount_dic[k]
+                        self.pool.get('account.commitment.line').write(cr, uid, [cv_line[0]], {'amount': amount_left}, context=context)
+                        # update AAL
+                        distrib_id = cv_line[5] or cv_line[6]
+                        if not distrib_id:
+                            raise osv.except_osv(_('Error'), _('No analytic distribution found.'))
+                        # Browse distribution
+                        distrib = self.pool.get('analytic.distribution').browse(cr, uid, [distrib_id], context=context)[0]
+                        engagement_lines = distrib.analytic_lines
+                        for distrib_line in distrib.funding_pool_lines:
+                            # Browse engagement lines to found out matching elements
+                            for i in range(0, len(engagement_lines)):
+                                if engagement_lines[i]:
+                                    eng_line = engagement_lines[i]
+                                    # restrict to the current CV line only
+                                    if eng_line.commitment_line_id and eng_line.commitment_line_id.id == cv_line[0]:
+                                        eng_line_distrib_id = eng_line.distrib_line_id and \
+                                            eng_line.distrib_line_id._name == 'funding.pool.distribution.line' and \
+                                            eng_line.distrib_line_id.id or False
+                                        # in case of an AD with several lines, several AJIs are linked to the same CV line:
+                                        # the comparison is used to decrement the right one
+                                        if eng_line_distrib_id == distrib_line.id:
+                                            # Update analytic line with new amount
+                                            anal_amount = (distrib_line.percentage * amount_left) / 100
+                                            curr_date = currency_date.get_date(self, cr, eng_line.document_date, eng_line.date,
+                                                                               source_date=eng_line.source_date)
+                                            context.update({'currency_date': curr_date})
+                                            amount = -1 * self.pool.get('res.currency').compute(cr, uid, cv_line[8], company_currency,
+                                                                                                anal_amount, round=False, context=context)
+                                            # write new amount to corresponding engagement line
+                                            self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id],
+                                                                                         {'amount': amount,
+                                                                                          'amount_currency': -1 * anal_amount}, context=context)
+                        # check next G/L account or CV line
+                        break
+                    cv_to_close[cv_line[2]] = True
+                    eng_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cv_line[0])], context=context)
+                    if eng_ids:
+                        self.pool.get('account.analytic.line').unlink(cr, uid, eng_ids, context=context)
+                    self.pool.get('account.commitment.line').write(cr, uid, [cv_line[0]], {'amount': 0.0}, context=context)
+                    if abs(cv_line[4] - amount_dic[k]) < 0.001:
+                        # check next G/L account or CV line
+                        break
+                    amount_dic[k] -= cv_line[4]
+
+        if auto_cv and from_cancel and from_cancel is not True:
+            # we cancel the last IN from PO and no draft invoice exist
+            if not self.pool.get('account.invoice').search_exist(cr, uid, [('purchase_ids', 'in', po_ids), ('state', '=', 'draft')], context=context):
+                dpo_ids = self.pool.get('purchase.order').search(cr, uid, [('id', 'in', po_ids), ('po_version', '!=', 1), ('order_type', '=', 'direct')], context=context)
+                # for dpo we can have further IN if the first one is cancelled
+                if dpo_ids:
+                    po_ids = list(set(po_ids) - set(dpo_ids))
+                    # can not use 0.001 because total is digits: (16, 2)
+                    commit_ids = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', 'in', dpo_ids), ('total', '<', 0.01)], context=context)
+                    if commit_ids:
+                        self.pool.get('account.commitment').action_commitment_done(cr, uid, commit_ids, context=context)
+                if not self.pool.get('stock.move').search_exist(cr, uid, [('type', '=', 'in'), ('id', 'not in', from_cancel), ('state', 'not in', ['cancel', 'done']), ('picking_id.purchase_id', 'in', po_ids)], context=context):
+                    self.pool.get('purchase.order')._finish_commitment(cr, uid, po_ids, context=context)
+                    return True
+
+        if cv_to_close:
+            for cv in self.pool.get('account.commitment').read(cr, uid, cv_to_close.keys(), ['total'], context=context):
+                if abs(cv['total']) < 0.001:
+                    self.pool.get('account.commitment').action_commitment_done(cr, uid, [cv['id']], context=context)
+        return True
 
 account_commitment_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

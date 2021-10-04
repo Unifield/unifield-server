@@ -1646,6 +1646,9 @@ class account_invoice_line(osv.osv):
         'price_unit': _price_unit_default,
     }
 
+    def create(self, cr, uid, vals, context):
+        import traceback; traceback.print_stack()
+        return super(account_invoice_line, self).create(cr, uid, vals, context)
     def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, context=None):
         if context is None:
             context = {}
