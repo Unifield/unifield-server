@@ -25574,12 +25574,17 @@ msgstr "Détermine les restrictions pour le pays."
 #: field:update.lines,delivery_requested_date:0
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:110
-#: field:purchase.order,delivery_requested_date:0
 #: field:purchase.order.merged.line,date_planned:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:232
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:897
 #, python-format
 msgid "Delivery Requested Date"
+msgstr "Date de Livraison Demandée"
+
+#. modules: purchase
+#: field:purchase.order,delivery_requested_date:0
+#, python-format
+msgid "Requested Delivery Date"
 msgstr "Date de Livraison Demandée"
 
 #. modules: purchase, msf_order_date
@@ -39428,13 +39433,13 @@ msgstr "Règlement des factures"
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:1654
 #, python-format
-msgid "Delivery Confirmed Date is a mandatory field."
+msgid "Confirmed Delivery Date is a mandatory field."
 msgstr "La Date de Livraison Confirmée est un champ obligatoire."
 
 #. module: purchase
 #: code:addons/purchase/purchase_workflow.py:673
 #, python-format
-msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
+msgid "Line #%s: Confirmed Delivery Date is a mandatory field."
 msgstr "Ligne #%s: La Date de Livraison Confirmée est un champ obligatoire."
 
 #. module: stock_schedule
@@ -66224,7 +66229,6 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:74
 #: field:sale.order,delivery_confirmed_date:0
 #: field:update.lines,delivery_confirmed_date:0
-#: field:purchase.order,delivery_confirmed_date:0
 #: field:international.transport.cost.report,delivery_confirmed_date:0
 #: field:local.transport.cost.report,delivery_confirmed_date:0
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:236
@@ -66239,6 +66243,12 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:898
 #, python-format
 msgid "Delivery Confirmed Date"
+msgstr "Date de Livraison Confirmée"
+
+#. modules: purchase
+#: field:purchase.order,delivery_confirmed_date:0
+#, python-format
+msgid "Confirmed Delivery Date"
 msgstr "Date de Livraison Confirmée"
 
 #. modules: purchase, msf_order_date
@@ -100655,7 +100665,7 @@ msgstr "Vous ne pouvez pas selectionner manuellement un fichier à importé si l
 #. module: purchase
 #: code:addons/purchase/purchase_workflow.py:879
 #, python-format
-msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
+msgid "Line #%s: Confirmed Delivery Date is a mandatory field."
 msgstr "Ligne #%s: La date de livraison confirmée est un champ obligatoire."
 
 #. module: purchase
