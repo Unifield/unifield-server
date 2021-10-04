@@ -1372,7 +1372,7 @@ msgstr "US/Pacific"
 #: code:addons/msf_doc_import/wizard/__init__.py:63
 #, python-format
 msgid "fo_import_drd"
-msgstr "Date de livraison souhaitée"
+msgstr "Date de livraison demandée"
 
 #. module: analytic_distribution
 #: field:analytic.distribution.wizard.f1.lines,wizard_id:0
@@ -10339,7 +10339,7 @@ msgstr "Sélectionnez une Période"
 #. module: procurement_request
 #: report:procurement.request.report:0
 msgid "Requested date :"
-msgstr "Date souhaitée :"
+msgstr "Date demandée :"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -23746,7 +23746,7 @@ msgstr "\n"
 #: field:purchase.order.followup,delivery_requested_date:0
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:212
 msgid "Delivery requested date"
-msgstr "Date de livraison souhaitée"
+msgstr "Date de livraison demandée"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:481
@@ -25580,14 +25580,14 @@ msgstr "Détermine les restrictions pour le pays."
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:897
 #, python-format
 msgid "Delivery Requested Date"
-msgstr "Date de Livraison Souhaitée"
+msgstr "Date de Livraison Demandée"
 
 #. modules: purchase, msf_order_date
 #: field:purchase.order.line,date_planned:0
 #: field:sale.order.line,date_planned:0
 #, python-format
 msgid "Requested DD"
-msgstr "DL Souhaitée"
+msgstr "DL Demandée"
 
 #. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:78
@@ -32158,7 +32158,7 @@ msgstr "Devise par défaut des commandes de terrain"
 #. module: sales_followup
 #: report:sales.follow.up.multi.report_pdf:0
 msgid "Req. Delivery date:"
-msgstr "Date Livraison Souhaité:"
+msgstr "Date Livraison Demandée:"
 
 #. module: stock_schedule
 #: selection:stock.frequence,name:0
@@ -33311,7 +33311,7 @@ msgstr "Vous avez sélectionné une nomenclature du dernier niveau obligatoire e
 #: code:addons/msf_order_date/order_dates.py:339
 #, python-format
 msgid "The number of days between Creation Date and Delivery Expected Date (%s) is less than the supplier lead-time (%s)."
-msgstr "Le nombre de jours entre Date de Création et Date de Livraison Souhaitée (%s) est inférieur à ceux du délai de livraison du fournisseur (%s)."
+msgstr "Le nombre de jours entre Date de Création et Date de Livraison Demandée (%s) est inférieur à ceux du délai de livraison du fournisseur (%s)."
 
 #. modules: account, account_override
 #: field:account.move.line,invoice_partner_link:0
@@ -36871,7 +36871,7 @@ msgid "\n"
 "                                        WARNING: The requested date of this purchase order is in the past.\n"
 "                                    "
 msgstr "\n"
-"                                        ATTENTION: La Date de Livraison Souhaitée est déjà passée.\n"
+"                                        ATTENTION: La Date de Livraison Demandée est déjà passée.\n"
 "                                    "
 
 #. modules: base, unifield_setup
@@ -44241,7 +44241,7 @@ msgstr "Nouvelle langue %s installée"
 #. module: purchase
 #: report:purchase.order:0
 msgid "Date Req."
-msgstr "Date Souhaitée"
+msgstr "Date Demandée"
 
 #. modules: purchase, sale
 #: model:ir.actions.act_window,name:purchase.action_view_purchase_line_invoice
@@ -49797,7 +49797,7 @@ msgid "\n"
 "                                    All information of the PO template will be written in the new PO, <br/>except the Delivery Requested date which will be the earliest date of all POs.<br/>Any sourcing group will be taken from the template PO/DPO.\n"
 "                                "
 msgstr "\n"
-"                                    Toutes les informations du modèle de BC seront écrites dans le nouveau BC, <br/>sauf la date de livraison souhaitée qui sera la date la plus ancienne de tous les BCs.<br/>Tout groupe de sourcing sera pris du BdC/BdC direct modèle.\n"
+"                                    Toutes les informations du modèle de BC seront écrites dans le nouveau BC, <br/>sauf la date de livraison demandée qui sera la date la plus ancienne de tous les BCs.<br/>Tout groupe de sourcing sera pris du BdC/BdC direct modèle.\n"
 "                                "
 
 #. module: stock
@@ -51661,7 +51661,7 @@ msgstr "Quantité commandée"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:187
 #: report:sales.follow.up.report_pdf:0
 msgid "Requested date:"
-msgstr "Date Souhaitée:"
+msgstr "Date demandée:"
 
 #. module: consumption_calculation
 #: view:real.average.consumption:0
@@ -53245,7 +53245,7 @@ msgstr "Journaux Généraux"
 #: report:purchase.order.merged:0
 #: report:msf.sale.order:0
 msgid "Requested delivery date :"
-msgstr "Date de Livraison Souhaitée :"
+msgstr "Date de Livraison Demandée :"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:379
@@ -61872,7 +61872,7 @@ msgstr "Par dépense"
 #. module: purchase
 #: field:purchase.order,requested_date_in_past:0
 msgid "Requested date in past"
-msgstr "Date souhaitée dans le passé"
+msgstr "Date demandée dans le passé"
 
 #. module: base
 #: help:attachment.config,next_migration:0
@@ -70259,7 +70259,7 @@ msgstr "Vue"
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
 msgid "Delivery requested date:"
-msgstr "Date de Livraison souhaitée: "
+msgstr "Date de Livraison demandée: "
 
 #. module: msf_outgoing
 #: report:invoice:0
@@ -70836,7 +70836,7 @@ msgstr "Zones Partenaires"
 #: code:addons/msf_doc_import/check_line.py:467
 #, python-format
 msgid "Delivery requested date not found. The date from the header has been taken."
-msgstr "Date de livraison souhaitée non trouvée, le système a pris la date de l'en-tête"
+msgstr "Date de livraison demandée non trouvée, le système a pris la date de l'en-tête"
 
 #. modules: return_claim, msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:555
@@ -81572,7 +81572,7 @@ msgstr "base.report.file.sxw"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1537
 #, python-format
 msgid "Incorrect date value for field 'Delivery Requested Date'"
-msgstr "Valeur inocrrect pour le champ 'Date de livraison souhaitée'"
+msgstr "Valeur inocrrect pour le champ 'Date de livraison Demandée'"
 
 #. modules: msf_doc_import, purchase
 #: view:purchase.order:0
@@ -97019,7 +97019,7 @@ msgstr "Colis"
 #: field:sale.order.followup,requested_date:0
 #: field:internal.request.import,in_requested_date:0
 msgid "Requested date"
-msgstr "Date souhaitée"
+msgstr "Date demandée"
 
 #. module: msf_outgoing
 #: field:shipment,cargo_manifest_reference:0
@@ -97243,7 +97243,7 @@ msgstr "Factures Manuelles de Taxes"
 #: code:addons/msf_doc_import/check_line.py:474
 #, python-format
 msgid "The delivery requested date format was not correct. The date from the header has been taken."
-msgstr "La date de livraison souhaitée est mal formatée, le système a pris la date de l'en-tête"
+msgstr "La date de livraison demandée est mal formatée, le système a pris la date de l'en-tête"
 
 #. modules: purchase, stock
 #: model:ir.ui.menu,name:purchase.menu_action_picking_tree_in_move
@@ -97336,7 +97336,7 @@ msgstr "Inactif depuis:"
 #: code:addons/msf_order_date/order_dates.py:181
 #, python-format
 msgid "The Delivery Requested Date should be between today and today + 24 months !"
-msgstr "La date de Livraison Souhaitée devrait être comprise entre aujourd'hui et aujourd'hui+24mois !"
+msgstr "La date de Livraison Demandée devrait être comprise entre aujourd'hui et aujourd'hui+24mois !"
 
 #. module: procurement_auto
 #: model:ir.module.module,description:procurement_auto.module_meta_information
@@ -99606,7 +99606,7 @@ msgstr "La Zone \"%s\" au niveau de la ligne n'est pas la même que la Zone \"%s
 #: field:tender,requested_date:0
 #: field:tender.line,date_planned:0
 msgid "Requested Date"
-msgstr "Date Souhaitée"
+msgstr "Date Demandée"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:60
@@ -101481,7 +101481,7 @@ msgstr "Date de Commande: La Date de Commande '%s' est vide ou incorrecte, la da
 #: code:addons/sale/wizard/internal_request_import.py:510
 #, python-format
 msgid "Requested Date: The Requested Date '%s' is incorrect, you will need to correct this manually."
-msgstr "Date Souhaitée: La Date Souhaitée '%s' incorrecte, vous devrez la corriger manuellement."
+msgstr "Date Demandée: La Date Demandée '%s' incorrecte, vous devrez la corriger manuellement."
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:531
@@ -101505,13 +101505,13 @@ msgstr "Vous ne pouvez pas valider '%s' sans la Zone de Demande."
 #: code:addons/sale/sale_workflow.py:702
 #, python-format
 msgid "You can not validate '%s' without a Requested date."
-msgstr "Vous ne pouvez pas valider '%s' sans la Date Souhaitée."
+msgstr "Vous ne pouvez pas valider '%s' sans la Date Demandée."
 
 #. module: sale
 #: code:addons/sale/sale_workflow.py:554
 #, python-format
 msgid "You can not validate the line without a Requested date."
-msgstr "Vous ne pouvez pas valider la ligne sans la Date Souhaitée."
+msgstr "Vous ne pouvez pas valider la ligne sans la Date Demandée."
 
 #. module: sale
 #: code:addons/sale/sale_workflow.py:551
@@ -103519,7 +103519,7 @@ msgstr "de"
 #: code:addons/msf_order_date/wizard/update_lines.py:114
 #, python-format
 msgid "requested"
-msgstr "souhaitée"
+msgstr "demandée"
 
 #. module: consumption_calculation, procurement_cycle
 #: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
@@ -105582,7 +105582,7 @@ msgstr "Date de Confirmation"
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:254
 msgid "Delivery Requested Date (RDD)"
-msgstr "Date de Livraison souhaitée (RDD)"
+msgstr "Date de Livraison Demandée (RDD)"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
@@ -112731,7 +112731,7 @@ msgstr "Ligne %s %s: un NL est défini dans le fichier, mais le produit ne néci
 #: code:addons/purchase/purchase_order.py:1507
 #, python-format
 msgid "Do you want to update the Requested Date of all/selected Order lines ?"
-msgstr "Voulez-vous mettre à jour la Date de Livraison Souhaitée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Demandée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
 
 #. module: stock
 #: field:physical.inventory.generate.counting.sheet,only_with_pos_move:0
