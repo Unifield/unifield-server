@@ -416,52 +416,27 @@ Importation completed in %s!
         domain_list = [
             {
                 'view_name':'invoice_supplier_form',
-                'domain':[
-                    ('type','=','in_invoice'),
-                    ('is_direct_invoice', '=', False),
-                    ('is_inkind_donation', '=', False),
-                    ('is_debit_note', '=', False),
-                    ('is_intermission', '=', False),
-                ]
+                'domain': [('doc_type', '=', 'si')]
             },
             {
                 'view_name': 'invoice_supplier_form',
-                'domain': [
-                    ('type','=','in_refund'),
-                ],
+                'domain': [('doc_type', '=', 'sr')],
             },
             {
                 'view_name': 'invoice_form',
-                'domain': [
-                    ('type','=','out_invoice'),
-                    ('is_debit_note', '=', False),
-                    ('is_inkind_donation', '=', False),
-                    ('is_intermission', '=', False)
-                ],
+                'domain': [('doc_type', '=', 'stv')],
             },
             {
                 'view_name': 'invoice_form',
-                'domain': [
-                    ('type','=','out_refund'),
-                ],
+                'domain': [('doc_type', '=', 'cr')],
             },
             {
                 'view_name': 'view_intermission_form',
-                'domain': [
-                    ('type','=','in_invoice'),
-                    ('is_debit_note', '=', False),
-                    ('is_inkind_donation', '=', False),
-                    ('is_intermission', '=', True),
-                ],
+                'domain': [('doc_type', '=', 'ivi')],
             },
             {
                 'view_name': 'view_intermission_form',
-                'domain': [
-                    ('type','=','out_invoice'),
-                    ('is_debit_note', '=', False),
-                    ('is_inkind_donation', '=', False),
-                    ('is_intermission', '=', True),
-                ],
+                'domain': [('doc_type', '=', 'ivo')],
             },
         ]
 
