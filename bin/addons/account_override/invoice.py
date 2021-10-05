@@ -678,7 +678,7 @@ class account_invoice(osv.osv):
             for node in nodes:
                 node.set('string', name)
             res['arch'] = etree.tostring(doc)
-        elif view_type in ('tree', 'search') and context.get('type') in ['out_invoice', 'out_refund']:
+        elif view_type in ('tree', 'search') and (context.get('type') in ['out_invoice', 'out_refund'] or context.get('doc_type') == 'str'):
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='supplier_reference']")
             for node in nodes:
