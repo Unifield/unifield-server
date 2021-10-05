@@ -1935,7 +1935,7 @@ class purchase_order_line(osv.osv):
                     'analytic_distribution_id': distrib_id,
                 }
                 if cv_version > 1:
-                    commit_line_vals.update({'po_line_id': pol.id, })
+                    commit_line_vals.update({'po_line_id': pol.id, 'line_number': pol.line_number, 'line_product_id': pol.product_id.id})
                 else:
                     commit_line_vals.update({'purchase_order_line_ids': [(4, pol.id)], })
                 commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, commit_line_vals, context=context)

@@ -10,7 +10,8 @@
             <field name="inherit_id" ref="analytic_distribution.account_commitment_form"/>
             <field name="arch" type="xml">
                 <xpath expr="/form/group[1]/field[@name='name']" position="after">
-                    <field name="purchase_id"/>
+                    <field name="purchase_id" attrs="{'invisible': [('sale_id', '!=', False)]}"/>
+                    <field name="sale_id" attrs="{'invisible': [('sale_id', '=', False)]}"/>
                 </xpath>
             </field>
         </record>
@@ -23,7 +24,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='partner_id']" position="after">
-                    <field name="purchase_id"/>
+                    <field name="source_document"/>
                 </xpath>
             </field>
         </record>

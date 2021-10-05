@@ -2901,6 +2901,7 @@ class purchase_order(osv.osv):
                 'currency_id': po.currency_id and po.currency_id.id or False,
                 'partner_id': po.partner_id and po.partner_id.id or False,
                 'purchase_id': po.id or False,
+                'source_document': po.name or False,
                 'type': cv_type,
             }
             # prepare some values

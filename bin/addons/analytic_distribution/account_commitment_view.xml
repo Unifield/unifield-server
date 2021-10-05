@@ -95,8 +95,8 @@
                       hide_delete_button="1"
                       >
                     <field name="commit_type"/>
-                    <field name="po_line_product_id"/>
-                    <field name="po_line_number"/>
+                    <field name="line_product_id"/>
+                    <field name="line_number"/>
                     <field name="account_id" domain="[('restricted_area', '=', 'commitment_lines')]"/>
                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
                             icon="terp-stock_symbol-selection" context="context"
@@ -141,7 +141,7 @@
                         <field name="date" select='1'/>
                         <field name="partner_id" select='1'/>
                         <field name="name" select="1"/>
-                        <field name="purchase_id"/>
+                        <field name="source_document"/>
                     </group>
                     <newline/>
                 </search>
