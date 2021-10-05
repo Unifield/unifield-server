@@ -112587,18 +112587,6 @@ msgstr "\n"
 "Vous devez remplir \"Vers\" avec une zone Interne."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:125
-#, python-format
-msgid "The Batch Number is mandatory for %s. "
-msgstr "Le Numéro de Lot est obligatoire pour %s. "
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:128
-#, python-format
-msgid "The Expiry Date is mandatory for %s. "
-msgstr "La Date d'Expiration est obligatoire pour %s. "
-
-#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:151
 #, python-format
 msgid "%s: The Expiry Date must be a date."

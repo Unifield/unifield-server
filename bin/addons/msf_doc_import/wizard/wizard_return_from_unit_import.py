@@ -123,12 +123,8 @@ class wizard_return_from_unit_import(osv.osv_memory):
             if prod.batch_management or prod.perishable:
                 bn_name = cell[5].value
                 ed = cell[6].value
-                if prod.batch_management and not bn_name:
-                    line_warn += _('The Batch Number is mandatory for %s. ') % (prod_name, )
                 if prod.perishable:
-                    if not ed:
-                        line_warn += _('The Expiry Date is mandatory for %s. ') % (prod_name, )
-                    elif cell[6].data_type != 'd' or not cell[6].is_date:
+                    if ed and (cell[6].data_type != 'd' or not cell[6].is_date):
                         line_warn += _('%s: The Expiry Date must be a date.') % (prod_name, )
                         ed = False
                     if not prod.batch_management and bn_name:
