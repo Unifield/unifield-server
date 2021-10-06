@@ -833,6 +833,10 @@ class account_invoice(osv.osv):
                                                      context=context):
                 vals['supplier_reference'] = partner['ref']
 
+        if context.get('doc_type', '') in ('str', 'isr'):
+            # for now restrict to new "real doc types" for which no refund can be generated to ensure the doc type used is correct
+            vals.update({'real_doc_type': context['doc_type']})
+
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
 
         return super(account_invoice, self).create(cr, uid, vals, context)
