@@ -473,7 +473,7 @@ class account_commitment(osv.osv):
                         create_account_analytic_lines(cr, uid, [distrib_id], c.description or c.name, c.date, cl.amount,
                                                       c.journal_id and c.journal_id.id,
                                                       c.currency_id and c.currency_id.id, c.date or False,
-                                                      (c.purchase_id and c.purchase_id.name) or c.name or False, c.date,
+                                                      (c.purchase_id and c.purchase_id.name or c.sale_id and c.sale_id.name) or c.name or False, c.date,
                                                       cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
         return True
 
@@ -674,7 +674,7 @@ class account_commitment_line(osv.osv):
             if distrib_id:
                 analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
-                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or False
+                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or cl.commit_id.sale_id and cl.commit_id.sale_id.name or False
                 if cl.commit_id:
                     desc = cl.commit_id.description or cl.commit_id.name
                 else:
