@@ -469,9 +469,9 @@ class sale_order_line(osv.osv):
                     raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
                 commitment_voucher_id = self.pool.get('sale.order').create_commitment_voucher_from_so(cr, uid, [sol.order_id.id], cv_date=sol.confirmed_delivery_date, context=context)
 
-            expense_account = sol.account_4_distribution and sol.account_4_distribution.id or False
-            if not expense_account:
-                raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (sol.name or '', sol.id))
+            income_account = sol.account_4_distribution and sol.account_4_distribution.id or False
+            if not income_account:
+                raise osv.except_osv(_('Error'), _('There is no income account defined for this line: %s (id:%d)') % (sol.name or '', sol.id))
 
             cc_lines = []
             ad_header = []  # if filled in, the line itself has no AD but uses the one at header level
@@ -490,7 +490,7 @@ class sale_order_line(osv.osv):
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
             commit_line_vals = {
                 'commit_id': commitment_voucher_id,
-                'account_id': expense_account,
+                'account_id': income_account,
                 'amount': -1 * sol.price_subtotal,
                 'initial_amount': -1 * sol.price_subtotal,
                 'analytic_distribution_id': distrib_id,
@@ -509,7 +509,7 @@ class sale_order_line(osv.osv):
                         'percentage': aline.percentage,
                     }
                     self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
-                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], expense_account, context=context)
+                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], income_account, context=context)
 
         return True
 
