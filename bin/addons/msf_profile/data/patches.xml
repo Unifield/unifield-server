@@ -701,5 +701,9 @@
         <record id="us_9003_partner_im_is_currencies" model="patch.scripts">
             <field name="method">us_9003_partner_im_is_currencies</field>
         </record>
+
+        <record id="us_8839_cv_from_fo" model="patch.scripts">
+            <field name="method">us_8839_cv_from_fo</field>
+        </record>
     </data>
 </openerp>

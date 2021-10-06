@@ -53,6 +53,19 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_8839_cv_from_fo(self, cr, uid, *a, **b):
+        if cr.column_exists('account_commitment_line', 'po_line_product_id'):
+            cr.execute('''update account_commitment_line set line_product_id=po_line_product_id, line_number=po_line_number''')
+            cr.execute('''update
+                account_commitment cv
+                set source_document=po.name
+                from
+                    purchase_order po
+                where
+                    po.id = cv.purchase_id
+                ''')
+        return True
+
     # UF22.0
     def us_9003_partner_im_is_currencies(self, cr, uid, *a, **b):
         self.us_5559_set_pricelist(cr, uid, *a, **b)
