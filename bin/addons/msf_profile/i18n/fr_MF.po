@@ -112587,28 +112587,10 @@ msgstr "\n"
 "Vous devez remplir \"Vers\" avec une zone Interne."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:125
-#, python-format
-msgid "Line: %s: The Batch Number is mandatory for %s. "
-msgstr "Ligne %s: Le Numéro de Lot est obligatoire pour %s. "
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:128
-#, python-format
-msgid "Line %s: The Expiry Date is mandatory for %s. "
-msgstr "Ligne %s: La Date d'Expiration est obligatoire pour %s. "
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:139
-#, python-format
-msgid "No Batch Number was found with the name %s and the expiry date %s. "
-msgstr "Aucun Numéro de Lot a été trouvé avec le nom %s et la date d'expiration %s. "
-
-#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:151
 #, python-format
-msgid "Line %s %s: The Expiry Date must be a date."
-msgstr "Ligne %s %s: La Date d'Expiration doit être une date. "
+msgid "%s: The Expiry Date must be a date."
+msgstr "%s: La Date d'Expiration doit être une date. "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:154
@@ -112619,26 +112601,26 @@ msgstr "Ligne %s: Il n'y a aucun produit actif %s. "
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:163
 #, python-format
-msgid "Line %s: The Quantity must be a number. "
-msgstr "Ligne %s: La Quantité doit être un nombre. "
+msgid "The Quantity must be a number. "
+msgstr "La Quantité doit être un nombre. "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:166
 #, python-format
-msgid "Line %s: The Quantity is mandatory for each line. "
-msgstr "Ligne %s: La Quantité est obligatoire pour chaque ligne. "
+msgid "The Quantity is mandatory for each line. "
+msgstr "La Quantité est obligatoire pour chaque ligne. "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:178
 #, python-format
-msgid "Line %s: The UoM imported was not in the same category than the UoM of the product. The UoM of the product was taken instead. "
-msgstr "Ligne %s: l'UdM importée n'a pas la même catégorie que l'UdM du produit. L'UdM du produit sera utilisée à la place. "
+msgid "The UoM imported was not in the same category than the UoM of the product. The UoM of the product was taken instead. "
+msgstr "L'UdM importée n'a pas la même catégorie que l'UdM du produit. L'UdM du produit sera utilisée à la place. "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:181
 #, python-format
-msgid "Line %s: The UoM is mandatory for each line. "
-msgstr "Ligne %s: L'UdM est obligatoire pour chaque ligne. "
+msgid "The UoM is mandatory for each line. "
+msgstr "L'UdM est obligatoire pour chaque ligne. "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:201
@@ -112653,14 +112635,16 @@ msgstr "\n"
 #, python-format
 msgid " \n"
 "Importation completed in %s!\n"
-"# of imported lines : %s lines\n"
+"# of imported lines : %s on %s lines\n"
+"# of ignored lines: %s\n"
 "# of errors to correct: %s\n"
 "\n"
 "%s\n"
 "%s"
 msgstr " \n"
 "Import effectué en %s!\n"
-"# de lignes importées : %s lignes\n"
+"# de lignes importées : %s sur %s lignes\n"
+"# de lignes ignorées: %s\n"
 "# d'erreurs à corriger: %s\n"
 "\n"
 "%s\n"
@@ -112717,14 +112701,14 @@ msgstr "Date et lieu:"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:141
 #, python-format
-msgid "Line %s %s the Expiry Date %s is not correct."
-msgstr "Ligne %s %s la Date d'Expiration %s est incorrecte."
+msgid "%s the Expiry Date %s is not correct."
+msgstr "%s la Date d'Expiration %s est incorrecte."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_return_from_unit_import.py:136
 #, python-format
-msgid "Line %s %s: a batch number is defined on the imported file but the product doesn't require batch number - Batch ignored"
-msgstr "Ligne %s %s: un NL est défini dans le fichier, mais le produit ne nécissite pas de lot - Lot ignoré"
+msgid "%s: a batch number is defined on the imported file but the product doesn't require batch number - Batch ignored"
+msgstr "%s: un NL est défini dans le fichier, mais le produit ne nécissite pas de lot - Lot ignoré"
 
 #. modules: msf_order_date, purchase
 #: code:addons/msf_order_date/order_dates.py:696
