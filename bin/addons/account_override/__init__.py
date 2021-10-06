@@ -61,6 +61,7 @@ ACCOUNT_RESTRICTED_AREA = {
     ],
     # HEADER OF:
     #+ Stock Transfer Voucher
+    #+ Stock Transfer Refund
     #+ Customer Refund
     #+ Debit Notes
     'out_invoice': [
@@ -82,6 +83,7 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Direct invoice
     #+ Supplier refund
     #+ Stock transfer voucher
+    #+ Stock transfer refund
     #+ Customer refund
     #+ Debit notes
     'invoice_lines': [
