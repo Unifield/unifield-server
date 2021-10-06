@@ -549,7 +549,8 @@ class account_invoice(osv.osv):
             context = {}
         res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, ctype, invoice_line,
                                                                currency_id, context=context)
-        if company_id and ctype:
+        doc_type = context.get('doc_type', '')
+        if company_id and (ctype or doc_type):
             res.setdefault('domain', {})
             res.setdefault('value', {})
             ass = {
@@ -558,7 +559,7 @@ class account_invoice(osv.osv):
                 'out_refund': 'sale_refund',
                 'in_refund': 'purchase_refund',
             }
-            if context.get('doc_type', '') == 'str':
+            if doc_type == 'str':
                 journal_type = 'sale'
             else:
                 journal_type = ass.get(ctype, 'purchase')
@@ -566,7 +567,7 @@ class account_invoice(osv.osv):
                 ('company_id', '=', company_id), ('type', '=', journal_type), ('is_current_instance', '=', True)
             ], order='id')
             if not journal_ids:
-                raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (ass.get(type, 'purchase'), ))
+                raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (journal_type, ))
             res['value']['journal_id'] = journal_ids[0]
             # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
             res['domain']['journal_id'] = [('id', 'in', journal_ids)]
