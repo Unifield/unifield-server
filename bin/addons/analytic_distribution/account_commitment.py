@@ -566,7 +566,7 @@ account_commitment()
 class account_commitment_line(osv.osv):
     _name = 'account.commitment.line'
     _description = "Account Commitment Voucher Line"
-    _order = "po_line_id, id desc"
+    _order = "line_number, id desc"
     _rec_name = 'account_id'
     _trace = True
 
