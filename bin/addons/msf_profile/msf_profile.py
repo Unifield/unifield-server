@@ -37,6 +37,7 @@ import traceback
 from msf_field_access_rights.osv_override import _get_instance_level
 import cStringIO
 import csv
+import zlib
 
 
 class patch_scripts(osv.osv):
@@ -52,6 +53,65 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def us_8336_update_msr_used(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+
+        if _get_instance_level(self, cr, uid) == 'hq':
+            # exclude hq
+            return True
+
+        doc_field_error_dom = [
+            ('stock_move', 'product_id'),
+            ('stock_production_lot', 'product_id'),
+            ('purchase_order_line', 'product_id'),
+            ('sale_order_line', 'product_id'),
+            ('tender_line', 'product_id'),
+            ('physical_inventory_counting', 'product_id'),
+            ('initial_stock_inventory_line', 'product_id'),
+            ('real_average_consumption_line', 'product_id'),
+            ('replenishment_segment_line', 'product_id'),
+            ('product_list_line', 'name'),
+            ('composition_kit', 'composition_product_id'),
+            ('composition_item', 'item_product_id'),
+        ]
+        report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)])
+        if not report_ids:
+            return True
+        report_id = report_ids[0]
+        for table, foreign_field in doc_field_error_dom:
+            # set used_in_transaction='t'
+            cr.execute('''
+                update
+                    stock_mission_report_line l
+                set
+                    used_in_transaction='t'
+                from
+                    ''' + table + ''' ft
+                where
+                    coalesce(l.used_in_transaction,'f')='f' and
+                    l.mission_report_id = %s and
+                    ft.''' + foreign_field + ''' = l.product_id
+                ''', (report_id, )) # not_a_user_entry
+
+        cr.execute('''
+            select d.name
+            from ir_model_data d, stock_mission_report_line l
+            where
+                l.id = d.res_id and
+                used_in_transaction='t' and
+                d.model='stock.mission.report.line' and
+                l.mission_report_id = %s
+        ''', (report_id,))
+        if cr.rowcount:
+            zipstr = base64.b64encode(zlib.compress(','.join([x[0] for x in cr.fetchall()])))
+            self.pool.get('sync.trigger.something.up').create(cr, uid, {'name': 'msr_used', 'args': zipstr})
+        return True
+
+
+
 
     # UF22.0
     def us_9003_partner_im_is_currencies(self, cr, uid, *a, **b):
@@ -4962,7 +5022,17 @@ class sync_tigger_something_up(osv.osv):
                 if remote_id:
                     cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
                     _logger.warn('Reset %d mission stock CU Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
-
+            elif vals.get('name') == 'msr_used':
+                cr.execute('''
+                    update stock_mission_report_line l
+                        set used_in_transaction='t'
+                    from
+                        ir_model_data d
+                    where
+                        d.model='stock.mission.report.line' and
+                        d.res_id = l.id and
+                        d.name in %s
+                ''', (tuple((zlib.decompress(base64.b64decode(vals.get('args'))).split(','))),))
         return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
 
 sync_tigger_something_up()

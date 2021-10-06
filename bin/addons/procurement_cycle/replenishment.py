@@ -1220,7 +1220,7 @@ class replenishment_segment(osv.osv):
                                )
                     pipe_data = {}
                     for x in cr.fetchall():
-                        pipe_data[datetime.strptime('%s 23:59:59' % (x[0].split(' ')[0], ), '%Y-%m-%d %H:%M:%S')] = x[1]
+                        pipe_data[datetime.strptime('%s 00:00:00' % (x[0].split(' ')[0], ), '%Y-%m-%d %H:%M:%S')] = x[1]
 
                     pipe_date = sorted(pipe_data.keys())
 
@@ -1272,21 +1272,21 @@ class replenishment_segment(osv.osv):
                                     period_conso = month*num_fmc
                                     if period_conso <= pas_full:
                                         pas_full -= period_conso
-                                    else:
-                                        # missing stock to cover the full period
                                         for x in pipe_date[:]:
-                                            # add pipe before period
-                                            if x <= begin:
+                                            # add pipe before end of period
+                                            if x <= end:
                                                 pas_full += pipe_data[x]
                                                 pipe_date.pop(0)
                                             else:
                                                 break
+                                    else:
+                                        # missing stock to cover the full period
                                         if period_conso > pas_full:
                                             # still not enough stock
                                             for x in pipe_date[:]:
                                                 if x <= end:
                                                     # compute missing just before the next pipe
-                                                    ndays = (x - new_begin).days + 1
+                                                    ndays = (x - new_begin).days
                                                     qty = num_fmc/30.44*ndays
                                                     pas_full -= qty
                                                     if pas_full < 0:

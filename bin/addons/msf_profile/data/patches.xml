@@ -701,5 +701,8 @@
         <record id="us_9003_partner_im_is_currencies" model="patch.scripts">
             <field name="method">us_9003_partner_im_is_currencies</field>
         </record>
+        <record id="us_8336_update_msr_used" model="patch.scripts">
+            <field name="method">us_8336_update_msr_used</field>
+        </record>
     </data>
 </openerp>
