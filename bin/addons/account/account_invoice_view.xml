@@ -651,7 +651,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'str')]</field>
-            <field name="context">{'doc_type': 'str'}</field>
+            <field name="context">{'doc_type': 'str', 'type': 'out_refund', 'journal_type': 'sale_refund'}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Customer Refunds -->
         </record>
         <record id="action_str_tree" model="ir.actions.act_window.view">
