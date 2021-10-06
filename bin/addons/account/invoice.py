@@ -634,10 +634,7 @@ class account_invoice(osv.osv):
         return {'value': {}}
 
     def onchange_company_id(self, cr, uid, ids, company_id, part_id, type, invoice_line, currency_id, context=None):
-        if context is None:
-            context = {}
         val = {}
-        dom = {}
         obj_journal = self.pool.get('account.journal')
         account_obj = self.pool.get('account.account')
         inv_line_obj = self.pool.get('account.invoice.line')
@@ -685,30 +682,13 @@ class account_invoice(osv.osv):
                                                  _('Invoice line account company does not match with invoice company.'))
                         else:
                             continue
-        doc_type = context.get('doc_type', '')
-        if company_id and (type or doc_type):
-            if doc_type == 'str' or type == 'out_invoice':
-                journal_type = 'sale'
-            elif type in ('out_refund'):
-                journal_type = 'sale_refund'
-            elif type in ('in_refund'):
-                journal_type = 'purchase_refund'
-            else:
-                journal_type = 'purchase'
-            journal_ids = obj_journal.search(cr, uid, [('company_id','=',company_id), ('type', '=', journal_type)])
-            if journal_ids:
-                val['journal_id'] = journal_ids[0]
-            if not val.get('journal_id', False):
-                raise osv.except_osv(_('Configuration Error !'), (_('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (journal_type)))
-            dom = {'journal_id':  [('id', 'in', journal_ids)]}
-
         if currency_id and company_id:
             currency = self.pool.get('res.currency').browse(cr, uid, currency_id)
             if currency.company_id and currency.company_id.id != company_id:
                 val['currency_id'] = False
             else:
                 val['currency_id'] = currency.id
-        return {'value': val, 'domain': dom}
+        return {'value': val}
 
     def onchange_synced(self, cr, uid, ids, synced, partner_id):
         """
