@@ -541,11 +541,14 @@ class account_invoice(osv.osv):
                                                             noupdate=noupdate, context=context, filename=filename,
                                                             display_all_errors=display_all_errors, has_header=has_header)
 
-    def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
+    def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id, context=None):
         """
         This is a method to redefine the journal_id domain with the current_instance taken into account
         """
-        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id)
+        if context is None:
+            context = {}
+        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, ctype, invoice_line,
+                                                               currency_id, context=context)
         if company_id and ctype:
             res.setdefault('domain', {})
             res.setdefault('value', {})
@@ -555,8 +558,12 @@ class account_invoice(osv.osv):
                 'out_refund': 'sale_refund',
                 'in_refund': 'purchase_refund',
             }
+            if context.get('doc_type', '') == 'str':
+                journal_type = 'sale'
+            else:
+                journal_type = ass.get(ctype, 'purchase')
             journal_ids = self.pool.get('account.journal').search(cr, uid, [
-                ('company_id','=',company_id), ('type', '=', ass.get(ctype, 'purchase')), ('is_current_instance', '=', True)
+                ('company_id', '=', company_id), ('type', '=', journal_type), ('is_current_instance', '=', True)
             ], order='id')
             if not journal_ids:
                 raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (ass.get(type, 'purchase'), ))

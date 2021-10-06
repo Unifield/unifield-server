@@ -633,7 +633,9 @@ class account_invoice(osv.osv):
     def onchange_partner_bank(self, cursor, user, ids, partner_bank_id=False):
         return {'value': {}}
 
-    def onchange_company_id(self, cr, uid, ids, company_id, part_id, type, invoice_line, currency_id):
+    def onchange_company_id(self, cr, uid, ids, company_id, part_id, type, invoice_line, currency_id, context=None):
+        if context is None:
+            context = {}
         val = {}
         dom = {}
         obj_journal = self.pool.get('account.journal')
@@ -683,8 +685,9 @@ class account_invoice(osv.osv):
                                                  _('Invoice line account company does not match with invoice company.'))
                         else:
                             continue
-        if company_id and type:
-            if type in ('out_invoice'):
+        doc_type = context.get('doc_type', '')
+        if company_id and (type or doc_type):
+            if doc_type == 'str' or type == 'out_invoice':
                 journal_type = 'sale'
             elif type in ('out_refund'):
                 journal_type = 'sale_refund'
@@ -702,8 +705,6 @@ class account_invoice(osv.osv):
             if not val.get('journal_id', False):
                 raise osv.except_osv(_('Configuration Error !'), (_('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (journal_type)))
             dom = {'journal_id':  [('id', 'in', journal_ids)]}
-        else:
-            journal_ids = obj_journal.search(cr, uid, [])
 
         if currency_id and company_id:
             currency = self.pool.get('res.currency').browse(cr, uid, currency_id)
