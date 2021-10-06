@@ -112785,3 +112785,24 @@ msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Termi
 #: view:account.commitment.line:0
 msgid "Do you really want to delete this line?"
 msgstr "Voulez-vous vraiment supprimer cette ligne ?"
+
+#. module: kit
+#: field:composition.kit,old_version_id:0
+msgid "Version to import"
+msgstr "Version à importer"
+
+#. module: kit
+#: help:composition.kit,old_version_id:0
+msgid "Used to select from which old version of this Kit Product you want to import the products"
+msgstr "Utilisé pour sélectionner depuis quelle version de ce Produit Kit il faut importer les produits"
+
+#. module: msf_doc_import
+#: view:composition.kit:0
+msgid "Import products from other version"
+msgstr "Importer les produits depuis une autre version"
+
+#. module: kit
+#: code:addons/kit/kit.py:894
+#, python-format
+msgid "You must select an old version of the Kit to be able to import from it"
+msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
