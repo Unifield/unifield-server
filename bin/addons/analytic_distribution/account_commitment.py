@@ -718,7 +718,7 @@ class account_commitment_line(osv.osv):
             if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
                 raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
         if 'initial_amount' in vals and 'amount' in vals:
-            if vals.get('initial_amount') < vals.get('amount'):
+            if abs(vals.get('initial_amount')) < abs(vals.get('amount')):
                 raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to Amount Left'))
         res = super(account_commitment_line, self).create(cr, uid, vals, context={})
         if res:
