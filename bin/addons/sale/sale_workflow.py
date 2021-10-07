@@ -531,12 +531,7 @@ class sale_order_line(osv.osv):
             ], context=context)
 
             if not sol.order_id.procurement_request and sol.order_id.partner_type in ('intermission', 'section') and sol.order_id.order_type == 'regular':
-                # sourced to PO
-                # TODO JFB: loan ?, claim ? consu, service ?  dpo ?
-                pol_line_id = pol_obj.search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
-                if pol_line_id:
-                    if pol_obj.browse(cr, uid, pol_line_id[0], fields_to_fetch=['order_id'], context=context).order_id.partner_type == 'external':
-                        self.create_or_update_commitment_voucher(cr, uid, [sol.id], context=context)
+                self.create_or_update_commitment_voucher(cr, uid, [sol.id], context=context)
 
 
             if sol.order_id.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'):  # IR non stockable
