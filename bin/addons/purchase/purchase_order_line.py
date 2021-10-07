@@ -756,7 +756,8 @@ class purchase_order_line(osv.osv):
 
 
             # check that the analytic accounts are active. Done at the end to use the newest AD of the pol (to re-browse)
-            if po.partner_id.partner_type in ('section', 'intermission', 'internal') and pol.state == 'validated':
+            if po.partner_id.partner_type in ('section', 'intermission', 'internal') and \
+                    ( pol.state in ('validated', 'sourced_sy', 'sourced_v') or pol.state == 'draft' and pol.created_by_sync):
                 # do not check on po line confirmation from instance
                 continue
 
