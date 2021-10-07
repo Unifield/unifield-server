@@ -1862,6 +1862,12 @@ class account_invoice_line(osv.osv):
             res[i] = False
         return res
 
+    def _get_line_doc_type(self, cr, uid, context=None):
+        """
+        Gets the list of possible invoice types
+        """
+        return self.pool.get('account.invoice')._get_invoice_type_list(cr, uid, context=context)
+
     _columns = {
         'line_number': fields.integer(string='Line Number'),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
@@ -1894,6 +1900,8 @@ class account_invoice_line(osv.osv):
         # (avoids having 2 fields with the same name within the same view)
         'line_synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False,
                                       help='Technical field, similar to "synced"'),
+        'line_doc_type': fields.related('invoice_id', 'doc_type', type='selection', selection=_get_line_doc_type,
+                                        string='Document Type', store=False),
         'invoice_type': fields.related('invoice_id', 'type', string='Invoice Type', type='selection', readonly=True, store=False,
                                        selection=[('out_invoice', 'Customer Invoice'),
                                                   ('in_invoice', 'Supplier Invoice'),
