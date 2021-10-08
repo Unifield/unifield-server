@@ -112769,3 +112769,9 @@ msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Termi
 #: view:account.commitment.line:0
 msgid "Do you really want to delete this line?"
 msgstr "Voulez-vous vraiment supprimer cette ligne ?"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1870
+#, python-format
+msgid "%s activation is not allowed at project"
+msgstr "%s activation non autorisée au projet"
