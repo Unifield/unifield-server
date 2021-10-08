@@ -1872,16 +1872,19 @@ class product_attributes(osv.osv):
         for product in self.browse(cr, uid, ids, context=context):
             if product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
-            if instance_level in ['project', 'coordo'] and product.standard_ok == 'non_standard_local':
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'product.ask.activate.wizard',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_id': wiz_obj.create(cr, uid, {'product_id': product.id}, context=context),
-                    'target': 'new',
-                    'context': context
-                }
+            if product.standard_ok == 'non_standard_local':
+                if instance_level == 'coordo':
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'product.ask.activate.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': wiz_obj.create(cr, uid, {'product_id': product.id}, context=context),
+                        'target': 'new',
+                        'context': context
+                    }
+                elif instance_level == 'project':
+                    raise osv.except_osv(_('Error'), _('%s activation is not allowed at project') % (product.default_code,))
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         self.write(cr, real_uid, ids, {'active': True}, context=context)
@@ -1916,6 +1919,7 @@ class product_attributes(osv.osv):
         internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
 
         ud_prod = []
+        ud_nsl_prod = []
         other_prod = []
         for product in self.browse(cr, uid, ids, context=context):
             # Raise an error if the product is already inactive
@@ -2008,7 +2012,10 @@ class product_attributes(osv.osv):
             opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line or has_product_list
             if not has_stock and not opened_object:
                 if product.international_status.code == 'unidata':
-                    ud_prod.append(product.id)
+                    if product.standard_ok == 'non_standard_local':
+                        ud_nsl_prod.append(product.id)
+                    else:
+                        ud_prod.append(product.id)
                 else:
                     other_prod.append(product.id)
             else:
@@ -2190,6 +2197,11 @@ class product_attributes(osv.osv):
             context['bypass_sync_update'] = True
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        if ud_nsl_prod:
+            # reactivation of UD NSL prod must bypass UR : active allowed
+            if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+                real_uid = uid
+            self.write(cr, real_uid, ud_prod, {'active': False}, context=context)
         if ud_prod:
             self.write(cr, real_uid, ud_prod, {'active': False}, context=context)
         if other_prod:
