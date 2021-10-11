@@ -702,6 +702,7 @@ class account_invoice(osv.osv):
             Restriction on allowed partners:
             - for STV/STR: Intersection customers only
             - for ISI/ISR: Intersection suppliers only
+            - for SI/SR: non-Intersection suppliers only
             """
             partner_domain = ""
             if context.get('doc_type', '') == 'str' or (
@@ -711,6 +712,9 @@ class account_invoice(osv.osv):
                 partner_domain = "[('partner_type', '=', 'section'), ('customer', '=', True)]"
             elif context.get('doc_type', '') in ('isi', 'isr'):
                 partner_domain = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
+            elif (context.get('type') == 'in_invoice' and context.get('journal_type') == 'purchase') or \
+                (context.get('type') == 'in_refund' and context.get('journal_type') == 'purchase_refund'):
+                partner_domain = "[('partner_type', '!=', 'section'), ('supplier', '=', True)]"
             if partner_domain:
                 doc = etree.XML(res['arch'])
                 partner_nodes = doc.xpath("//field[@name='partner_id']")
