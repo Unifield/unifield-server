@@ -94,11 +94,24 @@ class account_invoice_refund(osv.osv_memory):
         res = ['address_contact_id', 'address_invoice_id', 'partner_id', 'account_id', 'currency_id', 'payment_term', 'journal_id']
         return res
 
-    def _hook_create_invoice(self, cr, uid, data, form, *args):
+    def _get_invoice_context(self, context):
+        """
+        Gets the context to be used in _hook_create_invoice
+
+        US-8585: for now only "from_refund_button" is handled, the context is otherwise empty in order not to break the current behavior.
+        """
+        if context and context.get('from_refund_button'):
+            inv_context = {'from_refund_button': True}
+        else:
+            inv_context = {}
+        return inv_context
+
+    def _hook_create_invoice(self, cr, uid, data, form, context=None):
         """
         Permits to adapt invoice creation
         """
-        res = self.pool.get('account.invoice').create(cr, uid, data, {})
+        inv_context = self._get_invoice_context(context)
+        res = self.pool.get('account.invoice').create(cr, uid, data, context=inv_context)
         return res
 
     def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form, context=None):
@@ -264,7 +277,7 @@ class account_invoice_refund(osv.osv_memory):
                         })
                         for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
                             invoice[field] = invoice[field] and invoice[field][0]
-                        inv_id = self._hook_create_invoice(cr, uid, invoice, form)
+                        inv_id = self._hook_create_invoice(cr, uid, invoice, form, context=context)
                         if inv.payment_term.id:
                             data = inv_obj.onchange_payment_term_date_invoice(cr, uid, [inv_id], inv.payment_term.id, date)
                             if 'value' in data and data['value']:
@@ -305,6 +318,9 @@ class account_invoice_refund(osv.osv_memory):
             return result
 
     def invoice_refund(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context.update({'from_refund_button': True})
         data_refund = self.read(cr, uid, ids[0], ['filter_refund'], context=context)['filter_refund']
         return self.compute_refund(cr, uid, ids, data_refund, context=context)
 

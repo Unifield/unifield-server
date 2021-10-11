@@ -143,7 +143,7 @@ class account_invoice_refund(osv.osv_memory):
         else:
             return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, context=context)
 
-    def _hook_create_invoice(self, cr, uid, data, form, *args):
+    def _hook_create_invoice(self, cr, uid, data, form, context=None):
         """
         Permits to adapt invoice creation
         """
@@ -151,7 +151,7 @@ class account_invoice_refund(osv.osv_memory):
             self.pool.get('finance.tools').check_document_date(cr, uid,
                                                                form['document_date'], form['date'])
             data.update({'document_date': form['document_date']})
-        return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form)
+        return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form, context=context)
 
     def _hook_get_period_from_date(self, cr, uid, invoice_id, date=False, period=False):
         """

@@ -1457,7 +1457,7 @@ class account_invoice(osv.osv):
                 invoice[field] = invoice[field] and invoice[field][0]
             invoice = self._hook_refund_data(cr, uid, invoice) or invoice
             # create the new invoice
-            new_ids.append(self.create(cr, uid, invoice))
+            new_ids.append(self.create(cr, uid, invoice, context=context))
 
         return new_ids
 
