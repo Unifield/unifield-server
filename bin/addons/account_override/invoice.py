@@ -703,22 +703,19 @@ class account_invoice(osv.osv):
             - for STV/STR: Intersection customers only
             - for ISI/ISR: Intersection suppliers only
             """
+            partner_domain = ""
             if context.get('doc_type', '') == 'str' or (
                 context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and
                 not context.get('is_debit_note', False) and not context.get('is_intermission', False)
             ):
-                doc = etree.XML(res['arch'])
-                partner_nodes = doc.xpath("//field[@name='partner_id']")
-                partner_domain_stv_str = "[('partner_type', '=', 'section'), ('customer', '=', True)]"
-                for node in partner_nodes:
-                    node.set('domain', partner_domain_stv_str)
-                res['arch'] = etree.tostring(doc)
+                partner_domain = "[('partner_type', '=', 'section'), ('customer', '=', True)]"
             elif context.get('doc_type', '') in ('isi', 'isr'):
+                partner_domain = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
+            if partner_domain:
                 doc = etree.XML(res['arch'])
                 partner_nodes = doc.xpath("//field[@name='partner_id']")
-                partner_domain_isi_isr = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
                 for node in partner_nodes:
-                    node.set('domain', partner_domain_isi_isr)
+                    node.set('domain', partner_domain)
                 res['arch'] = etree.tostring(doc)
         return res
 
