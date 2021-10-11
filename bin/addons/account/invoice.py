@@ -390,11 +390,14 @@ class account_invoice(osv.osv):
             view_id = view_id[0]
         res = super(account_invoice,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
 
-        type = context.get('journal_type', 'sale')
         if 'journal_id' in res['fields']:
-            filter_journal = [('type', '=', type), ('is_current_instance','=',True)]
-            if type == 'inkind' and context.get('is_inkind_donation'):
+            jtype = context.get('journal_type', 'sale')
+            if jtype == 'inkind' and context.get('is_inkind_donation'):
                 filter_journal = [('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]
+            elif context.get('doc_type') in ('isi', 'isr'):
+                filter_journal = [('type', '=', 'purchase'), ('code', '=', 'ISI'), ('is_current_instance', '=', True)]
+            else:
+                filter_journal = [('type', '=', jtype), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)]
             journal_select = journal_obj._name_search(cr, uid, '', filter_journal, context=context, limit=None, name_get_uid=1)
             res['fields']['journal_id']['selection'] = journal_select
 

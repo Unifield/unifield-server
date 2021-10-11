@@ -561,11 +561,16 @@ class account_invoice(osv.osv):
             }
             if doc_type == 'str':
                 journal_type = 'sale'
+            elif doc_type in ('isi', 'isr'):
+                journal_type = 'purchase'
             else:
                 journal_type = ass.get(ctype, 'purchase')
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [
-                ('company_id', '=', company_id), ('type', '=', journal_type), ('is_current_instance', '=', True)
-            ], order='id')
+            journal_dom = [('type', '=', journal_type), ('is_current_instance', '=', True)]
+            if doc_type in ('isi', 'isr'):
+                journal_dom.append(('code', '=', 'ISI'))
+            else:
+                journal_dom.append(('code', '!=', 'ISI'))
+            journal_ids = self.pool.get('account.journal').search(cr, uid, journal_dom, order='id')
             if not journal_ids:
                 raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (journal_type, ))
             res['value']['journal_id'] = journal_ids[0]
