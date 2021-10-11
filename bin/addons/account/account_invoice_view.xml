@@ -694,5 +694,30 @@
         </record>
         <menuitem action="action_isi" id="menu_action_isi" parent="menu_finance_payables" sequence="20"/>
 
+        <!-- INTERSECTION SUPPLIER REFUNDS -->
+        <record id="action_isr" model="ir.actions.act_window">
+            <field name="name">Intersection Supplier Refunds</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field eval="False" name="view_id"/>
+            <field name="domain">[('doc_type', '=', 'isr')]</field>
+            <field name="context">{'doc_type': 'isr', 'type': 'in_refund'}</field>
+            <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Refunds -->
+        </record>
+        <record id="action_isr_tree" model="ir.actions.act_window.view">
+            <field eval="50" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="invoice_tree"/> <!-- default tree view -->
+            <field name="act_window_id" ref="action_isr"/>
+        </record>
+        <record id="action_isr_form" model="ir.actions.act_window.view">
+            <field eval="55" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="invoice_form"/>
+            <field name="act_window_id" ref="action_isr"/>
+        </record>
+        <menuitem action="action_isr" id="menu_action_isr" parent="menu_finance_payables" sequence="22"/>
+
     </data>
 </openerp>
