@@ -593,7 +593,7 @@
             <field name="search_view_id" ref="view_account_invoice_filter"/>
             <field name="help">With Supplier Invoices you can enter and manage invoices issued by your suppliers. OpenERP can also generate draft invoices automatically from purchase orders or receipts. This way, you can control the invoice from your supplier according to what you purchased or received.</field>
         </record>
-        <menuitem action="action_invoice_tree2" id="menu_action_invoice_tree2" parent="menu_finance_payables"/>
+        <menuitem action="action_invoice_tree2" id="menu_action_invoice_tree2" parent="menu_finance_payables" sequence="10"/>
 
         <record id="action_invoice_tree3" model="ir.actions.act_window">
             <field name="name">Customer Refunds</field>
@@ -633,7 +633,7 @@
             <field name="search_view_id" ref="view_account_invoice_filter"/>
             <field name="help">With Supplier Refunds you can manage the credit notes you receive from your suppliers. A refund is a document that credits an invoice completely or partially. You can easily generate refunds and reconcile them directly from the invoice form.</field>
         </record>
-        <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables"/>
+        <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables" sequence="12"/>
 
         <act_window context="{'search_default_partner_id':[active_id]}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner"/>
 
@@ -692,7 +692,7 @@
             <field name="view_id" ref="invoice_form"/>
             <field name="act_window_id" ref="action_isi"/>
         </record>
-        <menuitem action="action_isi" id="menu_action_isi" parent="menu_finance_payables" sequence="4"/>
+        <menuitem action="action_isi" id="menu_action_isi" parent="menu_finance_payables" sequence="20"/>
 
     </data>
 </openerp>

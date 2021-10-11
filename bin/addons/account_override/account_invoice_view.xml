@@ -1047,13 +1047,13 @@
         <menuitem action="action_debit_note" id="menu_action_debit_note" parent="account.menu_finance_receivables" sequence="10"/>
 
         <!-- In-kind Donation Menu in "Supplier Invoices" -->
-        <menuitem action="action_inkind_donation" id="menu_action_inkind_donation" parent="account.menu_finance_payables" sequence="11"/>
+        <menuitem action="action_inkind_donation" id="menu_action_inkind_donation" parent="account.menu_finance_payables" sequence="30"/>
 
         <!-- Intermission Voucher OUT in "Customer Invoices" -->
-        <menuitem action="action_intermission_out" id="menu_action_intermission_out" parent="account.menu_finance_receivables" sequence="10"/>
+        <menuitem action="action_intermission_out" id="menu_action_intermission_out" parent="account.menu_finance_receivables" sequence="12"/>
 
         <!-- Intermission Voucher IN in "Supplier Invoices" -->
-        <menuitem action="action_intermission_in" id="menu_action_intermission_in" parent="account.menu_finance_payables" sequence="12"/>
+        <menuitem action="action_intermission_in" id="menu_action_intermission_in" parent="account.menu_finance_payables" sequence="40"/>
 
         <!--
             Account invoice report redefinition
