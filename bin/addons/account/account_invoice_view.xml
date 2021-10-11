@@ -282,7 +282,9 @@
                         </page>
                         <page string="Other Info">
                             <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)"/>
-                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" widget="selection" groups="base.group_multi_company"/>
+                            <field name="company_id"
+                                   on_change="onchange_company_id(company_id, partner_id, type, invoice_line, currency_id, context)"
+                                   widget="selection" groups="base.group_multi_company"/>
                             <newline/>
                             <field name="payment_term" widget="selection"/>
                             <field name="name"
@@ -714,7 +716,7 @@
         <record id="action_isr_form" model="ir.actions.act_window.view">
             <field eval="55" name="sequence"/>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="invoice_form"/>
+            <field name="view_id" ref="invoice_supplier_form"/>
             <field name="act_window_id" ref="action_isr"/>
         </record>
         <menuitem action="action_isr" id="menu_action_isr" parent="menu_finance_payables" sequence="22"/>

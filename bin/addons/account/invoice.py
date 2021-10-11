@@ -401,9 +401,12 @@ class account_invoice(osv.osv):
             journal_select = journal_obj._name_search(cr, uid, '', filter_journal, context=context, limit=None, name_get_uid=1)
             res['fields']['journal_id']['selection'] = journal_select
 
-        if view_type == 'form' and context.get('type', 'out_invoice') == 'in_refund':
+        if view_type == 'form' and (context.get('type', 'out_invoice') == 'in_refund' or context.get('doc_type', '') == 'isr'):
             doc = etree.XML(res['arch'])
-            doc.attrib['string'] = _('Supplier Refund')
+            if context.get('doc_type', '') == 'isr':
+                doc.attrib['string'] = _('Intersection Supplier Refund')
+            else:
+                doc.attrib['string'] = _('Supplier Refund')
             nodes = doc.xpath("//field[@name='amount_to_pay']")
             for node in nodes:
                 node.set('string', _('Amount to be refunded'))
