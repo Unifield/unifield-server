@@ -691,7 +691,7 @@
         <record id="action_isi_form" model="ir.actions.act_window.view">
             <field eval="45" name="sequence"/>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="invoice_form"/>
+            <field name="view_id" ref="invoice_supplier_form"/>
             <field name="act_window_id" ref="action_isi"/>
         </record>
         <menuitem action="action_isi" id="menu_action_isi" parent="menu_finance_payables" sequence="20"/>
