@@ -419,7 +419,7 @@ class account_invoice(osv.osv):
             if context.get('from_wizard') and context.get('from_wizard')['model'] == 'wizard.cash.return':
                 doc.set('hide_new_button', 'True')
             partner_string = _('Customer')
-            if context.get('type', 'out_invoice') in ('in_invoice', 'in_refund'):
+            if context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
                 partner_string = _('Supplier')
             for node in nodes:
                 node.set('string', partner_string)
