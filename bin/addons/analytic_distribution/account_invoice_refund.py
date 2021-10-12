@@ -42,9 +42,13 @@ class account_invoice_refund(osv.osv_memory):
         # in case of a DI refund from a register line use the dir_invoice_id in context
         doc_to_refund_id = context.get('dir_invoice_id', False) or (context.get('active_ids') and context['active_ids'][0])
         if doc_to_refund_id:
-            source = obj_inv.read(cr, uid, doc_to_refund_id, ['type', 'is_intermission', 'doc_type'], context=context)
+            source = obj_inv.read(cr, uid, doc_to_refund_id, ['type', 'is_intermission', 'doc_type', 'journal_id'], context=context)
             if source['doc_type'] == 'stv':
-                args = [('type', '=', 'sale')]
+                if source['journal_id']:
+                    # by default use the same journal for the refund
+                    args = [('id', '=', source['journal_id'][0])]
+                else:
+                    args = [('type', '=', 'sale')]
             elif source['doc_type'] == 'isi':
                 args = [('type', '=', 'purchase'), ('code', '=', 'ISI')]
             elif source['is_intermission']:
