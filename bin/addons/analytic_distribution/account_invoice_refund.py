@@ -33,7 +33,6 @@ class account_invoice_refund(osv.osv_memory):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
-        # @@@override@account.wizard.account_invoice_refund.py
         obj_journal = self.pool.get('account.journal')
         obj_inv = self.pool.get('account.invoice')
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
