@@ -32,11 +32,11 @@ class account_invoice_refund(osv.osv_memory):
 
     def _get_filter_refund(self, cr, uid, context=None):
         """
-        Returns the selectable Refund Types (no simple "Refund" in case of an IVO/IVI)
+        Returns the selectable Refund Types (no simple "Refund" in case of an IVO/IVI or STV)
         """
         if context is None:
             context = {}
-        if context.get('is_intermission', False):
+        if context.get('is_intermission', False) or context.get('doc_type', '') == 'stv':
             return [('modify', 'Modify'), ('cancel', 'Cancel')]
         return [('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')]
 
@@ -149,6 +149,11 @@ class account_invoice_refund(osv.osv_memory):
                     if inv.is_intermission:
                         # error specific to IVO/IVI for which there is no simple refund option
                         raise osv.except_osv(_('Error !'), _('Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first.') % _(mode))
+                    if inv.doc_type == 'stv':
+                        # error specific to STV for which there is no simple refund option
+                        raise osv.except_osv(_('Error !'),
+                                             _('Cannot %s a Stock Transfer Voucher which is already reconciled, '
+                                               'it should be unreconciled first.') % _(mode))
                     if inv.state == 'inv_close':
                         raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first.') % (mode))
                     else:

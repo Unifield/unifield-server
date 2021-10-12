@@ -102,7 +102,8 @@ class account_invoice_refund(osv.osv_memory):
     _columns = {
         'date': fields.date('Posting date'),
         'document_date': fields.date('Document Date', required=True),
-        'is_intermission': fields.boolean("Wizard opened from an Intermission Voucher", readonly=True)
+        'is_intermission': fields.boolean("Wizard opened from an Intermission Voucher", readonly=True),
+        'is_intersection': fields.boolean("Wizard opened from a Stock Transfer Voucher", readonly=True),
     }
 
     def _get_refund(self, cr, uid, context=None):
@@ -111,7 +112,7 @@ class account_invoice_refund(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if context.get('is_intermission', False):
+        if context.get('is_intermission', False) or context.get('doc_type', '') == 'stv':
             return 'modify'
         return 'refund'  # note that only the "Refund" option is available in DI
 
@@ -123,11 +124,20 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         return context.get('is_intermission', False)
 
+    def _get_is_intersection(self, cr, uid, context=None):
+        """
+        Returns True if the wizard has been opened from a Stock Transfer Voucher
+        """
+        if context is None:
+            context = {}
+        return context.get('doc_type', '') == 'stv'
+
     _defaults = {
         'document_date': _get_document_date,
         'filter_refund': _get_refund,
         'journal_id': _get_journal,  # US-193
         'is_intermission': _get_is_intermission,
+        'is_intersection': _get_is_intersection,
     }
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
