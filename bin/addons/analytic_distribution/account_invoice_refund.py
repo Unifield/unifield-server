@@ -42,8 +42,12 @@ class account_invoice_refund(osv.osv_memory):
         # in case of a DI refund from a register line use the dir_invoice_id in context
         doc_to_refund_id = context.get('dir_invoice_id', False) or (context.get('active_ids') and context['active_ids'][0])
         if doc_to_refund_id:
-            source = obj_inv.read(cr, uid, doc_to_refund_id, ['type', 'is_intermission'], context=context)
-            if source['is_intermission']:
+            source = obj_inv.read(cr, uid, doc_to_refund_id, ['type', 'is_intermission', 'doc_type'], context=context)
+            if source['doc_type'] == 'stv':
+                args = [('type', '=', 'sale')]
+            elif source['doc_type'] == 'isi':
+                args = [('type', '=', 'purchase'), ('code', '=', 'ISI')]
+            elif source['is_intermission']:
                 args = [('type', '=', 'intermission')]
             elif source['type'] in ('in_invoice', 'in_refund'):
                 args = [('type', '=', 'purchase_refund')]
@@ -68,17 +72,24 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         journal_obj = self.pool.get('account.journal')
         res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        jtype = 'sale_refund'
-        if context.get('journal_type'):
-            jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
-        if jtype in ('sale', 'sale_refund'):
+        if context.get('doc_type', '') == 'stv':
+            jtype = 'sale'
+        elif context.get('doc_type', '') == 'isi':
+            jtype = 'purchase'
+        else:
             jtype = 'sale_refund'
-        elif jtype != 'intermission':  # for IVO/IVI keep using the Interm. journal
-            jtype = 'purchase_refund'
+            if context.get('journal_type'):
+                jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
+            if jtype in ('sale', 'sale_refund'):
+                jtype = 'sale_refund'
+            elif jtype != 'intermission':  # for IVO/IVI keep using the Interm. journal
+                jtype = 'purchase_refund'
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         for field in res['fields']:
             if field == 'journal_id' and user.company_id.instance_id:
                 journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True)]
+                if context.get('doc_type', '') == 'isi':
+                    journal_domain.append(('code', '=', 'ISI'))
                 journal_select = journal_obj._name_search(cr, uid, '', journal_domain, context=context, limit=None, name_get_uid=1)
                 res['fields'][field]['selection'] = journal_select
                 res['fields'][field]['domain'] = journal_domain
