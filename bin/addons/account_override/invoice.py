@@ -705,14 +705,15 @@ class account_invoice(osv.osv):
             - for SI/SR: non-Intersection suppliers only
             """
             partner_domain = ""
-            if context.get('doc_type', '') == 'str' or (
+            if context.get('doc_type', '') in ('stv', 'str') or (
                 context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and
                 not context.get('is_debit_note', False) and not context.get('is_intermission', False)
             ):
                 partner_domain = "[('partner_type', '=', 'section'), ('customer', '=', True)]"
             elif context.get('doc_type', '') in ('isi', 'isr'):
                 partner_domain = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
-            elif (context.get('type') == 'in_invoice' and context.get('journal_type') == 'purchase') or \
+            elif (context.get('doc_type', '') in ('si', 'sr')) or \
+                (context.get('type') == 'in_invoice' and context.get('journal_type') == 'purchase') or \
                 (context.get('type') == 'in_refund' and context.get('journal_type') == 'purchase_refund'):
                 partner_domain = "[('partner_type', '!=', 'section'), ('supplier', '=', True)]"
             if partner_domain:
