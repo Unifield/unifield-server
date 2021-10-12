@@ -637,7 +637,33 @@
         </record>
         <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables" sequence="12"/>
 
-        <act_window context="{'search_default_partner_id':[active_id]}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner"/>
+
+        <record id="generic_invoice_tree" model="ir.ui.view">
+            <field name="name">account.invoice.generic.tree</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="100" />
+            <field name="arch" type="xml">
+                <tree colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                    <button name="invoice_open_form_view" string="Display Invoice" icon="gtk-go-forward" type="object"/>
+                    <field name="doc_type"/>
+                    <field name="date_invoice"/>
+                    <field name="number"/>
+                    <field name="partner_id" />
+                    <field name="name"/>
+                    <field name="date_due"/>
+                    <field name="origin"/>
+                    <field name="line_count"/>
+                    <field name="currency_id"/>
+                    <field name="residual" sum="Residual Amount"/>
+                    <field name="amount_untaxed" sum="Untaxed Amount"/>
+                    <field name="amount_total" sum="Total Amount"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+        <act_window context="{'search_default_partner_id':[active_id]}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner" view_id="generic_invoice_tree" view_mode="tree" search_view_id="view_account_invoice_filter"/>
+
 
         <act_window
            id="act_account_journal_2_account_invoice_opened"

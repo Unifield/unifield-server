@@ -253,6 +253,25 @@ class account_invoice(osv.osv):
                 ('unknown', 'Unknown'),
                 ]
 
+    _invoice_action_act_window = {
+        'dn': 'account_override.action_debit_note',
+        'donation': 'account_override.action_inkind_donation',
+        'ivi': 'account_override.action_intermission_in',
+        'ivo': 'account_override.action_intermission_out',
+        'di': 'register_accounting.action_direct_invoice',
+        'si': 'account.action_invoice_tree2',
+        'sr': 'account.action_invoice_tree4',
+        'stv': 'account.action_invoice_tree1',
+        'cr': 'account.action_invoice_tree3',
+        'str': 'account.action_str',
+        'isi': 'account.action_isi',
+        'isr': 'account.action_isr',
+    }
+
+    def _get_invoice_act_window(self, cr, uid, invoice_id, views_order=None, context=None):
+        inv_doc_type = self.read(cr, uid, invoice_id, ['doc_type'], context=context)['doc_type']
+        return self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, self._invoice_action_act_window[inv_doc_type], views_order=views_order, context=context)
+
     def _get_doc_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Returns a dict with key = id of the account.invoice, and value = doc type (see the list of types in _get_invoice_type_list).
