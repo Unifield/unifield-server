@@ -376,20 +376,19 @@ Importation completed in %s!
 
     def get_invoice_view_name(self, cr, uid, invoice_id, context=None):
         '''
-        get the name of the view corresponding to the invoice (using the
-        domain to find which type it is)
+        get the name of the view corresponding to the invoice
         '''
         invoice_obj = self.pool.get('account.invoice')
         action_xmlid = {
-            'si': 'account_action.invoice_tree2',
+            'si': 'account.action_invoice_tree2',
             'sr': 'account.action_invoice_tree4',
             'stv': 'account.action_invoice_tree1',
             'str': 'account.action_str',
             'cr': 'account.action_invoice_tree3',
             'ivi': 'account_override.action_intermission_in',
             'ivo': 'account_override.action_intermission_out',
-            'isi': 'account.action_isi', # TODO ?
-            'isr': 'account?action_isr', # TODO ?
+            'isi': 'account.action_isi',
+            'isr': 'account.action_isr',
         }
         inv_doc_type = invoice_obj.read(cr, uid, invoice_id, ['doc_type'], context=context)['doc_type']
         return self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xmlid[inv_doc_type], views_order=['form', 'tree'], context=context)
