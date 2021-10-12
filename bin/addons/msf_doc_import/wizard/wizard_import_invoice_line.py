@@ -373,27 +373,6 @@ Importation completed in %s!
                 self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (invoice_name or _('the object'), )})
         return False
 
-
-    def get_invoice_view_name(self, cr, uid, invoice_id, context=None):
-        '''
-        get the name of the view corresponding to the invoice (using the
-        domain to find which type it is)
-        '''
-        invoice_obj = self.pool.get('account.invoice')
-        action_xmlid = {
-            'si': 'account_action.invoice_tree2',
-            'sr': 'account.action_invoice_tree4',
-            'stv': 'account.action_invoice_tree1',
-            'str': 'account.action_str',
-            'cr': 'account.action_invoice_tree3',
-            'ivi': 'account_override.action_intermission_in',
-            'ivo': 'account_override.action_intermission_out',
-            'isi': 'account.action_isi', # TODO ?
-            'isr': 'account?action_isr', # TODO ?
-        }
-        inv_doc_type = invoice_obj.read(cr, uid, invoice_id, ['doc_type'], context=context)['doc_type']
-        return self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xmlid[inv_doc_type], views_order=['form', 'tree'], context=context)
-
     def cancel(self, cr, uid, ids, context=None):
         '''
         Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
@@ -403,7 +382,7 @@ Importation completed in %s!
             ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['invoice_id']):
             invoice_id = wiz_obj['invoice_id']
-            view_data = self.get_invoice_view_name(cr, uid, invoice_id, context=context)
+            view_data = self.pool.get('account.invoice')._get_invoice_act_window(cr, uid, invoice_id, views_order=['form', 'tree'], context=context)
             view_data['res_id'] = invoice_id
             return view_data
 

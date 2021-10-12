@@ -28,7 +28,7 @@ from osv import fields, osv, orm
 from tools.translate import _
 from msf_partner import PARTNER_TYPE
 from base import currency_date
-
+from tools.safe_eval import safe_eval
 
 class account_invoice(osv.osv):
     def _amount_all(self, cr, uid, ids, name, args, context=None):
@@ -641,7 +641,6 @@ class account_invoice(osv.osv):
 
     def onchange_company_id(self, cr, uid, ids, company_id, part_id, type, invoice_line, currency_id, context=None):
         val = {}
-        obj_journal = self.pool.get('account.journal')
         account_obj = self.pool.get('account.account')
         inv_line_obj = self.pool.get('account.invoice.line')
         if company_id and part_id and type:
@@ -1580,6 +1579,20 @@ class account_invoice(osv.osv):
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'account.invoice', inv_id, {},
                                                                                   'account.invoice.update_counterpart_inv', self._logger, check_identifier=False, context=context)
         return True
+
+    def invoice_open_form_view(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        view_data = self._get_invoice_act_window(cr, uid, ids[0], views_order=['form', 'tree'], context=context)
+        view_data['res_id'] = ids[0]
+        view_data['target'] = 'current'
+        if context.get('search_default_partner_id'):
+            dom = []
+            if view_data['domain']:
+                dom = safe_eval(view_data['domain'])
+            dom.append(('partner_id', '=', context.get('search_default_partner_id')))
+            view_data['domain'] = dom
+        return view_data
 
 account_invoice()
 
