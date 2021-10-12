@@ -1347,8 +1347,8 @@ class account_invoice(osv.osv):
         """
         res = [
             'name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id',
-            'partner_contact', 'partner_insite', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line', 'journal_id',
-            'analytic_distribution_id', 'document_date',
+            'partner_contact', 'partner_insite', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line',
+            'journal_id', 'analytic_distribution_id', 'document_date', 'doc_type',
         ]
         return res
 
@@ -1424,10 +1424,24 @@ class account_invoice(osv.osv):
             else:
                 refund_journal_ids = obj_journal.search(cr, uid, [('type','=','sale_refund')])
 
+            if invoice.get('doc_type') == 'stv':
+                doc_type = 'str'
+            elif invoice.get('doc_type') == 'isi':
+                doc_type = 'isr'
+            elif invoice.get('doc_type') in ('si', 'di'):
+                doc_type = 'sr'
+            elif invoice.get('doc_type') == 'ivo':
+                doc_type = 'ivi'
+            elif invoice.get('doc_type') == 'ivi':
+                doc_type = 'ivo'
+            else:
+                doc_type = ''
+
             if not date:
                 date = time.strftime('%Y-%m-%d')
             invoice.update({
                 'type': type_dict[invoice['type']],
+                'real_doc_type': doc_type,
                 'date_invoice': date,
                 'state': 'draft',
                 'number': False,
