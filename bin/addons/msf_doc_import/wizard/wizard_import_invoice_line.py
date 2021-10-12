@@ -373,39 +373,6 @@ Importation completed in %s!
                 self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (invoice_name or _('the object'), )})
         return False
 
-    def get_invoice_view(self, cr, uid, invoice_id, view_name, domain, context=None):
-        if view_name in ('view_intermission_form'):
-            module = 'account_override'
-        else:
-            module = 'account'
-        if view_name:
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
-            view_id = view_id and view_id[1] or False
-            tree_view = self.pool.get('ir.model.data').get_object_reference(cr,
-                                                                            uid, 'account', 'invoice_tree')
-            tree_view_id = tree_view and tree_view[1] or False
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'account.invoice',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'view_id': [view_id],
-                'views': [(view_id, 'form'), (tree_view_id, 'tree')],
-                'domain': domain,
-                'target': 'crush',
-                'res_id': invoice_id,
-                'context': context,
-            }
-        # if no view_name match, return the defaut accout.invoice view
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'account.invoice',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'domain': domain,
-                'target': 'crush',
-                'res_id': invoice_id,
-                'context': context,
-                }
 
     def get_invoice_view_name(self, cr, uid, invoice_id, context=None):
         '''
@@ -413,39 +380,19 @@ Importation completed in %s!
         domain to find which type it is)
         '''
         invoice_obj = self.pool.get('account.invoice')
-        domain_list = [
-            {
-                'view_name':'invoice_supplier_form',
-                'domain': [('doc_type', '=', 'si')]
-            },
-            {
-                'view_name': 'invoice_supplier_form',
-                'domain': [('doc_type', '=', 'sr')],
-            },
-            {
-                'view_name': 'invoice_form',
-                'domain': [('doc_type', '=', 'stv')],
-            },
-            {
-                'view_name': 'invoice_form',
-                'domain': [('doc_type', '=', 'cr')],
-            },
-            {
-                'view_name': 'view_intermission_form',
-                'domain': [('doc_type', '=', 'ivi')],
-            },
-            {
-                'view_name': 'view_intermission_form',
-                'domain': [('doc_type', '=', 'ivo')],
-            },
-        ]
-
-        for domain_dict in domain_list:
-            domain = domain_dict['domain']
-            domain += [('id', '=', invoice_id)]
-            if invoice_obj.search_exist(cr, uid, domain, context=context):
-                return domain_dict['view_name'], domain_dict['domain']
-        return None
+        action_xmlid = {
+            'si': 'account_action.invoice_tree2',
+            'sr': 'account.action_invoice_tree4',
+            'stv': 'account.action_invoice_tree1',
+            'str': 'account.action_str',
+            'cr': 'account.action_invoice_tree3',
+            'ivi': 'account_override.action_intermission_in',
+            'ivo': 'account_override.action_intermission_out',
+            'isi': 'account.action_isi', # TODO ?
+            'isr': 'account?action_isr', # TODO ?
+        }
+        inv_doc_type = invoice_obj.read(cr, uid, invoice_id, ['doc_type'], context=context)['doc_type']
+        return self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xmlid[inv_doc_type], views_order=['form', 'tree'], context=context)
 
     def cancel(self, cr, uid, ids, context=None):
         '''
@@ -456,9 +403,9 @@ Importation completed in %s!
             ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['invoice_id']):
             invoice_id = wiz_obj['invoice_id']
-            view_name, domain = self.get_invoice_view_name(cr, uid, invoice_id, context=context)
-            return self.get_invoice_view(cr, uid, invoice_id, view_name,
-                                         domain=domain, context=context)
+            view_data = self.get_invoice_view_name(cr, uid, invoice_id, context=context)
+            view_data['res_id'] = invoice_id
+            return view_data
 
     def close_import(self, cr, uid, ids, context=None):
         '''
