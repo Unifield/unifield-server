@@ -867,7 +867,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'dn')]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}</field>
+            <field name="context">{'doc_type': 'dn', 'type': 'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -934,7 +934,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'donation')]</field>
-            <field name="context">{'type': 'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_open': 1}</field>
+            <field name="context">{'doc_type': 'donation', 'type': 'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_open': 1}</field>
             <field name="search_view_id" ref="view_account_invoice_filter_donation"/>
         </record>
 
@@ -962,7 +962,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'ivo')]</field>
-            <field name="context">{'type': 'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
+            <field name="context">{'doc_type': 'ivo', 'type': 'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -990,7 +990,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field name="view_id" ref="view_intermission_form"/>
             <field name="domain">[('doc_type', '=', 'ivi')]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True}</field>
+            <field name="context">{'doc_type': 'ivi', 'type': 'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -1018,7 +1018,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'stv')]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
+            <field name="context">{'doc_type': 'stv', 'type': 'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>
@@ -1032,7 +1032,7 @@
             <field eval="False" name="view_id"/>
             <!-- US-2704 if the domain change, do not forget to update the domain of account_board_supplier_invoice_draft in finance/board_account_view.xml -->
             <field name="domain">[('doc_type', '=', 'si')]</field>
-            <field name="context">{'type': 'in_invoice', 'journal_type': 'purchase', 'from_inv_form': True}</field>
+            <field name="context">{'doc_type': 'si', 'type': 'in_invoice', 'journal_type': 'purchase', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Supplier Invoices you can enter and manage invoices issued by your suppliers.
                 OpenERP can also generate draft invoices automatically from purchase orders or receipts. This way, you can control the invoice

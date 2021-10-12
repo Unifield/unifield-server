@@ -223,7 +223,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field name="view_id" ref="direct_supplier_invoice_form"/>
             <field name="domain">[('doc_type', '=', 'di')]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
+            <field name="context">{'doc_type': 'di', 'type': 'in_invoice', 'journal_type': 'purchase'}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Supplier Direct Invoices you can enter and manage direct invoices issued by your user into Registers.</field>
         </record>
