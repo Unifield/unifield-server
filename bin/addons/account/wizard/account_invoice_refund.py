@@ -240,6 +240,7 @@ class account_invoice_refund(osv.osv_memory):
                         source_doc = invoice.get('number', False)
                         invoice.update({
                             'type': inv.type,
+                            'real_doc_type': inv.doc_type or '',
                             'date_invoice': date,
                             'state': 'draft',
                             'number': False,
