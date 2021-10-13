@@ -18,6 +18,7 @@
             model="replenishment.segment"
             name="report_replenishment_segment_xls"
             file="procurement_cycle/report/replenishment_segment.mako"
+            target_filename="${name_seg}_%(year)s_%(month)s_%(day)s"
             report_type="webkit"
             menu="True"
             />
