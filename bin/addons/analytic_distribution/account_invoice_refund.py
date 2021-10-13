@@ -103,7 +103,8 @@ class account_invoice_refund(osv.osv_memory):
         'date': fields.date('Posting date'),
         'document_date': fields.date('Document Date', required=True),
         'is_intermission': fields.boolean("Wizard opened from an Intermission Voucher", readonly=True),
-        'is_intersection': fields.boolean("Wizard opened from a Stock Transfer Voucher", readonly=True),
+        'is_stv': fields.boolean("Wizard opened from a Stock Transfer Voucher", readonly=True),
+        'is_isi': fields.boolean("Wizard opened from an Intersection Supplier Invoice", readonly=True),
     }
 
     def _get_refund(self, cr, uid, context=None):
@@ -124,7 +125,7 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         return context.get('is_intermission', False)
 
-    def _get_is_intersection(self, cr, uid, context=None):
+    def _get_is_stv(self, cr, uid, context=None):
         """
         Returns True if the wizard has been opened from a Stock Transfer Voucher
         """
@@ -132,12 +133,21 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         return context.get('doc_type', '') == 'stv'
 
+    def _get_is_isi(self, cr, uid, context=None):
+        """
+        Returns True if the wizard has been opened from an Intersection Supplier Invoice
+        """
+        if context is None:
+            context = {}
+        return context.get('doc_type', '') == 'isi'
+
     _defaults = {
         'document_date': _get_document_date,
         'filter_refund': _get_refund,
         'journal_id': _get_journal,  # US-193
         'is_intermission': _get_is_intermission,
-        'is_intersection': _get_is_intersection,
+        'is_stv': _get_is_stv,
+        'is_isi': _get_is_isi,
     }
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
