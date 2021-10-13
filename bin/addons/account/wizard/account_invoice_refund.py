@@ -32,13 +32,17 @@ class account_invoice_refund(osv.osv_memory):
 
     def _get_filter_refund(self, cr, uid, context=None):
         """
-        Returns the selectable Refund Types (no simple "Refund" in case of an IVO/IVI or STV)
+        Returns the selectable Refund Types (no simple "Refund" in case of an IVO/IVI or STV, only Refund/Cancel in case of an ISI)
         """
         if context is None:
             context = {}
+        refund_types = [('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')]
         if context.get('is_intermission', False) or context.get('doc_type', '') == 'stv':
-            return [('modify', 'Modify'), ('cancel', 'Cancel')]
-        return [('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')]
+            refund_types = [('modify', 'Modify'), ('cancel', 'Cancel')]
+        elif context.get('doc_type', '') == 'isi':
+            # note: Refund Cancel is allowed only if the counterpart invoice is closed (handled directly in ISI form)
+            refund_types = [('cancel', 'Cancel')]
+        return refund_types
 
     _columns = {
         'date': fields.date('Operation date', help='This date will be used as the invoice date for Refund Invoice and Period will be chosen accordingly!'),
@@ -146,19 +150,13 @@ class account_invoice_refund(osv.osv_memory):
                 if mode in ('cancel', 'modify') and not inv.account_id.reconcile:
                     raise osv.except_osv(_('Error !'), _("Cannot Cancel / Modify if the account can't be reconciled."))
                 if mode in ('cancel', 'modify') and inv_obj.has_one_line_reconciled(cr, uid, [inv.id], context=context):
-                    if inv.is_intermission:
-                        # error specific to IVO/IVI for which there is no simple refund option
-                        raise osv.except_osv(_('Error !'), _('Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first.') % _(mode))
-                    if inv.doc_type == 'stv':
-                        # error specific to STV for which there is no simple refund option
-                        raise osv.except_osv(_('Error !'),
-                                             _('Cannot %s a Stock Transfer Voucher which is already reconciled, '
-                                               'it should be unreconciled first.') % _(mode))
-                    if inv.state == 'inv_close':
-                        raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first.') % (mode))
+                    if inv.state == 'inv_close' or inv.is_intermission or inv.doc_type in ('stv', 'isi'):
+                        # error msg specific to UC where there is no simple refund option
+                        raise osv.except_osv(_('Error !'), _('Cannot %s an invoice which is already reconciled, '
+                                                             'it should be unreconciled first.') % _(mode))
                     else:
-                        raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice') % (mode))
-
+                        raise osv.except_osv(_('Error !'), _('Cannot %s an invoice which is already reconciled, '
+                                                             'it should be unreconciled first. You can only Refund this invoice.') % _(mode))
                 if mode == 'refund' and inv.state == 'inv_close':
                     raise osv.except_osv(_('Error !'), _('It is not possible to refund a Closed invoice'))
 

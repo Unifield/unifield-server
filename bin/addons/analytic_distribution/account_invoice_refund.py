@@ -105,7 +105,6 @@ class account_invoice_refund(osv.osv_memory):
         'is_intermission': fields.boolean("Wizard opened from an Intermission Voucher", readonly=True),
         'is_stv': fields.boolean("Wizard opened from a Stock Transfer Voucher", readonly=True),
         'is_isi': fields.boolean("Wizard opened from an Intersection Supplier Invoice", readonly=True),
-        'counterpart_inv_status': fields.char('Counterpart Invoice Status', size=24, readonly=True),
     }
 
     def _get_refund(self, cr, uid, context=None):
@@ -116,6 +115,8 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         if context.get('is_intermission', False) or context.get('doc_type', '') == 'stv':
             return 'modify'
+        elif context.get('doc_type', '') == 'isi':
+            return 'cancel'
         return 'refund'  # note that only the "Refund" option is available in DI
 
     def _get_is_intermission(self, cr, uid, context=None):
@@ -142,18 +143,6 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         return context.get('doc_type', '') == 'isi'
 
-    def _get_counterpart_inv_status(self, cr, uid, context=None):
-        """
-        Returns the "Counterpart Invoice Status" of the invoice being refunded
-        """
-        if context is None:
-            context = {}
-        inv_obj = self.pool.get('account.invoice')
-        status = ''
-        if context.get('active_id'):
-            status = inv_obj.read(cr, uid, context['active_id'], ['counterpart_inv_status'])['counterpart_inv_status'] or ''
-        return status
-
     _defaults = {
         'document_date': _get_document_date,
         'filter_refund': _get_refund,
@@ -161,7 +150,6 @@ class account_invoice_refund(osv.osv_memory):
         'is_intermission': _get_is_intermission,
         'is_stv': _get_is_stv,
         'is_isi': _get_is_isi,
-        'counterpart_inv_status': _get_counterpart_inv_status,
     }
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
