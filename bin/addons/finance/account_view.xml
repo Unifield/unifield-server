@@ -2,25 +2,6 @@
 <openerp>
     <data>
 
-    <!-- Account View -->
-        <record id="inherit_view_account_tree" model="ir.ui.view">
-            <field name="name">inherit.view.account.tree</field>
-            <field name="model">account.account</field>
-            <field name="type">tree</field>
-            <field name="field_parent">child_id</field>
-            <field name="inherit_id" ref="account.view_account_tree"/>
-            <field name="priority">19</field>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='type']" position="replace">
-                </xpath>
-                <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="type" invisible="1"/>
-                    <field name="type_for_register" invisible="1"/>
-                    <field name="accrual_account" invisible="1"/>
-                </xpath>
-            </field>
-        </record>
-
     <!--
         Journal Entries
     -->
@@ -149,21 +130,6 @@
             <field name="context">{'from_web_menu': True}</field>
         </record>
 
-    <!-- Account View -->
-        <record id="inherit_view_account_form" model="ir.ui.view">
-            <field name='name'>inherit.view.account.form</field>
-            <field name='model'>account.account</field>
-            <field name="type">form</field>
-            <field name="priority">50</field>
-            <field name='inherit_id' ref='account.view_account_form' />
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="shrink_entries_for_hq"/>
-                    <field name="is_child_of_coa" invisible="1" />
-                    <field name="display_in_reports" attrs="{'invisible': [('is_child_of_coa', '=', False)]}"  />
-                </xpath>
-            </field>
-        </record>
 
     <!-- UF-1715 -->
     <report id="account_partner_balance_tree_xls"

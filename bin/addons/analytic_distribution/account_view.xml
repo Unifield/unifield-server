@@ -41,38 +41,6 @@
             </field>
         </record>
 
-        <record id="view_account_form" model="ir.ui.view">
-            <field name="name">account.form</field>
-            <field name="model">account.account</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="account.view_account_form"/>
-            <field name="priority">25</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='user_type']" position="replace">
-                        <field name="user_type_code" invisible="1"/>
-                        <field name="is_analytic_addicted" invisible="1"/>
-                        <field name="user_type" on_change="onchange_user_type(user_type, code)"/>
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='General Information']" position="after">
-                        <page string="Analytical Destination">
-                            <field name="default_destination_id" colspan="2" 
-                                attrs="{'required': [('is_analytic_addicted', '=', True)], 'readonly': [('is_analytic_addicted', '!=', True)]}"/>
-                            <label string="" colspan="2"/>
-                            <field name="destination_ids" nolabel="1" colspan="4" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
-                                <tree string="Destinations">
-                                    <field name="name"/>
-                                    <field name="description"/>
-                                    <field name="date_start"/>
-                                    <field name="date"/>
-                                </tree>
-                            </field>
-                        </page>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
         <record id="analytic_view_move_form" model="ir.ui.view">
             <field name="name">analytic.view.move.form</field>
             <field name="model">account.move</field>
