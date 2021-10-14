@@ -546,43 +546,6 @@ class account_invoice(osv.osv):
                                                             noupdate=noupdate, context=context, filename=filename,
                                                             display_all_errors=display_all_errors, has_header=has_header)
 
-    def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id, context=None):
-        """
-        This is a method to redefine the journal_id domain with the current_instance taken into account
-        """
-        if context is None:
-            context = {}
-        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, ctype, invoice_line,
-                                                               currency_id, context=context)
-        doc_type = context.get('doc_type', '')
-        if company_id and (ctype or doc_type):
-            res.setdefault('domain', {})
-            res.setdefault('value', {})
-            ass = {
-                'out_invoice': 'sale',
-                'in_invoice': 'purchase',
-                'out_refund': 'sale_refund',
-                'in_refund': 'purchase_refund',
-            }
-            if doc_type == 'str':
-                journal_type = 'sale'
-            elif doc_type in ('isi', 'isr'):
-                journal_type = 'purchase'
-            else:
-                journal_type = ass.get(ctype, 'purchase')
-            journal_dom = [('type', '=', journal_type), ('is_current_instance', '=', True)]
-            if doc_type in ('isi', 'isr'):
-                journal_dom.append(('code', '=', 'ISI'))
-            else:
-                journal_dom.append(('code', '!=', 'ISI'))
-            journal_ids = self.pool.get('account.journal').search(cr, uid, journal_dom, order='id')
-            if not journal_ids:
-                raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (journal_type, ))
-            res['value']['journal_id'] = journal_ids[0]
-            # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
-            res['domain']['journal_id'] = [('id', 'in', journal_ids)]
-        return res
-
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id, date_invoice=False, payment_term=False, partner_bank_id=False,
                             company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False,
                             account_id=False):
