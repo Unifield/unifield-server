@@ -80,25 +80,12 @@ class account_invoice(osv.osv):
 
     def _get_journal(self, cr, uid, context=None):
         """
-        WARNING: This method has been taken from account module from OpenERP
+        Returns the journal to be used by default, depending on the doc type of the selected invoice
         """
         if context is None:
             context = {}
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        if context.get('is_inkind_donation'):
-            args = [('type', 'in', ['inkind', 'extra'])]
-        else:
-            type_inv = context.get('type', 'out_invoice')
-            company_id = context.get('company_id', user.company_id.id)
-            type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
-            refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
-            args = [('type', '=', type2journal.get(type_inv, 'sale')),
-                    ('company_id', '=', company_id),
-                    ('refund_journal', '=', refund_journal.get(type_inv, False))]
-        if user.company_id.instance_id:
-            args.append(('is_current_instance','=',True))
         journal_obj = self.pool.get('account.journal')
-        res = journal_obj.search(cr, uid, args, order='id', limit=1, context=context)
+        res = journal_obj.search(cr, uid, [('inv_doc_type', '=', True)], order='id', limit=1, context=context)
         return res and res[0] or False
 
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
