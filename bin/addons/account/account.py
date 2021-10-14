@@ -580,6 +580,43 @@ account_journal_column()
 class account_journal(osv.osv):
     _name = "account.journal"
     _description = "Journal"
+
+    def _get_false(self, cr, uid, ids, *a, **b):
+        """
+        Returns False for all ids (cf. only the search method is used for this field)
+        """
+        return {}.fromkeys(ids, False)
+
+    def _search_inv_doc_type(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain (based on the context) to get all journals matching with the doc type of the selected invoice
+        """
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        doc_type = context.get('doc_type', '')
+        if doc_type == 'str':
+            journal_types = ['sale']
+        elif doc_type in ('isi', 'isr'):
+            journal_types = ['purchase']
+        elif doc_type == 'donation':
+            journal_types = ['inkind', 'extra']
+        else:
+            journals = {
+                'out_invoice': 'sale',
+                'in_invoice': 'purchase',
+                'out_refund': 'sale_refund',
+                'in_refund': 'purchase_refund',
+            }
+            journal_types = [journals.get(context.get('type', ''), 'purchase')]
+        journal_dom = [('type', 'in', journal_types), ('is_current_instance', '=', True)]
+        if doc_type in ('isi', 'isr'):
+            journal_dom.append(('code', '=', 'ISI'))
+        else:
+            journal_dom.append(('code', '!=', 'ISI'))
+        return journal_dom
+
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True),
         'code': fields.char('Code', size=5, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
@@ -609,6 +646,8 @@ class account_journal(osv.osv):
         'bank_account_name': fields.char('Bank Account Name', size=256, required=False),
         'bank_swift_code': fields.char('Swift Code', size=32, required=False),
         'bank_address': fields.text('Address', required=False),
+        'doc_type': fields.function(_get_false, method=True, type='boolean', string='Document Type', store=False,
+                                    fnct_search=_search_inv_doc_type),
     }
 
     _defaults = {
