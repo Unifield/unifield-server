@@ -844,11 +844,12 @@ class account_invoice(osv.osv):
             i['currency_id'] = inv.currency_id.id
             i['amount_currency'] = i['price']
             i['ref'] = ref
-            if inv.type in ('out_invoice','in_refund'):
+            # the direction of the amounts depends on the invoice type
+            if inv.doc_type in ('stv', 'ivo', 'dn', 'sr', 'isr'):
                 i['price'] = -i['price']
                 i['amount_currency'] = - i['amount_currency']
                 i['change_sign'] = True
-            else:
+            else:  # 'str', 'ivi', 'si', 'di', 'isi', 'cr', 'donation'
                 i['change_sign'] = False
             total -= i['amount_currency']
         return total, invoice_move_lines
