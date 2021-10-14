@@ -82,7 +82,6 @@ class account_invoice(osv.osv):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
-        # @@@override@account.invoice.py
         if context is None:
             context = {}
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
