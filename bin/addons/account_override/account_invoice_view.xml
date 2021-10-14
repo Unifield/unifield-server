@@ -245,7 +245,7 @@
             <field name="arch" type="xml">
                 <form string="Debit Note" hide_duplicate_button="1">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('doc_type', '=', True)]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" width="50"/>
@@ -345,7 +345,7 @@
             <field name="arch" type="xml">
                 <form string="In-kind Donation" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('doc_type', '=', True)]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="is_inkind_donation" invisible="1"/>

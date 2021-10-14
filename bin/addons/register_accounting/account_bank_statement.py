@@ -338,6 +338,7 @@ class account_bank_statement(osv.osv):
             {
                 'active_id': ids[0],
                 'type': 'in_invoice',
+                'doc_type': 'di',
                 'journal_type': 'purchase',
                 'active_ids': ids,
                 'from_wizard_di': 1,
@@ -2830,6 +2831,7 @@ class account_bank_statement_line(osv.osv):
             context.update({
                 'active_id': ids[0],
                 'type': invoice.type,
+                'doc_type': invoice.doc_type,
                 'journal_type': invoice.journal_id.type,
                 'active_ids': ids,
                 'from_register': True,
@@ -2922,6 +2924,9 @@ class account_bank_statement_line(osv.osv):
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
+            'type': invoice.type,
+            'doc_type': invoice.doc_type,
+            'journal_type': invoice.journal_id.type,
         })
         # Open it!
         return {

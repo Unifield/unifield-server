@@ -583,7 +583,7 @@ class account_journal(osv.osv):
 
     def _get_false(self, cr, uid, ids, *a, **b):
         """
-        Returns False for all ids (cf. only the search method is used for this field)
+        Returns False for all ids (cf. only the search method is used for the field)
         """
         return {}.fromkeys(ids, False)
 
@@ -646,8 +646,8 @@ class account_journal(osv.osv):
         'bank_account_name': fields.char('Bank Account Name', size=256, required=False),
         'bank_swift_code': fields.char('Swift Code', size=32, required=False),
         'bank_address': fields.text('Address', required=False),
-        'doc_type': fields.function(_get_false, method=True, type='boolean', string='Document Type', store=False,
-                                    fnct_search=_search_inv_doc_type),
+        'inv_doc_type': fields.function(_get_false, method=True, type='boolean', string='Document Type', store=False,
+                                        fnct_search=_search_inv_doc_type),
     }
 
     _defaults = {

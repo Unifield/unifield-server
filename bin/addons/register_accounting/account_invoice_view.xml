@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group colspan="4" col="6">
-                        <field name="journal_id" domain="[('doc_type', '=', True)]" />
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]" />
                         <field name="number" readonly="1" />
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />
@@ -290,7 +290,7 @@
             <field name="arch" type="xml">
                 <data>
                     <field name="journal_id" position="replace">
-                        <field name="journal_id" domain="[('doc_type', '=', True)]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]"/>
                     </field>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
@@ -332,7 +332,7 @@
                     </xpath>
                     <field name="journal_id" position="replace">
                         <field name="journal_id"
-                               domain="[('doc_type', '=', True)]"
+                               domain="[('inv_doc_type', '=', True)]"
                                attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         <field name="vat_ok" invisible="1" />
                     </field>
