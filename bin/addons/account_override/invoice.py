@@ -1206,9 +1206,9 @@ class account_invoice(osv.osv):
         if inv_type is None:
             inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         account_domain = []
-        if inv_type in ('si', 'di', 'sr'):
+        if inv_type in ('si', 'di', 'sr', 'isi', 'isr'):
             account_domain.append(('restricted_area', '=', 'in_invoice'))
-        elif inv_type in ('stv', 'cr'):
+        elif inv_type in ('stv', 'cr', 'str'):
             account_domain.append(('restricted_area', '=', 'out_invoice'))
         elif inv_type == 'dn':
             account_domain.append(('restricted_area', '=', 'out_invoice'))
@@ -1238,7 +1238,7 @@ class account_invoice(osv.osv):
         if inv_type is None:
             inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         account_domain = []
-        if inv_type in ('si', 'di', 'sr', 'cr'):
+        if inv_type in ('si', 'di', 'sr', 'cr', 'isi', 'isr', 'str'):
             account_domain.append(('restricted_area', '=', 'invoice_lines'))
         elif inv_type == 'stv':
             context.update(({'check_line_stv': True, }))
