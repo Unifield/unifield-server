@@ -1189,11 +1189,14 @@ class account_invoice(osv.osv):
         if inv_type is None:
             inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         # if a supplier/customer is expected for the doc: check that the partner used has the right flag
-        supplier_ko = inv_type in ('si', 'di', 'sr', 'ivi', 'donation') and not partner.supplier
-        customer_ko = inv_type in ('ivo', 'stv', 'dn', 'cr') and not partner.customer
+        # note: SI/SR on Intersection partners and STV on external partners are blocked only at form level (the
+        # validation of old docs should still be possible)
+        supplier_ko = inv_type in ('si', 'di', 'sr', 'ivi', 'donation', 'isi', 'isr') and not partner.supplier
+        customer_ko = inv_type in ('ivo', 'stv', 'dn', 'cr', 'str') and not partner.customer
         if supplier_ko or customer_ko or inv_type in ('ivi', 'ivo') and p_type != 'intermission' or \
             inv_type == 'stv' and p_type not in ('section', 'external') or \
-                inv_type == 'donation' and p_type not in ('esc', 'external', 'section'):
+                inv_type == 'donation' and p_type not in ('esc', 'external', 'section') or \
+                inv_type in ('isi', 'isr', 'str') and p_type != 'section':
             raise osv.except_osv(_('Error'), _("The partner %s is not allowed for this document.") % partner.name)
 
     def _check_header_account(self, cr, uid, inv_id, inv_type=None, context=None):
