@@ -8,12 +8,15 @@
             <field name="model">account.commitment</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Commitment Voucher" hide_duplicate_button="1">
+                <form string="Supplier Commitment Voucher" hide_duplicate_button="1">
                     <group col="6" colspan="4">
                         <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
-                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}"/>
+                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}" string="Supplier"/>
                         <newline/>
                         <field name="name"/>
+                        <field name="cv_flow_type" invisible="1" />
+                        <field name="purchase_id" attrs="{'invisible': [('cv_flow_type', '!=', 'supplier')]}"/>
+                        <field name="sale_id" attrs="{'invisible': [('cv_flow_type', '!=', 'customer')]}"/>
                         <newline/>
                         <field name="date" on_change="onchange_date(date, period_id)"/>
                         <field name="period_id"/>
@@ -70,10 +73,11 @@
             <field name="model">account.commitment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Commitment Voucher" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'">
+                <tree string="Supplier Commitment Voucher" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'">
                     <field name="date"/>
                     <field name="name"/>
-                    <field name="partner_id"/>
+                    <field name="partner_id" string="Supplier"/>
+                    <field name="purchase_id" />
                     <field name="currency_id"/>
                     <field name="total" digits="(16,2)"/>
                     <field name="type"/>
@@ -83,6 +87,95 @@
             </field>
         </record>
 
+
+        <!-- Dedicated from FO views: duplicate CV from PO view and replace fields -->
+        <record model="ir.ui.view" id="account_commitment_fo_tree_copy">
+            <field name="name">account.commitment.fo.tree.copy</field>
+            <field name="model">account.commitment</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="150" />
+            <field name="duplicate_view_id" ref="account_commitment_tree" />
+            <field name="arch" type="xml">
+                <tree />
+            </field>
+        </record>
+        <record model="ir.ui.view" id="account_commitment_fo_tree">
+            <field name="name">account.commitment.fo.tree.copy.inherit</field>
+            <field name="model">account.commitment</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="160" />
+            <field name="inherit_id" ref="account_commitment_fo_tree_copy" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree" position="attributes">
+                    <attribute name="string">Customer Commitment Voucher</attribute>
+                </xpath>
+                <xpath expr="//field[@name='purchase_id']" position="replace">
+                    <field name="sale_id" />
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="attributes">
+                    <attribute name="string">Customer</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="account_commitment_fo_search_copy">
+            <field name="name">account.commitment.fo.search.copy</field>
+            <field name="model">account.commitment</field>
+            <field name="type">search</field>
+            <field name="priority" eval="150" />
+            <field name="duplicate_view_id" ref="account_commitment_search" />
+            <field name="arch" type="xml">
+                <search />
+            </field>
+        </record>
+        <record model="ir.ui.view" id="account_commitment_fo_search">
+            <field name="name">account.commitment.fo.seach.copy.inherit</field>
+            <field name="model">account.commitment</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="160" />
+            <field name="inherit_id" ref="account_commitment_fo_search_copy" />
+            <field name="arch" type="xml">
+                <xpath expr="/search" position="attributes">
+                    <attribute name="string">Customer Commitment Voucher</attribute>
+                </xpath>
+                <xpath expr="//field[@name='purchase_id']" position="replace">
+                    <field name="sale_id" />
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="attributes">
+                    <attribute name="context">{'default_customer': 1, 'search_default_customer': 1, 'default_supplier': 0}</attribute>
+                    <attribute name="string">Customer</attribute>
+                </xpath>
+                <xpath expr="//filter[@string='External']" position="replace" />
+                <xpath expr="//filter[@string='ESC']" position="replace" />
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="account_commitment_fo_form_copy">
+            <field name="name">account.commitment.fo.form.copy</field>
+            <field name="model">account.commitment</field>
+            <field name="type">form</field>
+            <field name="priority" eval="160" />
+            <field name="duplicate_view_id" ref="account_commitment_form" />
+            <field name="arch" type="xml">
+                <form />
+            </field>
+        </record>
+        <record model="ir.ui.view" id="account_commitment_fo_form">
+            <field name="name">account.commitment.fo.form.copy.inherit</field>
+            <field name="model">account.commitment</field>
+            <field name="type">form</field>
+            <field name="priority" eval="160" />
+            <field name="inherit_id" ref="account_commitment_fo_form_copy" />
+            <field name="arch" type="xml">
+                <xpath expr="/form" position="attributes">
+                    <attribute name="string">Customer Commitment Voucher</attribute>
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="attributes">
+                    <attribute name="context">{'default_customer': 1, 'search_default_customer': 1, 'default_supplier': 0}</attribute>
+                    <attribute name="string">Customer</attribute>
+                </xpath>
+            </field>
+        </record>
     <!-- Commitment Lines -->
         <record model="ir.ui.view" id="account_commitment_line_tree">
             <field name="name">account.commitment.line.tree</field>
@@ -139,9 +232,9 @@
                         <newline/>
                         <field name="currency_id" select="1"/>
                         <field name="date" select='1'/>
-                        <field name="partner_id" select='1'/>
+                        <field name="partner_id" select="1" string="Supplier" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"/>
                         <field name="name" select="1"/>
-                        <field name="source_document"/>
+                        <field name="purchase_id"/>
                     </group>
                     <newline/>
                 </search>
@@ -252,16 +345,40 @@
             </field>
         </record>
 
-    <!-- Commitment Voucher Actions -->
+    <!-- Commitment Voucher Actions from PO -->
         <record model="ir.actions.act_window" id="action_account_commitment_tree">
             <field name="res_model">account.commitment</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="account_commitment_tree"/>
             <field name="search_view_id" ref="account_commitment_search"/>
+            <field name="domain">[('cv_flow_type', '=', 'supplier')]</field>
             <!-- US-2704 if a domain is added here, do not forget to update the domain of account_board_commitment_voucher in finance/board_account_view.xml -->
             <field name="context">{'search_default_draft': 1, 'search_default_validated': 1, 'target_filename_prefix': 'Commitment Vouchers'}</field>
         </record>
+    
+    <!-- Commitment Voucher Actions from FO -->
+        <record model="ir.actions.act_window" id="action_account_commitment_from_fo">
+            <field name="res_model">account.commitment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="account_commitment_fo_search_copy"/>
+            <field name="domain">[('cv_flow_type', '=', 'customer')]</field>
+            <field name="context">{'search_default_draft': 1, 'search_default_validated': 1, 'target_filename_prefix': 'Commitment Vouchers'}</field>
+        </record>
+        <record model="ir.actions.act_window.view" id="action_account_commitment_from_fo_tree">
+            <field name="sequence" eval="10"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="account_commitment_fo_tree_copy"/>
+            <field name="act_window_id" ref="action_account_commitment_from_fo"/>
+        </record>
+        <record model="ir.actions.act_window.view" id="action_account_commitment_from_fo_form">
+            <field name="sequence" eval="20"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account_commitment_fo_form_copy"/>
+            <field name="act_window_id" ref="action_account_commitment_from_fo"/>
+        </record>
+
 
         <!-- next 2 views: duplicate AJI form/tree for commitment Lines (only used to link dedicated sidebar entries -->
         <record id="view_account_analytic_line_tree_commline" model="ir.ui.view">
@@ -337,9 +454,10 @@
 
     <!-- Menu -->
         <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="4"/>
-        <menuitem name="Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="1"/>
-        <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
-        <menuitem name="Import Intl Commitments" action="action_import_commitment_wizard" id="menu_import_commitment" parent="menu_commitment" sequence="3"/>
+        <menuitem name="Customer Commitment Voucher" action="action_account_commitment_from_fo" id="menu_account_commitment_from_fo" parent="menu_commitment" sequence="10"/>
+        <menuitem name="Supplier Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="20"/>
+        <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="30"/>
+        <menuitem name="Import Intl Commitments" action="action_import_commitment_wizard" id="menu_import_commitment" parent="menu_commitment" sequence="40"/>
 
     </data>
 

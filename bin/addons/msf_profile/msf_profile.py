@@ -58,7 +58,7 @@ class patch_scripts(osv.osv):
             cr.execute('''update account_commitment_line set line_product_id=po_line_product_id, line_number=po_line_number''')
             cr.execute('''update
                 account_commitment cv
-                set source_document=po.name
+                set cv_flow_type='supplier'
                 from
                     purchase_order po
                 where

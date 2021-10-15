@@ -127,9 +127,9 @@ class account_commitment(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'type': fields.selection(get_cv_type, string="Type", readonly=True),
         'notes': fields.text(string="Comment"),
+        'cv_flow_type': fields.selection([('customer', 'Customer'), ('supplier', 'Supplier')], string="Type of CV"),
         'purchase_id': fields.many2one('purchase.order', string="PO", readonly=True),
         'sale_id': fields.many2one('sale.order', string="FO", readonly=True),
-        'source_document': fields.char('Source Document', size=128, readonly=True),
         'description': fields.char(string="Description", size=256),
         'version': fields.integer('Version', required=True,
                                   help="Technical field to distinguish old CVs from new ones which have a different behavior."),
@@ -169,6 +169,10 @@ class account_commitment(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
+        if vals.get('sale_id'):
+            vals['cv_flow_type'] = 'customer'
+        elif vals.get('purchase_id'):
+            vals['cv_flow_type'] = 'supplier'
         # Add sequence
         sequence_number = self.pool.get('ir.sequence').get(cr, uid, self._name)
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
@@ -455,6 +459,9 @@ class account_commitment(osv.osv):
             ids = [ids]
         # Browse commitments
         for c in self.browse(cr, uid, ids, context=context):
+            sign = 1
+            if c.cv_flow_type == 'customer':
+                sign = -1
             for cl in c.line_ids:
                 # Verify that analytic distribution is present
                 if cl.analytic_distribution_state != 'valid':
@@ -470,7 +477,7 @@ class account_commitment(osv.osv):
                 if not al_ids:
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').\
-                        create_account_analytic_lines(cr, uid, [distrib_id], c.description or c.name, c.date, cl.amount,
+                        create_account_analytic_lines(cr, uid, [distrib_id], c.description or c.name, c.date, sign * cl.amount,
                                                       c.journal_id and c.journal_id.id,
                                                       c.currency_id and c.currency_id.id, c.date or False,
                                                       (c.purchase_id and c.purchase_id.name or c.sale_id and c.sale_id.name) or c.name or False, c.date,
@@ -533,7 +540,7 @@ class account_commitment(osv.osv):
         cv_line_obj = self.pool.get('account.commitment.line')
         cr.execute('''
             select
-                line.id, -1 * line.amount
+                line.id, line.amount
             from
                 account_commitment_line line
             left join
@@ -668,6 +675,9 @@ class account_commitment_line(osv.osv):
         # Prepare some values
         for cl in self.browse(cr, uid, ids, context=context):
             # Browse distribution
+            sign = 1
+            if cl.commit_id.cv_flow_type == 'customer':
+                sign = -1
             distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or False
             if not distrib_id:
                 distrib_id = cl.commit_id and cl.commit_id.analytic_distribution_id and cl.commit_id.analytic_distribution_id.id or False
@@ -681,7 +691,7 @@ class account_commitment_line(osv.osv):
                     desc = 'Commitment voucher line'
                 self.pool.get('analytic.distribution').\
                     create_account_analytic_lines(cr, uid, [distrib_id], desc,
-                                                  cl.commit_id.date, amount, cl.commit_id.journal_id.id, cl.commit_id.currency_id.id,
+                                                  cl.commit_id.date, sign * amount, cl.commit_id.journal_id.id, cl.commit_id.currency_id.id,
                                                   cl.commit_id and cl.commit_id.date or False, ref, cl.commit_id.date,
                                                   account_id or cl.account_id.id, move_id=False, invoice_line_id=False,
                                                   commitment_line_id=cl.id, context=context)
@@ -707,18 +717,12 @@ class account_commitment_line(osv.osv):
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot create a commitment voucher line on a 'view' account type!"))
         # Verify amount validity
-        if vals.get('so_line_id'):
-            if 'amount' in vals and vals.get('amount', 0.0) > 0.0:
-                raise osv.except_osv(_('Warning'), _('Total amount should be equal to or less than 0!'))
-            if 'initial_amount' in vals and vals.get('initial_amount', 0.0) >= 0.0:
-                raise osv.except_osv(_('Warning'), _('Initial Amount should be negative !'))
-        else:
-            if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-                raise osv.except_osv(_('Warning'), _('Total amount should be equal or superior to 0!'))
-            if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
-                raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
+        if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
+            raise osv.except_osv(_('Warning'), _('Total amount should be equal or superior to 0!'))
+        if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
+            raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
         if 'initial_amount' in vals and 'amount' in vals:
-            if abs(vals.get('initial_amount')) < abs(vals.get('amount')):
+            if vals.get('initial_amount') < vals.get('amount'):
                 raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to Amount Left'))
         res = super(account_commitment_line, self).create(cr, uid, vals, context={})
         if res:
@@ -747,29 +751,21 @@ class account_commitment_line(osv.osv):
         # Update analytic distribution if needed and initial_amount
         for line in self.browse(cr, uid, ids, context=context):
             # Verify amount validity
-            if not line.so_line_id:
-                if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-                    raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
-                if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
-                    raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
-                message = _('Initial Amount should be superior to Amount Left')
-            else:
-                if 'amount' in vals and vals.get('amount', 0.0) > 0.0:
-                    raise osv.except_osv(_('Warning'), _('Amount Left should be equal to or less than 0!'))
-                if 'initial_amount' in vals and vals.get('initial_amount', 0.0) >= 0.0:
-                    raise osv.except_osv(_('Warning'), _('Initial Amount should be negative !'))
-
-                message = _('Initial Amount should be less than Amount Left')
+            if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
+                raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
+            if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
+                raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
+            message = _('Initial Amount should be superior to Amount Left')
 
             # verify that initial amount is superior to amount left
             if 'amount' in vals and 'initial_amount' in vals:
-                if abs(vals.get('initial_amount')) < abs(vals.get('amount')):
+                if vals.get('initial_amount') < vals.get('amount'):
                     raise osv.except_osv(_('Warning'), message)
             elif 'amount' in vals:
-                if abs(line.initial_amount) < abs(vals.get('amount')):
+                if line.initial_amount < vals.get('amount'):
                     raise osv.except_osv(_('Warning'), message)
             elif 'initial_amount' in vals:
-                if abs(vals.get('initial_amount')) < abs(line.amount):
+                if vals.get('initial_amount') < line.amount:
                     raise osv.except_osv(_('Warning'), message)
             # verify analytic distribution only on 'open' commitments
             if line.commit_id and line.commit_id.state and line.commit_id.state == 'open':
@@ -874,7 +870,7 @@ class account_commitment_line(osv.osv):
         if not from_cancel and cv_line.commit_id.state == 'draft':
             wf_service.trg_validate(uid, 'account.commitment', cv_line.commit_id.id, 'commitment_open', cr)
 
-        amount_left = min(round(cv_line.amount + amount, 2), 0)
+        amount_left = max(round(cv_line.amount - amount, 2), 0)
         # this will trigger AJIs update
         self.write(cr, uid, [id], {'amount': amount_left}, context=context)
 

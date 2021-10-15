@@ -491,8 +491,8 @@ class sale_order_line(osv.osv):
             commit_line_vals = {
                 'commit_id': commitment_voucher_id,
                 'account_id': income_account,
-                'amount': -1 * sol.price_subtotal,
-                'initial_amount': -1 * sol.price_subtotal,
+                'amount': sol.price_subtotal,
+                'initial_amount': sol.price_subtotal,
                 'analytic_distribution_id': distrib_id,
                 'so_line_id': sol.id,
                 'line_product_id': sol.product_id.id,

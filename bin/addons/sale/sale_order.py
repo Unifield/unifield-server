@@ -1938,7 +1938,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'currency_id': so.currency_id and so.currency_id.id or False,
                 'partner_id': so.partner_id and so.partner_id.id or False,
                 'sale_id': so.id or False,
-                'source_document': so.name or False,
                 'type': cv_type,
             }
             period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)
@@ -1952,9 +1951,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             commit_id = self.pool.get('account.commitment').create(cr, uid, vals, context=context)
 
             commit_data = self.pool.get('account.commitment').read(cr, uid, commit_id, ['name'], context=context)
-            message = _("Commitment Voucher %s has been created.") % commit_data.get('name', '')
-            view_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'account_commitment_form')
-            self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_ids and view_ids[1] or False})
+            message = _("Customer Commitment Voucher %s has been created.") % commit_data.get('name', '')
+            self.pool.get('account.commitment').log(cr, uid, commit_id, message, action_xmlid='analytic_distribution.action_account_commitment_from_fo')
             self.infolog(cr, uid, message)
 
             if so.analytic_distribution_id:
