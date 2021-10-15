@@ -1172,9 +1172,10 @@ class account_invoice(osv.osv):
         j_type = journal.type
         if inv_type is None:
             inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
-        if inv_type in ('si', 'di') and j_type != 'purchase' or inv_type == 'sr' and j_type != 'purchase_refund' or \
-            inv_type in ('ivi', 'ivo') and j_type != 'intermission' or inv_type in ('stv', 'dn') and j_type != 'sale' or \
-                inv_type == 'cr' and j_type != 'sale_refund' or inv_type == 'donation' and j_type not in ('inkind', 'extra'):
+        if inv_type in ('si', 'di', 'isi', 'isr') and j_type != 'purchase' or inv_type == 'sr' and j_type != 'purchase_refund' or \
+            inv_type in ('ivi', 'ivo') and j_type != 'intermission' or inv_type in ('stv', 'str', 'dn') and j_type != 'sale' or \
+                inv_type == 'cr' and j_type != 'sale_refund' or inv_type == 'donation' and j_type not in ('inkind', 'extra') or \
+                inv_type in ('isi', 'isr') and journal.code != 'ISI' or inv_type not in ('isi', 'isr') and journal.code == 'ISI':
             raise osv.except_osv(_('Error'), _("The journal %s is not allowed for this document.") % journal.name)
 
     def _check_partner(self, cr, uid, inv_id, inv_type=None, context=None):
