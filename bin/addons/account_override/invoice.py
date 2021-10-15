@@ -80,26 +80,12 @@ class account_invoice(osv.osv):
 
     def _get_journal(self, cr, uid, context=None):
         """
-        WARNING: This method has been taken from account module from OpenERP
+        Returns the journal to be used by default, depending on the doc type of the selected invoice
         """
-        # @@@override@account.invoice.py
         if context is None:
             context = {}
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        if context.get('is_inkind_donation'):
-            args = [('type', 'in', ['inkind', 'extra'])]
-        else:
-            type_inv = context.get('type', 'out_invoice')
-            company_id = context.get('company_id', user.company_id.id)
-            type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
-            refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
-            args = [('type', '=', type2journal.get(type_inv, 'sale')),
-                    ('company_id', '=', company_id),
-                    ('refund_journal', '=', refund_journal.get(type_inv, False))]
-        if user.company_id.instance_id:
-            args.append(('is_current_instance','=',True))
         journal_obj = self.pool.get('account.journal')
-        res = journal_obj.search(cr, uid, args, order='id', limit=1, context=context)
+        res = journal_obj.search(cr, uid, [('inv_doc_type', '=', True)], order='id', limit=1, context=context)
         return res and res[0] or False
 
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -559,43 +545,6 @@ class account_invoice(osv.osv):
         return super(account_invoice, self).import_data_web(cr, uid, fields, new_data, mode=mode, current_module=current_module,
                                                             noupdate=noupdate, context=context, filename=filename,
                                                             display_all_errors=display_all_errors, has_header=has_header)
-
-    def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id, context=None):
-        """
-        This is a method to redefine the journal_id domain with the current_instance taken into account
-        """
-        if context is None:
-            context = {}
-        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, ctype, invoice_line,
-                                                               currency_id, context=context)
-        doc_type = context.get('doc_type', '')
-        if company_id and (ctype or doc_type):
-            res.setdefault('domain', {})
-            res.setdefault('value', {})
-            ass = {
-                'out_invoice': 'sale',
-                'in_invoice': 'purchase',
-                'out_refund': 'sale_refund',
-                'in_refund': 'purchase_refund',
-            }
-            if doc_type == 'str':
-                journal_type = 'sale'
-            elif doc_type in ('isi', 'isr'):
-                journal_type = 'purchase'
-            else:
-                journal_type = ass.get(ctype, 'purchase')
-            journal_dom = [('type', '=', journal_type), ('is_current_instance', '=', True)]
-            if doc_type in ('isi', 'isr'):
-                journal_dom.append(('code', '=', 'ISI'))
-            else:
-                journal_dom.append(('code', '!=', 'ISI'))
-            journal_ids = self.pool.get('account.journal').search(cr, uid, journal_dom, order='id')
-            if not journal_ids:
-                raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (journal_type, ))
-            res['value']['journal_id'] = journal_ids[0]
-            # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
-            res['domain']['journal_id'] = [('id', 'in', journal_ids)]
-        return res
 
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id, date_invoice=False, payment_term=False, partner_bank_id=False,
                             company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False,

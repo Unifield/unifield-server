@@ -175,7 +175,7 @@
                 <form string="Supplier Invoice">
                     <group col="8" colspan="4">
                         <field name="journal_id"
-                               domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
+                               domain="[('inv_doc_type', '=', True)]"
                                attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         <field name="vat_ok" invisible="1" />
                         <field name="number" readonly="1"/>
@@ -254,7 +254,7 @@
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
                                     />
                                     <field name="invoice_line_tax_id" view_mode="2" context="{'type':parent.type}" domain="[('parent_id','=',False)]"/>
-                                   <field name="inactive_product" invisible="1" />
+                                    <field name="inactive_product" invisible="1" />
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
                                     <field name="analytic_distribution_state_recap"/>
                                     <field name="have_analytic_distribution_from_header" invisible="1"/>
@@ -310,7 +310,13 @@
                                 <field name="state"/>
                                 <field name="residual"/>
                                 <group col="6" colspan="4">
-                                    <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
+                                    <field name="doc_type" invisible="1"/>
+                                    <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute"
+                                        attrs="{'invisible': ['|', '|',
+                                                                ('state', '=', 'draft'),
+                                                                ('type', 'in', ['in_refund', 'out_refund']),
+                                                                '&amp;', ('doc_type', '=', 'isi'), ('counterpart_inv_status', 'not in', ['inv_close', 'paid'])]}"
+                                    />
                                     <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                                     <field name="is_direct_invoice" invisible="1"/>
                                     <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
@@ -389,7 +395,7 @@
             <field name="arch" type="xml">
                 <form string="Stock Transfer Voucher" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]"/>
                         <field name="journal_type" invisible="1"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>

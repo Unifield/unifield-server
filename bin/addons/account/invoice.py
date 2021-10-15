@@ -46,21 +46,6 @@ class account_invoice(osv.osv):
             res[invoice.id]['amount_total'] = res[invoice.id]['amount_tax'] + res[invoice.id]['amount_untaxed']
         return res
 
-    def _get_journal(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        type_inv = context.get('type', 'out_invoice')
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        company_id = context.get('company_id', user.company_id.id)
-        type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
-        refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
-        journal_obj = self.pool.get('account.journal')
-        res = journal_obj.search(cr, uid, [('type', '=', type2journal.get(type_inv, 'sale')),
-                                           ('company_id', '=', company_id),
-                                           ('refund_journal', '=', refund_journal.get(type_inv, False))],
-                                 limit=1)
-        return res and res[0] or False
-
     def _get_journal_analytic(self, cr, uid, type_inv, context=None):
         type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale', 'in_refund': 'purchase'}
         tt = type2journal.get(type_inv, 'sale')
@@ -363,7 +348,6 @@ class account_invoice(osv.osv):
     _defaults = {
         'type': _get_type,
         'state': 'draft',
-        'journal_id': _get_journal,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.invoice', context=c),
         'reference_type': 'none',
         'check_total': 0.0,
@@ -376,30 +360,9 @@ class account_invoice(osv.osv):
         if context is None:
             context = {}
 
-        if context.get('active_model', '') in ['res.partner'] and context.get('active_ids', False) and context['active_ids']:
-            partner = self.pool.get(context['active_model']).read(cr, uid, context['active_ids'], ['supplier','customer'])[0]
-            if not view_type:
-                view_id = self.pool.get('ir.ui.view').search(cr, uid, [('name', '=', 'account.invoice.tree')])
-                view_type = 'tree'
-            if view_type == 'form':
-                if partner['supplier'] and not partner['customer']:
-                    view_id = self.pool.get('ir.ui.view').search(cr,uid,[('name', '=', 'account.invoice.supplier.form')])
-                else:
-                    view_id = self.pool.get('ir.ui.view').search(cr,uid,[('name', '=', 'account.invoice.form')])
         if view_id and isinstance(view_id, (list, tuple)):
             view_id = view_id[0]
         res = super(account_invoice,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-
-        if 'journal_id' in res['fields']:
-            jtype = context.get('journal_type', 'sale')
-            if jtype == 'inkind' and context.get('is_inkind_donation'):
-                filter_journal = [('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]
-            elif context.get('doc_type') in ('isi', 'isr'):
-                filter_journal = [('type', '=', 'purchase'), ('code', '=', 'ISI'), ('is_current_instance', '=', True)]
-            else:
-                filter_journal = [('type', '=', jtype), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)]
-            journal_select = journal_obj._name_search(cr, uid, '', filter_journal, context=context, limit=None, name_get_uid=1)
-            res['fields']['journal_id']['selection'] = journal_select
 
         if view_type == 'form' and (context.get('type', 'out_invoice') == 'in_refund' or context.get('doc_type', '') == 'isr'):
             doc = etree.XML(res['arch'])
@@ -881,11 +844,12 @@ class account_invoice(osv.osv):
             i['currency_id'] = inv.currency_id.id
             i['amount_currency'] = i['price']
             i['ref'] = ref
-            if inv.type in ('out_invoice','in_refund'):
+            # the direction of the amounts depends on the invoice type
+            if inv.doc_type in ('stv', 'ivo', 'dn', 'sr', 'isr'):
                 i['price'] = -i['price']
                 i['amount_currency'] = - i['amount_currency']
                 i['change_sign'] = True
-            else:
+            else:  # 'str', 'ivi', 'si', 'di', 'isi', 'cr', 'donation'
                 i['change_sign'] = False
             total -= i['amount_currency']
         return total, invoice_move_lines
