@@ -2817,11 +2817,10 @@ class account_bank_statement_line(osv.osv):
                 break
         if cash_return:
             invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
-            view_name = 'invoice_supplier_form_2'
             name = _('Supplier Invoice')
             # Search the customized view we made for Supplier Invoice (for * Register's users)
             irmd_obj = self.pool.get('ir.model.data')
-            view_ids = irmd_obj.search(cr, uid, [('name', '=', view_name), ('model', '=', 'ir.ui.view')])
+            view_ids = irmd_obj.search(cr, uid, [('name', '=', 'invoice_supplier_form'), ('module', '=', 'account'), ('model', '=', 'ir.ui.view')])
             # Préparation de l'élément permettant de trouver la vue à  afficher
             if view_ids:
                 view = irmd_obj.read(cr, uid, view_ids[0])
