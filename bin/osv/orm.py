@@ -1948,11 +1948,6 @@ class orm_template(object):
             result['arch'] = sql_res[0]
             result['title_field'] = sql_res[8]
 
-            trace_obj = 'account.analytic.line'
-            if self._name == trace_obj:
-                d_id = self.pool.get('ir.model.data').search(cr, user, [('res_id', '=', sql_res[3]), ('model', '=', 'ir.ui.view'), ('module', '!=', 'sd')])
-                print view_type, self.pool.get('ir.model.data').read(cr, user, d_id[0], ['module', 'name'])
-
             # Reverse the search on models to apply view inheritance in a good way
             def _inherit_apply_rec(result, inherit_id):
                 # get all views which inherit from (ie modify) this view
@@ -1960,9 +1955,6 @@ class orm_template(object):
                 sql_inherit = cr.fetchall()
                 for (inherit, id) in sql_inherit:
                     result = _inherit_apply(result, inherit, id)
-                    if self._name == trace_obj:
-                        d_id = self.pool.get('ir.model.data').search(cr, user, [('res_id', '=', id), ('model', '=', 'ir.ui.view'), ('module', '!=', 'sd')])
-                        print view_type, self.pool.get('ir.model.data').read(cr, user, d_id[0], ['module', 'name'])
                     result = _inherit_apply_rec(result, id)
                 return result
 
