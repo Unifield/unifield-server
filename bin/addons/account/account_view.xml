@@ -167,34 +167,88 @@
             <field name="arch" type="xml">
                 <form string="Account">
                     <group col="6" colspan="4">
-                    <field name="name" select="1"/>
-                    <field name="code" select="1"/>
-                    <field name="company_id" widget="selection" groups="base.group_multi_company"/>
-                    <newline/>
-                    <field name="parent_id"/>
-                    <field name="type" select="1"/>
-                    <field name="user_type" select="1"/>
+                        <field name="name" select="1"/>
+                        <field name="code" select="1"/>
+                        <newline/>
+                        <field name="parent_id"/>
+                        <field name="type" select="1"/>
+                        <field name="user_type_code" invisible="1"/>
+                        <field name="is_analytic_addicted" invisible="1"/>
+                        <field name="user_type" on_change="onchange_user_type(user_type, code)"/>
+                         <field name="shrink_entries_for_hq"/>
+                        <field name="is_child_of_coa" invisible="1" />
+                        <field name="display_in_reports" attrs="{'invisible': [('is_child_of_coa', '=', False)]}"  />
+                        <field name="type_for_register"/>
+                        <field name="accrual_account" />
+                        <field name="is_not_hq_correctible" on_change="onchange_is_not_hq_correctible(is_not_hq_correctible)"/>
+                        <newline/>
+                        <label string="" colspan="2"/>
+                        <field name="is_not_ad_correctable" on_change="onchange_is_not_ad_correctable(is_not_ad_correctable)"/>
                     </group>
                     <notebook colspan="4">
                         <page string="General Information">
-                            <field name="active" groups="base.group_extended" />
-                            <newline/>
-                            <group col="2" colspan="2">
-                                <separator string="Currency" colspan="2"/>
-                                <field name="currency_id"/>
-                                <field name="currency_mode" attrs="{'readonly': [('currency_id','=',False)]}"/>
+                            <group col="6" colspan="4">
+                                <field name="activation_date"/>
+                                <field name="inactivation_date"/>
+                                <group col="2" colspan="2">
+                                    <field name="reconcile" on_change="onchange_reconcile(reconcile)"/>
+                                    <field name="prevent_multi_curr_rec" attrs="{'readonly': [('reconcile', '=', False)]}"/>
+                                    <field name="reconciliation_debit_account_id"/>
+                                    <field name="reconciliation_credit_account_id"/>
+                                </group>
                             </group>
-                            <group col="2" colspan="2">
-                                <separator string="Reconcile" colspan="2"/>
-                                <field name="reconcile"/>
+                        </page>
+                        <page string="Analytical Destination">
+                            <field name="default_destination_id" colspan="2"
+                                attrs="{'required': [('is_analytic_addicted', '=', True)], 'readonly': [('is_analytic_addicted', '!=', True)]}"/>
+                            <label string="" colspan="2"/>
+                            <field name="destination_ids" nolabel="1" colspan="4" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
+                                <tree string="Destinations">
+                                    <field name="name"/>
+                                    <field name="description"/>
+                                    <field name="date_start"/>
+                                    <field name="date"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Allowed Partner types">
+                            <group col="4" colspan="4">
+                                <group col="2" colspan="2">
+                                    <field name="has_partner_type_internal" />
+                                    <field name="has_partner_type_external" />
+                                    <field name="has_partner_type_esc" />
+                                    <newline />
+                                    <field name="has_partner_type_local" />
+                                    <field name="has_partner_type_ex" />
+                                    <field name="has_partner_type_empty" />
+                                    <newline />
+                                    <field name="has_partner_type_book" />
+                                </group>
+
+                                <group col="2" colspan="2">
+                                    <field name="has_partner_type_intermission" />
+                                    <field name="has_partner_type_section" />
+
+                                    <label /><label />
+                                    <newline />
+                                    <label /><label />
+                                    <label /><label />
+                                    <newline />
+                                    <label /><label />
+                                </group>
                             </group>
-                            <separator string="Default Taxes" colspan="4"/>
-                            <field colspan="4" name="tax_ids" nolabel="1" domain="[('parent_id','=',False)]"/>
-                            <separator string="Consolidated Children" colspan="4"/>
-                            <field name="child_consol_ids" colspan="4" nolabel="1" attrs="{'readonly':[('type','!=','consolidation')]}"/>
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
+                        </page>
+                        <page string="Currency Revaluation" attrs="{'invisible': [('instance_level', '=', 'project')]}">
+                            <field name="instance_level" invisible="1"/>
+                            <field name="currency_revaluation"
+                                attrs="{'readonly': ['|', ('instance_level', '!=', 'section'), ('user_type_code', 'not in', ['receivables', 'payables', 'cash', 'asset', 'stock'])]}"/>
+                        </page>
+                        <page string="End Year Closing"  attrs="{'invisible': [('instance_level', '=', 'project')]}">
+                            <field name="include_in_yearly_move"
+                                attrs="{'readonly': ['|', ('instance_level', '!=', 'section'), ('type', 'not in', ['other', ])]}"/>
                         </page>
                     </notebook>
                 </form>
@@ -290,26 +344,24 @@
             </field>
         </record>
 
-        <record id="view_account_list" model="ir.ui.view">
-            <field name="name">account.account.list</field>
+        <!-- Tree view for default tree view of accounts -->
+        <record id="account.view_account_list" model="ir.ui.view">
+            <field name="name">account.account_activable.list</field>
             <field name="model">account.account</field>
             <field name="type">tree</field>
             <field name="field_parent">child_id</field>
+            <field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" >
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" nolink="1">
                     <field name="code"/>
                     <field name="name"/>
-                    <field name="parent_id" invisible="1"/>
-                    <field name="user_type" invisible="1"/>
-                    <field name="debit"/>
-                    <field name="credit"/>
-                    <field name="balance"/>
                     <field name="type"/>
-                    <field name="company_id" groups="base.group_multi_company"/>
-                    <field name="company_currency_id"/>
+                    <field name="activation_date"/>
+                    <field name="inactivation_date"/>
                 </tree>
             </field>
         </record>
+
         <record id="view_treasory_graph" model="ir.ui.view">
            <field name="name">account.treasury.graph</field>
            <field name="model">account.account</field>
@@ -334,26 +386,29 @@
         <menuitem id="account_account_menu" name="Accounts" parent="menu_finance_accounting"/>
         <menuitem action="action_account_form" id="menu_action_account_form" parent="account_account_menu"/>
 
-        <record id="view_account_tree" model="ir.ui.view">
-            <field name="name">account.account.tree</field>
+        <record model="ir.ui.view" id="account.view_account_tree">
+            <field name="name">account.account_activable.tree</field>
             <field name="model">account.account</field>
             <field name="type">tree</field>
             <field name="field_parent">child_id</field>
-            <field name="priority" eval="13"/>
+            <field name="priority" eval="12"/>
             <field name="arch" type="xml">
-                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" >
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1" nolink="1">
                     <field name="code"/>
                     <field name="name"/>
-                    <field name="debit"/>
-                    <field name="credit"/>
-                    <field name="balance"/>
-                    <field name="company_currency_id"/>
-                    <field name="company_id" groups="base.group_multi_company"/>
-                    <field name="type"/>
+                    <field name="note"/>
+                    <field name="type" invisible="1"/>
+                    <field name="type_for_register" invisible="1"/>
+                    <field name="accrual_account" invisible="1"/>
+                    <field name="is_not_hq_correctible" invisible="1"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
                     <field name="parent_id" invisible="1"/>
+                    <field name="is_analytic_addicted" invisible="1"/>
                 </tree>
             </field>
         </record>
+
         <record id="action_account_tree" model="ir.actions.act_window">
             <field name="name">Chart of Accounts</field>
             <field name="res_model">account.account</field>
@@ -546,52 +601,84 @@
         </record>
         <menuitem action="action_account_journal_form" id="menu_action_account_journal_form" parent="menu_journals"/>
 
-        <record id="view_account_bank_statement_filter" model="ir.ui.view">
+        <!-- Bank Statement Filter -->
+        <record id="account.view_account_bank_statement_filter" model="ir.ui.view">
             <field name="name">account.cash.statement.select</field>
             <field name="model">account.bank.statement</field>
             <field name="type">search</field>
-            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <search string="Search Bank Statements">
                     <group col="8" colspan="4">
-                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new"/>
-                        <filter string="Confirmed" domain="[('state','=','confirm')]" icon="terp-camera_test"/>
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new" name="draft"/>
+                        <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
+                        <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
-                        <field name="date"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
-                        <field name="journal_id" widget='selection' domain="[('type', '=', 'cash')]" />
+                        <newline/>
+                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
+                        <field name="journal_id" domain="[('type', '=', 'cash')]" />
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By...">
+                    <group expand="1" string="Group By...">
                         <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
                         <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
                     </group>
                 </search>
             </field>
         </record>
 
-        <record id="view_bank_statement_tree" model="ir.ui.view">
+
+        <!-- Bank Statement Tree  US-807: force the priority to 10 to avoid showing the view in addons, for default tree view, check the view named account.view_bank_statement_tree_for_journal for more info -->
+        <record id="account.view_bank_statement_tree" model="ir.ui.view">
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
-            <field name="priority" eval="19"/>
+            <field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree colors="red:balance_end_real!=balance_end and state=='draft';blue:state=='draft' and (balance_end_real==balance_end);black:state=='confirm'" string="Statement">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
+                    <field name="currency"/>
                     <field name="journal_id"/>
                     <field name="balance_start"/>
+                    <field name="balance_end" />
                     <field name="balance_end_real"/>
-                    <field name="balance_end" invisible="1"/>
                     <field name="state"/>
-                    <button type="object" string="Cancel" name="button_cancel" states="confirm" icon="gtk-cancel"/>
-                    <button type="object" string="Confirm" name="button_confirm_bank" states="draft" icon="terp-camera_test"/>
+                    <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                 </tree>
             </field>
         </record>
+
+           <!-- US-807: force the priority to 5 to show by default for all cases, BUT when the tree is called from Bank/Cash/Cheque main menu, then the explicit view name will be picked in the python code "register_accounting/account_bank_statement.py" method: get_statement() -->
+        <record id="account.view_bank_statement_tree_for_journal" model="ir.ui.view">
+            <field name="name">account.bank.statement.tree.journal</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1"  editable="bottom" noteditable="1">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="currency"/>
+                    <field name="journal_id"/>
+                    <field name="balance_start"/>
+                    <field name="balance_end" />
+                    <field name="balance_end_real"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+
+
+
         <record id="view_bank_statement_search" model="ir.ui.view">
             <field name="name">account.bank.statement.search</field>
             <field name="model">account.bank.statement</field>
