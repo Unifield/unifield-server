@@ -126,7 +126,6 @@ class account_invoice_refund(osv.osv_memory):
         inv_obj = self.pool.get('account.invoice')
         reconcile_obj = self.pool.get('account.move.reconcile')
         account_m_line_obj = self.pool.get('account.move.line')
-        mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         wf_service = netsvc.LocalService('workflow')
         inv_tax_obj = self.pool.get('account.invoice.tax')
@@ -275,22 +274,20 @@ class account_invoice_refund(osv.osv_memory):
                     ji_ids.extend([sr_ji.id for sr_ji in refund.move_id.line_id])
                     # write on JIs without recreating AJIs
                     account_m_line_obj.write(cr, uid, ji_ids, {'is_si_refund': True}, context=context, check=False, update_check=False)
-
-            if context.get('is_intermission', False):
-                module = 'account_override'
-                if inv.type == 'in_invoice':
-                    xml_id = 'action_intermission_out'
-                else:
-                    xml_id = 'action_intermission_in'
-            else:
-                module = 'account'
-                if inv.type in ('out_invoice', 'out_refund'):
-                    xml_id = 'action_invoice_tree3'
-                else:
-                    xml_id = 'action_invoice_tree4'
-            result = mod_obj.get_object_reference(cr, uid, module, xml_id)
-            id = result and result[1] or False
-            result = act_obj.read(cr, uid, id, context=context)
+            # return to a tree view containing the refund generated
+            from_doc_type = context.get('doc_type', '')
+            if from_doc_type == 'stv':
+                return_doc_type = 'str'
+            elif from_doc_type == 'ivo':
+                return_doc_type = 'ivi'
+            elif from_doc_type == 'ivi':
+                return_doc_type = 'ivo'
+            elif from_doc_type == 'isi':
+                return_doc_type = 'isr'
+            else:  # i.e. si, di
+                return_doc_type = 'sr'
+            action_act_window = inv_obj._invoice_action_act_window[return_doc_type]
+            result = act_obj.open_view_from_xmlid(cr, uid, action_act_window, context=context)
             invoice_domain = eval(result['domain'])
             invoice_domain.append(('id', 'in', created_inv))
             result['domain'] = invoice_domain
