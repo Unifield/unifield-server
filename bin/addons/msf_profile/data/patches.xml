@@ -704,5 +704,10 @@
         <record id="us_8336_update_msr_used" model="patch.scripts">
             <field name="method">us_8336_update_msr_used</field>
         </record>
+
+        <!-- UF23.0 -->
+        <record id="us_8585_new_isi_journals" model="patch.scripts">
+            <field name="method">us_8585_new_isi_journals</field>
+        </record>
     </data>
 </openerp>

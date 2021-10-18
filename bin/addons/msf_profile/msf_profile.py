@@ -54,6 +54,48 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF23.0
+    def us_8585_new_isi_journals(self, cr, uid, *a, **b):
+        """
+        Creates the ISI G/L and analytic journals in all existing instances.
+        This is done in Python as the objects created must sync normally.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # ISI analytic journal
+            isi_analytic_journal_ids = analytic_journal_obj.search(cr, uid,
+                                                                   [('code', '=', 'ISI'),
+                                                                    ('type', '=', 'purchase'),
+                                                                    ('is_current_instance', '=', True)])
+            if isi_analytic_journal_ids:  # just in case the journal has been created before the release
+                isi_analytic_journal_id = isi_analytic_journal_ids[0]
+            else:
+                isi_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ISI',
+                    'name': 'Intersection Supplier Invoice',
+                    'type': 'purchase',
+                }
+                isi_analytic_journal_id = analytic_journal_obj.create(cr, uid, isi_analytic_vals)
+            # ISI G/L journal
+            if not journal_obj.search_exist(cr, uid, [('code', '=', 'ISI'),  # just in case the journal has been created before the release
+                                                      ('type', '=', 'purchase'),
+                                                      ('is_current_instance', '=', True),
+                                                      ('analytic_journal_id', '=', isi_analytic_journal_id)]):
+                isi_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ISI',
+                    'name': 'Intersection Supplier Invoice',
+                    'type': 'purchase',
+                    'analytic_journal_id': isi_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, isi_vals)
+        return True
+
+    # UF22.0
     def us_8336_update_msr_used(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity'):
             # exclude new instances
@@ -110,10 +152,6 @@ class patch_scripts(osv.osv):
             self.pool.get('sync.trigger.something.up').create(cr, uid, {'name': 'msr_used', 'args': zipstr})
         return True
 
-
-
-
-    # UF22.0
     def us_9003_partner_im_is_currencies(self, cr, uid, *a, **b):
         self.us_5559_set_pricelist(cr, uid, *a, **b)
         return True
