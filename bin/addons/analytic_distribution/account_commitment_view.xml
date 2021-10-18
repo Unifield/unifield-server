@@ -73,7 +73,7 @@
             <field name="model">account.commitment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Supplier Commitment Voucher" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'">
+                <tree string="Supplier Commitment Vouchers" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'">
                     <field name="date"/>
                     <field name="name"/>
                     <field name="partner_id" string="Supplier"/>
@@ -130,7 +130,7 @@
             <field name="model">account.commitment</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Search Commitment Voucher">
+                <search string="Supplier Commitment Vouchers">
                     <group col='6' colspan='4'>
                         <filter icon="terp-tools" string="Manual" domain="[('type','=','manual')]" help="Manual Commitment Voucher"/>
                         <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
@@ -172,7 +172,7 @@
             <field name="inherit_id" ref="account_commitment_fo_tree_copy" />
             <field name="arch" type="xml">
                 <xpath expr="/tree" position="attributes">
-                    <attribute name="string">Customer Commitment Voucher</attribute>
+                    <attribute name="string">Customer Commitment Vouchers</attribute>
                 </xpath>
                 <xpath expr="//field[@name='purchase_id']" position="replace">
                     <field name="sale_id" />
@@ -201,7 +201,7 @@
             <field name="inherit_id" ref="account_commitment_fo_search_copy" />
             <field name="arch" type="xml">
                 <xpath expr="/search" position="attributes">
-                    <attribute name="string">Customer Commitment Voucher</attribute>
+                    <attribute name="string">Customer Commitment Vouchers</attribute>
                 </xpath>
                 <xpath expr="//field[@name='purchase_id']" position="replace">
                     <field name="sale_id" />
@@ -455,8 +455,8 @@
 
     <!-- Menu -->
         <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="4"/>
-        <menuitem name="Customer Commitment Voucher" action="action_account_commitment_from_fo" id="menu_account_commitment_from_fo" parent="menu_commitment" sequence="10"/>
-        <menuitem name="Supplier Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="20"/>
+        <menuitem name="Customer Commitment Vouchers" action="action_account_commitment_from_fo" id="menu_account_commitment_from_fo" parent="menu_commitment" sequence="10"/>
+        <menuitem name="Supplier Commitment Vouchers" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="20"/>
         <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="30"/>
         <menuitem name="Import Intl Commitments" action="action_import_commitment_wizard" id="menu_import_commitment" parent="menu_commitment" sequence="40"/>
 
