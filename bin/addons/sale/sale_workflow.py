@@ -530,7 +530,11 @@ class sale_order_line(osv.osv):
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
 
-            if not sol.order_id.procurement_request and sol.order_id.partner_type in ('intermission', 'section') and sol.order_id.order_type == 'regular':
+
+            if self.pool.get('unifield.setup.configuration').get_config(cr, uid,).customer_commitment and \
+                    not sol.order_id.procurement_request and \
+                    sol.order_id.partner_type in ('intermission', 'section') and \
+                    sol.order_id.order_type == 'regular':
                 self.create_or_update_commitment_voucher(cr, uid, [sol.id], context=context)
 
 
