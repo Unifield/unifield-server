@@ -41,7 +41,7 @@ class customer_commitment_setup(osv.osv_memory):
             context = {}
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res = super(customer_commitment_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
-        res['has_customer_commitment'] = self.pool.get('account.commitment').search_exists(cr, uid, [('state', '!=', 'done'), ('cv_flow_type', '=', 'customer')], context=context)
+        res['has_customer_commitment'] = self.pool.get('account.commitment').search_exists(cr, uid, [('cv_flow_type', '=', 'customer')], context=context)
         res['customer_commitment'] = setup.customer_commitment
         return res
 
@@ -50,17 +50,17 @@ class customer_commitment_setup(osv.osv_memory):
             context = {}
         if not isinstance(ids, list) or len(ids) != 1:
             raise osv.except_osv(_('Error'), _('An error has occurred with the item retrieved from the form. Please contact an administrator if the problem persists.'))
-        payload = self.browse(cr, uid, ids[0], fields_to_fetch=['customer_commitment'], context=context)
+        payload = self.browse(cr, uid, ids[0], fields_to_fetch=['customer_commitment', 'has_customer_commitment'], context=context)
         setup_obj = self.pool.get('unifield.setup.configuration')
-        cv_obj = self.pool.get('account.commitment')
         setup = setup_obj.get_config(cr, uid)
         if setup:
             menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'menu_account_commitment_from_fo')[1]
-            self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': payload.customer_commitment}, context=context)
-            if not payload.customer_commitment:
-                set_as_done_ids = cv_obj.search(cr, uid, [('state', '!=', 'done'), ('cv_flow_type', '=', 'customer')], context=context)
-                if set_as_done_ids:
-                    cv_obj.action_commitment_done(cr, uid, set_as_done_ids, context=context)
+            menu_active = payload.customer_commitment
+            if not menu_active and payload.has_customer_commitment:
+                # do not hide menu if CCV exist
+                menu_active = True
+
+            self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': menu_active}, context=context)
             setup_obj.write(cr, uid, [setup.id], {'customer_commitment': payload.customer_commitment}, context=context)
 
 

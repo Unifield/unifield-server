@@ -64,6 +64,10 @@ class patch_scripts(osv.osv):
                 where
                     po.id = cv.purchase_id
                 ''')
+
+        # hide menu
+        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'menu_account_commitment_from_fo')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': False})
         return True
 
     # UF22.0

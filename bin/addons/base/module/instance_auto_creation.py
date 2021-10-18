@@ -486,6 +486,11 @@ class instance_auto_creation(osv.osv):
                 else:
                     previous_fy_dates_allowed = False
 
+                if config.has_option('reconfigure', 'customer_commitment'):
+                    customer_commitment = config.getboolean('reconfigure', 'customer_commitment')
+                else:
+                    customer_commitment = False
+
                 if config.has_option('reconfigure', 'payroll_ok'):
                     payroll_ok = config.getboolean('reconfigure', 'payroll_ok')
                 else:
@@ -538,6 +543,9 @@ class instance_auto_creation(osv.osv):
                     },
                     'previous.fy.dates.setup': {
                         'previous_fy_dates_allowed': previous_fy_dates_allowed,
+                    },
+                    'customer.commitment.setup': {
+                        'customer_commitment': customer_commitment,
                     }
                 }
                 if country_id:
