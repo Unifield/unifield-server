@@ -920,65 +920,7 @@ class account_invoice(osv.osv):
         view_data = self._get_invoice_act_window(cr, uid, inv_id, context=context)
         if view_data and view_data.get('id'):
             action_xmlid = view_data['id']
-        # context
-        local_ctx = context.copy()
-        if view_data and view_data.get('context'):
-            local_ctx.update(eval(view_data['context']))
-        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, local_ctx)
-        # TODO: delete the following:
-        # Prepare some values
-        # Search donation view and return it
-        try:
-            # try / except for runbot
-            debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_debit_note_form')
-            inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_inkind_donation_form')
-            intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
-            supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
-            customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
-            supplier_direct_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'direct_supplier_invoice_form')
-        except ValueError:
-            return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, context)
-        debit_view_id = debit_res and debit_res[1] or False
-        debit_note_ctx = {'view_id': debit_view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}
-        # Search donation view and return it
-        inkind_view_id = inkind_res and inkind_res[1] or False
-        inkind_ctx = {'view_id': inkind_view_id, 'type':'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': True}
-        # Search intermission view
-        intermission_view_id = intermission_res and intermission_res[1] or False
-        intermission_ctx = {'view_id': intermission_view_id, 'journal_type': 'intermission', 'is_intermission': True}
-        customer_view_id = customer_invoice_res[1] or False
-        customer_ctx = {'view_id': customer_view_id, 'type': 'out_invoice', 'journal_type': 'sale'}
-        message_changed = False
-        pattern = re.compile('^(Invoice)')
-        for el in [('is_debit_note', 'Debit Note', debit_note_ctx), ('is_inkind_donation', 'In-kind Donation', inkind_ctx), ('is_intermission', 'Intermission Voucher', intermission_ctx)]:
-            if self.read(cr, uid, inv_id, [el[0]]).get(el[0], False) is True:
-                m = re.match(pattern, message)
-                if m and m.groups():
-                    message = re.sub(pattern, el[1], message, 1)
-                    message_changed = True
-                local_ctx.update(el[2])
-        # UF-1112: Give all customer invoices a name as "Stock Transfer Voucher".
-        if not message_changed and self.read(cr, uid, inv_id, ['type']).get('type', False) == 'out_invoice':
-            if local_ctx.get('is_intermission', False):
-                message = re.sub(pattern, 'Intermission Voucher', message, 1)
-                local_ctx.update(intermission_ctx)
-            else:
-                message = re.sub(pattern, 'Stock Transfer Voucher', message, 1)
-                local_ctx.update(customer_ctx)
-
-        # UF-1307: for supplier invoice log (from the incoming shipment), the context was not
-        # filled with all the information; this leaded to having a "Sale" journal in the supplier
-        # invoice if it was saved after coming from this link. Here's the fix.
-        if local_ctx.get('type', False) == 'in_invoice':
-            if not local_ctx.get('journal_type', False):
-                supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
-                local_ctx.update({'journal_type': 'purchase',
-                                  'view_id': supplier_view_id})
-            elif local_ctx.get('direct_invoice_view', False): # UFTP-166: The wrong context saved in log
-                supplier_view_id = supplier_direct_invoice_res and supplier_direct_invoice_res[1] or False
-                local_ctx = {'journal_type': 'purchase',
-                             'view_id': supplier_view_id}
-        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, local_ctx)
+        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, context)
 
     def _check_tax_allowed(self, cr, uid, ids, context=None):
         """
