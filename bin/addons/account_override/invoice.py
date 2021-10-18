@@ -904,11 +904,11 @@ class account_invoice(osv.osv):
 
     def log(self, cr, uid, inv_id, message, secondary=False, action_xmlid=False, context=None):
         """
-        Updates the log message with the right document name + link it to the right view and context
+        Updates the log message with the right document name + link it to the right action_act_window
         """
         if context is None:
             context = {}
-        # message
+        # update the message
         pattern = re.compile('^(Invoice)')
         doc_type = self.read(cr, uid, inv_id, ['doc_type'], context=context)['doc_type'] or ''
         doc_name = dict(self.fields_get(cr, uid, context=context)['doc_type']['selection']).get(doc_type)
@@ -916,7 +916,7 @@ class account_invoice(osv.osv):
             m = re.match(pattern, message)
             if m and m.groups():
                 message = re.sub(pattern, doc_name, message, 1)
-        # view
+        # get the action_act_window (with the right context)
         view_data = self._get_invoice_act_window(cr, uid, inv_id, context=context)
         if view_data and view_data.get('id'):
             action_xmlid = view_data['id']
