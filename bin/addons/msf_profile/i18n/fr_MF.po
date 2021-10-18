@@ -112773,8 +112773,8 @@ msgstr "Ligne du BC"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Done (for Administrator only)"
-msgstr "Terminé (pour l'Administrateur uniquement)"
+msgid "Force Done"
+msgstr "Forcer Terminé"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
