@@ -904,12 +904,28 @@ class account_invoice(osv.osv):
 
     def log(self, cr, uid, inv_id, message, secondary=False, action_xmlid=False, context=None):
         """
-        Change first "Invoice" word from message into "Debit Note" if this invoice is a debit note.
-        Change it to "In-kind donation" if this invoice is an In-kind donation.
+        Updates the log message with the right document name + link it to the right view and context
         """
-        if not context:
+        if context is None:
             context = {}
+        # message
+        pattern = re.compile('^(Invoice)')
+        doc_type = self.read(cr, uid, inv_id, ['doc_type'], context=context)['doc_type'] or ''
+        doc_name = dict(self.fields_get(cr, uid, context=context)['doc_type']['selection']).get(doc_type)
+        if doc_name:
+            m = re.match(pattern, message)
+            if m and m.groups():
+                message = re.sub(pattern, doc_name, message, 1)
+        # view
+        view_data = self._get_invoice_act_window(cr, uid, inv_id, context=context)
+        if view_data and view_data.get('id'):
+            action_xmlid = view_data['id']
+        # context
         local_ctx = context.copy()
+        if view_data and view_data.get('context'):
+            local_ctx.update(eval(view_data['context']))
+        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, local_ctx)
+        # TODO: delete the following:
         # Prepare some values
         # Search donation view and return it
         try:
