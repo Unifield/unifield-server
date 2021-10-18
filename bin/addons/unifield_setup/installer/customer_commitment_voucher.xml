@@ -27,7 +27,7 @@
                             <newline />
                             <group colspan="5" attrs="{'invisible': [('has_customer_commitment', '=', False)]}">
                             <html colspan="4">
-                                <h1>Customer Commitment Vouchers already generated on this instance. If you deactivate this feature, the menu will not be hidden.</h1>
+                                <h1><translate>Customer Commitment Vouchers already generated on this instance. If you deactivate this feature, the menu will not be hidden.</translate></h1>
                             </html>
                             </group>
                         </group>

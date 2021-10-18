@@ -35913,8 +35913,8 @@ msgstr "Asia/Anadyr"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Manual Commitment Voucher"
-msgstr "Manual Commitment Voucher"
+msgid "Manual Commitment Vouchers"
+msgstr "Bons d'Engagement Manuels"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -44959,7 +44959,7 @@ msgstr "Les groupes servent à définir les droits d'accès aux objets, et la vi
 #: code:addons/res_currency_tables/res_currency.py:258
 #, python-format
 msgid "The currency you want to %s is used in at least one Commitment Voucher which isn't Done."
-msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Engagement non Terminé."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un Bon d'Engagement non Terminé."
 
 #. modules: account, resource, account_mcdb, msf_instance, analytic, base, msf_audittrail, msf_profile, product_attributes, sync_client
 #: view:account.journal:0
@@ -46097,8 +46097,8 @@ msgstr "Liste de Prix"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Commitment Voucher in Draft state"
-msgstr "Commitment Voucher in Draft state"
+msgid "Commitment Vouchers in Draft state"
+msgstr "Bons d'Engagement dans l'état Brouillon"
 
 #. module: base
 #: view:ir.actions.server:0
@@ -49064,7 +49064,7 @@ msgstr "Total Résiduel"
 msgid "Total amount"
 msgstr "Montant total"
 
-#. modules: account_hq_entries, account_override, purchase_allocation_report, register_accounting, msf_accrual, partner_modification, return_claim, account_mcdb, supplier_catalogue, import_data, stock_override, product_asset, analytic, stock_batch_recall, msf_doc_import, stock, msf_order_date, product, msf_homere_interface, service_purchasing, purchase_override, kit, base, sync_so, account_corrections, account, msf_outgoing, msf_partner, documents_done, sale, finance, sales_followup, sourcing, purchase, msf_audittrail
+#. modules: account_hq_entries, account_override, purchase_allocation_report, register_accounting, msf_accrual, partner_modification, return_claim, account_mcdb, supplier_catalogue, import_data, stock_override, product_asset, analytic, stock_batch_recall, msf_doc_import, stock, msf_order_date, product, msf_homere_interface, service_purchasing, purchase_override, kit, base, sync_so, account_corrections, account, msf_outgoing, msf_partner, documents_done, sale, finance, sales_followup, sourcing, purchase, msf_audittrail, analytic_distribution
 #: field:account.bank.statement.line,partner_id:0
 #: view:account.entries.report:0
 #: field:account.entries.report,partner_id:0
@@ -49196,6 +49196,7 @@ msgstr "Montant total"
 #: field:account.tax,partner_id:0
 #: report:addons/account/report/invoice_excel_export.mako:80
 #: report:addons/account/report/export_invoice.mako:100
+#: field:account.commitment,partner_id:0
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -53927,8 +53928,8 @@ msgstr "Line %s, incorrect column number src should not be empty."
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "ESC Commitment Voucher"
-msgstr "ESC Commitment Voucher"
+msgid "ESC Commitment Vouchers"
+msgstr "Bons d'Engagement ESC"
 
 #. module: account
 #: field:account.fiscalyear.close,period_id:0
@@ -56096,6 +56097,8 @@ msgstr "Operational advance linked po invoices"
 #: field:msf_button_access_rights.view_config_wizard_install_results,progress:0
 #: field:commitment.import.setup,progress:0
 #: field:vat.setup,progress:0
+#: field:customer.commitment.setup,progress:0
+#: field:previous.fy.dates.setup,progress:0
 msgid "Configuration Progress"
 msgstr "Progression de la Configuration"
 
@@ -66019,6 +66022,7 @@ msgstr "Tester la connexion"
 
 #. module: analytic_distribution
 #: field:account.commitment,purchase_id:0
+#: field:account.commitment,sale_id:0
 msgid "Source document"
 msgstr "Document Source "
 
@@ -66357,8 +66361,8 @@ msgstr "Jours de sécurité"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Commitment Voucher in Validated state"
-msgstr "Commitment Voucher in Validated state"
+msgid "Commitment Vouchers in Validated state"
+msgstr "Bons d'Engagement dans l'état Validé"
 
 #. modules: purchase, tender_flow
 #: view:purchase.order:0
@@ -69259,11 +69263,6 @@ msgstr "Choisir entre l'interface simplifiée et l'interface étendue"
 msgid "Indicate if the catalogue is currently active."
 msgstr "Indiquer si le catalogue est actuellement actif."
 
-#. module: analytic_distribution
-#: view:account.commitment:0
-msgid "Search Commitment Voucher"
-msgstr "Rechercher Bon d'Engagement"
-
 #. module: sales_followup
 #: code:addons/sales_followup/sale_followup.py:402
 #: code:addons/sales_followup/sale_followup.py:518
@@ -69435,13 +69434,13 @@ msgstr "Automatique - Intersection"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Intermission Commitment Voucher"
-msgstr "Bon d'Engagement Intermission"
+msgid "Intermission Commitment Vouchers"
+msgstr "Bons d'Engagement Intermission"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Intersection Commitment Voucher"
-msgstr "Bon d'Engagement Intersection"
+msgid "Intersection Commitment Vouchers"
+msgstr "Bons d'Engagement Intersection"
 
 #. module: procurement
 #: field:procurement.order,close_move:0
@@ -78314,8 +78313,8 @@ msgstr "- Commitments"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Commitment Voucher in Done state"
-msgstr "Commitment Voucher in Done state"
+msgid "Commitment Vouchers in Done state"
+msgstr "Bons d'Engement dans l'état Terminé"
 
 #. module: supplier_catalogue
 #: model:ir.module.module,shortdesc:supplier_catalogue.module_meta_information
@@ -81238,8 +81237,8 @@ msgstr "Vous aide à gérer vos ressources humaines en saisissant la structure R
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "External Commitment Voucher"
-msgstr "External Commitment Voucher"
+msgid "External Commitment Vouchers"
+msgstr "Bons d'Engagement Externes"
 
 #. module: hr
 #: field:hr.employee,address_id:0
@@ -85489,6 +85488,8 @@ msgstr "Statistiques Ecritures Analytiques"
 #: report:addons/stock/report/stock_reception_report_xls.mako:228
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:881
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:228
+#: view:account.commitment:0
+#: selection:account.commitment,cv_flow_type:0
 #, python-format
 msgid "Supplier"
 msgstr "Fournisseur"
@@ -91273,13 +91274,14 @@ msgstr "Zone - Adresse"
 msgid "Purchase Orders Waiting Confirmation"
 msgstr "Bons de Commandes en attente de Confirmation"
 
-#. modules: purchase, analytic_distribution, purchase_override, account_override, register_accounting
+#. modules: purchase, analytic_distribution, purchase_override, account_override, register_accounting, sale
 #: field:account.commitment,line_ids:0
 #: view:account.commitment.line:0
 #: field:purchase.order.line,cv_line_ids:0
 #: field:purchase.order.merged.line,cv_line_ids:0
 #: field:account.invoice.line,cv_line_ids:0
 #: field:wizard.account.invoice.line,cv_line_ids:0
+#: field:sale.order.line,cv_line_ids:0
 msgid "Commitment Voucher Lines"
 msgstr "Lignes de Bon d'Engagement"
 
@@ -96782,7 +96784,7 @@ msgstr "Aperçu"
 msgid "product.likely.expire.report.item"
 msgstr "product.likely.expire.report.item"
 
-#. modules: sales_followup, account, msf_outgoing, vertical_integration, msf_config_locations, sale, account_override, sourcing, base, return_claim, stock_batch_recall, stock, msf_supply_doc_export
+#. modules: sales_followup, account, msf_outgoing, vertical_integration, msf_config_locations, sale, account_override, sourcing, base, return_claim, stock_batch_recall, stock, msf_supply_doc_export, analytic_distribution
 #: selection:account.bank.statement.line,type:0
 #: view:account.invoice:0
 #: view:account.invoice.report:0
@@ -96819,6 +96821,8 @@ msgstr "product.likely.expire.report.item"
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:901
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:317
+#: view:account.commitment:0
+#: selection:account.commitment,cv_flow_type:0
 #, python-format
 msgid "Customer"
 msgstr "Client"
@@ -112785,3 +112789,76 @@ msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Termi
 #: view:account.commitment.line:0
 msgid "Do you really want to delete this line?"
 msgstr "Voulez-vous vraiment supprimer cette ligne ?"
+
+#. module: unifield_setup
+#: view:customer.commitment.setup:0
+#: model:ir.actions.act_window,name:unifield_setup.action_customer_commitment_voucher_setup
+msgid "Activate Customer Commitment Vouchers"
+msgstr "Activer les Bons d'Engagement Client"
+
+#. module: unifield_setup
+#: field:customer.commitment.setup,has_customer_commitment:0
+msgid "CCV already created"
+msgstr "BEC déjà créés"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Customer Commitment Voucher"
+msgstr "Bon d'Engagement Client"
+
+#. module: sale
+#: code:addons/sale/sale_order.py:1954
+#, python-format
+msgid "Customer Commitment Voucher %s has been created."
+msgstr "Le Bon d'Engagement Client %s a été créé."
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+#: model:ir.ui.menu,name:analytic_distribution.menu_account_commitment_from_fo
+msgid "Customer Commitment Vouchers"
+msgstr "Bons d'Engagement Client"
+
+#. module: unifield_setup
+#: field:customer.commitment.setup,customer_commitment:0
+#: field:unifield.setup.configuration,customer_commitment:0
+msgid "Does the system allow Customer Commitment Vouchers ?"
+msgstr "Est-ce que le système autorise les Bons d'Engagement Client ?"
+
+#. module: analytic_distribution
+#: field:account.commitment.line,so_line_id:0
+msgid "SO Line"
+msgstr "Ligne FO"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Supplier Commitment Voucher"
+msgstr "Bon d'Engagement Fournisseur"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:2919
+#, python-format
+msgid "Supplier Commitment Voucher %s has been created."
+msgstr "Le Bon d'Engagement Fournisseur %s a été créé."
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+#: model:ir.ui.menu,name:analytic_distribution.menu_commitment_entries
+msgid "Supplier Commitment Vouchers"
+msgstr "Bons d'Engagement Fournisseur"
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:474
+#, python-format
+msgid "There is no income account defined for this line: %s (id:%d)"
+msgstr "Il n'y a pas de compte de produit défini pour cette ligne: %s (id:%d)"
+
+#. module: analytic_distribution
+#: field:account.commitment,cv_flow_type:0
+msgid "Type of CV"
+msgstr "Type de BE"
+
+#. module: unifield_setup
+#: view:customer.commitment.setup:0
+msgid "Customer Commitment Vouchers already generated on this instance. If you deactivate this feature, the menu will not be hidden."
+msgstr "Des Bons d'Engagement Client existent sur cette instance. Le menu ne sera pas caché si vous désactivez cette fonctionnalité."
+

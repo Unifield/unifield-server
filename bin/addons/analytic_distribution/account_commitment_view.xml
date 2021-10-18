@@ -132,15 +132,15 @@
             <field name="arch" type="xml">
                 <search string="Supplier Commitment Vouchers">
                     <group col='6' colspan='4'>
-                        <filter icon="terp-tools" string="Manual" domain="[('type','=','manual')]" help="Manual Commitment Voucher"/>
-                        <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
-                        <filter icon="gtk-refresh" string="Intersection" domain="[('type', '=', 'intersection')]" help="Intersection Commitment Voucher"/>
-                        <filter icon="gtk-ok" string="Intermission" domain="[('type', '=', 'intermission')]" help="Intermission Commitment Voucher"/>
-                        <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Voucher"/>
+                        <filter icon="terp-tools" string="Manual" domain="[('type','=','manual')]" help="Manual Commitment Vouchers"/>
+                        <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Vouchers"/>
+                        <filter icon="gtk-refresh" string="Intersection" domain="[('type', '=', 'intersection')]" help="Intersection Commitment Vouchers"/>
+                        <filter icon="gtk-ok" string="Intermission" domain="[('type', '=', 'intermission')]" help="Intermission Commitment Vouchers"/>
+                        <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Vouchers"/>
                         <separator orientation="vertical"/>
-                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state" name="draft"/>
-                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Voucher in Validated state" name="validated"/>
-                        <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Voucher in Done state" name="done"/>
+                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Vouchers in Draft state" name="draft"/>
+                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Vouchers in Validated state" name="validated"/>
+                        <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Vouchers in Done state" name="done"/>
                         <newline/>
                         <field name="currency_id" select="1"/>
                         <field name="date" select='1'/>

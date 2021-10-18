@@ -31,7 +31,7 @@ class customer_commitment_setup(osv.osv_memory):
 
     _columns = {
         'customer_commitment': fields.boolean(string='Does the system allow Customer Commitment Vouchers ?'),
-        'has_customer_commitment': fields.boolean('CCV already create'),
+        'has_customer_commitment': fields.boolean('CCV already created'),
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
