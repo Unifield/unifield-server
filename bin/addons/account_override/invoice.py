@@ -822,7 +822,7 @@ class account_invoice(osv.osv):
                                                      context=context):
                 vals['supplier_reference'] = partner['ref']
 
-        if 'real_doc_type' not in vals and context.get('doc_type') and not context.get('from_refund_button'):
+        if not vals.get('real_doc_type') and context.get('doc_type') and not context.get('from_refund_button'):
             vals.update({'real_doc_type': context['doc_type']})
 
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
