@@ -911,13 +911,13 @@ class account_invoice(osv.osv):
         # update the message
         pattern = re.compile('^(Invoice)')
         doc_type = self.read(cr, uid, inv_id, ['doc_type'], context=context)['doc_type'] or ''
+        action_xmlid = self._invoice_action_act_window.get(doc_type) or action_xmlid
         doc_name = dict(self.fields_get(cr, uid, context=context)['doc_type']['selection']).get(doc_type)
         if doc_name:
             m = re.match(pattern, message)
             if m and m.groups():
                 message = re.sub(pattern, doc_name, message, 1)
-        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary,
-                                                action_xmlid=self._invoice_action_act_window[doc_type], context=context)
+        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid=action_xmlid, context=context)
 
     def _check_tax_allowed(self, cr, uid, ids, context=None):
         """
