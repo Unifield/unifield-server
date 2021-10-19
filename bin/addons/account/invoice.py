@@ -356,26 +356,25 @@ class account_invoice(osv.osv):
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
-        journal_obj = self.pool.get('account.journal')
         if context is None:
             context = {}
-
         if view_id and isinstance(view_id, (list, tuple)):
             view_id = view_id[0]
         res = super(account_invoice,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-
-        if view_type == 'form' and (context.get('type', 'out_invoice') == 'in_refund' or context.get('doc_type', '') == 'isr'):
+        if view_type == 'form':
             doc = etree.XML(res['arch'])
-            if context.get('doc_type', '') == 'isr':
-                doc.attrib['string'] = _('Intersection Supplier Refund')
-            else:
-                doc.attrib['string'] = _('Supplier Refund')
-            nodes = doc.xpath("//field[@name='amount_to_pay']")
-            for node in nodes:
-                node.set('string', _('Amount to be refunded'))
+            if context.get('type', 'out_invoice') == 'in_refund' or context.get('doc_type', '') == 'isr':
+                nodes = doc.xpath("//field[@name='amount_to_pay']")
+                for node in nodes:
+                    node.set('string', _('Amount to be refunded'))
+            # adapt the form name depending on the doc_type (used e.g. when clicking on a res.log)
+            if context.get('doc_type'):
+                for doc_type in self._get_invoice_type_list(cr, uid, context=context):
+                    if context['doc_type'] in doc_type:
+                        doc.attrib['string'] = doc_type[1]
+                        break
             res['arch'] = etree.tostring(doc)
-
-        if view_type == 'tree':
+        elif view_type == 'tree':
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
             # (US-777) Remove the possibility to create new invoices through the "Advance Return" Wizard

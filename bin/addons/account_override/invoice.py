@@ -226,7 +226,7 @@ class account_invoice(osv.osv):
         """
         return [('dn', 'Debit Note'),
                 ('donation', 'Donation'),
-                ('ivi',' Intermission Voucher IN'),
+                ('ivi', 'Intermission Voucher IN'),
                 ('ivo', 'Intermission Voucher OUT'),
                 ('di', 'Direct Invoice'),
                 ('si', 'Supplier Invoice'),
