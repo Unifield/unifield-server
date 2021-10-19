@@ -916,11 +916,8 @@ class account_invoice(osv.osv):
             m = re.match(pattern, message)
             if m and m.groups():
                 message = re.sub(pattern, doc_name, message, 1)
-        # get the action_act_window (with the right context)
-        view_data = self._get_invoice_act_window(cr, uid, inv_id, context=context)
-        if view_data and view_data.get('id'):
-            action_xmlid = view_data['id']
-        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, context)
+        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary,
+                                                action_xmlid=self._invoice_action_act_window[doc_type], context=context)
 
     def _check_tax_allowed(self, cr, uid, ids, context=None):
         """
