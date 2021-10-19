@@ -79,7 +79,7 @@ class invoice_excel_export(report_sxw.rml_parse):
             return self.invoices[inv.id]['shipment']
         ship_or_out_ref = ''
         if inv.from_supply:
-            inv_type = self.pool.get('account.invoice').get_account_invoice_type(self.cr, self.uid, inv.id)
+            inv_type = self.pool.get('account.invoice').read(self.cr, self.uid, inv.id, ['doc_type'])['doc_type']
             if inv_type in ('ivo', 'stv'):
                 if inv.name:
                     ship_or_out_ref = inv.name.split()[-1]
@@ -99,7 +99,7 @@ class invoice_excel_export(report_sxw.rml_parse):
             return self.invoices[inv.id]['fo']
         fo_number = ''
         if inv.from_supply:
-            inv_type = self.pool.get('account.invoice').get_account_invoice_type(self.cr, self.uid, inv.id)
+            inv_type = self.pool.get('account.invoice').read(self.cr, self.uid, inv.id, ['doc_type'])['doc_type']
             if inv_type in ('ivo', 'stv'):
                 if inv.origin:
                     inv_source_doc_split = inv.origin.split(':')
@@ -118,7 +118,7 @@ class invoice_excel_export(report_sxw.rml_parse):
         For the IVI: PO to the intermission partner which triggered the creation of the FO
         """
         inv = inv_line.invoice_id
-        inv_type = self.pool.get('account.invoice').get_account_invoice_type(self.cr, self.uid, inv.id)
+        inv_type = self.pool.get('account.invoice').read(self.cr, self.uid, inv.id, ['doc_type'])['doc_type']
         out_inv_from_supply = inv_type in ('ivo', 'stv') and inv.from_supply
         if not out_inv_from_supply and self.invoices.get(inv.id, {}).get('po', None) is not None:
             # process only once per invoice except for IVO/STV from Supply where the check must be done line by line
