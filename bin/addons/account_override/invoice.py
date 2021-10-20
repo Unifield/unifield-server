@@ -364,7 +364,7 @@ class account_invoice(osv.osv):
         if args[0][1] == '=' and args[0][2]:
             doc_type = args[0][2]
             dom = self._get_dom_by_doc_type(doc_type)
-        if args[0][1] == 'in' and args[0][2] and isinstance(args[0][2], list):
+        if args[0][1] == 'in' and args[0][2] and isinstance(args[0][2], (list, tuple)):
             dom = []
             for i in range(len(args[0][2]) - 1):
                 dom.append('|')
