@@ -89325,7 +89325,7 @@ msgstr "Vos Comptes de Banque et Caisse"
 #: code:addons/analytic_distribution/account_commitment.py:212
 #, python-format
 msgid "You can only delete done commitments!"
-msgstr "Vous ne pouvez effacer que des obligations remplies!"
+msgstr "Vous ne pouvez effacer que des engagements terminés!"
 
 #. modules: msf_button_access_rights, sync_so
 #: model:ir.model,name:msf_button_access_rights.model_msf_button_access_rights_button_access_rule

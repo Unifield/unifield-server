@@ -547,13 +547,10 @@ class account_commitment(osv.osv):
             left join
                 sale_order_line sol on sol.id = line.so_line_id
             left join
-                account_invoice_line inv_line on inv_line.sale_order_line_id = sol.id
+                account_invoice_line inv_line on inv_line.sale_order_line_id = sol.id and inv_line.invoice_id not in %s
             left join
-                account_invoice inv on inv_line.invoice_id = inv.id
+                account_invoice inv on inv_line.invoice_id = inv.id and inv.type = 'out_invoice' and inv.from_supply = 't'
             where
-                inv.id not in %s and
-                inv.type = 'out_invoice' and
-                inv.from_supply = 't' and
                 sol.state in ('done', 'cancel', 'cancel_r') and
                 line.amount != 0 and
                 line.commit_id in %s
