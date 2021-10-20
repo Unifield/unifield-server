@@ -500,8 +500,16 @@ class res_partner(osv.osv):
             ('doc_type', '=', 'si'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
         ], context = context.update({'type':'in_invoice', 'journal_type': 'purchase'}))
 
+        sr_ids = account_invoice_obj.search(cr, uid, [
+            ('doc_type', '=', 'sr'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ])
+
         isi_ids = account_invoice_obj.search(cr, uid, [
             ('doc_type', '=', 'isi'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ])
+
+        isr_ids = account_invoice_obj.search(cr, uid, [
+            ('doc_type', '=', 'isr'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
         ])
 
         str_ids = account_invoice_obj.search(cr, uid, [
@@ -560,7 +568,9 @@ class res_partner(osv.osv):
             +(intermission_vouch_out_ids and [_('%s Intermission Voucher OUT') % (len(intermission_vouch_out_ids),)] or [])
             +(donation_ids and [_('%s Donation(s)') % (len(donation_ids),)] or [])
             +(supp_invoice_ids and [_('%s Supplier Invoice(s)') % (len(supp_invoice_ids), )] or [])
+            + (sr_ids and [_('%s Supplier Refunds(s)') % (len(sr_ids),)] or [])
             + (isi_ids and [_('%s Intersection Supplier Invoice(s)') % (len(isi_ids),)] or [])
+            + (isr_ids and [_('%s Intersection Supplier Refunds(s)') % (len(isr_ids),)] or [])
             + (str_ids and [_('%s Stock Transfer Refunds(s)') % (len(str_ids),)] or [])
             +(cust_refunds_ids and [_('%s Customer Refund(s)') % (len(cust_refunds_ids), )] or [])
             +(debit_note_ids and [_('%s Debit Note(s)') % (len(debit_note_ids), )] or [])
@@ -572,6 +582,7 @@ class res_partner(osv.osv):
             +[tend['name']+_(' (Tender)') for tend in tender_obj.read(cr, uid, tender_ids, ['name'], context) if tend['name']]
             +[com_vouch['name']+_(' (Commitment Voucher)') for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids, ['name'], context) if com_vouch['name']]
             +[ship['name']+_(' (Shipment)') for ship in ship_obj.read(cr, uid, ship_ids, ['name'], context) if ship['name']]
+            # Note: DI are seen at register level
             +[absl.name + '(' + absl.statement_id.name + _(' Register)') for absl in absl_obj.browse(cr, uid, absl_ids, context) if absl.name and absl.statement_id and absl.statement_id.name]
             +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
