@@ -72,20 +72,20 @@ class report_open_invoices2(report_sxw.rml_parse):
             self.percent = 0.05  # 5% of the process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         states = context.get('paid_invoice') and ['paid', 'inv_close'] or ['open']
-        for type in ['si_di', 'sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo']:
+        for doc_type in ['si_di', 'sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo']:
             # determine the domain to use according to the report type and the doc type
             domain = [('state', 'in', states)]
             if context.get('paid_invoice') and beginning_date and ending_date:
                 domain += [('date_invoice', '>=', beginning_date), ('date_invoice', '<=', ending_date)]
-            if type == 'si_di':
+            if doc_type == 'si_di':
                 domain += [('doc_type', 'in', ['si', 'di'])]
-            elif type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
-                domain += [('doc_type', '=', type)]
+            elif doc_type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
+                domain += [('doc_type', '=', doc_type)]
             type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='move_name')
             if isinstance(type_ids, (int, long)):
                 type_ids = [type_ids]
             self.nb_lines += len(type_ids)
-            res.update({type: inv_obj.browse(self.cr, self.uid, type_ids, context)})
+            res.update({doc_type: inv_obj.browse(self.cr, self.uid, type_ids, context)})
         if bg_id:
             self.percent += 0.20  # 25% of the process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
