@@ -72,43 +72,15 @@ class report_open_invoices2(report_sxw.rml_parse):
             self.percent = 0.05  # 5% of the process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         states = context.get('paid_invoice') and ['paid', 'inv_close'] or ['open']
-        for type in ['si_di', 'sr', 'donation', 'ivi', 'stv', 'cr', 'dn', 'ivo']:
+        for type in ['si_di', 'sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo']:
             # determine the domain to use according to the report type and the doc type
             domain = [('state', 'in', states)]
             if context.get('paid_invoice') and beginning_date and ending_date:
                 domain += [('date_invoice', '>=', beginning_date), ('date_invoice', '<=', ending_date)]
             if type == 'si_di':
-                domain += [('type', '=', 'in_invoice'),
-                           ('is_inkind_donation', '=', False),
-                           ('is_debit_note', '=', False),
-                           ('is_intermission', '=', False)]
-            elif type == 'sr':
-                domain += [('type', '=', 'in_refund')]
-            elif type == 'donation':
-                domain += [('type', '=', 'in_invoice'),
-                           ('is_debit_note', '=', False),
-                           ('is_inkind_donation', '=', True)]
-            elif type == 'ivi':
-                domain += [('type', '=', 'in_invoice'),
-                           ('is_debit_note', '=', False),
-                           ('is_inkind_donation', '=', False),
-                           ('is_intermission', '=', True)]
-            elif type == 'stv':
-                domain += [('type', '=', 'out_invoice'),
-                           ('is_debit_note', '=', False),
-                           ('is_inkind_donation', '=', False),
-                           ('is_intermission', '=', False)]
-            elif type == 'cr':
-                domain += [('type', '=', 'out_refund')]
-            elif type == 'dn':
-                domain += [('type', '=', 'out_invoice'),
-                           ('is_debit_note', '!=', False),
-                           ('is_inkind_donation', '=', False)]
-            elif type == 'ivo':
-                domain += [('type','=','out_invoice'),
-                           ('is_debit_note', '=', False),
-                           ('is_inkind_donation', '=', False),
-                           ('is_intermission', '=', True)]
+                domain += [('doc_type', 'in', ['si', 'di'])]
+            elif type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
+                domain += [('doc_type', '=', type)]
             type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='move_name')
             if isinstance(type_ids, (int, long)):
                 type_ids = [type_ids]

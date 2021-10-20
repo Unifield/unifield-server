@@ -294,15 +294,10 @@ class account_invoice(osv.osv):
             res[inv.id] = inv_type
         return res
 
-    def _search_doc_type(self, cr, uid, obj, name, args, context=None):
+    def _get_dom_by_doc_type(self, doc_type):
         """
-        Returns a domain to get all invoices matching the selected doc type (see the list of types in _get_invoice_type_list).
+        Returns the domain matching to the doc type (see the list of types in _get_invoice_type_list).
         """
-        if not args:
-            return []
-        if not args[0] or len(args[0]) < 3 or args[0][1] != '=' or not args[0][2]:
-            raise osv.except_osv(_('Error'), _('Filter not implemented yet.'))
-        doc_type = args[0][2]
         if doc_type in ('str', 'isi', 'isr'):
             dom = [('real_doc_type', '=', doc_type)]
         elif doc_type == 'dn':  # Debit Note
@@ -355,6 +350,26 @@ class account_invoice(osv.osv):
                    '&', ('real_doc_type', '=', False), ('type', '=', 'out_refund')]
         else:  # "unknown" or any undefined type
             dom = [('id', '=', 0)]
+        return dom
+
+    def _search_doc_type(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain to get all invoices matching the selected doc types (see the list of types in _get_invoice_type_list).
+        """
+        if not args:
+            return []
+        dom = [('id', '=', 0)]
+        if not args[0] or len(args[0]) < 3 or args[0][1] not in ('=', 'in'):
+            raise osv.except_osv(_('Error'), _('Filter not implemented yet.'))
+        if args[0][1] == '=' and args[0][2]:
+            doc_type = args[0][2]
+            dom = self._get_dom_by_doc_type(doc_type)
+        if args[0][1] == 'in' and args[0][2] and isinstance(args[0][2], list):
+            dom = []
+            for i in range(len(args[0][2]) - 1):
+                dom.append('|')
+            for doc_type in args[0][2]:
+                dom.extend(self._get_dom_by_doc_type(doc_type))
         return dom
 
     _columns = {
