@@ -500,6 +500,14 @@ class res_partner(osv.osv):
             ('doc_type', '=', 'si'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
         ], context = context.update({'type':'in_invoice', 'journal_type': 'purchase'}))
 
+        isi_ids = account_invoice_obj.search(cr, uid, [
+            ('doc_type', '=', 'isi'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ])
+
+        str_ids = account_invoice_obj.search(cr, uid, [
+            ('doc_type', '=', 'str'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ])
+
         cust_refunds_ids = account_invoice_obj.search(cr, uid,
                                                       [('doc_type', '=', 'cr'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])],
                                                       context = context.update({'type':'out_refund', 'journal_type': 'sale_refund'}))
@@ -552,6 +560,8 @@ class res_partner(osv.osv):
             +(intermission_vouch_out_ids and [_('%s Intermission Voucher OUT') % (len(intermission_vouch_out_ids),)] or [])
             +(donation_ids and [_('%s Donation(s)') % (len(donation_ids),)] or [])
             +(supp_invoice_ids and [_('%s Supplier Invoice(s)') % (len(supp_invoice_ids), )] or [])
+            + (isi_ids and [_('%s Intersection Supplier Invoice(s)') % (len(isi_ids),)] or [])
+            + (str_ids and [_('%s Stock Transfer Refunds(s)') % (len(str_ids),)] or [])
             +(cust_refunds_ids and [_('%s Customer Refund(s)') % (len(cust_refunds_ids), )] or [])
             +(debit_note_ids and [_('%s Debit Note(s)') % (len(debit_note_ids), )] or [])
             +(stock_transfer_vouch_ids and [_('%s Stock Transfer Voucher(s)') % (len(stock_transfer_vouch_ids),)] or [])
