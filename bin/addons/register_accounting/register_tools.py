@@ -303,7 +303,7 @@ def previous_register_is_closed(self, cr, uid, ids, context=None):
     for reg in self.pool.get('account.bank.statement').browse(cr, uid, ids, context=context):
         # if no previous register (case where register is the first register) we don't need to close non-existent registers
         if reg.prev_reg_id:
-            if reg.prev_reg_id.state not in ['partial_close', 'confirm']:
+            if reg.prev_reg_id.state != 'confirm':
                 raise osv.except_osv(_('Error'),
                                      _('The previous register "%s" for period "%s" has not been closed properly.') %
                                      (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
@@ -371,6 +371,7 @@ def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None
                     }
                     if el == 'ending_id':
                         starting_vals.update({'number': 0.0,})
+                    # note: if ending is True, closing lines are created, but the check on duplicates is skipped as the reg. is in Draft state
                     cashbox_line_obj.create(cr, uid, starting_vals, context=context)
             # update new register balance_start
             balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_start', False)

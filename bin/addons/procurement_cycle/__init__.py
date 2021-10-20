@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,8 +19,23 @@
 #
 ##############################################################################
 
-import procurement
-import scheduler
-import wizard
+def normalize_td(time_unit, value):
+    """
+        timedelta does not support float for months
+    """
 
+    unit = {'d': 'days', 'm': 'months', 'w': 'weeks'}.get(time_unit, 'd')
+    value = value or 0
+    if unit == 'months':
+        if value%1 != 0:
+            return {'months': int(value), 'days': 30.44 * (value%1)}
+        else:
+            value = int(value)
+    return {unit: value}
+
+import replenishment
+import wizard
+import report
+import replenishment_wizard
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

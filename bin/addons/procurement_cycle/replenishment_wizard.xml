@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="export_replenishment_product_list_form">
+            <field name="name">wizard.export.replenishment.product.list</field>
+            <field name="model">wizard.export.replenishment.product.list</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+
+                <form string="Export Product List Consistency Report">
+                    <group colspan="4">
+                        <group col="1"></group>
+                        <group col="2" colspan="2">
+                            <field colspan="2" name="list_id"/>
+                            <button colspan="2" name="create_report" string="Export" type="object" icon="gtk-print"/>
+                        </group>
+                        <group col="1"></group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <act_window id="action_replenishment_product_list"
+            name="Export Product List"
+            res_model="wizard.export.replenishment.product.list"
+            src_model="replenishment.product.list"
+            view_mode="form"
+            view_type="form"
+            key2="client_print_multi"
+            target="new" />
+
+
+        <record model="ir.ui.view" id="replenishment_segment_line_paired_form">
+            <field name="name">replenishment.segment.line.paired</field>
+            <field name="model">replenishment.segment.line</field>
+            <field name="type">form</field>
+            <field name="priority">25</field>
+            <field name="arch" type="xml">
+                <form string="Set Paired Product">
+                        <field name="product_id" readonly="1" colspan="4"/>
+                        <field name="status" invisible="1" />
+                        <field name="replacing_product_id" attrs="{'invisible': [('status', 'not in', ['replaced', 'phasingout'])], 'required':  [('status', '=', 'replaced')]}" colspan="4" domain="[('id', '!=', product_id)]" />
+                        <field name="replaced_product_id" attrs="{'invisible': [('status', 'not in', ['replacing', 'activereplacing'])], 'required':  [('status', 'in', ['replacing', 'activereplacing'])]}" colspan="4" domain="[('id', '!=', product_id)]"/>
+                        <group colspan="4">
+                            <button name="save_paired" icon="gtk-ok" string="Save" type="object"/>
+                            <button special="cancel" string="Close" icon="gtk-cancel" />
+                        </group>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="replenishment_consolidated_oc_import_form">
+            <field name="name">replenishment.consolidated_oc.import.form</field>
+            <field name="model">replenishment.consolidated_oc.import</field>
+            <field name="type">form</field>
+            <field name="priority">25</field>
+            <field name="arch" type="xml">
+                <form string="Import consolidated OC">
+                        <field name="file_to_import" colspan="4" attrs="{'invisible': [('state', 'in', ['done', 'partial'])]}" />
+                        <field name="state"  />
+                        <group colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}">
+                            <separator string="Import Summary" colspan="4" />
+                            <field name="error" colspan="4" widget="full_text" nolabel="1" />
+                        </group>
+                        <group colspan="4">
+                            <button name="import_oc_lines" icon="gtk-ok" string="Import" type="object" attrs="{'invisible': [('state', 'in', ['done', 'partial'])]}" />
+                            <button special="cancel" string="Close" icon="gtk-cancel" />
+                        </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="action_replenishment_consolidated_oc_import_"
+            name="Import Consolidated OC lines"
+            res_model="replenishment.consolidated_oc.import"
+            src_model="replenishment.order_calc"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            multi="True"
+            key2="client_action_multi"
+            />
+
+    </data>
+</openerp>
+

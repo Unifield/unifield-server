@@ -45,8 +45,10 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
         Return the moves for the report
         '''
         result = []
-        for move in report.sm_ids:
-            result.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
+        for move_id in report.sm_ids:
+            move = self.pool.get('stock.move').browse(self.cr, self.uid, move_id)
+            if self._get_qty(move) != 0:
+                result.append(move)
 
         return sorted(result, key=lambda r: (r['date']), reverse=True)
 
@@ -85,9 +87,17 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
         '''
         currency_obj = self.pool.get('res.currency')
 
-        if not move.price_currency_id:
+        if move.type == 'in':
             if move.price_unit is None:
                 return round(move.product_id.standard_price, 2)
+            else:
+                price = move.price_unit
+        elif move.type == 'out' and move.sale_line_id:
+            price = move.sale_line_id.price_unit
+        else:
+            return 0.00
+
+        if not move.price_currency_id:
             if move.type == 'in':
                 from_currency_id = move.partner_id.property_product_pricelist_purchase.currency_id.id
             else:
@@ -95,13 +105,13 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
         else:
             from_currency_id = move.price_currency_id.id
 
-        context = {'date': move.date}
+        context = {'currency_date': move.date}
         to_currency_id = self.user_company['currency_id'].id
 
         if from_currency_id == to_currency_id:
-            return round(move.price_unit, 2)
+            return round(price, 2)
 
-        return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, move.price_unit, round=False, context=context), 2)
+        return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, price, round=False, context=context), 2)
 
 
 class sale_donation_stock_moves_report_xls(SpreadsheetReport):

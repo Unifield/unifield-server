@@ -30,34 +30,7 @@ class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
 
-    _defaults = {
-        'name': False,
-        'state': lambda *a: 'draft',
-    }
-
-    def _get_starting_balance(self, cr, uid, ids, context=None):
-        """ Find starting balance
-        @param name: Names of fields.
-        @param arg: User defined arguments
-        @return: Dictionary of values.
-        """
-        res = {}
-        for statement in self.browse(cr, uid, ids, context=context):
-            amount_total = 0.0
-
-            if statement.journal_id.type not in('cash'):
-                continue
-
-            if not statement.prev_reg_id:
-                for line in statement.starting_details_ids:
-                    amount_total+= line.pieces * line.number
-            else:
-                amount_total = statement.prev_reg_id.msf_calculated_balance
-
-            res[statement.id] = {
-                'balance_start': amount_total
-            }
-        return res
+    _order = 'state, period_id, instance_id, journal_id'
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -65,7 +38,6 @@ class account_cash_statement(osv.osv):
         """
         j_obj = self.pool.get('account.journal')
         journal = j_obj.browse(cr, uid, vals['journal_id'], context=context)
-        # @@@override@account.account_cash_statement.create()
 
         # UFTP-116: Fixed a serious problem detected very late: the cashbox lines created by default even for the Cash Reg from sync!
         # This leads to the problem that each time, a Cash Reg is new from a sync, it added new 16 lines for the Cash Reg
@@ -94,7 +66,6 @@ class account_cash_statement(osv.osv):
             if period and period.state == 'created':
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Register is created') % (period.name,))
 
-        # @@@end
         # Observe register state
         prev_reg = False
         prev_reg_id = vals.get('prev_reg_id', False)
@@ -116,7 +87,7 @@ class account_cash_statement(osv.osv):
         if 'responsible_ids' not in vals and prev_reg and prev_reg.responsible_ids:
             vals['responsible_ids'] = [(6, 0, [x.id for x in prev_reg.responsible_ids])]
 
-        res_id = osv.osv.create(self, cr, uid, vals, context=context)
+        res_id = super(account_cash_statement, self).create(cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
         if prev_reg_id and not sync_update:
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
@@ -124,41 +95,6 @@ class account_cash_statement(osv.osv):
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        if context is None:
-            context = {}
-
-        if not context.get('sync_update_execution'):
-            if 'balance_end_real' in vals:
-                new_vals = {'balance_start': vals['balance_end_real']}
-                # US-948/2: carry over end of month balance to next registers if
-                # the source register is not 'end of month balance' frozen
-                # note: the last carry over is processed via
-                # 'button_confirm_closing_bank_balance' button
-                to_write_id_list = []
-                for r in self.read(cr, uid, ids,
-                                   [ 'closing_balance_frozen', 'journal_id', ],
-                                   context=context):
-                    if not r['closing_balance_frozen']:
-                        if r['journal_id']:
-                            jtype = self.pool.get('account.journal').read(cr,
-                                                                          uid, [r['journal_id'][0]], ['type'],
-                                                                          context=context)[0]['type']
-                            if jtype != 'cash':
-                                args = [('prev_reg_id', '=', r['id'])]
-                                search_ids = self.search(cr, uid, args,
-                                                         context=context)
-                                if search_ids:
-                                    to_write_id_list.extend(search_ids)
-                self.write(cr, uid, to_write_id_list, new_vals, context=context)
-
-        if not vals:
-            return True
-
-        return super(account_cash_statement, self).write(cr, uid, ids, vals,
-                                                         context=context)
 
     def do_button_open_cash(self, cr, uid, ids, opening_balance=None, context=None):
         """
@@ -186,6 +122,7 @@ class account_cash_statement(osv.osv):
                 'pieces': line.pieces,
                 'number': 0.0,
             }
+            # note: check on closing line duplicates will be skipped as the reg. is still in Draft state at this step
             cashbox_line_obj.create(cr, uid, vals, context=context)
         # Give a Cash Register Name with the following composition :
         #+ Cash Journal Name
@@ -231,18 +168,6 @@ class account_cash_statement(osv.osv):
                 'active_ids': ids
             }
         }
-
-    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        """
-        Calculate register's balance: call super, then add the Open Advance Amount to the end balance
-        """
-        res = super(account_cash_statement, self)._end_balance(cr, uid, ids, field_name, arg, context)
-        for statement in self.browse(cr, uid, ids, context):
-            # UF-425: Add the Open Advances Amount when calculating the "Calculated Balance" value
-            res[statement.id] -= statement.open_advance_amount or 0.0
-            # UF-810: Add a "Unrecorded Expenses" when calculating "Calculated Balance"
-            res[statement.id] -= statement.unrecorded_expenses_amount or 0.0
-        return res
 
     def _gap_compute(self, cursor, user, ids, name, attr, context=None):
         res = {}
@@ -294,13 +219,8 @@ class account_cash_statement(osv.osv):
         return res
 
     _columns = {
-        'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
-        'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')),
-                                  readonly="True", string='State'),
-        'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
-        'period_id': fields.many2one('account.period', 'Period', required=True),
         'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines',
-                                    states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
+                                    states={'confirm': [('readonly', True)], 'draft': [('readonly', True)]}),
         'open_advance_amount': fields.float('Unrecorded Advances'),
         'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
         'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
@@ -320,7 +240,10 @@ class account_cash_statement(osv.osv):
         domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
         if context is None:
             context = {}
-        context['type_posting'] = 'temp'
+        context.update({
+            'type_posting': 'temp',
+            'register_id': ids[0],
+        })
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False
@@ -349,7 +272,10 @@ class account_cash_statement(osv.osv):
         domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
         if context is None:
             context = {}
-        context['type_posting'] = 'hard'
+        context.update({
+            'type_posting': 'hard',
+            'register_id': ids[0],
+        })
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False

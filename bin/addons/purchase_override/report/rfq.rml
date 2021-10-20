@@ -6,7 +6,7 @@
             <frame id="first" x1="30.0" y1="0.0" width="772" height="500" />
 
         <pageGraphics>
-            <drawString x="35" y="560.0">REQUEST FOR QUOTATION [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
+            <drawString x="35" y="560.0">REQUEST FOR QUOTATION [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'rfq_state')) ]]</drawString>
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
@@ -78,7 +78,7 @@
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformationOrigin" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextNotes" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
@@ -86,7 +86,7 @@
 
     <story>
 
-        <para style="Standard">[[ setLang(objects[0].partner_id.lang) ]]</para>
+        <para style="Standard"></para>
         <para style="Standard">
             <font color="white"> </font>
         </para>
@@ -505,7 +505,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="20.0,62.5,100,303.0,141.0,70.5,75.0" style="LinesTable">
+        <blockTable colWidths="20.0,62.5,100,253.0,116.0,55.5,70.0,55.0,40.0" style="LinesTable">
             <tr>
                 <td>
                     <para style="Lines"><i>Line</i></para>
@@ -528,11 +528,17 @@
                 <td>
                     <para style="Lines"><i>Unit of Measure</i></para>
                 </td>
+                <td>
+                    <para style="Lines"><i>Unit Price</i></para>
+                </td>
+                <td>
+                    <para style="Lines"><i>Currency</i></para>
+                </td>
             </tr>
         </blockTable>
 
         <section>
-            <blockTable colWidths="20.0,62.5,100,303.0,141.0,70.5,75.0" style="LinesTable">
+            <blockTable colWidths="20.0,62.5,100,253.0,116.0,55.5,70.0,55.0,40.0" style="LinesTable">
                 [[ repeatIn(objects[0].order_line, 'line') ]]
                 [[ (line.order_id.state != 'cancel' and line.state not in ['cancel', 'cancel_r']) or removeParentNode('blockTable') ]]
                 <tr>
@@ -558,6 +564,12 @@
                     <td>
                         <para style="LinesBlue" alignment="CENTER">[[ line.product_uom.name ]]</para>
                     </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.order_id.rfq_state in ('updated', 'done') and line.price_unit or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line.order_id.rfq_state in ('updated', 'done') and line.currency_id.name or '' ]]</para>
+                    </td>
                 </tr>
             </blockTable>
 
@@ -578,7 +590,7 @@
         <blockTable colWidths="772.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextRemarks">REMARKS : [[ objects[0].notes ]]</para>
+                    <para style="TextNotes">Notes : [[ objects[0].notes ]]</para>
                 </td>
             </tr>
             <tr>

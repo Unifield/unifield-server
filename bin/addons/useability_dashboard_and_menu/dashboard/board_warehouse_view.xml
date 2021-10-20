@@ -41,7 +41,7 @@
             <field name="res_model">stock.picking</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'), ('state', 'not in', ['done', 'cancel'])]</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'), ('state', 'not in', ['delivered', 'cancel'])]</field>
             <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard', 'wh_dashboard': True, 'pick_type': 'delivery'}</field>
             <field name="search_view_id" ref="stock.view_picking_out_search"/>
         </record>
@@ -127,7 +127,6 @@
                             <action name="%(action_picking_ticket_board)d" string="Picking Tickets" menu_ref="%(msf_outgoing.menu_action_picking_ticket)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
                             <action name="%(action_ppl_board)d" string="Pre-Packing Lists" menu_ref="%(msf_outgoing.menu_action_ppl)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
                             <action name="%(board_action_shipment)d" string="Shipments" menu_ref="%(msf_outgoing.menu_action_shipment)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
-                            <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" menu_ref="%(procurement.menu_stock_sched)d,%(procurement.menu_stock_procurement_action)d"/>
                         </child1>
                     </hpaned>
                 </form>
@@ -145,7 +144,6 @@
                         <child1>
                             <action name="%(action_picking_tree_available)d" string="Incoming Shipments" menu_ref="%(stock.menu_action_picking_tree4)d,%(stock.menu_stock_warehouse_mgmt)d"/>
                             <action name="%(action_outgoing_product_board)d" string="Delivery Orders" menu_ref="%(stock.menu_action_picking_tree)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d"/>
-                            <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" menu_ref="%(procurement.menu_stock_sched)d,%(procurement.menu_stock_procurement_action)d"/>
                         </child1>
                     </hpaned>
                 </form>
@@ -161,9 +159,10 @@
             <field name="view_id" ref="board_warehouse_form_default"/>
         </record>
 
-        <menuitem id="stock.menu_stock_root" 
-        name="Warehouse"  
-        action="open_board_warehouse_unifield"/>
+        <menuitem id="stock.menu_stock_root"
+        name="Warehouse"
+        action="open_board_warehouse_unifield"
+        sequence="5"/>
         
     </data>
 </openerp>

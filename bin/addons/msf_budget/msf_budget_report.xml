@@ -97,6 +97,7 @@
             <field name="object" eval="1" />
             <field name="name">order.impact.vs.budget</field>
             <field name="key2">client_print_multi</field>
+            <field name="view_ids" ref="purchase.purchase_order_form,purchase.purchase_order_tree" />
             <field name="value" eval="'ir.actions.act_window,' +str(ref('action_order_impact_vs_budget_menu'))" />
             <field name="key">action</field>
             <field name="model">purchase.order</field>

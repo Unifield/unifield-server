@@ -30,7 +30,7 @@ class stock_inventory_line_split(osv.osv_memory):
     _description = "Split inventory lines"
 
     
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """ To check the availability of production lot. 
         @param self: The object pointer.
         @param cr: A database cursor

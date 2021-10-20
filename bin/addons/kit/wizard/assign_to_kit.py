@@ -45,14 +45,10 @@ class assign_to_kit(osv.osv_memory):
                     # negative value
                     errors.update(negative=True)
                     mem.write({'integrity_status': 'negative'}, context=context)
-                if abs(mem.assigned_qty_assign_to_kit_line - obj.qty_assign_to_kit) > 0.0001:
+                if mem.assigned_qty_assign_to_kit_line - obj.qty_assign_to_kit > 0.0001:
                     # quantity assigned is greater than available quantity
                     errors.update(greater_than_available=True)
                     mem.write({'integrity_status': 'greater_than_available'}, context=context)
-#                if mem.qty_assign_to_kit_by_product_uom > mem.required_qty_assign_to_kit_line: -> problem because not item created and so the value is not updated...
-#                    # total quantity assigned is greater than required quantity
-#                    errors.update(greater_than_required=True)
-#                    mem.write({'integrity_status': 'greater_than_required'}, context=context)
         # check the encountered errors
         return all([not x for x in errors.values()])
 
@@ -156,7 +152,7 @@ class assign_to_kit(osv.osv_memory):
                                    'item_kit_id': mem.kit_id_assign_to_kit_line.id,
                                    'item_description': 'Kitting Order',
                                    'item_stock_move_id': stock_move_ids[0],
-                                   }
+                                   'to_consume_id': obj.move_id_assign_to_kit.to_consume_id_stock_move.id}
                     item_obj.create(cr, uid, item_values, context=context)
             # if kit_list is not empty, the user deleted some lines and we therefore delete the items corresponding to the deleted kits
             if kit_list:
@@ -193,7 +189,7 @@ class assign_to_kit(osv.osv_memory):
                     'target': 'crush',
                     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         fill the lines with default values
         '''
@@ -203,16 +199,16 @@ class assign_to_kit(osv.osv_memory):
         # objects
         move_obj = self.pool.get('stock.move')
 
-        res = super(assign_to_kit, self).default_get(cr, uid, fields, context=context)
+        res = super(assign_to_kit, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         stock_move_ids = context.get('active_ids', False)
         if not stock_move_ids:
             return res
 
         result = []
-        for obj in move_obj.browse(cr, uid, stock_move_ids, context=context):
+        for stock_move in move_obj.browse(cr, uid, stock_move_ids, context=context):
             # qty from version for each kit from to_consume line - total qty from line
-            required_qty = obj.to_consume_id_stock_move.qty_to_consume
-            for kit in obj.kit_creation_id_stock_move.kit_ids_kit_creation:
+            required_qty = stock_move.to_consume_id_stock_move.qty_to_consume
+            for kit in stock_move.kit_creation_id_stock_move.kit_ids_kit_creation:
                 if kit.state == 'in_production':
                     # qty already assigned in kits for this stock move
                     # we therefore have a complete picture of assign state for this stock move
@@ -224,10 +220,11 @@ class assign_to_kit(osv.osv_memory):
                         # if the item comes from this stock move, we take the qty into account
                         if item.item_stock_move_id.id in stock_move_ids:
                             assigned_qty += item.item_qty
-                        if item.item_product_id.id == obj.product_id.id and item.item_uom_id.id == obj.product_uom.id:
+                        if item.item_product_id.id == stock_move.product_id.id and item.item_uom_id.id == stock_move.product_uom.id and item.to_consume_id.id == stock_move.to_consume_id_stock_move.id:
                             total_assigned_qty += item.item_qty
+
                     # load the kit data
-                    values = {'kit_creation_id_assign_to_kit_line': obj.kit_creation_id_stock_move.id,
+                    values = {'kit_creation_id_assign_to_kit_line': stock_move.kit_creation_id_stock_move.id,
                               'kit_id_assign_to_kit_line': kit.id,
                               'assigned_qty_assign_to_kit_line': assigned_qty,
                               'qty_assign_to_kit_by_product_uom': total_assigned_qty,
@@ -239,27 +236,27 @@ class assign_to_kit(osv.osv_memory):
                 res.update({'kit_ids_assign_to_kit': result})
             # module
             if 'module_assign_to_kit' in fields:
-                res.update({'module_assign_to_kit': obj.to_consume_id_stock_move.module_to_consume})
+                res.update({'module_assign_to_kit': stock_move.to_consume_id_stock_move.module_to_consume})
             # product
             if 'product_id_assign_to_kit' in fields:
-                res.update({'product_id_assign_to_kit': obj.product_id.id})
+                res.update({'product_id_assign_to_kit': stock_move.product_id.id})
             # total qty
             if 'qty_assign_to_kit' in fields:
-                res.update({'qty_assign_to_kit': obj.product_qty})
+                res.update({'qty_assign_to_kit': stock_move.product_qty})
             # uom
             if 'uom_id_assign_to_kit' in fields:
-                res.update({'uom_id_assign_to_kit': obj.product_uom.id})
+                res.update({'uom_id_assign_to_kit': stock_move.product_uom.id})
             # lot
             if 'prodlot_id_assign_to_kit' in fields:
-                res.update({'prodlot_id_assign_to_kit': obj.prodlot_id.id})
+                res.update({'prodlot_id_assign_to_kit': stock_move.prodlot_id.id})
             # move
             if 'move_id_assign_to_kit' in fields:
-                res.update({'move_id_assign_to_kit': obj.id})
+                res.update({'move_id_assign_to_kit': stock_move.id})
             # expiry date
             if 'expiry_date_assign_to_kit' in fields:
-                res.update({'expiry_date_assign_to_kit': obj.expired_date})
+                res.update({'expiry_date_assign_to_kit': stock_move.expired_date})
             if 'kit_creation_id_assign_to_kit' in fields:
-                res.update({'kit_creation_id_assign_to_kit': obj.kit_creation_id_stock_move.id})
+                res.update({'kit_creation_id_assign_to_kit': stock_move.kit_creation_id_stock_move.id})
 
         return res
 
@@ -303,6 +300,7 @@ class assign_to_kit_line(osv.osv_memory):
             item_ids = item_obj.search(cr, uid, [('item_kit_id', '=', obj.kit_id_assign_to_kit_line.id),
                                                  ('item_product_id', '=', obj.wizard_id_assign_to_kit_line.product_id_assign_to_kit.id),
                                                  ('item_uom_id', '=', obj.wizard_id_assign_to_kit_line.uom_id_assign_to_kit.id),
+                                                 ('to_consume_id', '=', obj.wizard_id_assign_to_kit_line.move_id_assign_to_kit.to_consume_id_stock_move.id),
                                                  ('item_stock_move_id', '!=', obj.wizard_id_assign_to_kit_line.move_id_assign_to_kit.id)], context=context)
             # read data
             if item_ids:
@@ -322,7 +320,6 @@ class assign_to_kit_line(osv.osv_memory):
                 'required_qty_assign_to_kit_line': fields.float(string='Qty required per kit', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 # functions
                 'qty_assign_to_kit_by_product_uom': fields.function(_vals_get, method=True, type='float', digits_compute=dp.get_precision('Product UoM'), string='Qty already assigned', multi='get_vals', store=False, readonly=True),
-                #'qty_assign_to_kit_by_product_uom': fields.float(string='Total Qty Assigned', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 }
 
     _defaults = {'integrity_status': 'empty',

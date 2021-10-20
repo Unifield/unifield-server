@@ -253,44 +253,6 @@ you cannot have an other location than \"Cross docking\""""))
 purchase_order()
 
 
-class procurement_order(osv.osv):
-
-    _inherit = 'procurement.order'
-
-    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        When you run the scheduler and you have a sale order line with type = make_to_order,
-        we modify the location_id to set 'cross docking' of the purchase order created in mirror
-        But if the sale_order is an Internal Request we don't want "Cross docking" but "Input" as location_id (i.e. the location of the warehouse_id)
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        stock_loc_obj = self.pool.get('stock.location')
-        sol_obj = self.pool.get('sale.order.line')
-        procurement = kwargs['procurement']
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-        if (procurement.tender_line_id or procurement.rfq_line_id or len(sol_ids)) and setup.allocation_setup != 'unallocated':
-            if sol_ids:
-                browse_so = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id
-            elif procurement.tender_line_id and procurement.tender_line_id.tender_id and procurement.tender_line_id.tender_id.sale_order_id:
-                browse_so = procurement.tender_line_id.tender_id.sale_order_id
-            elif procurement.rfq_line_id and procurement.rfq_line_id.order_id and procurement.rfq_line_id.order_id.sale_order_id:
-                browse_so = procurement.rfq_line_id.order_id.sale_order_id
-
-            if browse_so:
-                req_loc = browse_so.location_requestor_id
-                if not (browse_so.procurement_request and req_loc and req_loc.usage != 'customer'):
-                    values.update({'cross_docking_ok': True, 'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
-                values.update({'priority': browse_so.priority, 'categ': browse_so.categ})
-        return values
-
-procurement_order()
-
-
 class stock_picking(osv.osv):
     '''
     do_partial(=function which is originally called from delivery_mechanism) modification
@@ -321,11 +283,11 @@ class stock_picking(osv.osv):
         'direct_incoming': False,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Fill the unallocated_ok field according to Unifield setup
         '''
-        res = super(stock_picking, self).default_get(cr, uid, fields, context=context)
+        res = super(stock_picking, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res.update({'allocation_setup': setup.allocation_setup})
         return res
@@ -387,7 +349,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
             ))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids)
-        self.action_assign(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context=context)
         return False
 
     @check_cp_rw
@@ -433,87 +395,13 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
             ))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids)
-        self.action_assign(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context=context)
         return False
 
-    def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        This hook refers to delivery_mechanism>delivery_mechanism.py>_do_incoming_shipment.
-        It updates the location_dest_id (to cross docking or to stock)
-        of selected stock moves when the linked 'incoming shipment' is validated
-        -> only related to 'in' type stock.picking
-        '''
-        values = super(stock_picking, self)._do_incoming_shipment_first_hook(cr, uid, ids, context=context, *args, **kwargs)
-        assert values is not None, 'missing values'
-        if context is None:
-            context = {}
-
-        # UF-1617: If the case comes from the sync_message, then just return the values, not the wizard stuff
-        if context.get('sync_message_execution', False):
-            return values
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # take ids of the wizard from the context.
-        # NB: the wizard_ids is created in delivery_mechanism>delivery_mecanism.py> in the method "_stock_picking_action_process_hook"
-        wiz_ids = context.get('wizard_ids')
-        res = {}
-        if not wiz_ids:
-            return res
-# ------ check the allocation setup ------------------------------------------------------------------------------
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-
-# ------ referring to locations 'cross docking' and 'stock' ------------------------------------------------------
-        obj_data = self.pool.get('ir.model.data')
-        if setup.allocation_setup != 'unallocated':
-            cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-        stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-        stock_location_service = self.pool.get('stock.location').get_service_location(cr, uid)
-        stock_location_non_stockable = self.pool.get('stock.location').search(cr, uid, [('non_stockable_ok', '=', True)])
-        if stock_location_non_stockable:
-            stock_location_non_stockable = stock_location_non_stockable[0]
-# ----------------------------------------------------------------------------------------------------------------
-        partial_picking_obj = self.pool.get('stock.partial.picking')
-        # We browse over the wizard (stock.partial.picking)
-        for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
-            """For incoming shipment """
-            # we check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
-            if var.dest_type == 'to_cross_docking':
-                if setup.allocation_setup == 'unallocated':
-                    raise osv.except_osv(_('Error'), _("""You cannot made moves from/to Cross-docking locations
-                    when the Allocated stocks configuration is set to \'Unallocated\'."""))
-                # below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is
-                # "default"and we do not want that info on INCOMING shipment
-                var.source_type = None
-                product_id = values['product_id']
-                product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
-                values.update({'location_dest_id': cross_docking_location})
-                values.update({'cd_from_bo': True})
-            elif var.dest_type == 'to_stock':
-                var.source_type = None
-                # below, "source_type" is only used for the outgoing shipment. We set it to "None" because
-                #by default it is "default"and we do not want that info on INCOMING shipment
-                product_id = values['product_id']
-                product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
-                if product_type == 'consu' and stock_location_non_stockable:
-                    values.update({'location_dest_id': stock_location_non_stockable})
-                elif product_type == 'service_recep' and stock_location_service:
-                    values.update({'location_dest_id': stock_location_service})
-                else:
-                    # treat moves towards STOCK if NOT SERVICE
-                    values.update({'location_dest_id': stock_location_input})
-                values.update({'cd_from_bo': False})
-
-            # Set the 'Direct to stock' boolean field
-            if var.dest_type != 'to_cross_docking':
-                values['direct_incoming'] = var.direct_incoming
-
-        return values
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
         hook to update defaults data of the current object, which is stock.picking.
-        The defaults data are taken from the _do_partial_hook which is on the stock_partial_picking
         osv_memory object used for the wizard of deliveries.
         For outgoing shipment
         '''
@@ -556,152 +444,3 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
 
 stock_picking()
 
-
-class stock_move(osv.osv):
-    _inherit = 'stock.move'
-    """
-    The field below 'move_cross_docking_ok' is used solely for the view using attrs. I has been named especially
-    'MOVE_cross_docking_ok' for not being in conflict with the other 'cross_docking_ok' in the stock.picking object
-    which also uses attrs according to the value of cross_docking_ok'.
-    """
-
-    def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns the Unifield configuration value
-        '''
-        res = {}
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        for order in ids:
-            res[order] = setup.allocation_setup
-        return res
-
-    _columns = {
-        'move_cross_docking_ok': fields.boolean('Cross docking'),
-        'direct_incoming': fields.boolean('Direct incoming'),
-        'allocation_setup': fields.function(_get_allocation_setup, type='selection',
-                                            selection=[('allocated', 'Allocated'),
-                                                       ('unallocated', 'Unallocated'),
-                                                       ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
-    }
-
-    _defaults = {
-        'direct_incoming': False,
-    }
-
-    def default_get(self, cr, uid, fields, context=None):
-        """ To get default values for the object:
-        If cross docking is checked on the purchase order, we set "cross docking" to the destination location
-        else we keep the default values i.e. "Input"
-        """
-        default_data = super(stock_move, self).default_get(cr, uid, fields, context=context)
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        default_data.update({'allocation_setup': setup.allocation_setup})
-        if context is None:
-            context = {}
-        purchase_id = context.get('purchase_id', [])
-        if not purchase_id:
-            return default_data
-        purchase_browse = self.pool.get('purchase.order').browse(cr, uid, purchase_id, context=context)
-        # If the purchase order linked has the option cross docking then the new created
-        #stock move should have the destination location to cross docking
-        if purchase_browse.cross_docking_ok:
-            default_data.update({'location_dest_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
-        return default_data
-
-    @check_cp_rw
-    def button_cross_docking(self, cr, uid, ids, context=None):
-        """
-        for each stock move we enable to change the source location to cross docking
-        """
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Check the allocation setup
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        if setup.allocation_setup == 'unallocated':
-            raise osv.except_osv(_('Error'), _("""You cannot made moves from/to Cross-docking locations
-            when the Allocated stocks configuration is set to \'Unallocated\'."""))
-        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-        todo = []
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state not in ['done', 'cancel']:
-                todo.append(move.id)
-                self.infolog(cr, uid, "The source location of the stock move id:%s has been changed to cross-docking location" % (move.id))
-        ret = True
-        if todo:
-            ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
-
-            # we cancel availability
-            new_todo = self.cancel_assign(cr, uid, todo, context=context)
-            if new_todo:
-                todo = new_todo
-            # we rechech availability
-            self.action_assign(cr, uid, todo, context)
-            #FEFO
-            self.fefo_update(cr, uid, todo, context)
-            # below we cancel availability to recheck it
-#            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
-#            picking_todo.append(stock_picking_id)
-#            # we cancel availability
-#            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
-#            # we recheck availability
-#            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
-#        if picking_todo:
-#            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
-        return ret
-
-    @check_cp_rw
-    def button_stock(self, cr, uid, ids, context=None):
-        """
-        for each stock move we enable to change the source location to stock
-        """
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
-        todo = []
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state not in ['done', 'cancel']:
-                '''
-                Specific rules for non-stockable products:
-                   * if the move is an outgoing delivery, picked them from cross-docking
-                   * else picked them from the non-stockable location
-                '''
-                if move.product_id.type in ('consu', 'service_recep'):
-                    if move.picking_id.type == 'out':
-                        id_loc_s = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-                    elif move.product_id.type == 'consu':
-                        id_loc_s = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-                    else:
-                        id_loc_s = self.pool.get('stock.location').get_service_location(cr, uid)
-                    self.write(cr, uid, move.id, {'location_id': id_loc_s, 'move_cross_docking_ok': False}, context=context)
-                else:
-                    self.write(cr, uid, move.id, {'location_id': move.picking_id.warehouse_id.lot_stock_id.id,
-                                                  'move_cross_docking_ok': False}, context=context)
-                todo.append(move.id)
-                self.infolog(cr, uid, "The source location of the stock move id:%s has been changed to stock location" % (move.id))
-            # below we cancel availability to recheck it
-
-        if todo:
-            # we cancel availability
-            new_todo = self.cancel_assign(cr, uid, todo, context=context)
-            if new_todo:
-                todo = new_todo
-            # we rechech availability
-            self.action_assign(cr, uid, todo)
-
-            #FEFO
-            self.fefo_update(cr, uid, todo, context)
-#            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
-#            picking_todo.append(stock_picking_id)
-            # we cancel availability
-#            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
-            # we recheck availability
-#            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
-#        if picking_todo:
-#            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
-        return True
-
-stock_move()

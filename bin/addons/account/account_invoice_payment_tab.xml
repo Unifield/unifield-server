@@ -1,0 +1,20 @@
+<!-- PAYMENT TAB -->
+<!-- added in SI / SR / IVO / STV -->
+<page string="Payments"
+      attrs="{'invisible': [('type', 'not in', ('in_refund', 'out_invoice')),
+                            '|', ('type', '!=', 'in_invoice'), ('is_intermission', '=', True)]}">
+    <field name="payment_to_display_ids" colspan="4" nolabel="1" >
+        <tree string="Payments">
+            <field name="move_id"/>
+            <field name="name"/>
+            <field name="ref"/>
+            <field name="date" string="Payment Date"/>
+            <field name="partner_type"/>
+            <field name="reconcile_txt"/>
+            <field name="debit_currency"/>
+            <field name="credit_currency"/>
+            <field name="amount_currency" sum="Total Amount"/>
+            <field name="currency_id"/>
+        </tree>
+    </field>
+</page>

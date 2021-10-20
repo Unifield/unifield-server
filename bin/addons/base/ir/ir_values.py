@@ -123,12 +123,12 @@ class ir_values(osv.osv):
         if not cr.fetchone():
             cr.execute('CREATE INDEX ir_values_key_model_key2_res_id_user_id_idx ON ir_values (key, model, key2, res_id, user_id)')
 
-    def set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=False, preserve_user=False, company=False):
+    def set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=False, preserve_user=False, company=False, view_ids=False):
         if isinstance(value, unicode):
             value = value.encode('utf8')
         if not isobject:
             value = pickle.dumps(value)
-        if meta:
+        if key != 'default' and meta:
             meta = pickle.dumps(meta)
         ids_res = []
 
@@ -165,6 +165,9 @@ class ir_values(osv.osv):
                 'meta': meta,
                 'user_id': preserve_user and uid,
             }
+
+            if view_ids:
+                vals['view_ids'] = [(6, 0, view_ids)]
             if preserve_user and key == 'default':
                 vals['sequence'] = 50
 
@@ -213,8 +216,14 @@ class ir_values(osv.osv):
                 join = 'left join actions_view_rel r on r.action_id=ir_values.id'
                 where.append('(view_id is NULL or view_id=%s)')
                 params.append(view_id)
-            if key == 'default' and (context.get('sync_update_execution') or context.get('sync_message_execution')):
-                where.append('user_id IS NULL order by sequence,id')
+            if key == 'default':
+                if meta != 'web':
+                    where.append("coalesce(meta,'')!='web'")
+                if context.get('sync_update_execution') or context.get('sync_message_execution'):
+                    where.append('user_id IS NULL order by sequence,id')
+                else:
+                    where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
+                    params.append(uid)
             else:
                 where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
                 params.append(uid)
@@ -259,7 +268,7 @@ class ir_values(osv.osv):
                     return False
             else:
                 datas = pickle.loads(x[2].encode('utf-8'))
-            if meta:
+            if meta and meta != 'web':
                 return (x[0], x[1], datas, pickle.loads(x[4]))
             return (x[0], x[1], datas)
         keys = []

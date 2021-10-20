@@ -38,6 +38,21 @@
             action="action_hq_export_ocg"
             id="menu_action_hq_export_ocg"  sequence="10"/>
 
+        <!-- OCG-POC -->
+        <record id="action_hq_export_ocg_poc" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCG-POC)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.hq.report.ocg</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hq_export_ocg_view"/>
+            <field name="context">{'ocg_poc': True}</field>
+            <field name="target">new</field>
+        </record>
+        <menuitem parent="account.menu_finance_generic_reporting"
+                  action="action_hq_export_ocg_poc"
+                  id="menu_action_hq_export_ocg_poc" sequence="12"/>
+
     <!-- OCA export -->
 
         <record id="hq_export_oca_view" model="ir.ui.view">
@@ -109,8 +124,26 @@
             action="action_hq_export_ocb"
             id="menu_action_hq_export_ocb"  sequence="30"/>
 
+        <!-- OLD OCB VI (to be deleted once this version will be dropped) -->
+        <record id="action_hq_export_ocb_old" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCB) Access Interface</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocb.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocb_export_wizard"/>
+            <field name="context">{'old_vi': True}</field>
+            <field name="target">new</field>
+        </record>
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_hq_export_ocb_old"
+            id="menu_action_hq_export_ocb_old" sequence="32"/>
+
     <!-- OCB matching export -->
 
+        <!-- see below for standard OCB matching (to be loaded after OCP matching export on which it is based) -->
+
+        <!-- OCB matching export Access Interface -->
         <record id="ocb_matching_export_wizard" model="ir.ui.view">
             <field name="name">OCB matching export</field>
             <field name="model">ocb.matching.export.wizard</field>
@@ -126,9 +159,8 @@
             </form>
             </field>
         </record>
-
-        <record id="action_hq_ocb_matching_export" model="ir.actions.act_window">
-            <field name="name">OCB matching export</field>
+        <record id="action_hq_ocb_matching_export_old" model="ir.actions.act_window">
+            <field name="name">OCB matching export Access Interface</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">ocb.matching.export.wizard</field>
             <field name="view_type">form</field>
@@ -136,10 +168,9 @@
             <field name="view_id" ref="ocb_matching_export_wizard"/>
             <field name="target">new</field>
         </record>
-
         <menuitem parent="account.menu_finance_generic_reporting"
-            action="action_hq_ocb_matching_export"
-            id="menu_action_hq_ocb_matching_export" sequence="40"/>
+                  action="action_hq_ocb_matching_export_old"
+                  id="menu_action_hq_ocb_matching_export_old" sequence="42"/>
 
 
     <!-- OCBA export -->
@@ -248,6 +279,21 @@
         <menuitem parent="account.menu_finance_generic_reporting"
             action="action_hq_ocp_matching_export"
             id="menu_action_hq_ocp_matching_export" sequence="70"/>
+
+        <!-- OCB matching export BASED ON OCP MATCHING EXPORT -->
+        <record id="action_hq_ocb_matching_export" model="ir.actions.act_window">
+            <field name="name">OCB matching export</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocp.matching.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocp_matching_export_wizard"/>
+            <field name="context">{'ocb_matching': True}</field>
+            <field name="target">new</field>
+        </record>
+        <menuitem parent="account.menu_finance_generic_reporting"
+                  action="action_hq_ocb_matching_export"
+                  id="menu_action_hq_ocb_matching_export" sequence="40"/>
 
     </data>
 </openerp>

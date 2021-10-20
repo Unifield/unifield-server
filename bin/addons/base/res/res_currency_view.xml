@@ -6,6 +6,7 @@
             <field name="name">res.currency.tree</field>
             <field name="model">res.currency</field>
             <field name="type">tree</field>
+            <field name="priority">15</field>
             <field name="arch" type="xml">
                 <tree string="Currencies">
                     <field name="name"/>
@@ -23,12 +24,13 @@
             <field name="name">res.currency.form</field>
             <field name="model">res.currency</field>
             <field name="type">form</field>
+            <field name="priority">16</field>
             <field name="arch" type="xml">
                 <form string="Currency" hide_duplicate_button="1">
                     <group col="6" colspan="6">
                         <field name="name" select="1"/>
                         <field name="rate"/>
-                        <field name="company_id" select="2" groups="base.group_multi_company" />
+                        <field name="currency_name" />
                         <field name="symbol"/>
                     </group>
 
@@ -38,10 +40,11 @@
                         <field name="accuracy"/>
                     </group>
 
-                    <group col="2" colspan="2">
-                        <separator string="Miscelleanous" colspan="2"/>
-                        <field name="base"/>
+                    <group col="4" colspan="2">
+                        <separator string="Miscelleanous" colspan="4"/>
                         <field name="active" select="1"/>
+                        <field name="is_section_currency" invisible="1" />
+                        <field name="is_esc_currency" invisible="1" />
                     </group>
 
                     <field colspan="4" mode="tree,form" name="rate_ids" nolabel="1" attrs="{'readonly':[('base','=',True)]}">
@@ -57,6 +60,7 @@
                 </form>
             </field>
         </record>
+
         <record id="action_currency_form" model="ir.actions.act_window">
             <field name="name">Currencies</field>
             <field name="res_model">res.currency</field>

@@ -84,14 +84,14 @@ class tax_report(report_sxw.rml_parse, common_report_header):
         while i < len(res):
 
             res_dict = { 'code': res[i][1].code,
-                'name': res[i][1].name,
-                'debit': 0,
-                'credit': 0,
-                'tax_amount': res[i][1].sum_period,
-                'type': 1,
-                'level': res[i][0],
-                'pos': 0
-            }
+                         'name': res[i][1].name,
+                         'debit': 0,
+                         'credit': 0,
+                         'tax_amount': res[i][1].sum_period,
+                         'type': 1,
+                         'level': res[i][0],
+                         'pos': 0
+                         }
 
             top_result.append(res_dict)
             res_general = self._get_general(res[i][1].id, period_list, company_id, based_on, context=context)
@@ -128,10 +128,10 @@ class tax_report(report_sxw.rml_parse, common_report_header):
                         AND account.company_id = %s \
                         AND move.id = line.move_id \
                         AND line.period_id IN %s \
-                        AND ((invoice.state = %s) \
+                        AND ((invoice.state in (\'paid\', \'inv_close\')) \
                             OR (invoice.id IS NULL))  \
                     GROUP BY account.id,account.name,account.code', ('draft', tax_code_id,
-                        company_id, periods_ids, 'paid',))
+                                                                     company_id, periods_ids))
 
         else:
             self.cr.execute('SELECT SUM(line.tax_amount) AS tax_amount, \
@@ -150,7 +150,7 @@ class tax_report(report_sxw.rml_parse, common_report_header):
                         AND line.period_id IN %s\
                         AND account.active \
                     GROUP BY account.id,account.name,account.code', ('draft', tax_code_id,
-                        company_id, periods_ids,))
+                                                                     company_id, periods_ids,))
         res = self.cr.dictfetchall()
 
         i = 0
@@ -206,14 +206,14 @@ class tax_report(report_sxw.rml_parse, common_report_header):
 
                 while (bcl_current_level >= int(accounts[bcl_rup_ind]['level']) and bcl_rup_ind >= 0 ):
                     res_tot = { 'code': accounts[bcl_rup_ind]['code'],
-                        'name': '',
-                        'debit': 0,
-                        'credit': 0,
-                        'tax_amount': accounts[bcl_rup_ind]['tax_amount'],
-                        'type': accounts[bcl_rup_ind]['type'],
-                        'level': 0,
-                        'pos': 0
-                    }
+                                'name': '',
+                                'debit': 0,
+                                'credit': 0,
+                                'tax_amount': accounts[bcl_rup_ind]['tax_amount'],
+                                'type': accounts[bcl_rup_ind]['type'],
+                                'level': 0,
+                                'pos': 0
+                                }
 
                     if res_tot['type'] == 1:
                         # on change le type pour afficher le total
@@ -229,6 +229,6 @@ class tax_report(report_sxw.rml_parse, common_report_header):
         return result_accounts
 
 report_sxw.report_sxw('report.account.vat.declaration', 'account.tax.code',
-    'addons/account/report/account_tax_report.rml', parser=tax_report, header="internal")
+                      'addons/account/report/account_tax_report.rml', parser=tax_report, header="internal")
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

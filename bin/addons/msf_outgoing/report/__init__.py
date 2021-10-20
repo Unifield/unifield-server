@@ -28,3 +28,5 @@ import picking_ticket
 import packing_list
 import labels
 import cargo_manifest
+import pre_packing_excel_report
+import freight_manifest

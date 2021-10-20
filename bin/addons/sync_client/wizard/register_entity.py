@@ -87,8 +87,8 @@ class register_entity(osv.osv_memory):
         'state':fields.selection([('register','Register'),('parents','Parents'),('groups','Groups'), ('message', 'Message')], 'State', required=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        values = super(register_entity, self).default_get(cr, uid, fields, context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        values = super(register_entity, self).default_get(cr, uid, fields, context, from_web=from_web)
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         values.update({
             'identifier': entity.identifier,

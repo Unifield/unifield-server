@@ -78,12 +78,6 @@ class in_family_processor(osv.osv):
         'integrity_status': 'empty',
     }
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        if 'weight' in vals:
-            vals['integrity_status'] = 'empty' if (vals['weight'] and vals['weight'] > 0) else 'missing_weight'
-        return super(in_family_processor, self).write(cr, uid, ids, vals, context=context)
 
     """
     Controller methods
@@ -131,10 +125,11 @@ class stock_incoming_processor(osv.osv):
             context = {}
 
         res = {}
-        for wiz in self.browse(cr, uid, ids, context=context):
+        for wiz in self.browse(cr, uid, ids, fields_to_fetch=['linked_to_out', 'picking_id'], context=context):
             res[wiz.id] = False
-            if wiz.picking_id and wiz.picking_id.state == 'updated' and wiz.linked_to_out:
-                res[wiz.id] = True
+            if wiz.picking_id and wiz.linked_to_out:
+                if not self.pool.get('stock.move.in.processor').search_exist(cr, uid, [('wizard_id', '=', wiz.id),('pack_info_id', '=', False)], context=context):
+                    res[wiz.id] = wiz.linked_to_out
 
         return res
 
@@ -163,7 +158,6 @@ class stock_incoming_processor(osv.osv):
                     break
 
         return res
-
 
     _columns = {
         'move_ids': fields.one2many(
@@ -200,7 +194,7 @@ class stock_incoming_processor(osv.osv):
         ),
         'draft': fields.boolean('Draft'),
         'already_processed': fields.boolean('Already processed'),
-        'linked_to_out': fields.boolean('Is this IN linked to a single Pick (same FO) ?'),
+        'linked_to_out': fields.char('If the IN is linked to a single Pick (same FO) give the type of delivery doc (standard / picking)', size=16),
         'register_a_claim': fields.boolean(
             string='Register a Claim to Supplier',
         ),
@@ -224,8 +218,11 @@ class stock_incoming_processor(osv.osv):
         'claim_description': fields.text(
             string='Claim Description',
         ),
-        'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='boolean', string='Process to ship'),
+        'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='char', string='Process to ship'),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
+        'fields_as_ro': fields.boolean('Hide split/change prod', internal=True),
+        'sequence_issue': fields.boolean('Issue with To ship'),
+        'physical_reception_date': fields.datetime('Physical Reception Date'),
     }
 
     _defaults = {
@@ -254,17 +251,33 @@ class stock_incoming_processor(osv.osv):
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
 
         cr.execute("""
-            select so.id from
+            select so.id, array_agg(distinct(out.name)), count(distinct(so.procurement_request)) from
             stock_move m
             left join stock_picking p on m.picking_id = p.id
             left join purchase_order_line pol on m.purchase_line_id = pol.id
             left join sale_order_line sol on sol.id = pol.linked_sol_id
             left join sale_order so on so.id = sol.order_id
-            where m.picking_id = %s and so.procurement_request = 'f' and coalesce(p.claim, 'f') = 'f'
+            left join stock_picking out on out.sale_id = so.id and out.type = 'out' and (out.subtype = 'picking' and out.state='draft' or out.subtype = 'standard' and out.state in ('draft', 'confirmed', 'assigned'))
+            where
+                m.picking_id = %s and
+                coalesce(p.claim, 'f') = 'f'
             group by so.id
             """, (vals.get('picking_id'), ))
         if cr.rowcount == 1:
-            vals['linked_to_out'] = True
+            fetch_data = cr.fetchone()
+            if fetch_data[2] > 1:
+                # IN mixed with FO/IR
+                vals['linked_to_out'] = False
+
+            out_names = fetch_data[1]
+            out_type = False
+            for out_name in out_names:
+                if out_name and out_name.startswith('OUT/'):
+                    out_type = out_name
+                    break
+            if not out_type:
+                out_type = out_names and len(out_names) == 1 and out_names[0] and out_names[0].startswith('PICK/') and 'picking' or False
+            vals['linked_to_out'] = out_type
         else:
             vals['linked_to_out'] = False
 
@@ -342,6 +355,10 @@ class stock_incoming_processor(osv.osv):
                 )
 
             for line in proc.move_ids:
+                if line.product_id and line.quantity:  # Check constraints on products
+                    self.pool.get('product.product')._get_restriction_error(cr, uid, [line.product_id.id],
+                                                                            {'location_id': line.location_id.id, 'location_dest_id': line.move_id.location_dest_id.id, 'obj_type': 'in', 'partner_type': proc.picking_id.partner_id.partner_type},
+                                                                            context=context)
                 # If one line as an error, return to wizard
                 if line.integrity_status not in ['empty', 'missing_1', 'to_smaller_than_from', 'overlap', 'gap', 'missing_weight']:
                     return {
@@ -592,7 +609,7 @@ class stock_incoming_processor(osv.osv):
         for wizard in self.browse(cr, uid, ids, context=context):
             picking_id = wizard.picking_id.id
 
-            simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id, }, context=context)
+            simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id, 'physical_reception_date': wizard.physical_reception_date}, context=context)
             context.update({'simu_id': simu_id})
 
         return {'type': 'ir.actions.act_window',
@@ -629,8 +646,18 @@ class stock_incoming_processor(osv.osv):
 
 
     def launch_simulation_pack(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('auto_import_ok'):
+            out = self.read(cr, uid, ids[0], ['linked_to_out'], context=context)
+            if out['linked_to_out'] != 'picking':
+                raise osv.except_osv(_('Warning'), _('This type of import cannot be used because related PICK document has been converted to %s') % out['linked_to_out'])
+
         data = self.launch_simulation(cr, uid, ids, context)
         self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
+
+
         data['name'] = _('Incoming shipment simulation screen (pick and pack mode)')
 
         file_attached = self.check_if_has_import_file_in_attachment(cr, uid, ids, context=context)
@@ -640,7 +667,8 @@ class stock_incoming_processor(osv.osv):
                 'filetype': self.pool.get('stock.picking').get_import_filetype(cr, uid, file_attached['name'], context=context),
             }, context=context)
             self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, data['res_id'], context=context)
-            self.pool.get('wizard.import.in.simulation.screen').launch_import_pack(cr, uid, data['res_id'], context=context)
+            # the following line process the IN but display the simu screen
+            #self.pool.get('wizard.import.in.simulation.screen').launch_import_pack(cr, uid, data['res_id'], context=context)
         return data
 
 
@@ -661,13 +689,8 @@ class stock_incoming_processor(osv.osv):
                 sequences.setdefault(move.packing_list, []).append((move.from_pack, move.to_pack, move.id))
                 num_of_packs = move.to_pack - move.from_pack + 1
                 if num_of_packs:
-                    if not self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, context=context):
+                    if not self.pool.get('ppl.processor')._check_rounding(cr, uid, move.uom_id, num_of_packs, move.quantity, context=context):
                         rounding_issues.append(move.line_number)
-            if move.integrity_status and move.integrity_status != 'empty':
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Please correct red lines before processing')
-                )
 
         if not total_qty:
             raise osv.except_osv(
@@ -684,63 +707,41 @@ class stock_incoming_processor(osv.osv):
         return (rounding_issues, sequence_ok)
 
 
-    def create_pack_family_lines(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # Create the different pack families according to values in stock moves
-        for wizard in self.browse(cr, uid, ids, context=context):
-
-            families_data = {}
-            for sm_in_proc in wizard.move_ids:
-                if sm_in_proc.quantity:
-                    key = 'pl%sf%st%s' % (sm_in_proc.packing_list,sm_in_proc.from_pack, sm_in_proc.to_pack)
-                    families_data.setdefault(key, {
-                        'wizard_id': wizard.id,
-                        'move_ids': [],
-                        'from_pack': sm_in_proc.from_pack,
-                        'to_pack': sm_in_proc.to_pack,
-                        'packing_list': sm_in_proc.packing_list,
-                    })
-                    families_data[key]['move_ids'].append(sm_in_proc.id)
-
-            for family_data in families_data.values():
-                move_ids = family_data.get('move_ids', [])
-                if 'move_ids' in family_data:
-                    del family_data['move_ids']
-
-                #pack_count = 0
-                #if family_data.get('from_pack') and family_data.get('to_pack'):
-                #    pack_count = family_data.get('to_pack') - family_data.get('from_pack') + 1
-
-                for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
-                    family_data.update({
-                        'weight': move.weight,
-                        'height': move.height,
-                        'length': move.length,
-                        'width': move.width,
-                        'volume': move.volume,
-                    })
-                    break
-
-                fam_id = self.pool.get('in.family.processor').create(cr, uid, family_data, context=context)
-                if move_ids:
-                    self.pool.get('stock.move.in.processor').write(cr, uid, move_ids, {'pack_id': fam_id}, context=context)
-        return False # TODO
-
-
     def process_to_ship(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
 
+        out = self.read(cr, uid, ids[0], ['linked_to_out'], context=context)
+        if out['linked_to_out'] != 'picking':
+            raise osv.except_osv(_('Warning'), _('This type of import cannot be used because related PICK document has been converted to %s') % out['linked_to_out'])
+
         rounding_issues, sequence_ok = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
+        cr.execute('''
+            select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.quantity)
+            from stock_move_in_processor wiz_line
+            left join stock_incoming_processor wiz on wiz.id = wiz_line.wizard_id
+            left join stock_move move_in on move_in.picking_id = wiz.picking_id and move_in.id = wiz_line.move_id
+            left join purchase_order_line pol on pol.id = move_in.purchase_line_id
+            where
+                wiz.id = %s
+            group by wiz_line.line_number, pol.linked_sol_id
+        ''', (ids[0],))
+        sol_id_to_wiz_line = {}
+        sol_id_sum = {}
+        for x in cr.fetchall():
+            sol_id_to_wiz_line[x[1]] = x[0]
+            sol_id_sum[x[1]] = x[2]
+
+        error_pick = self.pool.get('wizard.import.in.simulation.screen').error_pick_already_processed(cr, uid, sol_id_sum, sol_id_to_wiz_line, context)
+        if error_pick:
+            raise osv.except_osv(_('Error'), error_pick)
 
         if not sequence_ok:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
+            self.write(cr, uid, ids, {'sequence_issue': True}, context=context)
+
             return {
                 'name': _('Products to Process'),
                 'type': 'ir.actions.act_window',
@@ -771,33 +772,8 @@ class stock_incoming_processor(osv.osv):
                 'context': context,
             }
 
-        return self.do_process_to_ship(cr, uid, ids, context=context)
-
-
-    def do_process_to_ship(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int,long)):
-            ids = [ids]
-
-        # delete previous fam if has:
-        pack_fam_to_del = self.pool.get('in.family.processor').search(cr, uid, [('wizard_id', 'in', ids)], context=context)
-        self.pool.get('in.family.processor').unlink(cr, uid, pack_fam_to_del, context=context)
-        # then create new:
-        self.create_pack_family_lines(cr, uid, ids, context=context)
-
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'incoming_shipment_processor_step2_form_view')[1]
-        return {
-            'name': _('PPL Information - step 2'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'stock.incoming.processor',
-            'res_id': ids[0],
-            'view_id': [view_id],
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': context,
-        }
+        self.pool.get('stock.picking').do_incoming_shipment(cr, uid, ids, context=context, with_ppl=True)
+        return {'type': 'ir.actions.act_window_close'}
 
 
     def do_in_back(self, cr, uid, ids, context=None):
@@ -836,7 +812,7 @@ class stock_incoming_processor(osv.osv):
                     'integrity_status': fam.integrity_status,
                     'packing_list': fam.packing_list,
                 }
-                for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
+                for manda_field in ['parcel_from', 'parcel_to']:
                     if not pack_info.get(manda_field):
                         raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
                 pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)
@@ -857,6 +833,7 @@ class stock_move_in_processor(osv.osv):
     _name = 'stock.move.in.processor'
     _inherit = 'stock.move.processor'
     _description = 'Wizard lines for incoming shipment processing'
+    _order = 'line_number, from_pack, id'
 
     def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
         return super(stock_move_in_processor, self)._get_move_info(cr, uid, ids, field_name, args, context=context)
@@ -963,6 +940,31 @@ class stock_move_in_processor(osv.osv):
             sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"  # not_a_user_entry
             cr.execute(sql, (value, ml_id))
         return True
+
+    def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for wiz in self.browse(cr, uid, ids, fields_to_fetch=['from_pack', 'to_pack'], context=context):
+            if wiz['from_pack']:
+                res[wiz.id] = '%s-%s' % (wiz['from_pack'], wiz['to_pack'])
+            else:
+                res[wiz.id] = False
+        return res
+
+    def _search_pack_info(self, cr, uid, obj, name, args, context):
+        dom = []
+        for arg in args:
+            if arg[2]:
+                d_p = arg[2].split('-')
+                if d_p and d_p[0] and d_p[0].strip():
+                    dom = [('from_pack', '=', d_p[0].strip())]
+                if d_p and len(d_p)>1 and d_p[1] and d_p[1].strip():
+                    dom.append(('to_pack', '=', d_p[1].strip()))
+        return dom
 
     _columns = {
         # Parent wizard
@@ -1140,7 +1142,7 @@ class stock_move_in_processor(osv.osv):
         'kc_check': fields.function(
             _get_product_info,
             method=True,
-            string='KC',
+            string='CC',
             type='char',
             size=8,
             store={
@@ -1148,7 +1150,7 @@ class stock_move_in_processor(osv.osv):
             },
             readonly=True,
             multi='product_info',
-            help="Ticked if the product is a Heat Sensitive Item",
+            help="Ticked if the product is a cold Chain Item",
         ),
         'ssl_check': fields.function(
             _get_product_info,
@@ -1190,17 +1192,22 @@ class stock_move_in_processor(osv.osv):
             help="Ticked if the product is a Controlled Substance",
         ),
         'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
-        'from_pack': fields.integer(string='From p.'),
-        'to_pack': fields.integer(string='To p.'),
-        'weight': fields.float('Weight', digits=(16,2)),
-        'volume': fields.float('Volume', digits=(16,2)),
-        'height': fields.float('Height', digits=(16,2)),
-        'length': fields.float('Length', digits=(16,2)),
-        'width': fields.float('Width', digits=(16,2)),
+        'from_pack': fields.integer_null(string='From p.'),
+        'to_pack': fields.integer_null(string='To p.'),
+        'weight': fields.float_null('Weight', digits=(16,2)),
+        'volume': fields.float_null('Volume', digits=(16,2)),
+        'height': fields.float_null('Height', digits=(16,2)),
+        'total_volume': fields.float_null(u'Total Volume [dm³]', digits=(16,0)),
+        'total_weight': fields.float_null(u'Total Weight [kg]', digits=(16,0)),
+        'length': fields.float_null('Length', digits=(16,2)),
+        'width': fields.float_null('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
         'packing_list': fields.char('Supplier Packing List', size=30),
+        'ppl_name': fields.char('Packing List', size=128),
         'sequence_issue': fields.selection(PACK_INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
         'split_move_ok': fields.boolean(string='Is split move ?'),
+        'filter_pack': fields.function(_get_pack_info, method=True, type='char', string='Pack', fnct_search=_search_pack_info),
+        'cost_as_ro': fields.boolean('Set Cost Price as RO', internal=1),
     }
 
 
@@ -1223,13 +1230,21 @@ class stock_move_in_processor(osv.osv):
         if context is None:
             context = {}
 
+        if not vals.get('cost'):
+            # issue on IN processor from sync if new line created (because of a split in coordo)
+            # then the price_unit should not come from product standard_price but from the original stock.move (i.e: from POL)
+            # before this the unit price was temporary set to the standard_price, but changed on IN processing, this was too late
+            if vals.get('move_id'):
+                move_data = self.pool.get('stock.move').browse(cr, uid, vals['move_id'], fields_to_fetch=['price_unit', 'currency_id'], context=context)
+                vals['cost'] = move_data.price_unit
+                vals['currency'] = move_data.currency_id.id
+
         if vals.get('product_id', False):
             if not vals.get('cost', False):
                 price = product_obj.browse(cr, uid, vals['product_id'], context=context).standard_price
                 vals['cost'] = price
             if not vals.get('currency', False):
                 vals['currency'] = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
-
         return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
 
 

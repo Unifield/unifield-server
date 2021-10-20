@@ -29,12 +29,12 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-
+import logging
 
 
 class automated_export_job(osv.osv):
     _name = 'automated.export.job'
-
+    logger = logging.getLogger('automated.export.job')
     def _get_name(self, cr, uid, ids, field_name, args, context=None):
         """
         Build the name of the job by using the function_id and the date and time
@@ -104,10 +104,12 @@ class automated_export_job(osv.osv):
             readonly=True,
             required=True,
         ),
+        'disable_generation': fields.boolean('Do not generate reports, push only to remote'),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
+        'disable_generation': False,
     }
 
     _order = 'id desc'
@@ -136,35 +138,44 @@ class automated_export_job(osv.osv):
 
             ftp_connec = None
             sftp = None
-            context.update({'no_raise_if_ok': True})
-            if job.export_id.ftp_ok and job.export_id.ftp_protocol == 'ftp':
-                ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, job.export_id.id, context=context)
-            elif job.export_id.ftp_ok and job.export_id.ftp_protocol == 'sftp':
-                sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, job.export_id.id, context=context)
-            context.pop('no_raise_if_ok')
-
-            # Process export
-            error_message = []
-            state = 'done'
             try:
-                processed, rejected, headers = getattr(
-                    self.pool.get(job.export_id.function_id.model_id.model),
-                    job.export_id.function_id.method_to_call
-                )(cr, uid, job.export_id, context=context)
+                context.update({'no_raise_if_ok': True})
+                if job.export_id.ftp_ok and job.export_id.ftp_protocol == 'ftp':
+                    ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, job.export_id.id, context=context)
+                elif job.export_id.ftp_ok and job.export_id.ftp_protocol == 'sftp':
+                    sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, job.export_id.id, context=context)
+                context.pop('no_raise_if_ok')
+                # Process export
+                error_message = []
+                state = 'done'
 
-                if context.get('po_not_found'):
-                    error_message.append(_('No PO to export !'))
 
-                if processed:
-                    nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
+                if job.export_id.function_id.model_id.model != 'wizard.hq.report.oca':
+                    processed, rejected, headers = getattr(
+                        self.pool.get(job.export_id.function_id.model_id.model),
+                        job.export_id.function_id.method_to_call
+                    )(cr, uid, job.export_id, context=context)
 
-                if rejected:
-                    nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
-                    state = 'error'
-                    for resjected_line in rejected:
-                        line_message = _('Line %s: ') % resjected_line[0]
-                        line_message += resjected_line[2]
-                        error_message.append(line_message)
+                    if context.get('po_not_found'):
+                        error_message.append(_('No PO to export !'))
+
+                    if processed:
+                        nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
+
+                    if rejected:
+                        nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
+                        state = 'error'
+                        for resjected_line in rejected:
+                            line_message = _('Line %s: ') % resjected_line[0]
+                            line_message += resjected_line[2]
+                            error_message.append(line_message)
+                else:
+                    nb_processed, nb_rejected, error_message = getattr(
+                        self.pool.get(job.export_id.function_id.model_id.model),
+                        job.export_id.function_id.method_to_call
+                    )(cr, uid, job.export_id, remote_con=ftp_connec or sftp, disable_generation=job.disable_generation, context=context)
+                    if nb_rejected:
+                        state = 'error'
 
                 self.write(cr, uid, [job.id], {
                     'start_time': start_time,
@@ -175,6 +186,7 @@ class automated_export_job(osv.osv):
                     'state': state,
                 }, context=context)
             except Exception as e:
+                self.logger.error('Unable to process export Job %s (%s)' % (job.id, job.name), exc_info=True)
                 self.write(cr, uid, [job.id], {
                     'start_time': start_time,
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -241,12 +253,9 @@ class automated_export_job(osv.osv):
                 if not rep.startswith('2'):
                     raise osv.except_osv(_('Error'), _('Unable to write report on FTP server'))
         elif on_ftp and job_brw.export_id.ftp_protocol == 'sftp':
-            new_tmp_file_name = os.path.join(os.path.dirname(temp_path), filename)
-            os.rename(temp_path, new_tmp_file_name)
-            temp_path = new_tmp_file_name
             try:
                 with sftp.cd(job_brw.export_id.report_path):
-                    sftp.put(new_tmp_file_name, preserve_mtime=True)
+                    sftp.put(temp_path, filename, preserve_mtime=True)
             except:
                 raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
 
@@ -261,6 +270,20 @@ class automated_export_job(osv.osv):
         })
 
         return len(data_lines)
+
+    def send_file(self, cr, uid, export_obj, remote_con, filename, destination_path, delete=False, context=None):
+        if export_obj.ftp_protocol == 'sftp':
+            with remote_con.cd(destination_path):
+                remote_con.put(filename)
+        else:
+            with open(filename, 'rb') as temp_file:
+                rep = remote_con.storbinary('STOR %s' % os.path.join(destination_path, os.path.basename(filename)), temp_file)
+                if not rep.startswith('2'):
+                    raise osv.except_osv(_('Error'), _('Unable to write file on FTP server'))
+        if delete:
+            os.unlink(filename)
+        return True
+
 
     def cancel_file_export(self, cr, uid, ids, context=None):
         """

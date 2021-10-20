@@ -33,6 +33,7 @@ import logging
 from passlib.hash import bcrypt
 from service import http_server
 from msf_field_access_rights.osv_override import _get_instance_level
+import time
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -207,6 +208,8 @@ class groups(osv.osv):
                 new_args = [('level', 'in', ['project', False])]
             elif instance_level == 'coordo':
                 new_args = [('level', 'in', ['project', 'coordo', False])]
+            if instance_level in ('project', 'coordo'):
+                new_args += [('is_an_admin_profile', '=', False)]
             for arg in args:
                 new_args.append(arg)
 
@@ -334,7 +337,7 @@ class users(osv.osv):
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
         security.check_password_validity(self, cr, uid, None, value, value, login)
         encrypted_password = bcrypt.encrypt(tools.ustr(value))
-        self.write(cr, uid, id, {'password': encrypted_password})
+        self.write(cr, uid, id, {'password': encrypted_password, 'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S')})
 
     def _is_erp_manager(self, cr, uid, ids, name=None, arg=None, context=None):
         '''
@@ -485,15 +488,25 @@ class users(osv.osv):
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
-        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
-        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users."),
+        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
+        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users.", select=1),
         'is_erp_manager': fields.function(_is_erp_manager, fnct_search=_search_role, method=True, string='Is ERP Manager ?', type="boolean"),
         'is_sync_config': fields.function(_is_sync_config, fnct_search=_search_role, method=True, string='Is Sync Config ?', type="boolean"),
         'instance_level': fields.function(_get_instance_level, fnct_search=_search_instance_level, method=True, string='Instance level', type="char"),
         'log_xmlrpc': fields.boolean('Log XMLRPC requests', help="Log the XMLRPC requests of this user into a dedicated file"),
         'last_use_shortcut': fields.datetime('Last use of shortcut', help="Last date when a shortcut was used", readonly=True),
         'nb_shortcut_used': fields.integer('Number of shortcut used', help="Number of time a shortcut has been used by this user", readonly=True),
+        'last_password_change': fields.datetime('Last Password Change', readonly=1),
+        'never_expire': fields.boolean('Password never expires', help="If unticked, the password must be changed every 6 months"),
     }
+
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
+        fg = super(users, self).fields_get(cr, uid, fields, context=context, with_uom_rounding=with_uom_rounding)
+        if fg.get('never_expire') and not tools.config.get('is_prod_instance') and not tools.misc.use_prod_sync(cr):
+            fg['never_expire']['string'] = '%s (%s)' % (fg['never_expire']['string'], _('not applicable on this sandbox'))
+            fg['never_expire']['help'] = _('On this sandbox passwords never expire')
+
+        return fg
 
     def on_change_company_id(self, cr, uid, ids, company_id):
         return {
@@ -603,6 +616,9 @@ class users(osv.osv):
         'force_password_change': False,
         'view': 'simple',
         'is_synchronizable': False,
+        'synchronize': False,
+        'last_password_change': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'never_expire': lambda self, cr, *a: cr.dbname == 'SYNC_SERVER',
     }
 
     @tools.cache()
@@ -649,10 +665,8 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
-        if not values.get('is_synchronizable', False):
-            # a user which is not synchronizable should not be synchronized
-            values['synchronize'] = False
-
+        if 'name' not in values:
+            values['name'] = values['login']
         user_id = super(users, self).create(cr, uid, values, context)
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
@@ -680,11 +694,6 @@ class users(osv.osv):
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
-
-        if 'is_synchronizable' in values and not values.get('is_synchronizable',
-                                                            False):
-            # desactivate synchronize if is_synchronizable is set to False
-            values['synchronize'] = False
 
         old_groups = []
         if values.get('groups_id'):
@@ -758,6 +767,8 @@ class users(osv.osv):
         copydef = dict(login=(copy_pattern % user2copy['login']),
                        name=(copy_pattern % user2copy['name']),
                        address_id=False, # avoid sharing the address of the copied user!
+                       synchronize=False,
+                       is_synchronizable=False,
                        )
         copydef.update(default)
         return super(users, self).copy(cr, uid, id, copydef, context)
@@ -783,7 +794,7 @@ class users(osv.osv):
         return encrypted password from the database using uid
         '''
         cr.execute("""SELECT password from res_users
-                      WHERE id=%s AND active""",
+                      WHERE id=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                    (uid,))
         res = cr.fetchone()
         if res:
@@ -796,7 +807,7 @@ class users(osv.osv):
         '''
         login = tools.ustr(login).lower()
         cr.execute("""SELECT password from res_users
-                      WHERE login=%s AND active""",
+                      WHERE login=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                    (login,))
         res = cr.fetchone()
         if res:
@@ -923,7 +934,7 @@ class users(osv.osv):
                 login = tools.ustr(login).lower()
                 # get user_uid
                 cr.execute("""SELECT id from res_users
-                              WHERE login=%s AND active=%s""",
+                              WHERE login=%s AND active=%s AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                            (login, True))
                 res = cr.fetchone()
                 uid = None
@@ -936,6 +947,7 @@ class users(osv.osv):
                 vals = {
                     'password': new_passwd,
                     'force_password_change': False,
+                    'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }
                 self.check(db_name, uid, tools.ustr(old_passwd))
                 result = self.write(cr, 1, uid, vals)
@@ -970,35 +982,6 @@ class wizard_add_users_synchronized(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 wizard_add_users_synchronized()
-
-class ir_values(osv.osv):
-    """
-    we override ir.values because we need to filter where the button add users to the white list is displayed
-    """
-
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        new_values = values
-        if context.get('user_white_list', False):
-            # add the action_open_wizard_add_users_to_white_list only if 'user_white_list' is in context
-            return new_values
-
-        if key == 'action' and key2 == 'client_action_multi' and 'res.users' in [x[0] for x in models]:
-            action_list = [x[1] for x in values if x]
-            if 'action_open_wizard_add_users_to_white_list' in action_list:
-                new_values = []
-                for v in values:
-                    if v[1] != 'action_open_wizard_add_users_to_white_list':
-                        new_values.append(v)
-        return new_values
-
-ir_values()
-
 
 class config_users(osv.osv_memory):
     _name = 'res.config.users'

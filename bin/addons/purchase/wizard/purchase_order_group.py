@@ -20,11 +20,17 @@
 ##############################################################################
 
 from osv import  osv
+from osv import fields
 from tools.translate import _
 
 class purchase_order_group(osv.osv_memory):
     _name = "purchase.order.group"
     _description = "Purchase Order Merge"
+
+    _columns = {
+        'po_value_id': fields.many2one('purchase.order', string='Template PO', help='All values in this PO will be used as default values for the merged PO'),
+        'unmatched_categ': fields.boolean(string='Unmatched categories'),
+    }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form',
                         context=None, toolbar=False, submenu=False):
@@ -64,8 +70,14 @@ class purchase_order_group(osv.osv_memory):
         result = mod_obj._get_id(cr, uid, 'purchase', 'view_purchase_order_filter')
         id = mod_obj.read(cr, uid, result, ['res_id'])
 
-        allorders = order_obj.do_merge(cr, uid, context.get('active_ids',[]), context)
-
+        tmpl_po = self.browse(cr, uid, ids[0], fields_to_fetch=['po_value_id'], context=context).po_value_id
+        tmpl_data = {
+            'dest_partner_id': tmpl_po.dest_partner_id and tmpl_po.dest_partner_id.id or False,
+            'related_sourcing_id': tmpl_po.related_sourcing_id and tmpl_po.related_sourcing_id.id or False
+        }
+        allorders = order_obj.do_merge(cr, uid, context.get('active_ids',[]), tmpl_data, context=context)
+        if not allorders:
+            raise osv.except_osv(_('Error'), _('No PO merged !'))
         return {
             'domain': "[('id','in', [" + ','.join(map(str, allorders.keys())) + "])]",
             'name': 'Purchase Orders',
@@ -74,8 +86,26 @@ class purchase_order_group(osv.osv_memory):
             'res_model': 'purchase.order',
             'view_id': False,
             'type': 'ir.actions.act_window',
-            'search_view_id': id['res_id']
+            'search_view_id': id['res_id'],
+            'context': {'search_default_draft': 1, 'search_default_approved': 0,'search_default_create_uid':uid, 'purchase_order': True},
         }
+
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context, from_web=from_web)
+        if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
+            raise osv.except_osv(_('Warning'),
+                                 _('Please select multiple order to merge in the list view.'))
+
+        res['po_value_id'] = context['active_ids'][-1]
+
+        categories = set()
+        for po in self.pool.get('purchase.order').read(cr, uid, context['active_ids'], ['categ'], context=context):
+            categories.add(po['categ'])
+
+        if len(categories) > 1:
+            res['unmatched_categ'] = True
+
+        return res
 
 purchase_order_group()
 

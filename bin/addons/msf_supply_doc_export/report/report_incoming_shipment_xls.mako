@@ -94,7 +94,7 @@
 </Styles>
 ## ==================================== we loop over the incoming_shipment "objects" == incoming_shipment  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}" ss:Protected="1">
+<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}" ss:Protected="0">
 ## definition of the columns' size
 <% nb_of_columns = 17 %>
 <Table x:FullColumns="1" x:FullRows="1">

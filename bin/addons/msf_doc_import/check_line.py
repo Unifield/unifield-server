@@ -214,9 +214,9 @@ def compute_location_value(cr, uid, **kwargs):
             if loc_name:
                 domain = [('name', '=ilike', loc_name)]
                 if check_type and product_id and check_type == 'src' and pick_type == 'internal':
-                    domain.extend([('internal_src', '=', product_id), ('usage', '!=', 'view')])
+                    domain.extend([('internal_src', '=', product_id), ('usage', '!=', 'view'), ('virtual_ok', '!=', 't')])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'internal':
-                    domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view')])
+                    domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view'), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')])
                 elif check_type and product_id and check_type == 'src' and pick_type == 'in':
                     domain.extend([('usage', '=', 'supplier')])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'in':
@@ -284,6 +284,7 @@ def product_value(cr, uid, **kwargs):
     product_code = kwargs['to_write'].get('product_code', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
+    p_id = False
     # The tender line may have a default product if it is not found
     obj_data = kwargs['obj_data']
     cell_nb = kwargs.get('cell_nb', 0)
@@ -295,8 +296,9 @@ def product_value(cr, uid, **kwargs):
                 p_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
                 if not p_ids:
                     comment += _(' Code: %s') % (product_code)
-                    msg = _('Product code doesn\'t exist in the DB.')
+                    msg = _('Product code %s doesn\'t exist in the DB.') % product_code
                 else:
+                    p_id = p_ids[0]
                     default_code = p_ids[0]
                     product = product_obj.browse(cr, uid, default_code)
                     proc_type = product.procure_method
@@ -313,7 +315,7 @@ def product_value(cr, uid, **kwargs):
         error_list.append(_('The Product\'s Code has to be defined'))
     return {
         'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit,
-        'cost_price': cost_price, 'product_code':product_code}
+        'cost_price': cost_price, 'product_code':product_code, 'product_id': p_id}
 
 
 def quantity_value(**kwargs):
@@ -448,22 +450,29 @@ def compute_price_value(**kwargs):
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     price = kwargs['price'] or 'Price'
+    is_rfq = kwargs.get('is_rfq', False)
     price_unit_defined = False
     cell_nb = kwargs.get('cell_nb', 3)
     try:
-        if not row.cells[cell_nb] or not row.cells[cell_nb].data:
-            if default_code:
-                warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
-            else:
-                error_list.append(_('The Price and Product were not found.'))
-        elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
-            error_list.append(_('The Price Unit was not a number and no product was found.'))
-        elif row.cells[cell_nb].type in ['int', 'float']:
-            price_unit_defined = True
-            price_unit = row.cells[cell_nb].data
-            cost_price = row.cells[cell_nb].data
+        if is_rfq:
+            if row.cells[cell_nb].type in ['int', 'float']:
+                price_unit_defined = True
+                price_unit = row.cells[cell_nb].data
+                cost_price = row.cells[cell_nb].data
         else:
-            error_list.append(_('The Price Unit was not defined properly.'))
+            if not row.cells[cell_nb] or not row.cells[cell_nb].data:
+                if default_code:
+                    warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
+                else:
+                    error_list.append(_('The Price and Product were not found.'))
+            elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
+                error_list.append(_('The Price Unit was not a number and no product was found.'))
+            elif row.cells[cell_nb].type in ['int', 'float']:
+                price_unit_defined = True
+                price_unit = row.cells[cell_nb].data
+                cost_price = row.cells[cell_nb].data
+            else:
+                error_list.append(_('The Price Unit was not defined properly.'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
         if default_code:

@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+from base import currency_date
+
 
 class hq_entries_validation(osv.osv_memory):
     _name = 'hq.entries.validation'
@@ -53,7 +55,7 @@ class hq_entries_validation(osv.osv_memory):
         'period_id': _get_default_period,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         # check transaction before showing wizard
         line_ids = context and context.get('active_ids', []) or []
         if isinstance(line_ids, (int, long)):
@@ -63,7 +65,7 @@ class hq_entries_validation(osv.osv_memory):
                                                                line_ids, self._name, context=context)
 
         return super(hq_entries_validation, self).default_get(cr, uid, fields,
-                                                              context=context)
+                                                              context=context, from_web=from_web)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if context is None:
@@ -105,11 +107,12 @@ class hq_entries_validation(osv.osv_memory):
                          (account.default_destination_id and account.default_destination_id.id) or False
         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
         if distrib_id:
+            curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
             common_vals = {'distribution_id':distrib_id,
                            'currency_id':currency_id,
                            'percentage':100.0,
                            'date':line.date or current_date,
-                           'source_date':line.date or current_date,
+                           'source_date': curr_date or current_date,
                            'destination_id':destination_id}
             common_vals.update({'analytic_id':cc_id})
             self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
@@ -126,7 +129,7 @@ class hq_entries_validation(osv.osv_memory):
         return distrib_id
 
     def create_move(self, cr, uid, ids, period_id=False, currency_id=False,
-                    date=None, journal=None, orig_acct=None, doc_date=None, split=False, context=None):
+                    date=None, journal=None, orig_acct=None, doc_date=None, source_date=None, split=False, context=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
@@ -176,16 +179,19 @@ class hq_entries_validation(osv.osv_memory):
             for line in hqentries_obj.browse(cr, uid, ids, context=context):
                 if not line.account_id_first_value:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
-                # create new distribution (only for expense accounts)
+                # create new distribution (only for expense or income accounts)
                 line_account = split and line.account_id or line.account_id_first_value
-                distrib_id = self.create_distribution_id(cr, uid, currency_id, line, line_account, split=split)
+                if line_account.user_type_code in ['income', 'expense']:
+                    distrib_id = self.create_distribution_id(cr, uid, currency_id, line, line_account, split=split)
+                else:
+                    distrib_id = False
                 vals = {
                     'account_id': line_account.id,
                     'period_id': period_id,
                     'journal_id': journal_id,
                     'date': line.date,
                     'date_maturity': line.date,
-                    'document_date': line.document_date,
+                    'document_date': line.document_date or line.date,
                     'move_id': move_id,
                     'analytic_distribution_id': distrib_id,
                     'name': line.name or '',
@@ -193,6 +199,8 @@ class hq_entries_validation(osv.osv_memory):
                     'partner_txt': line.partner_txt or '',
                     'reference': line.ref or ''
                 }
+                if source_date is not None:
+                    vals.update({'source_date': source_date, })
                 # Fetch debit/credit
                 debit = 0.0
                 credit = 0.0
@@ -254,12 +262,9 @@ class hq_entries_validation(osv.osv_memory):
         original_lines = set()
         original_move_ids = []
         ana_line_obj = self.pool.get('account.analytic.line')
-        od_journal_ids = self.pool.get('account.journal').search(cr, uid,
-                                                                 [('type', '=', 'correction'), ('is_current_instance', '=', True)],
-                                                                 order='id', limit=1)
-        if not od_journal_ids:
-            raise osv.except_osv(_('Error'), _('No correction journal found!'))
-        od_journal_id = od_journal_ids[0]
+        odhq_journal_id = self.pool.get('account.journal').get_correction_journal(cr, uid, corr_type='hq', context=context)
+        if not odhq_journal_id:
+            raise osv.except_osv(_('Error'), _('No "correction HQ" journal found!'))
         all_lines = set()
         pure_ad_cor_ji_ids = []
         original_aji_ids = []
@@ -291,9 +296,10 @@ class hq_entries_validation(osv.osv_memory):
             aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
             original_account_id = original_move.account_id.id
 
+            curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
             new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id,
-                                            line.currency_id.id, date=line.date, doc_date=line.document_date,
-                                            journal=od_journal_id, orig_acct=original_account_id, split=True, context=context)
+                                            line.currency_id.id, date=line.date, doc_date=line.document_date, source_date=curr_date,
+                                            journal=odhq_journal_id, orig_acct=original_account_id, split=True, context=context)
             # original move line
             original_ml_result = res_move[line.id]
             # Mark new journal items as corrections for the first one
@@ -316,7 +322,7 @@ class hq_entries_validation(osv.osv_memory):
             # Create also the AD from the original line and update it into the counterpart move
             if not line.account_id_first_value:
                 raise osv.except_osv(_('Error'), _('An account is missing!'))
-            # create new distribution (only for expense accounts)
+            # create new distribution
             distrib_id = self.create_distribution_id(cr, uid, line.currency_id.id, line, line.account_id_first_value)
             aml_obj.write(cr, uid, counterpart_id, {
                 'reversal': True,
@@ -326,21 +332,18 @@ class hq_entries_validation(osv.osv_memory):
                 'reversal_line_id': original_move.id,
                 'partner_txt': original_move.partner_txt or '',
                 'reference': ji_entry_seq or ' ', # UFTP-342: if HQ entry reference is empty, do not display anything. As a field function exists for account_move_line object, so we add a blank char to avoid this problem
-                'document_date': line.document_date,  # US-1361
+                'document_date': line.document_date or line.date,
+                'source_date': curr_date,
             }, context=context, check=False, update_check=False)
 
             # create the analytic lines as a reversed copy of the original
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
             original_aji_ids += initial_ana_ids
             res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date, context=context)
-            acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
-                                                                                [('type', '=', 'correction'), ('is_current_instance', '=', True)],
-                                                                                order='id', limit=1)
-            if not acor_journal_ids:
-                raise osv.except_osv(_('Error'), _('No correction journal found!'))
-            acor_journal_id = acor_journal_ids[0]
+            acor_journal_id = self.pool.get('account.analytic.journal').get_correction_analytic_journal(cr, uid,
+                                                                                                        corr_type='hq', context=context)
             if not acor_journal_id:
-                raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
+                raise osv.except_osv(_('Error'), _('No "correction HQ" analytic journal found!'))
             ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'move_id': counterpart_id[0]}) # UTP-1106: change move_id link as it's wrong one
 
             # Mark new analytic items as correction for original line
@@ -358,7 +361,7 @@ class hq_entries_validation(osv.osv_memory):
             for aal in browse_aals:
                 cor_name = 'COR1 - ' + aal.name
                 ana_line_obj.write(cr, uid, aal.id, {'last_corrected_id': original_aal_ids[0],'name': cor_name, 'ref': cor_ref})
-            # also write the OD entry_sequence to the REV aal
+            # also write the ODHQ entry_sequence to the REV aal
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
             cr.execute('''UPDATE account_analytic_line SET entry_sequence=%s WHERE id=%s''', (aal.entry_sequence, res_reverse[0]))
 
@@ -398,15 +401,11 @@ class hq_entries_validation(osv.osv_memory):
             ana_line_obj = self.pool.get('account.analytic.line')
             distrib_fp_line_obj = self.pool.get('funding.pool.distribution.line')
             distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
-            # Search an analytic correction journal
-            acor_journal_id = False
-            acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'),
-                                                                                          ('is_current_instance', '=', True)],
-                                                                                order='id', limit=1)
-            if acor_journal_ids:
-                acor_journal_id = acor_journal_ids[0]
+            journal_obj = self.pool.get('account.journal')
+            analytic_journal_obj = self.pool.get('account.analytic.journal')
+            # Search for the "Correction HQ" analytic journal
+            acor_journal_id = analytic_journal_obj.get_correction_analytic_journal(cr, uid, corr_type='hq', context=context)
             # Tag active_ids as user validated
-            to_write = {}
             account_change = []
             cc_change = []
             cc_account_change = []
@@ -429,6 +428,7 @@ class hq_entries_validation(osv.osv_memory):
                 raise osv.except_osv(_('Error'),
                                      "\n".join(account_partner_not_compat_log))
 
+            all_lines = {}
             for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
                 # for December HQ Entries: use the period selected in the wizard
                 if line.period_id.number == 12 and wiz.period_id:
@@ -450,8 +450,6 @@ class hq_entries_validation(osv.osv_memory):
                     split_change.append(line)
                     continue
                 if not line.user_validated:
-                    to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, {}).setdefault(line.date, []).append(line.id)
-
                     if line.account_id.id != line.account_id_first_value.id:
                         if line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
                             cc_account_change.append(line)
@@ -460,24 +458,39 @@ class hq_entries_validation(osv.osv_memory):
                     elif line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
                         if line.cost_center_id_first_value and line.cost_center_id_first_value.id:
                             cc_change.append(line)
-            all_lines = {}
-            for currency in to_write:
-                for period in to_write[currency]:
-                    for date in to_write[currency][period]:
-                        lines = to_write[currency][period][date]
-                        write = self.create_move(cr, uid, lines, period, currency, date)
+                    if line in account_change or line in cc_account_change:
+                        # non-correctable accounts should neither be corrected nor used in the correction lines
+                        non_correctable_account = (line.account_id_first_value.is_not_hq_correctible and line.account_id_first_value) or \
+                                                  (line.account_id.is_not_hq_correctible and line.account_id) or False
+                        if non_correctable_account:
+                            raise osv.except_osv(_('Warning'), _('The account %s - %s should neither be corrected nor be used in '
+                                                                 'correction lines.') % (non_correctable_account.code,
+                                                                                         non_correctable_account.name))
+                    if line in cc_change or line in cc_account_change:
+                        # accounts "non correctable on AD" should neither be corrected on AD nor used in the AD corr. lines
+                        ad_non_correctable_account = (line.account_id_first_value.is_not_ad_correctable and line.account_id_first_value) or \
+                                                     (line.account_id.is_not_ad_correctable and line.account_id) or False
+                        if ad_non_correctable_account:
+                            raise osv.except_osv(_('Warning'), _('The account %s - %s should not be used in '
+                                                                 'AD corrections.') % (ad_non_correctable_account.code,
+                                                                                       ad_non_correctable_account.name))
+
+                    document_date = line.document_date or line.date  # posting date is used by default if there is no doc date on the line
+                    write = self.create_move(cr, uid, line.id, period_id=line.period_id.id, currency_id=line.currency_id.id,
+                                             date=line.date, doc_date=document_date)
+                    if write:
                         all_lines.update(write)
-                        if write:
-                            self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
+                        self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
             for line in account_change:
+                curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
                 corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'funding_pool_lines': [(0, 0, {
                         'percentage': 100,
                         'analytic_id': line.analytic_id.id,
                         'cost_center_id': line.cost_center_id.id,
                         'currency_id': line.currency_id.id,
-                        'source_date': line.date,
+                        'source_date': curr_date,
                         'destination_id': line.destination_id.id,
                     })]
                 })
@@ -487,10 +500,13 @@ class hq_entries_validation(osv.osv_memory):
                 # actual distrib_id
                 distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
                 # update the distribution
+                curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
                 distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-                distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
+                distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id,
+                                                                      'source_date': curr_date, 'destination_id': line.destination_id.id})
                 distrib_cc_lines = distrib_cc_line_obj.search(cr, uid, [('analytic_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-                distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
+                distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id,
+                                                                      'source_date': curr_date, 'destination_id': line.destination_id.id})
 
                 # reverse ana lines
                 fp_old_lines = ana_line_obj.search(cr, uid, [
@@ -503,15 +519,16 @@ class hq_entries_validation(osv.osv_memory):
                 # Give them analytic correction journal (UF-1385 in comments)
                 if not acor_journal_id:
                     self.write(cr, uid, [wiz.id], {'running': False})
-                    raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
+                    raise osv.except_osv(_('Warning'), _('No "correction HQ" analytic journal found!'))
                 ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
                 # create new lines
                 if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
                     continue
 
                 # UTP-1118: posting date should be those from initial HQ entry line
-                vals_cor = {'date':line.date, 'source_date':line.date, 'cost_center_id':line.cost_center_id.id,
-                            'account_id':line.analytic_id.id, 'destination_id':line.destination_id.id, 'journal_id':acor_journal_id, 'last_correction_id':fp_old_lines[0]}
+                vals_cor = {'date': line.date, 'source_date': curr_date, 'cost_center_id': line.cost_center_id.id,
+                            'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,
+                            'journal_id': acor_journal_id, 'last_correction_id':fp_old_lines[0]}
 
                 # US-1347: Use the entry sequence of HQ for reference, not the description
                 entry_seq = ana_line_obj.read(cr, uid, res_reverse, ['ref'], context=context)
@@ -533,14 +550,11 @@ class hq_entries_validation(osv.osv_memory):
                 if isinstance(cor_ids, (int, long)):
                     cor_ids = [cor_ids]
                 cor_ids += res_reverse
-
-                gl_journal_ids = self.pool.get('account.journal').search(cr, uid,
-                                                                         [('type', '=', 'correction'), ('is_current_instance', '=', True)],
-                                                                         order='id', limit=1)
-                if not gl_journal_ids:
+                odhq_journal_id = journal_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
+                if not odhq_journal_id:
                     self.write(cr, uid, [wiz.id], {'running': False})
-                    raise osv.except_osv(_('Error'), _('No correction journal found!'))
-                gl_journal_obj = self.pool.get('account.journal').browse(cr, uid, gl_journal_ids[0], context=context)
+                    raise osv.except_osv(_('Error'), _('No "correction HQ" journal found!'))
+                gl_journal_obj = journal_obj.browse(cr, uid, odhq_journal_id, fields_to_fetch=['sequence_id', 'code'], context=context)
                 journal_sequence_id = gl_journal_obj.sequence_id.id
                 journal_code = gl_journal_obj.code
                 seq_obj = self.pool.get('ir.sequence')
@@ -559,13 +573,14 @@ class hq_entries_validation(osv.osv_memory):
                 pure_ad_cor_ji_ids.append(all_lines[line.id])
 
             for line in cc_account_change:
+                curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
                 # call correct_account with a new arg: new_distrib
                 corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'cost_center_lines': [(0, 0, {
                         'percentage': 100,
                         'analytic_id': line.cost_center_id.id,
                         'currency_id': line.currency_id.id,
-                        'source_date': line.date,
+                        'source_date': curr_date,
                         'destination_id': line.destination_id.id,
                     })],
                     'funding_pool_lines': [(0, 0, {
@@ -573,7 +588,7 @@ class hq_entries_validation(osv.osv_memory):
                         'analytic_id': line.analytic_id.id,
                         'cost_center_id': line.cost_center_id.id,
                         'currency_id': line.currency_id.id,
-                        'source_date': line.date,
+                        'source_date': curr_date,
                         'destination_id': line.destination_id.id,
                     })]
                 })

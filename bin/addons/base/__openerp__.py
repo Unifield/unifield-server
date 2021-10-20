@@ -23,7 +23,7 @@
 
 {
     'name': 'Base',
-    'version': '1.4',
+    'version': '1.6',
     'category': 'Generic Modules/Base',
     'description': """The kernel of OpenERP, needed for all installation.""",
     'author': 'OpenERP SA',

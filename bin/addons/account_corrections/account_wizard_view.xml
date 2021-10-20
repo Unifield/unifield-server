@@ -8,7 +8,7 @@
             <field name="model">wizard.journal.items.corrections.lines</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree hide_new_button="1" hide_delete_button="1" editable="bottom" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
+                <tree hide_new_button="1" hide_delete_button="1" editable="bottom" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid', 'invalid_small_amount');black:analytic_distribution_state in ('none')">
                     <field name="move_id"/>
                     <field name="ref"/>
                     <field name="date"/>
@@ -83,7 +83,7 @@
                         <group colspan="4" attrs="{'invisible': [('state', '!=', 'correction')]}">
                             <label string="" colspan="2"/>
                             <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
-                            <button name="button_confirm" string="Correct it" type="object" icon="gtk-edit" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                            <button name="button_confirm" string="Correct" type="object" icon="gtk-edit" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                         </group>
                     </xpath>
                 </data>

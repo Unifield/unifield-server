@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 from osv import osv
@@ -54,11 +54,11 @@ class project_addresses(osv.osv_memory):
         'bill_phone':fields.char('Phone', size=64),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Get the current address of the main partner and fill the form
         '''
-        res = super(project_addresses, self).default_get(cr, uid, fields, context=context)
+        res = super(project_addresses, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if not 'company_id' in res:
             return res
@@ -80,6 +80,8 @@ class project_addresses(osv.osv_memory):
             for field in ['country_id','state_id']:
                 if address[field]:
                     res[field] = address[field].id
+            if address.name:
+                res['contact_name'] = address.name
 
         if delivery_id:
             address = self.pool.get('res.partner.address').browse(cr, uid, delivery_id, context=context)
@@ -147,7 +149,7 @@ class project_addresses(osv.osv_memory):
                 address_obj.unlink(cr, uid, ship_address[0], context=context)
 
         if payload.bill_street or payload.bill_street2 or payload.bill_zip or payload.bill_city \
-           or payload.bill_email or payload.bill_phone or payload.bill_country_id:    
+           or payload.bill_email or payload.bill_phone or payload.bill_country_id:
             bill_address_data = {
                 'type': 'invoice',
                 'name':company.instance_id.instance,

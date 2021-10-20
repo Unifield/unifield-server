@@ -143,6 +143,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="80"/>
 <Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="1"/>
 <Column ss:AutoFitWidth="1" ss:Width="80"/>
+<Column ss:AutoFitWidth="1" ss:Width="90"/>
+<Column ss:AutoFitWidth="1" ss:Width="70"/>
 
 <!-- HEADER -->
 <Row>
@@ -156,6 +158,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    % if analytic_axis() not in ('f1', 'f2'):
+        <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    % endif
     <Cell ss:StyleID="ssCell" >
        <Data ss:Type="String">${ current_inst_code() |x}</Data>
     </Cell>
@@ -169,6 +174,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    % if analytic_axis() not in ('f1', 'f2'):
+        <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    % endif
     <Cell ss:StyleID="ssCellBold" ss:MergeAcross="2">
        <Data ss:Type="String">${_('COMBINED JOURNALS REPORT')}</Data>
     </Cell>
@@ -177,12 +185,20 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
 </Row>
 <Row>
-    <Cell ss:StyleID="ssBorderTopLeftRight" ss:MergeAcross="18">
+    % if analytic_axis() in ('f1', 'f2'):
+        <Cell ss:StyleID="ssBorderTopLeftRight" ss:MergeAcross="18">
+    % else:
+        <Cell ss:StyleID="ssBorderTopLeftRight" ss:MergeAcross="20">
+    % endif
         <Data ss:Type="String">${_('SELECTION')}</Data>
     </Cell>
 </Row>
 <Row>
-    <Cell ss:StyleID="ssBorderBottomLeftRight" ss:MergeAcross="18">
+    % if analytic_axis() in ('f1', 'f2'):
+        <Cell ss:StyleID="ssBorderBottomLeftRight" ss:MergeAcross="18">
+    % else:
+        <Cell ss:StyleID="ssBorderBottomLeftRight" ss:MergeAcross="20">
+    % endif
         <Data ss:Type="String">${ criteria() |x}</Data>
     </Cell>
 </Row>
@@ -258,6 +274,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Func. Currency')}</Data>
     </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Reconcile')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Status')}</Data>
+    </Cell>
 </Row>
 
 % for line in lines():
@@ -325,6 +347,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     </Cell>
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['func_currency']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['reconcile']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${getSelValue('account.move', 'state', line['status']) or ''|x}</Data>
     </Cell>
 </Row>
 % endfor

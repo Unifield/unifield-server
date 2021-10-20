@@ -32,6 +32,7 @@ import psycopg2.extensions
 import warnings
 import pooler
 from tools import cache
+from tools import misc
 import time
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
@@ -173,12 +174,12 @@ class Cursor(object):
                 if osv_pool:
                     for key in osv_pool._sql_error.keys():
                         if key in ie[0]:
-                            self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, ie[0])
+                            self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, tools.misc.ustr(ie[0]))
                             #US-88: if error occurred for account analytic then just clear the cache
                             if 'account_analytic_account_parent_id_fkey' in ie[0]:
                                 cache.clean_caches_for_db(self.dbname)
                             raise
-                self.__logger.exception("Unknown Constraint Error: %s", self._obj.query or query)
+                self.__logger.exception("Unknown Constraint Error: %s %s", self._obj.query or query, misc.get_stack())
 
             #US-88: if error occurred for account analytic then just clear the cache
             if 'account_analytic_account_parent_id_fkey' in ie[0]:
@@ -306,6 +307,20 @@ class Cursor(object):
         return self.rowcount
 
     @check
+    def get_referenced(self, table, column='id'):
+        self.execute("""
+            SELECT tc.table_name, kcu.column_name, ref.delete_rule
+            FROM information_schema.table_constraints AS tc
+                JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
+                JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name
+                JOIN information_schema.referential_constraints AS ref ON ref.constraint_name = tc.constraint_name
+            WHERE
+                tc.constraint_type = 'FOREIGN KEY' AND
+                ccu.table_name=%s AND
+                ccu.column_name=%s
+        """, (table, column))
+        return self.fetchall()
+    @check
     def drop_constraint_if_exists(self, table, constraint):
         self.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (constraint, ))
         if self.fetchone():
@@ -313,9 +328,14 @@ class Cursor(object):
 
     @check
     def drop_index_if_exists(self, table, indexname):
-        self.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, table))
-        if self.fetchone():
+        if self.index_exists(table, indexname):
             self.execute('DROP INDEX "%s"' % (indexname,))
+
+    @check
+    def index_exists(self, table, indexname):
+        self.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, table))
+        return self.fetchone()
+
 
 class PsycoConnection(psycopg2.extensions.connection):
     pass

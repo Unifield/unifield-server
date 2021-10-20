@@ -44,13 +44,13 @@ class currency_setup(osv.osv_memory):
     def functional_on_change(self, cr, uid, ids, currency_id, context=None):
         return {'value': {'section_id': currency_id}}
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         if context is None:
             context = {}
         '''
         Display the default value for delivery process
         '''
-        res = super(currency_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(currency_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         esc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'EUR')[1]
@@ -119,7 +119,7 @@ class currency_setup(osv.osv_memory):
         analytic_ids = self.pool.get('account.analytic.account').search(cr, uid, [('currency_id', '=', 1)])
         # use a for to avoid a recursive account error
         for analytic_id in analytic_ids:
-            self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id})
+            self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id}, context={'lang': 'en_MF'})
 
         # product.product
         # UF-1766 : Pass out the OpenObject framework to gain time on currency change with a big amount of products

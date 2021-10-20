@@ -20,3 +20,5 @@
 ##############################################################################
 
 import kit_report
+import kit_mass_impor_export
+import kitting_order_report

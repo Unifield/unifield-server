@@ -78,7 +78,7 @@ class initial_stock_inventory(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please enter at least one line in stock inventory before confirm it.'))
 
             for inventory_line in inventory.inventory_line_id:
-                if inventory_line.product_id:
+                if inventory_line.product_id and inventory_line.product_id.state.code != 'forbidden':
                     # Check product constrainsts
                     product_obj._get_restriction_error(cr, uid, [inventory_line.product_id.id], {'location_id': inventory_line.location_id.id}, context=context)
 
@@ -103,13 +103,8 @@ class initial_stock_inventory(osv.osv):
                     # if no production lot, we create a new one
                     prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', inventory_line.prodlot_name),
                                                                ('type', '=', 'standard'),
-                                                               ('product_id', '=', inventory_line.product_id.id)], context=context)
-                    if prodlot_ids:
-                        # Prevent creation of two batch with the same name/product but different expiry date
-                        prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0])
-                        if prodlot.life_date != inventory_line.expiry_date:
-                            life_date = self.pool.get('date.tools').get_date_formatted(cr, uid, datetime=prodlot.life_date)
-                            raise osv.except_osv(_('Error'), _('The batch number \'%s\' is already in the system but its expiry date is %s') % (prodlot.name, life_date))
+                                                               ('product_id', '=', inventory_line.product_id.id),
+                                                               ('life_date', '=', inventory_line.expiry_date)], context=context)
                     prodlot_id = prodlot_ids and prodlot_ids[0] or False
                     # no prodlot, create a new one
                     if not prodlot_ids:
@@ -276,8 +271,6 @@ class initial_stock_inventory_line(osv.osv):
     _inherit = 'stock.inventory.line'
 
     def _get_error_msg(self, cr, uid, ids, field_name, args, context=None):
-        prodlot_obj = self.pool.get('stock.production.lot')
-        dt_obj = self.pool.get('date.tools')
         res = {}
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -288,16 +281,6 @@ class initial_stock_inventory_line(osv.osv):
                 res[line.id] = _('You must define a batch number')
             elif line.hidden_perishable_mandatory and not line.expiry_date:
                 res[line.id] = _('You must define an expiry date')
-            elif line.prodlot_name and line.expiry_date and line.product_id:
-                prodlot_ids = prodlot_obj.search(cr, uid, [
-                    ('name', '=', line.prodlot_name),
-                    ('product_id', '=', line.product_id.id),
-                ], context=context)
-                if prodlot_ids:
-                    prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0], context=context)
-                    life_date = dt_obj.get_date_formatted(cr, uid, datetime=prodlot.life_date)
-                    if prodlot.life_date != line.expiry_date:
-                        res[line.id] = _('The batch number \'%s\' is already in the system but its expiry date is %s') % (line.prodlot_name, life_date)
 
         return res
 
@@ -324,7 +307,7 @@ class initial_stock_inventory_line(osv.osv):
     _columns = {
         'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory', ondelete='cascade'),
         'prodlot_name': fields.char(size=64, string='Batch'),
-        'average_cost': fields.float(string='Initial average cost', digits_compute=dp.get_precision('Sale Price Computation'), required=True),
+        'average_cost': fields.float(string='Initial average cost', digits_compute=dp.get_precision('Sale Price Computation'), required=True, en_thousand_sep=False),
         'currency_id': fields.many2one('res.currency', string='Functional currency', readonly=True),
         'err_msg': fields.function(_get_error_msg, method=True, type='char', string='Message', store=False),
         'hidden_perishable_mandatory': fields.function(
@@ -429,13 +412,14 @@ class initial_stock_inventory_line(osv.osv):
             context = {}
             if location_id:
                 context = {'location': location_id, 'compute_child': False}
+            if prodlot_id:
+                context.update({'prodlot_id': prodlot_id})
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            if location_id and product.state.code != 'forbidden':
                 # Test the compatibility of the product with the location
                 value, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name=field_change, values=value, vals={'location_id': location_id})
                 if test:
                     return value
-            if prodlot_id:
-                context.update({'prodlot_id': prodlot_id})
-            product = product_obj.browse(cr, uid, product_id, context=context)
             value.update({'product_uom': product.uom_id.id,
                           'hidden_perishable_mandatory': product.perishable,
                           'hidden_batch_management_mandatory': product.batch_management})
@@ -705,7 +689,7 @@ class stock_cost_reevaluation_line(osv.osv):
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'average_cost': fields.float(string='Average cost', digits_compute=dp.get_precision('Sale Price Computation'), required=True),
+        'average_cost': fields.float(string='Average cost', digits_compute=dp.get_precision('Sale Price Computation'), required=True, en_thousand_sep=False),
         'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'reevaluation_id': fields.many2one('stock.cost.reevaluation', string='Header'),
     }
@@ -726,11 +710,3 @@ class stock_cost_reevaluation_line(osv.osv):
 
 stock_cost_reevaluation_line()
 
-class stock_move(osv.osv):
-    _inherit = 'stock.move'
-
-    _columns = {
-        'init_inv_ids': fields.many2many('initial.stock.inventory', 'initial_stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
-    }
-
-stock_move()

@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
+from base import currency_date
 import threading
 import logging
 import pooler
@@ -159,8 +160,12 @@ class hr_payroll_validation(osv.osv_memory):
             self.check(cr, uid, context=context)  # check expense lines
             account_partner_not_compat_log = []
             self._update_message(cr, uid, ids, _('Checking account/partner compatibility...'), context, use_new_cursor)
+            currency_list = []
             for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids,
-                                                             ['name', 'ref', 'partner_id', 'account_id', 'amount', 'employee_id', ]):
+                                                             ['name', 'ref', 'partner_id', 'account_id', 'amount', 'employee_id', 'currency_id']):
+                # store all the currencies used
+                if line['currency_id'] and line['currency_id'][0] not in currency_list:
+                    currency_list.append(line['currency_id'][0])
                 account_id = line.get('account_id', False) and line.get('account_id')[0] or False
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('No account found!'))
@@ -206,7 +211,12 @@ class hr_payroll_validation(osv.osv_memory):
                 'date': period_obj.get_date_in_period(cr, uid, move_date, period_id) or False,
                 'ref': 'Salaries' + ' ' + field,
             }
-            move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
+            # create one JE per currency (note that the JE currency_id depends on the currency of its lines)
+            am_by_curr = {}
+            for curr in currency_list:
+                move_vals_copy = move_vals.copy()  # avoids using the same Sequence for the different moves
+                move_id = self.pool.get('account.move').create(cr, uid, move_vals_copy, context=context)
+                am_by_curr[curr] = move_id
 
             # Create lines into this move
             current_line_position = 0
@@ -215,7 +225,7 @@ class hr_payroll_validation(osv.osv_memory):
                                                              ['amount', 'cost_center_id', 'funding_pool_id', 'free1_id',
                                                               'free2_id', 'currency_id', 'date', 'name', 'ref',
                                                               'partner_id', 'employee_id', 'account_id', 'period_id',
-                                                              'destination_id']):
+                                                              'destination_id', 'document_date']):
                 current_line_position += 1
                 # Update the percentage of import (from 10 to 70 ; assuming that this loop takes 60% of the process time)
                 percent_before = 10
@@ -253,12 +263,13 @@ class hr_payroll_validation(osv.osv_memory):
                     dest_id = line.get('destination_id', False) and line.get('destination_id')[0] or (
                         account.default_destination_id and account.default_destination_id.id) or False
                     if distrib_id:
+                        curr_date = currency_date.get_date(self, cr, line.get('document_date', False), line.get('date', False))
                         common_vals = {
                             'distribution_id': distrib_id,
                             'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
                             'percentage': 100.0,
                             'date': line.get('date', False) or current_date,
-                            'source_date': line.get('date', False) or current_date,
+                            'source_date': curr_date or current_date,
                             'destination_id': dest_id,
                         }
                         common_vals.update({'analytic_id': cc_id, })
@@ -275,8 +286,9 @@ class hr_payroll_validation(osv.osv_memory):
 
                 # UTP-1042: Specific partner's accounts are not needed.
                 # create move line values
+                line_curr = line.get('currency_id')[0]  # mandatory field
                 line_vals = {
-                    'move_id': move_id,
+                    'move_id': am_by_curr.get(line_curr),
                     'name': line.get('name', ''),
                     'date': line.get('date', ''),
                     'document_date': line.get('date', ''),
@@ -289,14 +301,19 @@ class hr_payroll_validation(osv.osv_memory):
                     'credit_currency': credit,
                     'journal_id': journal_id,
                     'period_id': line.get('period_id', False) and line.get('period_id')[0] or period_id,
-                    'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
+                    'currency_id': line_curr,
                     'analytic_distribution_id': distrib_id or False,
                 }
                 # create move line
                 self.pool.get('account.move.line').create(cr, uid, line_vals, check=False)
-            self._update_message(cr, uid, ids, _('Posting of the Journal Entry. This may take a while...'), context, use_new_cursor)
+            if len(am_by_curr) > 1:
+                msg = _('Posting of the Journal Entries. This may take a while...')
+            else:
+                msg = _('Posting of the Journal Entry. This may take a while...')
+            self._update_message(cr, uid, ids, msg, context, use_new_cursor)
             context['do_not_create_analytic_line'] = True
-            self.pool.get('account.move').post(cr, uid, [move_id], context=context)
+            for am_curr in am_by_curr:
+                self.pool.get('account.move').post(cr, uid, am_by_curr[am_curr], context=context)
             # Update payroll lines status
             self._update_percent(cr, uid, ids, 90, context, use_new_cursor)  # 90% of the total process time
             self._update_message(cr, uid, ids, _('Updating the status of the Journal Items...'), context, use_new_cursor)

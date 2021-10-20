@@ -49,7 +49,9 @@ class journal_items_corrections_lines(osv.osv_memory):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = 'none'
             if line.analytic_distribution_id:
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+                amount = (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id,
+                                                                                              False, line.account_id.id, amount=amount)
         return res
 
     def _get_is_analytic_target(self, cr, uid, ids, name, args,  context=None):
@@ -220,7 +222,8 @@ class journal_items_corrections_lines(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       selection=[('none', 'None'), ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'is_analytic_target': fields.function(_get_is_analytic_target, type='boolean', string='Is analytic target', method=True, invisible=True),
         'is_account_correctible': fields.function(_get_is_account_correctible,
@@ -462,12 +465,38 @@ class journal_items_corrections(osv.osv_memory):
         :param account: new account selected in the Correction Wizard
         :param aml: Journal Item with the Third Party to check
         """
+        if context is None:
+            context = {}
         acc_obj = self.pool.get('account.account')
+        employee_obj = self.pool.get('hr.employee')
+        partner_obj = self.pool.get('res.partner')
+        journal_obj = self.pool.get('account.journal')
         acc_type = account.type_for_register
         if acc_type != 'none':
+            # get the right Third Party to check if there is a partner_txt ONLY (e.g.: correction made on HQ entry)
+            partner_txt = aml.partner_txt
+            partner_id = aml.partner_id and aml.partner_id.id or False
+            employee_id = aml.employee_id and aml.employee_id.id or False
+            partner_journal = aml.transfer_journal_id
+            if partner_txt and not partner_id and not employee_id and not partner_journal:
+                employee_ids = employee_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                if employee_ids:
+                    employee_id = employee_ids[0]
+                else:
+                    partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt), ('active', 'in', ['t', 'f'])],
+                                                     limit=1, context=context)
+                    if partner_ids:
+                        partner_id = partner_ids[0]
+                    else:
+                        journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
+                        if journal_ids:
+                            partner_journal = journal_obj.browse(cr, uid, journal_ids[0], context=context)
+                # if there is a partner_txt but no related Third Party found:
+                # ignore the check if "ignore_non_existing_tp" is in context (e.g. when validating HQ entries)
+                if not partner_id and not employee_id and not partner_journal and context.get('ignore_non_existing_tp', False):
+                    return True
             # Check the compatibility with the "Type For Specific Treatment" of the account
             if acc_type in ['transfer', 'transfer_same']:
-                partner_journal = aml.transfer_journal_id
                 is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
                 if acc_type == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != aml.currency_id.id):
                     raise osv.except_osv(_('Warning'),
@@ -477,13 +506,13 @@ class journal_items_corrections(osv.osv_memory):
                     raise osv.except_osv(_('Warning'),
                                          _('The account "%s - %s" is only compatible with a Liquidity Journal Third Party\n'
                                            'having a currency different from the booking one.') % (account.code, account.name))
-            elif acc_type == 'advance' and not aml.employee_id:
+            elif acc_type == 'advance' and not employee_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with an Employee Third Party.') % (account.code, account.name))
-            elif acc_type == 'down_payment' and not aml.partner_id:
+            elif acc_type == 'down_payment' and not partner_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with a Partner Third Party.') % (account.code, account.name))
-            elif acc_type == 'payroll' and not aml.partner_id and not aml.employee_id:
+            elif acc_type == 'payroll' and not partner_id and not employee_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with a Partner or an Employee Third Party.') % (account.code, account.name))
         else:
@@ -492,6 +521,7 @@ class journal_items_corrections(osv.osv_memory):
             acc_obj.is_allowed_for_thirdparty(cr, uid, [account.id], partner_type=aml.partner_type or False, partner_txt=aml.partner_txt or False,
                                               employee_id=aml.employee_id or False, transfer_journal_id=aml.transfer_journal_id or False,
                                               partner_id=aml.partner_id or False, raise_it=True, context=context)
+        return True
 
     def correct_manually(self, cr, uid, ids, context=None):
         """

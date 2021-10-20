@@ -33,10 +33,12 @@ class enter_reason(osv.osv_memory):
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Incoming Shipment', readonly=True),
         'change_reason': fields.char(string='Change Reason', size=1024),
+        'in_from_dpo': fields.boolean('Sourced on remote to DPO ?'),
     }
 
     _defaults = {
         'picking_id': lambda obj, cr, uid, c: c and c.get('picking_id', False),
+        'in_from_dpo': lambda obj, cr, uid, c: c and c.get('in_from_dpo', False),
     }
 
     def do_cancel(self, cr, uid, ids, context=None):
@@ -64,10 +66,16 @@ class enter_reason(osv.osv_memory):
         # update the object
         for obj in picking_obj.browse(cr, uid, picking_ids, context=context):
             # set the reason
+            cancel_forced = self.pool.get('stock.move.cancel.wizard').is_in_forced(cr, uid, obj, context=context)
             obj.write({'change_reason': change_reason}, context=context)
 
             if context.get('do_resource', False):
-                self.pool.get('stock.move').write(cr, uid, [move.id for move in obj.move_lines], {'has_to_be_resourced': True}, context=context)
+                to_write = {'has_to_be_resourced': True}
+                if cancel_forced:
+                    to_write['in_forced'] = True
+                self.pool.get('stock.move').write(cr, uid, [move.id for move in obj.move_lines], to_write, context=context)
+            elif cancel_forced:
+                self.pool.get('stock.move').write(cr, uid, [move.id for move in obj.move_lines], {'in_forced': True}, context=context)
 
             context['allow_cancelled_pol_copy'] = True
             self.pool.get('stock.move').action_cancel(cr, uid, [move.id for move in obj.move_lines], context=context)

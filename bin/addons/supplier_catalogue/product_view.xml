@@ -140,31 +140,6 @@
         	<field name="act_window_id" ref="product.product_pricelist_action2" />
         </record>
         
-        <!-- Add the two fields in Currency form -->
-        <record id="res_currency_add_checkboxes_form_view" model="ir.ui.view">
-        	<field name="name">res.currency.add.checkboxes.form.view</field>
-        	<field name="model">res.currency</field>
-        	<field name="type">form</field>
-            <field name="priority">25</field>
-        	<field name="inherit_id" ref="base.view_currency_form" />
-        	<field name="arch" type="xml">
-        		<data>
-        			<xpath expr="/form//group[3]" position="attributes">
-        				<attribute name="col">4</attribute>
-        			</xpath>
-        			
-        			<xpath expr="/form//separator[@string='Miscelleanous']" position="attributes">
-        				<attribute name="colspan">4</attribute>
-        			</xpath>
-        			
-	        		<xpath expr="/form//field[@name='active']" position="after">
-	        			<field name="is_section_currency" invisible="1" />
-	        			<field name="is_esc_currency" invisible="1" />
-	        		</xpath>
-        		</data>
-        	</field>
-        </record>
-
         <record id="catalogue_product_search_view" model="ir.ui.view">
             <field name="name">catalogue.product.search.view</field>
             <field name="model">product.product</field>

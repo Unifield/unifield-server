@@ -22,7 +22,6 @@ from operator import itemgetter
 
 from osv import osv, fields
 import netsvc
-import tools
 
 class base_setup_company(osv.osv_memory):
     """
@@ -55,24 +54,22 @@ class base_setup_company(osv.osv_memory):
         return self.pool.get('ir.model.data').get_object(cr, uid, 'base', 'module_meta_information').demo
 
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
         """ get default company if any, and the various other fields
         from the company's fields
         """
         defaults = super(base_setup_company, self)\
-            .default_get(cr, uid, fields_list=fields_list, context=context)
+            .default_get(cr, uid, fields_list=fields_list, context=context, from_web=from_web)
         companies = self.pool.get('res.company')
         company_id = companies.search(cr, uid, [], limit=1, order="id")
         if not company_id or 'company_id' not in fields_list:
             return defaults
         company = companies.browse(cr, uid, company_id[0], context=context)
         defaults['company_id'] = company.id
-        defaults['currency'] = company.currency_id.id
 
         if not self._show_company_data(cr, uid, context=context):
             return defaults
 
-        defaults['currency'] = company.currency_id.id
         for field in ['name','logo','rml_header1','rml_footer1','rml_footer2']:
             defaults[field] = company[field]
 
@@ -97,7 +94,6 @@ class base_setup_company(osv.osv_memory):
         'country_id':fields.selection(_get_all_countries, 'Country'),
         'email':fields.char('E-mail', size=64),
         'phone':fields.char('Phone', size=64),
-        'currency':fields.many2one('res.currency', 'Currency', required=True),
         'rml_header1':fields.char('Report Header', size=200,
                                   help='''This sentence will appear at the top right corner of your reports.
 We suggest you to put a slogan here:
@@ -129,7 +125,6 @@ IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
             'rml_footer1':payload.rml_footer1,
             'rml_footer2':payload.rml_footer2,
             'logo':payload.logo,
-            'currency_id':payload.currency.id,
             'account_no':payload.account_no,
         })
 
@@ -159,22 +154,5 @@ IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
                                                              partner_id=int(company.partner_id)),
                                                         context=context)
 base_setup_company()
-
-class res_currency(osv.osv):
-    _inherit = 'res.currency'
-
-    def name_get(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-#        We can use the following line,if we want to restrict this name_get for company setup only
-#        But, its better to show currencies as name(Code).
-        if not len(ids):
-            return []
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        reads = self.read(cr, uid, ids, ['name','symbol'], context, load='_classic_write')
-        return [(x['id'], tools.ustr(x['name']) + (x['symbol'] and (' (' + tools.ustr(x['symbol']) + ')') or '')) for x in reads]
-
-res_currency()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

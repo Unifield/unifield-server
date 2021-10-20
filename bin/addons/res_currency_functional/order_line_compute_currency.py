@@ -43,14 +43,14 @@ class sale_order_line_compute_currency(osv.osv):
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True, write_relate=False),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Fill currency and functional currency fields
         '''
         if not context:
             context = {}
 
-        res = super(sale_order_line_compute_currency, self).default_get(cr, uid, fields, context=context)
+        res = super(sale_order_line_compute_currency, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res['functional_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
 #        if context.get('pricelist_id'):
@@ -75,7 +75,7 @@ class sale_order_compute_currency(osv.osv):
             # for the currency rate
             ctx = {}
             if order.date_confirm:
-                ctx['date'] = order.date_confirm
+                ctx['currency_date'] = order.date_confirm
             try:
                 res[order.id] = {
                     'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,
@@ -123,14 +123,14 @@ class purchase_order_line_compute_currency(osv.osv):
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True, write_relate=False),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Fill currency and functional currency fields
         '''
         if not context:
             context = {}
 
-        res = super(purchase_order_line_compute_currency, self).default_get(cr, uid, fields, context=context)
+        res = super(purchase_order_line_compute_currency, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res['functional_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         if context.get('pricelist_id'):
@@ -151,7 +151,7 @@ class purchase_order_compute_currency(osv.osv):
             # for the currency rate
             ctx = {}
             if order.date_approve:
-                ctx['date'] = order.date_approve
+                ctx['currency_date'] = order.date_approve
             try:
                 res[order.id] = {
                     'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,

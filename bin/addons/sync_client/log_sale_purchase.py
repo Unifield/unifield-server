@@ -40,6 +40,11 @@ def check(fn):
 
     return wrapper
 
+class SyncException(Exception):
+    def __init__(self, value, target_object, target_id):
+        super(Exception, self).__init__(value)
+        self.target_object = target_object
+        self.target_id = target_id
 
 class log_sale_purchase(osv.osv):
     _name = 'sync.client.log_sale_purchase'
@@ -70,10 +75,10 @@ class log_sale_purchase(osv.osv):
         return super(log_sale_purchase, self).write(*a, **kw)
 
     # UF-2239: Sort the list by synchronisation id
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         if not orderby:
             orderby = 'synchro_datetime desc'
-        return super(log_sale_purchase, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        return super(log_sale_purchase, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby, count=count)
 
     _columns = {
         # Synchronization

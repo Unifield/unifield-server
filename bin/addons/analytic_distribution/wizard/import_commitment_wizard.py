@@ -20,6 +20,7 @@
 ##############################################################################
 from osv import osv, fields
 from tools.translate import _
+from base import currency_date
 
 import base64
 import StringIO
@@ -60,7 +61,7 @@ class import_commitment_wizard(osv.osv_memory):
             'context': context or {},
         }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         ids = self.search(cr, 1, [('in_progress', '=', True)])
         if ids:
             d = self.read(cr, 1, ids, ['start_date', 'progress'], context=context)
@@ -70,7 +71,7 @@ class import_commitment_wizard(osv.osv_memory):
                 'in_progress': False,
             }
 
-        d = super(import_commitment_wizard, self).default_get(cr, uid, fields, context)
+        d = super(import_commitment_wizard, self).default_get(cr, uid, fields, context, from_web=from_web)
         ir_config = self.pool.get('ir.config_parameter')
         d['last_stop'] = ir_config.get_param(cr, 1, 'LAST_COMMIT_DATE')
         d['last_error'] = ir_config.get_param(cr, 1, 'LAST_COMMIT_ERROR')
@@ -225,7 +226,8 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No account code found!'))
                     # Destination
                     if destination:
-                        dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination), ('type', '!=', 'view')])
+                        dest_dom = [('code', '=', destination), ('category', '=', 'DEST'), ('type', '!=', 'view')]
+                        dest_id = self.pool.get('account.analytic.account').search(cr, uid, dest_dom, context=context)
                         if dest_id:
                             vals.update({'destination_id': dest_id[0]})
                         else:
@@ -242,7 +244,8 @@ class import_commitment_wizard(osv.osv_memory):
                             raise osv.except_osv(_('Error'), raise_msg_prefix + msg)
                     # Cost Center
                     if cost_center:
-                        cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center), ('type', '!=', 'view')])
+                        cc_dom = [('code', '=', cost_center), ('category', '=', 'OC'), ('type', '!=', 'view')]
+                        cc_id = self.pool.get('account.analytic.account').search(cr, uid, cc_dom, context=context)
                         if cc_id:
                             vals.update({'cost_center_id': cc_id[0]})
                         else:
@@ -251,7 +254,8 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No cost center code found!'))
                     # Funding Pool
                     if funding_pool:
-                        fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('type', '!=', 'view')])
+                        fp_dom = [('code', '=', funding_pool), ('category', '=', 'FUNDING'), ('type', '!=', 'view')]
+                        fp_id = self.pool.get('account.analytic.account').search(cr, uid, fp_dom, context=context)
                         if fp_id:
                             vals.update({'account_id': fp_id[0]})
                         else:
@@ -285,7 +289,8 @@ class import_commitment_wizard(osv.osv_memory):
                             else:
                                 # lookup id for code
                                 line_currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=',booking_currency)])[0]
-                                date_context = {'date': line_date }
+                                curr_date = currency_date.get_date(self, cr, line_document_date, line_date)
+                                date_context = {'currency_date': curr_date}
                                 converted_amount = self.pool.get('res.currency').compute(
                                     cr,
                                     uid,
@@ -428,7 +433,8 @@ class int_commitment_export_wizard(osv.osv_memory):
         ]
         export_ids = aal_obj.search(cr, uid, domain, context=context)
         for export_br in aal_obj.browse(cr, uid, export_ids, context=context):
-            csv_writer.writerow(self._export_entry(export_br))
+            line_data = self._export_entry(export_br)
+            csv_writer.writerow(map(lambda x: isinstance(x, unicode) and x.encode('utf8') or x, line_data))
 
         # download csv
         vals = {

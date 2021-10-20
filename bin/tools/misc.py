@@ -33,6 +33,7 @@ import smtplib
 import socket
 import sys
 import threading
+
 import time
 import warnings
 import zipfile
@@ -70,6 +71,13 @@ _logger = logging.getLogger('tools')
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 # We include the *Base ones just in case, currently they seem to be subclasses of the _* ones.
 SKIPPED_ELEMENT_TYPES = (etree._Comment, etree._ProcessingInstruction, etree.CommentBase, etree.PIBase)
+
+rsync_lock = threading.RLock()
+
+def _(d):
+    # just here to export the month when trans. file is generated
+    return d
+month_abbr = ['', _('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]
 
 # initialize a database with base/base.sql
 def init_db(cr):
@@ -154,6 +162,109 @@ def _set_env_pg(remove=False):
         if remove and os.environ.get('PGPASSWORD'):
             os.environ['PGPASSWORD'] = ''
 
+def path_to_cygwin(path):
+    new_path = re.sub(r'^(.):', '/cygdrive/\\1', path).replace('\\', '/')
+    if not new_path.endswith('/'):
+        new_path = '%s/' % new_path
+    return new_path
+
+def force_wal_generation(cr, wal_path):
+    cr.execute('select * from pg_xlogfile_name_offset(pg_switch_xlog())')
+    file_name, offset = cr.fetchone()
+    _logger.warn('WAL generation forced %s %s' % (file_name, offset))
+    if not offset or not file_name:
+        return True
+    zip_new_wal = os.path.join(wal_path, '%s.7z' % file_name)
+    wait = 0
+    while True:
+        if os.path.exists(zip_new_wal):
+            return True
+        wait += 1
+        if wait > 30:
+            _logger.warn('7z Wal %s not found' % zip_new_wal)
+            return False
+        time.sleep(2)
+
+def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=False, remote_dir=False):
+
+    exe_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), 'rsync')
+    sync = os.path.join(exe_dir, 'rsync.exe')
+    ssh = os.path.join(exe_dir, 'ssh.exe')
+
+    if not remote_user:
+        remote_user = 'backup'
+
+    if not remote_host:
+        remote_host = '51.91.31.142'
+
+    if not config_dir:
+        config_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), '..', '..', 'SSH_CONFIG')
+    sshconfig = os.path.join(config_dir, 'config')
+
+    for to_check in [sshconfig, sync, ssh]:
+        if not os.path.exists(to_check):
+            raise Exception("%s not found" % (to_check,))
+
+    if not os.path.isdir(local_path):
+        raise Exception("Local path %s not found" % (local_path,))
+
+
+    remote_path = '%s/' % remote_dir
+    try:
+        with rsync_lock:
+            command = [sync, '--remove-source-files', '--partial-dir=.rsync-partial', '-a', '-e', '"%s" -F "%s"'%(ssh, sshconfig), '--include=*/', '--include=*7z', '--exclude=*', path_to_cygwin(local_path), "%s@%s:%s" % (remote_user, remote_host, remote_path)]
+            _logger.info(' '.join(command))
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
+            _logger.info('Rsync ends')
+            return True
+    except subprocess.CalledProcessError, e:
+        _logger.error('rsync %s' % e.output)
+        raise Exception(e.output)
+    except Exception, e:
+        raise e
+
+def pg_basebackup(db_name, wal_dir):
+    if not os.path.isdir(wal_dir):
+        raise Exception("Destination directory %s not found" % (wal_dir,))
+    dest_dir = os.path.join(wal_dir, 'base')
+    if not os.path.isdir(dest_dir):
+        os.makedirs(dest_dir)
+    try:
+        _logger.info('pg_basebackup %s to %s' % (db_name, dest_dir))
+        _set_env_pg()
+        pg_basebackup = find_pg_tool('pg_basebackup')
+        if not pg_basebackup:
+            raise Exception("Couldn't find %s" % pg_basebackup)
+        cmd = [pg_basebackup, '--format=t', '-D', dest_dir]
+        if config['db_user']:
+            cmd.append('--username=' + config['db_user'])
+        if config['db_host']:
+            cmd.append('--host=' + config['db_host'])
+        if config['db_port']:
+            cmd.append('--port=' + str(config['db_port']))
+
+        szexe = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), 'rsync' , '7za.exe')
+        if not os.path.exists(szexe):
+            raise Exception('7za.exe not found')
+
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        _logger.info('pg_basebackup done')
+        base_path = os.path.join(dest_dir, 'base.tar')
+        if not os.path.exists(base_path):
+            raise Exception('%s not found' % base_path)
+        command_7z = [szexe, '-sdel', '-bd', '-bso0', '-w', 'a', '%s.7z' % base_path, base_path]
+        _logger.info(' '.join(command_7z))
+        subprocess.check_output(command_7z, stderr=subprocess.STDOUT)
+        _logger.info('7z done')
+        return True
+    except subprocess.CalledProcessError, e:
+        _logger.error('pg_base %s' % e.output)
+        raise Exception(e.output)
+    except Exception, e:
+        raise e
+    finally:
+        _set_env_pg(remove=True)
+
 def pg_dump(db_name, outfile=False):
     try:
         _logger.info('Dump %s to %s' % (db_name, outfile or 'memory'))
@@ -170,6 +281,10 @@ def pg_dump(db_name, outfile=False):
         cmd.append(db_name)
         if outfile:
             res = exec_pg_command(*tuple(cmd))
+            if res != 0:
+                error_txt = 'pg_dump return code %s, outfile: %s' % (res, outfile)
+                _logger.error(error_txt)
+                raise Exception(error_txt)
         else:
             # TODO: current pg_dump method do not return the same type of
             # variable depending of outfile, if outfile, it return an int, else
@@ -184,6 +299,7 @@ def pg_dump(db_name, outfile=False):
         if outfile:
             try:
                 os.remove(outfile)
+                open('%s.KO' % outfile, 'a').close()
             except:
                 pass
             res = -1
@@ -1775,14 +1891,30 @@ class Path():
         self.path = path
         self.delete = delete
 
-def use_prod_sync(cr):
+def use_prod_sync(cr, uid=False, pool=False):
+    if not cr.table_exists('sync_client_sync_server_connection'):
+        return False
     cr.execute('''SELECT host, database
             FROM sync_client_sync_server_connection''')
     host, database = cr.fetchone()
 
     if host and database and database.strip() == 'SYNC_SERVER' and \
             ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
-        return True
+        if uid and pool:
+            connection = pool.get('sync.client.sync_server_connection')
+            entity_obj = pool.get('sync.client.entity')
+            if not connection or not entity_obj:
+                return False
+            entity = entity_obj.get_entity(cr, uid)
+            if connection.is_connected:
+                # check HW on the sync server
+                proxy = pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+                res = proxy.get_entity(entity.identifier, entity._hardware_id)
+                if res:
+                    return res[0]
+            return entity._hardware_id == entity.previous_hw
+        else:
+            return True
 
     return False
 
@@ -1820,4 +1952,19 @@ class crypt():
     def decrypt(self, string):
         return self.Fernet.decrypt(bytes(string))
 
+
+def get_fake(self, cr, uid, ids, *a, **b):
+    ret = {}
+    for x in ids:
+        ret[x] = False
+    return ret
+
+def get_traceback(error):
+    import sys, traceback
+    tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
+    return ustr(tb_s)
+
+def get_stack():
+    import traceback
+    return ustr("".join(traceback.format_list(traceback.extract_stack())))
 

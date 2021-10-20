@@ -122,7 +122,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 if header_row:
                     for i, h_name in enumerate(columns_for_fo_line_import):
                         # To be able to import without Status column
-                        if h_name != 'state' or len(header_row) != mandatory_col_count:
+                        if h_name != 'State' or len(header_row) != mandatory_col_count:
                             tr_header_row = _(tools.ustr(header_row[i]))
                             tr_h_name = _(h_name)
                             if len(header_row) > i and tr_header_row != tr_h_name:
@@ -260,7 +260,7 @@ class wizard_import_fo_line(osv.osv_memory):
 
                             # Check product restrictions
                             if p_value.get('default_code') and fo_browse.partner_id:
-                                product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'partner_id': fo_browse.partner_id.id}, context=dict(context, noraise=False))
+                                product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'partner_id': fo_browse.partner_id.id, 'obj_type': 'sale.order'}, context=dict(context, noraise=False))
 
                             # write order line on FO
                             vals['order_line'].append((0, 0, to_write))

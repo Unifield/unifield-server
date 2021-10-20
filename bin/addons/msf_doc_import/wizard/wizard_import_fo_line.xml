@@ -17,7 +17,7 @@
                     attrs="{'invisible':[('import_error_ok', '!=', False), ('state', '!=', 'done')]}"/>
                     
                     <separator colspan="12" string="Information" />
-                    <field name="message" colspan="4" nolabel="1" />
+                    <field name="message" colspan="4" nolabel="1" widget="full_text"/>
                     <group name="buttons" string="" colspan="24" col="6">
                         <button name="cancel" string="Cancel" icon="gtk-cancel" type="object" 
                         attrs="{'invisible':[('state', '!=', 'draft')]}"/>

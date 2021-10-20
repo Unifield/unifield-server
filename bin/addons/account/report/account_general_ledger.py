@@ -49,6 +49,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             used_context['all_fiscalyear'] = True
             used_context['report_cross_fy'] = True
             data['form']['initial_balance'] = False  # IB not applicable
+        used_context['rev_journal_ids'] = self._get_data_form(data, 'rev_journal_ids', default=False)
         self.query = obj_move._query_get(self.cr, self.uid, obj='l',
                                          context=used_context)
 
@@ -107,7 +108,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.title = _('Trial Balance')
 
         self.account_ids = self._get_data_form(data, 'account_ids') or []
-
+        # reverse the selection in case "Exclude account selection" has been ticked
+        self.exclude_all_acc = False  # note: in case all accounts are selected and excluded, the report behaves as if no acc. had been selected
+        if self.account_ids and self._get_data_form(data, 'rev_account_ids', default=False):
+            rev_account_sql = """
+                SELECT id
+                FROM account_account
+                WHERE type != 'view' AND id NOT IN %s;
+            """
+            self.cr.execute(rev_account_sql, (tuple(self.account_ids),))
+            self.account_ids = [x[0] for x in self.cr.fetchall()]
+            if not self.account_ids:
+                self.exclude_all_acc = True
         # US-533 reconciled filter:
         # decision matrix
         # http://jira.unifield.org/browse/US-533?focusedCommentId=50246&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-50246
@@ -225,7 +237,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_start_period': self.get_start_period,
             'get_end_period': self.get_end_period,
             'get_filter': self._get_filter,
-            'get_sortby': self._get_sortby,
             'get_start_date':self._get_start_date,
             'get_end_date':self._get_end_date,
             'get_target_move': self._get_target_move,
@@ -237,6 +248,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances_str,
             'get_display_info': self._get_display_info,
+            'get_open_items_selection': self._get_open_items_selection,
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
             'get_title': self._get_title,
@@ -336,10 +348,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             del counterpart_res'''
             # Then select all account_move_line of this account
 
-            if self.sortby == 'sort_journal_partner':
-                sql_sort='j.code, p.name, l.move_id'
-            else:
-                sql_sort='l.date, l.move_id'
+            if self.sortby == 'sort_third_party':
+                sql_sort = 'l.partner_txt NULLS first, l.move_id'
+            elif self.sortby == 'sort_currency':
+                sql_sort = 'c.name, l.move_id'
+            elif self.sortby == 'sort_reconcile':
+                sql_sort = 'l.reconcile_txt NULLS first, l.move_id'
+            else:  # sort_date by default
+                sql_sort = 'l.date, l.move_id'
             sql = """
                 SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,
                 l.amount_currency,l.ref AS lref, l.name AS lname,
@@ -351,7 +367,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 c.symbol AS currency_code,
                 i.id AS invoice_id, i.type AS invoice_type,
                 i.number AS invoice_number,
-                p.name AS partner_name, c.name as currency_name, l.partner_txt as third_party
+                p.name AS partner_name, c.name as currency_name, l.partner_txt as third_party, l.reconcile_txt
                 FROM account_move_line l
                 JOIN account_move m on (l.move_id=m.id)
                 LEFT JOIN res_currency c on (l.currency_id=c.id)
@@ -369,6 +385,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if self.init_balance:
                 # US-822: move lines for period 0 IB journal
                 sql_sort = 'l.move_id'
+                if self.sortby == 'sort_currency':  # also sort by currency in case the related option is selected
+                    sql_sort = 'c.name, l.move_id'
                 sql = """
                     SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,
                     l.amount_currency,l.ref AS lref, l.name AS lname,
@@ -380,7 +398,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     per.code as period_code, c.symbol AS currency_code,
                     '' AS invoice_id, '' invoice_type,
                     '' AS invoice_number,
-                    '' AS partner_name, c.name as currency_name
+                    '' AS partner_name, c.name as currency_name, l.reconcile_txt
                     FROM account_move_line l
                     JOIN account_move m on (l.move_id=m.id)
                     LEFT JOIN res_currency c on (l.currency_id=c.id)
@@ -414,13 +432,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if data['model'] == 'account.account':
             return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['id'], context=self.context).company_id.name
         return super(general_ledger ,self)._get_account(data)
-
-    def _get_sortby(self, data):
-        if self.sortby == 'sort_date':
-            return 'Date'
-        elif self.sortby == 'sort_journal_partner':
-            return 'Journal & Partner'
-        return 'Date'
 
     def _get_output_currency_code(self, data):
         return self.output_currency_code or self.currency_name
@@ -494,15 +505,21 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return amount
 
     def _get_prop_instances_str(self):
-        return ', '.join([ i.code \
-                           for i in self.pool.get('msf.instance').browse(self.cr, self.uid, self.selected_instance_ids) \
-                           if i.code ])
+        data_tools_obj = self.pool.get('data.tools')
+        inst_list = [ i.code \
+                      for i in self.pool.get('msf.instance').browse(self.cr, self.uid, self.selected_instance_ids) \
+                      if i.code ]
+        return data_tools_obj.truncate_list(inst_list)
 
     def _get_journals_str(self, data):
+        data_tools_obj = self.pool.get('data.tools')
+        prefix = self._get_data_form(data, 'rev_journal_ids', default=False) and _("Excluded Journals: ") or ""
         if 'all_journals' in data['form']:
-            return _('All Journals')
-        return ', '.join(list(set(self._get_journal(data,
-                                                    instance_ids=self.selected_instance_ids))))
+            ret = _('All Journals')
+        else:
+            journal_list = list(set(self._get_journal(data, instance_ids=self.selected_instance_ids)))
+            ret = data_tools_obj.truncate_list(journal_list, limit=300-len(prefix))
+        return "%s%s" % (prefix, ret)
 
     # internal filter functions
     def _get_data_form(self, data, key, default=False):
@@ -511,6 +528,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return data['form'].get(key, default)
 
     def _get_display_info(self, data):
+        data_tools_obj = self.pool.get('data.tools')
         info_data = []
         yes_str = _('Yes')
         no_str = _('No')
@@ -540,16 +558,29 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         info_data.append((_('Accounts'), display_account, ))
 
         account_ids = list(set(self._get_data_form(data, 'account_ids')))
-        if account_ids:
+        if account_ids and not self.exclude_all_acc:
             # US-1197/2: display filtered accounts
             account_obj = self.pool.get('account.account')
-            info_data.append((_('Selected Accounts'), ', '.join(
+            if self._get_data_form(data, 'rev_account_ids', default=False):
+                account_label = _('Excluded Accounts')
+            else:
+                account_label = _('Selected Accounts')
+            info_data.append((account_label, ', '.join(
                 [ a.code for a in account_obj.browse(
                   self.cr, self.uid, account_ids) \
                   if a.type != 'view' ], )))
 
         res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
-        return ', \n'.join(res)
+        return data_tools_obj.truncate_list(res, separator=', \n')
+
+    def _get_open_items_selection(self, data):
+        """
+        Returns the name of the period selected in the filter "Open Items at" if any
+        """
+        period_obj = self.pool.get('account.period')
+        if data.get('form', {}).get('open_items'):
+            return period_obj.read(self.cr, self.uid, data['form']['open_items'], ['name'], context=self.context)['name']
+        return ''
 
     def get_show_move_lines(self):
         return self.show_move_lines

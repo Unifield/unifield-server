@@ -25,7 +25,6 @@ import time
 from datetime import datetime
 from datetime import timedelta
 
-import tools
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
@@ -35,12 +34,12 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         super(sale_follow_up_multi_report_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getLang': self._get_lang,
             'parse_date_xls': self._parse_date_xls,
             'upper': self._upper,
             'getLines': self._get_lines,
             'getOrders': self._get_orders,
             'getProducts': self._get_products,
-            'saleUstr': self._sale_ustr,
         })
         self._order_iterator = 0
         self._nb_orders = 0
@@ -52,8 +51,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         else:
             self.back_browse = None
 
-    def _sale_ustr(self, string):
-        return tools.ustr(string)
+    def _get_lang(self):
+        return self.localcontext.get('lang', 'en_MF')
 
     def _get_orders(self, report, grouped=False, only_bo=False):
         orders = []
@@ -101,21 +100,36 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     return True
         return False
 
+    def in_line_data_expected_date(self, pol_id):
+        '''
+         Get data from the IN moves' linked to the PO
+        '''
+        self.cr.execute('''
+            SELECT DISTINCT(m.date_expected) FROM stock_move m, stock_picking p
+            WHERE m.picking_id = p.id AND m.purchase_line_id = %s AND p.type = 'in' AND m.state != 'cancel'
+        ''', (pol_id,))
+
+        return [data[0] for data in self.cr.fetchall()]
+
     def _get_lines(self, order_id, grouped=False, only_bo=False):
         '''
         Get all lines with OUT/PICK for an order
         '''
+        sol_obj = self.pool.get('sale.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
+        uom_obj = self.pool.get('product.uom')
+        ship_obj = self.pool.get('shipment')
         keys = []
 
         if only_bo:
             grouped = True
 
-
-        transport_info = self.pool.get('shipment').fields_get(self.cr, self.uid, ['transport_type'], context=self.localcontext).get('transport_type', {}).get('selection', {})
+        transport_info = ship_obj.fields_get(self.cr, self.uid, ['transport_type'], context=self.localcontext).get('transport_type', {}).get('selection', {})
         transport_dict = dict(transport_info)
         if not isinstance(order_id, int):
             order_id = order_id.id
 
+        line_state_display_dict = dict(sol_obj.fields_get(self.cr, self.uid, ['state_to_display'], context=self.localcontext).get('state_to_display', {}).get('selection', []))
         for line in self._get_order_line(order_id):
             if not grouped:
                 keys = []
@@ -126,19 +140,31 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             bo_qty = line.product_uom_qty
             po_name = '-'
             supplier_name = '-'
+
             cdd = False
-            linked_pol = self.pool.get('purchase.order.line').search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
+            if self.localcontext.get('lang', False) == 'fr_MF':
+                date_format = '%d/%m/%Y'
+            else:
+                date_format = '%d-%b-%Y'
+
+            linked_pol = pol_obj.search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
             if linked_pol:
-                linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
+                linked_pol = pol_obj.browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
-                cdd = linked_pol.order_id.delivery_confirmed_date
+                cdd = linked_pol.confirmed_delivery_date
                 supplier_name = linked_pol.order_id.partner_id.name
-            if not cdd and line.order_id.delivery_confirmed_date:
-                cdd = line.order_id.delivery_confirmed_date
+                if line.product_id:
+                    in_data = self.in_line_data_expected_date(linked_pol.id)
+                    if len(in_data) > 1:
+                        cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data])
+                    elif len(in_data) == 1:
+                        cdd = in_data[0][:10]
+            if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
+                cdd = line.confirmed_delivery_date or line.order_id.delivery_confirmed_date
 
             data = {
                 'state': line.state,
-                'state_display': line.state_to_display,
+                'state_display': line_state_display_dict.get(line.state_to_display),
             }
 
             for move in line.move_ids:
@@ -148,13 +174,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
                 if m_type and (ppl or s_out or ppl_not_shipped):
                     # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
-                    bo_qty -= self.pool.get('product.uom')._compute_qty(
-                        self.cr,
-                        self.uid,
-                        move.product_uom.id,
-                        move.product_qty,
-                        line.product_uom.id,
-                    )
+                    bo_qty -= uom_obj._compute_qty(self.cr, self.uid, move.product_uom.id, move.product_qty, line.product_uom.id)
                     data.update({
                         'po_name': po_name,
                         'supplier_name': supplier_name,
@@ -208,18 +228,19 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
                             shipment = move.picking_id.shipment_id.name or '-'
-                            is_shipment_done = move.picking_id.shipment_id.state == 'done'
+                            is_shipment_done = move.picking_id.shipment_id.state in ('done', 'delivered')
                         else:
                             shipment = move.picking_id.name or '-'
-                            is_shipment_done = move.picking_id.state == 'done'
+                            is_shipment_done = move.picking_id.state in ('done', 'delivered')
                             packing = '-'
                         if not grouped:
-                            key = (packing, False, move.product_uom.name)
+                            key = (packing, s_out and shipment or False, move.product_uom.name)
                         else:
-                            key = (packing, False, move.product_uom.name, line.line_number)
+                            key = (packing, s_out and shipment or False, move.product_uom.name, line.line_number)
                         if not only_bo:
                             data.update({
                                 'packing': packing,
+                                'is_delivered': is_shipment_done,
                                 'delivered_qty': is_shipment_done and move.product_qty or 0.00,
                                 'delivered_uom': is_shipment_done and move.product_uom.name or '-',
                                 'rts': line.order_id.ready_to_ship_date,

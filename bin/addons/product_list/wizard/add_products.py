@@ -48,7 +48,7 @@ class product_list_add_products(osv.osv_memory):
         ),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         To get default values for the object.
         '''
@@ -62,7 +62,7 @@ class product_list_add_products(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No list found !'))
 
         res = super(product_list_add_products, self).\
-            default_get(cr, uid, fields, context=context)
+            default_get(cr, uid, fields, context=context, from_web=from_web)
         res.update({
             'list_id': list_id,
             'parent_list_id': list_obj.browse(cr, uid, list_id, context=context).parent_id.id,

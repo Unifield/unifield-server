@@ -65,7 +65,7 @@
         <blockTable colWidths="842.0" style="MainTitle">
             <tr>
                 <td>
-                    <para style="Title">[[ o.composition_type == 'theoretical' and 'THEORETICAL KIT COMPOSITION' or 'KIT COMPOSITION LIST' ]]</para>
+                    <para style="Title">[[ o.composition_type == 'theoretical' and translate('THEORETICAL KIT COMPOSITION') or translate('KIT COMPOSITION LIST') ]]</para>
                 </td>
             </tr>
         </blockTable>
@@ -75,7 +75,7 @@
         </para>
 
         <!-- Header Information -->
-        <blockTable colWidths="80.0,240.0,80.0,110.0,90.0,120.0" style="HeaderInfo">
+        <blockTable colWidths="80.0,235.0,85.0,110.0,90.0,120.0" style="HeaderInfo">
             <tr>
                 <td>
                     <para style="HeaderRight">Product :</para>
@@ -104,13 +104,13 @@
                     <para style="Header">[[ getSel(o, 'state') ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">[[ o.composition_type == 'real' and 'Reference :' or '' ]]</para>
+                    <para style="HeaderRight">[[ o.composition_type == 'real' and (o.composition_product_id.batch_management and translate('Batch Number :') or translate('Reference :')) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="Header">[[ o.composition_type == 'real' and o.composition_reference or '' ]]</para>
+                    <para style="Header">[[ o.composition_type == 'real' and (o.composition_product_id.batch_management and o.composition_lot_id and o.composition_lot_id.name or o.composition_reference) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">[[ o.composition_type == 'real' and 'Expiry Date :' or '' ]]</para>
+                    <para style="HeaderRight">[[ o.composition_type == 'real' and translate('Expiry Date :') or '' ]]</para>
                 </td>
                 <td>
                     <para style="Header">[[ o.composition_type == 'real' and formatLang(o.composition_exp, date=True) or '' ]]</para>
@@ -125,7 +125,7 @@
         <section>
 
             <!-- Composition items for Kit Composition List -->
-            <blockTable colWidths="90.0,130.0,40.0,60.0,80.0,80.0,60.0,40.0,40.0,170.0" style="LineHeader" repeatRows="1">
+            <blockTable colWidths="90.0,130.0,95.0,40.0,30.0,65.0,60.0,60.0,40.0,40.0,140.0" style="LineHeader" repeatRows="1">
                 [[ o.composition_type == 'real' or removeParentNode('blockTable') ]]
                 <tr>
                     <td>
@@ -133,6 +133,9 @@
                     </td>
                     <td>
                         <para style="LHeader">Product</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Comment</para>
                     </td>
                     <td>
                         <para style="LHeader">Qty</para>
@@ -156,7 +159,7 @@
                         <para style="LHeader">Exp</para>
                     </td>
                     <td>
-                        <para style="LHeader">Comment</para>
+                        <para style="LHeader">System Message</para>
                     </td>
                 </tr>
                 <tr>
@@ -166,6 +169,9 @@
                     </td>
                     <td>
                         <para style="Line">[[ item.item_product_id and get_name('product.product', item.item_product_id.id) or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.comment ]]</para>
                     </td>
                     <td>
                         <para style="Line">[[ formatLang(item.item_qty) ]]</para>
@@ -195,7 +201,7 @@
             </blockTable>
 
             <!-- Composition items for Theoretical Kit Composition -->
-            <blockTable colWidths="110.0,200.0,55.0,75.0,50.0,50.0,250.0" style="LineHeader" repeatRows="1">
+            <blockTable colWidths="90.0,170.0,165.0,55.0,30.0,40.0,40.0,200.0" style="LineHeader" repeatRows="1">
                 [[ o.composition_type == 'theoretical' or removeParentNode('blockTable') ]]
                 <tr>
                     <td>
@@ -203,6 +209,9 @@
                     </td>
                     <td>
                         <para style="LHeader">Product</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Comment</para>
                     </td>
                     <td>
                         <para style="LHeader">Qty</para>
@@ -217,7 +226,7 @@
                         <para style="LHeader">Exp</para>
                     </td>
                     <td>
-                        <para style="LHeader">Comment</para>
+                        <para style="LHeader">System Message</para>
                     </td>
                 </tr>
                 <tr>
@@ -227,6 +236,9 @@
                     </td>
                     <td>
                         <para style="Line">[[ item.item_product_id and get_name('product.product', item.item_product_id.id) or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.comment ]]</para>
                     </td>
                     <td>
                         <para style="Line">[[ formatLang(item.item_qty) ]]</para>

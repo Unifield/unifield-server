@@ -132,6 +132,7 @@ SELECT res_id, touched
     FROM ir_model_data
     WHERE module = 'sd' AND
           model = %s AND
+          COALESCE(touched, '') != '[]' AND
           """+add_sql+"""
           ("""+field+""" < last_modification OR """+field+""" IS NULL)""",
                        sql_params) # not_a_user_entry
@@ -166,11 +167,18 @@ SELECT res_id, touched
         if not result_iterable: ids = [ids]
         if not ids: return {} if result_iterable else False
 
+        if hasattr(field, '__iter__'):
+            fields_to_fetch = field[:]
+        else:
+            fields_to_fetch = [field]
+
+        fields_to_fetch.append('res_id')
+
         model_data_obj = self.pool.get('ir.model.data')
         sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
         try:
             result = RejectingDict((data.res_id, get_fields(data))
-                                   for data in model_data_obj.browse(cr, uid, sdref_ids))
+                                   for data in model_data_obj.browse(cr, uid, sdref_ids, fields_to_fetch=fields_to_fetch))
         except DuplicateKey, e:
             raise Exception("Duplicate definition of 'sd' xml_id: %d@ir.model.data" % e.key)
         missing_ids = filter(lambda id:id and not id in result, ids)
@@ -267,6 +275,11 @@ SELECT res_id, touched
             'account.bank.statement': ['line_ids'],
             'res.currency': ['rate_ids'],
             'product.list': [],
+            'account.move.reconcile': ['line_id', 'line_partial_ids'],
+            'replenishment.segment': ['line_ids', 'child_ids'],
+            'replenishment.parent.segment': ['child_ids'],
+            'shipment': ['picking_ids'],
+            'account.analytic.account': ['dest_cc_link_ids'],
         }
 
         _previous_calls = _previous_calls or []
@@ -324,10 +337,15 @@ SELECT res_id, touched
                 whole_fields+['id'])
             # handle one2many
             o2m_fields = filter_o2m(whole_fields)
+
             # handle one2many (because orm don't call write() on them)
             for field, column in o2m_fields:
                 for next_rec in current_values.values():
-                    if column._obj == self._name: continue
+                    if column._obj == self._name:
+                        continue
+                    if self._name in write_skip_o2m and field in write_skip_o2m[self._name]:
+                        continue
+
                     self.pool.get(column._obj).touch(
                         cr, uid, next_rec[field],
                         None, data_base_values,
@@ -366,11 +384,7 @@ SELECT res_id, touched
                             _previous_calls=_previous_calls,
                             context=context)
 
-        # store changes in the context
-        if context is not None and 'changes' in context:
-            changes = context['changes'].setdefault(self._name, {})
-        else:
-            changes = {}
+        changes = {}
 
         # do not track changes if the dict are the same
         if previous_values == current_values:
@@ -408,6 +422,26 @@ SELECT res_id, touched
         Doesn't returns anything interesting
         """
         self.touch(cr, uid, ids, None, True, context=context)
+        return True
+
+    def sql_synchronize(self, cr, ids, field='name'):
+        """
+        Includes in the next synchro the records with the ids in param on the current object.
+
+        This is done via a "touch" in SQL in order to synch only the selected objects and not their related o2m.
+        A specific "field" to synchronize can be given ("name" by default).
+        """
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            trigger_sync_sql = """
+                                  UPDATE ir_model_data
+                                  SET touched ='[''%s'']', last_modification=NOW()
+                                  WHERE module='sd'
+                                  AND model='%s'
+                                  AND res_id IN %%s
+                               """ % (field, self._name) # not_a_user_entry
+            cr.execute(trigger_sync_sql, (tuple(ids),))
         return True
 
     def clear_synchronization(self, cr, uid, ids, context=None):
@@ -638,7 +672,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 """, [self._name, ids])
         return True
 
-    def search_deleted(self, cr, user, module=None, res_ids=None, context=None):
+    def search_deleted(self, cr, user, module=None, res_ids=None, context=None, for_sync=False):
         """
         Search for deleted entries in the table. It search for xmlids that are linked to not existing records. Beware that the domain applies to the ir.model.data
 
@@ -657,6 +691,8 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         if module:
             sql_add = ' AND d.module=%(module)s '
             sql_params['module'] = module
+        if for_sync:
+            sql_add += ' AND (d.sync_date < d.last_modification OR d.sync_date IS NULL) '
         if res_ids:
             sql_add += ' AND d.res_id in %(res_ids)s '
             sql_params['res_ids'] = tuple(res_ids)
@@ -795,7 +831,9 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         """
         rule_dest_field = rule.destination_name
         fields = eval(rule.arguments)
-        res =  self.export_data_json(cr, uid, [res_id], fields, destination=destination, rule_dest_field=rule_dest_field, context=context)
+        if isinstance(res_id, (int, long)):
+            res_id = [res_id]
+        res =  self.export_data_json(cr, uid, res_id, fields, destination=destination, rule_dest_field=rule_dest_field, context=context)
         return res['datas']
 
     def export_data_json(self, cr, uid, ids, fields_to_export, destination=False, rule_dest_field=False, context=None):
@@ -885,7 +923,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 
         def fsplit(x):
             if x=='.id': return [x]
-            return x.replace(':id','/id').replace('.id','/.id').split('/')
+            return x.replace(':id','/id').split('/')
 
         fields_to_export = map(fsplit, fields_to_export)
         datas = []

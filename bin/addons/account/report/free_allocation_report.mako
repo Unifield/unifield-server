@@ -266,35 +266,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
             </Cell>
         </Row>
     % endfor
-    <!-- TOTAL -->
-    <% total_l = total_line(entry_seq) %>
-    % if total_l:
-        <Row>
-            <% total_str = "%s %s" % (_("Total"), entry_seq) %>
-            <Cell ss:StyleID="ssBorderBold">
-                <Data ss:Type="String">${total_str|x}</Data>
-            </Cell>
-            <Cell ss:StyleID="ssBorderBold" ss:MergeAcross="5"></Cell>
-            <Cell ss:StyleID="ssNumberBold">
-                <Data ss:Type="Number">${total_l['book_amount']}</Data>
-            </Cell>
-            <Cell ss:StyleID="ssBorderBold">
-                <Data ss:Type="String">${total_l['book_currency']|x}</Data>
-            </Cell>
-            <Cell ss:StyleID="ssNumberBold">
-                <Data ss:Type="Number">${total_l['func_amount']}</Data>
-            </Cell>
-            <Cell ss:StyleID="ssBorderBold">
-                <Data ss:Type="String">${company.currency_id.name|x}</Data>
-            </Cell>
-        </Row>
-    % endif
-    % if lines(data)[entry_seq]:
-        <!-- EMPTY LINE BETWEEN EACH ENTRY SEQ. -->
-        <Row>
-            <Cell ss:MergeAcross="10"><Data ss:Type="String"></Data></Cell>
-        </Row>
-    % endif
 % endfor
 
 </Table>

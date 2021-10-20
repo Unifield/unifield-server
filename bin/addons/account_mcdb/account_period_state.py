@@ -35,9 +35,25 @@ class account_period_state(osv.osv):
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
-        'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State',
-                                  readonly=True),
+        'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True),
+        'auto_export_vi': fields.boolean('Auto VI exported', select=1),
     }
+
+    _defaults = {
+        'auto_export_vi': True,
+    }
+
+    def clean_auto_export(self, cr, uid, vals, context=None):
+        '''
+        Set the account.period.state as ready for auto export if:
+          1/ we are in a sync and
+          2/ the state is mission-close and
+          3/ auto export is enabled: we are on HQ OCA and the job is active
+        '''
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals and vals.get('state') == 'mission-closed' and 'auto_export_vi' not in vals and self.pool.get('wizard.hq.report.oca').get_active_export_ids(cr, uid, context=context):
+            vals['auto_export_vi'] = False
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -46,8 +62,13 @@ class account_period_state(osv.osv):
             # US-841: period is required but we got
             # an update related to non existant period: ignore it
             return False
-
+        self.clean_auto_export(cr, uid, vals, context)
         return super(account_period_state, self).create(cr, uid, vals, context=context)
+
+
+    def write(self, cr, uid, ids, vals, context=None):
+        self.clean_auto_export(cr, uid, vals, context)
+        return super(account_period_state, self).write(cr, uid, ids, vals, context=context)
 
     def get_period(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
@@ -169,12 +190,18 @@ class account_fiscalyear_state(osv.osv):
             sql = '''SELECT ml.id
                      FROM account_move_line ml
                      INNER JOIN account_move m ON m.id = ml.move_id
+                     INNER JOIN account_period p ON ml.period_id = p.id
                      WHERE ml.instance_id in %s
                      AND ml.date >= %s AND ml.date <= %s AND m.period_id != %s
+                     AND p.number != 0
                      AND ml.account_id = %s AND ml.currency_id = %s;
                   '''
             for fy_state_id in ids:
-                fy = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id'], context=context).fy_id
+                fy_state = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id', 'instance_id'], context=context)
+                if fy_state.instance_id.id != company_instance.id:
+                    # trigger reconcile only if instance FY is closed, not when update is received from project
+                    break
+                fy = fy_state.fy_id
                 period_id = year_end_closing_obj._get_period_id(cr, uid, fy.id, period_number, context=context)
                 if not period_id:
                     raise osv.except_osv(_('Error'), _("FY 'Period %d' not found") % (period_number,))

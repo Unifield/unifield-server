@@ -737,7 +737,7 @@ class sale_order_line_followup(osv.osv_memory):
         'original_order_id': fields.many2one('sale.order', string='Orig. line', readonly=True),
         'first_line': fields.boolean(string='First line'),
         'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
-        'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT')], readonly=True, string='PO/CFT'),
+        'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT'), ('pli', 'PLI')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
         'product_id': fields.related('line_id', 'product_id', string='Product Code', readondy=True,
                                      type='many2one', relation='product.product'),
@@ -878,25 +878,6 @@ request_for_quotation()
 class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
-
-    def _get_parent_doc(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns the shipment id if exist or the picking id
-        '''
-        res = {}
-
-        for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = False
-            if move.picking_id:
-                res[move.id] = move.picking_id.name
-                if move.picking_id.shipment_id:
-                    res[move.id] = move.picking_id.shipment_id.name
-
-        return res
-
-    _columns = {
-        'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
-    }
 
     def _get_view_id(self, cr, uid, ids, context=None):
         '''

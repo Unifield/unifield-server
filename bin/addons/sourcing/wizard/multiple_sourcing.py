@@ -33,6 +33,27 @@ _SELECTION_TYPE = [
 class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
 
+    def _get_values(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Get some values from the wizard.
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for wizard in self.browse(cr, uid, ids, context=context):
+            values = {
+                'supplier_type': wizard.supplier_id and wizard.supplier_id.partner_type or False,
+                'supplier_split_po': wizard.supplier_id and wizard.supplier_id.split_po or False,
+            }
+            res[wizard.id] = values
+
+        return res
+
     _columns = {
         'line_ids': fields.many2many(
             'sale.order.line',
@@ -78,9 +99,27 @@ class multiple_sourcing_wizard(osv.osv_memory):
         'related_sourcing_ok': fields.boolean(
             string='Related sourcing OK',
         ),
+        'supplier_type': fields.function(
+            _get_values,
+            method=True,
+            string='Supplier Type',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='wizard_info',
+        ),
+        'supplier_split_po': fields.function(
+            _get_values,
+            method=True,
+            string='Supplier can Split POs',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='wizard_info',
+        ),
     }
 
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         """
         Set lines with the selected lines to source
         :param cr: Cursor to the database
@@ -100,7 +139,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not active_ids or len(active_ids) < 2:
             raise osv.except_osv(_('Error'), _('You should select at least two lines to process.'))
 
-        res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields_list, context=context)
+        res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields_list, context=context, from_web=from_web)
 
         res.update({
             'line_ids': [],
@@ -163,6 +202,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
             res['location_id'] = loc
         if supplier != -1:
             res['supplier_id'] = supplier
+            local_market_id = 0
+            try:
+                local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
+            except ValueError:
+                pass
+            if supplier == local_market_id:
+                res['po_cft'] = 'pli'
         if group is not None:
             res['related_sourcing_id'] = group
 
@@ -306,7 +352,26 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def change_type(self, cr, uid, ids, l_type, supplier, context=None):
+    def get_same_seller(self, cr, uid, sols, context=None):
+        if context is None:
+            context = {}
+
+        res = False
+        for line in self.pool.get('sale.order.line').browse(cr, uid, sols[0][2], fields_to_fetch=['product_id'], context=context):
+            if line.product_id and line.product_id.seller_id and (line.product_id.seller_id.supplier or
+                                                                  line.product_id.seller_id.manufacturer or line.product_id.seller_id.transporter):
+                if res and res != line.product_id.seller_id.id:
+                    res = False
+                    break
+                else:
+                    res = line.product_id.seller_id.id
+            else:
+                res = False
+                break
+
+        return res
+
+    def change_type(self, cr, uid, ids, lines, l_type, supplier, context=None):
         """
         Unset the other fields if the type is 'from stock'
         :param cr: Cursor to the database
@@ -327,7 +392,8 @@ class multiple_sourcing_wizard(osv.osv_memory):
             return {
                 'value': {
                     'location_id': False,
-                    'related_sourcing_ok': sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+                    'related_sourcing_ok': sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context),
+                    'supplier_id': self.get_same_seller(cr, uid, lines, context=context),
                 },
             }
 
@@ -379,7 +445,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             },
         }
 
-    def change_po_cft(self, cr, uid, ids, po_cft, context=None):
+    def change_po_cft(self, cr, uid, ids, po_cft, supplier_id, context=None):
         """
         Unset the supplier if tender is choose
         :param cr: Cursor to the database
@@ -391,6 +457,17 @@ class multiple_sourcing_wizard(osv.osv_memory):
         """
         if po_cft == 'cft':
             return {'value': {'supplier_id': False}}
+
+        if supplier_id:
+            suppl_type = self.pool.get('res.partner').read(cr, uid, supplier_id, ['partner_type'], context=context)['partner_type']
+            if po_cft == 'pli' and suppl_type != 'external':
+                return {
+                    'value': {'po_cft': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _("""You can't source with 'Purchase List' to a non-external partner."""),
+                    },
+                }
 
         return {}
 
@@ -411,7 +488,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        result = {}
+        result = {'value': {}}
         related_sourcing_ok = False
         if supplier:
             related_sourcing_ok = sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
@@ -423,9 +500,26 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     'message': _('The chosen partner has no address. Please define an address before continuing.'),
                 }
 
-        result['value'] = {
+            result['value'].update({
+                'supplier_type': partner and partner.partner_type or False,
+                'supplier_split_po': partner and partner.split_po or False,
+            })
+
+            # Look if the partner is the same res_partner as Local Market
+            data_obj = self.pool.get('ir.model.data')
+            is_loc_mar = data_obj.search_exists(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'),
+                                                          ('name', '=', 'res_partner_local_market'), ('res_id', '=', partner.id)], context=context)
+            if is_loc_mar:
+                result['value'].update({'po_cft': 'pli'})
+        else:
+            result['value'].update({
+                'supplier_type': False,
+                'supplier_split_po': False,
+            })
+
+        result['value'].update({
             'related_sourcing_ok': related_sourcing_ok,
-        }
+        })
 
         if not related_sourcing_ok:
             result['value']['related_sourcing_id'] = False

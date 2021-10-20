@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from product._common import rounding
+import netsvc
 
 from tools.translate import _
 
@@ -63,7 +64,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         'impact_so_split_po_line_wizard': True,
     }
 
-    def split_line(self, cr, uid, ids, context=None):
+    def split_line(self, cr, uid, ids, context=None, for_claim=False):
         '''
         Create a new order line and change the quantity of the old line
         '''
@@ -71,6 +72,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        wf_service = netsvc.LocalService('workflow')
 
         context.update({'split_line': True})
         context.update({'keepDateAndDistrib': True})
@@ -89,7 +92,6 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 self.infolog(cr, uid, "The PO line id:%s (line number: %s) has been split" % (
                     split.purchase_line_id.id, split.purchase_line_id.line_number,
                 ))
-
                 # Change the qty of the old line
                 self.pool.get('purchase.order.line').write(cr, uid, [split.purchase_line_id.id], {
                     'product_qty': split.original_qty - split.new_line_qty,
@@ -107,10 +109,25 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 'sale_line_id': sale_line_id,
                 'product_qty': split.new_line_qty,
                 'origin': split.purchase_line_id.origin,
+                'line_number': split.purchase_line_id.line_number,
+                'from_synchro_return_goods': for_claim,
             }
 
             # copy original line
             new_line_id = self.pool.get('purchase.order.line').copy(cr, uid, split.purchase_line_id.id, po_copy_data, context=context)
+
+            if for_claim or split.purchase_line_id.state == 'validated':
+                wf_service.trg_validate(uid, 'purchase.order.line', new_line_id, 'validated', cr)
+
+            if for_claim or split.purchase_line_id.state in ['draft', 'validated', 'validated_n'] and split.purchase_line_id.linked_sol_id:
+                self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [split.purchase_line_id.id, new_line_id], qty_updated=True, context=context)
+
+                new_sol = self.pool.get('purchase.order.line').browse(cr, uid, new_line_id, fields_to_fetch=['linked_sol_id'], context=context).linked_sol_id.id
+                if new_sol and split.purchase_line_id.state != 'draft':
+                    wf_service.trg_validate(uid, 'sale.order.line', new_sol, 'sourced_v', cr)
+
+            if for_claim and split.purchase_line_id.state == 'confirmed':
+                wf_service.trg_validate(uid, 'purchase.order.line', new_line_id, 'confirmed', cr)
 
             if context.get('from_simu_screen') or context.get('return_new_line_id'):
                 return new_line_id

@@ -104,7 +104,7 @@
                     <para style="HeaderBold">Stock Balance</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(o.available_stock or 0.00) ]]</para>
+                    <para style="Header">[[ formatLang(o.real_stock or 0.00) ]]</para>
                 </td>
                 <td>
                     <para style="HeaderBold">UoM</para>
@@ -163,7 +163,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="95.0,100.0,220.0,55.0,55.0,55.0,120.0,100.0" style="LineHeader" keepWithNext="1">
+        <blockTable colWidths="85.0,90.0,160.0,100,55.0,55.0,55.0,100.0,100.0" style="LineHeader" keepWithNext="1">
             <tr>
                 <td>
                     <para style="ParaLineHeader">Date</para>
@@ -173,6 +173,9 @@
                 </td>
                 <td>
                     <para style="ParaLineHeader">Origin</para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader">Partner/Location</para>
                 </td>
                 <td>
                     <para style="ParaLineHeader">Qty IN</para>
@@ -215,10 +218,13 @@
                 <td>
                     <para style="ParaLineHeader"> </para>
                 </td>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
             </tr>
         </blockTable>
         <section>
-            <blockTable colWidths="95.0,100.0,220.0,55.0,55.0,55.0,120.0,100.0" style="Lines">
+            <blockTable colWidths="85.0,90.0,160.0,100,55.0,55.0,55.0,100.0,100.0" style="Lines">
                 [[ repeatIn(o.card_lines, 'l') ]]
                 <tr>
                     <td>
@@ -229,6 +235,9 @@
                     </td>
                     <td>
                         <para style="ParaLinesLeft">[[ parse_origin(l.origin) ]]</para>
+                    </td>
+                    <td>
+                        <para style="ParaLinesLeft">[[ l.partner_or_loc or '' ]]</para>
                     </td>
                     <td>
                         <para style="ParaLines">[[ formatLang(l.qty_in) ]]</para>

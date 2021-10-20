@@ -48,7 +48,8 @@ Synchronization Engine - Client Module
         'data/cron_ops.xml',
         'data/backupconfig.xml',
         'data/hq_monitor.xml',
-        'security/ir.model.access.csv'
+        'security/ir.model.access.csv',
+        'survey_view.xml'
     ],
     'demo_xml': [
     ],

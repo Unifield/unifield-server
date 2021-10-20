@@ -22,6 +22,7 @@
 from osv import fields
 from osv import osv
 from tools.translate import _
+from account_override import finance_export
 
 from time import strftime
 from time import strptime
@@ -79,7 +80,7 @@ class ocb_export_wizard(osv.osv_memory):
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})
 
-        target_file_name_pattern = '%s_%s_formatted data UF to OCB HQ system' 
+        target_file_name_pattern = '%s_%s_formatted data UF to OCB HQ system'
         data['target_filename'] = target_file_name_pattern % (
             wizard.instance_id and wizard.instance_id.code or '',
             period_name)
@@ -90,6 +91,12 @@ class ocb_export_wizard(osv.osv_memory):
         }, context=context)
         context['background_id'] = background_id
         context['background_time'] = 2
+
+        if context.get('old_vi'):
+            report_name = _('Export to HQ system (OCB) Access Interface')
+        else:
+            report_name = _('Export to HQ system (OCB)')
+        finance_export.log_vi_exported(self, cr, uid, report_name, wizard.id, data['target_filename'])
 
         data['context'] = context
         return {

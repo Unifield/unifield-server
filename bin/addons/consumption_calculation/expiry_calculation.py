@@ -26,6 +26,8 @@ from mx.DateTime import RelativeDateTime, today, DateFrom, Age
 from datetime import date, timedelta, datetime
 
 import time
+import tools
+
 
 class expiry_quantity_report(osv.osv_memory):
     _name = 'expiry.quantity.report'
@@ -226,6 +228,26 @@ class product_likely_expire_report(osv.osv):
             res[r['id']] = r['status']
         return res
 
+    def _get_amc_consumption_text(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the complete name for AMC Consumption
+        '''
+        if context is None:
+            context = {}
+
+        date_obj = self.pool.get('date.tools')
+
+        res = {}
+        for r in self.read(cr, uid, ids, ['consumption_type', 'consumption_from', 'consumption_to'], context=context):
+            if r['consumption_from'] and r['consumption_to']:
+                d_from = date_obj.get_date_formatted(cr, uid, datetime=r['consumption_from'])
+                d_to = date_obj.get_date_formatted(cr, uid, datetime=r['consumption_to'])
+                res[r['id']] = _([label for val, label in CONSUMPTION_TYPE if val == r['consumption_type']][0]) + tools.ustr(' (' + d_from + ' - ' + d_to + ')')
+            else:
+                res[r['id']] = _([label for val, label in CONSUMPTION_TYPE if val == r['consumption_type']][0])
+
+        return res
+
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
         'msf_instance': fields.char(size=64, string='Location', readonly=True),
@@ -241,6 +263,8 @@ class product_likely_expire_report(osv.osv):
         'requestor_date': fields.datetime(string='Date of the demand'),
         'fake_status': fields.function(_get_status, method=True, type='selection', selection=LIKELY_EXPIRE_STATUS, readonly=True, string='Status'),
         'status': fields.selection(LIKELY_EXPIRE_STATUS, string='Status'),
+        'amc_consumption_text': fields.function(_get_amc_consumption_text, method=True, type="char", string='Consumption'),
+        'segment_id': fields.many2one('replenishment.segment', 'Segment'),
     }
 
     _defaults = {
@@ -289,7 +313,7 @@ class product_likely_expire_report(osv.osv):
         if consumption_type == 'fmc':
             res = product_obj.browse(cr, uid, product_id, context=new_context).reviewed_consumption
         elif consumption_type == 'amc':
-            res = product_obj.compute_amc(cr, uid, product_id, context=new_context)
+            res = product_obj.compute_amc(cr, uid, product_id, context=new_context)[product_id]
         else:
             res = product_obj.browse(cr, uid, product_id, context=new_context).monthly_consumption
 
@@ -340,7 +364,7 @@ class product_likely_expire_report(osv.osv):
 
         return self.open_report(cr, uid, ids, context=context)
 
-    def _process_lines(self, cr, uid, ids, context=None):
+    def _process_lines(self, cr, uid, ids, context=None, create_cr=True):
         '''
         Creates all moves with expiry quantities for all
         lot life date
@@ -351,10 +375,12 @@ class product_likely_expire_report(osv.osv):
             ids = [ids]
 
         # background cursor
-        import pooler
-        new_cr = pooler.get_db(cr.dbname).cursor()
+        if create_cr:
+            import pooler
+            new_cr = pooler.get_db(cr.dbname).cursor()
+        else:
+            new_cr = cr
 
-        move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
         loc_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
@@ -365,45 +391,62 @@ class product_likely_expire_report(osv.osv):
         view_id = self.pool.get('ir.model.data').get_object_reference(new_cr, uid, 'consumption_calculation', 'product_likely_expire_report_form_processed')[1]
         report = self.browse(new_cr, uid, ids[0], context=context)
 
-        if report.date_to <= report.date_from:
-            raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
 
-        if report.consumption_type in ('amc', 'rac') and report.consumption_from > report.consumption_to:
-            raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
-
-        if report.consumption_type in ('amc', 'rac'):
-            context.update({'from': report.consumption_from, 'to': report.consumption_to})
-        else:
-            context.update({'from': report.date_from, 'to': report.date_to})
-
-        location_ids = []
-        not_loc_ids = []
+        segment_product_amc = {}
+        segment_product_fmc = {}
         only_product_ids = []
+        if report.segment_id:
+            from_segment = True
+            if report.segment_id.rule != 'cycle':
+                instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+                cr.execute('select id, amc from replenishment_segment_line_amc where segment_line_id in %s and instance_id=%s', (tuple([line_id.id for line_id in report.segment_id.line_ids]) , instance_id))
+                local_amc = {}
+                for x in cr.fetchall():
+                    local_amc[x[0]] = x[1] or 0
 
-        if context.get('only_product_ids'):
-            only_product_ids = context.get('only_product_ids')
-
-        if report.input_output_ok:
-            wh_ids = self.pool.get('stock.warehouse').search(new_cr, uid, [], context=context)
-            for wh in self.pool.get('stock.warehouse').browse(new_cr, uid, wh_ids, context=context):
-                not_loc_ids.extend(loc_obj.search(new_cr, uid, [('location_id', 'child_of', wh.lot_input_id.id)], context=context))
-                not_loc_ids.extend(loc_obj.search(new_cr, uid, [('location_id', 'child_of', wh.lot_output_id.id)], context=context))
-
-        if report.location_id:
-            # Get all locations
-            location_ids = loc_obj.search(new_cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
+            for segment_line in report.segment_id.line_ids:
+                if report.segment_id.rule != 'cycle':
+                    segment_product_amc[segment_line.product_id.id] = local_amc.get(segment_line.id, 0)
+                else:
+                    for x in xrange(1, 19):
+                        fmc_from = getattr(segment_line, 'rr_fmc_from_%d'%x)
+                        fmc_to = getattr(segment_line, 'rr_fmc_to_%d'%x)
+                        fmc_value = getattr(segment_line, 'rr_fmc_%d'%x)
+                        if fmc_from and fmc_to and fmc_value:
+                            segment_product_fmc.setdefault(segment_line.product_id.id, []).append({'from': DateFrom(fmc_from), 'to': DateFrom(fmc_to), 'fmc': fmc_value})
+                only_product_ids.append(segment_line.product_id.id)
+            location_ids = [loc.id for loc in report.segment_id.location_config_id.local_location_ids]
         else:
-            # Get all locations
-            wh_location_ids = loc_obj.search(new_cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
+            from_segment = False
+            if report.date_to <= report.date_from:
+                raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
 
-            move_ids = move_obj.search(new_cr, uid, [('prodlot_id', '!=', False)], context=context)
-            for move in move_obj.browse(new_cr, uid, move_ids, context=context):
-                if move.location_id.id not in location_ids:
-                    if move.location_id.usage == 'internal' and not move.location_id.quarantine_location and move.location_id.id in wh_location_ids:
-                        location_ids.append(move.location_id.id)
-                if move.location_dest_id.id not in location_ids and not move.location_dest_id.quarantine_location and move.location_dest_id.id in wh_location_ids:
-                    if move.location_dest_id.usage == 'internal':
-                        location_ids.append(move.location_dest_id.id)
+            if report.consumption_type in ('amc', 'rac') and report.consumption_from > report.consumption_to:
+                raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
+
+            if report.consumption_type in ('amc', 'rac'):
+                context.update({'from': report.consumption_from, 'to': report.consumption_to})
+            else:
+                context.update({'from': report.date_from, 'to': report.date_to})
+
+            location_ids = []
+            not_loc_ids = []
+
+            if context.get('only_product_ids'):
+                only_product_ids = context.get('only_product_ids')
+
+            if report.input_output_ok:
+                wh_ids = self.pool.get('stock.warehouse').search(new_cr, uid, [], context=context)
+                for wh in self.pool.get('stock.warehouse').browse(new_cr, uid, wh_ids, context=context):
+                    not_loc_ids.extend(loc_obj.search(new_cr, uid, [('location_id', 'child_of', wh.lot_input_id.id)], context=context))
+                    not_loc_ids.extend(loc_obj.search(new_cr, uid, [('location_id', 'child_of', wh.lot_output_id.id)], context=context))
+
+            if report.location_id:
+                # Get all locations
+                location_ids = loc_obj.search(new_cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
+            else:
+                # Get all locations
+                location_ids = loc_obj.search(new_cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
 
         context.update({'location_id': location_ids, 'location': location_ids})
 
@@ -412,7 +455,6 @@ class product_likely_expire_report(osv.osv):
             lot_domain.append(('product_id', 'in', only_product_ids))
 
         lot_ids = lot_obj.search(new_cr, uid, lot_domain, order='product_id, life_date', context=context)
-
         from_date = DateFrom(report.date_from)
         to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
 
@@ -427,11 +469,15 @@ class product_likely_expire_report(osv.osv):
         for lot in lot_obj.browse(new_cr, uid, lot_ids, context=context):
             if lot.product_id and lot.product_id.id not in products:
                 products.update({lot.product_id.id: {}})
-                consumption = self._get_average_consumption(new_cr, uid, lot.product_id.id,
-                                                            report.consumption_type,
-                                                            context.get('from', report.date_from),
-                                                            context.get('to', report.date_to),
-                                                            context=context)
+
+                if not from_segment:
+                    consumption = self._get_average_consumption(new_cr, uid, lot.product_id.id,
+                                                                report.consumption_type,
+                                                                context.get('from', report.date_from),
+                                                                context.get('to', report.date_to),
+                                                                context=context)
+                else:
+                    consumption = segment_product_amc.get(lot.product_id.id, 0)
 
                 current_line = line_obj.create(new_cr, uid, {'report_id': report.id,
                                                              'product_id': lot.product_id.id,
@@ -452,37 +498,66 @@ class product_likely_expire_report(osv.osv):
                     if not last_expiry_date:
                         last_expiry_date = month - RelativeDateTime(days=1)
 
-                    item_id = item_obj.create(new_cr, uid, {
-                        'name': start_month_flag and 'expired_qty_col' or month.strftime('%m/%y'),
-                        'line_id': products[lot.product_id.id]['line_id'],
-                        'uom_id': lot.product_id.uom_id.id,
-                    }, context=context)
                     available_qty = 0.00
                     expired_qty = 0.00
                     seq += 1
 
                     # Create a line for each lot which expired in this month
                     domain = [('product_id', '=', lot.product_id.id),
-                              ('stock_available', '>', 0.00),
+                              ('id', 'in', lot_ids),
                               ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))]
 
                     if not start_month_flag:
                         domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
-                        item_obj.write(new_cr, uid, [item_id], {'period_start': (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')}, context=context)
+                        item_period_start = (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
                     else:
-                        item_obj.write(new_cr, uid, [item_id], {'period_start': month.strftime('%Y-%m-%d')}, context=context)
+                        item_period_start = month.strftime('%Y-%m-%d')
                         domain.append(('life_date', '<=', month.strftime('%Y-%m-01')))
 
-                    start_month_flag = False
+                    item_id = item_obj.create(new_cr, uid, {
+                        'name': start_month_flag and 'expired_qty_col' or month.strftime('%m/%y'),
+                        'line_id': products[lot.product_id.id]['line_id'],
+                        'uom_id': lot.product_id.uom_id.id,
+                        'period_start': item_period_start,
+                    }, context=context)
+
                     product_lot_ids = lot_obj.search(new_cr, uid, domain, order='life_date', context=context)
 
-                    # Create an item line for each lot and each location
+                    tmp_last_expiry_date = False
                     for product_lot in lot_obj.browse(new_cr, uid, product_lot_ids, context=context):
-                        lot_days = Age(DateFrom(product_lot.life_date), last_expiry_date)
-                        lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
-                        if lot_coeff >= 0.00: last_expiry_date = DateFrom(product_lot.life_date)
-                        if lot_coeff < 0.00: lot_coeff = 0.00
-                        lot_cons = self.pool.get('product.uom')._compute_qty(new_cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id) + rest
+                        # each BN that expires in the month ordered by life_date
+                        if from_segment and segment_product_fmc:
+                            life_date = DateFrom(product_lot.life_date)
+                            consum = 0
+                            # consum is the sum of FMC for the period:
+                            #   period is: from today to expiry_date for the 1st BN
+                            #              or from previous_bn_expiry to expiry_date if previous BN found
+                            # note: the period may be covered by several FMC intervals
+
+                            # ignore FMC if BN is already expired
+                            if life_date > last_expiry_date:
+                                tmp_last_expiry_date = last_expiry_date
+                                for fmc in segment_product_fmc.setdefault(lot.product_id.id, []):
+                                    if life_date >= fmc['from'] and tmp_last_expiry_date <= fmc['to']:
+                                        # if the given period overlaps FMC interval
+                                        end_fmc = min(life_date, fmc['to'])
+                                        lot_days = Age(DateFrom(end_fmc), tmp_last_expiry_date)
+                                        consum += fmc['fmc'] * (lot_days.years*364.8 + lot_days.months*30.44 + lot_days.days)/30.44
+                                        tmp_last_expiry_date = end_fmc
+                                    if life_date <= fmc['to']:
+                                        # no need to check other FMCs
+                                        break
+
+                        else:
+                            lot_days = Age(DateFrom(product_lot.life_date), last_expiry_date)
+                            lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
+                            consum = 0
+                            if lot_coeff >= 0.00:
+                                consum = round(lot_coeff*consumption,2)
+
+                        if consum > 0:
+                            last_expiry_date = DateFrom(product_lot.life_date)
+                        lot_cons = self.pool.get('product.uom')._compute_qty(new_cr, uid, lot.product_id.uom_id.id, consum, lot.product_id.uom_id.id) + rest
 
                         if lot_cons > 0.00:
                             if lot_cons >= product_lot.stock_available:
@@ -499,12 +574,12 @@ class product_likely_expire_report(osv.osv):
 
                         lot_context = context.copy()
                         lot_context.update({'prodlot_id': product_lot.id})
-                        product = product_obj.browse(new_cr, uid, lot.product_id.id, context=lot_context)
                         lot_expired_qty = l_expired_qty
+                        # Create an item line for each lot and each location
                         for location in location_ids:
                             new_lot_context = lot_context.copy()
                             new_lot_context.update({'location': location, 'compute_child': False})
-                            product2 = product_obj.browse(new_cr, uid, lot.product_id.id, context=new_lot_context)
+                            product2 = product_obj.browse(new_cr, uid, lot.product_id.id, fields_to_fetch=['qty_available'], context=new_lot_context)
                             if product2.qty_available > 0.00:
                                 # Create the item line
                                 if product2.qty_available <= lot_expired_qty:
@@ -515,16 +590,19 @@ class product_likely_expire_report(osv.osv):
                                     lot_expired_qty = 0.00
                                 item_line_obj.create(new_cr, uid, {'item_id': item_id,
                                                                    'lot_id': product_lot.id,
-                                                                   'uom_id': product.uom_id.id,
+                                                                   'uom_id': lot.product_id.uom_id.id,
                                                                    'location_id': location,
                                                                    'available_qty': product2.qty_available,
                                                                    'expired_qty': new_lot_expired}, context=context)
 
-                        available_qty += product.qty_available
+                        available_qty += product_lot.stock_available
 
                     item_obj.write(new_cr, uid, [item_id], {'available_qty': available_qty,
                                                             'expired_qty': expired_qty}, context=context)
                     total_expired += expired_qty
+                    if start_month_flag:
+                        last_expiry_date = month
+                        start_month_flag = False
 
                 if report.only_non_zero and total_expired <= 0.00:
                     line_obj.unlink(new_cr, uid, [products[lot.product_id.id]['line_id']], context=context)
@@ -538,8 +616,9 @@ class product_likely_expire_report(osv.osv):
         context.update({'dates': new_date})
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
-        new_cr.commit()
-        new_cr.close(True)
+        if create_cr:
+            new_cr.commit()
+            new_cr.close(True)
 
         return {
             'type': 'ir.actions.act_window',
@@ -567,7 +646,7 @@ class product_likely_expire_report(osv.osv):
         dates = context.get('dates', [])
         for month in dates:
             line_view += '<field name="%s" />' % month
-            line_view += '<button name="go_to_item_%s" type="object" string="Go to item" icon="gtk-info" context="{item_date: %s}" />' % (month, month)
+            line_view += '<button name="go_to_item_%s" type="object" string="%s" icon="gtk-info" context="{item_date: %s}" />' % (month, _('Go to item'), month)
 
         line_view += """<field name="in_stock"/>
                         <field name="total_expired" />

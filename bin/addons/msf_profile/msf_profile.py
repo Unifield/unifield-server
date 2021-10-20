@@ -37,6 +37,8 @@ import traceback
 from msf_field_access_rights.osv_override import _get_instance_level
 import cStringIO
 import csv
+import zlib
+
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -51,6 +53,1790 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def us_8336_update_msr_used(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+
+        if _get_instance_level(self, cr, uid) == 'hq':
+            # exclude hq
+            return True
+
+        doc_field_error_dom = [
+            ('stock_move', 'product_id'),
+            ('stock_production_lot', 'product_id'),
+            ('purchase_order_line', 'product_id'),
+            ('sale_order_line', 'product_id'),
+            ('tender_line', 'product_id'),
+            ('physical_inventory_counting', 'product_id'),
+            ('initial_stock_inventory_line', 'product_id'),
+            ('real_average_consumption_line', 'product_id'),
+            ('replenishment_segment_line', 'product_id'),
+            ('product_list_line', 'name'),
+            ('composition_kit', 'composition_product_id'),
+            ('composition_item', 'item_product_id'),
+        ]
+        report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)])
+        if not report_ids:
+            return True
+        report_id = report_ids[0]
+        for table, foreign_field in doc_field_error_dom:
+            # set used_in_transaction='t'
+            cr.execute('''
+                update
+                    stock_mission_report_line l
+                set
+                    used_in_transaction='t'
+                from
+                    ''' + table + ''' ft
+                where
+                    coalesce(l.used_in_transaction,'f')='f' and
+                    l.mission_report_id = %s and
+                    ft.''' + foreign_field + ''' = l.product_id
+                ''', (report_id, )) # not_a_user_entry
+
+        cr.execute('''
+            select d.name
+            from ir_model_data d, stock_mission_report_line l
+            where
+                l.id = d.res_id and
+                used_in_transaction='t' and
+                d.model='stock.mission.report.line' and
+                l.mission_report_id = %s
+        ''', (report_id,))
+        if cr.rowcount:
+            zipstr = base64.b64encode(zlib.compress(','.join([x[0] for x in cr.fetchall()])))
+            self.pool.get('sync.trigger.something.up').create(cr, uid, {'name': 'msr_used', 'args': zipstr})
+        return True
+
+
+
+
+    # UF22.0
+    def us_9003_partner_im_is_currencies(self, cr, uid, *a, **b):
+        self.us_5559_set_pricelist(cr, uid, *a, **b)
+        return True
+
+    def us_8944_cold_chain_migration(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+
+        # trigger sync updates
+        cr.execute('''
+            update
+                ir_model_data set last_modification=NOW(), touched='[''cold_chain'']'
+            where
+                model='product.product' and
+                module='sd' and
+                res_id in (
+                    select p.id from
+                        product_product p , product_cold_chain cold, product_international_status int, product_heat_sensitive heat
+                    where
+                        heat.id = p.heat_sensitive_item and
+                        int.id=p.international_status and
+                        cold.id=p.cold_chain and
+                        int.name in ('Local', 'Temporary') and
+                        cold.mapped_to is not null
+                )
+        ''')
+        self.log_info(cr, uid, 'US-8944 thermo: %d products touched' % cr.rowcount)
+        cr.execute('''
+            update
+                product_product p
+            set
+                cold_chain = cold.mapped_to
+            from
+                product_cold_chain cold, product_international_status int, product_heat_sensitive heat
+            where
+                heat.id = p.heat_sensitive_item and
+                int.id=p.international_status and
+                cold.id=p.cold_chain and
+                int.name in ('Local', 'Temporary') and
+                cold.mapped_to is not null
+        ''')
+        self.log_info(cr, uid, 'US-8944 thermo: %d products updated' % cr.rowcount)
+        return True
+
+    def us_8597_set_custom_default_from_web(self, cr, uid, *a, **b):
+        cr.execute("update sale_order set location_requestor_id=NULL where location_requestor_id is not null and procurement_request='f'")
+        self._logger.warn('US-8597: Location removed on %d FO' % (cr.rowcount,))
+
+        cr.execute("""
+            update ir_values set meta='web' where
+                key='default' and
+                (name, model) not in (('shop_id', 'sale.order'), ('warehouse_id', 'purchase.order'), ('lang', 'res.partner'))
+            """)
+        self._logger.warn('US-8597: web default value set on %d records' % (cr.rowcount,))
+        return True
+
+    def us_8805_product_set_archived(self, cr, uid, *a, **b):
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            if instance and instance.level in ['project', 'coordo']:
+                st_obj = self.pool.get('product.status')
+                phase_out_ids = st_obj.search(cr, uid, [('code', '=', 'phase_out')])
+                archived_ids = st_obj.search(cr, uid, [('code', '=', 'archived')])
+                cr.execute('''
+                    update product_template t set
+                        state=%(archived_id)s
+                    from product_product p, product_international_status st
+                    where
+                        st.id = p.international_status and
+                        p.product_tmpl_id = t.id and
+                        p.oc_subscription = 'f' and
+                        p.active = 'f' and
+                        st.code = 'unidata' and
+                        t.state=%(phase_out_id)s
+                    ''', {'archived_id': archived_ids[0], 'phase_out_id': phase_out_ids[0]})
+                self.log_info(cr, uid, 'US-8805: %d products' % cr.rowcount)
+        return True
+
+    def us_8869_remove_ir_import(self, cr, uid, *a, **b):
+        cr.execute("update internal_request_import set file_to_import=NULL");
+        return True
+
+    def us_7449_set_cv_version(self, cr, uid, *a, **b):
+        """
+        Sets the existing Commitment Vouchers in version 1.
+        """
+        if self.pool.get('sync.client.entity'):  # existing instances
+            cr.execute("UPDATE account_commitment SET version = 1")
+            self._logger.warn('Commitment Vouchers: %s CV(s) set to version 1.', cr.rowcount)
+        return True
+
+    # UF21.1
+    def us_8810_fake_updates(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.entity'):
+            cr.execute("""
+                update sync_client_update_received set
+                    manually_ran='t', run='t', execution_date=now(),
+                    manually_set_run_date=now(), editable='f',
+                    log='Set manually to run without execution'
+                where
+                    run='f' and
+                    sequence_number=1071578 and
+                    source='OCG_HQ'
+            """);
+            self._logger.warn('US-8810: %d updates set as Run' % (cr.rowcount,))
+        return True
+
+    def us_8753_admin_never_expire_password(self, cr, uid, *a, **b):
+        # do not deactivate, to be executed on each new instances
+        cr.execute("update res_users set never_expire='t' where login='admin'")
+        return True
+
+    # UF21.0
+    def us_8196_delete_default_prod_curr(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_values where key = 'default' and model='product.product' and name in ('currency_id','field_currency_id') ;")
+        self._logger.warn('Delete %d default values on product currencies' % (cr.rowcount,))
+        user_record = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'])
+        if user_record.company_id and user_record.company_id.currency_id:
+            cur_id = user_record.company_id.currency_id.id
+            cr.execute("update product_product set currency_id = %s, currency_fixed='t' where currency_id != %s", (cur_id, cur_id))
+            self._logger.warn('Changed cost price currency on %d products' % (cr.rowcount,))
+            cr.execute("update product_product set field_currency_id = %s, currency_fixed='t' where field_currency_id != %s", (cur_id, cur_id))
+            self._logger.warn('Changed field price currency on %d products' % (cr.rowcount,))
+        return True
+
+    def us_7941_auto_vi_set_partner(self, cr, uid, *a, **b):
+        cr.execute('''
+            update automated_import imp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
+                from automated_import_function function
+            where
+                function.id = imp.function_id and
+                imp.partner_id is null and
+                function.multiple='t'
+        ''')
+        self._logger.warn('APU set on %s VI import.' % (cr.rowcount,))
+
+        cr.execute('''
+            update automated_export exp set partner_id = (select id from res_partner where ref='APU' and partner_type='esc' LIMIT 1)
+                from automated_export_function function
+            where
+                function.id = exp.function_id and
+                exp.partner_id is null and
+                function.multiple='t'
+        ''')
+        self._logger.warn('APU set on %s VI export.' % (cr.rowcount,))
+
+        return True
+
+    def us_8166_hide_consolidated_sm_report(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        consolidated_sm_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'mission_stock', 'consolidated_mission_stock_wizard_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, consolidated_sm_report_menu_id, {'active': instance.level == 'coordo'}, context={})
+        return True
+
+    def us_7019_force_password_expiration(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj:
+            # don't run on new instances
+            cr.execute("update res_users set last_password_change =  NOW() - interval '7 months'")
+            self._logger.warn('Force password expiration on %d users.' % (cr.rowcount,))
+            cr.execute("update res_users set never_expire='t' where login in ('unidata', 'unidata2', 'unidata_screen', 'unidatasupply', 'unidataonly')")
+            self._logger.warn('Set never expire on %d unidata users.' % (cr.rowcount,))
+            if self.pool.get('sync.server.entity'):
+                cr.execute("""
+                    update res_users u set never_expire='t' from
+                        res_groups_users_rel grp_rel, ir_model_data d
+                    where
+                        grp_rel.uid = u.id and
+                        d.res_id = grp_rel.gid and
+                        d.name = 'instance_sync_user' and
+                        d.module = 'sync_server'
+                """)
+                self._logger.warn('Sync server: set never expire on %d sync users.' % (cr.rowcount,))
+        return True
+
+    def us_7295_update_new_dest_cc_link(self, cr, uid, *a, **b):
+        """
+        CC Tab of the Destinations: replaces the old field "dest_cc_ids" by the new one "dest_cc_link_ids".
+
+        1) In all instances: deletes the old CCs, and creates the related links without activation/inactivation dates.
+
+        2) At HQ Level: sends a message to trigger the deletion of all the links created out of HQ (used at migration time only).
+
+        3) Out of HQ: prevents the sync of the links created, they are used at migration time only and will be deleted, cf 2).
+        """
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
+        dest_ids = analytic_acc_obj.search(cr, uid, [('category', '=', 'DEST')])
+        dcl_nb = 0
+        for dest in analytic_acc_obj.browse(cr, uid, dest_ids, fields_to_fetch=['dest_cc_ids']):
+            for cc in dest.dest_cc_ids:
+                dest_cc_link_obj.create(cr, uid, {'dest_id': dest.id, 'cc_id': cc.id})
+                dcl_nb += 1
+        self._logger.warn('Destinations: %s Dest CC Links generated.', dcl_nb)
+
+        cr.execute("DELETE FROM destination_cost_center_rel")
+        self._logger.warn('Destinations: %s CC deleted.', cr.rowcount)
+
+        if _get_instance_level(self, cr, uid) == 'hq':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-7295-delete-not-hq-links'})
+        else:
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[]', last_modification = '1980-01-01 00:00:00'
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE (SELECT instance_identifier FROM msf_instance WHERE id = (SELECT instance_id FROM res_company)) || '%'
+            """)
+        return True
+
+    # UF20.0
+    def us_7866_fill_in_target_cc_code(self, cr, uid, *a, **b):
+        """
+        Fills in the new "cost_center_code" field of the Account Target Cost Centers.
+        """
+        cr.execute("""
+                   UPDATE account_target_costcenter t_cc
+                   SET cost_center_code = (SELECT code FROM account_analytic_account a_acc WHERE a_acc.id = t_cc.cost_center_id);
+                   """)
+        self._logger.warn('Cost Center Code updated in %s Target CC.' % (cr.rowcount,))
+        return True
+
+    def us_7848_cold_chain(self, cr, uid, *a, **b):
+        for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'return_ppl_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+            cr.execute("update %s set kc_check = '' where kc_check != ''" % (table, )) # not_a_user_entry
+            cr.execute(""" update %s rel set kc_check='X'
+                from product_product prod, product_cold_chain c
+                where
+                    prod.id = rel.product_id and
+                    prod.cold_chain = c.id and
+                    c.cold_chain='t'
+            """ % (table, )) # not_a_user_entry
+        return True
+
+    def us_7749_migrate_dpo_flow(self, cr, uid, *a, **b):
+        # ignore old DPO IN: do not generate sync msg for old IN
+        cr.execute("update stock_picking set dpo_incoming='f' where dpo_incoming='t'")
+        cr.execute('update purchase_order set po_version=1')
+        cr.execute("update purchase_order set po_version=2, invoice_method='picking' where order_type='direct' and state in ('draft', 'validated')")
+        return True
+
+    def us_6796_hide_prod_status_inconsistencies(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': instance.level != 'project'}, context={})
+        return True
+
+    # UF19.0
+    def us_7808_ocg_rename_esc(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocg':
+            cr.execute("update res_partner set name='MSF LOGISTIQUE' where id in (select res_id from ir_model_data where name='1e206c21-b2ba-11e4-a614-005056290182/res_partner/6')")
+            self._logger.warn('%d ESC partner renamed' % (cr.rowcount,))
+
+            if _get_instance_level(self, cr, uid) == 'hq':
+                cr.execute("update ir_model_data set touched='[''name'']', last_modification=now() where name='1e206c21-b2ba-11e4-a614-005056290182/res_partner/6'")
+                self._logger.warn('%d ESC sync update triggered' % (cr.rowcount,))
+        return True
+
+
+    def us_7243_migrate_contract_quad(self, cr, uid, *a, **b):
+        quad_obj = self.pool.get('financing.contract.account.quadruplet')
+        if not cr.table_exists('financing_contract_actual_account_quadruplets_old'):
+            cr.execute("create table financing_contract_actual_account_quadruplets_old as (select * from financing_contract_actual_account_quadruplets)")
+        already_migrated = {}
+        cr.execute('truncate financing_contract_actual_account_quadruplets')
+        cr.execute('select actual_line_id, account_quadruplet_id from financing_contract_actual_account_quadruplets_old')
+        nb_mig = 0
+        for x in cr.fetchall():
+            if x[1] not in already_migrated:
+                new_id = quad_obj.migrate_old_quad(cr, uid, [x[1]])
+                already_migrated[x[1]] = new_id and new_id[0]
+            if already_migrated.get(x[1]):
+                nb_mig += 1
+                cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id, account_quadruplet_id) values (%s, %s)', (x[0], already_migrated[x[1]]))
+
+        self._logger.warn('%d quad migrated' % (nb_mig,))
+        return True
+
+    def us7940_create_parent_seg(self, cr, uid, *a, **b):
+        if not cr.column_exists('replenishment_segment', 'order_validation_lt') or not cr.column_exists('replenishment_segment', 'hidden'):
+            return True
+
+        seg_obj = self.pool.get('replenishment.segment')
+
+        copy_fields = ['location_config_id', 'ir_requesting_location', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'order_coverage', 'previous_order_rdd', 'date_next_order_received_modified', 'hidden']
+        cr.execute("select id, description_seg, state, "+','.join(copy_fields)+"  from replenishment_segment where parent_id is NULL order by id")  # not_a_user_entry
+
+        for seg in cr.dictfetchall():
+            vals = {'name_parent_seg': self.pool.get('ir.sequence').get(cr, uid, 'replenishment.parent.segment')}
+            for x in copy_fields:
+                vals[x] = seg[x]
+            vals['state_parent'] = seg['state']
+            if vals['order_coverage']:
+                vals['order_coverage'] = vals['order_coverage'] * 30.44
+            vals['description_parent_seg'] = 'Parent %s' % seg['description_seg']
+
+            cr.execute('''
+                insert into replenishment_parent_segment (name_parent_seg, description_parent_seg, order_preparation_lt, time_unit_lt, state_parent, '''+','.join(copy_fields)+''')
+                values
+                (%(name_parent_seg)s, %(description_parent_seg)s, 0, 'd', %(state_parent)s, '''+','.join(['%%(%s)s' % x for x in copy_fields])+''')
+                returning id
+            ''', vals)  # not_a_user_entry
+            parent_seg_id = cr.fetchone()[0]
+            cr.execute('update replenishment_segment set parent_id=%s, safety_stock=safety_stock*30.44 where id=%s', (parent_seg_id, seg['id']))
+
+            seg_sdref = seg_obj.get_sd_ref(cr, uid, seg['id'])
+            cr.execute('''
+                insert into ir_model_data
+                    (noupdate, name, date_init, date_update, module, model, res_id, force_recreation, version, touched, last_modification)
+                    values
+                    ('f', %(sdref)s, now(), now(), 'sd', 'replenishment.parent.segment', %(parent_seg_id)s, 'f', 1, '[]', NOW())
+                ''', {'sdref': '%s_parent'%seg_sdref, 'parent_seg_id': parent_seg_id})
+
+        cr.execute('''update replenishment_order_calc_line line set segment_id=calc.segment_id from replenishment_order_calc calc where calc.id=line.order_calc_id''')
+        cr.execute('''update replenishment_order_calc calc set parent_segment_id=seg.parent_id, time_unit_lt='d' from replenishment_segment seg where calc.segment_id=seg.id''')
+        return True
+
+    def us_2725_uf_write_date_on_products(self, cr, uid, *a, **b):
+        '''
+        Set the uf_write_date of products which don't have one to the date of creation
+        '''
+
+        cr.execute('''
+            UPDATE product_product SET uf_write_date = uf_create_date WHERE uf_write_date is NULL
+        ''')
+        self._logger.warn('The uf_write_date has been modified on %s products' % (cr.rowcount,))
+
+        return True
+
+    def us_7742_update_stock_mission(self, cr, uid, *a, **b):
+        cr.execute('''update stock_move m set included_in_mission_stock='t' from mission_move_rel rel where m.id = rel.move_id''')
+
+        location_obj = self.pool.get('stock.location')
+        quarantine_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', True)])
+        input_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('input_ok', '=', True)])
+        output_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('output_ok', '=', True)])
+        report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)])
+        if not report_ids:
+            return True
+        report_id = report_ids[0]
+
+        stock_query = '''
+          SELECT al.product_id, al.qty FROM (
+            SELECT
+                m.product_id,
+                SUM(
+                    CASE
+                        WHEN COALESCE(m.product_qty, 0.0)=0 THEN 0
+                        WHEN m.location_dest_id in %(loc)s and m.location_id in %(loc)s THEN 0
+                        WHEN m.location_dest_id in %(loc)s AND pt.uom_id = m.product_uom THEN m.product_qty
+                        WHEN m.location_dest_id in %(loc)s AND pt.uom_id != m.product_uom THEN m.product_qty / u.factor * pu.factor
+                        WHEN pt.uom_id = m.product_uom THEN -m.product_qty
+                        ELSE -m.product_qty / u.factor * pu.factor
+                    END
+                ) AS qty
+            FROM stock_move m
+                LEFT JOIN product_product pp ON m.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                LEFT JOIN product_uom u ON m.product_uom = u.id
+            WHERE
+                m.state = 'done' AND
+                m.included_in_mission_stock = 't' AND
+                ( m.location_dest_id in %(loc)s or m.location_id in %(loc)s) AND
+                m.location_dest_id != m.location_id
+            GROUP BY
+                m.product_id
+            ) al WHERE qty!=0'''
+
+        for col, loc in [('quarantine_qty', quarantine_loc), ('input_qty', input_loc), ('opdd_qty', output_loc)]:
+            nb_update = 0
+            cr.execute(stock_query, {'loc': tuple(loc)})
+            for x in cr.fetchall():
+                cr.execute('update stock_mission_report_line line set '+col+'=%s  where product_id = %s and line.mission_report_id=%s RETURNING id', (x[1], x[0], report_id)) # not_a_user_entry
+                line_id = cr.fetchone()
+                if line_id:
+                    nb_update += 1
+                    cr.execute("update ir_model_data set last_modification=NOW(), touched='[''product_id'']' where model='stock.mission.report.line' and module='sd' and res_id=%s", (line_id[0],))
+            self._logger.warn('Mission stock line %s, updated: %d' % (col, nb_update))
+        return True
+
+
+    def us_7742_hide_stock_pipe(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        stock_pipe_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, stock_pipe_report_menu_id, {'active': instance.level == 'section'}, context={})
+        return True
+
+    # UF18.0
+    def uf18_0_migrate_acl(self, cr, uid, *a, **b):
+        cr.execute('''
+            update button_access_rule_groups_rel set
+            button_access_rule_id=(select res_id from ir_model_data where name='BAR_stockview_production_lot_tree_unlink' limit 1)
+            where
+            button_access_rule_id=(select res_id from ir_model_data where name='BAR_specific_rulesview_production_lot_tree_unlink' limit 1)
+        ''')
+        self._logger.warn('%d BAR updated' % (cr.rowcount, ))
+        return True
+
+    def us_7215_prod_set_active_sync(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.message_received'):
+            # new instance
+            return True
+        cr.execute("""
+            update product_product p set
+                active_change_date=d.last_modification, active_sync_change_date=d.sync_date
+            from
+                ir_model_data d
+            where
+                d.model='product.product' and
+                d.module='sd' and
+                d.res_id = p.id and
+                touched like '%''state''%'
+        """)
+        self._logger.warn('Set active_sync_change_date on %d product' % (cr.rowcount,))
+
+        return True
+
+    def us_7158_prod_set_uf_status(self, cr, uid, *a, **b):
+        st_obj = self.pool.get('product.status')
+        audit_obj = self.pool.get('audittrail.rule')
+        stopped_ids = st_obj.search(cr, uid, [('code', '=', 'stopped'), ('active', 'in', ['t', 'f'])])
+        phase_out_ids = st_obj.search(cr, uid, [('code', '=', 'phase_out')])
+
+        st12_ids = st_obj.search(cr, uid, [('code', 'in', ['status1', 'status2']), ('active', 'in', ['t', 'f'])])
+        valid_ids = st_obj.search(cr, uid, [('code', '=', 'valid')])
+
+        # state 1, state2, blank to valid
+        cr.execute('''update product_template set state = %s where state is NUll or state in %s''' , (valid_ids[0], tuple(st12_ids)))
+        cr.execute('''update stock_mission_report_line set product_state='valid' where product_state is NULL or product_state in ('', 'status1', 'status2')''')
+
+        # stopped to phase_out
+        cr.execute('''update product_template set state = %s where state = %s RETURNING id''' , (phase_out_ids[0], stopped_ids[0]))
+        prod_templ_ids = [x[0] for x in cr.fetchall()]
+        if prod_templ_ids:
+            audit_ids = audit_obj.search(cr, uid, [('name', '=', 'Product_template rule')])
+            if audit_ids:
+                audit_obj.audit_log(cr, uid, audit_ids, 'product.template', prod_templ_ids, 'write', previous_value=[{'state': (stopped_ids[0], 'Stopped'), 'id': pt_id} for pt_id in prod_templ_ids], current={x: {'state': (phase_out_ids[0], 'Phase out')} for x in prod_templ_ids}, context=None)
+        cr.execute('''update stock_mission_report_line set product_state='phase_out' where product_state = 'stopped' ''')
+
+        return True
+
+    def us_5216_update_recurring_object_state(self, cr, uid, *a, **b):
+        """
+        Updates the state of the Recurring Plans and Recurring Models with the new rules set in US-5216.
+        """
+        if not self.pool.get('sync.server.update'):
+            rec_plan_obj = self.pool.get('account.subscription')
+            rec_model_obj = self.pool.get('account.model')
+            # Recurring Plans
+            rec_plans = {
+                'draft': [],
+                'running': [],
+                'done': [],
+            }
+            rec_plan_ids = rec_plan_obj.search(cr, uid, [], order='NO_ORDER')
+            for rec_plan in rec_plan_obj.browse(cr, uid, rec_plan_ids, fields_to_fetch=['lines_id']):
+                if not rec_plan.lines_id:
+                    rec_plans['draft'].append(rec_plan.id)
+                else:
+                    running = False
+                    for sub_line in rec_plan.lines_id:
+                        if not sub_line.move_id or sub_line.move_id.state != 'posted':
+                            running = True
+                            break
+                    if running:
+                        rec_plans['running'].append(rec_plan.id)
+                    else:
+                        rec_plans['done'].append(rec_plan.id)
+            for plan_state in rec_plans:
+                if rec_plans[plan_state]:
+                    update_rec_plans = """
+                                       UPDATE account_subscription
+                                       SET state = %s
+                                       WHERE id IN %s;
+                                       """
+                    cr.execute(update_rec_plans, (plan_state, tuple(rec_plans[plan_state])))
+            # Recurring Models
+            rec_models = {
+                'draft': [],
+                'running': [],
+                'done': [],
+            }
+            rec_model_ids = rec_model_obj.search(cr, uid, [], order='NO_ORDER')
+            for model_id in rec_model_ids:
+                if rec_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'done')]):
+                    state = 'done'
+                elif rec_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'running')]):
+                    state = 'running'
+                else:
+                    state = 'draft'
+                rec_models[state].append(model_id)
+            for model_state in rec_models:
+                if rec_models[model_state]:
+                    update_rec_models = """
+                                        UPDATE account_model
+                                        SET state = %s
+                                        WHERE id IN %s;
+                                        """
+                    cr.execute(update_rec_models, (model_state, tuple(rec_models[model_state])))
+        return True
+
+    def us_5216_remove_duplicated_ir_values(self, cr, uid, *a, **b):
+        """
+        Removes the old ir.values related to the act_window "Recurring Entries To Post",
+        so that the menu entry appears only once in the already existing DBs.
+        """
+        cr.execute("""
+           DELETE FROM ir_values
+           WHERE
+                name='act_account_subscription_to_account_move_line_open' AND
+                key2='client_action_relate' AND
+                model='account.subscription'
+        """)
+        return True
+
+    def us_7448_set_revaluated_periods(self, cr, uid, *a, **b):
+        """
+        Sets the tag "is_revaluated" for the existing periods in which the revaluation has been run,
+        based on the rules which applied until now
+        """
+        if not self.pool.get('sync.server.update'):
+            user_obj = self.pool.get('res.users')
+            period_obj = self.pool.get('account.period')
+            fy_obj = self.pool.get('account.fiscalyear')
+            journal_obj = self.pool.get('account.journal')
+            aml_obj = self.pool.get('account.move.line')
+            instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            revaluated_period_ids = []
+            if instance and instance.level == 'coordo':
+                reval_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'revaluation'), ('is_current_instance', '=', True)])
+                if reval_journal_ids:
+                    period_ids = period_obj.search(cr, uid, [('special', '=', False)])
+                    for period in period_obj.browse(cr, uid, period_ids, fields_to_fetch=[('number', 'fiscalyear_id', 'name')]):
+                        # domain taken from the check which was done until now at period closing time
+                        aml_domain = [('journal_id', 'in', reval_journal_ids), ('period_id', '=', period.id)]
+                        # additional check which was done at revaluation time
+                        # for the January periods having a previous FY
+                        if period.number == 1:
+                            if fy_obj.search_exist(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)]):
+                                aml_domain.append(('name', 'like', "Revaluation - %s" % (period.name,)))
+                        if aml_obj.search_exist(cr, uid, aml_domain):
+                            revaluated_period_ids.append(period.id)
+            if revaluated_period_ids:
+                update_period_sql = """
+                                UPDATE account_period
+                                SET is_revaluated = 't'
+                                WHERE id IN %s;
+                                """
+                cr.execute(update_period_sql, (tuple(revaluated_period_ids),))
+                self._logger.warn('Number of periods set as revaluated: %s.' % (cr.rowcount,))
+        return True
+
+    def us_7412_set_fy_closure_settings(self, cr, uid, *a, **b):
+        """
+        Sets the Fiscal Year Closure options depending on the OC.
+        """
+        if self.pool.get('sync.client.entity') and not self.pool.get('sync.server.update'):
+            oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+            cr.execute(oc_sql)
+            oc = cr.fetchone()[0]
+            has_move_regular_bs_to_0 = False
+            has_book_pl_results = False
+            if oc == 'ocg':
+                has_move_regular_bs_to_0 = True
+            elif oc == 'ocb':
+                has_move_regular_bs_to_0 = True
+                has_book_pl_results = True
+            update_company = """
+                             UPDATE res_company
+                             SET has_move_regular_bs_to_0 = %s, has_book_pl_results = %s;
+                             """
+            cr.execute(update_company, (has_move_regular_bs_to_0, has_book_pl_results))
+
+    def us_6453_set_ref_on_in(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.entity'):
+            cr.execute('''
+            update stock_picking set customer_ref=x.ref, customers=x.cust from (
+                select
+                    p.id,
+                    string_agg(distinct(regexp_replace(so.client_order_ref,'^.*\.', '')),';') as ref,
+                    string_agg(distinct(part.name), ';') as cust
+                from
+                    stock_picking p,
+                    sale_order so,
+                    sale_order_line sol,
+                    purchase_order_line pol,
+                    purchase_order po,
+                    res_partner part
+                where
+                    p.type='in' and
+                    p.purchase_id=po.id and
+                    pol.order_id=po.id and
+                    pol.linked_sol_id=sol.id and
+                    sol.order_id=so.id and
+                    part.id = so.partner_id
+                group by p.id
+                ) as x
+            where x.id=stock_picking.id and type='in'
+            ''')
+
+            cr.execute("SELECT name FROM sync_client_entity LIMIT 1")
+            inst_name = cr.fetchone()[0]
+            if not inst_name:
+                return False
+
+            cr.execute("update stock_picking set customers=%s where customers is null and type='in'", (inst_name, ))
+
+        return True
+
+    def us_7646_dest_loc_on_pol(self, cr, uid, *a, **b):
+        data_obj = self.pool.get('ir.model.data')
+        try:
+            service_id = self.pool.get('stock.location').get_service_location(cr, uid)
+            conso_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+            log_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+            med_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+            cross_dock_id =  data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        except:
+            return True
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s where id in (
+            select pol.id
+            from purchase_order_line pol, purchase_order po, product_product prod, product_template tmpl
+            where
+                pol.order_id = po.id and
+                pol.product_id = prod.id and
+                tmpl.id = prod.product_tmpl_id and
+                tmpl.type = 'service_recep' and
+                coalesce(po.cross_docking_ok, 'f') = 'f' and
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
+            ) ''', (service_id,))
+        self._logger.warn('POL loc_dest service on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s where id in (
+            select pol.id
+            from purchase_order_line pol, purchase_order po, product_product prod, product_template tmpl
+            where
+                pol.order_id = po.id and
+                pol.product_id = prod.id and
+                tmpl.id = prod.product_tmpl_id and
+                tmpl.type = 'consu' and
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
+            ) ''', (conso_id,))
+        self._logger.warn('POL loc_dest conso on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = so.location_requestor_id
+                        from sale_order so, sale_order_line sol, stock_location loc, product_product prod, product_template tmpl
+                        where
+                            so.id = sol.order_id and
+                            loc.id = so.location_requestor_id and
+                            loc.usage != 'customer' and
+                            so.procurement_request = 't' and
+                            purchase_order_line.linked_sol_id = sol.id and
+                            purchase_order_line.product_id = prod.id and
+                            tmpl.id = prod.product_tmpl_id and
+                            tmpl.type != 'consu' and
+                            purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (conso_id,))
+        self._logger.warn('POL loc_dest IR on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s from purchase_order po
+                        where
+                            po.id = purchase_order_line.order_id and
+                            purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
+                            coalesce(po.cross_docking_ok, 'f') = 't' and
+                            location_dest_id is NULL ''', (cross_dock_id,))
+        self._logger.warn('POL loc_dest Cross Dock on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s
+                    from product_product prod, product_template tmpl, product_nomenclature nom
+                    where
+                        purchase_order_line.product_id = prod.id and
+                        tmpl.nomen_manda_0 = nom.id and
+                        nom.name = 'MED' and
+                        tmpl.id = prod.product_tmpl_id and
+                        location_dest_id is NULL and
+                        purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (med_id,))
+        self._logger.warn('POL loc_dest MED on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s
+                    from product_product prod, product_template tmpl, product_nomenclature nom
+                    where
+                        purchase_order_line.product_id = prod.id and
+                        tmpl.nomen_manda_0 = nom.id and
+                        nom.name = 'LOG' and
+                        tmpl.id = prod.product_tmpl_id and
+                        location_dest_id is NULL and
+                        purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (log_id,))
+        self._logger.warn('POL loc_dest LOG on %s lines' % (cr.rowcount,))
+        return True
+
+
+    def us_6544_no_sync_on_forced_out(self, cr, uid, *a, **b):
+        # already forced OUT as delivred must no generate sync msg to prevent NR at reception
+        if self.pool.get('sync_client.version'):
+            cr.execute('''
+                update ir_model_data set sync_date=NOW() where id in (
+                    select d.id from
+                        stock_picking p
+                        left join ir_model_data d on d.model='stock.picking' and d.res_id=p.id and d.module='sd'
+                    where
+                        p.type='out' and
+                        p.subtype='standard' and
+                        p.state='delivered' and
+                        (d.sync_date is null or d.sync_date < d.last_modification)
+            )''')
+            self._logger.warn('Prevent NR on forced delivered OUT (%s)' % (cr.rowcount,))
+        return True
+
+    # UF17.1
+    def us_7631_set_default_liquidity_accounts(self, cr, uid, *a, **b):
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1"
+            cr.execute(oc_sql)
+            oc = cr.fetchone()[0]
+            if not oc:
+                return False
+
+            to_write = {}
+            account_obj = self.pool.get('account.account')
+
+            # cash
+            ids_10100 = account_obj.search(cr, uid, [('code', '=', '10100')])
+            if ids_10100:
+                to_write.update({'cash_debit_account_id': ids_10100[0], 'cash_credit_account_id': ids_10100[0]})
+
+
+            # bank
+            ids_10200 = account_obj.search(cr, uid, [('code', '=', '10200')])
+            if ids_10200:
+                to_write.update({'bank_debit_account_id': ids_10200[0], 'bank_credit_account_id': ids_10200[0]})
+
+
+            # cheque
+            if oc == 'oca':
+                cheque_code = '15630'
+            else:
+                cheque_code = '10210'
+
+            ids_cheque = account_obj.search(cr, uid, [('code', '=', cheque_code)])
+            if ids_cheque:
+                to_write.update({'cheque_debit_account_id': ids_cheque[0], 'cheque_credit_account_id': ids_cheque[0]})
+
+            if to_write:
+                company_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.id
+                self.pool.get('res.company').write(cr, uid, company_id, to_write)
+                self._logger.warn('Liquidity journals set on company form')
+
+            return True
+
+    def sync_msg_from_itself(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        cr.execute(''' update sync_client_message_received set run='t', manually_ran='t', log='Set manually to run without execution', manually_set_run_date=now() where run='f' and source=%s ''', (instance.instance, ))
+        self._logger.warn('Set %s self sync messages as Run' % (cr.rowcount,))
+        return True
+
+    def us_7593_inactivate_en_US(self, cr, uid, *a, **b):
+        """
+        Inactivates en_US and replaces it by en_MF for users, partners and related not runs
+        """
+        lang_sql = "UPDATE res_lang SET active = 'f' WHERE code='en_US';"
+        cr.execute(lang_sql)
+        partner_sql = "UPDATE res_partner SET lang='en_MF' WHERE lang='en_US';"
+        cr.execute(partner_sql)
+        partner_count = cr.rowcount
+        user_sql = "UPDATE res_users SET context_lang='en_MF' WHERE context_lang='en_US';"
+        cr.execute(user_sql)
+        user_count = cr.rowcount
+        self._logger.warn('English replaced by MSF English for %s partner(s) and %s user(s).' %
+                          (partner_count, user_count))
+
+
+    # UF17.0
+    def recursive_fix_int_previous_chained_pick(self, cr, uid, to_fix_pick_id, prev_chain_pick_id, context=None):
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        cr.execute("update stock_picking set previous_chained_pick_id=%s where id=%s" , (prev_chain_pick_id, to_fix_pick_id))
+        pick = pick_obj.browse(cr, uid, to_fix_pick_id, fields_to_fetch=['backorder_id'], context=context)
+        if pick.backorder_id:
+            self.recursive_fix_int_previous_chained_pick(cr, uid, pick.backorder_id.id, prev_chain_pick_id, context={})
+
+        return True
+
+    def us_7533_fix_int_previous_chained_pick_id(self, cr, uid, *a, **b):
+        """
+        Fix the previous_chained_pick_id of INTs which have been partially processed
+        """
+        cr.execute("""
+            SELECT backorder_id, previous_chained_pick_id FROM stock_picking 
+            WHERE type = 'internal' AND subtype = 'standard' AND backorder_id IS NOT NULL 
+                AND previous_chained_pick_id IS NOT NULL
+        """)
+
+        for pick in cr.fetchall():
+            self.recursive_fix_int_previous_chained_pick(cr, uid, pick[0], pick[1], context={})
+
+        return True
+
+    def us_7425_clean_period_not_run(self, cr, uid, *a, **b):
+        """
+        Sets as "Run without execution" the updates related to the field-closing of periods received from OCBHQ and not executed
+        in projects and coordos because the related FY is already Mission-Closed.
+        """
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+            cr.execute(oc_sql)
+            oc = cr.fetchone()[0]
+            if oc == 'ocb':
+                instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+                if instance and instance.level in ['project', 'coordo']:
+                    update_dom = [('model', '=', 'account.period'),
+                                  ('run', '=', False),
+                                  ('log', 'like', "Fiscal Year is already in Mission-Closed.")]
+                    update_ids = self.pool.get('sync.client.update_received').search(cr, uid, update_dom)
+                    if update_ids:
+                        update_sync_received = """
+                            UPDATE sync_client_update_received
+                            SET manually_ran='t', run='t', execution_date=now(), 
+                            manually_set_run_date=now(), editable='f', 
+                            log='Set manually to run without execution'
+                            WHERE id IN %s;
+                        """
+                        cr.execute(update_sync_received, (tuple(update_ids),))
+                        self._logger.warn('%s Not Runs on periods set as manually run without exec. as the FY is already closed.' %
+                                          (cr.rowcount,))
+
+    def us_7015_del_rac_line_sql(self, cr, uid, *a, **b):
+        cr.drop_constraint_if_exists('real_average_consumption_line', 'real_average_consumption_line_unique_lot_poduct')
+        return True
+
+    def us_7236_remove_reg_wkf_and_partial_close_state(self, cr, uid, *a, **b):
+        """
+        Both the workflows and the "Partial Close" state are not used anymore in the registers, so:
+        - deletes the workflow related to registers
+        - sets to Open the existing registers in "Partial Close" state
+        """
+        delete_wkf_transition = """
+            DELETE FROM wkf_transition
+            WHERE (signal IN ('button_open', 'button_confirm_cash', 'button_reopen', 'button_write_off') OR signal IS NULL)
+            AND act_from IN 
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement')
+                );
+        """
+        delete_wkf_workitem = """
+            DELETE FROM wkf_workitem WHERE act_id IN
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement')
+                );
+        """
+        delete_wkf_activity = """
+            DELETE FROM wkf_activity 
+            WHERE wkf_id = (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement');
+        """
+        delete_wkf = """
+            DELETE FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement';
+        """
+        update_reg_state = """
+            UPDATE account_bank_statement SET state = 'open' WHERE state = 'partial_close';
+        """
+        cr.execute(delete_wkf_transition)
+        cr.execute(delete_wkf_workitem)
+        cr.execute(delete_wkf_activity)
+        cr.execute(delete_wkf)  # will also delete data in wkf_instance because of the ONDELETE 'cascade'
+        cr.execute(update_reg_state)
+        self._logger.warn('%s registers in Partial Close state have been re-opened.' % (cr.rowcount,))
+        return True
+
+    def us_7221_reset_starting_balance(self, cr, uid, *a, **b):
+        """
+        Reset the Starting Balance of the first register created for each journal if it is still in Draft state
+        """
+        # Cashbox details set to zero
+        cr.execute("""
+                   UPDATE account_cashbox_line
+                   SET number = 0 
+                   WHERE starting_id IN (
+                       SELECT id FROM account_bank_statement
+                       WHERE state = 'draft'
+                       AND prev_reg_id IS NULL
+                       AND journal_id IN (SELECT id FROM account_journal WHERE type='cash')
+                   );
+                   """)
+        # Starting Balance set to zero
+        cr.execute("""
+                   UPDATE account_bank_statement
+                   SET balance_start = 0.0
+                   WHERE state = 'draft'
+                   AND prev_reg_id IS NULL
+                   AND journal_id IN (SELECT id FROM account_journal WHERE type in ('bank', 'cash'));
+                   """)
+        self._logger.warn('Starting Balance set to zero in %s registers.' % (cr.rowcount,))
+
+        return True
+
+    def us_6641_remove_duplicates_from_stock_mission(self, cr, uid, *a, **b):
+        """
+        Remove duplicates products (lines not coming from the current instance) from the generated Stock Mission Report lines
+        """
+        if not self.pool.get('sync.client.message_received'):  # New instance
+            return True
+
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id.id
+        if not instance_id:
+            return True
+        cr.execute("""
+                SELECT l.id FROM stock_mission_report_line l 
+                    LEFT JOIN ir_model_data d ON d.res_id = l.id AND d.model = 'stock.mission.report.line' AND d.module = 'sd'
+                WHERE d.name LIKE (SELECT identifier||'%%' FROM sync_client_entity) AND 
+                    mission_report_id IN (SELECT id FROM stock_mission_report WHERE instance_id != %s)
+        """, (instance_id,))
+
+        lines_to_del = [l[0] for l in cr.fetchall()]
+        if lines_to_del:
+            cr.execute("""DELETE FROM stock_mission_report_line WHERE id IN %s""", (tuple(lines_to_del),))
+            self._logger.warn('%s Stock Mission Report lines have been deleted.' % (len(lines_to_del),))
+
+        return True
+
+    # UF16.1
+    def remove_ir_actions_linked_to_deleted_modules(self, cr, uid, *a, **b):
+        # delete remove actions
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window')")
+
+        # delete xmlid
+        cr.execute("delete from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window'")
+
+        # delete sdred
+        cr.execute("delete from ir_model_data where name in ('procurement_report_action_auto_supply_rules_report', 'procurement_report_action_min_max_rules_report', 'procurement_report_action_order_cycle_rules_report', 'procurement_report_action_compute_schedulers_min_max', 'threshold_value_action_compute_schedulers_threshold', 'procurement_report_action_procurement_batch_form', 'procurement_report_action_procurement_rules_report', 'threshold_value_action_threshold_value', 'procurement_report_action_threshold_value_rules_report')")
+
+        return True
+
+    def us_7025_7039_fix_nr_empty_ins(self, cr, uid, *a, **b):
+        """
+        1. Set the Not Runs to run:
+            - Error from coordo: "Exception: Something goes wrong with this message and no confirmation of delivery".
+            - Error from project: "Exception: Unable to receive Shipment Details into an Incoming Shipment in this
+                instance as IN IN/XXXXX (POXXXXX) already fully/partially cancelled/Closed".
+        2. Remove reference data from empty INs (Backorder, Origin, links to FO, links to PO, Ship Reference, ...) and
+            modify "Change Reason" to "False movement, bug US-7025/7039".
+        3. Remove empty Draft IVOs.
+        """
+        if not self.pool.get('sync.client.message_received'):
+            # new instance
+            return True
+        # 1
+        cr.execute("""
+            SELECT id, identifier, arguments FROM sync_client_message_received
+            WHERE run = 'f' AND remote_call IN ('stock.picking.closed_in_validates_delivery_out_ship', 'stock.picking.partial_shipped_fo_updates_in_po')
+        """)
+        to_run_ids = []
+        to_run_name = []
+        for msg in cr.fetchall():
+            args = eval(msg[2])[0]
+            if args.get('shipment_ref', False) and args['shipment_ref'].endswith('-s') or args.get('name', False) and args['name'].endswith('-s'):
+                to_run_ids.append(msg[0])
+                to_run_name.append(msg[1])
+        if to_run_ids:
+            cr.execute("""
+                UPDATE sync_client_message_received SET run = 't', manually_ran = 't', execution_date = %s
+                WHERE id IN %s""", (time.strftime("%Y-%m-%d %H:%M:%S"), tuple(to_run_ids))
+                       )
+            self._logger.warn('The following Not Runs have been set to Run: %s.', (', '.join(to_run_name),))
+
+        # 2
+        cr.execute("""
+            SELECT p.id, p.name FROM stock_picking p LEFT JOIN stock_move m ON p.id = m.picking_id WHERE m.id IS NULL
+                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done' AND shipment_ref like '%s' AND purchase_id is not null
+        """)
+        empty_in_ids = []
+        empty_in_names = []
+        for inc in cr.fetchall():
+            empty_in_ids.append(inc[0])
+            empty_in_names.append(inc[1])
+        if empty_in_ids:
+            cr.execute("""
+                UPDATE stock_picking SET sale_id = NULL, purchase_id = NULL, backorder_id = NULL, origin = '', 
+                    shipment_ref = '', change_reason = 'False movement, bug US-7025/7039' WHERE id IN %s
+            """, (tuple(empty_in_ids),))
+            self._logger.warn('The following empty INs have been modified: %s.', (', '.join(empty_in_names),))
+
+        # 3
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
+        cr.execute("""
+            DELETE FROM account_invoice WHERE id IN (
+                SELECT a.id FROM account_invoice a LEFT JOIN account_invoice_line l ON a.id = l.invoice_id 
+                    WHERE l.id IS NULL AND a.state = 'draft' AND a.type = 'out_invoice' AND a.is_debit_note = 'f'
+                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND a.user_id = %s AND a.name like 'IN/%%' AND a.create_date < '2020-01-17 00:00:00'
+            )
+        """, (sync_id, ))
+        self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
+
+        return True
+
+    def us_6513_rename_dispatch_to_shipment(self, cr, uid, *a, **b):
+        """
+        Rename the locations named 'Dispatch' to 'Shipment' for normal Location and Stock Mission report
+        """
+        cr.execute("""UPDATE stock_location SET name = 'Shipment' WHERE name = 'Dispatch'""")
+        cr.execute("""
+            UPDATE stock_mission_report_line_location SET remote_location_name = 'Shipment' 
+            WHERE remote_location_name = 'Dispatch' 
+        """)
+        return True
+
+    # UF16.0
+    def us_7181_add_oc_subscrpition_to_unidata_products(self, cr, uid, *a, **b):
+        """
+        Set the new 'oc_subscription' boolean to True for each product with 'Unidata' as Product Creator
+        """
+        cr.execute("""
+            UPDATE product_product SET oc_subscription = 't' WHERE id IN (
+                SELECT p.id FROM product_product p LEFT JOIN product_international_status i ON p.international_status = i.id
+                WHERE i.code = 'unidata'
+            )
+        """)
+        self._logger.warn('%s Unidata product(s) have been updated.' % (cr.rowcount,))
+
+        return True
+
+    def us_6692_new_od_journals(self, cr, uid, *a, **b):
+        """
+        1. Change the type of the existing correction journals (except OD) to "Correction Manual" so they remain usable
+
+        2. Create:
+        - ODM journals in all existing instances
+        - ODHQ journals in existing coordo instances
+
+        Notes:
+        - creations are done in Python as the objects created must sync normally
+        - none of these journals already exists in prod. DB.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # existing correction journals
+            cr.execute("""
+                       UPDATE account_analytic_journal
+                       SET type = 'correction_manual'
+                       WHERE type = 'correction'
+                       AND code != 'OD';
+                       """)
+            self._logger.warn('%s correction analytic journal(s) updated.' % (cr.rowcount,))
+            cr.execute("""
+                       UPDATE account_journal
+                       SET type = 'correction_manual'
+                       WHERE type = 'correction'
+                       AND code != 'OD';
+                       """)
+            self._logger.warn('%s correction journal(s) updated.' % (cr.rowcount,))
+            # ODM analytic journal
+            odm_analytic_vals = {
+                # Prop. Instance: by default the current one is used
+                'code': 'ODM',
+                'name': 'Correction manual',
+                'type': 'correction_manual',
+            }
+            odm_analytic_journal_id = analytic_journal_obj.create(cr, uid, odm_analytic_vals)
+            # ODM G/L journal
+            odm_vals = {
+                # Prop. Instance: by default the current one is used
+                'code': 'ODM',
+                'name': 'Correction manual',
+                'type': 'correction_manual',
+                'analytic_journal_id': odm_analytic_journal_id,
+            }
+            journal_obj.create(cr, uid, odm_vals)
+            if current_instance.level == 'coordo':
+                # ODHQ analytic journal
+                odhq_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ODHQ',
+                    'name': 'Correction automatic HQ',
+                    'type': 'correction_hq',
+                }
+                odhq_analytic_journal_id = analytic_journal_obj.create(cr, uid, odhq_analytic_vals)
+                # ODHQ G/L journal
+                odhq_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ODHQ',
+                    'name': 'Correction automatic HQ',
+                    'type': 'correction_hq',
+                    'analytic_journal_id': odhq_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, odhq_vals)
+        return True
+
+    def us_6684_push_backup(self, cr, uid, *a, **b):
+        backup_obj = self.pool.get('backup.config')
+        if backup_obj:
+            cr.execute("update ir_cron set manual_activation='f' where function='send_backup_bg' and model='msf.instance.cloud'")
+            cr.execute("update ir_cron set name='Send Continuous Backup', manual_activation='f' where function='sent_continuous_backup_bg' and model='backup.config'")
+            if cr.column_exists('backup_config', 'continuous_backup_enabled'):
+                cr.execute("update backup_config set backup_type='cont_back' where continuous_backup_enabled='t'")
+
+            # update active field on cron
+            bck_ids = backup_obj.search(cr, uid, [])
+            backup_obj.write(cr, uid, bck_ids, {})
+        return True
+
+    def us_7024_update_standard(self, cr, uid, *a, **b):
+        cr.execute("update product_product set standard_ok='standard' where standard_ok='True'")
+        cr.execute("update product_product set standard_ok='non_standard' where standard_ok='False'")
+        return True
+
+    # UF15.3
+    def us_7147_reset_duplicate_proj_fxa(self, cr, uid, *a, **b):
+        cr.execute("""
+            select am.name, am.id, aml.id, data.name
+                from account_move_line aml
+                inner join account_journal aj ON aml.journal_id = aj.id
+                inner join account_move am ON aml.move_id = am.id
+                inner join account_period ap ON aml.period_id = ap.id
+                inner join account_account aa ON aml.account_id = aa.id
+                inner join msf_instance i ON aml.instance_id = i.id
+                inner join ir_model_data data on data.res_id = aml.id and data.model = 'account.move.line'
+            where
+                aj.type = 'cur_adj' and
+                i.level = 'project' and
+                aml.reconcile_id is null and
+                aa.reconcile = 't' and
+                (aml.credit != 0 or aml.debit != 0)
+        """)
+        for x in cr.fetchall():
+            cr.execute("select id from sync_client_update_to_send where model='account.move.reconcile' and values ~* '.*sd.%s[,''].*'" % x[3]) # not_a_user_entry
+            if not cr.rowcount:
+                cr.execute("select id from sync_client_update_received where model='account.move.reconcile' and values ~* '.*sd.%s[,''].*'" % x[3]) # not_a_user_entry
+                if not cr.rowcount:
+                    cr.execute("update account_move_line set credit=0, debit=0 where move_id = %s", (x[1], ))
+                    cr.execute("update account_analytic_line set amount=0, amount_currency=0 where move_id in (select id from account_move_line where move_id = %s)", (x[1], ))
+                    self._logger.warn('Set 0 on FXA %s' % (x[0],))
+        return True
+
+    # UF15.2
+    def rec_entries_uf14_1_uf15(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            trigger_obj = self.pool.get('sync.trigger.something.target')
+            cr.execute('''
+                select sdref, values, source from sync_client_update_received where model='account.move.reconcile' and execution_date > ( select applied from sync_client_version where name='UF15.0') and fields not like '%action_date%'
+            ''')
+
+            for update in cr.fetchall():
+                rec_number = False
+                try:
+                    rec_number = eval(update[1])
+                except:
+                    self._logger.warn('Unable to parse values, sdref: %s' % update[0])
+
+                if rec_number:
+                    trigger_obj.create(cr, uid, {'name': 'trigger_rec', 'destination': update[2] , 'args': rec_number[0], 'local': True})
+
+        return True
+
+    # UF15.1
+    def us_6930_gen_unreconcile(self, cr, uid, *a, **b):
+        # generate updates to delete reconcile done after UF15.0
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            unrec_obj = self.pool.get('account.move.unreconcile')
+            cr.execute('''
+                select d.name from ir_model_data d
+                left join
+                    account_move_reconcile rec on d.model='account.move.reconcile' and d.res_id = rec.id
+                where d.model='account.move.reconcile' and rec.id is null and touched like '%action_date%'
+            ''')
+            for sdref_rec in cr.fetchall():
+                unrec_obj.create(cr, uid, {'reconcile_sdref': sdref_rec[0]})
+        return True
+
+    def us_6905_manage_bned_switch(self, cr, uid, *a, **b):
+        fake_ed = '2999-12-31'
+        fake_bn = 'TO-BE-REPLACED'
+
+        lot_obj = self.pool.get('stock.production.lot')
+
+        # old move with BN or ED if product is no_bn no_ed
+        # set no on bn or en moves
+        cr.execute('''
+            update stock_move set prodlot_id=NULL, expired_date=NULL, hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where id in
+                (select m.id from stock_move m, product_product p where p.id = m.product_id and p.perishable='f' and p.batch_management='f' and m.prodlot_id is not null and m.state in ('done', 'cancel'))
+        ''')
+        self._logger.warn('%d done/cancel moves set from ED or BN to no' % (cr.rowcount, ))
+
+
+        # set bn on no moves
+        cr.execute('''select distinct(product_id) from stock_move m, product_product p where p.id = m.product_id and p.perishable='t' and p.batch_management='t' and m.prodlot_id is null and m.state = 'done' and m.product_qty!=0 and m.location_dest_id != m.location_id''')
+        self._logger.warn('%d done/cancel moves set from NO to BN' % (cr.rowcount, ))
+        for prod_id in cr.fetchall():
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=fake_bn, expiry_date=fake_ed, product_id=prod_id)
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 BN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state = 'done' and product_qty!=0 and location_dest_id != location_id", (batch_id, fake_ed, prod_id))
+
+        # set ed on no moves
+        cr.execute('''select distinct(product_id) from stock_move m, product_product p where p.id = m.product_id and p.perishable='t' and p.batch_management='f' and m.prodlot_id is null and m.state = 'done' and m.product_qty!=0 and m.location_dest_id != m.location_id''')
+        self._logger.warn('%d done/cancel moves set from NO to ED' % (cr.rowcount, ))
+        for prod_id in cr.fetchall():
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=fake_ed, product_id=prod_id)
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 EN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state = 'done' and product_qty!=0 and location_dest_id != location_id", (batch_id, fake_ed, prod_id))
+
+        # set ed on bn moves
+        cr.execute("update stock_production_lot set name='MSFBN/'||name, type='internal' where id in (select lot.id from stock_production_lot lot, product_product p where p.id = lot.product_id and type='standard' and p.perishable='t' and p.batch_management='f') returning name")
+        for lot in cr.fetchall():
+            self._logger.warn('BN %s from standard to internal' % (lot[0], ))
+
+        # set bn on ed moves
+        cr.execute("update stock_production_lot set type='standard', name='S'||name where id in (select lot.id from stock_production_lot lot, product_product p where p.id = lot.product_id and type='internal' and p.perishable='t' and p.batch_management='t') returning name")
+        for lot in cr.fetchall():
+            self._logger.warn('BN %s from internal to standard' % (lot[0], ))
+
+        return True
+
+    # UF15.0
+    def us_6768_trigger_FP_sync(self, cr, uid, *a, **b):
+        """
+        Triggers a synch. on the FP CD1-KNDAK_ in OCBCD100, to trigger its re-recreation in the projects
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and current_instance.code == 'OCBCD100':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''code'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='account.analytic.account' 
+                AND name = '3beb0a5e-5a6b-11e8-a0e4-1c4d70b8cca6/account_analytic_account/444';                
+            """)
+        return True
+
+    def uf15_fields_moved(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) == 'hq':
+            # touch BAR and ACL for fields moved from one module to another (i.e sdref renamed)
+            cr.execute("""
+                update ir_model_data set last_modification=now(), touched='[''name'']' 
+                where name in ('ir_model_access_res_currency_tables_model_res_currency_table_user read', 'ir_model_access_res_currency_tables_model_res_currency_table_admin', '_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_Full', '_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_HQ', 'BAR_res_currency_tablesview_currency_table_form_valid', 'BAR_res_currency_tablesview_currency_table_form_closed')
+            """)
+            self._logger.warn('%d BAR/ACL sync touched' % (cr.rowcount,))
+        elif self.pool.get('sync.server.update'):
+            # prevent NR on init sync for FARL/BAR on renamed or deleted fields
+            cr.execute('''
+                update sync_server_update set rule_id = NULL
+                where sdref in ('_msf_profile_account_payment_model_payment_mode_common','_msf_profile_account_voucher_model_account_voucher_line_common','_msf_profile_account_payment_model_payment_line_common','_msf_profile_account_voucher_model_sale_receipt_report_common','_msf_profile_account_payment_model_payment_order_common','_msf_profile_account_voucher_model_account_voucher_common','BAR_account_voucherview_purchase_receipt_form_action_cancel_draft','BAR_account_voucherview_account_voucher_unreconcile_trans_unrec','BAR_account_voucherview_vendor_receipt_form_proforma_voucher','BAR_account_paymentview_payment_order_form_set_done','BAR_account_voucherview_purchase_receipt_form_compute_tax','BAR_account_voucherview_sale_receipt_form_account_voucheract_pay_voucher','BAR_account_voucherview_voucher_form_proforma_voucher','BAR_account_voucherview_vendor_payment_form_cancel_voucher','BAR_account_paymentaccount_payment_populate_statement_view_populate_statement','BAR_account_voucherview_voucher_form_compute_tax','BAR_account_paymentview_payment_order_form_open','BAR_account_voucherview_account_statement_from_invoice_search_invoices','BAR_account_voucherview_sale_receipt_form_action_cancel_draft','BAR_account_voucherview_vendor_receipt_form_action_cancel_draft','BAR_account_voucherview_sale_receipt_form_compute_tax','BAR_account_voucherview_sale_receipt_form_cancel_voucher','BAR_account_voucherview_account_statement_from_invoice_lines_populate_statement','BAR_account_voucherview_sale_receipt_form_proforma_voucher','BAR_account_voucherview_voucher_tree_proforma_voucher','BAR_account_voucherview_purchase_receipt_form_cancel_voucher','BAR_account_voucherview_purchase_receipt_form_account_voucheract_pay_bills','BAR_account_voucherview_vendor_payment_form_proforma_voucher','BAR_account_voucherview_voucher_form_cancel_voucher','BAR_account_paymentview_create_payment_order_search_entries','BAR_account_paymentview_payment_order_form_set_to_draft','BAR_account_voucherview_voucher_form_action_cancel_draft','BAR_account_voucherview_vendor_payment_form_action_cancel_draft','BAR_account_paymentview_create_payment_order_lines_create_payment','BAR_account_paymentaccount_payment_make_payment_view_launch_wizard','BAR_account_voucherview_vendor_receipt_form_cancel_voucher','BAR_account_paymentview_payment_order_tree_cancel','BAR_account_voucherview_purchase_receipt_form_proforma_voucher','BAR_account_paymentview_payment_order_form_cancel','BAR_account_paymentview_payment_order_tree_set_done','BAR_account_paymentview_payment_order_form_account_paymentaction_create_payment_order','BAR_account_paymentview_payment_order_tree_open','ir_model_access_res_currency_tables_model_res_currency_table_user read','ir_model_access_res_currency_tables_model_res_currency_table_admin','_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_Full','_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_HQ','BAR_res_currency_tablesview_currency_table_form_valid','BAR_res_currency_tablesview_currency_table_form_closed', 'base_group_extended')
+                ''')
+            self._logger.warn('%d sync updates deactivated for init sync' % (cr.rowcount,))
+        return True
+
+    def us_6618_create_shadow_pack(self, cr, uid, *a, **b):
+        wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+        if not wh_ids:
+            return True
+
+        wh = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0])
+        loc_ship = wh.lot_dispatch_id.id
+        loc_distrib = wh.lot_distribution_id.id
+        if not loc_ship or not loc_distrib:
+            return True
+
+        if cr.column_exists('stock_picking', 'first_shipment_packing_id'):
+            cr.execute('''
+                select * from stock_picking
+                where
+                    subtype='packing' and
+                    name ~ 'PACK/[0-9]+-(surplus|return-)?[0-9]+-[0-9]+' and
+                    first_shipment_packing_id is null and
+                    id not in (
+                        select first_shipment_packing_id from stock_picking where first_shipment_packing_id is not null
+                    )
+            ''')
+        else:
+            cr.execute('''
+                select * from stock_picking
+                where
+                    subtype='packing' and
+                    name ~ 'PACK/[0-9]+-(surplus|return-)?[0-9]+-[0-9]+'
+            ''')
+        create_ship = []
+        for ship in cr.dictfetchall():
+            ship_id = ship['id']
+            del(ship['id'])
+            del(ship['shipment_id'])
+            ship['state'] = 'done'
+            ship['name'] = '%s-s' % ship['name']
+            columns = []
+            values = []
+            columns = ship.keys()
+            values = ['%%(%s)s' % x for x in columns]
+            cr.execute('''insert into stock_picking (''' +','.join(columns)+ ''') VALUES (''' + ','.join(values) + ''') RETURNING ID''', ship) # not_a_user_entry
+            new_ship_id = cr.fetchone()[0]
+            create_ship.append(ship['name'])
+
+            cr.execute("select * from stock_move where picking_id = %s", (ship_id,))
+            for move in cr.dictfetchall():
+                del(move['id'])
+                move['picking_id'] = new_ship_id
+                move['location_id'] = loc_ship
+                move['location_dest_id'] = loc_distrib
+                move['state'] = 'done'
+                move['date'] = move['create_date']
+                columns = []
+                values = []
+                columns = move.keys()
+                values = ['%%(%s)s' % x for x in columns]
+                cr.execute('''insert into stock_move (''' +','.join(columns)+ ''') VALUES (''' + ','.join(values) + ''') ''', move) # not_a_user_entry
+
+        self._logger.warn('%d shadow pack created from %s' % (len(create_ship), ','.join(create_ship)))
+        return True
+
+    def us_6354_trigger_donation_account_sync(self, cr, uid, *a, **b):
+        """
+        Triggers a synch. on the Intersection Partners at HQ, so that their Donation Payable Account is retrieved in the lower instances
+        """
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''donation_payable_account'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='res.partner' 
+                AND res_id IN (
+                    SELECT id
+                    FROM res_partner
+                    WHERE partner_type = 'section'
+                );
+            """)
+            self._logger.warn('Sync. triggered on %s Intersection Partner(s).' % (cr.rowcount,))
+        return True
+
+    def us_6457_update_uf_create_date_product(self, cr, uid, *a, **b):
+        """
+        Fill the uf_create_date for existing products
+        """
+        cr.execute("""UPDATE product_product SET uf_create_date = create_date WHERE uf_create_date IS NULL""")
+        self._logger.warn('Set uf_create_date on %d products' % cr.rowcount)
+        return True
+
+    # UF14.1
+    def us_6433_remove_sale_override_sourcing(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window')")
+        l1 = cr.rowcount
+        cr.execute("delete from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window'")
+        l2 = cr.rowcount
+        self._logger.warn("Deleted %d+%d old sourcing progress entry" % (l1, l2))
+        return True
+
+    def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        cr.execute('''
+            update stock_move
+                set selected_number=to_pack-from_pack+1
+            where id =ANY(
+                select unnest(move_lines) from pack_family_memory where shipment_id in (select id from shipment where state='shipped') and state!='done'
+                )
+        ''')
+        self._logger.warn('Set qty to process on %d stock.move' % cr.rowcount)
+        return True
+
+    # UF14.0
+    def us_6342_cancel_ir(self, cr, uid, *a, **b):
+        """
+         bug at IR import: IRs stuck in draft state, edition not allowed => set to Cancel
+        """
+
+        ir_name = []
+        ir_ids = []
+        cr.execute("""select ir.name, ir.id from sale_order ir left join sale_order_line irl on irl.order_id=ir.id  where ir.state='draft' and ir.import_in_progress='t' and ir.procurement_request='t'  group by ir.name,ir.id order by ir.name""")
+        for x in cr.fetchall():
+            ir_name.append(x[0])
+            ir_ids.append(x[1])
+
+        if ir_name:
+            self._logger.warn('%d IRs to Cancel: %s' % (len(ir_name), ', '.join(ir_name)))
+            # SOL
+            cr.execute('''update sale_order_line set state='cancel' where order_id in %s ''', (tuple(ir_ids),))
+
+            # wkf
+            cr.execute('''update wkf_workitem set act_id=(select id from wkf_activity where name='cancel' and wkf_id = (select id from wkf where osv='sale.order.line'))
+                 where inst_id in (select id from wkf_instance where res_type='sale.order.line' and res_id in (select id from sale_order_line where order_id in %s))
+            ''', (tuple(ir_ids),))
+            cr.execute('''update wkf_instance set state='complete' where res_type='sale.order.line' and res_id in (select id from sale_order_line where order_id in %s)''', (tuple(ir_ids),))
+
+            # SO
+            cr.execute('''update sale_order set state='cancel', import_in_progress='f' where id in %s ''', (tuple(ir_ids),))
+
+        return True
+
+    def us_5952_delivered_closed_outs_to_delivered_state(self, cr, uid, *a, **b):
+        """
+        Set the OUT pickings in 'Done' state with delivered = True to the 'Delivered' state
+        """
+        cr.execute('''
+            UPDATE stock_picking SET state = 'delivered' 
+            WHERE state = 'done' AND type = 'out' AND subtype = 'standard' AND delivered = 't'
+        ''')
+        return True
+
+    def us_6108_onedrive_bg(self, cr, uid, *a, **b):
+        cr.execute("update ir_cron set function='send_backup_bg' where function='send_backup' and model='msf.instance.cloud'")
+        return True
+
+    def us_6075_set_paid_invoices_as_closed(self, cr, uid, *a, **b):
+        cr.execute('''SELECT i.id, i.number
+            FROM account_invoice i
+                LEFT JOIN account_move_line l ON i.move_id=l.move_id
+                LEFT JOIN account_move_line rec_line ON rec_line.reconcile_id = l.reconcile_id
+                LEFT JOIN account_journal j ON j.id = rec_line.journal_id AND j.type in ('cash', 'bank', 'cheque')
+            WHERE i.state='paid'
+                AND l.reconcile_id is not null
+                AND l.account_id=i.account_id
+                AND l.is_counterpart
+            GROUP BY i.id, i.number
+            HAVING min(j.id) IS NULL
+            ORDER BY i.id
+        ''')
+        inv_ids = []
+        inv_name = []
+        for x in cr.fetchall():
+            inv_ids.append(x[0])
+            inv_name.append(x[1])
+        if inv_ids:
+            self._logger.warn('%d Invoices change state from Paid to Close: %s' % (len(inv_ids), ', '.join(inv_name)))
+            cr.execute("update account_invoice set state='inv_close' where state='paid' and id in %s", (tuple(inv_ids), ))
+        return True
+
+    def us_6076_set_inv_as_from_supply(self, cr, uid, *a, **b):
+        """
+        Set the new tag from_supply to True in the related account.invoices
+        """
+        update_inv = """
+            UPDATE account_invoice
+            SET from_supply = 't' 
+            WHERE picking_id IS NOT NULL
+            OR id IN (SELECT DISTINCT (invoice_id) FROM shipment WHERE invoice_id IS NOT NULL);
+        """
+        cr.execute(update_inv)
+        self._logger.warn('Tag from_supply set to True in %s account.invoice(s).' % (cr.rowcount,))
+        return True
+
+
+    # UF13.1
+    def us_3413_align_in_partner_to_po(self,cr, uid, *a, **b):
+        cr.execute("select p.name, p.id, po.partner_id, p.partner_id from stock_picking p, purchase_order po where p.type='in' and po.id = p.purchase_id and ( p.partner_id != po.partner_id or p.partner_id2 != po.partner_id) order by p.name")
+        pick_to_update = []
+        for x in cr.fetchall():
+            pick_to_update.append(x[1])
+            self._logger.warn('Update partner on IN: %s, from partner id: %s to id %s' % (x[0], x[3], x[2]))
+        if pick_to_update:
+            cr.execute('''update stock_picking set (partner_id, partner_id2, address_id) = (select po.partner_id, po.partner_id, po.partner_address_id from purchase_order po where po.id=stock_picking.purchase_id) where id in %s''' , (tuple(pick_to_update),))
+            cr.execute('''update stock_move set partner_id=(select partner_id from stock_picking where id=stock_move.picking_id) where picking_id in %s''', (tuple(pick_to_update),))
+            cr.execute('''select p.id from stock_picking p, res_partner_address ad where p.address_id = ad.id and p.id in %s and p.partner_id2 != ad.partner_id''', (tuple(pick_to_update),))
+            address_to_fix = [x[0] for x in cr.fetchall()]
+            if address_to_fix:
+                cr.execute('''update stock_picking set address_id=(select min(id) from res_partner_address where partner_id=stock_picking.partner_id) where id in %s''', (tuple(address_to_fix), ))
+                self._logger.warn('Update address on %d IN' % cr.rowcount)
+        return True
+
+    def us_6111_nr_field_closed_mar_2018(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            return True
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.startswith('OCG'):
+            cr.execute("""
+                update sync_client_update_received set
+                    run='t',
+                    log='Set manually to run without execution',
+                    manually_set_run_date=now(),
+                    editable='f'
+                where
+                    run='f' and
+                    sdref = 'FY2018/Mar 2018_2018-03-01' and
+                    values like '%''field-closed''%'
+            """)
+            self._logger.warn('%d NR Mar 2018 field-closed set as run' % (cr.rowcount, ))
+
+        return True
+
+    def us_6128_delete_auto_group(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+        if instance_id.level == 'section':
+            login_to_del = ['sup_consumption_management', 'sup_consumption_only', 'sup_demand_manager', 'sup_fin_read', 'sup_med_read', 'sup_product_manager', 'sup_product_mgr_coordo', 'sup_purchase_cr', 'sup_purchase_manager', 'sup_purchase_officer', 'sup_purchase_sup', 'sup_read_all', 'sup_request_sourcing', 'sup_request_validator', 'sup_requester', 'sup_store_keeper', 'sup_supply_config', 'sup_supply_system_administrator', 'sup_transport_manager', 'sup_valid_line_fo', 'sup_valid_line_ir', 'sup_valid_line_po', 'sup_warehouse_cr', 'sup_warehouse_manager', 'sync_config', 'sync_manual', 'user_manager', 'fin_accounting_entries_act', 'fin_accounting_entries_consult', 'fin_accounting_reports', 'fin_advanced_accounting', 'fin_bnk_chk_registers', 'fin_bnk_chk_responsible_access', 'fin_budget', 'fin_cash_registers', 'fin_cash_responsible_access', 'fin_config_admin_mission', 'fin_config_coordo', 'fin_config_full', 'fin_config_hq', 'fin_config_project', 'fin_consult_sup', 'fin_grant_mgt', 'fin_hard_posting', 'fin_hq_entries', 'fin_hr', 'fin_invoicing_advanced', 'fin_local_payroll', 'fin_register_project_responsible', 'fin_supplier_invoices', 'fin_supplier_invoices_validation', 'auditor_read']
+
+            cr.execute('delete from res_users where login in %s', (tuple(login_to_del),))
+            self._logger.warn('%d users deleted' % (cr.rowcount, ))
+
+        return True
+
+    # UF13.1
+    def us_5859_remove_deprecated_objects(self, cr, uid, *a, **b):
+        to_del = [
+            'stock.move.track',
+            'stock.move.consume',
+            'stock.move.scrap',
+            'create.picking.processor',
+            'create.picking.move.processor',
+            'create.picking',
+            'validate.picking.processor',
+            'validate.move.processor',
+            'ppl.move.processor',
+            'shipment.processor',
+            'shipment.family.processor',
+            'shipment.additional.line.processor',
+            'shipment.wizard',
+            'memory.additionalitems',
+            'stock.move.memory.shipment.additionalitems',
+        ]
+        cr.execute('delete from ir_model where model in %s', (tuple(to_del),))
+        return True
+
+    def us_5859_set_flag_on_sub_pick(self, cr, uid, *a, **b):
+        cr.execute("update stock_picking set is_subpick = 't' where subtype='picking' and name like '%-%'")
+        return True
+
+    # UF13.0
+    def us_5771_allow_all_cc_in_default_dest(self, cr, uid, *a, **b):
+        """
+        Set the default created destinations (OPS/EXP/SUP/NAT) as "Allow all Cost Centers"
+        """
+        update_dests = """
+            UPDATE account_analytic_account
+            SET allow_all_cc = 't'
+            WHERE category = 'DEST' 
+            AND id IN (SELECT res_id FROM ir_model_data WHERE module='analytic_distribution' AND name IN (
+                'analytic_account_destination_operation',
+                'analytic_account_destination_expatriates',
+                'analytic_account_destination_support',
+                'analytic_account_destination_national_staff'));
+        """
+        cr.execute(update_dests)
+        return True
+
+    # UF12.1
+    def us_5199_fix_cancel_partial_move_sol_id(self, cr, uid, *a, **b):
+        '''
+        Set the correct sale_line_id on moves post SLL that were cancelled after the original line was partially processed
+        '''
+        move_obj = self.pool.get('stock.move')
+        sol_obj = self.pool.get('sale.order.line')
+
+        move_domain = [
+            ('state', '=', 'cancel'),
+            ('type', '=', 'out'),
+            ('picking_id.subtype', '=', 'standard'),
+            ('picking_id.type', '=', 'out'),
+            ('sale_line_id.order_id.procurement_request', '=', True),
+            ('sale_line_id.state', '=', 'done'),
+        ]
+        moves_ids = move_obj.search(cr, uid, move_domain)
+        impacted_ir = []
+        for move in self.pool.get('stock.move').browse(cr, uid, moves_ids):
+            split_sol_ids = sol_obj.search(cr, uid, [
+                ('order_id', '=', move.sale_line_id.order_id.id),
+                ('id', '!=', move.sale_line_id.id),
+                ('line_number', '=', move.sale_line_id.line_number),
+                ('is_line_split', '=', True),
+                ('state', '=', 'cancel'),
+                ('product_uom_qty', '=', move.product_qty),
+            ])
+            if split_sol_ids:
+                impacted_ir.append('%s #%s' % (move.sale_line_id.order_id.name, move.sale_line_id.line_number))
+                move_obj.write(cr, uid, [move.id], {'sale_line_id': split_sol_ids[0]})
+
+        if impacted_ir:
+            self._logger.warn('%d IR cancelled lines linked to cancelled OUT: %s' % (len(impacted_ir), ', '.join(impacted_ir)))
+        return True
+
+
+    def us_5785_set_ocg_price_001(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.startswith('OCG'):
+            cr.execute("""select p.id, tmpl.id, p.default_code from
+                product_template tmpl, product_product p
+                where
+                    p.product_tmpl_id = tmpl.id and
+                    standard_price=0
+                """)
+            prod = cr.fetchall()
+            if prod:
+                cr.execute('update product_template set standard_price=0.01, list_price=0.01 where id in %s', (tuple([x[1] for x in prod]), ))
+                self._logger.warn('Change price to 0.01 on %d products: %s' % (cr.rowcount,', '.join([x[2] for x in prod])))
+                for prod_i in prod:
+                    cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
+                            (1, NOW(), 0.00, 0.01, 1, %s, date_trunc('second', now()::timestamp), 'Patch US-5785')
+                            """,  (prod_i[0], ))
+                if instance.level == 'section' and instance.code == 'CH':
+                    cr.execute('''update ir_model_data set touched='[''default_code'']', last_modification=NOW() where model='product.product' and res_id in %s and module='sd' ''', (tuple([x[0] for x in prod]), ))
+                    self._logger.warn('Tigger price sync update on %d products' % (cr.rowcount,))
+        return True
+
+    def us_5667_remove_contract_workflow(self, cr, uid, *a, **b):
+        """
+        Deletes the workflow related to Financing Contracts (not used anymore)
+        """
+        delete_wkf_transition = """
+            DELETE FROM wkf_transition
+            WHERE signal IN ('contract_open', 'contract_soft_closed', 'contract_hard_closed', 'contract_reopen')
+            AND act_from IN 
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract')
+                );
+        """
+        delete_wkf_workitem = """
+            DELETE FROM wkf_workitem WHERE act_id IN
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract')
+                );
+        """
+        delete_wkf_activity = """
+            DELETE FROM wkf_activity 
+            WHERE wkf_id = (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract');
+        """
+        delete_wkf = """
+            DELETE FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract';
+        """
+        cr.execute(delete_wkf_transition)
+        cr.execute(delete_wkf_workitem)
+        cr.execute(delete_wkf_activity)
+        cr.execute(delete_wkf)  # will also delete data in wkf_instance because of the ONDELETE 'cascade'
+        return True
+
+    # UF12.0
+    def us_5724_set_previous_fy_dates_allowed(self, cr, uid, *a, **b):
+        """
+        Sets the field "previous_fy_dates_allowed" to True in the UniField Setup Configuration for all OCB and OCP instances
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and (current_instance.name.startswith('OCB') or current_instance.name.startswith('OCP')):
+            cr.execute("UPDATE unifield_setup_configuration SET previous_fy_dates_allowed = 't';")
+        return True
+
+    def us_5746_rename_products_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the description of products and their translation
+        """
+        cr.execute("""
+            UPDATE product_template
+            SET name = regexp_replace(name, '^\\s+', '', 'g' )
+            WHERE name ~ '^\\s.*';
+            """)
+        self._logger.warn('Update description on %d products' % (cr.rowcount,))
+        cr.execute("""
+            UPDATE ir_translation
+            SET src = regexp_replace(src, '^\\s+', '', 'g' ), value = regexp_replace(value, '^\\s+', '', 'g' )
+            WHERE name = 'product.template,name' AND (src ~ '^\\s.*' OR value ~ '^\\s.*');
+            """)
+        self._logger.warn('Update src and/or value on %d products translations' % (cr.rowcount,))
+        return True
+
+    def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
+        ''' OCBHQ: volume has not been converted to dm3 on instances '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.name == 'OCBHQ':
+            cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''volume'']' where module='sd' and name in ('product_TVECZTF0058','product_TVECZTF0051','product_TVECZBE0175','product_TVEAZTF0086','product_TVEAZTF0057','product_STRYZ597044S','product_STRYZ597004S','product_STRYZ596001S','product_STRYZ33625100','product_STRYZ33625080','product_SCTDZBE0102','product_SCTDZBE0090','product_PTOOZBE0502','product_PTOOPLIE01E','product_PSAFZBE0109','product_PSAFZBE0076','product_PPAIZBE0010','product_PIDEZTF0073','product_PHYGZBE0022','product_PELEZBE1287','product_PELEZBE1279','product_PCOOZTF0014','product_PCOOZBE0039','product_PCOOZBE0038','product_PCOMZBE0518','product_L028AIDG01E','product_KADMZBE0031','product_EPHYCRUT1C-','product_EMEQBOTP01-','product_ELAEZTF0809','product_ELAEZBE0941','product_ELAEZBE0898','product_EHOEZBE1052','product_EHOEZBE0907','product_EDIMZBE0103','product_EDIMZBE0102','product_EDIMZBE0101','product_EDIMZBE0099','product_EDIMZBE0061','product_EANEZTF0081','product_EANEZTF0079','product_EANEZBE0167','product_DEXTZBE0031','product_ALIFZTF0029','product_ADAPZBE0460','product_41400-35031')''')
+            self._logger.warn('Trigger sync updates on %d products' % (cr.rowcount,))
+        return True
+
+    def us_5507_set_synchronize(self, cr, uid, *a, **b):
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
+        cr.execute("update res_users set synchronize='t' where create_uid=%s", (sync_id,))
+        self._logger.warn('Set synchronize on  %s users.' % (cr.rowcount,))
+        return True
+
+    def us_5480_correct_partner_fo_default_currency(self, cr, uid, *a, **b):
+        """
+        Sets FO default currency = PO default currency for all external partners where these currencies are different
+        """
+        partner_obj = self.pool.get('res.partner')
+        pricelist_obj = self.pool.get('product.pricelist')
+        partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])])
+        partner_count = 0
+        sync = 0
+        for partner in partner_obj.browse(cr, uid, partner_ids,
+                                          fields_to_fetch=['property_product_pricelist_purchase',
+                                                           'property_product_pricelist',
+                                                           'locally_created']):
+            if partner.property_product_pricelist_purchase and partner.property_product_pricelist \
+                    and partner.property_product_pricelist_purchase.currency_id.id != partner.property_product_pricelist.currency_id.id:
+                # search for the "Sale" pricelist having the same currency as the "Purchase" pricelist currently used
+                pricelist_dom = [('type', '=', 'sale'),
+                                 ('currency_id', '=', partner.property_product_pricelist_purchase.currency_id.id)]
+                pricelist_ids = pricelist_obj.search(cr, uid, pricelist_dom, limit=1)
+                if pricelist_ids:
+                    sql = """
+                          UPDATE ir_property
+                          SET value_reference = %s
+                          WHERE name = 'property_product_pricelist'
+                          AND res_id = %s;
+                          """
+                    cr.execute(sql, ('product.pricelist,%s' % pricelist_ids[0], 'res.partner,%s' % partner.id))
+                    if partner.locally_created:
+                        cr.execute("update ir_model_data set last_modification=NOW(), touched='[''property_product_pricelist'']' where model='res.partner' and module='sd' and res_id = %s", (partner.id,))
+                        sync += 1
+                    partner_count += 1
+        self._logger.warn('FO default currency modified for %s partner(s), %s sync generated' % (partner_count, sync))
+        return True
 
     # UF11.1
     def us_5559_set_pricelist(self, cr, uid, *a, **b):
@@ -140,18 +1926,12 @@ class patch_scripts(osv.osv):
 
     def us_4541_stock_mission_recompute_cu_qty(self, cr, uid, *a, **b):
         """
-        rest cu_qty and central_qty
+        rest cu_qty
         """
         trigger_up = self.pool.get('sync.trigger.something.up')
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if not instance_id:
             return True
-
-        central_loc = self.pool.get('stock.location').search(cr, uid, [('central_location_ok', '=', 't')])
-        if not central_loc:
-            cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
-            if cr.rowcount:
-                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_central', 'args': instance_id.code})
 
         cu_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')])
         if not cu_loc:
@@ -1170,8 +2950,8 @@ class patch_scripts(osv.osv):
         # reset stock mission report line
         cr.execute('truncate mission_move_rel')
         fields_to_reset = ['in_pipe_coor_val', 'in_pipe_coor_qty', 'in_pipe_val', 'in_pipe_qty',
-                           'secondary_val', 'cu_qty', 'wh_qty', 'cu_val', 'stock_val', 'central_qty',
-                           'cross_qty', 'cross_val', 'secondary_qty', 'central_val', 'internal_qty', 'stock_qty'
+                           'secondary_val', 'cu_qty', 'wh_qty', 'cu_val', 'stock_val',
+                           'cross_qty', 'cross_val', 'secondary_qty', 'internal_qty', 'stock_qty'
                            ]
         if self.pool.get('sync.client.entity'):
             cr.execute("""update ir_model_data set touched='[''wh_qty'']', last_modification=NOW()
@@ -1523,7 +3303,7 @@ class patch_scripts(osv.osv):
                     select res_id from ir_model_data d
                     where d.module='sd'
                         and d.model='res.partner'
-                        and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
+                        and name != 'order_types_res_partner_local_market'
                         and name not like '%s%%'
                     ) """ % (identifier, ))  # not_a_user_entry
                 self._logger.warn('%s non local partners updated' % (cr.rowcount,))
@@ -1672,22 +3452,6 @@ class patch_scripts(osv.osv):
         if seq_id_list:
             seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
 
-    def launch_patch_scripts(self, cr, uid, *a, **b):
-        ps_obj = self.pool.get('patch.scripts')
-        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
-        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
-            method = ps['method']
-            model_obj = self.pool.get(ps['model'])
-            try:
-                getattr(model_obj, method)(cr, uid, *a, **b)
-                self.write(cr, uid, [ps['id']], {'run': True})
-            except Exception as e:
-                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
-                self._logger.error(err_msg)
-                raise osv.except_osv(
-                    'Error',
-                    err_msg,
-                )
 
     def us_1421_lower_login(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
@@ -2112,35 +3876,6 @@ class patch_scripts(osv.osv):
                 where module='sd' and model='msf_button_access_rights.button_access_rule'
             ''')
 
-    def update_volume_patch(self, cr, uid, *a, **b):
-        """
-        Update the volume from dm³ to m³ for OCB databases
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls the method
-        :param a: Unnamed parameters
-        :param b: Named parameters
-        :return: True
-        """
-        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if instance:
-            while instance.level != 'section':
-                if not instance.parent_id:
-                    break
-                instance = instance.parent_id
-
-        if instance and instance.name != 'OCBHQ':
-            cr.execute("""
-                UPDATE product_template
-                SET volume_updated = True
-                WHERE volume_updated = False
-            """)
-        else:
-            cr.execute("""
-                UPDATE product_template
-                SET volume = volume*1000,
-                    volume_updated = True
-                WHERE volume_updated = False
-            """)
 
     def us_750_patch(self, cr, uid, *a, **b):
         """
@@ -2152,25 +3887,25 @@ class patch_scripts(osv.osv):
         :param b: Named parameters
         :return: True
         """
-        prd_obj = self.pool.get('product.product')
-        data_obj = self.pool.get('ir.model.data')
+        #prd_obj = self.pool.get('product.product')
+        #data_obj = self.pool.get('ir.model.data')
 
-        heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
-        no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+        #heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
+        #no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
-        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
-        if prd_ids:
-            cr.execute("""
-                UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
-            """, (heat_id, tuple(prd_ids),))
+        #prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
+        #if prd_ids:
+        #    cr.execute("""
+        #        UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
+        #    """, (heat_id, tuple(prd_ids),))
 
-        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
-        if no_prd_ids:
-            cr.execute("""
-                UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
-            """, (no_heat_id, tuple(no_prd_ids),))
+        #no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
+        #if no_prd_ids:
+        #    cr.execute("""
+        #        UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
+        #    """, (no_heat_id, tuple(no_prd_ids),))
 
-        cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
+        #cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
 
         return True
 
@@ -2264,7 +3999,6 @@ class patch_scripts(osv.osv):
                                        l.mission_report_id IN %s
                                        AND (l.internal_qty != 0.00
                                        OR l.stock_qty != 0.00
-                                       OR l.central_qty != 0.00
                                        OR l.cross_qty != 0.00
                                        OR l.secondary_qty != 0.00
                                        OR l.cu_qty != 0.00
@@ -2605,7 +4339,29 @@ class patch_scripts(osv.osv):
         cr.execute(update_name_and_code)
         cr.execute(update_translation)
 
+    def launch_patch_scripts(self, cr, uid, *a, **b):
+        ps_obj = self.pool.get('patch.scripts')
+        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
+        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
+            method = ps['method']
+            model_obj = self.pool.get(ps['model'])
+            try:
+                getattr(model_obj, method)(cr, uid, *a, **b)
+                self.write(cr, uid, [ps['id']], {'run': True})
+            except Exception as e:
+                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
 
+    def log_info(self, cr, uid, msg, context=None):
+        self._logger.warn(msg)
+        self.pool.get('res.log').create(cr, uid, {
+            'name': '[AUTO] %s ' % msg,
+            'read': True,
+        }, context=context)
 patch_scripts()
 
 
@@ -2789,8 +4545,8 @@ class base_setup_company(osv.osv_memory):
     _inherit = 'base.setup.company'
     _name = 'base.setup.company'
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
-        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context)
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
+        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context, from_web=from_web)
         if not ret.get('name'):
             ret.update({'name': 'MSF', 'street': 'Rue de Lausanne 78', 'street2': 'CP 116', 'city': 'Geneva', 'zip': '1211', 'phone': '+41 (22) 849.84.00'})
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
@@ -2805,13 +4561,6 @@ class base_setup_company(osv.osv_memory):
                 for field in ['country_id','state_id']:
                     if address[field]:
                         ret[field] = address[field].id
-            # Currency
-            cur = self.pool.get('res.currency').search(cr, uid, [('name','=','EUR')])
-            if company.currency_id:
-                ret['currency'] = company.currency_id.id
-            elif cur:
-                ret['currency'] = cur[0]
-
             fp = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb')
             ret['logo'] = base64.encodestring(fp.read())
             fp.close()
@@ -2963,6 +4712,10 @@ class communication_config(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return True
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
 
@@ -2995,6 +4748,11 @@ class communication_config(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return sync_disabled.get_message(cr, 1, context)
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
         return self.read(cr, 1, ids[0], ['message'],
@@ -3013,6 +4771,70 @@ class communication_config(osv.osv):
     ]
 
 communication_config()
+
+class sync_tigger_something_target(osv.osv):
+    _name = 'sync.trigger.something.target'
+
+    _columns = {
+        'name': fields.char('Name', size=256, select=1),
+        'destination': fields.char('Destination', size=256, select=1),
+        'args': fields.text('Args', select=1),
+        'local': fields.boolean('Generated on the instance'),
+    }
+
+    _defaults = {
+        'local': False,
+    }
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('name') == 'trigger_rec':
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            if current_instance.instance == vals.get('destination'):
+                # coordo retrieves updates targeted to project
+                rec_obj = self.pool.get('account.move.reconcile')
+                # check if this rec num was already requested by an instance
+                if not self.search(cr, uid, [('name', '=', 'trigger_rec'), ('args', '=', vals['args']), ('local', '=', False)], context=context):
+                    rec_ids = rec_obj.search(cr, uid, [('name', '=', vals['args'])], context=context)
+                    if rec_ids:
+                        cr.execute('''update account_move_reconcile set action_date=create_date where id in %s''', (tuple(rec_ids),))
+                        cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''name'']' where model='account.move.reconcile' and res_id in %s ''', (tuple(rec_ids),))
+
+        return super(sync_tigger_something_target, self).create(cr, uid, vals, context)
+
+sync_tigger_something_target()
+
+class sync_tigger_something_target_lower(osv.osv):
+    _inherit = 'sync.trigger.something.target'
+    _name = 'sync.trigger.something.target.lower'
+
+    _columns = {
+
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution') and vals.get('name') == 'sync_fp':
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            if current_instance and current_instance.instance == vals.get('destination'):
+                fp_to_coo_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), ('instance_id', '=', current_instance.id)], context=context)
+                if fp_to_coo_ids:
+                    logging.getLogger('trigger').info('Touch %d fp' % (len(fp_to_coo_ids),))
+                    # trigger a sync in SQL in order not to re-trigger sync on the o2m linked to the FP
+                    trigger_sync_sql = """
+                        UPDATE ir_model_data
+                        SET touched ='[''code'']', last_modification=NOW()
+                        WHERE module='sd'
+                        AND model='account.analytic.account'
+                        AND res_id IN %s
+                    """
+                    cr.execute(trigger_sync_sql, (tuple(fp_to_coo_ids),))
+
+        return super(sync_tigger_something_target_lower, self).create(cr, uid, vals, context)
+
+sync_tigger_something_target_lower()
 
 class sync_tigger_something(osv.osv):
     _name = 'sync.trigger.something'
@@ -3151,6 +4973,32 @@ class sync_tigger_something(osv.osv):
 
                 _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
+        if vals.get('name') == 'us-7295-delete-not-hq-links' and context.get('sync_update_execution'):
+            cr.execute("""
+                DELETE FROM dest_cc_link 
+                WHERE id IN (
+                    SELECT res_id
+                    FROM ir_model_data
+                    WHERE module='sd' 
+                    AND model='dest.cc.link' 
+                    AND name LIKE ANY (
+                        SELECT instance_identifier || '%'
+                        FROM msf_instance
+                        WHERE level IN ('coordo', 'project')
+                    )
+                )
+            """)
+            cr.execute("""
+                DELETE FROM ir_model_data
+                WHERE module='sd' 
+                AND model='dest.cc.link' 
+                AND name LIKE ANY (
+                    SELECT instance_identifier || '%'
+                    FROM msf_instance
+                    WHERE level IN ('coordo', 'project')
+                )
+            """)
+            _logger.warn('Deletion of %d Dest CC Links created out of HQ' % (cr.rowcount,))
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
@@ -3169,17 +5017,22 @@ class sync_tigger_something_up(osv.osv):
             context = {}
         if context.get('sync_update_execution'):
             _logger = logging.getLogger('tigger')
-            if vals.get('name') == 'clean_mission_stock_central':
-                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
-                if remote_id:
-                    cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
-                    _logger.warn('Reset %d mission stock Unall. Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
-            elif vals.get('name') == 'clean_mission_stock_cu':
+            if vals.get('name') == 'clean_mission_stock_cu':
                 remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
                 if remote_id:
                     cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
                     _logger.warn('Reset %d mission stock CU Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
-
+            elif vals.get('name') == 'msr_used':
+                cr.execute('''
+                    update stock_mission_report_line l
+                        set used_in_transaction='t'
+                    from
+                        ir_model_data d
+                    where
+                        d.model='stock.mission.report.line' and
+                        d.res_id = l.id and
+                        d.name in %s
+                ''', (tuple((zlib.decompress(base64.b64decode(vals.get('args'))).split(','))),))
         return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
 
 sync_tigger_something_up()

@@ -693,7 +693,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Requested Date of all order lines ?'), }
+        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
 
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
@@ -701,7 +701,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
+        return {'name': _('Do you want to update the Confirmed Delivery Date of all/selected Order lines ?'), }
 
     def stock_take_data(self, cr, uid, ids, context=None):
         '''
@@ -709,7 +709,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
+        return {'name': _('Do you want to update the Date of Stock Take of all/selected Order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
@@ -779,9 +779,11 @@ class sale_order_line(osv.osv):
             return ids[1]
         return False
 
-    _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
+    _columns = {'date_planned': fields.date(string='Requested DD', required=True, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
-                'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
+                'esti_dd': fields.date(string='Estimated DD', select=True,
+                                       help='Header level dates has to be populated by default with the possibility of manual updates'),
+                'confirmed_delivery_date': fields.date(string='Confirmed DD',
                                                        help='Header level dates has to be populated by default with the possibility of manual updates.'),
                 'so_state_stored': fields.related('order_id', 'state', type='selection', selection=SALE_ORDER_STATE_SELECTION, string='So State', readonly=True,),
                 }
@@ -816,48 +818,6 @@ class sale_order_line(osv.osv):
         return common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, 'sale.order', context=context)
 
 sale_order_line()
-
-
-class procurement_order(osv.osv):
-    '''
-    date modifications
-    '''
-    _inherit = 'procurement.order'
-
-    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-
-        - allow to modify the data for purchase order line creation
-        '''
-        if context is None:
-            context = {}
-        line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        procurement = kwargs['procurement']
-        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
-        # confirmed_delivery_date (confirmed date) = False
-        line.update({'date_planned': procurement.date_planned, 'confirmed_delivery_date': False, })
-        return line
-
-    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-
-        - allow to modify the data for purchase order creation
-        '''
-        if context is None:
-            context = {}
-        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        line = kwargs['line']
-        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
-        # confirmed_delivery_date (confirmed date) = False
-        # both values are taken from line
-        values.update({'delivery_requested_date': line['date_planned'], 'delivery_confirmed_date': line['confirmed_delivery_date'], })
-        return values
-
-procurement_order()
 
 
 class stock_picking(osv.osv):
@@ -911,7 +871,7 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'manual_min_date_stock_picking': value}, context=context)
+        cr.execute("update stock_picking set manual_min_date_stock_picking=%s where id in %s", (value, tuple(ids)))
         return True
 
     _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
@@ -972,46 +932,6 @@ class stock_picking(osv.osv):
         return res
 
 stock_picking()
-
-
-class stock_move(osv.osv):
-    '''
-    shipment date of sale order is updated
-    '''
-    _inherit = 'stock.move'
-
-    def default_get(self, cr, uid, fields, context=None):
-        if not context:
-            context = {}
-
-        res = super(stock_move, self).default_get(cr, uid, fields, context=context)
-        res['date'] = res['date_expected'] = context.get('date_expected', time.strftime('%Y-%m-%d %H:%M:%S'))
-
-        return res
-
-    def do_partial(self, cr, uid, ids, partial_datas, context=None):
-        '''
-        update shipment date and logged
-        '''
-        if context is None:
-            context = {}
-        date_tools = self.pool.get('date.tools')
-        res = super(stock_move, self).do_partial(cr, uid, ids, partial_datas, context=context)
-
-        so_obj = self.pool.get('sale.order')
-
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.picking_id and obj.picking_id.sale_id and not obj.picking_id.sale_id.shipment_date:
-                sale_id = obj.picking_id.sale_id.id
-                date_format = date_tools.get_date_format(cr, uid, context=context)
-                db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-                today = time.strftime(date_format)
-                today_db = time.strftime(db_date_format)
-                so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (obj.picking_id.sale_id.name, today))
-        return res
-
-stock_move()
 
 
 class res_company(osv.osv):

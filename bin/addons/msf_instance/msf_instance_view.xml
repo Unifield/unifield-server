@@ -52,7 +52,7 @@
                                     <tree editable="top"
                                     hide_delete_button="PROP_INSTANCE_HIDE_BUTTON or context.get('level')=='project'"
                                     hide_new_button="1" string="Cost Centers">
-                                    <field name="cost_center_id" readonly="1"/>
+                                    <field name="cost_center_code"/>
                                     <field name="cost_center_name"/>
                                     <field name="is_target"/>
                                     <field name="is_top_cost_center"/>
@@ -371,8 +371,11 @@
                 <data>
                     <field name="parent_id" position="before">
                         <field name="current_instance_type" invisible="1"/>
+                        <field name="is_pf" invisible="1"/>
                         <field name="instance_id" domain="[('level', '=', 'coordo')]"
-                               attrs="{'required': [('category', '=', 'FUNDING'), ('current_instance_type', '=', 'section')], 'invisible': [('category', '!=', 'FUNDING')], 'readonly': [('current_instance_type', '!=', 'section')]}"/>
+                               attrs="{'required': [('category', '=', 'FUNDING'), ('current_instance_type', '=', 'section'), ('is_pf', '=', False)],
+                                       'invisible': [('category', '!=', 'FUNDING')],
+                                       'readonly': ['|', ('current_instance_type', '!=', 'section'), ('is_pf', '=', True)]}"/>
                     </field>
                 </data>
             </field>

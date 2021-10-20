@@ -26,8 +26,8 @@
     "author" : "MSF, TeMPO Consulting",
     "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock", 
-                 "partner_modification", "sourcing", 
+    "depends" : ["sale", "purchase", "stock",
+                 "partner_modification", "sourcing",
                  "msf_order_date", "supplier_catalogue",],
     "init_xml" : [],
     "demo_xml" : [],
@@ -42,6 +42,7 @@
         'report/purchase_report_view.xml',
         'board_purchase_view.xml',
         'tender_flow_report.xml',
+        'audittrail_data_tender.yml',
     ],
     'installable': True,
 }

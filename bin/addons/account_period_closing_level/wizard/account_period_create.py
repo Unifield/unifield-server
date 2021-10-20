@@ -36,10 +36,18 @@ class account_period_create(osv.osv_memory):
 
 
     def account_period_create_periods(self, cr, uid, ids, context=None):
-        data = self.read(cr, uid, ids, [], context=context)[0]
-        year = datetime.date.today().year
-        if data['fiscalyear'] == 'next':
-            year += 1
+        if context is None:
+            context = {}
+
+
+        if context.get('force_open_year'):
+            year = context['force_open_year']
+        else:
+            data = self.read(cr, uid, ids, [], context=context)[0]
+            year = datetime.date.today().year
+            if data['fiscalyear'] == 'next':
+                year += 1
+
         start_date = datetime.date(year, 1, 1)
         end_date = datetime.date(year, 12, 31)
 

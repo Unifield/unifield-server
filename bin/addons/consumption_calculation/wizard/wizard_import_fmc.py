@@ -38,7 +38,7 @@ class wizard_import_fmc(osv.osv_memory):
     }
 
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Set rmc_id with the active_id value in context
         '''
@@ -46,7 +46,7 @@ class wizard_import_fmc(osv.osv_memory):
             raise osv.except_osv(_('Error !'), _('No Monthly review consumption found !'))
 
         rmc_id = context.get('active_id')
-        res = super(wizard_import_fmc, self).default_get(cr, uid, fields, context=context)
+        res = super(wizard_import_fmc, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         res['rmc_id'] = rmc_id
         res['message'] =  _("""
         IMPORTANT: The four first lines will be ignored by the system.
@@ -107,8 +107,9 @@ class wizard_import_fmc(osv.osv_memory):
 
         line_num = 1
         to_write = {}
-        error = ''
+        errors = []
         for row in rows:
+            error = ''
             # default values
             to_write = {
                 'error_list': [],
@@ -158,6 +159,8 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
             error += '\n'.join(to_write['error_list'])
             if error:
                 lines_to_correct += 1
+                if error not in errors:
+                    errors.append(error)
             line_data = {'name': product_id,
                          'fmc': fmc,
                          'mrc_id': mrc_id,
@@ -181,7 +184,7 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
                                                 
                                                 Reported errors :
                                                 %s
-                                             ''') % (complete_lines, lines_to_correct, ignore_lines, error or _('No error !'))}, context=context)
+                                             ''') % (complete_lines, lines_to_correct, ignore_lines, ' '.join(errors) or _('No error !'))}, context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_fmc_end')[1],
 

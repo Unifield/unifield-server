@@ -12,9 +12,16 @@
                     <field name="sourcing_trace_ok" invisible="1" />
                     <group colspan="6" attrs="{'invisible': [('state', 'not in', ['validated', 'validated_p'])]}">
                         <html>
-                            <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
-                               WARNING: This document has already been validated, are you sure you wish to modify after validation?
+                            <p id="message_ir_validated" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                               <translate>WARNING: This document has already been validated, are you sure you wish to modify after validation?</translate>
                             </p>
+                            <script language="javascript">
+                                var editable = $('#_terp_editable').val();
+                                if (editable == "True") {
+                                    msg_dom = $('#message_ir_validated');
+                                    msg_dom.show();
+                                }
+                            </script>
                         </html>
                     </group>
                     <group col="6" colspan="6" name="header">
@@ -27,7 +34,7 @@
                             <field name="functional_currency_id" />
                             <group colspan="2" col="3">
                                 <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                                <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"
+                                <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"
                                     attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                             </group>
                             <field name="fo_to_resource" invisible="1" />
@@ -46,9 +53,10 @@
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             <field name="order_line" mode="tree,form" colspan="4" nolabel="1"
                                 on_change="order_line_change(order_line)"
-                                filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]"
-                                o2m_selectable="2">
-                                <tree string="Products" hide_delete_button="True" editable="top" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
+                                filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
+                                default_selector="'3'" o2m_selectable="2">
+                                <tree string="Products" hide_delete_button="True" editable="top" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}">
+                                    <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)"
                                     context="available_for_restriction='consumption',search_default_not_restricted=1"
                                     attrs="{'required': [('product_ok', '=', False)]}" />
@@ -73,7 +81,7 @@
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="original_changed" readonly="1"/>
                                     <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom"
-                                            attrs="{'invisible': [('original_qty', '=', False), ('modification_comment', '=', False)]}"/>
+                                            attrs="{'invisible': [('original_qty', '=', False), ('modification_comment', '=', False), ('original_changed', '=', False)]}"/>
                                     <field name="price_unit"/>
                                     <field name="notes" />
                                     <field name="display_resourced_orig_line" />
@@ -119,18 +127,12 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
-                                <button name="validate_ir_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" />
+                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel document" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" help="all the lines will be Cancelled where this status change is feasible" />
+                                <button name="validate_ir_lines" type="object" string="Validate document" icon="terp-check" states="draft,draft_p" help="all the lines will be Validated where this status change is feasible" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
-                            <field name="order_ids" nolabel="1" colspan="4">
-                                <tree string="Sourcing Documents">
-                                    <field name="sourcing_document_type" />
-                                    <field name="sourcing_document_name" />
-                                    <button type="object" name="go_to_document" string="Open document" icon="terp-gtk-jump-to-ltr" />
-                                </tree>
-                            </field> 
+                            <field name="order_ids" nolabel="1" colspan="4" readonly="1" />
                         </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
@@ -173,9 +175,11 @@
                 <search string="Internal Requests">
                     <group string="Filters" expand="1">
                         <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', 'in', ['draft','draft_p'])]" />
-                        <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', 'in', ['validated','validated_p'])]" />
-                        <filter name="state_proc_progress" string="Confirmed" icon="terp-stage" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
+                        <filter name="state_valid" string="Validated" icon="terp-check" domain="[('state', 'in', ['validated','validated_p'])]" />
+                        <filter name="sourced" string="Sourced" icon="gtk-paste-v" domain="[('state','in',['sourced','sourced_p'])]" />
+                        <filter name="state_proc_progress" string="Confirmed" icon="terp-camera_test" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
                         <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
+                        <filter name="cancelled" string="Cancelled" icon="gtk-cancel" domain="[('state', '=', 'cancel')]" />
                         <separator orientation="vertical" />
                         <field name="name" />
                         <field name="origin" />
@@ -191,6 +195,19 @@
                         <filter string="Warehouse" icon="terp-stock" domain="[]" context="{'group_by': 'warehouse_id'}" />
                     </group>
                 </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="procurement_request_sourcing_document_tree_view">
+            <field name="name">procurement.request.sourcing.document.tree</field>
+            <field name="model">procurement.request.sourcing.document</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Sourcing Documents" editable="0">
+                    <field name="linked_model" />
+                    <field name="linked_name" />
+                    <button type="object" name="go_to_document" string="Open document" icon="terp-gtk-jump-to-ltr" />
+                </tree>
             </field>
         </record>
         

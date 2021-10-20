@@ -88,7 +88,7 @@ class internal_picking_processor(osv.osv):
         'draft': fields.boolean('Draft'),
     }
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
         """
         Get default value for the object
         """
@@ -98,7 +98,7 @@ class internal_picking_processor(osv.osv):
         if fields_list is None:
             fields_list = []
 
-        res = super(internal_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context)
+        res = super(internal_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context, from_web=from_web)
 
         res.update({
             'register_a_claim': False,
@@ -186,7 +186,6 @@ class internal_picking_processor(osv.osv):
     def return_hook_do_partial(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
-        This hook belongs to the do_partial method from stock_override>wizard>stock_partial_picking.py>stock_partial_picking
 
         - allow to modify returned value from button method
         '''
@@ -618,7 +617,7 @@ class internal_move_processor(osv.osv):
         'kc_check': fields.function(
             _get_product_info,
             method=True,
-            string='KC',
+            string='CC',
             type='char',
             size=8,
             store={
@@ -626,7 +625,7 @@ class internal_move_processor(osv.osv):
             },
             readonly=True,
             multi='product_info',
-            help="Ticked if the product is a Heat Sensitive Item",
+            help="Ticked if the product is a Cold Chain Item",
         ),
         'ssl_check': fields.function(
             _get_product_info,

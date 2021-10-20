@@ -33,6 +33,7 @@ from mx import DateTime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
+from tools.misc import escape_html
 
 NB_OF_HEADER_LINES = 11
 NB_LINES_COLUMNS = 9
@@ -95,8 +96,6 @@ class internal_request_import(osv.osv):
         'file_to_import': fields.binary(string='File to import'),
         'filename': fields.char(size=64, string='Filename'),
         'message': fields.text(string='Import general message for html display', readonly=True),
-        'error_file': fields.binary(string='File with errors'),
-        'error_filename': fields.char(size=64, string='Lines with errors'),
         'nb_file_lines': fields.integer(string='Total of file lines', readonly=True),
         'nb_treated_lines': fields.integer(string='Nb treated lines', readonly=True),
         'percent_completed': fields.float(string='Percent completed', readonly=True),
@@ -165,14 +164,14 @@ class internal_request_import(osv.osv):
     <p>%s</p>
     <p>%s</p>
     </span>
-                                ''' % (line_n, line.line_message, line.data_summary)
+                                ''' % (line_n, escape_html(line.line_message), escape_html(line.data_summary))
                             else:
                                 line_n = _('Line %s') % (line.line_number,)
                                 line_err_data += '''
     <p><u>%s</u></p>
     <p>%s</p>
     <p>%s</p>
-                                ''' % (line_n, line.line_message, line.data_summary)
+                                ''' % (line_n, escape_html(line.line_message), escape_html(line.data_summary))
                     if header_err_data:
                         info_msg += '''
     <br/>
@@ -398,7 +397,7 @@ class internal_request_import(osv.osv):
                     for err in file_format_errors:
                         message += '%s\n' % err
 
-                    self.write(cr, uid, [ir_imp.id], {'message': message, 'state': 'error'}, context)
+                    self.write(cr, uid, [ir_imp.id], {'message': message, 'state': 'error', 'file_to_import': False}, context)
                     res = self.go_to_simulation(cr, uid, [ir_imp.id], context=context)
                     cr.commit()
                     cr.close(True)
@@ -544,6 +543,7 @@ class internal_request_import(osv.osv):
                 '''
                 ir_line_numbers = []  # existing line numbers
                 imp_line_numbers = []  # imported line numbers
+                ignored = []
                 if ir_order:  # get the lines numbers
                     ir_line_numbers = [line.line_number for line in ir_order.order_line]
 
@@ -551,6 +551,7 @@ class internal_request_import(osv.osv):
                 for x in xrange(first_line_index+1, len(values)+1):
                     red = False
                     line_errors = ''
+                    ignored_line = False
                     # Check mandatory fields
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
@@ -614,11 +615,18 @@ class internal_request_import(osv.osv):
                         if prod_ids:
                             product_id = prod_ids[0]
                             prod_cols = ['standard_price', 'uom_id', 'uom_po_id']
-                            product = prod_obj.read(cr, uid, product_id, prod_cols, context=context)
-                            line_data.update({
-                                'imp_product_id': product_id,
-                                'imp_comment': comment or '',
-                            })
+                            p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [product_id],
+                                                                              vals={'constraints': 'consumption'},
+                                                                              context=context)
+                            if p_error:  # Check constraints on products
+                                red = True
+                                line_errors += p_msg + '. '
+                            else:
+                                product = prod_obj.read(cr, uid, product_id, prod_cols, context=context)
+                                line_data.update({
+                                    'imp_product_id': product_id,
+                                    'imp_comment': comment or '',
+                                })
                         else:
                             if ir_imp.no_prod_as_comment:
                                 nb_treated_lines_by_nomen += 1
@@ -708,15 +716,32 @@ class internal_request_import(osv.osv):
                             if not line_data.get('imp_stock_take_date'):
                                 line_errors += _('Date of Stock Take \'%s\' is not a correct value, line has been imported without Date of Stock Take. ') \
                                     % vals[8]
+                        if line_data.get('imp_stock_take_date') and line_data['imp_stock_take_date'] > ir_order.date_order:
+                            red = True
+                            line_errors += _('The Date of Stock Take is not consistent! It should not be later than %s\'s creation date. ') \
+                                % (ir_order.name)
 
                     line_data.update({
                         'error_msg': line_errors,
                         'ir_import_id': ir_imp.id,
                     })
 
-                    if len(line_errors):
+                    ir_imp_l_ids_to_write = []  # Fetch the ids of lines to modify if any
+                    if not duplicate_line and ir_line_numbers and line_data.get('imp_line_number') \
+                            and line_data['imp_line_number'] in ir_line_numbers:
+                        l_ids = ir_imp_l_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id),
+                                                              ('ir_line_number', '=', line_data['imp_line_number'])],
+                                                    context=context)
+                        for ir_imp_l in ir_imp_l_obj.browse(cr, uid, l_ids, fields_to_fetch=['ir_line_id'], context=context):
+                            if ir_imp_l.ir_line_id.state != 'draft':
+                                ignored_line = True
+                                ignored.append(str(line_data['imp_line_number']))
+                            else:
+                                ir_imp_l_ids_to_write.append(ir_imp_l.id)
+
+                    if len(line_errors) and not ignored_line:  # Add the errors if the line is not cancelled
                         if red:
-                            line_errors = _('%sLine not imported.') % (line_errors)
+                            line_errors = _('%sLine not imported.') % (line_errors,)
                             line_data.update({'red': red})
                             nb_error_lines += 1
                         values_line_errors.append(line_errors)
@@ -726,12 +751,11 @@ class internal_request_import(osv.osv):
 
                     if not duplicate_line and ir_line_numbers and line_data.get('imp_line_number') \
                             and line_data['imp_line_number'] in ir_line_numbers:
-                        l_ids = ir_imp_l_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id),
-                                                              ('ir_line_number', '=', line_data['imp_line_number'])],
-                                                    context=context)
-                        ir_imp_l_obj.write(cr, uid, l_ids, line_data, context=context)
+                        if ir_imp_l_ids_to_write and not ignored_line:  # No modification on ignored lines
+                            ir_imp_l_obj.write(cr, uid, ir_imp_l_ids_to_write, line_data, context=context)
                     else:
                         ir_imp_l_obj.create(cr, uid, line_data, context=context)
+
                     nb_treated_lines += 1
 
                 import_error_ok = False
@@ -743,6 +767,8 @@ class internal_request_import(osv.osv):
                     nb_imp_lines = 0
                     nb_error_lines = nb_treated_lines
                     nb_treated_lines_by_nomen = 0
+                else:
+                    nb_imp_lines -= len(ignored)
 
                 message = _('''
 <p>Importation completed in %s second(s)!</p>
@@ -750,8 +776,13 @@ class internal_request_import(osv.osv):
 <p># of lines imported : %s</p>
 <p># of lines not imported : %s</p>
 <p># of lines imported as line by nomenclature : %s</p>
-                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_imp_lines, nb_error_lines,
-                        nb_treated_lines_by_nomen)
+                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_imp_lines,
+                        nb_error_lines, nb_treated_lines_by_nomen)
+                if ignored:
+                    message += _('''
+<p>Non-Draft lines ignored: Number %s</p>
+                    ''') % (', '.join(ignored),)
+
                 header_values.update({
                     'order_id': ir_order and ir_order.id,
                     'message': message,
@@ -759,6 +790,7 @@ class internal_request_import(osv.osv):
                     'percent_completed': 100.0,
                     'import_error_ok': import_error_ok,
                     'nb_treated_lines': nb_treated_lines,
+                    'file_to_import': False,
                 })
                 self.write(cr, uid, [ir_imp.id], header_values, context=context)
 
@@ -767,7 +799,7 @@ class internal_request_import(osv.osv):
 
         except Exception, e:
             logging.getLogger('internal.request.import').warn('Exception', exc_info=True)
-            self.write(cr, uid, ids, {'message': e}, context=context)
+            self.write(cr, uid, ids, {'message': e, 'file_to_import': False}, context=context)
             cr.commit()
             cr.close(True)
 
@@ -845,6 +877,7 @@ class internal_request_import(osv.osv):
                                 'product_id': line.imp_product_id and line.imp_product_id.id or False,
                                 'product_uom_qty': line.imp_qty or 0.00,
                                 'comment': line.imp_comment or '',
+                                'procurement_request': True,
                                 'stock_take_date': line.imp_stock_take_date or False,
                                 'cost_price': line.imp_cost_price or 0.00,
                                 'price_unit': line.imp_cost_price or 0.00,
@@ -852,7 +885,8 @@ class internal_request_import(osv.osv):
                             if line.imp_uom_id:
                                 line_vals.update({'product_uom': line.imp_uom_id.id})
                             if line.ir_line_id:  # update IR line
-                                sol_obj.write(cr, uid, line.ir_line_id.id, line_vals, context=context)
+                                if line.ir_line_id.state == 'draft':
+                                    sol_obj.write(cr, uid, line.ir_line_id.id, line_vals, context=context)
                             else:  # create IR line
                                 line_vals.update({
                                     'order_id': wiz.order_id.id,
@@ -874,6 +908,7 @@ class internal_request_import(osv.osv):
                             'cost_price': x.imp_cost_price or 0.00,
                             'price_unit': x.imp_cost_price or 0.00,
                             'product_uom': x.imp_uom_id and x.imp_uom_id.id or False,
+                            'procurement_request': True,
                             'comment': x.imp_comment or '',
                             'stock_take_date': x.imp_stock_take_date or False,
                         }) for x in (y for y in wiz.imp_line_ids if not y.red)],

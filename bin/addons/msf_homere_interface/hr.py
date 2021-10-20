@@ -139,6 +139,7 @@ class hr_employee(osv.osv):
         'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=False),
         'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=False),
         'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False),
+        'homere_uuid_key': fields.char(string='Homere field: UUID_key', size=64, readonly=True, required=False),
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
@@ -199,13 +200,35 @@ class hr_employee(osv.osv):
                         employee_name = employee.get('name', False)
                         if employee_name and employee_name not in names:
                             names.append(employee_name)
-                    raise osv.except_osv(_('Error'), _('Some employees have the same unique code: %s') % (';'.join(names)))
+                    raise osv.except_osv(_('Error'), _('Several employees have the same Identification No "%s": %s') %
+                                         (e.identification_id, ' ; '.join(names)))
                     return False
         return True
 
     _constraints = [
-        (_check_unicity, "Another employee has the same unique code.", ['identification_id']),
+        (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
+
+    def _check_employee_cc_compatibility(self, cr, uid, employee_id, context=None):
+        """
+        Raises an error in case the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are not compatible.
+        """
+        if context is None:
+            context = {}
+        ad_obj = self.pool.get('analytic.distribution')
+        employee_fields = ['destination_id', 'cost_center_id', 'funding_pool_id', 'name_resource']
+        employee = self.browse(cr, uid, employee_id, fields_to_fetch=employee_fields, context=context)
+        emp_dest = employee.destination_id
+        emp_cc = employee.cost_center_id
+        emp_fp = employee.funding_pool_id
+        if emp_dest and emp_cc:
+            if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
+                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') %
+                                     (employee.name_resource, emp_cc.code or '', emp_dest.code or ''))
+        if emp_fp and emp_cc:
+            if not ad_obj.check_fp_cc_compatibility(cr, uid, emp_fp.id, emp_cc.id, context=context):
+                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.') %
+                                     (employee.name_resource, emp_cc.code or '', emp_fp.code or ''))
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -227,18 +250,9 @@ class hr_employee(osv.osv):
             # Raise an error if employee is created manually
             if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_update_execution', False) and not allow_edition:
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
-#            # Raise an error if no cost_center
-#            if not vals.get('cost_center_id', False):
-#                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
-            # Add Nat. staff by default if not in vals
-            if not vals.get('destination_id', False):
-                try:
-                    ns_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_destination_national_staff')[1]
-                except ValueError:
-                    ns_id = False
-                vals.update({'destination_id': ns_id})
-
-        return super(hr_employee, self).create(cr, uid, vals, context)
+        employee_id = super(hr_employee, self).create(cr, uid, vals, context)
+        self._check_employee_cc_compatibility(cr, uid, employee_id, context=context)
+        return employee_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -248,6 +262,8 @@ class hr_employee(osv.osv):
         """
         if not ids:
             return True
+        elif isinstance(ids, (int, long)):
+            ids = [ids]
         # Some verifications
         if not context:
             context = {}
@@ -287,6 +303,7 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
+            self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -316,7 +333,7 @@ class hr_employee(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Change funding pool domain in order to include MSF Private fund
+        Adapts domain for AD fields
         """
         if not context:
             context = {}
@@ -332,37 +349,22 @@ class hr_employee(osv.osv):
             fields = form.xpath('/' + view_type + '//field[@name="cost_center_id"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
+            # Change DEST field
+            dest_fields = form.xpath('/' + view_type + '//field[@name="destination_id"]')
+            for dest_field in dest_fields:
+                dest_field.set('domain', "[('category', '=', 'DEST'), ('type', '!=', 'view'), "
+                                         "('dest_compatible_with_cc_ids', '=', cost_center_id)]")
             # Change FP field
-            try:
-                fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            fp_fields = form.xpath('/'  + view_type + '//field[@name="funding_pool_id"]')
+            fp_fields = form.xpath('/' + view_type + '//field[@name="funding_pool_id"]')
             for field in fp_fields:
-                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
+                                    "('fp_compatible_with_cc_ids', '=', cost_center_id)]")
             view['arch'] = etree.tostring(form)
         return view
 
     def onchange_cc(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
-        """
-        Update FP or CC regarding both.
-        """
-        # Prepare some values
-        vals = {}
-        if not cost_center_id or not funding_pool_id:
-            return {}
-        if cost_center_id and funding_pool_id:
-            fp = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            # Exception for MSF Private Fund
-            if funding_pool_id == fp_id:
-                return {}
-            if cost_center_id not in [x.id for x in fp.cost_center_ids]:
-                vals.update({'funding_pool_id': False})
-        return {'value': vals}
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_cost_center(cr, uid, ids, cost_center_id=cost_center_id, funding_pool_id=funding_pool_id)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
 

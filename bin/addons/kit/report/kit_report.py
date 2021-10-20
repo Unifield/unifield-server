@@ -38,6 +38,7 @@ class kit_report(report_sxw.rml_parse):
         '''
         return self.pool.get(obj).name_get(self.cr, self.uid, [obj_id])[0][1]
 
+
 report_sxw.report_sxw(
     'report.kit.report',
     'composition.kit',

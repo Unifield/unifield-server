@@ -50,12 +50,12 @@ So, you cannot choose 'Simple OUT' as Delivery process while these documents are
         
         return res
     
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for delivery process
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(delivery_process_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(delivery_process_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         res['delivery_process'] = setup_id.delivery_process
         
         return res

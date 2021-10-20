@@ -16,7 +16,8 @@
                             <field name="activation_date"/>
                             <field name="inactivation_date"/>
                             <group col="2" colspan="2">
-                                <field name="reconcile"/>
+                                <field name="reconcile" on_change="onchange_reconcile(reconcile)"/>
+                                <field name="prevent_multi_curr_rec" attrs="{'readonly': [('reconcile', '=', False)]}"/>
                                 <field name="reconciliation_debit_account_id"/>
                                 <field name="reconciliation_credit_account_id"/>
                             </group>
@@ -117,23 +118,6 @@
                     <field name="parent_id" invisible="1"/>
                     <field name="is_analytic_addicted" invisible="1"/>
                 </tree>
-            </field>
-        </record>
-
-        <record model="ir.ui.view" id="view_account_activable_search">
-            <field name="name">account.account_activable.search</field>
-            <field name="model">account.account</field>
-            <field name="type">search</field>
-            <field name="field_parent">child_id</field>
-            <field name="inherit_id" ref="account.view_account_search"/>
-            <field name="arch" type="xml">
-                <data>
-                    <group string="Group By..." position="replace">
-                        <group expand="0" string="Group By...">
-                            <filter string="Internal Type" icon="terp-stock_symbol-selection" context="{'group_by':'type'}"/>
-                        </group>
-                    </group>
-                </data>
             </field>
         </record>
 

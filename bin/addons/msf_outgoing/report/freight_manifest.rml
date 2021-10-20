@@ -1,0 +1,820 @@
+<?xml version="1.0" ?>
+<document filename="freight_manifest.pdf">
+
+    <template pageSize="(842.0,595.0)" title="Freight Manifest" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="530" />
+
+        <pageGraphics>
+            <drawString x="35" y="560.0">FREIGHT MANIFEST</drawString>
+            <fill color="blue"/>
+            <drawString x="35" y="540.0">[[ '%s' % (objects[0].name) ]]</drawString>
+            <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="730" y="530.0">Page : <pageNumber /></drawString>
+            <drawString x="765" y="530.0">/</drawString>
+            <drawString x="770" y="530.0"><pageCount /> </drawString>
+        </pageGraphics>
+
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="Signature">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+        </blockTableStyle>
+
+        <blockTableStyle id="OrderInformations">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="1,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="3,0" stop="3,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="5,0" stop="5,-1" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="silver" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+
+        <blockTableStyle id="ItemsTitle2">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="silver" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="0,0" stop="3,0"/>
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" />
+
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle3">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle4">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="silver" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="1.0" />
+        </blockTableStyle>
+
+
+        <blockTableStyle id="ItemsTitle5">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle6">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle7">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle8">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+
+
+        <blockTableStyle id="LinesTable2">
+
+
+            <blockAlignment value="LEFT" />
+            <blockValign value="MIDDLE"  />
+            <blockBackground colorName="silver"  />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5"  />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+
+
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white"  start="0,1"/>
+            <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,0" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,0" thickness="0.5" />
+
+        </blockTableStyle>
+
+        <blockTableStyle id="LinesTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,0" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,0" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="LinesTableEnd">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="0,0" stop="-1,-1" thickness="0.5" />
+        </blockTableStyle>
+        <blockTableStyle id="RemarkTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+        <blockTableStyle id="StatusTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+
+        <!-- Header font style -->
+        <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
+        <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
+        <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
+        <!-- Information font style -->
+        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation3" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="11.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation5" fontName="Helvetica-Bold" fontSize="7.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
+
+
+        <!-- Lines font style -->
+        <paraStyle name="Lines" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesBlue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="9.0" />
+        <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="7.0" alignment="LEFT" leading="9.0" />
+
+    </stylesheet>
+
+    <story>
+
+        <para style="Standard"></para>
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="180.0,80.0,512.0" >
+            <tr>
+                <td>
+                    <para style="TextInformation">EDD (Estimated Date of Departure) :</para>
+                </td>
+                <td>
+                    <para style="TextInformation2">[[ getEtd(objects[0]) ]]</para>
+                </td>
+                <td>
+                   <para style="TextInformation"></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">EDA (Estimated Date of Arrival) :</para>
+                </td>
+                <td>
+                    <para style="TextInformation2">[[ getEta(objects[0]) ]]</para>
+                </td>
+                <td>
+                   <para style="TextInformation"></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">TRANSIT via :</para>
+                </td>
+                <td>
+                    <para style="TextInformation2">[[ objects[0].transit_via ]]</para>
+                </td>
+                <td>
+                   <para style="TextInformation"></para>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <para style="TextInformation">Transport :</para>
+                </td>
+                <td>
+                    <para style="TextInformation2">[[ getSel(objects[0], 'transport_type') ]]</para>
+                </td>
+                <td>
+                   <para style="TextInformation"></para>
+                </td>
+            </tr>
+
+            <tr>
+                <td><para style="TextInformation"></para></td>
+                <td><para style="TextInformation"></para></td>
+                <td><para style="TextInformation"></para></td>
+            </tr>
+            <tr>
+                <td><para style="TextInformation"></para></td>
+                <td><para style="TextInformation"></para></td>
+                <td><para style="TextInformation"></para></td>
+            </tr>
+            <tr>
+                <td><para style="TextInformation"></para></td>
+                <td><para style="TextInformation"></para></td>
+                <td><para style="TextInformation"></para></td>
+            </tr>
+
+        </blockTable>
+
+        <blockTable colWidths="0.5,252.0,5.5,252.0,5.5,252.0,1.0,0.5" style="OrderInformations">
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"><b>Shipper</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"><b>Carrier</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"><b>Consignee</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].shipper_name ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].carrier_name ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].consignee_name ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation3">[[ objects[0].shipper_address ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation3">[[ objects[0].carrier_address ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation3">[[ objects[0].consignee_address ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].shipper_phone ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].carrier_phone ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].consignee_phone ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation">Registration : [[ objects[0].registration ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Date:</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Date:</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Signature:</para>
+                    <blockTable colWidths="180.00" style="Signature" rowHeights="30">
+                        <tr>
+                            <td><para style="TextInformation"> </para></td>
+                        </tr>
+                    </blockTable>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Signature:</para>
+                    <blockTable colWidths="180.00" style="Signature" rowHeights="30">
+                        <tr>
+                            <td><para style="TextInformation"> </para></td>
+                        </tr>
+                    </blockTable>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+
+
+
+
+        <section>
+            <blockTable colWidths="150.0,160.0,65.0,180.0,30.0,42.0,38.0,62.0,15.0,15.0,15.0" style="LinesTable2" repeatRows="1" >
+
+
+                <tr >
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Our ref</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Your ref</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Packing list</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Description</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Parcels</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Kgs</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">m³</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Value</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">CC</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">DG</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">CS</para>
+                    </td>
+                </tr>
+
+
+                <tr>
+                    [[ repeatIn(get_group_lines(objects[0]), 'line') ]]
+                    <td>
+                        <parawrap style="LinesBlue">[[ line['ref'] ]]</parawrap>
+                    </td>
+                    <td>
+                        <parawrap style="LinesBlue">[[ line['po_ref'] ]]</parawrap>
+                    </td>
+                    <td>
+                        <parawrap style="LinesBlue">[[ line['ppl'] ]]</parawrap>
+                    </td>
+                    <td>
+                        <para style="LinesBlue">[[ line['desc'] ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line['parcels'] ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line['kgs'] ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line['m3'] ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line['value'] ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line['kc'] ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line['dg'] ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line['np'] ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+        </section>
+
+
+        <blockTable colWidths="555.0,30.0,42.0,38.0,62,45" style="ItemsTitle2">
+            <tr>
+                <td>
+                    <para style="Total" alignment="RIGHT">Sub-total</para>
+                </td>
+                <td>
+                    <para style="Total" alignment="RIGHT">[[ getTotParce() ]]</para>
+                </td>
+                <td>
+                    <para style="Total" alignment="RIGHT">[[ getTotKg() ]]</para>
+                </td>
+                <td>
+                    <para style="Total" alignment="RIGHT">[[ getTotM3() ]]</para>
+                </td>
+                <td>
+                    <para style="Total" alignment="RIGHT">[[ getTotValue() ]]</para>
+                </td>
+                <td>
+                    <para style="Total" alignment="LEFT">[[ getFonCur(line) ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+        <blockTable colWidths="772.0" style="LinesTableEnd">
+            <tr>
+                <td>
+                    <para style="LinesBlue"> </para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard" >
+            <font color="white"> </font>
+        </para>
+
+        <section>
+            <para style="TextInformation3"><b>Additional Items</b></para>
+            <blockTable colWidths="310,245.0,30.0,42.0,38.0,62.0,15.0,15.0,15.0" style="LinesTable2" repeatRows="1" >
+
+                <tr>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Description</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Comment</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Parcels</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Kgs</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">m³</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Value</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">CC</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">DG</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">CS</para>
+                    </td>
+                </tr>
+
+
+                <tr>
+                    [[ repeatIn(objects[0].additional_items_ids, 'line') ]]
+
+                    <td>
+                        <para style="LinesBlue">[[ line.name ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue">[[ line.comment ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.nb_parcels ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.weight ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ (line.volume or 0) / 1000.0 ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.value ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line.kc and 'X' or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line.dg and 'X' or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line.cs and 'X' or '' ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+            <blockTable colWidths="555.0,30.0,42.0,38.0,62.0,45" style="ItemsTitle2">
+               [[ repeatIn(get_sum_additionnal(objects[0]), 'add') ]]
+                <tr>
+                    <td>
+                        <para style="Total" alignment="RIGHT">Sub-total</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[0] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[1] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[2] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ formatLang(add[3]) ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="LEFT">[[ add[4] ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+            [[ objects[0].additional_items_ids or removeParentNode('section') ]]
+        </section>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <section>
+            <blockTable colWidths="555.0,30.0,42.0,38.0,62,45" style="ItemsTitle2">
+               [[ repeatIn(get_total(), 'add') ]]
+                <tr>
+                    <td>
+                        <para style="Total" alignment="RIGHT">Total</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[0] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[1] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[2] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ formatLang(add[3]) ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="LEFT">[[ add[4] ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+        </section>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+
+        <blockTable colWidths="772.0" style="ItemsTitle4" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="TextInformation5" alignment="CENTER">Reception remarks</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="388.0,384.0" style="ItemsTitle3" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="Standard" alignment="LEFT">Parcels Missing :</para>
+                </td>
+                <td>
+                    <para style="Standard" alignment="LEFT">Freight Claim Report Made ? Yes / No</para>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <para style="Standard" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="Standard" alignment="LEFT">If so, claim reference :</para>
+                </td>
+            </tr>
+
+        </blockTable>
+
+
+        <blockTable colWidths="388.0,384.0" style="ItemsTitle6" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="Standard" alignment="LEFT">Parcels damaged :</para>
+                </td>
+                <td>
+                    <para style="Standard" alignment="LEFT">Other remarks :</para>
+                </td>
+            </tr>
+
+        </blockTable>
+        <blockTable colWidths="388.0,384.0" style="ItemsTitle5" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="Standard" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="Standard" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+
+
+        <blockTable colWidths="194.0,194.0,384.0" style="ItemsTitle7" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="Standard" alignment="LEFT">Name :</para>
+                </td>
+                <td>
+                    <para style="Standard" alignment="LEFT">Date :</para>
+                </td>
+                <td>
+                    <para style="Standard" alignment="LEFT">Signature :</para>
+                </td>
+            </tr>
+
+
+        </blockTable>
+
+
+        <blockTable colWidths="194.0,194.0,384.0" style="ItemsTitle8" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="Standard" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="Standard" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="Standard" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+    </story>
+
+</document>

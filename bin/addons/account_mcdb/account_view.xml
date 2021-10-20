@@ -111,6 +111,29 @@
             </field>
         </record>
 
+    <!-- Actions -->
+        <act_window id="analytic_distribution.action_mass_reallocation"
+            name="Mass reallocation"
+            res_model="mass.reallocation.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="{'analytic_account_from': context.get('analytic_account_from', False) }"
+            view_ids="account.view_account_analytic_line_form,account.view_account_analytic_line_tree,account_mcdb.account_analytic_line_mcdb_search_result"
+            target="new"/>
+
+        <act_window id="analytic_distribution.action_mass_reallocation_search"
+            name="Mass reallocation - All search results"
+            res_model="mass.reallocation.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            view_ids="account.view_account_analytic_line_form,account.view_account_analytic_line_tree,account_mcdb.account_analytic_line_mcdb_search_result"
+            context="{'all_search': True, 'search_domain': search_domain, 'analytic_account_from': context.get('analytic_account_from', False) }"
+            target="new"/>
+
         <record id="register_view_account_move_line_filter" model="ir.ui.view">
             <field name="name">Journal Items</field>
             <field name="model">account.move.line</field>
@@ -143,12 +166,15 @@
                             <filter
                                 icon="terp-dolar_ok!"
                                 string="Unreconciled"
-                                domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
+                                domain="['&amp;', ('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
                                 name="unreconciled"/>
+                            <separator orientation="vertical"/>
                             <filter icon="terp-personal" string="Employee" domain="[('employee_id', '!=', False)]" context="{'identification': 1}" />
                             <field name="document_date"/>
                             <field name="date" select='1'/>
-                            <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                            <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"
+                                   domain="[('state', '!=', 'created')]"
+                            />
                             <field name="fiscalyear_id"/>
                         </group>
                         <newline/>
@@ -340,7 +366,7 @@
                                 <separator orientation="vertical"/>
                                 <field name="document_date" select="1"/>
                                 <field name="date" select="1" string="Posting Date"/>
-                                <field name="period_id" domain="[]"/>
+                                <field name="period_id" domain="[('state', '!=', 'created')]"/>
                                 <field name="fiscalyear_id"/>
                             </group>
                             <newline/>

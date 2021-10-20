@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="wizard_cancel_lines_form_view" model="ir.ui.view">
+            <field name="name">wizard.cancel.lines.form.view</field>
+            <field name="model">wizard.cancel.lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cancel lines">
+                    <field name="initial_doc_id" invisible="True" />
+                    <field name="initial_doc_type" invisible="True" />
+                    <field name="to_cancel_type" invisible="True" />
+                    <field name="linked_field_name" invisible="True" />
+                    <field name="qty_field" invisible="True" />
+                    <field name="has_sel_lines" invisible="True" />
+                    <field name="sourced_po" invisible="True" />
+                    <separator colspan="4" string="Lines to cancel" />
+                    <button name="select_all_lines" type="object" icon="gtk-go-down" string="Select all lines" attrs="{'invisible': [('has_sel_lines', '=', True)]}" colspan="2" />
+                    <button name="select_empty_lines" type="object" icon="gtk-go-down" string="Select Qty=0 lines" attrs="{'invisible': ['|', ('qty_field', '=', False), ('has_sel_lines', '=', True)]}" colspan="2" />
+                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_cancel_wizard': True, 'initial_doc_id': initial_doc_id, 'initial_doc_type': initial_doc_type}" mode="tree" />
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="6" col="6" >
+                        <button special="cancel" icon="gtk-cancel" string="Close window" colspan="2" />
+                        <button name="cancel_selected_lines" type="object" icon="gtk-execute" string="Cancel selected lines" colspan="2" />
+                        <button name="cancel_resource_selected_lines" type="object" icon="gtk-execute" string="Cancel &amp; Resource selected lines" attrs="{'invisible': [('sourced_po', '=', False)]}" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

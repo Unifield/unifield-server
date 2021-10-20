@@ -4,6 +4,7 @@ TRUE,PUF,Purchase Refund,purchase
 TRUE,SAL,Sales,sale
 TRUE,SAR,Sales Refund,sale
 TRUE,OD,Corrections,correction
+TRUE,ODM,Correction manual,correction_manual
 TRUE,HQ,Headquarters,hq
 TRUE,HR,Human Resources,hr
 TRUE,ENG,Engagement,engagement
@@ -16,3 +17,4 @@ TRUE,BNK,Bank,cash
 TRUE,CAS,Cash,cash
 TRUE,CHK,Cheque,cash
 TRUE,REV,Revaluation,revaluation
+TRUE,ENGI,International Engagement,engagement

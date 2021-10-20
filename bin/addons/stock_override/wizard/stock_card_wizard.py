@@ -46,13 +46,13 @@ class stock_card_wizard(osv.osv_memory):
         ),
         'from_date': fields.date(string='From date'),
         'to_date': fields.date(string='To date'),
-        'available_stock': fields.float(digits=(16,2), string='Available stock'),
+        'real_stock': fields.float(digits=(16,2), string='Real stock'),
         'card_lines': fields.one2many('stock.card.wizard.line', 'card_id',
                                       string='Card lines'),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(stock_card_wizard, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(stock_card_wizard, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         product_id = context.get('product_id', False)
         perishable = False
         if product_id:
@@ -66,6 +66,18 @@ class stock_card_wizard(osv.osv_memory):
             'to_date': time.strftime('%Y-%m-%d'),
         })
         return res
+
+    def onchange_all_inout(self, cr, uid, ids, all_inout, context=None):
+        '''
+        Empty the 'location_id' field if the 'all_inout' field is selected.
+        '''
+        if not context:
+            context = {}
+
+        if all_inout:
+            return {'value': {'location_id': False}}
+
+        return {}
 
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
         '''
@@ -94,13 +106,11 @@ class stock_card_wizard(osv.osv_memory):
         '''
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
-        loc_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
         line_obj = self.pool.get('stock.card.wizard.line')
         pi_line_obj = self.pool.get('physical.inventory.counting')
         # 'Old' physical inventories
         oldinv_line_obj = self.pool.get('stock.inventory.line')
-
 
         if not context:
             context = {}
@@ -115,24 +125,21 @@ class stock_card_wizard(osv.osv_memory):
 
         if location_id:
             context.update({'location': location_id})
-            location_ids = loc_obj.search(cr, uid,
-                                          [('location_id', 'child_of', location_id)],
-                                          context=context)
+            location_ids = [location_id]
 
         # Set the context to compute stock qty at the start date
         context.update({'to_date': card.from_date})
 
         prodlot_id = card.prodlot_id and card.prodlot_id.id or False
-        product = product_obj.browse(cr, uid, card.product_id.id,
-                                     context=context)
+        product = product_obj.browse(cr, uid, card.product_id.id, context=context)
         if not card.from_date:
             initial_stock = 0.00
         else:
             initial_stock = product.qty_available
 
-        domain = [('product_id', '=', product.id),
-                  ('prodlot_id', '=', prodlot_id),
-                  ('state', '=', 'done')]
+        domain = [('product_id', '=', product.id), ('state', '=', 'done')]
+        if prodlot_id:
+            domain.append(('prodlot_id', '=', prodlot_id))
 
         # "Old" physical inventory
         inv_dom = [
@@ -148,7 +155,6 @@ class stock_card_wizard(osv.osv_memory):
             ('discrepancy', '=', False),
             ('inventory_id.state', 'in', ['confirmed', 'closed'])
         ]
-
 
         if card.from_date:
             domain.append(('date', '>=', card.from_date))
@@ -174,10 +180,10 @@ class stock_card_wizard(osv.osv_memory):
 
         if location_id:
             domain.extend(['|',
-                           ('location_id', 'child_of', location_id),
-                           ('location_dest_id', 'child_of', location_id)])
-            inv_dom.append(('location_id', 'child_of', location_id))
-            pi_counting_dom.append(('inventory_id.location_id', 'child_of', location_id))
+                           ('location_id', '=', location_id),
+                           ('location_dest_id', '=', location_id)])
+            inv_dom.append(('location_id', '=', location_id))
+            pi_counting_dom.append(('inventory_id.location_id', '=', location_id))
         else:
             domain.extend(['|',
                            ('location_id.usage', 'in', location_usage),
@@ -283,11 +289,31 @@ class stock_card_wizard(osv.osv_memory):
                       (move.init_inv_ids and move.init_inv_ids[0].name) or \
                       (move.inventory_ids and move.inventory_ids[0].name) or move.name or ''
 
+            partner_or_loc = False
+            if move.type == 'out':
+                if not move.sale_line_id and not move.purchase_line_id and not move.picking_id.sale_id and \
+                        not move.picking_id.purchase_id:  # from scratch OUT move
+                    partner_or_loc = move.location_dest_id.name
+                elif move.sale_line_id:
+                    if move.sale_line_id.procurement_request:  # OUT move linked to IR
+                        partner_or_loc = move.sale_line_id.order_id.location_requestor_id.name
+                    else:  # OUT move linked to FO
+                        partner_or_loc = move.sale_line_id.order_id.partner_id.name
+            elif move.type == 'in':
+                if (not move.sale_line_id and not move.purchase_line_id and not move.picking_id.sale_id and
+                        not move.picking_id.purchase_id) or (move.sale_line_id and move.sale_line_id.procurement_request) \
+                        or (move.purchase_line_id and move.purchase_line_id.linked_sol_id
+                            and move.purchase_line_id.linked_sol_id.procurement_request):  # from scratch IN move or IN move linked to IR
+                    partner_or_loc = move.location_id.name
+                elif move.purchase_line_id:  # IN move linked to PO
+                    partner_or_loc = move.purchase_line_id.order_id.partner_id.name
+
             line_values = {
                 'card_id': ids[0],
                 'date_done': move.date,
                 'doc_ref': doc_ref,
                 'origin': move.picking_id and move.picking_id.origin or False,
+                'partner_or_loc': partner_or_loc,
                 'qty_in': in_qty,
                 'qty_out': out_qty,
                 'balance': initial_stock,
@@ -307,7 +333,7 @@ class stock_card_wizard(osv.osv_memory):
                 new_line['balance'] = initial_stock
                 line_obj.create(cr, uid, new_line, context=context)
 
-        self.write(cr, uid, [ids[0]], {'available_stock': initial_stock},
+        self.write(cr, uid, [ids[0]], {'real_stock': initial_stock},
                    context=context)
 
         return {'type': 'ir.actions.act_window',
@@ -356,6 +382,7 @@ class stock_card_wizard_line(osv.osv_memory):
         'date_done': fields.datetime(string='Date'),
         'doc_ref': fields.char(size=64, string='Doc. Ref.'),
         'origin': fields.char(size=512, string='Origin'),
+        'partner_or_loc': fields.char(size=512, string='Partner/Location'),
         'qty_in': fields.float(digits=(16,2), string='Qty IN', related_uom='uom_id'),
         'qty_out': fields.float(digits=(16,2), string='Qty OUT', related_uom='uom_id'),
         'balance': fields.float(digits=(16,2), string='Balance', related_uom='uom_id'),

@@ -105,20 +105,54 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
-                                        <button name="button_delete_all_quads" type="object" string="Remove all quads" icon="gtk-clear" colspan="1"
-                                                attrs="{'invisible': [('is_quadruplet', '=', False)]}" />
-                                        <button name="button_delete_all_couples" type="object" string="Remove all couples" icon="gtk-clear" colspan="1"
-                                                attrs="{'invisible': [('is_quadruplet', '=', True)]}" />
-                                        <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                        <group colspan="6" col="20">
+                                            <button name="button_delete_all_quads" type="object" string="Remove all quads"
+                                                    icon="gtk-clear" colspan="4"
+                                                    attrs="{'invisible': ['|',
+                                                                          ('is_quadruplet', '=', False),
+                                                                          ('line_type', '=', 'view')]}" />
+                                            <button name="button_delete_all_couples" type="object" string="Remove all couples"
+                                                    icon="gtk-clear" colspan="4"
+                                                    attrs="{'invisible': ['|', '|',
+                                                                          ('is_quadruplet', '=', True),
+                                                                          ('reporting_select_accounts_only', '=', True),
+                                                                          ('line_type', '=', 'view')]}"
+                                            />
+                                            <button name="button_remove_all_accounts" type="object" string="Remove all accounts"
+                                                    icon="gtk-clear" colspan="4"
+                                                    attrs="{'invisible': ['|',
+                                                                          ('reporting_select_accounts_only', '=', False),
+                                                                          ('line_type', '=', 'view')]}" />
+                                            <label string="" colspan="1"/>
+                                            <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"
+                                                   colspan="2"
+                                                   on_change="on_change_is_quadruplet(is_quadruplet)"
+                                            />
+                                            <field name="reporting_select_accounts_only" attrs="{'invisible': [('line_type', '=', 'view')]}"
+                                                   colspan="2"
+                                                   on_change="on_change_reporting_select_accounts_only(reporting_select_accounts_only)"
+                                            />
+                                            <label string="" colspan="3"/>
+                                        </group>
                                         <field name="account_destination_ids" colspan="4" string="Account/Destination" nolabel="1"
                                                context="{'search_default_active': 1}"
-                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
-                                        </field>
+                                               attrs="{'invisible': ['|', '|',
+                                                                     ('line_type', '=', 'view'),
+                                                                     ('is_quadruplet', '=', True),
+                                                                     ('reporting_select_accounts_only', '=', True)]}"
+                                        />
                                         <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
                                                context="{'search_default_active': 1}"
                                                attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '!=', True)]}"
                                                domain="[('can_be_used','=',True)]">
                                         </field>
+                                        <field name="reporting_account_ids" colspan="4" string="G/L Accounts" nolabel="1"
+                                               context="{'from_grant_management': True, 'search_default_active': 1}"
+                                               attrs="{'invisible': ['|',
+                                                                     ('line_type', '=', 'view'),
+                                                                     ('reporting_select_accounts_only', '=', False)]}"
+                                               domain="[('selectable_in_contract', '=', True)]"
+                                        />
                                     </form>
                                 </field>
                             </page>
@@ -134,7 +168,7 @@
                         </group>
                         <button name="contract_open_proxy" states="draft" string="Open" type="object" icon="gtk-go-forward"/>
                         <button name="contract_soft_closed_proxy" states="open" string="Soft-close" type="object" icon="gtk-go-forward"/>
-                        <button name="contract_reopen" states="soft_closed" string="Re-Open" type="workflow" icon="gtk-go-forward"/>
+                        <button name="contract_reopen_proxy" states="soft_closed" string="Re-Open" type="object" icon="gtk-go-forward"/>
                         <button name="contract_hard_closed_proxy" states="soft_closed" string="Hard-close" type="object" icon="gtk-ok"/>
                     </form>
                 </field>
@@ -174,13 +208,12 @@
                 <field name="model">financing.contract.account.quadruplet</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract;red:disabled" notselectable="used_in_contract" editable="top" noteditable="1">
-                        <field name="can_be_used" invisible="1"/>
+                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract;red:not valid" notselectable="used_in_contract" editable="top" noteditable="1">
                         <field name="account_destination_name"/>
                         <field name="funding_pool_id"/>
                         <field name="cost_center_id"/>
                         <field name="used_in_contract" invisible="1"/>
-                        <field name="disabled" invisible="1" />
+                        <field name="valid" invisible="1" />
                     </tree>
                 </field>
             </record>
@@ -304,9 +337,19 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
+                                        <field name="reporting_select_accounts_only" attrs="{'invisible': [('line_type', '=', 'view')]}"
+                                               colspan="2"/>
                                         <field name="account_destination_ids" colspan="4" string="Account/Destination"
                                                context="context" 
-                                               attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                               attrs="{'invisible': ['|',
+                                                                    ('line_type', '=', 'view'),
+                                                                    ('reporting_select_accounts_only', '=', True)]}"/>
+                                        <field name="reporting_account_ids" colspan="4" string="G/L Accounts"
+                                               context="{'from_grant_management': True, 'search_default_active': 1}"
+                                               attrs="{'invisible': ['|',
+                                                                     ('line_type', '=', 'view'),
+                                                                     ('reporting_select_accounts_only', '=', False)]}"
+                                        />
                                     </form>
                                 </field>
                             </page>
@@ -364,8 +407,10 @@
                 <field name="field_parent">child_complete_ids</field>
                 <field name="priority" eval="17"/>
                 <field name="arch" type="xml">
-                    <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts" 
-                     toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                    <tree colors="red:(date and date&lt;=current_date or dest_without_cc==True)"
+                          string="Analytic Accounts"
+                          toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                        <field name="dest_without_cc" invisible="1"/>
                         <field name="name"/>
                         <field name="code"/>
                         <field name="description"/>

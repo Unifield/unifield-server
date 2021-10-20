@@ -123,6 +123,7 @@ class res_partner(osv.osv):
                 pricelist = partner.property_product_pricelist_purchase
                 context.update({'uom': uom})
                 price_list = self.pool.get('product.product')._get_partner_info_price(cr, uid, product, partner.id, context.get('product_qty', 1.00), pricelist.currency_id.id, time.strftime('%Y-%m-%d'), uom, context=context)
+                # now is used, OST partner view
                 if not price_list:
                     func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                     price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=False, context=context)
@@ -351,25 +352,7 @@ class res_partner(osv.osv):
         """
         Check if the deleted partner is not a system one
         """
-        data_obj = self.pool.get('ir.model.data')
         property_obj = self.pool.get('ir.property')
-
-        partner_data_id = [
-            'supplier_tbd',
-        ]
-
-        for data_id in partner_data_id:
-            try:
-                part_id = data_obj.get_object_reference(
-                    cr, uid, 'msf_doc_import', data_id)[1]
-                if part_id in ids:
-                    part_name = self.read(cr, uid, part_id, ['name'])['name']
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('''The partner '%s' is an Unifield internal partner, so you can't remove it''') % part_name,
-                    )
-            except ValueError:
-                pass
 
 
         #US-1344: treat deletion of partner
@@ -539,7 +522,7 @@ class res_partner(osv.osv):
             'contact_display': 'partner_address', 'subtype': 'in', 'picking_type': 'incoming_shipment', 'search_default_available':1
         }))
         out_ids = pick_obj.search(cr, uid, [
-            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'),
+            ('state', 'not in', ['done', 'delivered', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'),
             '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
         ], context = context.update({
             'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'
@@ -666,6 +649,26 @@ class res_partner(osv.osv):
 
         return True
 
+    def _check_existing_tax_partner(self, cr, uid, ids, context=None):
+        """
+        Raises an error in case the partner has been used in a tax (to be used when trying to de-activate partners)
+        """
+        if context is None:
+            context = {}
+        tax_obj = self.pool.get('account.tax')
+        inv_obj = self.pool.get('account.invoice')
+        inv_tax_obj = self.pool.get('account.invoice.tax')
+        if tax_obj.search_exist(cr, uid, [('partner_id', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'),
+                                 _("Impossible to deactivate a partner used for a tax."))
+        # use case: partner linked to a tax, related tax lines generated and partner removed from the tax
+        # Note that only draft account.invoices need to be checked as other ones have generated JIs (so are already checked)
+        draft_invoice_ids = inv_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)
+        if draft_invoice_ids:
+            if inv_tax_obj.search_exist(cr, uid, [('partner_id', 'in', ids), ('invoice_id', 'in', draft_invoice_ids)], context=context):
+                raise osv.except_osv(_('Warning'),
+                                     _("Impossible to deactivate a partner used in the tax line of an invoice."))
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -677,10 +680,9 @@ class res_partner(osv.osv):
 
         #US-126: when it's an update from the sync, then just remove the forced 'active' parameter
         if context.get('sync_update_execution', False):
-            if 'active' in vals:
-                del vals['active']
-            if 'po_by_project' in vals:
-                del vals['po_by_project']
+            for to_remove in ['active', 'po_by_project', 'manufacturer', 'transporter']:
+                if to_remove in vals:
+                    del vals[to_remove]
 
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
@@ -702,6 +704,7 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Warning'),
                                          _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
                                            ) % (objects_linked_to_partner))
+                self._check_existing_tax_partner(cr, uid, ids, context=context)
 
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
@@ -714,8 +717,9 @@ class res_partner(osv.osv):
         '''
             bo_py_poject field must not trigger an sync update
         '''
-        if touched_fields and 'po_by_project' in touched_fields:
-            touched_fields = [x for x in touched_fields if x!='po_by_project']
+        ignore = ['po_by_project', 'manufacturer', 'transporter']
+        if touched_fields and set(ignore).intersection(touched_fields):
+            touched_fields = [x for x in touched_fields if x not in ignore]
         return super(res_partner, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -967,7 +971,7 @@ class res_partner(osv.osv):
         if view_type == 'search':
             if not context or not context.get('show_button_show_inactive', False):
                 tree = etree.fromstring(view['arch'])
-                fields = tree.xpath('//filter[@name="inactive"]')
+                fields = tree.xpath('//filter[@name="inactive"]|//filter[@name="active"]')
                 for field in fields:
                     field.set('invisible', "1")
                 view['arch'] = etree.tostring(tree)
@@ -990,24 +994,6 @@ class res_partner_address(osv.osv):
         """
         Check if the deleted address is not a system one
         """
-        data_obj = self.pool.get('ir.model.data')
-
-        addr_data_id = [
-            'address_tbd',
-        ]
-
-        for data_id in addr_data_id:
-            try:
-                addr_id = data_obj.get_object_reference(
-                    cr, uid, 'msf_doc_import', data_id)[1]
-                if addr_id in ids:
-                    addr_name = self.read(cr, uid, addr_id, ['name'])['name']
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('''The Address '%s' is an Unifield internal address, so you can't remove it''') % addr_name,
-                    )
-            except ValueError:
-                pass
         res = super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
         #US-1344: treat deletion of partner

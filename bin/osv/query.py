@@ -52,6 +52,8 @@ class Query(object):
         # passed to psycopg's execute method.
         self.where_clause_params = where_clause_params or []
 
+        self.having = ''
+        self.having_group_by = ''
         # holds table joins done explicitly, supporting outer joins. The JOIN
         # condition should not be in `where_clause`. The dict is used as follows:
         #   self.joins = {
@@ -85,7 +87,7 @@ class Query(object):
         (lhs, table, lhs_col, col) = connection
         lhs = _quote(lhs)
         table = _quote(table)
-        assert lhs in self.tables, "Left-hand-side table must already be part of the query!"
+        assert lhs in self.tables, "Left-hand-side (%s) table must already be part of the query! %s" % (lhs, self.tables)
         if table in self.tables:
             # already joined, must ignore (promotion to outer and multiple joins not supported yet)
             pass
@@ -99,12 +101,15 @@ class Query(object):
         """Returns (query_from, query_where, query_params)"""
         query_from = ''
         tables_to_process = list(self.tables)
-
         def add_joins_for_table(table, query_from):
             for (dest_table, lhs_col, col, join) in self.joins.get(table,[]):
                 tables_to_process.remove(dest_table)
+                dest_table_alias = dest_table.split(' ')
+                join_table = dest_table
+                if len(dest_table_alias) == 2:
+                    join_table = dest_table_alias[1]
                 query_from += ' %s %s ON (%s."%s" = %s."%s")' % \
-                    (join, dest_table, table, lhs_col, dest_table, col)
+                    (join, dest_table, table, lhs_col, join_table, col)
                 query_from = add_joins_for_table(dest_table, query_from)
             return query_from
 

@@ -1,0 +1,39 @@
+-
+  For Dest CC Links (dest.cc.link), track the changes on the Destinations
+-
+  !python {model: audittrail.rule}: |
+    name = 'Dest / CC Combinations'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'dest.cc.link')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['cc_id', 'active_from', 'inactive_from']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'dest.cc.link'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'dest.cc.link'), ('name', '=', 'cc_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'dest.cc.link'), ('name', '=', 'dest_id')], context=context)
+
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+            if field_name:
+                name_id = field_name[0]
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+            'parent_field_id': parent_id,
+            'name_get_field_id': name_id,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)

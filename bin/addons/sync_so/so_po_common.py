@@ -22,6 +22,7 @@
 from osv import osv
 from sync_common import xmlid_to_sdref
 from lxml import etree
+from tools.translate import _
 import re
 
 class so_po_common(osv.osv_memory):
@@ -80,9 +81,18 @@ class so_po_common(osv.osv_memory):
             context = {}
         context.update({'active_test': False})
         partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
-        if not partner.address:
+
+        address_id = False
+        if partner.address:
+            # Check if the default addresses are deactivated
+            for address in partner.address:
+                if address.active:
+                    address_id = address.id
+                    break
+
+        if not address_id:
             raise Exception("The partner address is not found in the system. The operation is thus interrupted.")
-        return partner.address[0].id
+        return address_id
 
     def get_price_list_id(self, cr, uid, partner_id, context=None):
         if not context:
@@ -254,7 +264,7 @@ class so_po_common(osv.osv_memory):
                 header_result['parent_order_name'] = po_ids[0] # and set the link into the newly created PO sourced
 
         partner_id = self.get_partner_id(cr, uid, source, context)
-        address_id = self.get_partner_address_id(cr, uid, partner_id, context)
+        address_id = self.get_partner_address_id(cr, uid, partner_id, context=context)
         location_id = self.get_location(cr, uid, partner_id, context)
         # just roll back what has been modified --- NO MODIF HERE!
         price_list = self.get_price_list_id(cr, uid, partner_id, context)
@@ -333,7 +343,8 @@ class so_po_common(osv.osv_memory):
             header_result['sourced_references'] = self.create_sync_order_label(cr, uid, header_info, context)
 
         partner_id = self.get_partner_id(cr, uid, source, context)
-        address_id = self.get_partner_address_id(cr, uid, partner_id, context)
+        address_id = self.get_partner_address_id(cr, uid, partner_id, context=context)
+        del_inv_addr_ids = self.pool.get('res.partner').address_get(cr, uid, [partner_id], ['delivery', 'invoice'])
 
         price_list = False
         # US-379: Fixed the price list retrieval
@@ -353,11 +364,17 @@ class so_po_common(osv.osv_memory):
         header_result['client_order_ref'] = source + "." + header_info.get('name')
         header_result['partner_id'] = partner_id
         header_result['partner_order_id'] = address_id
-        header_result['partner_shipping_id'] = address_id
-        header_result['partner_invoice_id'] = address_id
+        header_result['partner_shipping_id'] = del_inv_addr_ids['delivery']
+        header_result['partner_invoice_id'] = del_inv_addr_ids['invoice']
         header_result['pricelist_id'] = price_list
         header_result['currency_id'] = currency_id
         return header_result
+
+    def check_merge(self, cr, uid, prod_id):
+        merged = self.pool.get('product.product').search(cr, uid, [('replace_product_id', '=', prod_id), ('active', 'in', ['t', 'f'])])
+        if merged:
+            return merged[0]
+        return prod_id
 
     def get_product_id(self, cr, uid, data, default_code=False, context=None):
         # us-1586: use msfid to search product in intersection flow, else use sdref
@@ -376,11 +393,11 @@ class so_po_common(osv.osv_memory):
             # msfid has no uniq constraint if only 1 active product: ok, elif more than 1 product found raise
             prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
             if len(prod_ids) == 1:
-                return prod_ids[0]
+                return self.check_merge(cr, uid, prod_ids[0])
             elif len(prod_ids) > 1:
                 prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
                 if len(prod_ids) == 1:
-                    return prod_ids[0]
+                    return self.check_merge(cr, uid, prod_ids[0])
                 raise Exception("Duplicate product for msfid %s" % msfid)
 
         if hasattr(data, 'id') and data.id:
@@ -391,12 +408,12 @@ class so_po_common(osv.osv_memory):
         if pid:
             prod_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(pid), context=context)
             if prod_id:
-                return prod_id
+                return self.check_merge(cr, uid, prod_id)
 
         if default_code:
             prod_ids = prod_obj.search(cr, uid, [('default_code', '=', default_code), ('active', 'in', ['t', 'f'])], limit=1, order='NO_ORDER', context=context)
             if prod_ids:
-                return prod_ids[0]
+                return self.check_merge(cr, uid, prod_ids[0])
 
         return False
 
@@ -480,6 +497,10 @@ class so_po_common(osv.osv_memory):
         else:
             res['name'] = order_line.comment
 
+        if not res.get('product_id', False) and not res.get('name', False):
+            raise osv.except_osv(_('Error'), _('Cannot process Document/line due to Product Code %s which does not exist in this instance')
+                                 % (src_values.get('default_code'),))
+
         if src_values.get('nomen_manda_0'):
             rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_0.id), context=context)
             if rec_id:
@@ -525,6 +546,9 @@ class so_po_common(osv.osv_memory):
 
         if src_values.get('source_sync_line_id'):
             res['original_purchase_line_id'] = src_values['source_sync_line_id']
+
+        if src_values.get('pol_external_ref'):
+            res['external_ref'] = src_values['pol_external_ref']
 
         return res
 

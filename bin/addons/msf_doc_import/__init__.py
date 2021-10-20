@@ -28,16 +28,23 @@ GENERIC_MESSAGE = _("""
         The file should be in XML 2003 format.
 
 The columns should be in this values: """)
-# Authorized analytic journal in Accounting import
+# Authorized journals in Accounting import
 ACCOUNTING_IMPORT_JOURNALS = [
     'intermission',
-    'correction',
+    'correction_manual',
     'hr',
     'migration',
     'sale',  # US-70/3
 ]
+
 PRODUCT_LIST_TYPE = [('list', 'List'), ('sublist', 'Sublist')]
 
+PPL_IMPORT_FOR_UPDATE_MESSAGE = _("""        The file should be in XML 2003 format.
+For the main header, the first 8 lines of the column 1 must have these values: Reference, Date, Requester Ref, \
+Our Ref, FO Date, Packing Date, RTS Date, Transport Mode. And the line 1 of the column 4 and 7 \
+must have these values: Shipper, Consignee.
+There should also be a blank line between the main header and the lines header.
+The lines columns at the line 10 should be in this values:""")
 
 import tender
 import purchase_order
@@ -52,7 +59,6 @@ import import_tools
 import composition_kit
 import account
 import stock_picking
-import replenishment_rules
 import product_list
 import supplier_catalogue
 import report

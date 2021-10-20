@@ -65,7 +65,7 @@ class product_to_list(osv.osv_memory):
         ),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Set product from the selected IDs on the product search view.
         """
@@ -73,7 +73,7 @@ class product_to_list(osv.osv_memory):
             context = {}
 
         res = super(product_to_list, self).\
-            default_get(cr, uid, fields, context=context)
+            default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res['product_ids'] = context.get('active_ids', [])
         res['list_type'] = 'exist'

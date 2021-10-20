@@ -50,27 +50,38 @@
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="90" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="45" />
+<Column ss:AutoFitWidth="1" ss:Width="200" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Module')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UOM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('B.Num mandatory')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Exp. Date mandatory')}</Data></Cell>
     </Row>
     ## we loop over the products line
     % for line in o.composition_item_ids:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_module or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_product_id.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_product_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_module or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_product_id.default_code or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_product_id.name or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" >
             % if line.item_qty:
-                <Data ss:Type="Number">${(line.item_qty or '')|x}</Data>
+                <Data ss:Type="Number">${line.item_qty or 0|x}</Data>
             % else:
                 <Data ss:Type="String"></Data>
             % endif
         </Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_uom_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_uom_id.name or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.comment or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_product_id.batch_management and _('Y') or _('N')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_product_id.perishable and _('Y') or _('N')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

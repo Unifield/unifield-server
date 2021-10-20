@@ -329,6 +329,11 @@ form: module.record_id""" % (xml_id,)
         if rec.get('report_type'):
             res['report_type'] = rec.get('report_type')
 
+        if rec.get('report_type') == 'openpyxl':
+            # manage migration from mako to openpyxl
+            res['report_rml'] = False
+            res['report_file'] = False
+
         if rec.get('target_filename'):
             res['target_filename'] = rec.get('target_filename')
 
@@ -337,7 +342,7 @@ form: module.record_id""" % (xml_id,)
 
         xml_id = rec.get('id','').encode('utf8')
         self._test_xml_id(xml_id)
-
+        res['update_title'] = rec.get('update_title', False)
         if rec.get('groups'):
             g_names = rec.get('groups','').split(',')
             groups_value = []
@@ -357,7 +362,11 @@ form: module.record_id""" % (xml_id,)
             keyword = str(rec.get('keyword', 'client_print_multi'))
             value = 'ir.actions.report.xml,'+str(id)
             replace = rec.get('replace', True)
-            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, res['name'], [res['model']], value, replace=replace, isobject=True, xml_id=xml_id)
+            linked_views = []
+            if rec.get('view_ids'):
+                for x in rec.get('view_ids').split(','):
+                    linked_views.append(self.id_get(cr,x))
+            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, res['name'], [res['model']], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views, sequence=rec.get('sequence', 100))
         elif self.mode=='update' and eval(rec.get('menu','False'))==False:
             # Special check for report having attribute menu=False on update
             value = 'ir.actions.report.xml,'+str(id)
@@ -520,7 +529,11 @@ form: module.record_id""" % (xml_id,)
             keyword = rec.get('key2','').encode('utf-8') or 'client_action_relate'
             value = 'ir.actions.act_window,'+str(id)
             replace = rec.get('replace','') or True
-            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, xml_id, [src_model], value, replace=replace, isobject=True, xml_id=xml_id)
+            linked_views = []
+            if rec.get('view_ids'):
+                for x in rec.get('view_ids').split(','):
+                    linked_views.append(self.id_get(cr,x))
+            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, xml_id, [src_model], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views)
         # TODO add remove ir.model.data
 
     def _tag_ir_set(self, cr, rec, data_node=None):
@@ -645,8 +658,7 @@ form: module.record_id""" % (xml_id,)
                 resw = cr.fetchone()
                 if (not values.get('name', False)) and resw:
                     values['name'] = resw[0]
-        if rec.get('sequence'):
-            values['sequence'] = int(rec.get('sequence'))
+        values['sequence'] = int(rec.get('sequence', 10))
         if rec.get('icon'):
             values['icon'] = str(rec.get('icon'))
         if rec.get('web_icon'):

@@ -23,44 +23,66 @@
 
 from osv import osv
 from osv import fields
+from base import currency_date
+from tools.translate import _
+from . import ACCOUNT_RESTRICTED_AREA
+
 
 class res_company(osv.osv):
     _name = 'res.company'
     _inherit = 'res.company'
 
+    def _get_currency_date_type(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns the type of date used for functional amount computation in this instance
+        """
+        res = {}
+        for c_id in ids:
+            res[c_id] = currency_date.get_date_type(self, cr) == 'document' and _('Document Date') or _('Posting Date')
+        return res
+
+    def _get_currency_date_beginning(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns the date from when the functional amount computation is based on the document date, if applicable
+        """
+        res = {}
+        for c_id in ids:
+            res[c_id] = currency_date.get_date_type(self, cr) == 'document' and currency_date.BEGINNING or False
+        return res
+
     _columns = {
-        'import_invoice_default_account': fields.many2one('account.account', string="Re-billing Inter-section account", 
-            help="Default account for an import invoice on a Debit note"),
-        'intermission_default_counterpart': fields.many2one('account.account', string="Intermission counterpart", 
-            help="Default account used for partner in Intermission Voucher IN/OUT"),
+        'import_invoice_default_account': fields.many2one('account.account', string="Re-billing Inter-section account",
+                                                          help="Default account for an import invoice on a Debit note"),
+        'intermission_default_counterpart': fields.many2one('account.account', string="Intermission counterpart",
+                                                            help="Default account used for partner in Intermission Voucher IN/OUT"),
         'additional_allocation': fields.boolean('Additional allocation condition?', help="If you check this attribute, analytic allocation will be required for income accounts with an account code starting with \"7\"; if unchecked, the analytic allocation will be required for all income accounts."),
-        'revaluation_default_account': fields.many2one('account.account', string="Revaluation account", 
-            help="Default account used for revaluation"),
+        'revaluation_default_account': fields.many2one('account.account', string="Revaluation account",
+                                                       help="Default account used for revaluation"),
+        'currency_date_type': fields.function(_get_currency_date_type, method=True, type='char',
+                                              string='Date Type Used', store=False, readonly=1),
+        'currency_date_beginning': fields.function(_get_currency_date_beginning, method=True, type='date',
+                                                   string='Since', store=False, readonly=1),
+        'cheque_debit_account_id': fields.many2one('account.account', 'Cheque Default Debit Account',
+                                                   domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'cheque_credit_account_id': fields.many2one('account.account', 'Cheque Default Credit Account',
+                                                    domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'bank_debit_account_id': fields.many2one('account.account', 'Bank Default Debit Account',
+                                                 domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'bank_credit_account_id': fields.many2one('account.account', 'Bank Default Credit Account',
+                                                  domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'cash_debit_account_id': fields.many2one('account.account', 'Cash Default Debit Account',
+                                                 domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'cash_credit_account_id': fields.many2one('account.account', 'Cash Default Credit Account',
+                                                  domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'has_move_regular_bs_to_0': fields.boolean("Move regular B/S account to 0"),
+        'has_book_pl_results': fields.boolean("Book the P&L results"),
     }
-    
-    def check_revaluation_default_account_has_sup_destination(self, cr, uid, company, context=None):
-        if company and company.revaluation_default_account:
-            reval_account = company.revaluation_default_account
-            if reval_account.default_destination_id \
-                and reval_account.default_destination_id.code == 'SUP':
-                return True
-            for dest in reval_account.destination_ids:
-                if dest.code == 'SUP':
-                    return True
-            return False
-        return True
-    
-    def _check_revaluation_default_account(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for obj in self.browse(cr, uid, ids, context=context):
-            if not self.check_revaluation_default_account_has_sup_destination(cr, uid, obj, context=context):
-                raise osv.except_osv('Settings Error!','The default revaluation account must have a default destination SUP')
-        return True
-        
-    _constraints = [
-        (_check_revaluation_default_account, 'The default revaluation account must have a default destination SUP', ['revaluation_default_account'])
-    ]
+
+    _defaults = {
+        'has_move_regular_bs_to_0': False,
+        'has_book_pl_results': False,
+    }
+
 
 res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -26,7 +26,6 @@ from operator import itemgetter
 
 PREFIXES = {'sale.order': 'so_',
             'purchase.order': 'po_',
-            'procurement.order': 'pr_',
             'stock.picking': 'pick_',
             'tender': 'tend_',
             }
@@ -59,7 +58,7 @@ class stock_forecast_line(osv.osv_memory):
         get states of specified objects, and modify keys on the fly
         '''
         field = 'state'
-        objects = ['sale.order', 'purchase.order', 'procurement.order', 'stock.picking', 'tender',]
+        objects = ['sale.order', 'purchase.order', 'stock.picking', 'tender']
         return self._get_selection(cr, uid, field, objects, context=context)
 
     def _get_order_type(self, cr, uid, context=None):
@@ -144,7 +143,7 @@ class stock_forecast(osv.osv_memory):
         'product_family_info_id': fields.function(_get_info, type='many2one', relation='product.nomenclature', method=True, string='Product Family', multi='get_info',),
         'procurement_method': fields.function(_get_info, type='selection', selection=[('make_to_stock','Make to Stock'),('make_to_order','Make to Order')], method=True, string='Procurement Method', multi='get_info',),
         'supply_method': fields.function(_get_info, type='selection', selection=[('produce','Produce'),('buy','Buy')], method=True, string='Supply Method', multi='get_info',),
-        'keep_cool': fields.function(_get_info, type='boolean', method=True, string='Keep Cool', multi='get_info',),
+        'keep_cool': fields.function(_get_info, type='boolean', method=True, string='Cold Chain', multi='get_info',),
         'short_shelf_life': fields.function(_get_info, type='boolean', method=True, string='Short Shelf Life', multi='get_info',),
         'dangerous_goods': fields.function(_get_info, type='boolean', method=True, string='Dangerous Goods', multi='get_info',),
         'justification_code_id': fields.function(_get_info, type='many2one', relation='product.justification.code', method=True, string='Justification Code', multi='get_info',),
@@ -368,7 +367,6 @@ class stock_forecast(osv.osv_memory):
         sol_obj = self.pool.get('sale.order.line')
         pol_obj = self.pool.get('purchase.order.line')
         tenderl_obj = self.pool.get('tender.line')
-        pro_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
@@ -487,23 +485,6 @@ class stock_forecast(osv.osv_memory):
                                            'wizard_id': wizard.id,
                                            })
 
-                # PROCUREMENT ORDERS
-                pro_list = pro_obj.search(cr, uid, [('state', 'in', ('exception',)),
-                                                    ('product_id', '=', product.id)], order='date_planned', context=context)
-
-                for pro in pro_obj.browse(cr, uid, pro_list, context=context):
-                    # create lines corresponding to po
-                    line_to_create.append({'date': pro.date_planned.split(' ')[0],
-                                           'doc': 'PR',
-                                           'order_type': False,
-                                           'origin': pro.origin,
-                                           #'origin': 'procurement.order,%s'%pro.origin,
-                                           'reference': 'procurement.order,%s'%pro.id,
-                                           'state': PREFIXES['procurement.order'] + pro.state,
-                                           'qty': uom_obj._compute_qty_obj(cr, uid, pro.product_uom, pro.product_qty, uom_to_use, context=context),
-                                           'stock_situation': False,
-                                           'wizard_id': wizard.id,})
-
                 # STOCK MOVES - in positive - out negative
                 moves_list = move_obj.search(cr, uid, [('state', 'not in', ('done', 'cancel')),
                                                        ('product_qty', '!=', 0.0), # dont take empty draft picking tickets into account if empty
@@ -552,7 +533,7 @@ class stock_forecast(osv.osv_memory):
 
             return True # popup policy
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """ For now no special initial values to load at wizard opening
 
          @return: A dictionary which of fields with values.
@@ -562,7 +543,7 @@ class stock_forecast(osv.osv_memory):
 
         product_obj = self.pool.get('product.product')
 
-        res = super(stock_forecast, self).default_get(cr, uid, fields, context=context)
+        res = super(stock_forecast, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if context.get('active_ids', []):
             active_id = context.get('active_ids')[0]
@@ -663,12 +644,3 @@ class purchase_order_line(osv.osv):
 purchase_order_line()
 
 
-class stock_move(osv.osv):
-    '''
-    corresponding picking subtype
-    '''
-    _inherit = 'stock.move'
-    _columns = {'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
-                }
-
-stock_move()

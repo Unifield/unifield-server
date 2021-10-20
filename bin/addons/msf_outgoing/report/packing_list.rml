@@ -126,7 +126,7 @@
 		                       			<para style="HeaderInfosTitle">Your Ref.:</para>
 									</td>
 									<td>
-                            			<parawrap style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</parawrap>
+                            			<parawrap style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref and p['ppl'].sale_id.short_client_ref or '-' ]]</parawrap>
 									</td>
 								</tr>
 								<tr>
@@ -274,7 +274,7 @@
                                 <para style="ParcelLineTitle">Exp. Date</para>
                             </td>
                             <td>
-                                <para style="ParcelLineTitle">KC</para>
+                                <para style="ParcelLineTitle">CC</para>
                             </td>
                             <td>
                                 <para style="ParcelLineTitle">DG</para>
@@ -301,7 +301,7 @@
                                 <parawrap style="ParcelLineValue">[[ m.comment or '' ]]</parawrap>
                             </td>
                             <td>
-                                <para style="ParcelLineValue">[[ formatLang(m.product_qty or 0.00) ]] [[ m.product_uom.name ]]</para>
+                                <para style="ParcelLineValue">[[ formatFloatDigitsToUom(m.product_qty or 0.00, m.product_uom.rounding) ]] [[ m.product_uom.name ]]</para>
                             </td>
                             <td>
                                 <para style="ParcelLineValue">[[ m.prodlot_id.name ]]</para>
@@ -310,7 +310,7 @@
                                 <para style="ParcelLineValue">[[ formatLang(m.prodlot_id.life_date, date=True) ]]</para>
                             </td>
                             <td>
-                                <para style="ParcelLineValue">[[ m.product_id.kc_txt or ' ' ]]</para>
+                                <para style="ParcelLineValue">[[ m.product_id.is_kc and 'X' or ' ' ]]</para>
                             </td>
                             <td>
                                 <para style="ParcelLineValue">[[ m.product_id.dg_txt or ' ' ]]</para>

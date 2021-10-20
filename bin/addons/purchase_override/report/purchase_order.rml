@@ -88,7 +88,7 @@
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="0" spaceAfter="0" />
         <paraStyle name="TextInformation1" fontName="Helvetica" fontSize="1.0" alignment="LEFT" leading="1.0" spaceBefore="0" spaceAfter="0" />
         <paraStyle name="TextInformationMail" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="0" spaceAfter="0" />
-        <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextNotes" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
@@ -96,7 +96,7 @@
 
     <story>
 
-        <para style="Standard">[[ setLang(objects[0].partner_id.lang) ]]</para>
+        <para style="Standard"></para>
 
         <blockTable colWidths="90.0,582.0,100.0" style="Origin">
             <tr>
@@ -115,7 +115,18 @@
                     <para style="TextInformationH">Customer reference :</para>
                 </td>
                 <td>
-                    <para style="TextInformationH">[[ objects[0].customer_ref ]]</para>
+                    <para style="TextInformationH">[[ objects[0].customer_ref and objects[0].short_customer_ref or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformationH"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformationH">Customers :</para>
+                </td>
+                <td>
+                    <para style="TextInformationH">[[ objects[0].dest_partner_names or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformationH"> </para>
@@ -433,7 +444,9 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total cost : [[ objects[0].total_price_include_transport or '0.00' ]]</para>
+                    <para style="TextInformation">Total cost :
+                        <b>[[ objects[0].total_price_include_transport or '0.00' ]] [[ objects[0].pricelist_id.currency_id.name ]]</b>
+                    </para>
                 </td>
                 <td>
                     <para style="TextInformation1"> </para>
@@ -462,7 +475,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Currency : [[ objects[0].pricelist_id.currency_id.name ]]</para>
+                    <para style="TextInformation">Functional total cost : [[ objects[0].func_total_price_include_transport or 0 ]] [[ objects[0].company_id.currency_id.name ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
@@ -622,10 +635,10 @@
                         <para style="LinesBlue" alignment="CENTER">[[ line.product_uom.name ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line.price_unit or '0.00' ]]</para>
+                        <parawrap style="LinesBlue" alignment="RIGHT">[[ line.price_unit or '0.00' ]]</parawrap>
                     </td>
                     <td>
-                         <para style="LinesBlue" alignment="RIGHT">[[ line.price_subtotal or '0.00' ]]</para>
+                         <parawrap style="LinesBlue" alignment="RIGHT">[[ line.price_subtotal or '0.00' ]]</parawrap>
                     </td>
                 </tr>
             </blockTable>
@@ -647,7 +660,7 @@
         <blockTable colWidths="772.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextRemarks">REMARKS : [[ objects[0].notes ]]</para>
+                    <para style="TextNotes">Notes : [[ objects[0].notes ]]</para>
                 </td>
             </tr>
             <tr>
@@ -656,11 +669,19 @@
                 </td>
             </tr>
             <tr>
+                [[ not (objects[0].show_default_msg and getPoCustomTxt()) or removeParentNode('tr') ]]
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
             </tr>
             <tr>
+                [[ (objects[0].show_default_msg and getPoCustomTxt()) or removeParentNode('tr') ]]
+                <td>
+                    <para style="TextNotes">[[ getPoCustomTxt() ]]</para>
+                </td>
+            </tr>
+            <tr>
+                [[ not (objects[0].show_default_msg and getPoCustomTxt()) or removeParentNode('tr') ]]
                 <td>
                     <para style="TextInformation"> </para>
                 </td>

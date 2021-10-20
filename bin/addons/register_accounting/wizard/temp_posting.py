@@ -28,30 +28,51 @@ from ..register_tools import open_register_view
 class wizard_temp_posting(osv.osv_memory):
     _name = "wizard.temp.posting"
 
-    def action_confirm_temp_posting(self, cr, uid, ids, context=None):
+    def action_confirm_temp_posting(self, cr, uid, ids, context=None, all_lines=False):
         """
         Temp post some statement lines
         """
         if context is None:
             context = {}
-        if 'active_ids' in context:
+        absl_obj = self.pool.get('account.bank.statement.line')
+        # note: active_ids must be in context also for Temp Post "ALL", or that would mean that there is no line to post in the reg. anyway
+        if context.get('active_ids'):
             # Retrieve statement line ids
             st_line_ids = context.get('active_ids')
             if isinstance(st_line_ids, (int, long)):
                 st_line_ids = [st_line_ids]
+            if all_lines:  # get ALL the register lines to temp-post for this register
+                reg_id = absl_obj.browse(cr, uid, st_line_ids[0], fields_to_fetch=['statement_id'], context=context).statement_id.id
+                if reg_id == context.get('register_id'):  # out of security compare with the register_id in param.
+                    st_line_ids = absl_obj.search(cr, uid,
+                                                  [('statement_id', '=', reg_id), ('state', '=', 'draft')],
+                                                  context=context)
+                    if not st_line_ids:
+                        # UC: either lines have been temp posted since the display of the temp posting page,
+                        # or the action is performed from the Register Lines View although there are no more Draft lines
+                        raise osv.except_osv(_('Warning'), _('There are no more lines to temp post for this register. '
+                                                             'Please refresh the page.'))
+                else:
+                    raise osv.except_osv(_('Warning'), _('Impossible to retrieve automatically the lines to temp post for this register. '
+                                                         'Please select them manually and click on "Temp Posting".'))
             # Prepare some values
             tochange = []
-            absl_obj = self.pool.get('account.bank.statement.line')
             # Browse statement lines
             for st_line in absl_obj.read(cr,uid, st_line_ids, ['statement_id', 'state']):
                 # Verify that the line isn't in hard state
                 if st_line.get('state', False) == 'draft':
                     tochange.append(st_line.get('id'))
             real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-            absl_obj.posting(cr, real_uid, tochange, 'temp')
+            absl_obj.posting(cr, real_uid, tochange, 'temp', context=context)
             return open_register_view(self, cr, real_uid, st_line.get('statement_id')[0])
+        elif all_lines:
+            raise osv.except_osv(_('Warning'), _('There are no lines to temp post for this register.'))
         else:
             raise osv.except_osv(_('Warning'), _('You have to select some lines before using this wizard.'))
+
+    def temp_post_all(self, cr, uid, ids, context=None):
+        return self.action_confirm_temp_posting(cr, uid, ids, context=context, all_lines=True)
+
 
 wizard_temp_posting()
 

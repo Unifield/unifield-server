@@ -66,11 +66,11 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'is_percentage_amount_touched': fields.boolean('Is percentage/amount updated ?', invisible=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Verify that percentage or amount are correctly set
         """
-        res = super(analytic_distribution_wizard_lines, self).default_get(cr, uid, fields, context=context)
+        res = super(analytic_distribution_wizard_lines, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if not context or not context.get('mode', False) or not context.get('parent_id', False):
             return res
         if not 'percentage' in fields or not 'amount' in fields:
@@ -143,7 +143,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not percentage or not total_amount:
+        no_total_amount = not total_amount and total_amount not in (0, 0.0)
+        if not percentage or no_total_amount:
             return {}
         amount = abs((total_amount * percentage) / 100)
         return {'value': {'amount': amount, 'is_percentage_amount_touched': True}}
@@ -158,6 +159,18 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             return {}
         percentage = abs((amount / total_amount) * 100)
         return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
+
+    def _dest_compatible_with_cc_domain_part(self, tree):
+        """
+        Returns the domain condition to restrict the destination regarding the cost_center_id (for finance views),
+        or if this field doesn't exist in the view, to the analytic_id (Cost Center in Supply views)
+        """
+        dom_part = ""
+        if tree.xpath('/tree/field[@name="cost_center_id"]'):
+            dom_part = "('dest_compatible_with_cc_ids', '=', cost_center_id)"
+        elif tree.xpath('/tree/field[@name="analytic_id"]'):
+            dom_part = "('dest_compatible_with_cc_ids', '=', analytic_id)"
+        return dom_part
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -195,9 +208,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
                     else:
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST'), " \
+                                 "('destination_ids', '=', parent.account_id) %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
             ## FUNDING POOL
             if line_type == 'analytic.distribution.wizard.fp.lines':
                 # Change OC field
@@ -219,12 +237,17 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
-                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
-                        # Filter is only on cost_center and MSF Private Fund on invoice header
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int))\
+                            or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)):
+                        # Filter is only on cost_centers on invoice header
+                        field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
+                                            "('hide_closed_fp', '=', True), ('fp_compatible_with_cc_ids', '=', cost_center_id)]")
                     else:
                         # Add account_id constraints for invoice lines
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
+                                            "('hide_closed_fp', '=', True), "
+                                            "('fp_compatible_with_cc_ids', '=', cost_center_id), "
+                                            "('fp_compatible_with_acc_dest_ids', '=', (parent.account_id, destination_id))]")
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
@@ -235,9 +258,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
 
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
                     else:
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST'), " \
+                                 "('destination_ids', '=', parent.account_id) %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
 
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
@@ -381,59 +409,17 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
     }
 
     def onchange_destination(self, cr, uid, ids, destination_id=False, analytic_id=False, account_id=False):
-        """
-        Check given funding pool with destination
-        """
-        # Prepare some values
-        res = {}
-        # Search MSF Private Fund element, because it's valid with all accounts
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                        'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
-
-        # If all elements given, then search FP compatibility
-        if destination_id and analytic_id and account_id:
-            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
-            # Delete analytic_id if not valid with tuple "account_id/destination_id".
-            # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and analytic_id != fp_id:
-                res = {'value': {'analytic_id': False}}
-        # If no destination, do nothing
-        elif not destination_id \
-                or analytic_id == fp_id:  # PF always compatible
-            res = {}
-        # Otherway: delete FP
-        else:
-            res = {'value': {'analytic_id': False}}
-        return res
+        return self.pool.get('analytic.distribution').onchange_ad_destination(cr, uid, ids, destination_id=destination_id,
+                                                                              funding_pool_id=analytic_id, account_id=account_id,
+                                                                              fp_field_name='analytic_id')
 
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):
-        """
-        Check given cost_center with funding pool
-        """
-        # Prepare some values
-        res = {}
-        # Search MSF Private Fund element, because it's valid with all accounts
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                        'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_cost_center(cr, uid, ids, cost_center_id=cost_center_id, funding_pool_id=analytic_id, fp_field_name='analytic_id')
 
-        if cost_center_id and analytic_id:
-            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
-            if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
-                res = {'value': {'analytic_id': False}}
-        elif not cost_center_id \
-                or analytic_id == fp_id:  # PF always compatible:
-            res = {}
-        else:
-            res = {'value': {'analytic_id': False}}
-        return res
 
 analytic_distribution_wizard_fp_lines()
+
 
 class analytic_distribution_wizard_f1_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.f1.lines'
@@ -485,14 +471,17 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify purchase state
             if el.purchase_id and el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated']:
                 res[el.id] = False
-            # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
+            # verify purchase line state and allow modification if the line is created by sync and blocked at validated
+            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and \
+                    not (not el.purchase_line_id.analytic_distribution_id and el.purchase_line_id.created_by_sync and
+                         el.purchase_line_id.state == 'sourced_v'):
                 res[el.id] = False
             # verify invoice state
-            if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
+            if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close', 'cancel']:
                 res[el.id] = False
             # verify invoice line state
-            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
+            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in \
+                    ['open', 'paid', 'inv_close', 'cancel']:
                 res[el.id] = False
             # verify commitment state
             if el.commitment_id and el.commitment_id.state in ['done']:
@@ -524,6 +513,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if not context.get('from_correction', False) and \
                         el.move_id.state and el.move_id.state not in ['draft']:
                     res[el.id] = False
+            # check Recurring Model state
+            if el.model_id and el.model_id.state == 'done':
+                res[el.id] = False
+            if el.model_line_id and el.model_line_id.model_id.state == 'done':
+                res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context=None):
@@ -707,6 +701,60 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
             return True
 
+    def _get_invalid_small_amount(self, cr, uid, vals, context=None):
+        """
+        Returns the value of "invalid_small_amount" for the Analytic Distrib. of which vals is in param.
+        (invalid_small_amount is True when several AD lines are linked to a booking amount <= 1).
+
+        Check all tuples listed in the object_list. For each one:
+        0) object name
+        1) many2one field of the analytic.distribution.wizard which is linked to this object
+        2) name of the field of this object corresponding to its lines if any
+           (e.g. "invalid_small_amount" is True on an invoice IF it is True on one of its invoice lines)
+
+        """
+        object_list = [
+            ('account.invoice', 'invoice_id', 'invoice_line'),
+            ('account.invoice.line', 'invoice_line_id', False),
+            ('account.direct.invoice.wizard', 'account_direct_invoice_wizard_id', 'invoice_wizard_line'),
+            ('account.direct.invoice.wizard.line', 'account_direct_invoice_wizard_line_id', False),
+            ('wizard.account.invoice', 'direct_invoice_id', 'invoice_line'),
+            ('wizard.account.invoice.line', 'direct_invoice_line_id', False),
+            ('wizard.cash.return', 'cash_return_id', 'advance_line_ids'),
+            ('wizard.advance.line', 'cash_return_line_id', False),
+            ('account.move.line', 'move_line_id', False),
+            ('account.move', 'move_id', 'line_id'),
+            ('account.bank.statement.line', 'register_line_id', False),
+            ('account.model', 'model_id', 'lines_id'),
+            ('account.model.line', 'model_line_id', False),
+            ('msf.accrual.line', 'accrual_line_id', False),
+        ]
+        invalid_small_amount = False
+        if context is None:
+            context = {}
+        for obj_data in object_list:
+            obj_type, field_name, line_field = obj_data
+            if vals.get(field_name):
+                obj = self.pool.get(obj_type).browse(cr, uid, vals[field_name], context=context)
+                if not line_field:
+                    # AD at line level
+                    distrib_state = hasattr(obj, 'analytic_distribution_state') and getattr(obj, 'analytic_distribution_state') or ''
+                    invalid_small_amount = distrib_state == 'invalid_small_amount' or False
+                else:
+                    # AD at header level
+                    lines = hasattr(obj, line_field) and getattr(obj, line_field) or []
+                    for line in lines:
+                        # display the warning msg for the header only if no AD is defined directly at line level
+                        distrib_at_line_level = hasattr(line, 'analytic_distribution_id') \
+                            and getattr(line, 'analytic_distribution_id') or False
+                        line_distrib_state = hasattr(line, 'analytic_distribution_state') \
+                            and getattr(line, 'analytic_distribution_state') or ''
+                        if not distrib_at_line_level and line_distrib_state == 'invalid_small_amount':
+                            invalid_small_amount = True
+                            break
+                break  # AD wizard is linked to only one object, no need to check the other list items
+        return invalid_small_amount
+
     def create(self, cr, uid, vals, context=None):
         """
         Add distribution lines to the wizard
@@ -714,7 +762,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        # Prepare some values
+        vals.update({'invalid_small_amount': self._get_invalid_small_amount(cr, uid, vals, context=context)})
         res = super(analytic_distribution_wizard, self).create(cr, uid, vals, context=context)
         wiz = self.browse(cr, uid, [res], context=context)[0]
         if wiz.distribution_id:
@@ -739,13 +787,16 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.purchase_id and wiz.purchase_id.state not in ['draft', 'validated_n', 'validated', 'draft_p', 'validated_p']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that purchase from purchase line is in good state if necessary
-            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
+            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and\
+                    not (not wiz.purchase_line_id.analytic_distribution_id and wiz.purchase_line_id.created_by_sync and
+                         wiz.purchase_line_id.state == 'sourced_v'):
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
-            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
+            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid', 'inv_close', 'cancel']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice from invoice line is in good state if necessary
-            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
+            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in \
+                    ['open', 'paid', 'inv_close', 'cancel']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that commitment is in good state if necessary
             if wiz.commitment_id and wiz.commitment_id.state in ['done']:
@@ -956,22 +1007,24 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        distrib_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         for w in self.browse(cr, uid, ids):
             # UF-1678
             # For Cost center and destination analytic accounts, check is done on POSTING date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.posting_date:
                 # First we check cost center distribution line with CC (analytic_id) and destination (destination_id)
-                for cline in self.pool.get('cost.center.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.cost_center_lines], {'date': w.posting_date}):
-                    if not cline.analytic_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') % (cline.analytic_id.code or '', w.posting_date))
-                    if not cline.destination_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (cline.destination_id.code or '', w.posting_date))
+                distrib_obj.check_cc_distrib_active(cr, uid, w.distribution_id, w.posting_date)
                 # Then we check funding pool distribution line with CC (cost_center_id) and destination (destination_id)
                 for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
                     if not fpline.cost_center_id.filter_active:
                         raise osv.except_osv(_('Error'), _('Cost center %s is not active at this date: %s') % (fpline.cost_center_id.code or '', w.posting_date))
                     if not fpline.destination_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (fpline.destination_id.code or '', w.posting_date))
+                        raise osv.except_osv(_('Error'), _('Destination %s is either inactive at the date %s, or it allows no Cost Center.')
+                                             % (fpline.destination_id.code or '', w.posting_date))
+                    if dest_cc_link_obj.is_inactive_dcl(cr, uid, fpline.destination_id.id, fpline.cost_center_id.id, w.posting_date):
+                        raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active at this date: %s") %
+                                             (fpline.destination_id.code or '', fpline.cost_center_id.code or '', w.posting_date))
             # UF-1678
             # For funding pool analytic account, check is done on DOCUMENT date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.document_date:
@@ -1032,7 +1085,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
             distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
-            if not distrib_id:
+            if not distrib_id or not self.pool.get('analytic.distribution').exists(cr, uid, distrib_id, context=context):
                 # create a new analytic distribution
                 analytic_vals = {}
                 if wiz.partner_type:#UF-2138: added the ref to partner type of FO/PO

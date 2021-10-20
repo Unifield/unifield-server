@@ -8,7 +8,7 @@
             <field name="model">export.report.stopped.products</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Export Stopped Products">
+                <form string="Export Phase Out Products">
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="state" />
@@ -24,7 +24,7 @@
             <field name="model">export.report.stopped.products</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Export Stopped Products">
+                <tree string="Export Phase Out Products">
                     <field name="name" />
                     <field name="state" />
                 </tree>
@@ -37,7 +37,7 @@
             <field name="model">export.report.stopped.products</field> <!-- _name of openERP object -->
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Export Stopped Products">
+                <search string="Export Phase Out Products">
                     <field name="name" />
                     <field name="state" />
                 </search>
@@ -63,7 +63,7 @@
                                     Due to the volume of data, your report cannot be shown immediatly.<br />
                                 </p>                                                
                                 <p style="font-size:14px;align:center">             
-                                    When the report will be ready, you can access to it by the menu Tools / Export Stopped Products.<br />
+                                    When the report will be ready, you can access to it by the menu Tools / Export Phase Out Products.<br />
                                 </p>                                                
                             </div>                                                  
                         </html>                                                     
@@ -75,7 +75,7 @@
 
 
         <record id="export_report_stopped_products_action" model="ir.actions.act_window">
-            <field name="name">Export Stopped Products</field>
+            <field name="name">Export Phase Out Products</field>
             <field name="res_model">export.report.stopped.products</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

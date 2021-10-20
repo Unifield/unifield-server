@@ -23,9 +23,11 @@ from osv import osv
 from osv import fields
 from lxml import etree
 from tools.translate import _
+from base import currency_date
 import decimal_precision as dp
 from time import strftime
 import logging
+
 
 class account_analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -106,12 +108,12 @@ class account_analytic_line(osv.osv):
 
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code', ondelete='restrict'),
         'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]", ondelete='restrict'),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'free_account': fields.function(_get_is_free, fnct_search=_search_is_free, method=True, type='boolean', string='Free account?', help="Does that line come from a Free 1 or Free 2 account?"),
-        'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
+        'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed.", select=1),
         'reversal_origin_txt': fields.function(_get_reversal_origin_txt, string="Reversal origin", type='char', size=256,
                                                store={
                                                    'account.analytic.line': (_get_analytic_reversal, ['name', 'reversal_origin'], 20),
@@ -157,6 +159,7 @@ class account_analytic_line(osv.osv):
             return True
 
         account_obj = self.pool.get('account.analytic.account')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
 
         #US-419: Use the document date and not posting date when checking the validity of analytic account
         # tech: replaced all date by document_date
@@ -169,6 +172,8 @@ class account_analytic_line(osv.osv):
                     raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
         if 'date' in vals and vals['date'] is not False:
             date = vals['date']
+            dest = False
+            cc = False
             if vals.get('cost_center_id', False):
                 cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
                 if date < cc.date_start or (cc.date != False and date >= cc.date):
@@ -179,6 +184,9 @@ class account_analytic_line(osv.osv):
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (dest.name or '',))
+            if context.get('from') != 'mass_reallocation' and dest and cc and \
+                    dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
+                raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active.") % (dest.code or '', cc.code or ''))
         return True
 
     def _check_document_date(self, cr, uid, ids):
@@ -236,6 +244,17 @@ class account_analytic_line(osv.osv):
             view['arch'] = etree.tostring(tree)
         return view
 
+    def _round_amounts(self, vals):
+        """
+        Updates vals with the booking and fctal amounts rounded to 2 digits
+        This avoids the rounding to be done in the SQL query as it would be different from the one done in Python
+        Cf: round(1.125, 2) ==> 1.13 / '%.2lf' % 1.125 ==> 1.12
+        """
+        if vals.get('amount_currency'):
+            vals['amount_currency'] = round(vals['amount_currency'], 2)
+        if vals.get('amount'):
+            vals['amount'] = round(vals['amount'], 2)
+
     def create(self, cr, uid, vals, context=None):
         entry_sequence_sync = None
         if vals.get('entry_sequence',False):
@@ -251,6 +270,7 @@ class account_analytic_line(osv.osv):
         invoice_line_obj = self.pool.get('account.invoice.line')
         aal_obj = self.pool.get('account.analytic.line')
         aal_account_obj = self.pool.get('account.analytic.account')
+        self._round_amounts(vals)
         # SP-50: If data is synchronized from another instance, just create it with the given document_date
         if context.get('update_mode') in ['init', 'update']:
             if not context.get('sync_update_execution', False) or not vals.get('document_date', False):
@@ -278,6 +298,7 @@ class account_analytic_line(osv.osv):
                                                                       context=context)
                 if reversed_aal_ids:
                     vals['reversal_origin'] = reversed_aal_ids[0]  # reversal_origin_txt will be automatically updated
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'], replace=['name'])
         # Default behaviour
         res = super(account_analytic_line, self).create(cr, uid, vals, context=context)
         # Check date
@@ -299,12 +320,14 @@ class account_analytic_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        self._round_amounts(vals)
         for l in self.browse(cr, uid, ids):
             vals2 = vals.copy()
             for el in ['account_id', 'cost_center_id', 'destination_id']:
                 if not el in vals:
                     vals2.update({el: l[el] and l[el]['id'] or False})
             self._check_date(cr, uid, vals2, context=context)
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'], replace=['name'])
         res = super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
         return res
@@ -312,7 +335,7 @@ class account_analytic_line(osv.osv):
     def reverse(self, cr, uid, ids, posting_date=None, context=None):
         """
         Reverse an analytic line:
-         - keep date as source_date
+         - use as source_date the original one if any, or the doc/posting date depending on the OC
          - mark this line as reversal
         """
         if context is None:
@@ -334,11 +357,12 @@ class account_analytic_line(osv.osv):
             period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
         res = []
         for al in self.browse(cr, uid, ids, context=context):
+            curr_date = currency_date.get_date(self, cr, al.document_date, al.date, source_date=al.source_date)
             vals = {
                 'name': self.join_without_redundancy(al.name, 'REV'),
                 'amount': al.amount * -1,
                 'date': posting_date,
-                'source_date': al.source_date or al.date,
+                'source_date': curr_date,
                 'reversal_origin': al.id,
                 'amount_currency': al.amount_currency * -1,
                 'currency_id': al.currency_id.id,

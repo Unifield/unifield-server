@@ -231,6 +231,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0"/>
    <Interior/>
   </Style>
   <Style ss:ID="s108">
@@ -241,6 +242,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0"/>
   </Style>
   <Style ss:ID="s109">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -325,7 +327,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <NumberFormat ss:Format="Short Date"/>
+   <NumberFormat ss:Format="dd/mm/yyyy;@"/>
   </Style>
  </Styles>
  <Worksheet ss:Name="stock">
@@ -476,13 +478,16 @@
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s107"><Data ss:Type="String">${item.product_uom_id and item.product_uom_id.name or ''|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s108"><Data ss:Type="String">${item.quantity or ''}</Data><NamedCell
-      ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s108">
+        % if item.quantity:
+        <Data ss:Type="Number">${item.quantity|x}</Data>
+        % endif
+        <NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s108"><Data ss:Type="String">${item.batch_number or ''|x}</Data></Cell>
     % if isDate(item.expiry_date):
     <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${item.expiry_date|n}T00:00:00.000</Data></Cell>
     % else:
-    <Cell ss:StyleID="s108"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="short_date"><Data ss:Type="String"></Data></Cell>
     % endif
     <Cell ss:StyleID="s108"><Data ss:Type="String">${display_product_attributes(item)|x}</Data></Cell>
     <Cell ss:StyleID="s109"><Data ss:Type="String">${yesno(item.is_bn)}</Data></Cell>

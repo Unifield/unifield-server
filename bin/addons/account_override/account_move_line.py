@@ -211,10 +211,10 @@ class account_move_line(osv.osv):
         if context is None:
             context = {}
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = False
-            if line.reconcile_partial_id or line.reconcile_id:
-                res[line.id] = True
+        for _id in ids:
+            res[_id] = False
+        for line in self.search(cr, uid, [('id', 'in', ids), '|', ('reconcile_partial_id', '!=', False), ('reconcile_id', '!=', False)], context=context):
+            res[line] = True
         return res
 
     def _search_is_reconciled(self, cr, uid, obj, name, args, context):
@@ -314,8 +314,8 @@ class account_move_line(osv.osv):
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
-        'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry."),
-        'document_date': fields.date('Document Date', size=255, required=True, readonly=True),
+        'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry.", select=1),
+        'document_date': fields.date('Document Date', size=255, required=True, readonly=True, select=1),
         'date': fields.related('move_id','date', string='Posting date', type='date', required=True, select=True,
                                store = {
                                    'account.move': (_get_move_lines, ['date'], 20)
@@ -376,13 +376,13 @@ class account_move_line(osv.osv):
 
     _order = 'move_id DESC'
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         UFTP-262: As we permit user to define its own reference for a journal item in a Manual Journal Entry, we display the reference from the Journal Entry as default value for Journal Item.
         """
         if context is None:
             context = {}
-        res = super(account_move_line, self).default_get(cr, uid, fields, context=context)
+        res = super(account_move_line, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if context.get('move_reference', False) and context.get('from_web_menu', False):
             if not 'reference' in res:
                 res.update({'reference': context.get('move_reference')})
@@ -550,6 +550,7 @@ class account_move_line(osv.osv):
             # UFTP-262: Add description from the move_id (US-2027) if there is not descr. on the line
             if m and m.manual_name and not vals.get('name'):
                 vals.update({'name': m.manual_name})
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'reference', 'ref'], replace=['name'])
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
             vals['ref'] = vals['ref'][:64]
@@ -603,12 +604,14 @@ class account_move_line(osv.osv):
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals, context=context)
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'reference', 'ref'], replace=['name'])
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         self._check_accounts_partner_compat(cr, uid, ids, context=context)
         # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
         if context.get('from_web_menu', False) and not vals.get('reference', False):
             for ml in self.browse(cr, uid, ids):
                 if ml.move_id and ml.move_id.status == 'manu' and not ml.reference:
+                    # note: line breaks are removed from JE ref at JE creation/edition
                     super(account_move_line, self).write(cr, uid, [ml.id], {'reference': ml.move_id.ref}, context=context, check=False, update_check=False)
         return res
 

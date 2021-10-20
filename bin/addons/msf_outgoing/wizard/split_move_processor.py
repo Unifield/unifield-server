@@ -79,6 +79,15 @@ class split_move_processor(osv.osv_memory):
         view_id = False
 
         for wiz in self.read(cr, uid, ids, ['processor_type', 'processor_line_id'], context=context):
+            if wiz['processor_type'] == 'stock.move':
+                return {
+                    'type': 'ir.actions.act_window_close'
+                }
+            elif wiz['processor_type'] == 'stock.move.in.processor':
+                return {
+                    'type': 'ir.actions.refresh_popupo2m',
+                    'o2m_refresh': 'move_ids'
+                }
             line_model = self.pool.get(wiz['processor_type'])
             line = line_model.browse(cr, uid, wiz['processor_line_id'], context=context)
             res_model = line_model._columns['wizard_id']._obj

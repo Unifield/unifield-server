@@ -54,7 +54,7 @@
 </Styles>
 
 
-<ss:Worksheet ss:Name="Stopped products">
+<ss:Worksheet ss:Name="${_('Phase Out products')|x}">
 
   <Table x:FullColumns="1" x:FullRows="1">
 
@@ -64,40 +64,39 @@
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # standardization level
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # unidata status
 
-    ##### Table with all stopped products #####
+    ##### Table with all phase out products #####
 
     <% stopped_products = get_uf_stopped_products() %>
     % if not stopped_products:
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_content"><Data ss:Type="String"></Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">There is no stopped products to report</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${_('There is no phase out products to report')|x}</Data></Cell>
         </Row>
     % endif
     
     % for line in stopped_products:
         <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Code</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Description</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Product Creator</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Standardization Level</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Unidata Status</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Product Creator')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Standardization Level')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Unidata Status')|x}</Data></Cell>
         </Row>
 
-        <% standard_level = 'Standard' if line.standard_ok == 'True' else 'Non-standard' %>
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.default_code)|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.name_template)|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.international_status and line.international_status.name or '')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(standard_level)|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${getSel(line, 'standard_ok')|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.state_ud and getSel(line, 'state_ud') or '')|x}</Data></Cell>
         </Row>
 
         <% smrl_list = get_stock_mission_report_lines(line) %>
         <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance/Mission</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Unifield Status</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance stock</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Pipeline Qty</Data></Cell>
+          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Instance/Mission')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Unifield Status')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Instance stock')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Pipeline Qty')|x}</Data></Cell>
         </Row>
         % for smrl in smrl_list:
             <Row ss:AutoFitHeight="1">

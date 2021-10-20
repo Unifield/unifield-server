@@ -42,6 +42,8 @@ class hr_payroll(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        ad_obj = self.pool.get('analytic.distribution')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -57,6 +59,7 @@ class hr_payroll(osv.osv):
         # E/ DEST in list of available DEST in ACCOUNT
         # F/ Check posting date with cost center and destination if exists
         # G/ Check document date with funding pool
+        # H/ Check Cost Center / Destination compatibility
         ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
         ## CC is mandatory, so always available:
         # 1/ no FP, no DEST => Distro = valid
@@ -82,6 +85,10 @@ class hr_payroll(osv.osv):
                 if dest and dest.filter_active is False:
                     res[line.id] = 'invalid'
                     continue
+            if line.destination_id and line.cost_center_id:
+                if dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context):
+                    res[line.id] = 'invalid'
+                    continue
             # G Check
             if line.funding_pool_id:
                 fp = self.pool.get('account.analytic.account').browse(cr, uid, line.funding_pool_id.id, context={'date': line.document_date})
@@ -101,7 +108,7 @@ class hr_payroll(osv.osv):
                 continue
             if line.funding_pool_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
-                if line.cost_center_id.id not in [x.id for x in line.funding_pool_id.cost_center_ids] and line.funding_pool_id.id != fp_id:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.funding_pool_id.id, line.cost_center_id.id, context=context):
                     res[line.id] = 'invalid'
                     continue
             elif not line.funding_pool_id and line.destination_id: # CASE 3/
@@ -112,11 +119,12 @@ class hr_payroll(osv.osv):
                     continue
             else: # CASE 4/
                 # C Check, except B
-                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.funding_pool_id.tuple_destination_account_ids if not x.disabled] and line.funding_pool_id.id != fp_id:
+                if not ad_obj.check_fp_acc_dest_compatibility(cr, uid, line.funding_pool_id.id, line.account_id.id,
+                                                              line.destination_id.id, context=context):
                     res[line.id] = 'invalid'
                     continue
                 # D Check, except B check
-                if line.cost_center_id.id not in [x.id for x in line.funding_pool_id.cost_center_ids] and line.funding_pool_id.id != fp_id:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.funding_pool_id.id, line.cost_center_id.id, context=context):
                     res[line.id] = 'invalid'
                     continue
                 # E Check
@@ -124,6 +132,11 @@ class hr_payroll(osv.osv):
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
                     continue
+            # H check
+            if line.destination_id and line.cost_center_id and \
+                    not ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context):
+                res[line.id] = 'invalid'
+                continue
         return res
 
     def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -156,9 +169,9 @@ class hr_payroll(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        fp = [0]
-        cc = [0]
-        dest = [0]
+        fp = [-1]
+        cc = [-1]
+        dest = [-1]
         for ana_account in self.read(cr, uid, ids, ['category']):
             if ana_account['category'] == 'OC':
                 cc.append(ana_account['id'])
@@ -167,8 +180,13 @@ class hr_payroll(osv.osv):
             elif ana_account['category'] == 'FUNDING':
                 fp.append(ana_account['id'])
         if len(fp) > 1 or len(cc) > 1 or len(dest) > 1:
-            return self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), '|', '|', ('funding_pool_id', 'in', fp), ('cost_center_id','in', cc), ('destination_id','in', dest)])
-
+            return self.pool.get('hr.payroll.msf').search(cr, uid,
+                                                          [('state', '=', 'draft'),
+                                                           '|', '|',
+                                                           ('funding_pool_id', 'in', fp),
+                                                           ('cost_center_id', 'in', cc),
+                                                           ('destination_id', 'in', dest)],
+                                                          order='NO_ORDER')
         return []
 
     def _get_trigger_state_account(self, cr, uid, ids, context=None):
@@ -188,6 +206,26 @@ class hr_payroll(osv.osv):
                 ('funding_pool_id', 'in', dest_link['funding_pool_ids'])
             ])
         return to_update
+
+    def _get_trigger_state_dest_cc_link(self, cr, uid, ids, context=None):
+        """
+        Returns the list of Payroll Entries for which the AD state should be re-computed
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cc_ids = []
+        dest_ids = []
+        payroll_obj = self.pool.get('hr.payroll.msf')
+        for dest_cc_link in self.browse(cr, uid, ids, context=context):
+            cc_ids.append(dest_cc_link.cc_id.id)
+            dest_ids.append(dest_cc_link.dest_id.id)
+        payroll_ids = payroll_obj.search(cr, uid, [('state', '=', 'draft'),
+                                                   '|',
+                                                   ('cost_center_id', 'in', cc_ids),
+                                                   ('destination_id', 'in', dest_ids)], order='NO_ORDER', context=context)
+        return payroll_ids
 
     def _has_third_party(self, cr, uid, ids, name, arg, context=None):
         """
@@ -228,8 +266,15 @@ class hr_payroll(osv.osv):
                                           store={
                                               'hr.payroll.msf': (lambda self, cr, uid, ids, c=None: ids, ['account_id', 'cost_center_id', 'funding_pool_id', 'destination_id'], 10),
                                               'account.account': (_get_trigger_state_account, ['user_type_code', 'destination_ids'], 20),
-                                              'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'cost_center_ids', 'tuple_destination_account_ids'], 20),
+                                              'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'allow_all_cc',
+                                                                                                    'allow_all_cc_with_fp',
+                                                                                                    'cost_center_ids', 'select_accounts_only',
+                                                                                                    'fp_account_ids',
+                                                                                                    'tuple_destination_account_ids'],
+                                                                           20),
                                               'account.destination.link': (_get_trigger_state_dest_link, ['account_id', 'destination_id'], 30),
+                                              'dest.cc.link': (_get_trigger_state_dest_cc_link,
+                                                               ['cc_id', 'dest_id', 'active_from', 'inactive_from'], 40),
                                           }
                                           ),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
@@ -248,7 +293,7 @@ class hr_payroll(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Change funding pool domain in order to include MSF Private fund
+        Adapts domain for AD fields
         """
         if not context:
             context = {}
@@ -265,13 +310,11 @@ class hr_payroll(osv.osv):
             for field in fields:
                 field.set('domain', "[('category', '=', 'OC'), ('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
             # Change FP field
-            try:
-                fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
             fp_fields = form.xpath('//field[@name="funding_pool_id"]')
             for field in fp_fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
+                                    "('fp_compatible_with_cc_ids', '=', cost_center_id), "
+                                    "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id))]")
             # Change Destination field
             dest_fields = form.xpath('//field[@name="destination_id"]')
             for field in dest_fields:
@@ -281,32 +324,8 @@ class hr_payroll(osv.osv):
         return view
 
     def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):
-        """
-        Check given funding pool with destination
-        """
-        # Prepare some values
-        res = {}
-        # If all elements given, then search FP compatibility
-        if destination_id and funding_pool_id and account_id:
-            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
-            # Search MSF Private Fund element, because it's valid with all accounts
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                            'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            # Delete funding_pool_id if not valid with tuple "account_id/destination_id".
-            # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and funding_pool_id != fp_id:
-                res = {'value': {'funding_pool_id': False}}
-        # If no destination, do nothing
-        elif not destination_id:
-            res = {}
-        # Otherway: delete FP
-        else:
-            res = {'value': {'funding_pool_id': False}}
-        # If destination given, search if given
-        return res
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_destination(cr, uid, ids, destination_id=destination_id, funding_pool_id=funding_pool_id, account_id=account_id)
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -381,33 +400,4 @@ class hr_payroll(osv.osv):
 hr_payroll()
 
 
-class ir_values(osv.osv):
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
-        """
-        Make the entries in the "Actions" menu depend on the view (Expense lines view or B/S lines view)
-        """
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        if key == 'action' and key2 == 'client_action_multi' and 'hr.payroll.msf' in [x[0] for x in models]:
-            new_act = []
-            for v in values:
-                if v[1] in ['action_payroll_deletion', 'action_payment_orders']:
-                    # for all Payroll views
-                    new_act.append(v)
-                elif context.get('payroll_bs_lines'):
-                    if v[1] == 'action_payroll_validation':
-                        # for the B/S lines view
-                        new_act.append(v)
-                else:
-                    if v[1] in ['action_payroll_analytic_reallocation', 'action_move_to_payroll_bs_lines']:
-                        # for the expense lines view
-                        new_act.append(v)
-            values = new_act
-        return values
-
-ir_values()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

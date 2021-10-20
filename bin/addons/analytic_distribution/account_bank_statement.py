@@ -20,6 +20,7 @@
 #
 ##############################################################################
 from osv import fields, osv
+from tools.translate import _
 
 class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
@@ -57,26 +58,46 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         res = {}
         # Browse all given lines
-        for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id'], context=context):
+        for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'amount'], context=context):
             if not line.get('analytic_distribution_id', False):
                 res[line.get('id')] = 'none'
                 continue
             distribution_id = line.get('analytic_distribution_id')[0]
             account_id = line.get('account_id', [False])[0]
-            res[line.get('id')] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distribution_id, False, account_id)
+            res[line.get('id')] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distribution_id,
+                                                                                                 False, account_id,
+                                                                                                 amount=line.get('amount', 0.0))
+        return res
+
+    def _display_analytic_lines_button(self, cr, uid, ids, name, args, context=None):
+        """
+        The Analytic Lines "magnifying glass" should be displayed only for expense or income lines being either temp or hard-posted.
+        """
+        res = {}
+        if context is None:
+            context = {}
+        for absl in self.browse(cr, uid, ids, fields_to_fetch=['state', 'account_id'], context=context):
+            if absl.state not in ('temp', 'hard') or not absl.account_id.is_analytic_addicted:
+                res[absl.id] = False
+            else:
+                res[absl.id] = True
         return res
 
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
-            help="This informs system that we can display or not an analytic button", store=False),
+                                                   help="This informs system that we can display or not an analytic button", store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'display_analytic_lines_button': fields.function(_display_analytic_lines_button, method=True, store=False, type='boolean',
+                                                         string='Display analytic lines button', readonly=True),
     }
 
     _defaults = {
         'display_analytic_button': lambda *a: True,
+        'display_analytic_lines_button': lambda *a: True,
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
@@ -118,14 +139,14 @@ class account_bank_statement_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
 account_bank_statement_line()

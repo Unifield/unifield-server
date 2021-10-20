@@ -33,6 +33,9 @@ from sync_common import sync_log, \
     fancy_integer, \
     split_xml_ids_list, normalize_xmlid
 
+from msf_field_access_rights.osv_override import _get_instance_level
+
+
 re_fieldname = re.compile(r"^\w+")
 re_subfield_separator = re.compile(r"[./]")
 
@@ -54,6 +57,8 @@ OBJ_TO_RECREATE = [
     'account.journal',
     'account.mcdb',
     'wizard.template',
+    'account.analytic.account',
+    'dest.cc.link',
 ]
 
 
@@ -213,7 +218,7 @@ class update_to_send(osv.osv,fv_formatter):
                 offset = min_offset + 200 < max_offset and min_offset +200 or max_offset
                 datas = self.export_data(cr, uid, ids_to_compute[min_offset:offset],
                                          export_fields, context=context)['datas']
-                sdrefs = self.get_sd_ref(cr, uid, ids_to_compute,
+                sdrefs = self.get_sd_ref(cr, uid, ids_to_compute[min_offset:offset],
                                          field=['name','version','force_recreation','id'], context=context)
                 ustr_export_fields = tools.ustr(export_fields)
                 for (id, row) in zip(ids_to_compute[min_offset:offset], datas):
@@ -242,9 +247,8 @@ class update_to_send(osv.osv,fv_formatter):
             if not rule.can_delete:
                 return 0
 
-            ids_to_delete = self.need_to_push(cr, uid,
-                                              self.search_deleted(cr, uid, module='sd', context=context),
-                                              context=context)
+            ids_to_delete = self.search_deleted(cr, uid, module='sd', context=context, for_sync=True)
+
             if not ids_to_delete:
                 return 0
 
@@ -306,21 +310,33 @@ class update_to_send(osv.osv,fv_formatter):
         self._logger.debug("package created for update ids=%s" % ids_in_package)
         return (ids_in_package, data)
 
-    def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
-        min_offset = 0
-        max_offset = len(update_ids)
-        while min_offset < max_offset:
-            offset = (min_offset + 200) < max_offset and min_offset + 200 or max_offset
-            for update in self.browse(cr, uid, update_ids[min_offset:offset], context=context):
-                try:
-                    self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                                                                 update.sdref, {'version':update.version,sync_field:update.create_date},
-                                                                 context=context)
-                except ValueError:
-                    self._logger.warning("Cannot find record %s during pushing update process!" % update.sdref)
-            min_offset += 200
-        self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
-        self._logger.debug(_("Push finished: %d updates") % len(update_ids))
+    def sync_finished(self, cr, uid, session_id, sync_field='sync_date', context=None):
+        # specific case to split the active field on product.product
+        # i.e: at COO an update received on product must not block a possible update on active field to the project
+        cr.execute('''
+            update product_product set active_sync_change_date = upd.create_date
+                from sync_client_update_to_send upd, ir_model_data d, sync_client_rule rule
+            where
+                rule.id = upd.rule_id and
+                rule.sequence_number in (602, 603) and
+                d.model = 'product.product' and
+                d.name = upd.sdref and
+                product_product.id = d.res_id and
+                upd.session_id = %s
+        ''', (session_id, ))
+
+
+        cr.execute('''update ir_model_data d set
+                version=upd.version, '''+sync_field+'''=upd.create_date, resend='f'
+            from sync_client_update_to_send upd
+            where
+                upd.session_id=%s and
+                upd.sdref=d.name and
+                d.module='sd'
+        ''', (session_id, )) # not_a_user_entry
+
+        cr.execute('''update sync_client_update_to_send set sent='t', sent_date=%s where session_id=%s ''', (fields.datetime.now(), session_id))
+        self._logger.debug(_("Push finished: %d updates") % cr.rowcount)
 
     _order = 'create_date desc, id desc'
 update_to_send()
@@ -354,7 +370,10 @@ class update_received(osv.osv,fv_formatter):
         'create_date':fields.datetime('Synchro date/time', readonly=True),
         'execution_date':fields.datetime('Execution date', readonly=True),
         'editable' : fields.boolean("Set editable"),
+        'manually_ran': fields.boolean('Has been manually tried', readonly=True),
+        'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
     }
+
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
 
@@ -430,11 +449,17 @@ class update_received(osv.osv,fv_formatter):
         else:
             raise Exception("Unable to unfold unknown packet type: " % packet_type)
 
+    def manual_set_as_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
+        return True
+
     def run(self, cr, uid, ids, context=None):
         try:
             self.execute_update(cr, uid, ids, context=context)
         except BaseException, e:
             sync_log(self, e)
+        finally:
+            self.write(cr, uid, ids, {'manually_ran': True})
         return True
 
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
@@ -446,7 +471,7 @@ class update_received(osv.osv,fv_formatter):
 
         local_entity = self.pool.get('sync.client.entity').get_entity(
             cr, uid, context=context)
-
+        instance_level = _get_instance_level(self, cr, uid)
         if ids is None:
             update_ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
         else:
@@ -543,6 +568,7 @@ class update_received(osv.osv,fv_formatter):
                                 'force_recreation' : False,
                                 'touched' : '[]',
                             },
+                            consider_resend=True,
                             context=context)
                     except ValueError:
                         self._logger.warning("Cannot find record %s during update execution process!" % update.sdref)
@@ -556,15 +582,20 @@ class update_received(osv.osv,fv_formatter):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
-                if self.search_exist(cr, uid,
-                                     [('sdref', '=', update.sdref),
-                                      ('is_deleted', '=', False),
-                                         ('run', '=', False),
-                                      ('rule_sequence', '=', update.rule_sequence),
-                                      ('sequence_number', '<', update.sequence_number)]):
-                    # previous not run on the same (sdref, rule_sequence): do not execute
-                    self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
-                    continue
+                prev_nr_ids = self.search(cr, uid,
+                                          [('sdref', '=', update.sdref),
+                                           ('is_deleted', '=', False),
+                                              ('run', '=', False),
+                                              ('rule_sequence', '=', update.rule_sequence),
+                                              ('sequence_number', '<', update.sequence_number)])
+                # previous not run on the same (sdref, rule_sequence): do not execute
+                if prev_nr_ids:
+                    if update.rule_sequence in (602, 603):
+                        # update on product state, we don't care of previous NR
+                        self.write(cr, uid, prev_nr_ids, {'run': 't', 'log': 'Set as Run due to a later update on the same record/rule.', 'editable': False, 'execution_date': datetime.now()}, context=context)
+                    else:
+                        self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
+                        continue
 
                 row = eval(update.values)
 
@@ -572,7 +603,7 @@ class update_received(osv.osv,fv_formatter):
                 #US-852: in case the account_move_line is given but not exist, then do not let the import of the current entry
                 #US-2147: same thing for property_product_pricelist and property_product_pricelist_purchase
                 result = self._check_and_replace_missing_id(cr, uid,
-                                                            import_fields, row, fallback, message, update, context=context)
+                                                            import_fields, row, fallback, message, update, local_level=instance_level, context=context)
 
                 if bad_fields :
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -652,6 +683,8 @@ class update_received(osv.osv,fv_formatter):
                     # Re-start import_data on rows that succeeds before
                     if value_index > 0:
                         # Try to import the beginning of the values and permit the import of the rest
+                        # db rollback, previous updates will be replayed, clear the id cache
+                        self.pool.get('ir.model.data')._get_id.clear_cache(cr.dbname)
                         try:
                             res = secure_import_data(obj, import_fields, values[:value_index])
                             assert res[0] == value_index, res[2]
@@ -669,6 +702,9 @@ class update_received(osv.osv,fv_formatter):
 
             if obj._name == 'ir.translation':
                 self.pool.get('ir.translation')._get_reset_cache_at_sync(cr, uid)
+            elif obj._name == 'ir.model.access':
+                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
             # Obvious
             assert len(values) == len(update_ids) == len(versions), \
                 message+"""This error must never occur. Please contact the developper team of this module.\n"""
@@ -717,6 +753,7 @@ class update_received(osv.osv,fv_formatter):
                     cr, uid, sdref, {
                         'sync_date': fields.datetime.now(),
                         'touched' : '[]',
+                        'resend': False,
                     },
                     context=context)
             return
@@ -902,7 +939,7 @@ class update_received(osv.osv,fv_formatter):
                      or next_version < data_rec.version))                     # next version is lower than current version
 
     def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback,
-                                      message, update, context=None):
+                                      message, update, local_level=None, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')
         result = {
             'res': True,
@@ -915,6 +952,10 @@ class update_received(osv.osv,fv_formatter):
             return not ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context)
 
         for i, field, value in zip(range(len(fields)), fields, values):
+            # replace English by MSF English for the updates on partners where English had been selected at some point
+            # (so that the initial synchro on new instances isn't blocked)
+            if update.model == 'res.partner' and field == 'lang' and value == 'en_US':
+                values[i] = u'en_MF'
             if '/id' not in field: continue
             if not value: continue
             res_val = []
@@ -933,9 +974,9 @@ class update_received(osv.osv,fv_formatter):
                                 result['error_message'] = 'Cannot execute due to missing the %s' % field
                                 return result
                         if '/analytic_distribution/' in xmlid:
-                            result['res'] = False
-                            result['error_message'] = 'Cannot execute due to missing the %s' % field
-                            return result
+                            self.pool.get('analytic.distribution').import_data(cr, uid, ['name', 'id'], [['Auto created', xmlid]], mode='update', current_module='sd', noupdate=True, context=context)
+                            res_val.append(xmlid)
+                            continue
 
                         #US-2147: property_product_pricelist/id and
                         # property_product_pricelist_purchase/id are required
@@ -952,6 +993,16 @@ class update_received(osv.osv,fv_formatter):
 
                         if update.model == 'res.partner.address' and field == 'partner_id/id':
                             return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                        if update.model == 'account.tax' and field == 'partner_id/id':
+                            return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                        if update.model == 'account.analytic.line' and field in ('cost_center_id/id', 'destination_id/id'):
+                            return {'res': False, 'error_message': 'Analytic Account %s not found' % xmlid}
+
+                        if update.model == 'account.move.reconcile' and field in ['line_id/id', 'partial_line_ids/id']:
+                            # not an issue if we are a project and no NR in the pipe
+                            if local_level != 'project' or self.search(cr, uid, [('sdref', '=', sdref), ('run', '=', False)], order='NO_ORDER', context=context):
+                                return {'res': False, 'error_message': 'JI %s not found' % xmlid}
+
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")

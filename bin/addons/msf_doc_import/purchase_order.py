@@ -30,11 +30,58 @@ import base64
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
+from msf_doc_import.wizard import RFQ_COLUMNS_HEADER_FOR_IMPORT
+from msf_doc_import.wizard import RFQ_LINE_COLUMNS_FOR_IMPORT
 from msf_doc_import import GENERIC_MESSAGE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 from service.web_services import report_spool
 
+class purchase_order_manual_export(osv.osv_memory):
+    _name = 'purchase.order.manual.export'
+
+    _columns = {
+        'purchase_id': fields.many2one('purchase.order', 'Purchase Order'),
+
+    }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        result = {'fields': {}, 'model': 'purchase.order.manual.export', 'type': 'form'}
+
+        msg = _('Manually run export of PO')
+
+        if self.pool.get('purchase.order').search_exist(cr, uid, [('id', '=', context.get('purchase_order')), ('auto_exported_ok', '=', True)], context=context):
+            msg = _('The PO was already exported, do you want to export it again ?')
+        result['arch'] = '''<form string="%(title)s">
+            <separator coslpan="4" string="%(msg)s" />
+            <button special="cancel" string="%(cancel)s" icon="gtk-cancel" colspan="2"/>
+            <button name="export_po" string="%(ok)s" icon="gtk-ok" colspan="2" type="object"/>
+            </form>''' % {
+            'title': msg,
+            'msg': msg,
+            'cancel': _('Cancel'),
+            'ok': _('OK'),
+        }
+        return result
+
+    def export_po(self, cr, uid, ids, context=None):
+        wiz = self.browse(cr, uid, ids[0], context)
+        auto_job_ids = self.pool.get('automated.export').search(cr, uid, [('function_id.method_to_call', '=', 'auto_export_validated_purchase_order'), ('active', '=', True), ('partner_id', '=', wiz.purchase_id.partner_id.id)], context=context)
+        if not auto_job_ids:
+            raise osv.except_osv(_('Warning'), _('The job to export PO is not active.'))
+
+        auto_job = self.pool.get('automated.export').browse(cr, uid, auto_job_ids[0], context=context)
+
+
+        processed, rejected, trash = self.pool.get('purchase.order').auto_export_validated_purchase_order(cr, uid, auto_job, [wiz.purchase_id.id], context=context)
+        if not rejected:
+            self.log(cr, uid, wiz.purchase_id.id, _('PO %s successfully exported') % wiz.purchase_id.name)
+        else:
+            self.log(cr, uid, wiz.purchase_id.id, _('PO %s %d lines rejected') %  (wiz.purchase_id.name, len(rejected)))
+
+        return {'type': 'ir.actions.act_window_close'}
+
+purchase_order_manual_export()
 
 class purchase_order(osv.osv):
     _inherit = 'purchase.order'
@@ -73,6 +120,34 @@ class purchase_order(osv.osv):
 
         return res
 
+
+    def _can_be_auto_exported(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+
+        if not ids:
+            return {}
+
+        cr.execute('''
+            select o.id
+                from
+                    purchase_order o, automated_export exp, automated_export_function fnct
+                where
+                    o.id in %s and
+                    o.partner_type = 'esc' and
+                    o.state in ('validated', 'validated_p') and
+                    o.partner_id = exp.partner_id and
+                    exp.active = 't' and
+                    exp.function_id = fnct.id and
+                    fnct.method_to_call = 'auto_export_validated_purchase_order'
+        ''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            ret[x[0]] = True
+
+        return ret
+
     _columns = {
         'import_in_progress': fields.function(
             _get_import_progress,
@@ -83,12 +158,26 @@ class purchase_order(osv.osv):
         ),
         'import_filenames': fields.one2many('purchase.order.simu.import.file', 'order_id', string='Imported files', readonly=True),
         'auto_exported_ok': fields.boolean('PO exported to ESC'),
+        'can_be_auto_exported': fields.function(_can_be_auto_exported, method=True, type='boolean', string='Can be auto exported ?'),
     }
 
     _defaults = {
         'import_in_progress': lambda *a: False,
     }
 
+    def auto_export_manual(self, cr, uid, ids, context=None):
+        wiz_id = self.pool.get('purchase.order.manual.export').create(cr, uid, {'purchase_id': ids[0]}, context=context)
+        ctx = context.copy()
+        ctx['purchase_order'] = ids[0]
+        return {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': wiz_id,
+            'context': ctx,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'res_model': 'purchase.order.manual.export',
+        }
 
     def get_file_content(self, cr, uid, file_path, context=None):
         if context is None:
@@ -136,9 +225,9 @@ class purchase_order(osv.osv):
         if not po_name:
             raise osv.except_osv(_('Error'), _('No PO name found in the given import file'))
 
-        po_id = self.search(cr, uid, [('name', '=', po_name)], context=context)
+        po_id = self.search(cr, uid, [('name', '=', po_name), ('state', 'in', ['validated', 'validated_p', 'confirmed', 'confirmed_p'])], context=context)
         if not po_id:
-            raise osv.except_osv(_('Error'), _('No PO found with the name %s') % po_name)
+            raise osv.except_osv(_('Error'), _('No available PO found with the name %s') % po_name)
 
         return po_id[0]
 
@@ -201,8 +290,8 @@ class purchase_order(osv.osv):
                     rejected.append( (key, values[key]) )
         else:
             values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.encodestring(file_content), context=context)
-            header = [x.replace('_', ' ').title() for x in values.get(21)]
-            for key in sorted([k for k in values.keys() if k > 21]):
+            header = [x.replace('_', ' ').title() for x in values.get(23)]
+            for key in sorted([k for k in values.keys() if k > 23]):
                 if import_success:
                     processed.append( (key, values[key]) )
                 else:
@@ -219,6 +308,9 @@ class purchase_order(osv.osv):
             context = {}
 
         import_success = False
+        # Reset part of the context updated in the PO import
+        context.update({'line_ids_to_confirm': [], 'job_comment': []})
+        simu_obj = self.pool.get('wizard.import.po.simulation.screen')
         try:
             # get filetype
             filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
@@ -230,11 +322,16 @@ class purchase_order(osv.osv):
             # create wizard.import.po.simulation.screen
             simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
             # launch simulate
-            self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context, thread=False)
+            simu_obj.launch_simulate(cr, uid, simu_id, context=context, thread=False)
+
             # get simulation report
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+            simu_result = simu_obj.read(cr, uid, simu_id, ['state', 'message'], context=context)
+            if simu_result['state'] == 'error':
+                raise osv.except_osv(_('Error'), simu_result['message'])
+
             # import lines
-            self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context, thread=False)
+            simu_obj.launch_import(cr, uid, simu_id, context=context, thread=False)
             # attach simulation report
             self.pool.get('ir.attachment').create(cr, uid, {
                 'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
@@ -259,58 +356,68 @@ class purchase_order(osv.osv):
             context = {}
 
         context.update({'auto_import_confirm_pol': True})
+        # Reset part of the context updated in the PO import
+        context.update({'line_ids_to_confirm': [], 'job_comment': []})
         res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
         context['rejected_confirmation'] = 0
+
+        pol_obj = self.pool.get('purchase.order.line')
         if context.get('po_id'):
-            po = self.browse(cr, uid, context['po_id'], context=context)
+            pol_ids_to_confirm = pol_obj.search(cr, uid, [('order_id', '=', context['po_id']), ('id', 'in', context['line_ids_to_confirm']), ('state', 'not in', ['confirmed', 'done', 'cancel', 'cancel_r'])], context=context)
             nb_pol_confirmed = 0
             nb_pol_total = 0
-            for pol in po.order_line:
+            po_name = ''
+            for pol in pol_obj.browse(cr, uid, pol_ids_to_confirm, fields_to_fetch=['order_id', 'line_number'], context=context):
                 nb_pol_total += 1
-                if pol.line_number in context.get('line_number_to_confirm', []) or \
-                        (pol.external_ref and pol.external_ref in context.get('ext_ref_to_confirm', [])):
-                    try:
-                        self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
-                        cr.commit()
-                        nb_pol_confirmed += 1
-                    except:
-                        context['rejected_confirmation'] += 1
-                        cr.rollback()
-                        self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (po.name, pol.line_number))
-                        job_comment = context.get('job_comment', [])
-                        job_comment.append({
-                            'res_model': 'purchase.order',
-                            'res_id': po.id,
-                            'msg': _('%s line #%s cannot be confirmed') % (po.name, pol.line_number),
-                        })
-                        context['job_comment'] = job_comment
+                try:
+                    self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                    cr.commit()
+                    nb_pol_confirmed += 1
+                    po_name = pol.order_id.name
+                except:
+                    context['rejected_confirmation'] += 1
+                    cr.rollback()
+                    self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (pol.order_id.name, pol.line_number))
+                    job_comment = context.get('job_comment', [])
+                    job_comment.append({
+                        'res_model': 'purchase.order',
+                        'res_id': pol.order_id.id,
+                        'msg': _('%s line #%s cannot be confirmed') % (pol.order_id.name, pol.line_number),
+                    })
+                    context['job_comment'] = job_comment
 
             if nb_pol_confirmed:
-                self.log(cr, uid, po.id, _('%s: %s out of %s lines have been confirmed') % (po.name, nb_pol_confirmed, nb_pol_total))
+                self.log(cr, uid, context['po_id'], _('%s: %s out of %s lines have been confirmed') % (po_name, nb_pol_confirmed, nb_pol_total))
 
         return res
 
 
-    def auto_export_validated_purchase_order(self, cr, uid, export_wiz, context=None):
+    def auto_export_validated_purchase_order(self, cr, uid, export_wiz, po_ids=False, context=None):
         '''
         Method called by obj automated.export
         '''
         if context is None:
             context = {}
 
-        po_ids = self.search(cr, uid, [
-            ('partner_type', '=', 'esc'),
-            ('state', 'in', ['validated', 'validated_p']),
-            ('auto_exported_ok', '=', False),
-        ], context= context)
+        # any change in domain must also be changed in _can_be_auto_exported
+        if not po_ids:
+            po_ids = self.search(cr, uid, [
+                ('partner_type', '=', 'esc'),
+                ('state', 'in', ['validated', 'validated_p']),
+                ('auto_exported_ok', '=', False),
+                ('partner_id', '=', export_wiz.partner_id.id),
+            ], context=context)
 
         if not po_ids:
             msg = _('No PO to export !')
             self.infolog(cr, uid, msg)
             context.update({'po_not_found': True})
+            return [], [], ['PO id', 'PO name']
 
         processed, rejected = [], []
-        for index, po_id in enumerate(po_ids):
+        cr.execute('select id from purchase_order where id in %s for update skip locked', (tuple(po_ids),))
+        index = 0
+        for po_id, in cr.fetchall():
             # generate report:
             report_name = 'validated.purchase.order_xls' if export_wiz.export_format == 'excel' else 'validated.purchase.order_xml'
             datas = {'ids': [po_id]}
@@ -353,19 +460,18 @@ class purchase_order(osv.osv):
                 # create tmp file
                 tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
                 tmp_file.write(base64.decodestring(file_res['result']))
+                tmpname = tmp_file.name
                 tmp_file.close()
-                new_tmp_file_name = os.path.join(os.path.dirname(tmp_file.name), filename)
-                os.rename(tmp_file.name, new_tmp_file_name)
 
                 # transfer tmp file on SFTP server
                 try:
                     with sftp.cd(export_wiz.dest_path):
-                        sftp.put(new_tmp_file_name, preserve_mtime=True)
+                        sftp.put(tmpname, filename, preserve_mtime=True)
                 except:
                     raise osv.except_osv(_('Error'), _('Unable to write on SFTP server at location %s') % export_wiz.dest_path)
 
                 # now we can remove tmp file
-                os.remove(new_tmp_file_name)
+                os.remove(tmpname)
             else:
                 # write export in local file
                 with open(path_to_file, 'w') as fich:
@@ -374,9 +480,9 @@ class purchase_order(osv.osv):
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
             self.infolog(cr, uid, _('%s successfully exported') % po_name)
+            index += 1
 
         return processed, rejected, ['PO id', 'PO name']
-
 
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''
@@ -387,27 +493,12 @@ class purchase_order(osv.osv):
 
         if 'import_in_progress' not in defaults:
             defaults.update({'import_in_progress': False})
+        if 'auto_exported_ok' not in defaults:
+            defaults.update({'auto_exported_ok': False})
+        if 'import_filenames' not in defaults:
+            defaults['import_filenames'] = False
 
         return super(purchase_order, self).copy(cr, uid, id, defaults, context=context)
-
-    def _check_active_product(self, cr, uid, ids, context=None):
-        '''
-        Check if the Purchase order contains a line with an inactive products
-        '''
-        inactive_lines = self.pool.get('purchase.order.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                               ('order_id', 'in', ids),
-                                                                               ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
-
-        if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
-            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
-            return False
-        return True
-
-    _constraints = [
-        (_check_active_product, "You cannot validate this purchase order because it contains a line with an inactive product", ['order_line', 'state'])
-    ]
 
     def wizard_import_file(self, cr, uid, ids, context=None):
         '''
@@ -539,8 +630,16 @@ class purchase_order(osv.osv):
         po = self.browse(cr, uid, [ids[0]], context=context)[0]
         columns = columns_for_po_line_import
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import]
+
+        if po.rfq_ok:
+            columns = RFQ_LINE_COLUMNS_FOR_IMPORT
+            columns_header = [(_(f[0]), f[1]) for f in RFQ_COLUMNS_HEADER_FOR_IMPORT]
+            if po.state != 'rfq_sent':
+                columns = columns[1:]
+                columns_header = columns_header[1:]
+
         # if PO is not a RfQ, then we doesn't take in account the first column (Line Number):
-        if not po.rfq_ok or po.state != 'rfq_sent':
+        if not po.rfq_ok:
             columns = columns_for_po_line_import[1:]
             columns_header = columns_header[1:]
 
@@ -570,13 +669,8 @@ class purchase_order(osv.osv):
             ids = [ids]
         message = ''
         plural = ''
-        obj_data = self.pool.get('ir.model.data')
 
         for var in self.browse(cr, uid, ids, context=context):
-            # we check the supplier and the address
-            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'supplier_tbd')[1] \
-                    or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'address_tbd')[1]:
-                raise osv.except_osv(_('Warning !'), _("\n You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."))
             # we check the lines that need to be fixed
             if var.order_line:
                 for var in var.order_line:
@@ -639,6 +733,27 @@ class purchase_order_line(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
+
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the Purchase order line has an inactive product
+        '''
+        inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('id', 'in', ids),
+                                               ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context=context)
+
+        if inactive_lines:
+            if len(inactive_lines) == 1:
+                line = self.browse(cr, uid, inactive_lines[0], fields_to_fetch=['product_id'], context=context)
+                raise osv.except_osv(_('Error'), _('%s has been inactivated. Please correct the line containing the inactive product.') % (line.product_id.default_code, ))
+
+            plural = _('Some products have')
+            l_plural = _('lines')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this line you have to remove/correct the line containing the inactive product (see red %s of the document)') % (plural, l_plural))
+        return True
+
+    _constraints = [
+        (_check_active_product, "You cannot validate this purchase order line because it has an inactive product", ['id', 'state'])
+    ]
 
     def check_line_consistency(self, cr, uid, ids, *args, **kwargs):
         """

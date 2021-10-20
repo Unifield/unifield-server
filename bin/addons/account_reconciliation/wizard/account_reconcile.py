@@ -31,8 +31,8 @@ class account_move_line_reconcile(osv.osv_memory):
     _name = 'account.move.line.reconcile'
 
     _columns = {
-        'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation'), 
-                                   ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State", 
+        'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation'),
+                                   ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State",
                                   required=True, readonly=True),
         'different_currencies': fields.boolean('Is this reconciliation in different currencies? (2 at most)'),
     }
@@ -42,7 +42,7 @@ class account_move_line_reconcile(osv.osv_memory):
         'different_currencies': lambda *a: False,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Add state field in res
         """
@@ -50,7 +50,7 @@ class account_move_line_reconcile(osv.osv_memory):
         if not context:
             context = {}
         # Default value
-        res = super(account_move_line_reconcile, self).default_get(cr, uid, fields, context=context)
+        res = super(account_move_line_reconcile, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         # Retrieve some value
         data = self.trans_rec_get(cr, uid, context['active_ids'], context=context)
         # Get different currencies state
@@ -171,8 +171,8 @@ class account_move_line_reconcile(osv.osv_memory):
             # UTP-1040: 3RD party is also desactivated in case of account that is "Disregard Third Party" as "type_for_register"
             if not transfer and not disregard_third_party:
                 third_party = {
-                    'partner_id': line.partner_id and line.partner_id.id or False, 
-                    'employee_id': line.employee_id and line.employee_id.id or False, 
+                    'partner_id': line.partner_id and line.partner_id.id or False,
+                    'employee_id': line.employee_id and line.employee_id.id or False,
                     'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or False}
                 if not prev_third_party:
                     prev_third_party = third_party
@@ -210,6 +210,8 @@ class account_move_line_reconcile(osv.osv_memory):
         if debit <= 10**-3 or credit <= 10**-3:
             raise osv.except_osv(_('Error'), _('Both Debit and Credit lines are required for reconciliation.'))
 
+        account_move_line_obj.check_multi_curr_rec(cr, uid, context.get('active_ids', []), context=context)
+
         # Adapt state value
         if diff_in_booking <= 10**-3:
             state = 'total'
@@ -224,15 +226,8 @@ class account_move_line_reconcile(osv.osv_memory):
             different_currencies = True
             debit = fdebit
             credit = fcredit
-        # For salaries, behaviour is the same as total_change: we use functional debit/credit
-        if account_id == salary_account_id or (currency_id and currency2_id and not transfer_with_change):
-            if abs(fdebit - fcredit) <= 10**-3:
-                state = 'total'
-            else:
-                state = 'partial'
-                # UF-2050: Do not allow partial reconciliation of entries in different currencies. We ALWAYS do total reconciliation
-                if different_currencies and not transfer_with_change:
-                    state = 'total'
+            # UF-2050: Do not allow partial reconciliation of entries in different currencies. We ALWAYS do total reconciliation
+            state = 'total'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state, 'different_currencies': different_currencies}
 
     def total_reconcile(self, cr, uid, ids, context=None):

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="sequence_replenishment_location_config_type" model="ir.sequence.type">
+            <field name="name">Location Configuration</field>
+            <field name="code">replenishment.location.config</field>
+        </record>
+
+        <record id="sequence_replenishment_location_config" model="ir.sequence">
+            <field name="name">Location Configuration</field>
+            <field name="code">replenishment.location.config</field>
+            <field name="prefix">LC/%(y)s/%(instance)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <record id="sequence_replenishment_parent_segment_type" model="ir.sequence.type">
+            <field name="name">Parent Segment</field>
+            <field name="code">replenishment.parent.segment</field>
+        </record>
+
+        <record id="sequence_replenishment_parent_segment" model="ir.sequence">
+            <field name="name">Parent Segment</field>
+            <field name="code">replenishment.parent.segment</field>
+            <field name="prefix">PS/%(y)s/%(instance)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <record id="sequence_replenishment_segment_type" model="ir.sequence.type">
+            <field name="name">Segment</field>
+            <field name="code">replenishment.segment</field>
+        </record>
+
+        <record id="sequence_replenishment_segment" model="ir.sequence">
+            <field name="name">Segment</field>
+            <field name="code">replenishment.segment</field>
+            <field name="prefix">SEG/%(y)s/%(instance)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <record id="sequence_order_calc_type" model="ir.sequence.type">
+            <field name="name">Order Calc</field>
+            <field name="code">replenishment.order_calc</field>
+        </record>
+
+        <record id="sequence_order_calc" model="ir.sequence">
+            <field name="name">Order Calc</field>
+            <field name="code">replenishment.order_calc</field>
+            <field name="prefix">OC/%(y)s/%(instance)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <record id="sequence_stock_out_type" model="ir.sequence.type">
+            <field name="name">Stock out</field>
+            <field name="code">product.stock_out</field>
+        </record>
+
+        <record id="sequence_stock_out" model="ir.sequence">
+            <field name="name">Stock out</field>
+            <field name="code">product.stock_out</field>
+            <field name="prefix">SO/%(y)s/%(instance)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+       <record id="ir_cron_replenishment_segment" model="ir.cron">
+            <field name="function">replenishment_compute_all_bg</field>
+            <field name="user_id">1</field>
+            <field name="name">Replenishment Rules</field>
+            <field name="interval_type">days</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="1" name="active"/>
+            <field eval="1" name="interval_number"/>
+            <field name="model">replenishment.segment</field>
+        </record>
+
+
+    </data>
+</openerp>

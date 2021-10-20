@@ -84,6 +84,7 @@ class _column(object):
         self.priority = priority
         self.change_default = change_default
         self.ondelete = ondelete
+        self.null_value = args.get('null_value')
         self.translate = translate
         self._domain = domain
         self._context = context
@@ -97,6 +98,7 @@ class _column(object):
         self.hide_default_menu = hide_default_menu
         self.group_operator = args.get('group_operator', False)
         self.m2o_order = args.get('m2o_order', False)
+        self.sort_column = False
         for a in args:
             if args[a]:
                 setattr(self, a, args[a])
@@ -195,6 +197,8 @@ class float(_column):
         _column.__init__(self, string=string, **args)
         self.digits = digits
         self.digits_compute = digits_compute
+        if not args.get('en_thousand_sep', True):
+            self.en_thousand_sep = False
 
         # custom fields
         self.computation = args.get('computation', False)
@@ -209,6 +213,22 @@ class float(_column):
             # new customized fields
             computation = self.digits_compute(cr, computation=True)
             self.computation = computation
+
+class float_null(float):
+    _type = 'float'
+    _with_null = True
+    _symbol_c = '%s'
+    _symbol_f = lambda x: None if x is False or x is None else __builtin__.float(x or  0.0)
+    _symbol_set = (_symbol_c, _symbol_f)
+    _symbol_get = lambda self,x: None if x is False or x is None else x or 0.0
+
+class integer_null(integer):
+    _type = 'integer'
+    _symbol_c = '%s'
+    _with_null = True
+    _symbol_f = lambda x: None if x is False or x is None else int(x or 0)
+    _symbol_set = (_symbol_c, _symbol_f)
+    _symbol_get = lambda self,x: None if x is False or x is None else x or 0
 
 
 class date(_column):
@@ -497,10 +517,15 @@ class one2many(_column):
         for id in ids:
             res[id] = []
 
-        ids2 = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, 'in', ids)], limit=self._limit, context=context)
-        for r in obj.pool.get(self._obj)._read_flat(cr, user, ids2, [self._fields_id], context=context, load='_classic_write'):
-            if r[self._fields_id] in res:
-                res[r[self._fields_id]].append(r['id'])
+
+        if self._obj in ['replenishment.segment.line', 'replenishment.order_calc.line', 'replenishment.inventory.review.line']:
+            for _id in ids:
+                res[_id] = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, '=', _id)], limit=self._limit, context=context)
+        else:
+            ids2 = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, 'in', ids)], limit=self._limit, context=context)
+            for r in obj.pool.get(self._obj)._read_flat(cr, user, ids2, [self._fields_id], context=context, load='_classic_write'):
+                if r[self._fields_id] in res:
+                    res[r[self._fields_id]].append(r['id'])
         return res
 
     def set(self, cr, obj, id, field, values, user=None, context=None):
@@ -536,6 +561,12 @@ class one2many(_column):
                 cr.execute('select id from '+_table+' where '+self._fields_id+'=%s and id <> ALL (%s)', (id,ids2))  # not_a_user_entry
                 ids3 = map(lambda x:x[0], cr.fetchall())
                 obj.write(cr, user, ids3, {self._fields_id:False}, context=context or {})
+            elif act[0] == 7:
+                # same a (4, id1), (4, id2), (4, id3) ... but with a single SQL query
+                if isinstance(act[1], (int, long)):
+                    act[1] = [act[1]]
+                cr.execute('update '+_table+' set '+self._fields_id+'=%s where id in %s', (id, tuple(act[1])))  # not_a_user_entry
+
         return result
 
     def search(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, operator='like', context=None):
@@ -765,6 +796,7 @@ class function(_column):
         self._fnct_inv = fnct_inv
         self._arg = arg
         self._multi = multi
+        self._with_null = args.get('with_null', False)
         if 'relation' in args:
             self._obj = args['relation']
 

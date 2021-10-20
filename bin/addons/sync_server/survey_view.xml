@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="sync_server_survey_search">
+            <field name="name">sync_server_survey_search</field>
+            <field name="model">sync_server.survey</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <filter name="activated" string="Synced" domain="[('activated', '=', True)]" icon="gtk-connect" />
+                    <filter name="deactivated" string="Not Synced" domain="[('activated', '=', False)]" icon="gtk-disconnect"/>
+                    <separator />
+                    <filter name="current" string="Current" domain="[('date_filter', '=', 'current')]" icon="terp-go-today" />
+                    <filter name="future" string="Future" domain="[('date_filter', '=', 'future')]" icon="terp-calendar" />
+                    <separator />
+                    <field name="name"/>
+                    <field name="name_fr"/>
+                    <field name="profile" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="included_group_ids" />
+                    <field name="excluded_group_ids" />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="sync_server_survey_tree">
+            <field name="name">sync_server_survey_tree</field>
+            <field name="model">sync_server.survey</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree colors="grey:end_date&lt;current_date;orange:not activated and end_date&gt;current_date">
+                    <field name="name"/>
+                    <field name="name_fr"/>
+                    <field name="profile" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="activated" />
+                    <field name="url_en" widget="url"/>
+                    <field name="url_fr" widget="url"/>
+                    <field name="included_group_ids" truncate="256" />
+                    <field name="excluded_group_ids" truncate="256" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="sync_server_survey_form">
+            <field name="name">sync_server_survey_tree</field>
+            <field name="model">sync_server.survey</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Survey">
+                    <group colspan="4" attrs="{'invisible': [('activated', '=', True)]}">
+                        <html>
+                            <p style="text-align: center; color: orange; margin-bottom: 10px; font-weight: bold; font-size: +1.5em;">
+                                <translate>Survey is not synced.</translate>
+                            </p>
+                        </html>
+                    </group>
+                    <field name="name"/>
+                    <field name="name_fr"/>
+                    <field name="profile" />
+                    <newline />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="url_en" widget="url" attrs="{'readonly': [('activated', '=', True)]}" colspan="4" />
+                    <field name="url_fr" widget="url" attrs="{'readonly': [('activated', '=', True)]}" colspan="4" />
+                    <group colspan="4">
+                        <field name="activated" readonly="1"/>
+                        <button name="activate" icon="gtk-connect" type="object" string="Activate Sync" attrs="{'invisible': [('activated', '=', True)]}"/>
+                        <button name="deactivate" icon="gtk-disconnect" type="object" string="De-Activate Sync" attrs="{'invisible': [('activated', '=', False)]}" />
+                    </group>
+                    <newline />
+                    <field name="included_group_ids" context="{'hide': excluded_group_ids}" nolabel="1" colspan="2">
+                        <tree string="Included Groups">
+                            <field name="name" />
+                        </tree>
+                    </field>
+                    <field name="excluded_group_ids" context="{'hide': included_group_ids}" nolabel="1" colspan="2">
+                        <tree string="Excluded Groups">
+                            <field name="name" />
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="sync_server_survey_action">
+            <field name="name">Survey</field>
+            <field name="res_model">sync_server.survey</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{}</field>
+        </record>
+
+        <menuitem id="sync_server_survey_menu" parent="sync_server.sync_menu" sequence="100" action="sync_server_survey_action" groups="sync_common.sync_read_group"/>
+
+        <record model="ir.ui.view" id="res_groups_instances_search">
+            <field name="name">res_groups_instances_search</field>
+            <field name="model">res.groups.instances</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+    </data>
+</openerp>
+

@@ -49,13 +49,8 @@ DOCUMENT_DATA = {
     'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids', 'item_qty', ''),
     'purchase.order': ('purchase.order.line', 'order_id', 'order_line', 'product_qty', ''),
     'tender': ('tender.line', 'tender_id', 'tender_line_ids', 'qty', ''),
-    'sale.order': ('sale.order.line', 'order_id', 'order_line', 'product_uom_qty', ''),
     'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids', 'min_qty', ''),
     'stock.picking': ('stock.move', 'picking_id', 'move_lines', 'product_qty', '(\'state\', \'=\', \'draft\')'),
-    'stock.warehouse.orderpoint': ('stock.warehouse.orderpoint.line', 'supply_id', 'line_ids', '', ''),
-    'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids', 'product_qty', ''),
-    'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_ids', 'safety_stock', ''),
-    'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', '', ''),
     'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
     'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
     'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'consumed_qty', ''),
@@ -98,9 +93,8 @@ to remove some or all lines on documents.
 Documents which inherit from document.remove.line:
     * Product List
     * Theoretical Kit Composition
-    * Purchase Order / Request for Quotation
+    * Request for Quotation
     * Tender
-    * Field Order / Internal request
     * Supplier catalogue
     * Stock Picking (IN / INT / OUT / PICK)
     * Order Cycle Replenishment Rule
@@ -162,14 +156,6 @@ class tender(osv.osv):
         return brl(self, cr, uid, ids, context=context)
 
 
-class sale_order(osv.osv):
-    _name = 'sale.order'
-    _inherit = 'sale.order'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        return brl(self, cr, uid, ids, context=context)
-
-
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _inherit = 'supplier.catalogue'
@@ -183,43 +169,6 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
 
     def button_remove_lines(self, cr, uid, ids, context=None):
-        return brl(self, cr, uid, ids, context=context)
-
-
-class stock_warehouse_orderpoint(osv.osv):
-    _name = 'stock.warehouse.orderpoint'
-    _inherit = 'stock.warehouse.orderpoint'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        return brl(self, cr, uid, ids, context=context)
-
-
-class stock_warehouse_automatic_supply(osv.osv):
-    _name = 'stock.warehouse.automatic.supply'
-    _inherit = 'stock.warehouse.automatic.supply'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        return brl(self, cr, uid, ids, context=context)
-
-
-class stock_warehouse_order_cycle(osv.osv):
-    _name = 'stock.warehouse.order.cycle'
-    _inherit = 'stock.warehouse.order.cycle'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        return brl(self, cr, uid, ids, context=context)
-
-
-class threshold_value(osv.osv):
-    _name = 'threshold.value'
-    _inherit = 'threshold.value'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        ids = isinstance(ids, (int, long)) and [ids] or ids
-        context = context is None and {} or context
-
-        context.update({'compute_method': self.read(cr, uid, ids[0], ['compute_method'], context=context)['compute_method']})
-
         return brl(self, cr, uid, ids, context=context)
 
 
@@ -263,13 +212,8 @@ return_claim()
 purchase_order()
 composition_kit()
 tender()
-sale_order()
 supplier_catalogue()
 stock_picking()
-stock_warehouse_orderpoint()
-stock_warehouse_automatic_supply()
-stock_warehouse_order_cycle()
-threshold_value()
 stock_inventory()
 initial_stock_inventory()
 real_average_consumption()
@@ -286,9 +230,8 @@ Documents:
     * Product List lines
     * Claim product lines
     * Theoretical Kit Items
-    * Purchase Order / Request for Quotation lines
+    * Request for Quotation lines
     * Tender lines
-    * Field Order / Internal request lines
     * Supplier catalogue lines
     * Stock Moves (IN / INT / OUT / PICK)
     * Order Cycle Replenishment Rule lines
@@ -342,8 +285,6 @@ def noteditable_fields_view_get(res, view_type, context=None):
         fields = root.xpath('/tree')
         for field in fields:
             root.set('noteditable', 'True')
-            if context.get('procurement_request'):
-                root.set('string', 'Internal request lines')
             if context.get('rfq_ok'):
                 root.set('string', 'RfQ lines')
         res['arch'] = etree.tostring(root)
@@ -402,22 +343,6 @@ class tender_line(osv.osv):
         return noteditable_fields_view_get(res, view_type, context)
 
 
-class sale_order_line(osv.osv):
-    _inherit = 'sale.order.line'
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if context is None:
-            context = {}
-
-        if context.get('initial_doc_id', False) and context.get('initial_doc_type', False) == 'sale.order':
-            proc_request = self.pool.get('sale.order').browse(cr, uid, context.get('initial_doc_id'), context=context).procurement_request
-            context['procurement_request'] = proc_request
-
-        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        res = super(sale_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return noteditable_fields_view_get(res, view_type, context)
-
-
 class supplier_catalogue_line(osv.osv):
     _inherit = 'supplier.catalogue.line'
 
@@ -433,33 +358,6 @@ class stock_move(osv.osv):
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
         res = super(stock_move, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return noteditable_fields_view_get(res, view_type, context)
-
-
-class stock_warehouse_automatic_supply_line(osv.osv):
-    _inherit = 'stock.warehouse.automatic.supply.line'
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        res = super(stock_warehouse_automatic_supply_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return noteditable_fields_view_get(res, view_type, context)
-
-
-class stock_warehouse_order_cycle_line(osv.osv):
-    _inherit = 'stock.warehouse.order.cycle.line'
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        res = super(stock_warehouse_order_cycle_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return noteditable_fields_view_get(res, view_type, context)
-
-
-class threshold_value_line(osv.osv):
-    _inherit = 'threshold.value.line'
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        res = super(threshold_value_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return noteditable_fields_view_get(res, view_type, context)
 
 
@@ -504,12 +402,8 @@ claim_product_line()
 purchase_order_line()
 composition_item()
 tender_line()
-sale_order_line()
 supplier_catalogue_line()
 stock_move()
-stock_warehouse_automatic_supply_line()
-stock_warehouse_order_cycle_line()
-threshold_value_line()
 stock_inventory_line()
 initial_stock_inventory_line()
 real_average_consumption_line()
@@ -540,13 +434,13 @@ class wizard_delete_lines(osv.osv_memory):
         'line_ids': fields.text(string='Line ids'),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Check if the wizard has been overrided
         '''
         context = context is None and {} or context
 
-        res = super(wizard_delete_lines, self).default_get(cr, uid, fields, context=context)
+        res = super(wizard_delete_lines, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         # Set the different data which are coming from the context
         if 'active_id' in context:
@@ -573,44 +467,25 @@ class wizard_delete_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # only for FO
-        if context['active_model'] == 'sale.order' \
-                and (not context.get('procurement_request') or not context['procurement_request']):
-            lines_ids = []
-            for wiz in self.browse(cr, uid, ids, context=context):
-                # the id of lines to remove.
-                for line in wiz.line_ids:
-                    for l in line[2]:
-                        lines_ids.append(l)
+        for wiz in self.browse(cr, uid, ids, context=context):
+            line_obj = self.pool.get(wiz.to_remove_type)
+            line_ids = []
+            # Parse the content of 'line_ids' field (text field) to retrieve
+            # the id of lines to remove.
+            for line in wiz.line_ids:
+                for l in line[2]:
+                    line_ids.append(l)
 
-            context['from_del_wizard'] = False
-            ids = lines_ids
-            model = 'delete.sale.order.line.wizard'
-            name = _('Warning!')
-            wiz_obj = self.pool.get('wizard')
-            if len(ids) > 0:
-                # open the selected wizard
-                return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
-        else:
-            for wiz in self.browse(cr, uid, ids, context=context):
-                line_obj = self.pool.get(wiz.to_remove_type)
-                line_ids = []
-                # Parse the content of 'line_ids' field (text field) to retrieve
-                # the id of lines to remove.
-                for line in wiz.line_ids:
-                    for l in line[2]:
-                        line_ids.append(l)
-
-                context['noraise'] = True
-                context.update({
-                    'noraise': True,
-                    'from_del_wizard': True,
-                })
-                if wiz.to_remove_type in ('purchase.order.line', 'tender.line', 'delete.sale.order.line.wizard'):
-                    line_obj.fake_unlink(cr, uid, line_ids, context=context)
-                else:
-                    line_obj.unlink(cr, uid, line_ids, context=context)
-            context['from_del_wizard'] = False
+            context['noraise'] = True
+            context.update({
+                'noraise': True,
+                'from_del_wizard': True,
+            })
+            if wiz.to_remove_type in ('purchase.order.line', 'tender.line', 'delete.sale.order.line.wizard'):
+                line_obj.fake_unlink(cr, uid, line_ids, context=context)
+            else:
+                line_obj.unlink(cr, uid, line_ids, context=context)
+        context['from_del_wizard'] = False
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -638,7 +513,7 @@ class wizard_delete_lines(osv.osv_memory):
             else:
                 line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id)], context=context)
 
-            if wiz.to_remove_type in ['sale.order.line', 'purchase.order.line']:
+            if wiz.to_remove_type == 'purchase.order.line':
                 line_ids = line_obj.search(cr, uid, [('id', 'in', line_ids), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
 
             self.write(cr, uid, [wiz.id], {'line_ids': line_ids}, context=context)
@@ -683,5 +558,6 @@ class wizard_delete_lines(osv.osv_memory):
                                  'domain': "%s" % domain})
 
         return res
+
 
 wizard_delete_lines()

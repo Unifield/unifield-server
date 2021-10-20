@@ -66,7 +66,7 @@ PACK_HEADER = [
     (_('Qty of parcels*'), 'parcel_qty', '', ''),
     (_('From parcel*'), 'parcel_from', 'mandatory', 'int'),
     (_('To parcel*'), 'parcel_to', 'mandatory', 'int'),
-    (_('Weight*'), 'total_weight', 'mandatory', 'float'),
+    (_('Weight*'), 'total_weight', '', 'float'),
     (_('Volume'), 'total_volume', '', 'float'),
     (_('Height'), 'total_height', '', 'float', 10),
     (_('Length'), 'total_length', '', 'float', 10),
@@ -102,7 +102,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                             'backorder_id': simu.picking_id.backorder_id and simu.picking_id.backorder_id.id or False,
                             'header_notes': simu.picking_id.note,
                             'freight_number': simu.picking_id.shipment_ref,
-                            'transport_mode': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
+                            'transport_type': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
 
         return res
 
@@ -147,18 +147,19 @@ class wizard_import_in_simulation_screen(osv.osv):
                                         readonly=True, type='text', multi='related'),
         'freight_number': fields.function(_get_related_values, method=True, string='Freight number',
                                           readonly=True, type='char', size=128, multi='related'),
-        'transport_mode': fields.function(_get_related_values, method=True, string='Transport mode',
+        'transport_type': fields.function(_get_related_values, method=True, string='Transport mode',
                                           readonly=True, type='selection', selection=TRANSPORT_TYPE, multi='related'),
         # Import fields
         'imp_notes': fields.text(string='Notes', readonly=True),
         'message_esc': fields.text(string='Message ESC', readonly=True),
         'imp_origin': fields.char(size=128, string='Origin', readonly=True),
         'imp_freight_number': fields.char(size=128, string='Freight number', readonly=True),
-        'imp_transport_mode': fields.char(string='Transport mode', size=128, readonly=True),
+        'imp_transport_type': fields.char(string='Transport mode', size=128, readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
         'with_pack': fields.boolean('With Pack Info'),
         'pack_found': fields.boolean('Pack Found'),
+        'physical_reception_date': fields.datetime('Physical Reception Date'),
 
     }
 
@@ -167,6 +168,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'filetype': 'excel',
         'with_pack': False,
         'pack_found': False,
+        'physical_reception_date': False,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -245,7 +247,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             'context': context,
         }
 
-    def launch_import(self, cr, uid, ids, context=None):
+    def launch_import(self, cr, uid, ids, context=None, with_ppl=False):
         '''
         '''
         if context is None:
@@ -254,10 +256,10 @@ class wizard_import_in_simulation_screen(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        return self._import(cr, uid, ids, context=context)
+        return self._import(cr, uid, ids, context=context, with_ppl=with_ppl)
 
     def launch_import_pack(self, cr, uid, ids, context=None):
-        return self.launch_import(cr, uid, ids, context)
+        return self.launch_import(cr, uid, ids, context, with_ppl=True)
 
     def populate(self, cr, uid, import_id, picking_id, context=None):
         if context is None:
@@ -270,6 +272,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             if move.state not in ('draft', 'cancel', 'done'):
                 line_obj.create(cr, uid, {
                     'move_id': move.id,
+                    'initial_move_id': move.id,
                     'simu_id': import_id,
                     'move_product_id': move.product_id and move.product_id.id or False,
                     'move_product_qty': move.product_qty or 0.00,
@@ -519,6 +522,55 @@ the date has a wrong format: %s') % (index+1, str(e)))
 
         return values, nb_line, error
 
+    def error_pick_already_processed(self, cr, uid, sol_id_sum, sol_id_to_wiz_line, context):
+        if not sol_id_sum:
+            return ''
+        cr.execute('''
+                select m.sale_line_id, sum(m.product_qty)
+                from stock_move m, stock_picking p
+                where
+                    m.picking_id = p.id and
+                    p.type = 'out' and
+                    p.subtype = 'picking' and
+                    p.state = 'draft' and
+                    m.state in ('assigned', 'confirmed') and
+                    m.in_out_updated = 'f' and
+                    m.sale_line_id in %s
+                group by
+                    m.sale_line_id
+            ''', (tuple(sol_id_sum.keys()),))
+        extra_qty = {}
+        for x in cr.fetchall():
+            if x[1] < sol_id_sum[x[0]]:
+                extra_qty[x[0]] = sol_id_sum[x[0]] -  x[1]
+
+        already_process = {}
+        if extra_qty:
+            cr.execute('''
+                    select m.sale_line_id, sum(m.product_qty)
+                    from stock_move m, stock_picking p
+                    where
+                        m.picking_id = p.id and
+                        p.type = 'out' and
+                        (
+                            p.subtype = 'standard' and p.state = 'done' or
+                            p.subtype = 'picking' and m.state != 'cancel' and p.state in ('done', 'assigned')
+                        ) and
+                        m.in_out_updated = 'f' and
+                        m.sale_line_id in %s
+                    group by
+                        m.sale_line_id
+                ''', (tuple(extra_qty.keys()),))
+            for x in cr.fetchall():
+                already_process[x[0]] = x[1]
+
+        if already_process:
+            details = []
+            for sol in self.pool.get('sale.order.line').browse(cr, uid, already_process.keys(), fields_to_fetch=['product_id'], context=context):
+                details.append(_('Line number: %s, [%s] %s, qty already processed: %s, qty imported: %s') % (sol_id_to_wiz_line.get(sol.id),sol.product_id.default_code, sol.product_id.name, '{:g}'.format(round(already_process.get(sol.id, 0),2)), '{:g}'.format(round(sol_id_sum.get(sol.id,0),2))))
+            return _('Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines or adjust quantity before trying to processs the movement\n%s') % ("\n".join(details))
+        return ''
+
     # Simulation routing
     def simulate(self, dbname, uid, ids, context=None):
         '''
@@ -664,8 +716,8 @@ Nothing has been imported because of %s. See below:
                 header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
-                transport_mode = values.get(5, ['', ''])[1]
-                header_values['imp_transport_mode'] = transport_mode
+                transport_type = values.get(5, ['', ''])[1]
+                header_values['imp_transport_type'] = transport_type
 
                 # Line 6: Notes
                 imp_notes = values.get(6, ['', ''])[1]
@@ -824,14 +876,14 @@ Nothing has been imported because of %s. See below:
                             if num_of_pack:
                                 for line in data_per_pack.get(pack_d[2], []):
                                     if line[3] and line[2] in uom_data:
-                                        if not ppl_processor._check_rounding(cr, uid, pack_d[2], uom_data.get(line[2]), num_of_pack, line[3]):
+                                        if not ppl_processor._check_rounding(cr, uid, uom_data.get(line[2]), num_of_pack, line[3]):
                                             rounding_issues.append('Packing List %s, Pack from parcel %s, to parcel %s' % (ppl or '-', pack_d[0], pack_d[1]))
 
                         pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences[ppl]]), ('integrity_status', '!=', 'empty')], context=context)
                         if pack_errors_ids:
                             pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
                             for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
-                                values_header_errors.append("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
+                                values_header_errors.append(_("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s") % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, _(pack_error_string.get(pack_error.integrity_status))))
 
 
                     rounding_text = ""
@@ -963,9 +1015,31 @@ Nothing has been imported because of %s. See below:
 
                         if err_msg:
                             for err in err_msg:
-                                err = 'Line %s of the Excel file: %s' % (file_line[0], err)
+                                if wiz.filetype == 'excel':
+                                    err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
+                if wiz.with_pack and not context.get('auto_import_ok'):
+                    # check if an out line has been forced
+                    cr.execute('''
+                        select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.imp_product_qty)
+                        from wizard_import_in_line_simulation_screen wiz_line
+                        left join wizard_import_in_simulation_screen wiz on wiz.id = wiz_line.simu_id
+                        left join stock_move move_in on move_in.picking_id = wiz.picking_id and ( move_id is not null and move_in.id = wiz_line.move_id or move_id is null and move_in.id = wiz_line.initial_move_id)
+                        left join purchase_order_line pol on pol.id = move_in.purchase_line_id
+                        where
+                            (wiz_line.type_change in ('', 'split') or wiz_line.type_change is NULL) and
+                            wiz.id = %s
+                        group by wiz_line.line_number, pol.linked_sol_id
+                    ''', (wiz.id,))
+                    sol_id_to_wiz_line = {}
+                    sol_id_sum = {}
+                    for x in cr.fetchall():
+                        sol_id_to_wiz_line[x[1]] = x[0]
+                        sol_id_sum[x[1]] = x[2]
+                    error_pick = self.error_pick_already_processed(cr, uid, sol_id_sum, sol_id_to_wiz_line, context)
+                    if error_pick:
+                        values_line_errors.append(error_pick)
 
                 # Create new lines
                 for in_line in new_in_lines:
@@ -986,7 +1060,8 @@ Nothing has been imported because of %s. See below:
 
                     if err_msg:
                         for err in err_msg:
-                            err = 'Line %s of the Excel file: %s' % (in_line, err)
+                            if wiz.filetype == 'excel':
+                                err = _('Line %s of the Excel file: %s') % (in_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
                     cr.commit()
@@ -1007,13 +1082,13 @@ Nothing has been imported because of %s. See below:
                 if len(values_header_errors):
                     import_error_ok = True
                     can_be_imported = False
-                    message += '\n## Error on header values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on header values'),)
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
                     import_error_ok = True
-                    message += '\n## Error on line values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on line values'),)
                     for err in values_line_errors:
                         message += '%s\n' % err
                     if wiz.with_pack:
@@ -1034,6 +1109,7 @@ Nothing has been imported because of %s. See below:
             cr.close(True)
 
         except Exception, e:
+            cr.rollback()
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
             cr.commit()
@@ -1048,7 +1124,7 @@ Nothing has been imported because of %s. See below:
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def _import_with_thread(self, cr, uid, partial_id, simu_id, context=None):
+    def _import_with_thread(self, cr, uid, partial_id, simu_id, context=None, with_ppl=False):
         inc_proc_obj = self.pool.get('stock.incoming.processor')
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
@@ -1062,7 +1138,7 @@ Nothing has been imported because of %s. See below:
                         prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(new_cr, uid, line.expiry_date, line.product_id.id, context=context)
                         in_proc_obj.write(new_cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
 
-            new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
+            new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context, with_ppl=with_ppl)
             if isinstance(new_picking, (int,long)):
                 context['new_picking'] = new_picking
             new_cr.commit()
@@ -1086,7 +1162,7 @@ Nothing has been imported because of %s. See below:
         return True
 
 
-    def _import(self, cr, uid, ids, context=None):
+    def _import(self, cr, uid, ids, context=None, with_ppl=False):
         '''
         Create memeory moves and return to the standard incoming processing wizard
         '''
@@ -1103,10 +1179,14 @@ Nothing has been imported because of %s. See below:
 
         context['active_id'] = simu_id.picking_id.id
         context['active_ids'] = [simu_id.picking_id.id]
-        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date}, context=context)
+        fields_as_ro = simu_id.picking_id.partner_id.partner_type == 'esc' and simu_id.picking_id.state == 'updated'
+        to_write = {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}
+        if simu_id.physical_reception_date:
+            to_write['physical_reception_date'] = simu_id.physical_reception_date
+        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, to_write, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
-        mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
+        mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, fields_as_ro=fields_as_ro, context=context)
 
         # delete extra lines
         del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
@@ -1117,12 +1197,13 @@ Nothing has been imported because of %s. See below:
 
         context['from_simu_screen'] = True
 
-        if simu_id.with_pack:
+        if simu_id.with_pack or context.get('do_not_import_with_thread'):
             cr.commit()
             if context.get('do_not_import_with_thread'):
-                self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context)
+                # Auto VI IN import: do not process IN
+                self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context, with_ppl=with_ppl)
             else:
-                new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
+                new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context, with_ppl))
                 new_thread.start()
                 new_thread.join(20)
                 if new_thread.isAlive():
@@ -1155,18 +1236,35 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
     _name = 'wizard.import.in.pack.simulation.screen'
     _rec_name = 'parcel_from'
 
+    def _get_real_total(self, cr, uid, ids, f, a, context=None):
+        res = {}
+        for pack in self.browse(cr, uid, ids, context=context):
+            res[pack.id] = {'real_total_volume': False, 'real_total_weight': False}
+
+            if pack.parcel_to and pack.parcel_from:
+                nb_pack = pack.parcel_to - pack.parcel_from + 1
+                if pack.total_weight:
+                    res[pack.id]['real_total_weight'] = int(round(nb_pack * pack.total_weight, 0))
+                if pack.total_height and pack.total_length and pack.total_width:
+                    res[pack.id]['real_total_volume'] = int(round(pack.total_height * pack.total_length * pack.total_width * nb_pack / 1000, 0))
+        return res
+
     _columns = {
         'wizard_id': fields.many2one('wizard.import.in.simulation.screen', 'Simu Wizard'),
-        'parcel_from': fields.integer('Parcel From'),
-        'parcel_to': fields.integer('Parcel To'),
-        'parcel_qty': fields.integer('Parcel Qty'),
-        'total_weight': fields.float('Weight', digits=(16,2)),
-        'total_volume': fields.float('Volume', digits=(16,2)),
-        'total_height': fields.float('Height', digits=(16,2)),
-        'total_length': fields.float('Length', digits=(16,2)),
-        'total_width': fields.float('Width', digits=(16,2)),
+        'parcel_from': fields.integer_null('Parcel From'),
+        'parcel_to': fields.integer_null('Parcel To'),
+        'parcel_qty': fields.integer_null('Parcel Qty'),
+        # on IN VI import file the fields are named total_xxx but the figures are p.p
+        'total_weight': fields.float_null('Weight', digits=(16,2)),
+        'total_volume': fields.float_null('Volume', digits=(16,2)),
+        'total_height': fields.float_null('Height', digits=(16,2)),
+        'total_length': fields.float_null('Length', digits=(16,2)),
+        'total_width': fields.float_null('Width', digits=(16,2)),
         'packing_list': fields.char('Supplier Packing List', size=30),
+        'ppl_name': fields.char('Supplier Packing List', size=128),
         'integrity_status': fields.selection(string='Integrity Status', selection=PACK_INTEGRITY_STATUS_SELECTION, readonly=True),
+        'real_total_volume': fields.function(_get_real_total, method=True, type='integer_null', string='Total volume for all packs', multi='real_total'),
+        'real_total_weight': fields.function(_get_real_total, method=True, type='integer_null', string='Total weight for all packs', multi='real_total'),
     }
 
     _defaults = {
@@ -1215,7 +1313,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             res[line.id] = {
                 'lot_check': product.batch_management,
                 'exp_check': product.perishable,
-                'kc_check': product.kc_txt,
+                'kc_check': product.is_kc and 'X',
                 'dg_check': product.dg_txt,
                 'np_check': product.cs_txt,
                 'move_price_unit': price_unit,
@@ -1262,6 +1360,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'simu_id': fields.many2one('wizard.import.in.simulation.screen', string='Simu ID', required=True, ondelete='cascade'),
         # Values from move line
         'move_id': fields.many2one('stock.move', string='Move', readonly=True),
+        'initial_move_id': fields.many2one('stock.move', string='Initial Move', readonly=True),
         'move_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True, related_uom='move_uom_id'),
         'move_uom_id': fields.many2one('product.uom', string='Ordered UoM', readonly=True),
@@ -1285,6 +1384,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                                          ('new', 'New')], string='CHG', readonly=True),
         'error_msg': fields.text(string='Error message', readonly=True),
         'parent_line_id': fields.many2one('wizard.import.in.line.simulation.screen', string='Parent line', readonly=True),
+        'parent_move_id': fields.many2one('stock.move', string='Parent Move', readonly=True),
         # Values after import
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_asset_id': fields.many2one('product.asset', string='Asset', readonly=True),
@@ -1327,7 +1427,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             method=True,
             type='char',
             size=8,
-            string='KC',
+            string='CC',
             readonly=True,
             store=False,
             multi='computed',
@@ -1364,6 +1464,26 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'integrity_status': 'empty',
     }
 
+
+    def check_exp_date(self, cr, uid, exp_value, context=None):
+        if context is None:
+            context = {}
+
+        res = False
+        if exp_value and type(exp_value) == type(DateTime.now()):
+            if not datetime.strptime(exp_value.strftime('%Y-%m-%d'), '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                res = exp_value.strftime('%Y-%m-%d')
+        elif exp_value and isinstance(exp_value, str):
+            try:
+                time.strptime(exp_value, '%Y-%m-%d')
+                if not datetime.strptime(exp_value, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                    res = exp_value
+            except ValueError:
+                res = False
+
+        return res
+
+
     def import_line(self, cr, uid, ids, values, prodlot_cache=None, context=None):
         '''
         Write the line with the values
@@ -1393,9 +1513,20 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # Product
             prod_id = False
+            loc_id = line.move_id and line.move_id.location_id.id or line.parent_line_id and \
+                line.parent_line_id.move_id.location_id.id or False
+            dest_loc_id = line.move_id and line.move_id.location_dest_id.id or line.parent_line_id and line.parent_line_id.move_id.location_dest_id or False
             if values.get('product_code') == line.move_product_id.default_code:
-                prod_id = line.move_product_id and line.move_product_id.id or False
-                write_vals['imp_product_id'] = prod_id
+                if line.move_product_id:
+                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [line.move_product_id.id],
+                                                                      vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
+                                                                      context=context)
+                    if p_error:  # Check constraints on products
+                        write_vals['type_change'] = 'error'
+                        errors.append(p_msg)
+                    else:
+                        prod_id = line.move_product_id.id
+                        write_vals['imp_product_id'] = prod_id
             else:
                 prod_id = False
                 if values.get('product_code'):
@@ -1417,9 +1548,21 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         self.write(cr, uid, [line.id], write_vals, context=context)
                         continue
                     else:
-                        write_vals['imp_product_id'] = prod_ids[0]
+                        p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
+                                                                          context=context)
+                        if p_error:  # Check constraints on products
+                            write_vals['type_change'] = 'error'
+                            errors.append(p_msg)
+                        else:
+                            write_vals['imp_product_id'] = prod_ids[0]
                 else:
-                    write_vals['imp_product_id'] = prod_id
+                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
+                                                                      context=context)
+                    if p_error:  # Check constraints on products
+                        write_vals['type_change'] = 'error'
+                        errors.append(p_msg)
+                    else:
+                        write_vals['imp_product_id'] = prod_id
 
             product = False
             if write_vals.get('imp_product_id'):
@@ -1489,123 +1632,52 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
                     errors.append(err_msg)
 
-            # Batch
+            # Batch number :: data initialisation
             batch_value = values.get('prodlot_id')
+            exp_value = values.get('expired_date') or False
             lot_check = line.lot_check
             exp_check = line.exp_check
             if product:
                 lot_check = product.batch_management
                 exp_check = product.perishable
-            if not lot_check and not exp_check and batch_value:
-                warnings.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
-            elif batch_value:
-                batch_id = PRODLOT_NAME_ID.get(tools.ustr(batch_value))
-                batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', write_vals['imp_product_id'])], context=context)
-                if not batch_id or batch_id not in batch_ids:
-                    batch_id = None # UFTP-386: If the batch number does not belong to the batch_idS of the given product --> set it to None again!
-                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', tools.ustr(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
-                    if batch_ids:
-                        batch_id = batch_ids[0]
-                        PRODLOT_NAME_ID.setdefault(tools.ustr(batch_value), batch_id)
-                    else:
-                        if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(tools.ustr(batch_value)):
+            if exp_value:
+                exp_value = self.check_exp_date(cr, uid, exp_value, context=context)
+                if not exp_value:
+                    errors.append(_('Incorrect date value for field \'Expired date\''))
+
+            if lot_check: # product is BN mandatory
+                if batch_value and exp_value:
+                    write_vals.update({
+                        'imp_batch_name': tools.ustr(batch_value),
+                        'imp_exp_date': exp_value,
+                    })
+                if batch_value and not exp_value:
+                    if not exp_value:
+                        batch_ids = prodlot_obj.search(cr, uid, [('name', '=', batch_value), ('product_id', '=', product.id)], order='id desc', context=context)
+                        if batch_ids:
+                            exp_value = prodlot_obj.browse(cr, uid, batch_ids[0]).life_date
                             write_vals.update({
                                 'imp_batch_name': tools.ustr(batch_value),
-                                'imp_exp_date': prodlot_cache[write_vals['imp_product_id']][tools.ustr(batch_value)],
+                                'imp_exp_date': exp_value,
                             })
-                        else:
-                            write_vals['imp_batch_name'] = tools.ustr(batch_value)
-
-                if batch_id:
-                    write_vals.update({
-                        'imp_batch_id': batch_id,
-                        'imp_batch_name': tools.ustr(batch_value),
-                    })
-                else:
-                    # UFTP-386: Add the warning message indicating that the batch does not exist for THIS product (but for others!)
-                    # If the batch is a completely new, no need to warn.
-                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', tools.ustr(batch_value))], context=context)
-                    if batch_ids:
-                        warnings.append(_('The given batch does not exist for the given product, but will be created automatically during the process.'))
-                        write_vals.update({'imp_batch_name': tools.ustr(batch_value),})
-
-            # Expired date
-            exp_value = values.get('expired_date')
-            if not lot_check and not exp_check and exp_value:
-                warnings.append(_('An expired date is defined on the imported file but the product doesn\'t require expired date - Expired date ignored'))
-            elif exp_value:
-                date_tools = self.pool.get('date.tools')
-                date_format = date_tools.get_date_format(cr, uid, context=context)
-                if exp_value and type(exp_value) == type(DateTime.now()):
-                    if datetime.strptime(exp_value.strftime('%Y-%m-%d'), '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
-                        err_msg = _('You cannot create a batch number with an expiry date before %s') % (
-                            datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
-                        )
-                        errors.append(err_msg)
-                    else:
-                        write_vals['imp_exp_date'] = exp_value.strftime('%Y-%m-%d')
-                elif exp_value and isinstance(exp_value, str):
-                    try:
-                        time.strptime(exp_value, '%Y-%m-%d')
-                        if datetime.strptime(exp_value, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
-                            error_msg = _('You cannot create a batch number with an expiry date before %s') % (
-                                datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
-                            )
-                            errors.append(err_msg)
-                        else:
-                            write_vals['imp_exp_date'] = exp_value
-                    except ValueError:
-                        err_msg = _('Incorrect date value for field \'Expired date\'')
-                        errors.append(err_msg)
-                elif exp_value:
-                    err_msg = _('Incorrect date value for field \'Expired date\'')
-                    errors.append(err_msg)
-
-                if write_vals.get('imp_exp_date') and write_vals.get('imp_batch_id') and lot_check:
-                    batch_exp_date = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
-                    if batch_exp_date != write_vals.get('imp_exp_date'):
-                        warnings.append(_('The \'Expired date\' value doesn\'t match with the expired date of the Batch - The expired date of the Batch was kept.'))
-                        write_vals['imp_exp_date'] = batch_exp_date
-                elif write_vals.get('imp_exp_date') and write_vals.get('imp_batch_name') and lot_check:
-                    if prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False):
-                        if prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False) != write_vals['imp_exp_date']:
-                            warnings.append(_('The \'Expired date\' value doesn\'t match with the expired date of the Batch - The expired date of the Batch was kept.'))
-                            write_vals['imp_exp_date'] = prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False)
-            elif not exp_value and write_vals.get('imp_batch_id') and lot_check:
-                write_vals['imp_exp_date'] = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
-            elif not exp_value and write_vals.get('imp_batch_name'):
-                if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False):
-                    warnings.append(_('The \'Expired date\' is not defined in file - The expired date of the Batch was put instead.'))
-
-            if exp_check and not lot_check and batch_value:
+            elif exp_check: # product is only ED mandatory
+                if batch_value:
+                    warnings.append(_('A batch number is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
                 write_vals.update({
                     'imp_batch_id': False,
                     'imp_batch_name': False,
+                    'imp_exp_date': exp_value,
                 })
-                if write_vals.get('imp_exp_date'):
-                    warnings.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored, expiry date kept'))
-                else:
-                    warnings.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
-
-            # If no batch defined, search batch corresponding with expired date or create a new one
-            if product and lot_check and not write_vals.get('imp_batch_id'):
-                exp_date = write_vals.get('imp_exp_date')
-
-                if batch_value and exp_date:
-                    # If a name and an expiry date for batch are defined, create a new batch
-                    prodlot_cache.setdefault(product.id, {})
-                    prodlot_cache[product.id].setdefault(tools.ustr(batch_value), exp_date)
-                    write_vals.update({
-                        'imp_batch_name': tools.ustr(batch_value),
-                        'imp_exp_date': exp_date,
-                    })
-
-                if not write_vals.get('imp_batch_id') and (not write_vals.get('imp_batch_name') or not write_vals.get('imp_exp_date'))  and not context.get('simulation_bypass_missing_lot', False):
-                    errors.append(_('No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation.'))
-                    write_vals['imp_batch_id'] = False
-
-            if exp_check and not lot_check and not write_vals.get('imp_exp_date') and not context.get('simulation_bypass_missing_lot', False):
-                errors.append(_('No expiry date set on ED product.'))
+            else: # product is not BN or ED mandatory
+                if batch_value:
+                    warnings.append(_('A batch number is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
+                if exp_value:
+                    warnings.append(_('An expired date is defined on the imported file but the product doesn\'t require expired date - Expired date ignored'))
+                write_vals.update({
+                    'imp_batch_id': False,
+                    'imp_batch_name': False,
+                    'imp_exp_date': False,
+                })
 
             # Message ESC 1
             write_vals['message_esc1'] = values.get('message_esc1')
@@ -1615,13 +1687,15 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             write_vals['integrity_status'] = self.check_integrity_status(cr, uid, write_vals, warnings=warnings, context=context)
             if write_vals['integrity_status'] != 'empty' or len(errors) > 0:
                 write_vals['type_change'] = 'error'
+                if write_vals['integrity_status'] != 'empty' and write_vals.get('imp_product_qty'):
+                    errors.append(_('IN-line %s Wrong BN/ED attributes') % (line.line_number,))
 
             if line.type_change == 'new':
                 write_vals['type_change'] = 'error'
                 if write_vals.get('imp_external_ref'):
                     errors.append(_('No original IN lines with external ref \'%s\' found.') % write_vals['imp_external_ref'])
                 else:
-                    errors.append(_('Line does not correspond to original IN'))
+                    errors.append(_('IN Line %s does not correspond to original IN') % (line.line_number or '',))
 
             error_msg = line.error_msg or ''
             for err in errors:
@@ -1668,11 +1742,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if line.integrity_status != 'empty':
                 sel = self.fields_get(cr, uid, ['integrity_status'])
                 integrity_message = dict(sel['integrity_status']['selection']).get(getattr(line, 'integrity_status'), getattr(line, 'integrity_status'))
-                name = '%s,%s' % (self._name, 'integrity_status')
-                tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', '=', integrity_message)])
-                if tr_ids:
-                    integrity_message = self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
-
                 raise osv.except_osv(_('Warning'), integrity_message)
 
         return True
@@ -1730,8 +1799,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         lot_cache.setdefault(product_id, {})
         lot_cache[product_id].setdefault(name, False)
 
-        if lot_cache[product_id][name]:
-            batch_id = lot_cache[product_id][name]
+        if lot_cache[product_id][name] and lot_cache[product_id][name][1] == exp_date:
+            batch_id = lot_cache[product_id][name][0]
         else:
             lot_ids = lot_obj.search(cr, uid, [
                 ('product_id', '=', product_id),
@@ -1748,13 +1817,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'life_date': exp_date,
                 }, context=context)
 
-            lot_cache[product_id][name] = batch_id
+            lot_cache[product_id][name] = (batch_id, exp_date)
 
         return batch_id
 
-    def put_in_memory_move(self, cr, uid, ids, partial_id, context=None):
+    def put_in_memory_move(self, cr, uid, ids, partial_id, fields_as_ro=False, context=None):
         '''
-        Create a stock.move.memory.in for each lines
+        Create a stock.move.in.processor for each lines
         '''
         move_obj = self.pool.get('stock.move.in.processor')
 
@@ -1792,6 +1861,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'expiry_date': line.imp_exp_date,
                     'line_number': line.line_number,
                     'move_id': move.id,
+                    'initial_move_id': move.id,
                     'split_move_ok': line.type_change == 'split',
                     'prodlot_id': batch_id,
                     'product_id': line.imp_product_id.id,
@@ -1799,7 +1869,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'ordered_quantity': move.product_qty,
                     'quantity': line.imp_product_qty,
                     'wizard_id': partial_id,
-                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False
+                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False,
+                    'cost_as_ro': fields_as_ro,
                     }
 
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))

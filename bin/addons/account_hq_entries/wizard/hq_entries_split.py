@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from lxml import etree
 
 class hq_entries_split_lines(osv.osv_memory):
     _name = 'hq.entries.split.lines'
@@ -43,7 +42,9 @@ class hq_entries_split_lines(osv.osv_memory):
         # Process
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'state_info': False, 'state': 'none'}
-            state, info = self.pool.get('analytic.distribution').analytic_state_from_info(cr, uid, line.account_id.id, line.destination_id.id, line.cost_center_id.id, line.analytic_id.id, context=context)
+            state, info = self.pool.get('analytic.distribution').analytic_state_from_info(cr, uid, line.account_id.id, line.destination_id.id,
+                                                                                          line.cost_center_id.id, line.analytic_id.id,
+                                                                                          posting_date=line.wizard_id.date, context=context)
             res[line.id].update({'state_info': info, 'state': state,})
         return res
 
@@ -270,36 +271,6 @@ class hq_entries_split(osv.osv_memory):
                                                                line_ids, self._name, context=context)
         return super(hq_entries_split, self).create(cr, uid, vals,
                                                     context=context)
-
-    # UFTP-200: Add the correct funding pool domain to the split line based on the account_id and cost_center
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Change funding pool domain in order to include MSF Private fund
-        """
-        if context is None:
-            context = {}
-        view = super(hq_entries_split, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        fields = view['fields']
-        if view_type=='form' and fields:
-            if fields.get('line_ids') and fields.get('line_ids')['views']:
-                # get the default PF and include into the domain for analytic_id
-                try:
-                    fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-                except ValueError:
-                    fp_id = 0
-
-                viewtemp = fields.get('line_ids')['views']
-                arch = etree.fromstring(viewtemp['tree']['arch']) # the analytic_id is found in the line_ids, one level down
-                fields = arch.xpath('field[@name="analytic_id"]')
-                if fields:
-                    fields[0].set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), ('id', '=', %s)]" % fp_id)
-
-                # Change Destination field
-                dest_fields = arch.xpath('field[@name="destination_id"]')
-                for field in dest_fields:
-                    field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
-                    viewtemp['tree']['arch'] = etree.tostring(arch)
-        return view
 
     def button_validate(self, cr, uid, ids, context=None):
         """

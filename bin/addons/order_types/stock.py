@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv, fields
-from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 
 # US-28: Refactored the method decoration to be reused for both RW and CP
@@ -101,82 +100,6 @@ def check_rw_warning(func):
         return cp_rw_warning(func, "remote_warehouse", *args, **kwargs)
     return decorated
 
-class stock_move(osv.osv):
-    _name = 'stock.move'
-    _inherit = 'stock.move'
-
-    def _search_order(self, cr, uid, obj, name, args, context=None):
-        if not len(args):
-            return []
-        matching_fields = {'order_priority': 'priority', 'order_category': 'categ'}
-        sale_obj = self.pool.get('sale.order')
-        purch_obj = self.pool.get('purchase.order')
-
-        search_args = []
-        for arg in args:
-            search_args.append((matching_fields.get(arg[0], arg[0]), arg[1], arg[2]))
-
-        # copy search_args, because it's modified by sale_obj.search
-        sale_ids = sale_obj.search(cr, uid, search_args[:], limit=0)
-        purch_ids = purch_obj.search(cr, uid, search_args, limit=0)
-
-        newrgs = []
-        if sale_ids:
-            newrgs.append(('sale_ref_id', 'in', sale_ids))
-        if purch_ids:
-            newrgs.append(('purchase_ref_id', 'in', purch_ids))
-
-        if not newrgs:
-            return [('id', '=', 0)]
-
-        if len(newrgs) > 1:
-            newrgs.insert(0, '|')
-
-        return newrgs
-
-    def _get_order_information(self, cr, uid, ids, fields_name, arg, context=None):
-        '''
-        Returns information about the order linked to the stock move
-        '''
-        res = {}
-
-        for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = {'order_priority': False,
-                            'order_category': False,
-                            'order_type': False}
-            order = False
-
-            if move.purchase_line_id and move.purchase_line_id.id:
-                order = move.purchase_line_id.order_id
-            elif move.sale_line_id and move.sale_line_id.id:
-                order = move.sale_line_id.order_id
-
-            if order:
-                res[move.id] = {}
-                if 'order_priority' in fields_name:
-                    res[move.id]['order_priority'] = order.priority
-                if 'order_category' in fields_name:
-                    res[move.id]['order_category'] = order.categ
-                if 'order_type' in fields_name:
-                    res[move.id]['order_type'] = order.order_type
-
-        return res
-
-    _columns = {
-        'order_priority': fields.function(_get_order_information, method=True, string='Priority', type='selection',
-                                          selection=ORDER_PRIORITY, multi='move_order', fnct_search=_search_order),
-        'order_category': fields.function(_get_order_information, method=True, string='Category', type='selection',
-                                          selection=ORDER_CATEGORY, multi='move_order', fnct_search=_search_order),
-        'order_type': fields.function(_get_order_information, method=True, string='Order Type', type='selection',
-                                      selection=[('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
-                                                 ('donation_st', 'Standard donation'), ('loan', 'Loan'),
-                                                 ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                                 ('direct', 'Direct Purchase Order')], multi='move_order', fnct_search=_search_order),
-        'sale_ref_id': fields.related('sale_line_id', 'order_id', type='many2one', relation='sale.order', string='Sale', readonly=True),
-        'purchase_ref_id': fields.related('purchase_line_id', 'order_id', type='many2one', relation='purchase.order', string='Purchase', readonly=True),
-    }
-
-stock_move()
 
 class stock_picking(osv.osv):
     _name = 'stock.picking'
@@ -287,10 +210,19 @@ class stock_picking(osv.osv):
         self._check_restriction_line(cr, uid, ids, context=context)
 
         certif = False
+        fields_as_ro = False
         for pick in self.browse(cr, uid, ids, context=context):
+            if pick.type == 'in':
+                fields_as_ro = pick.partner_id.partner_type == 'esc' and pick.state == 'updated'
+
             if pick.type in ['in', 'out']:
-                if not context.get('yesorno', False) :
+                if not context.get('yesorno', False):
                     for move in pick.move_lines:
+                        if pick.type == 'out' and move.state not in ['done', 'cancel'] and \
+                                move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
+                            check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
+                            self.pool.get('product.product')._get_restriction_error(cr, uid, [move.product_id.id],
+                                                                                    check_vals, context=context)
                         if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
                             certif = True
                             break
@@ -333,7 +265,10 @@ class stock_picking(osv.osv):
                 if wiz_ids:
                     proc_id = wiz_ids[0]
                 else:
-                    proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
+                    write_data = {'picking_id': pick.id}
+                    if fields_as_ro:
+                        write_data['fields_as_ro'] = fields_as_ro
+                    proc_id = wizard_obj.create(cr, uid, write_data)
                 wizard_obj.create_lines(cr, uid, proc_id, context=context)
 
                 res = {
@@ -347,7 +282,8 @@ class stock_picking(osv.osv):
 
                 if not context.get('force_process', False) and pick.type == 'in' \
                    and not pick.in_dpo \
-                   and pick.state != 'shipped' and pick.partner_id.partner_type == 'internal':
+                   and pick.state != 'shipped' and pick.partner_id.partner_type in ('internal', 'section', 'intermission') \
+                   and self.pool.get('stock.move').search_exists(cr, uid, [('picking_id', '=', pick.id), ('in_forced', '=', False)], context=context):
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
                                                                                   'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
                     res['view_id'] = [view_id]

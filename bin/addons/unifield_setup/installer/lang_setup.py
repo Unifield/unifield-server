@@ -42,12 +42,12 @@ class lang_setup(osv.osv_memory):
         'lang_id': fields.selection(_list_lang, string='Language', size=-1, required=True),
     }
     
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for system language
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(lang_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(lang_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         lang_ids = self.pool.get('res.lang').search(cr, uid, [('code', '=', setup_id.lang_id)], context=context)
         if lang_ids:
@@ -95,13 +95,13 @@ class config_users(osv.osv):
     _name = 'res.config.users'
     _inherit = 'res.config.users'
     
-    def default_get(self, cr, uid, fields, context=False):
+    def default_get(self, cr, uid, fields, context=False, from_web=False):
         '''
         If no lang defined, get this of the configuration setup
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         
-        res = super(config_users, self).default_get(cr, uid, fields, context=context)
+        res = super(config_users, self).default_get(cr, uid, fields, context=context, from_web=from_web)
             
         if not setup_id:
             res['context_lang'] = 'en_MF'

@@ -52,6 +52,8 @@ class msf_instance_setup(osv.osv_memory):
                                        {'groups_id': [(6, 0, user['groups_id'])]},
                                        context=context)
 
+
+
             return self.action_next(cr, uid, ids, context=context)
         if current_obj['instance_id']:
             instance_code = self.pool.get('msf.instance').read(cr, uid, current_obj['instance_id'], ['code'])['code']

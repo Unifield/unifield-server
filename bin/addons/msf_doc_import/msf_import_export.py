@@ -23,7 +23,6 @@ import base64
 import time
 import logging
 
-import pooler
 import tools
 
 from osv import fields
@@ -33,6 +32,7 @@ from tools.translate import _
 from tempfile import TemporaryFile
 from lxml import etree
 from lxml.etree import XMLSyntaxError
+from datetime import datetime
 
 from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 from msf_doc_import.msf_import_export_conf import MODEL_DICT
@@ -240,17 +240,21 @@ class msf_import_export(osv.osv_memory):
         headers = []
         if not field_list:
             field_list = MODEL_DATA_DICT[selection]['header_list']
-        model_obj = self.pool.get(model)
 
+        new_ctx = context.copy()
+        if 'lang' in MODEL_DICT.get(selection, {}):
+            new_ctx['lang'] = MODEL_DICT[selection]['lang']
+
+        model_obj = self.pool.get(model)
         fields_get_dict = {}  # keep fields_get result in cache
-        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
+        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=new_ctx)
 
         for field_index, field in enumerate(field_list):
             res = {'tech_name': field}
             if selection and field in MODEL_DATA_DICT[selection]['required_field_list']:
                 res['required'] = True
             child_field, child_model = self.get_child_field(cr, uid, field, model,
-                                                            fields_get_dict, context=context)
+                                                            fields_get_dict, context=new_ctx)
             first_part = field.split('.')[0]
 
             custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
@@ -327,6 +331,8 @@ class msf_import_export(osv.osv_memory):
                 result['value']['hide_download_all_entries'] = hide_all
                 csv_button = MODEL_DATA_DICT[model_list_selection].get('csv_button', False)
                 result['value']['csv_button'] = csv_button
+
+                result['value']['display_file_import'] = MODEL_DATA_DICT[model_list_selection].get('display_file_import', True)
             else:
                 result['value']['hide_download_template'] = False
                 result['value']['hide_download_3_entries'] = False
@@ -477,7 +483,11 @@ class msf_import_export(osv.osv_memory):
         field_list = MODEL_DATA_DICT[selection]['header_list']
 
         fields_get_dict = {}  # keep fields_get result in cache
-        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
+        new_ctx = context.copy()
+        if 'lang' in MODEL_DICT.get(selection, {}):
+            new_ctx['lang'] = MODEL_DICT[selection]['lang']
+
+        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=new_ctx)
         if len(field_list) != len(header_columns):
             raise osv.except_osv(_('Info'), _('The number of column is not same ' \
                                               'than expected (get %s, expected %s). Check your import file and ' \
@@ -485,7 +495,7 @@ class msf_import_export(osv.osv_memory):
 
         for field_index, field in enumerate(field_list):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
-                                                            fields_get_dict, context=context)
+                                                            fields_get_dict, context=new_ctx)
             first_part = field.split('.')[0]
             custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
             if custom_name:
@@ -509,7 +519,6 @@ class msf_import_export(osv.osv_memory):
                                                fields_get_dict[child_model][child_field]['string'])
                 else:
                     column_name = fields_get_dict[model][first_part]['string']
-
             file_column_name = header_columns[field_index] or ''
             if column_name.upper() != file_column_name.upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
@@ -557,7 +566,11 @@ class msf_import_export(osv.osv_memory):
             }, context=context)
             return res
 
-    def import_xml(self, cr, uid, ids, context=None):
+    def button_import_xml(self, cr, uid, ids, context=None):
+        self.import_xml(cr, uid, ids, context=context)
+        return True
+
+    def import_xml(self, cr, uid, ids, raise_on_error=False, context=None):
         """Create a thread to import the data after import checking
         """
         if context is None:
@@ -567,7 +580,6 @@ class msf_import_export(osv.osv_memory):
 
         self.check_import(cr, uid, ids, context=context)
 
-        res = (False, False, False)
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)
             if context.get('row'):
@@ -604,7 +616,7 @@ class msf_import_export(osv.osv_memory):
                     if index > len(MODEL_DATA_DICT[selection].get('header_info')) - 1:
                         break
 
-            res = self.bg_import(cr.dbname, uid, wiz, expected_headers, rows, context)
+            #res = self.bg_import(cr.dbname, uid, wiz, expected_headers, rows, context)
             # thread = threading.Thread(
             #     target=self.bg_import,
             #     args=(cr.dbname, uid, wiz, expected_headers, rows, context),
@@ -614,9 +626,61 @@ class msf_import_export(osv.osv_memory):
             # # in case background is needed, just set a value to wait time
             # wait_time = None
             # thread.join(wait_time)
-        return res
+        return self.bg_import(cr, uid, wiz, expected_headers, rows, raise_on_error=raise_on_error,  context=context)
 
-    def bg_import(self, dbname, uid, import_brw, headers, rows, context=None):
+    def _handle_dest_cc_dates(self, cr, uid, data, dest_cc_list, dest_cc_tuple_list, context=None):
+        """
+        Gets and checks the dest_cc_link_active_from and dest_cc_link_inactive_from dates.
+        Updates the dest_cc_tuple_list with tuples containing (cost_center, active_date, inactive_date)
+        """
+        if context is None:
+            context = {}
+        dest_cc_active_date_list = []
+        dest_cc_inactive_date_list = []
+        active_from = (True, 'dest_cc_link_active_from', _("Activation Combination Dest / CC from"))
+        inactive_from = (False, 'dest_cc_link_inactive_from', _("Inactivation Combination Dest / CC from"))
+        for t in [active_from, inactive_from]:
+            active = t[0]
+            col_name = t[1]
+            col_str = t[2]
+            dest_cc_date_list = []
+            if data.get(col_name):
+                split_char = ';'
+                if split_char not in data.get(col_name):
+                    split_char = ','
+                for cost_center_date in data.get(col_name).split(split_char):
+                    cc_date = cost_center_date.strip()
+                    if cc_date:
+                        cc_date = cc_date.replace(' 00:00:00.00', '')  # can be if there is only one date in the cell
+                        try:
+                            cc_date = datetime.strptime(cc_date, "%Y-%m-%d")
+                        except ValueError:
+                            raise Exception(_('The dates in the column "%s" should use the format YYYY-MM-DD.') % col_str)
+                    else:
+                        cc_date = False  # the related Dest/CC combination has no activation/inactivation date
+                    dest_cc_date_list.append(cc_date)
+                del data[col_name]
+            if len(dest_cc_date_list) > len(dest_cc_list):
+                raise Exception(_('The number of dates in the column "%s" exceeds the number of Cost Centers indicated.') % col_str)
+            if active:
+                dest_cc_active_date_list = dest_cc_date_list[:]
+            else:
+                dest_cc_inactive_date_list = dest_cc_date_list[:]
+        for num, cc in enumerate(dest_cc_list):
+            try:
+                dest_cc_active_date = dest_cc_active_date_list[num]
+            except IndexError:
+                dest_cc_active_date = False
+            try:
+                dest_cc_inactive_date = dest_cc_inactive_date_list[num]
+            except IndexError:
+                dest_cc_inactive_date = False
+            if dest_cc_active_date and dest_cc_inactive_date and dest_cc_active_date >= dest_cc_inactive_date:
+                cc_code = self.pool.get('account.analytic.account').read(cr, uid, cc, ['code'], context=context)['code'] or ''
+                raise Exception(_('The activation date related to the Cost Center %s must be before the inactivation date.') % cc_code)
+            dest_cc_tuple_list.append((cc, dest_cc_active_date, dest_cc_inactive_date))
+
+    def bg_import(self, cr, uid, import_brw, headers, rows, raise_on_error=False, context=None):
         """
         Run the import of lines in background
         :param dbname: Name of the database
@@ -629,18 +693,26 @@ class msf_import_export(osv.osv_memory):
         """
         if context is None:
             context = {}
-        cr = pooler.get_db(dbname).cursor()
+
+        dbname = cr.dbname
+
         model = MODEL_DICT[import_brw.model_list_selection]['model']
         impobj = self.pool.get(model)
         acc_obj = self.pool.get('account.account')
+        acc_analytic_obj = self.pool.get('account.analytic.account')
         acc_dest_obj = self.pool.get('account.destination.link')
+        dest_cc_link_obj = self.pool.get('dest.cc.link')
 
+        cost_centers_cache = {}
+        gl_account_cache = {}
+        parent_ok_cache = {}
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
         # Manage errors
         import_errors = {}
-        allow_partial = MODEL_DICT[import_brw.model_list_selection].get('partial')
+        allow_partial = not raise_on_error and MODEL_DICT[import_brw.model_list_selection].get('partial')
+        forced_values =  MODEL_DICT[import_brw.model_list_selection].get('forced_values', {})
         def save_error(errors, row_index):
             if not isinstance(errors, list):
                 errors = [errors]
@@ -711,6 +783,16 @@ class msf_import_export(osv.osv_memory):
         fields_def = impobj.fields_get(cr, uid, context=context)
         i = 0
 
+        # custom process to retrieve CC, Destination_ids
+        custom_m2m = []
+        if import_brw.model_list_selection == 'destinations':
+            custom_m2m = ['destination_ids']
+        elif import_brw.model_list_selection == 'funding_pools':
+            custom_m2m = ['cost_center_ids', 'tuple_destination_account_ids']
+        for c_m2m in custom_m2m:
+            if c_m2m in fields_def:
+                fields_def[c_m2m]['type'] = 'many2many_custom'
+
         def _get_obj(header, value, fields_def):
             list_obj = header.split('.')
             relation = fields_def[list_obj[0]]['relation']
@@ -759,6 +841,18 @@ class msf_import_export(osv.osv_memory):
                                     self._cache[dbname].setdefault('product.product.%s' % field, {})
                                     self._cache[dbname]['product.product.%s.%s' % (field, value)] = key
                                 break
+                if fields_def[field]['type'] == 'many2many':
+                    new_obj = self.pool.get(fields_def[field]['relation'])
+                    ret = [(6, 0, [])]
+                    for name in value.split(','):
+                        new_id = new_obj.name_search(cr, uid, name)
+                        if not new_id:
+                            raise osv.except_osv(_('Warning !'), _('%s \'%s\' does not exist') % (new_obj._description, name,))
+                        new_id = new_id[0]
+                        if isinstance(new_id, (list, tuple)): # name_search may return (id, name) or only id
+                            new_id = new_id[0]
+                        ret[0][2].append(new_id)
+                    return ret
                 return value
 
             else:
@@ -792,6 +886,9 @@ class msf_import_export(osv.osv_memory):
                 )
                 continue
             if res < 0:
+                if raise_on_error:
+                    raise Exception('Line %s: %s' % (row_index+1, '\n'.join(errors)))
+
                 save_error(errors, row_index)
                 rejected.append((row_index+1, line_data, '\n'.join(errors)))
                 continue
@@ -828,10 +925,13 @@ class msf_import_export(osv.osv_memory):
                             if len(line_data[n]) > max_size:
                                 msg_tpl = "field '%s' value exceed field length of %d"
                                 msg = msg_tpl % (h , max_size, )
+                                error = "Line %s, row: %s, %s" % (i, n, msg, )
+                                if raise_on_error:
+                                    raise Exception(error)
+
                                 logging.getLogger('import data').info(
                                     'Error %s'% (msg, ))
                                 cr.rollback()
-                                error = "Line %s, row: %s, %s" % (i, n, msg, )
                                 save_error(error, row_index)
                                 nb_error += 1
                                 line_ok = False
@@ -930,11 +1030,21 @@ class msf_import_export(osv.osv_memory):
                     if len(ids_to_update) > 1:
                         raise Exception('%d records found for rule=%s, model=%s' % (len(ids_to_update), data.get('name'), data.get('model_id')))
 
-                # Analytic Accounts
-                if import_brw.model_list_selection == 'analytic_accounts':
+                # Funding Pools
+                if import_brw.model_list_selection == 'funding_pools':
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'FUNDING')])
                     context['from_import_menu'] = True
+                    data['category'] = 'FUNDING'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'FUNDING':
+                            raise Exception(_('The Parent Analytic Account must be a View type Funding Pool.'))
                     # Cost Centers
-                    if data.get('cost_center_ids') and data.get('category', '') == 'FUNDING':
+                    if data.get('cost_center_ids'):
                         cc_list = []
                         for cost_center in data.get('cost_center_ids').split(','):
                             cc = cost_center.strip()
@@ -949,7 +1059,7 @@ class msf_import_export(osv.osv_memory):
                     else:
                         data['cost_center_ids'] = [(6, 0, [])]
                     # Account/Destination
-                    if data.get('tuple_destination_account_ids') and data.get('category', '') == 'FUNDING':
+                    if data.get('tuple_destination_account_ids'):
                         dest_acc_list = []
                         for destination_account in data.get('tuple_destination_account_ids').split(','):
                             dest_acc_ids = []
@@ -969,6 +1079,125 @@ class msf_import_export(osv.osv_memory):
                     else:
                         data['tuple_destination_account_ids'] = [(6, 0, [])]
 
+                # Destinations
+                dest_cc_tuple_list = []
+                if import_brw.model_list_selection == 'destinations':
+                    context['from_import_menu'] = True
+                    data['category'] = 'DEST'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        if data['parent_id'] not in parent_ok_cache:
+                            parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'], fields_to_fetch=['type', 'category'], context=context)
+                            parent_type = parent_id.type or ''
+                            parent_category = parent_id.category or ''
+                            if parent_type == 'view' and parent_category == 'DEST':
+                                parent_ok_cache[data['parent_id']] = True
+                        if not parent_ok_cache.get(data['parent_id']):
+                            raise Exception(_('The Parent Analytic Account must be a View type Destination.'))
+                    # Type
+                    if data['type'] not in ['normal', 'view']:
+                        raise Exception(_('The Type must be either "Normal" or "View".'))
+                    # Cost Centers
+                    dest_cc_list = []
+                    if data.get('dest_cc_link_ids'):
+                        if data.get('allow_all_cc'):
+                            raise Exception(_("Please either list the Cost Centers to allow, or allow all Cost Centers."))
+                        split_char = ';'
+                        if split_char not in data.get('dest_cc_link_ids'):
+                            split_char = ','
+                        for cost_center in data.get('dest_cc_link_ids').split(split_char):
+                            cc = cost_center.strip()
+                            if cc not in cost_centers_cache:
+                                cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), ('code', '=', cc)]
+                                cost_centers_cache[cc] = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                            cc_ids = cost_centers_cache.get(cc)
+                            if cc_ids:
+                                dest_cc_list.append(cc_ids[0])
+                            else:
+                                raise Exception(_('Cost Center "%s" not found.') % cc)
+                    self._handle_dest_cc_dates(cr, uid, data, dest_cc_list, dest_cc_tuple_list, context=context)
+                    # Accounts
+                    if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
+                        acc_list = []
+                        split_char = ';'
+                        if split_char not in data.get('destination_ids'):
+                            split_char = ','
+                        for account in data.get('destination_ids').split(split_char):
+                            acc = account.strip()
+                            if acc not in gl_account_cache:
+                                acc_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('code', '=', acc)]
+                                gl_account_cache[acc] = acc_obj.search(cr, uid, acc_dom, order='id', limit=1, context=context)
+                            acc_ids = gl_account_cache.get(acc)
+                            if acc_ids:
+                                acc_list.append(acc_ids[0])
+                            else:
+                                raise Exception(_("Account code \"%s\" doesn't exist or isn't allowed.") % acc)
+                        data['destination_ids'] = [(6, 0, acc_list)]
+                    else:
+                        data['destination_ids'] = [(6, 0, [])]
+                    # if the code matches with an existing destination: update it
+                    if data.get('code'):
+                        ids_to_update = impobj.search(cr, uid, [('category', '=', 'DEST'), ('code', '=', data['code'])],
+                                                      limit=1, context=context)
+                        if ids_to_update:
+                            # in case of empty columns on non-required fields, existing values should be deleted
+                            if 'date' not in data:
+                                data['date'] = False
+                            if 'allow_all_cc' not in data:
+                                data['allow_all_cc'] = False
+                            if 'destination_ids' not in data:
+                                data['destination_ids'] = [(6, 0, [])]
+                            elif data['destination_ids'][0][2]:
+                                # accounts already linked to the destination:
+                                # - if they don't appear in the new list: will be automatically de-activated
+                                # - if they appear in the list: must be re-activated if they are currently disabled
+                                link_ids = acc_dest_obj.search(cr, uid,
+                                                               [('account_id', 'in', data['destination_ids'][0][2]),
+                                                                ('destination_id', '=', ids_to_update[0]),
+                                                                ('disabled', '=', True)], context=context)
+                                if link_ids:
+                                    acc_dest_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
+
+                # Cost Centers
+                if import_brw.model_list_selection == 'cost_centers':
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'OC')])
+                    context['from_import_menu'] = True
+                    data['category'] = 'OC'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'OC':
+                            raise Exception(_('The Parent Analytic Account must be a View type Cost Center.'))
+
+                # Free 1
+                if import_brw.model_list_selection == 'free1':
+                    context['from_import_menu'] = True
+                    data['category'] = 'FREE1'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'FREE1':
+                            raise Exception(_('The Parent Analytic Account must be a View type Free 1 account.'))
+
+                # Free 2
+                if import_brw.model_list_selection == 'free2':
+                    context['from_import_menu'] = True
+                    data['category'] = 'FREE2'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'FREE2':
+                            raise Exception(_('The Parent Analytic Account must be a View type Free 2 account.'))
+
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):
                         data['groups'] = [(6, 0, [])]
@@ -985,6 +1214,9 @@ class msf_import_export(osv.osv_memory):
                     if not data.get('groups_id'):
                         data['groups_id'] = [(6, 0, [])]
 
+                data.update(forced_values)
+
+                id_created = False
                 if data.get('comment') == '[DELETE]':
                     impobj.unlink(cr, uid, ids_to_update, context=context)
                     nb_lines_deleted += len(ids_to_update)
@@ -1003,20 +1235,79 @@ class msf_import_export(osv.osv_memory):
                             line_created = impobj.create(cr, uid, data, context=context)
                             lines_already_updated.append(line_created)
                     else:
-                        impobj.create(cr, uid, data, context=context)
+                        id_created = impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
                     if allow_partial:
                         cr.commit()
+                # For Dest CC Links: create, update or delete the links if necessary
+                if import_brw.model_list_selection == 'destinations':
+                    if isinstance(ids_to_update, (int, long)):
+                        ids_to_update = [ids_to_update]
+                    if not dest_cc_tuple_list and ids_to_update:
+                        # UC1: Dest CC Link column empty => delete all current Dest/CC combinations attached to the Dest
+                        old_dcl_ids = dest_cc_link_obj.search(cr, uid, [('dest_id', 'in', ids_to_update)], order='NO_ORDER', context=context)
+                        if old_dcl_ids:
+                            dest_cc_link_obj.unlink(cr, uid, old_dcl_ids, context=context)
+                    else:
+                        # UC2: new dest
+                        if id_created:
+                            for cc, active_date, inactive_date in dest_cc_tuple_list:
+                                dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': id_created,
+                                                                  'active_from': active_date, 'inactive_from': inactive_date},
+                                                        context=context)
+                        elif ids_to_update:
+                            for dest_id in ids_to_update:
+                                dest = acc_analytic_obj.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
+                                current_cc_ids = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
+                                new_cc_ids = []
+                                for cc, active_date, inactive_date in dest_cc_tuple_list:
+                                    new_cc_ids.append(cc)
+                                    # UC3: new combinations in existing Destinations
+                                    if cc not in current_cc_ids:
+                                        dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': dest_id,
+                                                                          'active_from': active_date, 'inactive_from': inactive_date},
+                                                                context=context)
+                                    else:
+                                        # UC4: combinations to be updated with new dates
+                                        dcl_ids = dest_cc_link_obj.search(cr, uid,
+                                                                          [('dest_id', '=', dest_id), ('cc_id', '=', cc)],
+                                                                          limit=1, context=context)
+                                        if dcl_ids:
+                                            dest_cc_link = dest_cc_link_obj.read(cr, uid, dcl_ids[0],
+                                                                                 ['active_from', 'inactive_from'], context=context)
+                                            if dest_cc_link['active_from']:
+                                                current_active_dt = datetime.strptime(dest_cc_link['active_from'], "%Y-%m-%d")
+                                            else:
+                                                current_active_dt = False
+                                            if dest_cc_link['inactive_from']:
+                                                current_inactive_dt = datetime.strptime(dest_cc_link['inactive_from'], "%Y-%m-%d")
+                                            else:
+                                                current_inactive_dt = False
+                                            if (current_active_dt != active_date) or (current_inactive_dt != inactive_date):
+                                                dest_cc_link_obj.write(cr, uid, dest_cc_link['id'],
+                                                                       {'active_from': active_date, 'inactive_from': inactive_date},
+                                                                       context=context)
+                                # UC5: combinations to be deleted in existing Destinations
+                                cc_to_be_deleted = [c for c in current_cc_ids if c not in new_cc_ids]
+                                if cc_to_be_deleted:
+                                    dcl_to_be_deleted = dest_cc_link_obj.search(cr, uid,
+                                                                                [('dest_id', '=', dest_id), ('cc_id', 'in', cc_to_be_deleted)],
+                                                                                order='NO_ORDER', context=context)
+                                    dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
+                if raise_on_error:
+                    raise Exception('Line %s, %s' % (row_index+2, e.value))
                 cr.rollback()
                 save_error(e.value, row_index)
                 nb_error += 1
                 rejected.append((row_index+1, line_data, e.value))
             except Exception, e:
-                cr.rollback()
                 logging.getLogger('import data').info('Error %s' % tools.ustr(e))
+                if raise_on_error:
+                    raise Exception('Line %s: %s' % (row_index+2, tools.ustr(e)))
+                cr.rollback()
                 save_error(tools.ustr(e), row_index)
                 nb_error += 1
                 rejected.append((row_index+1, line_data, tools.ustr(e)))
@@ -1087,8 +1378,8 @@ class msf_import_export(osv.osv_memory):
             prod_nomenclature_obj._cache[dbname] = {}
 
 
-        cr.commit()
-        cr.close()
+        if allow_partial:
+            cr.commit()
 
         return (processed, rejected, [tu[0] for tu in headers])
 

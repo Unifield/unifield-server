@@ -99,28 +99,11 @@
                 <data>
                     <xpath expr="/tree" position="attributes">
                         <attribute name='hide_delete_button'>1</attribute>
-                        <attribute name='colors'>blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date</attribute>
+                        <attribute name='colors'>blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done', 'delivered') and min_date &lt; current_date</attribute>
                     </xpath>
                     <xpath expr="/tree/field[@name='state']" position="after">
                         <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
                         attrs="{'invisible' : [('state','!=','draft')]}" confirm='Do you really want to delete selected record(s) ?'/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-        
-        <!-- PICKING -->
-        <record id="view_picking_ticket_form" model="ir.ui.view">
-            <field name="name">picking.ticket.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                        <attribute name='hide_duplicate_button'>1</attribute>
                     </xpath>
                 </data>
             </field>
@@ -160,23 +143,5 @@
             </field>
         </record>
  
-        <record id="real_average_consumption_tree_view" model="ir.ui.view">
-            <field name="name">real.average.consumption.tree.view</field>
-            <field name="model">real.average.consumption</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="consumption_calculation.real_average_consumption_tree_view" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='state']" position="after">
-                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
-                        states='draft'  confirm='Do you really want to delete selected record(s) ?'/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-        
     </data>
 </openerp>

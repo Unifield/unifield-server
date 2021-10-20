@@ -5,7 +5,7 @@
 
         <report
             id="report_stopped_products_xls"
-            string="Stopped products"
+            string="Phase Out products"
             model="export.report.stopped.products"
             name="stopped.products.xls"
             file="msf_tools/report/report_stopped_products_xls.mako"

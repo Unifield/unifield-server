@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data noupdate="1">
+		<record id="po_custom_text_default" model="po.custom.text">
+			<field name="po_text"/>
+		</record>
+	</data>
+</openerp>

@@ -42,9 +42,10 @@ class sale_order(osv.osv):
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
                 if partner and partner.partner_type not in ['internal', 'intermission', 'section', 'external']:
                     return {'warning': {'title': _('Error'), 'message': msg}}
-        else:
-            pass
 
+                if partner.partner_type == 'section' and order_type == 'regular':
+                    current_type = id and self.browse(cr, uid, id[0], fields_to_fetch=['order_type'], context=context).order_type or False
+                    return {'value': {'order_type': current_type}, 'warning': {'title': _('Error'), 'message': msg}}
 
         if partner_id and order_type:
             res.update({'value': {'order_policy': 'picking'}})
@@ -59,7 +60,7 @@ class sale_order(osv.osv):
         Check that partner and order type are compatibles
         """
         compats = {
-            'regular':      ['internal', 'intermission', 'section', 'external'],
+            'regular':      ['internal', 'intermission', 'section', 'external', 'esc'],
             'donation_st':  ['internal', 'intermission', 'section', 'external'],
             'loan':         ['internal', 'intermission', 'section', 'external'],
             'donation_exp': ['internal', 'intermission', 'section', 'external'],
@@ -73,7 +74,7 @@ class sale_order(osv.osv):
         return True
 
     _constraints = [
-       (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
+        (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
     ]
 
 sale_order()

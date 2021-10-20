@@ -27,11 +27,22 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+from tools import config
 from ftplib import FTP
 
 
 class automated_import(osv.osv):
     _name = 'automated.import'
+    _order = 'name, id'
+
+    def _auto_init(self, cr, context=None):
+        res = super(automated_import, self)._auto_init(cr, context)
+        # migration delete old constraint
+        cr.drop_constraint_if_exists('automated_import', 'automated_import_import_function_id_uniq')
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'automated_import_function_id_partner_id_uniq'")
+        if not cr.fetchone():
+            cr.execute("CREATE UNIQUE INDEX automated_import_function_id_partner_id_uniq ON automated_import (function_id, coalesce(partner_id, 0))")
+        return res
 
     def _check_paths(self, cr, uid, ids, context=None):
         """
@@ -71,6 +82,50 @@ class automated_import(osv.osv):
                 )
 
         return True
+
+    def _check_unicity(self, cr, uid, ids, context=None):
+        '''
+            if the function_id allows multiple then the server / src_path must be unique
+            if not multiple: then function_id must be unique
+        '''
+
+        error = []
+        cr.execute('''
+            select function.name
+                from automated_import import, automated_import_function function
+            where
+                function.id = import.function_id and
+                coalesce(function.multiple, 'f') = 'f'
+            group by function.name
+            having(count(*) > 1)
+        ''')
+        for x in cr.fetchall():
+            error.append(_('Another Automated import with same functionality "%s" already exists (maybe inactive). Only one automated import must be created for a '\
+                           'same functionality. Please select an other functionality.') % x[0])
+
+        cr.execute('''
+            select function.name
+                from automated_import import, automated_import_function function
+            where
+                function.id = import.function_id and
+                coalesce(function.multiple, 'f') = 't' and
+                coalesce(src_path, '') != ''
+            group by function.name, src_path, ftp_url
+            having(count(*) > 1)
+        ''')
+        for x in cr.fetchall():
+            error.append(_('Another Automated import with same functionality "%s", same server and same source already exists (maybe inactive).') % x[0])
+
+        if error:
+            raise osv.except_osv(_('Warning'), "\n".join(error))
+
+        return True
+
+    def _get_isadmin(self, cr, uid, ids, *a, **b):
+        ret = {}
+        for _id in ids:
+            ret[_id] = uid == 1
+        return ret
 
     _columns = {
         'name': fields.char(
@@ -116,6 +171,7 @@ class automated_import(osv.osv):
             string='Functionality',
             required=True,
         ),
+        'multiple': fields.related('function_id', 'multiple', string='Multiple', type='boolean', write_relate=False),
         'active': fields.boolean(
             string='Active',
             readonly=True,
@@ -141,6 +197,8 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'is_admin': fields.function(_get_isadmin, method=True, type='boolean', string='Is Admin'),
+        'partner_id': fields.many2one('res.partner', 'Partner', domain=[('partner_type', '=', 'esc')]),
     }
 
     _defaults = {
@@ -149,6 +207,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'active': lambda *a: False,
         'priority': lambda *a: 10,
         'ftp_protocol': lambda *a: 'ftp',
+        'is_admin': lambda obj, cr, uid, c: uid == 1,
     }
 
     _sql_constraints = [
@@ -158,10 +217,9 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             _('Another Automated import with same name already exists (maybe inactive). Automated import name must be unique. Please select an other name.'),
         ),
         (
-            'import_function_id_uniq',
-            'unique(function_id)',
-            _('Another Automated import with same functionality already exists (maybe inactive). Only one automated import must be created for a '\
-              'same functionality. Please select an other functionality.'),
+            'function_id_partner_id_uniq',
+            '',
+            _('Another Automated import with same function / same partner already exists (maybe inactive).'),
         ),
         (
             'import_positive_interval',
@@ -172,7 +230,19 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
 
     _constraints = [
         (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path', 'dest_path_failure']),
+        (_check_unicity, _('There is a problem with paths'), []),
     ]
+
+    def change_function_id(self, cr, uid, ids, function_id, context=None):
+        multiple = False
+        value = {}
+        if function_id:
+            fct_data = self.pool.get('automated.import.function').browse(cr, uid, function_id, context=context)
+            multiple = fct_data.multiple
+            if not multiple:
+                value['partner_id'] = False
+        value['multiple'] = multiple
+        return {'value': value}
 
     def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
         if context is None:
@@ -222,9 +292,10 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
                 cnopts = pysftp.CnOpts()
                 cnopts.hostkeys = None
                 sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password, cnopts=cnopts)
+                sftp._transport.set_keepalive(15)
             except:
                 self.infolog(cr, uid, _('%s :: SFTP connection failed') % obj.name)
-                raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
+                raise osv.except_osv(_('Error'), _('Not able to connect to SFTP server at location %s') % obj.ftp_url)
 
         if not context.get('no_raise_if_ok'):
             raise osv.except_osv(_('Info'), _('Connection succeeded'))
@@ -273,6 +344,30 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             raise osv.except_osv(_('Error'), msg)
 
         return True
+
+    def local_autoconfig(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        main_path = os.path.join(config.get('root_path'), 'vi_auto_import')
+        write_me = {'ftp_source_ok': False, 'ftp_dest_ok': False, 'ftp_dest_fail_ok': False, 'ftp_report_ok': False, 'ftp_ok': False, 'active': True, 'interval_unit': 'months', 'interval': 12}
+
+        prefix = ''
+        for job in self.browse(cr, uid, ids, fields_to_fetch=['name', 'function_id'], context=context):
+            if job.function_id.multiple:
+                num = self.search(cr, uid, [('function_id', '=', job.function_id.id), ('active', 'in', ['t', 'f'])], count=True, context=context)
+                if num > 1:
+                    prefix = num
+            self.log(cr, uid, job.id, 'Auto configuration done on job %s' % job.name)
+
+        for directory in ['src_path', 'dest_path', 'dest_path_failure', 'report_path']:
+            target = os.path.join(main_path, '%s%s' % (directory, prefix))
+            write_me[directory] = target
+            if not os.path.exists(target):
+                os.makedirs(target)
+        self.write(cr, uid, ids, write_me, context=context)
+        return True
+
 
     def run_job_manually(self, cr, uid, ids, context=None, params=None):
         """
@@ -351,7 +446,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             job_id = job_obj.create(cr, uid, params, context=context)
             self.infolog(cr, uid, _('%s :: New import job created') % self.read(cr, uid, import_id, ['name'])['name'])
             cr.commit()
-            res = job_obj.process_import(cr, uid, [job_id], context=context)
+            res = job_obj.process_import(cr, uid, import_id, job_id, context=context)
             cr.commit()
 
         return res
