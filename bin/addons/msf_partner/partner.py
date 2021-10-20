@@ -486,19 +486,19 @@ class res_partner(osv.osv):
 
         intermission_vouch_in_ids = account_invoice_obj.search(cr, uid, [
             ('doc_type', '=', 'ivi'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-        ], context = context.update({'type':'in_invoice', 'journal_type': 'intermission'}))
+        ])
 
         intermission_vouch_out_ids = account_invoice_obj.search(cr, uid, [
             ('doc_type', '=', 'ivo'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-        ], context = context.update({'type':'out_invoice', 'journal_type': 'intermission'}))
+        ])
 
         donation_ids = account_invoice_obj.search(cr, uid, [
             ('doc_type', '=', 'donation'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-        ], context = context.update({'type':'in_invoice', 'journal_type': 'inkind'}))
+        ])
 
         supp_invoice_ids = account_invoice_obj.search(cr, uid, [
             ('doc_type', '=', 'si'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-        ], context = context.update({'type':'in_invoice', 'journal_type': 'purchase'}))
+        ])
 
         sr_ids = account_invoice_obj.search(cr, uid, [
             ('doc_type', '=', 'sr'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
@@ -516,17 +516,17 @@ class res_partner(osv.osv):
             ('doc_type', '=', 'str'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
         ])
 
-        cust_refunds_ids = account_invoice_obj.search(cr, uid,
-                                                      [('doc_type', '=', 'cr'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])],
-                                                      context = context.update({'type':'out_refund', 'journal_type': 'sale_refund'}))
+        cust_refunds_ids = account_invoice_obj.search(cr, uid, [
+            ('doc_type', '=', 'cr'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ])
 
         debit_note_ids = account_invoice_obj.search(cr, uid, [
             ('doc_type', '=', 'dn'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-        ], context = context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}))
+        ])
 
         stock_transfer_vouch_ids = account_invoice_obj.search(cr, uid, [
             ('doc_type', '=', 'stv'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-        ], context = context.update({'type':'out_invoice', 'journal_type': 'sale'}))
+        ])
 
         incoming_ship_ids = pick_obj.search(cr, uid, [
             ('state', 'not in', ['done', 'cancel']), ('type', '=', 'in'), ('subtype', '=', 'standard'),
