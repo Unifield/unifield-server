@@ -590,6 +590,27 @@ class account_period(osv.osv):
         """
         return self.invoice_view(cr, uid, ids, doc_type='si', context=context)
 
+    # Intersection Supplier Invoice
+    def button_intersection_supplier_invoices(self, cr, uid, ids, context=None):
+        """
+        Opens a view with the ISI to check before closing the period
+        """
+        return self.invoice_view(cr, uid, ids, doc_type='isi', context=context)
+
+    # Intersection Supplier Refund
+    def button_intersection_supplier_refunds(self, cr, uid, ids, context=None):
+        """
+        Opens a view with the ISR to check before closing the period
+        """
+        return self.invoice_view(cr, uid, ids, doc_type='isr', context=context)
+
+    # Stock Transfer Refund
+    def button_stock_transfer_refunds(self, cr, uid, ids, context=None):
+        """
+        Opens a view with the STR to check before closing the period
+        """
+        return self.invoice_view(cr, uid, ids, doc_type='str', context=context)
+
     def button_close_field_period(self, cr, uid, ids, context=None):
         if not context:
             context = {}

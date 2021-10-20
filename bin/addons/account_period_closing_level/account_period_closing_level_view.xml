@@ -152,15 +152,18 @@
                                 <label string="Did you check draft and open customer documents?" colspan="6" align="0.0"/>
                                 <group colspan="6" col="6">
                                     <button string="Stock transfer vouchers" name="button_stock_transfer_vouchers" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Stock Transfer Refunds" name="button_stock_transfer_refunds" type="object" icon="gtk-dnd" colspan="2"/>
                                     <button string="Customer Refunds" name="button_customer_refunds" type="object" icon="gtk-dnd" colspan="2"/>
-                                    <button string="Debit Note" name="button_debit_note" type="object" icon="gtk-dnd" colspan="2"/>
                                     <button string="Intermission Voucher OUT" name="button_intermission_out" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Debit Note" name="button_debit_note" type="object" icon="gtk-dnd" colspan="2"/>
                                 </group>
                                 <label string="Did you check draft and open supplier documents?" colspan="6" align="0.0"/>
                                 <group colspan="6" col="6">
                                     <button string="Supplier invoices" name="button_supplier_invoices" type="object" icon="gtk-dnd" colspan="2"/>
                                     <button string="Supplier refunds" name="button_supplier_refunds" type="object" icon="gtk-dnd" colspan="2"/>
                                     <button string="Supplier direct invoices" name="button_supplier_direct_invoices" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Intersection Supplier Invoices" name="button_intersection_supplier_invoices" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Intersection Supplier Refunds" name="button_intersection_supplier_refunds" type="object" icon="gtk-dnd" colspan="2"/>
                                     <button string="Donation" name="button_donation" type="object" icon="gtk-dnd" colspan="2"/>
                                     <button string="Intermission Voucher IN" name="button_intermission_in" type="object" icon="gtk-dnd" colspan="2"/>
                                 </group>
