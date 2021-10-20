@@ -144,6 +144,9 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice">
+                    <field name="document_date"/>
+                    <field name="supplier_reference"/>
+
                     <field name="date_invoice"/>
                     <field name="number"/>
                     <field name="partner_id" groups="base.group_user"/>
@@ -151,17 +154,14 @@
                     <field name="journal_id" invisible="1"/>
                     <field name="period_id" invisible="1" groups="account.group_account_user"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
-                    <field name="user_id"/>
                     <field name="date_due"/>
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual" sum="Residual Amount"/>
-                    <field name="amount_untaxed" sum="Untaxed Amount"/>
-                    <field name="amount_total" sum="Total Amount"/>
+                    <field name="residual" />
+                    <field name="amount_total"/>
                     <field name="state"/>
-
-                    <button name="invoice_open" states="draft,proforma2" string="Approve" icon="terp-camera_test"/>
+                    <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
                 </tree>
             </field>
         </record>
@@ -174,7 +174,10 @@
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group col="8" colspan="4">
-                        <field name="journal_id" widget="selection"/>
+                        <field name="journal_id"
+                               domain="[('inv_doc_type', '=', True)]"
+                               attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                        <field name="vat_ok" invisible="1" />
                         <field name="number" readonly="1"/>
                         <field name="type" invisible="1"/>
                         <field name="is_intermission" invisible="1"/>  <!-- for Payment tab -->
@@ -186,7 +189,7 @@
                                         'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         <newline/>
                         <field string="Supplier" name="partner_id" domain="[('supplier', '=', True)]"
-                               on_change="onchange_partner_id(type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)"
+                               on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term,partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice,False)"
                                context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"
                                attrs="{'readonly': ['|',
                                                     ('state', '!=', 'draft'),
@@ -195,25 +198,52 @@
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
                         <field name="fiscal_position" groups="base.group_extended" widget="selection"/>
                         <newline/>
+                        <field name="document_date" />
                         <field name="date_invoice"/>
-                        <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection"/>
-                        <group colspan="2" col="1" groups="account.group_account_user">
-                            <label align="0.0" string="(keep empty to use the current period)"/>
-                        </group>
+                        <group colspan="2" col="1" />
                     </group>
+                    <newline />
+                    <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                    </group>
+                    <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                    </group>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                    <group colspan="3"/>
+
                     <notebook colspan="4">
                         <page string="Invoice">
-                           <field domain="[('company_id', '=', company_id), ('type', '=', 'payable')]" name="account_id" groups="account.group_account_user"/>
+                           <field domain="[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]" name="account_id" />
                             <field name="reference_type" nolabel="1" size="0"/>
                             <field name="reference" nolabel="1"/>
                             <field name="date_due"/>
                             <field name="check_total" required="2"/>
+                            <field name="supplier_reference"/>
+                            <group name="import" string=" Import Lines " colspan="4" col="4"
+                               attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'in_invoice')]}">
+                                    <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                            attrs="{'readonly': [('state', '!=', 'draft')],
+                                                    'invisible': [('type', '!=', 'in_invoice')]}"/>
+                                    <button name="export_invoice" string="Export Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                            attrs="{'invisible': [('type', '!=', 'in_invoice')]}"/>
+                                    <newline/>
+                                    <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
+                                            attrs="{'invisible': [('state', '!=', 'draft')],
+                                                    'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                           </group>
+
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
-                                <tree string="Invoice lines" editable="both">
+                                <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:analytic_distribution_state in ('none','valid') and inactive_product == False">
                                     <field name="from_supply" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
                                     <field name="invoice_type" invisible="1"/>
                                     <field name="partner_type" invisible="1"/>
+                                    <field name="line_number" displayon="noteditable"/>
+                                    <field name="is_corrected" invisible="1"/>
+                                    <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="product_id"
                                            attrs="{'readonly': ['|',
                                                                 '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
@@ -224,7 +254,13 @@
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
                                     />
                                     <field name="invoice_line_tax_id" view_mode="2" context="{'type':parent.type}" domain="[('parent_id','=',False)]"/>
-                                    <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
+                                    <field name="inactive_product" invisible="1" />
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                    <field name="analytic_distribution_state_recap"/>
+                                    <field name="have_analytic_distribution_from_header" invisible="1"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="is_allocatable" invisible="1"/>
+
                                     <field name="quantity"
                                            attrs="{'readonly': ['|',
                                                                 '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True),('from_supply', '=', True),
@@ -265,24 +301,42 @@
                                 </field>
                             </group>
                             <group col="4" colspan="2">
-                                <button colspan="2" name="button_reset_taxes" states="draft" string="Compute Taxes" type="object" icon="terp-stock_format-scientific"/>
-                                <field name="amount_untaxed"/>
+                                <button colspan="2" name="button_reset_taxes" states="draft" string="Compute Taxes" type="object" icon="terp-stock_format-scientific" attrs="{'invisible': [('vat_ok', '=', False)], 'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="amount_untaxed" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
                                 <label string="" colspan="2"/>
-                                <field name="amount_tax"/>
+                                <field name="amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}" />
                                 <field name="reconciled"/>
                                 <field name="amount_total"/>
                                 <field name="state"/>
                                 <field name="residual"/>
                                 <group col="6" colspan="4">
-                                    <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="terp-stock_effects-object-colorize"/>
-                                    <button name="%(action_account_invoice_refund)d" type='action' string='Refund' states='open,paid,inv_close' icon="gtk-execute"/>
-                                    <button name="invoice_open" states="draft,proforma2" string="Approve" icon="terp-camera_test"/>
+                                    <field name="doc_type" invisible="1"/>
+                                    <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute"
+                                        attrs="{'invisible': ['|', '|',
+                                                                ('state', '=', 'draft'),
+                                                                ('type', 'in', ['in_refund', 'out_refund']),
+                                                                '&amp;', ('doc_type', '=', 'isi'), ('counterpart_inv_status', 'not in', ['inv_close', 'paid'])]}"
+                                    />
+                                    <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
+                                    <field name="is_direct_invoice" invisible="1"/>
+                                    <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
+                                    <newline/>
+                                    <field name="can_merge_lines" invisible="1"/>
+                                    <button name="button_merge_lines" type="object"
+                                        colspan="3"
+                                        string="Merge Lines by Account" icon="gtk-convert"
+                                        confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
+                                        attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
+
                                 </group>
                             </group>
                         </page>
                         <page string="Other Info">
+                            <field name="amount_to_pay"/>
                             <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)"/>
-                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" widget="selection" groups="base.group_multi_company"/>
+                            <field name="company_id"
+                                   on_change="onchange_company_id(company_id, partner_id, type, invoice_line, currency_id, context)"
+                                   widget="selection" groups="base.group_multi_company"/>
                             <newline/>
                             <field name="payment_term" widget="selection"/>
                             <field name="name"
@@ -304,6 +358,31 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         &payment_tab;
+                        <page string="Down Payments">
+                            <field name="down_payment_ids" nolabel="1" colspan="4">
+                                <tree string="Down Payment">
+                                    <field name="move_id"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="ref"/>
+                                    <field name="date"/>
+                                    <field name="partner_type"/>
+                                    <field name="reconcile_txt"/>
+                                    <field name="debit_currency"/>
+                                    <field name="credit_currency"/>
+                                    <field name="amount_currency" sum="Total Amount"/>
+                                    <field name="currency_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <!-- display the Counterpart Invoice tab in SI, hide it in SR -->
+                        <page string="Counterpart Invoice" attrs="{'invisible': [('type', '!=', 'in_invoice')]}">
+                            <field name="from_supply" invisible="1"/>  <!-- make the field exportable -->
+                            <field name="synced" readonly="1"/>  <!-- SI can never be ticked as "Synced" manually -->
+                            <newline/>
+                            <field name="counterpart_inv_number"/>
+                            <field name="counterpart_inv_status"/>
+                        </page>
+
                     </notebook>
                 </form>
             </field>
@@ -314,38 +393,46 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Invoice" noteditable="state=='cancel'">
+                <form string="Stock Transfer Voucher" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
-                    <field name="journal_id" groups="base.group_user" widget="selection"/>
-                    <field name="journal_type" invisible="1"/>
-                    <field name="number"/>
-                    <field name="type" invisible="1"/>
-                    <field name="is_intermission" invisible="1"/>  <!-- for Payment tab -->
-                    <field name="currency_id" width="50"/>
-                    <button name="%(action_account_change_currency)d" type="action" icon="terp-stock_effects-object-colorize" string="Change" attrs="{'invisible':[('state','!=','draft')]}" groups="account.group_account_user"/>
-                    <newline/>
-                    <field string="Customer" name="partner_id"
-                           domain="[('customer', '=', True)]"
-                           on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)"
-                           groups="base.group_user" context="{'search_default_customer': 1}"
-                           attrs="{'readonly': ['|',
-                                                ('state', '!=', 'draft'),
-                                                '&amp;', '&amp;',
-                                                ('type', '=', 'out_invoice'),
-                                                ('from_supply', '=', True),
-                                                ('partner_type', 'in', ('intermission', 'section'))]}"/>
-                    <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
-                    <field name="fiscal_position" groups="base.group_extended" widget="selection"/>
-                    <newline/>
-                    <field name="date_invoice"/>
-                    <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection"/>
-                    <group colspan="2" col="1" groups="account.group_account_user">
-                        <label align="0.0" string="(keep empty to use the current period)"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]"/>
+                        <field name="journal_type" invisible="1"/>
+                        <field name="number"/>
+                        <field name="type" invisible="1"/>
+                        <field name="is_intermission" invisible="1"/>  <!-- for Payment tab -->
+                        <field name="currency_id" width="50"/>
+                        <button name="%(action_account_change_currency)d" type="action" icon="terp-stock_effects-object-colorize" string="Change" attrs="{'invisible':[('state','!=','draft')]}" groups="account.group_account_user"/>
+                        <newline/>
+                        <field string="Customer" name="partner_id"
+                               domain="[('customer', '=', True)]"
+                               on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)"
+                               groups="base.group_user" context="{'search_default_customer': 1}"
+                               attrs="{'readonly': ['|',
+                                                    ('state', '!=', 'draft'),
+                                                    '&amp;', '&amp;',
+                                                    ('type', '=', 'out_invoice'),
+                                                    ('from_supply', '=', True),
+                                                    ('partner_type', 'in', ('intermission', 'section'))]}"/>
+                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
+                        <newline/>
+                        <field name="document_date"/>
+                        <field name="date_invoice"/>
+                        <group colspan="2" col="1" groups="account.group_account_user">
+                        </group>
                     </group>
+                    <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
                     </group>
+                    <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                    </group>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                    <group colspan="3"/>
                     <notebook colspan="4">
                         <page string="Invoice">
-                            <field domain="[('company_id', '=', company_id),('type','=', 'receivable')]" name="account_id" groups="account.group_account_user"/>
+                            <field domain="[('company_id', '=', company_id), ('restricted_area', '=', 'out_invoice')]" name="account_id" />
                             <field name="name" attrs="{'readonly': ['|',
                                                                     ('state', '!=', 'draft'),
                                                                     '&amp;', '&amp;',
@@ -353,6 +440,21 @@
                                                                     ('from_supply', '=', True),
                                                                     ('partner_type', 'in', ('intermission', 'section'))]}"/>
                             <field name="payment_term" widget="selection"/>
+                            <group name="import" string=" Import Lines " colspan="4" col="4"
+                                attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}">
+                                <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'readonly': [('state', '!=', 'draft')],
+                                    'invisible': [('type', '!=', 'out_invoice')]}"/>
+                                <button name="export_invoice" string="Export Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'invisible': [('type', '!=', 'out_invoice')]}"
+                                    force_editable="1"/>
+                                <newline/>
+                                <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
+                                    attrs="{'invisible': [('state', '!=', 'draft')],
+                                    'readonly': [('type', '=', 'out_invoice'),
+                                    ('from_supply', '=', True),
+                                    ('partner_type', 'in', ('intermission', 'section'))]}"/>
+                            </group>
                             <field colspan="4" name="invoice_line" nolabel="1" context="{'fake': 1, 'from_inv_form': True}">
                                 <tree string="Invoice Line"
                                       colors="red:inactive_product == True or analytic_distribution_state in ('invalid', 'invalid_small_amount');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')"
@@ -397,44 +499,66 @@
                                     <field name="name"/>
                                 </tree>
                             </field>
-                            <group col="1" colspan="2">
-                                <field name="tax_line" nolabel="1">
-                                    <tree editable="bottom" string="Taxes">
-                                        <field name="name"/>
-                                        <field name="account_id" groups="account.group_account_invoice"/>
-                                        <field name="base"
-                                               on_change="base_change(base, parent.currency_id, parent.company_id, parent.document_date, parent.date_invoice)"
-                                               readonly="1"/>
-                                        <field name="amount"
-                                               on_change="amount_change(amount, parent.currency_id, parent.company_id, parent.document_date, parent.date_invoice)"/>
-                                        <field invisible="True" name="base_amount"/>
-                                        <field invisible="True" name="tax_amount"/>
-                                        <field name="factor_base" invisible="True"/>
-                                        <field name="factor_tax" invisible="True"/>
-                                    </tree>
-                                </field>
-                            </group>
-                            <group col="4" colspan="2">
-                                <button colspan="2" name="button_reset_taxes" states="draft" string="Compute Taxes" type="object" groups="base.group_user" icon="terp-stock_format-scientific"/>
-                                <field name="amount_untaxed"/>
-                                <label string="" colspan="2"/>
-                                <field name="amount_tax"/>
+                            <group col="1" colspan="2" />
+                            <group col="8" colspan="4">
+                                <label string="" colspan="3"/>
                                 <field name="reconciled"/>
                                 <field name="amount_total"/>
+                                <label string="" colspan="3"/>
                                 <field name="state"/>
                                 <field name="residual"/>
-                                <group col="8" colspan="4" groups="base.group_user">
-                                    <button name="action_cancel_draft" states="cancel" string="Reset to Draft" type="object" icon="terp-stock_effects-object-colorize"/>
+                                <field name="is_debit_note" invisible="1"/>
+                            </group>
+                            <field name="partner_type" invisible="1"/>
+                            <group col="8" colspan="4">
 
-                                    <button name="%(action_account_invoice_refund)d" type='action' string='Refund' states='open,paid,inv_close' icon="gtk-execute"/>
-                                    <button name="invoice_proforma2" states="draft" string="PRO-FORMA" icon="terp-gtk-media-pause" groups="account.group_account_user"/>
-                                    <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
-                                    <button name="%(account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,inv_close,proforma,sale,proforma2"/>
-                                </group>
+                                <field name="doc_type" invisible="1"/>
+
+                                <button string="Cancel document" name="invoice_cancel"
+                                        type="workflow" icon="gtk-cancel"
+                                        confirm="Do you really want to cancel this document?"
+                                        attrs="{'invisible': ['|', '|',
+                                                              ('state', '!=', 'draft'),
+                                                              ('type', '!=', 'out_invoice'),
+                                                              ('from_supply', '=', False)]}"/>
+
+                                <button name="button_split_invoice" type="object" string="Split Stock Transfer Voucher"
+                                        icon="gtk-cut"
+                                        context="{'from_stv': True}"
+                                        attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('doc_type', '!=', 'stv')]}"/>
+
+                                <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
+                                <!-- add a confirmation step only for STV (not for CR/STR)
+                                     when the partner type is compatible with a synchro but "synced" isn't ticked -->
+                                <button name="invoice_open" type="object" string="Validate"
+                                        icon="gtk-go-forward"
+                                        attrs="{'invisible': ['|',
+                                                              ('state', '!=', 'draft'),
+                                                              '&amp;',
+                                                              ('doc_type', '=', 'stv'), ('partner_type', 'in', ('intermission', 'section')) ]}"/>
+                                <button name="invoice_open_with_confirmation" type="object" string="Validate"
+                                        icon="gtk-go-forward"
+                                        confirm="Are you sure you want to validate this invoice without synchronization?"
+                                        attrs="{'invisible': ['|', '|', '|',
+                                                              ('state', '!=', 'draft'),
+                                                              ('doc_type', '!=', 'stv'),
+                                                              ('synced', '=', True),
+                                                              ('partner_type', 'not in', ('intermission', 'section'))]}"/>
+
+                                <button name="invoice_open_with_sync_confirmation" type="object" string="Validate"
+                                        icon="gtk-go-forward"
+                                        confirm="This invoice will sync to its counterpart instance."
+                                        attrs="{'invisible': ['|', '|', '|',
+                                                              ('state', '!=', 'draft'),
+                                                              ('doc_type', '!=', 'stv'),
+                                                              ('synced', '=', False),
+                                                              ('partner_type', 'not in', ('intermission', 'section'))]}"/>
+                                <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,inv_close,proforma,sale,proforma2"/>
                             </group>
                         </page>
                         <page string="Other Info">
-                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" widget="selection" groups="base.group_multi_company"/>
+                            <field name="company_id" on_change="onchange_company_id(company_id, partner_id, type, invoice_line, currency_id, context)"
+                                   widget="selection" groups="base.group_multi_company"/>
                             <newline/>
                             <field name="date_due"/>
                             <field name="user_id" attrs="{'readonly': ['|',
@@ -484,16 +608,20 @@
                 <search string="Search Invoice">
                    <group col="10" colspan="4">
                         <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
-                        <filter name="proforma" icon="terp-gtk-media-pause" string="Proforma" domain="[('state','=','proforma2')]" help="Proforma Invoices"/>
-                        <filter name="invoices" icon="terp-dolar" string="Invoices" domain="[('state','not in',['draft','cancel'])]" help="Proforma/Open/Paid Invoices"/>
+                        <filter name="unpaid" icon="terp-dolar_ok!" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
+                        <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
+                        <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
+                        <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                         <separator orientation="vertical"/>
-                        <filter name="unpaid" icon="terp-dolar_ok!" string="Unpaid" domain="[('state','=','open')]" help="Unpaid Invoices"/>
+                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
+                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
+                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
+                        <separator orientation="vertical"/>
+
                         <separator orientation="vertical"/>
                         <field name="number"/>
                         <field name="partner_id"/>
-                        <field name="user_id" select="1" widget="selection" string="Salesman">
                         <filter domain="[('user_id','=',uid)]" help="My invoices" icon="terp-personal" separator="1"/>
-                        </field>
                         <field name="origin"/>
                         <field name="amount_total"/>
                     </group>
@@ -501,11 +629,12 @@
                     <group col="10" colspan="4">
                         <field name="journal_id" widget="selection" select='1'/>
                         <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="supplier_reference"/>
+                        <field name="name"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
-                        <filter string="Responsible" icon="terp-personal" domain="[]"  context="{'group_by':'user_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]"  context="{'group_by':'state'}"/>
@@ -552,15 +681,16 @@
             <field name="act_window_id" ref="action_invoice_tree"/>
         </record>
 
-        <record id="action_invoice_tree1" model="ir.actions.act_window">
-            <field name="name">Customer Invoices</field>
+    <!-- Fix customer invoice display with a bypass on 'is_debit_note' set to True -->
+        <record id="account.action_invoice_tree1" model="ir.actions.act_window">
+            <field name="name">Customer Invoices</field>  <!-- Stock Transfer Vouchers -->
             <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','out_invoice')]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale'}</field>
-            <field name="search_view_id" ref="view_account_invoice_filter"/>
+            <field name="domain">[('doc_type', '=', 'stv')]</field>
+            <field name="context">{'doc_type': 'stv', 'type': 'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
+            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>
 
@@ -578,20 +708,26 @@
             <field name="act_window_id" ref="action_invoice_tree1"/>
         </record>
 
-        <menuitem action="action_invoice_tree1" id="menu_action_invoice_tree1" parent="menu_finance_receivables"/>
+        <!-- STV -->
+        <menuitem action="action_invoice_tree1" id="menu_action_invoice_tree1" parent="menu_finance_receivables" sequence="3"/>
 
-        <record id="action_invoice_tree2" model="ir.actions.act_window">
+          <!-- Fix supplier invoice display with a bypass on 'is_inkind_donation' set to True -->
+        <record id="account.action_invoice_tree2" model="ir.actions.act_window">
             <field name="name">Supplier Invoices</field>
             <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','in_invoice')]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
-            <field name="search_view_id" ref="view_account_invoice_filter"/>
-            <field name="help">With Supplier Invoices you can enter and manage invoices issued by your suppliers. OpenERP can also generate draft invoices automatically from purchase orders or receipts. This way, you can control the invoice from your supplier according to what you purchased or received.</field>
+            <!-- US-2704 if the domain change, do not forget to update the domain of account_board_supplier_invoice_draft in finance/board_account_view.xml -->
+            <field name="domain">[('doc_type', '=', 'si')]</field>
+            <field name="context">{'doc_type': 'si', 'type': 'in_invoice', 'journal_type': 'purchase', 'from_inv_form': True}</field>
+            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="help">With Supplier Invoices you can enter and manage invoices issued by your suppliers.
+                OpenERP can also generate draft invoices automatically from purchase orders or receipts. This way, you can control the invoice
+                from your supplier according to what you purchased or received.</field>
         </record>
-        <menuitem action="action_invoice_tree2" id="menu_action_invoice_tree2" parent="menu_finance_payables"/>
+
+        <menuitem action="action_invoice_tree2" id="menu_action_invoice_tree2" parent="menu_finance_payables" sequence="10"/>
 
         <record id="action_invoice_tree3" model="ir.actions.act_window">
             <field name="name">Customer Refunds</field>
@@ -599,8 +735,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','out_refund')]</field>
-            <field name="context">{'type':'out_refund', 'journal_type': 'sale_refund'}</field>
+            <field name="domain">[('doc_type', '=', 'cr')]</field>
+            <field name="context">{'doc_type': 'cr', 'type': 'out_refund', 'journal_type': 'sale_refund'}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/>
             <field name="help">With Customer Refunds you can manage the credit notes for your customers. A refund is a document that credits an invoice completely or partially. You can easily generate refunds and reconcile them directly from the invoice form.</field>
         </record>
@@ -617,7 +753,8 @@
             <field name="view_id" ref="invoice_form"/>
             <field name="act_window_id" ref="action_invoice_tree3"/>
         </record>
-        <menuitem action="action_invoice_tree3" id="menu_action_invoice_tree3" parent="menu_finance_receivables"/>
+        <!-- Customer Refunds Menu -->
+        <menuitem action="action_invoice_tree3" id="menu_action_invoice_tree3" parent="menu_finance_receivables" sequence="6"/>
 
         <record id="action_invoice_tree4" model="ir.actions.act_window">
             <field name="name">Supplier Refunds</field>
@@ -625,14 +762,40 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','in_refund')]</field>
-            <field name="context">{'type':'in_refund', 'journal_type': 'purchase_refund'}</field>
+            <field name="domain">[('doc_type', '=', 'sr')]</field>
+            <field name="context">{'doc_type': 'sr', 'type': 'in_refund', 'journal_type': 'purchase_refund'}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/>
             <field name="help">With Supplier Refunds you can manage the credit notes you receive from your suppliers. A refund is a document that credits an invoice completely or partially. You can easily generate refunds and reconcile them directly from the invoice form.</field>
         </record>
-        <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables"/>
+        <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables" sequence="12"/>
 
-        <act_window context="{'search_default_partner_id':[active_id]}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner"/>
+
+        <record id="generic_invoice_tree" model="ir.ui.view">
+            <field name="name">account.invoice.generic.tree</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="100" />
+            <field name="arch" type="xml">
+                <tree colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                    <button name="invoice_open_form_view" string="Display Invoice" icon="gtk-go-forward" type="object"/>
+                    <field name="doc_type"/>
+                    <field name="date_invoice"/>
+                    <field name="number"/>
+                    <field name="partner_id" />
+                    <field name="name"/>
+                    <field name="date_due"/>
+                    <field name="origin"/>
+                    <field name="line_count"/>
+                    <field name="currency_id"/>
+                    <field name="residual" sum="Residual Amount"/>
+                    <field name="amount_untaxed" sum="Untaxed Amount"/>
+                    <field name="amount_total" sum="Total Amount"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+        <act_window context="{'search_default_partner_id':[active_id]}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner" view_id="generic_invoice_tree" view_mode="tree" search_view_id="view_account_invoice_filter"/>
+
 
         <act_window
            id="act_account_journal_2_account_invoice_opened"
@@ -640,6 +803,81 @@
            context="{'search_default_journal_id':active_id, 'search_default_unpaid':1,}"
            res_model="account.invoice"
            src_model="account.journal"/>
+
+        <!-- STOCK TRANSFER REFUNDS -->
+        <record id="action_str" model="ir.actions.act_window">
+            <field name="name">Stock Transfer Refunds</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field eval="False" name="view_id"/>
+            <field name="domain">[('doc_type', '=', 'str')]</field>
+            <field name="context">{'doc_type': 'str', 'type': 'out_refund'}</field>
+            <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Customer Refunds -->
+        </record>
+        <record id="action_str_tree" model="ir.actions.act_window.view">
+            <field eval="30" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="invoice_tree"/> <!-- as for Customer Refunds (default tree view) -->
+            <field name="act_window_id" ref="action_str"/>
+        </record>
+        <record id="action_str_form" model="ir.actions.act_window.view">
+            <field eval="35" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="invoice_form"/>  <!-- as for Customer Refunds -->
+            <field name="act_window_id" ref="action_str"/>
+        </record>
+        <menuitem action="action_str" id="menu_action_str" parent="menu_finance_receivables" sequence="4"/>
+
+        <!-- INTERSECTION SUPPLIER INVOICES -->
+        <record id="action_isi" model="ir.actions.act_window">
+            <field name="name">Intersection Supplier Invoices</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field eval="False" name="view_id"/>
+            <field name="domain">[('doc_type', '=', 'isi')]</field>
+            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice'}</field>
+            <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Invoices -->
+        </record>
+        <record id="action_isi_tree" model="ir.actions.act_window.view">
+            <field eval="40" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="invoice_tree"/> <!-- default tree view -->
+            <field name="act_window_id" ref="action_isi"/>
+        </record>
+        <record id="action_isi_form" model="ir.actions.act_window.view">
+            <field eval="45" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="invoice_supplier_form"/>
+            <field name="act_window_id" ref="action_isi"/>
+        </record>
+        <menuitem action="action_isi" id="menu_action_isi" parent="menu_finance_payables" sequence="20"/>
+
+        <!-- INTERSECTION SUPPLIER REFUNDS -->
+        <record id="action_isr" model="ir.actions.act_window">
+            <field name="name">Intersection Supplier Refunds</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field eval="False" name="view_id"/>
+            <field name="domain">[('doc_type', '=', 'isr')]</field>
+            <field name="context">{'doc_type': 'isr', 'type': 'in_refund'}</field>
+            <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Refunds -->
+        </record>
+        <record id="action_isr_tree" model="ir.actions.act_window.view">
+            <field eval="50" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="invoice_tree"/> <!-- default tree view -->
+            <field name="act_window_id" ref="action_isr"/>
+        </record>
+        <record id="action_isr_form" model="ir.actions.act_window.view">
+            <field eval="55" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="invoice_supplier_form"/>
+            <field name="act_window_id" ref="action_isr"/>
+        </record>
+        <menuitem action="action_isr" id="menu_action_isr" parent="menu_finance_payables" sequence="22"/>
 
     </data>
 </openerp>

@@ -200,7 +200,7 @@ class account_invoice_import(osv.osv_memory):
                     elif invoice.is_inkind_donation:  # for Donations
                         restricted_area = 'donation_lines'
                     else:
-                        restricted_area = 'invoice_lines'  # for SI / STV
+                        restricted_area = 'invoice_lines'  # for SI / STV / ISI
                     if not account_obj.search_exist(cr, uid, [('id', '=', account.id), ('restricted_area', '=', restricted_area)],
                                                     context=context):
                         errors.append(_("Line %s: the account %s is not allowed.") % (current_line_num, account_code))

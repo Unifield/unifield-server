@@ -28,7 +28,7 @@ from osv import fields, osv, orm
 from tools.translate import _
 from msf_partner import PARTNER_TYPE
 from base import currency_date
-
+from tools.safe_eval import safe_eval
 
 class account_invoice(osv.osv):
     def _amount_all(self, cr, uid, ids, name, args, context=None):
@@ -45,21 +45,6 @@ class account_invoice(osv.osv):
                 res[invoice.id]['amount_tax'] += line.amount
             res[invoice.id]['amount_total'] = res[invoice.id]['amount_tax'] + res[invoice.id]['amount_untaxed']
         return res
-
-    def _get_journal(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        type_inv = context.get('type', 'out_invoice')
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        company_id = context.get('company_id', user.company_id.id)
-        type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
-        refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
-        journal_obj = self.pool.get('account.journal')
-        res = journal_obj.search(cr, uid, [('type', '=', type2journal.get(type_inv, 'sale')),
-                                           ('company_id', '=', company_id),
-                                           ('refund_journal', '=', refund_journal.get(type_inv, False))],
-                                 limit=1)
-        return res and res[0] or False
 
     def _get_journal_analytic(self, cr, uid, type_inv, context=None):
         type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale', 'in_refund': 'purchase'}
@@ -363,7 +348,6 @@ class account_invoice(osv.osv):
     _defaults = {
         'type': _get_type,
         'state': 'draft',
-        'journal_id': _get_journal,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.invoice', context=c),
         'reference_type': 'none',
         'check_total': 0.0,
@@ -372,48 +356,32 @@ class account_invoice(osv.osv):
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
-        journal_obj = self.pool.get('account.journal')
         if context is None:
             context = {}
-
-        if context.get('active_model', '') in ['res.partner'] and context.get('active_ids', False) and context['active_ids']:
-            partner = self.pool.get(context['active_model']).read(cr, uid, context['active_ids'], ['supplier','customer'])[0]
-            if not view_type:
-                view_id = self.pool.get('ir.ui.view').search(cr, uid, [('name', '=', 'account.invoice.tree')])
-                view_type = 'tree'
-            if view_type == 'form':
-                if partner['supplier'] and not partner['customer']:
-                    view_id = self.pool.get('ir.ui.view').search(cr,uid,[('name', '=', 'account.invoice.supplier.form')])
-                else:
-                    view_id = self.pool.get('ir.ui.view').search(cr,uid,[('name', '=', 'account.invoice.form')])
         if view_id and isinstance(view_id, (list, tuple)):
             view_id = view_id[0]
         res = super(account_invoice,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-
-        type = context.get('journal_type', 'sale')
-        if 'journal_id' in res['fields']:
-            filter_journal = [('type', '=', type), ('is_current_instance','=',True)]
-            if type == 'inkind' and context.get('is_inkind_donation'):
-                filter_journal = [('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]
-            journal_select = journal_obj._name_search(cr, uid, '', filter_journal, context=context, limit=None, name_get_uid=1)
-            res['fields']['journal_id']['selection'] = journal_select
-
-        if view_type == 'form' and context.get('type', 'out_invoice') == 'in_refund':
+        if view_type == 'form':
             doc = etree.XML(res['arch'])
-            doc.attrib['string'] = _('Supplier Refund')
-            nodes = doc.xpath("//field[@name='amount_to_pay']")
-            for node in nodes:
-                node.set('string', _('Amount to be refunded'))
+            if context.get('type', 'out_invoice') == 'in_refund' or context.get('doc_type', '') == 'isr':
+                nodes = doc.xpath("//field[@name='amount_to_pay']")
+                for node in nodes:
+                    node.set('string', _('Amount to be refunded'))
+            # adapt the form name depending on the doc_type (used e.g. when clicking on a res.log)
+            if context.get('doc_type'):
+                for doc_type in self._get_invoice_type_list(cr, uid, context=context):
+                    if context['doc_type'] in doc_type:
+                        doc.attrib['string'] = doc_type[1]
+                        break
             res['arch'] = etree.tostring(doc)
-
-        if view_type == 'tree':
+        elif view_type == 'tree':
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
             # (US-777) Remove the possibility to create new invoices through the "Advance Return" Wizard
             if context.get('from_wizard') and context.get('from_wizard')['model'] == 'wizard.cash.return':
                 doc.set('hide_new_button', 'True')
             partner_string = _('Customer')
-            if context.get('type', 'out_invoice') in ('in_invoice', 'in_refund'):
+            if context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
                 partner_string = _('Supplier')
             for node in nodes:
                 node.set('string', partner_string)
@@ -432,18 +400,6 @@ class account_invoice(osv.osv):
                 res['arch'] = etree.tostring(doc)
         return res
 
-    def get_log_context(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        is_intermission = context.get('is_intermission', False)
-        if is_intermission:
-            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
-        else:
-            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
-        view_id = res and res[1] or False
-        context.update({'view_id': view_id})
-        return context
-
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -453,8 +409,6 @@ class account_invoice(osv.osv):
                 ctx = context.copy()
                 if 'is_intermission' in vals:
                     ctx.update({'is_intermission': vals['is_intermission']})
-                if vals.get('type', 'in_invoice') in ('out_invoice', 'out_refund'):
-                    ctx = self.get_log_context(cr, uid, context=ctx)
                 if 'type' in vals:
                     ctx.update({'type': vals['type']})
                 if '_terp_view_name' in ctx:
@@ -633,10 +587,8 @@ class account_invoice(osv.osv):
     def onchange_partner_bank(self, cursor, user, ids, partner_bank_id=False):
         return {'value': {}}
 
-    def onchange_company_id(self, cr, uid, ids, company_id, part_id, type, invoice_line, currency_id):
+    def onchange_company_id(self, cr, uid, ids, company_id, part_id, type, invoice_line, currency_id, context=None):
         val = {}
-        dom = {}
-        obj_journal = self.pool.get('account.journal')
         account_obj = self.pool.get('account.account')
         inv_line_obj = self.pool.get('account.invoice.line')
         if company_id and part_id and type:
@@ -683,35 +635,13 @@ class account_invoice(osv.osv):
                                                  _('Invoice line account company does not match with invoice company.'))
                         else:
                             continue
-        if company_id and type:
-            if type in ('out_invoice'):
-                journal_type = 'sale'
-            elif type in ('out_refund'):
-                journal_type = 'sale_refund'
-            elif type in ('in_refund'):
-                journal_type = 'purchase_refund'
-            else:
-                journal_type = 'purchase'
-            journal_ids = obj_journal.search(cr, uid, [('company_id','=',company_id), ('type', '=', journal_type)])
-            if journal_ids:
-                val['journal_id'] = journal_ids[0]
-            res_journal_default = self.pool.get('ir.values').get(cr, uid, 'default', 'type=%s' % (type), ['account.invoice'])
-            for r in res_journal_default:
-                if r[1] == 'journal_id' and r[2] in journal_ids:
-                    val['journal_id'] = r[2]
-            if not val.get('journal_id', False):
-                raise osv.except_osv(_('Configuration Error !'), (_('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (journal_type)))
-            dom = {'journal_id':  [('id', 'in', journal_ids)]}
-        else:
-            journal_ids = obj_journal.search(cr, uid, [])
-
         if currency_id and company_id:
             currency = self.pool.get('res.currency').browse(cr, uid, currency_id)
             if currency.company_id and currency.company_id.id != company_id:
                 val['currency_id'] = False
             else:
                 val['currency_id'] = currency.id
-        return {'value': val, 'domain': dom}
+        return {'value': val}
 
     def onchange_synced(self, cr, uid, ids, synced, partner_id):
         """
@@ -899,11 +829,12 @@ class account_invoice(osv.osv):
             i['currency_id'] = inv.currency_id.id
             i['amount_currency'] = i['price']
             i['ref'] = ref
-            if inv.type in ('out_invoice','in_refund'):
+            # the direction of the amounts depends on the invoice type
+            if inv.doc_type in ('stv', 'ivo', 'dn', 'sr', 'isr'):
                 i['price'] = -i['price']
                 i['amount_currency'] = - i['amount_currency']
                 i['change_sign'] = True
-            else:
+            else:  # 'str', 'ivi', 'si', 'di', 'isi', 'cr', 'donation'
                 i['change_sign'] = False
             total -= i['amount_currency']
         return total, invoice_move_lines
@@ -1232,8 +1163,6 @@ class account_invoice(osv.osv):
 
             for inv_id, name in self.name_get(cr, uid, [id]):
                 ctx = context.copy()
-                if obj_inv.type in ('out_invoice', 'out_refund'):
-                    ctx = self.get_log_context(cr, uid, context=ctx)
                 ctx['type'] = obj_inv.type
                 message = _('Invoice ') + " '" + name + "' "+ _("is validated.")
                 self.log(cr, uid, inv_id, message, context=ctx)
@@ -1371,8 +1300,8 @@ class account_invoice(osv.osv):
         """
         res = [
             'name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id',
-            'partner_contact', 'partner_insite', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line', 'journal_id',
-            'analytic_distribution_id', 'document_date',
+            'partner_contact', 'partner_insite', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line',
+            'journal_id', 'analytic_distribution_id', 'document_date', 'doc_type',
         ]
         return res
 
@@ -1448,10 +1377,24 @@ class account_invoice(osv.osv):
             else:
                 refund_journal_ids = obj_journal.search(cr, uid, [('type','=','sale_refund')])
 
+            if invoice.get('doc_type') == 'stv':
+                doc_type = 'str'
+            elif invoice.get('doc_type') == 'isi':
+                doc_type = 'isr'
+            elif invoice.get('doc_type') in ('si', 'di'):
+                doc_type = 'sr'
+            elif invoice.get('doc_type') == 'ivo':
+                doc_type = 'ivi'
+            elif invoice.get('doc_type') == 'ivi':
+                doc_type = 'ivo'
+            else:
+                doc_type = ''
+
             if not date:
                 date = time.strftime('%Y-%m-%d')
             invoice.update({
                 'type': type_dict[invoice['type']],
+                'real_doc_type': doc_type,
                 'date_invoice': date,
                 'state': 'draft',
                 'number': False,
@@ -1481,7 +1424,7 @@ class account_invoice(osv.osv):
                 invoice[field] = invoice[field] and invoice[field][0]
             invoice = self._hook_refund_data(cr, uid, invoice) or invoice
             # create the new invoice
-            new_ids.append(self.create(cr, uid, invoice))
+            new_ids.append(self.create(cr, uid, invoice, context=context))
 
         return new_ids
 
@@ -1590,6 +1533,20 @@ class account_invoice(osv.osv):
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'account.invoice', inv_id, {},
                                                                                   'account.invoice.update_counterpart_inv', self._logger, check_identifier=False, context=context)
         return True
+
+    def invoice_open_form_view(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        view_data = self._get_invoice_act_window(cr, uid, ids[0], views_order=['form', 'tree'], context=context)
+        view_data['res_id'] = ids[0]
+        view_data['target'] = 'current'
+        if context.get('search_default_partner_id'):
+            dom = []
+            if view_data['domain']:
+                dom = safe_eval(view_data['domain'])
+            dom.append(('partner_id', '=', context.get('search_default_partner_id')))
+            view_data['domain'] = dom
+        return view_data
 
 account_invoice()
 
@@ -2147,7 +2104,7 @@ class ir_values(osv.osv):
     def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         """
         Hides the reports:
-        - "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        - "Invoice Excel Export" in the menu of other invoices than IVO/IVI/STV
         - "FO Follow-up Finance" in the menu of other invoices than IVO/STV
         - "STV/IVO lines follow-up" in the menu of other invoices than IVO/STV (+ renames it depending on the inv. type)
         """
@@ -2169,7 +2126,8 @@ class ir_values(osv.osv):
                     elif context_stv:
                         v[2]['name'] = _('STV lines follow-up')
                 # display
-                if not context.get('is_intermission') and len(v) > 2 and v[2].get('report_name', '') == 'invoice.excel.export':
+                if not context.get('is_intermission') and not context_stv and len(v) > 2 and \
+                        v[2].get('report_name', '') == 'invoice.excel.export':
                     continue
                 elif not context_ivo and not context_stv and len(v) > 1 and v[1] in ('fo_follow_up_finance', 'invoice_lines_follow_up'):
                     continue

@@ -1416,7 +1416,11 @@ class shipment(osv.osv):
                     if order_id not in invoice_id_by_fo:
                         new_invoice_vals = invoice_vals.copy()
                         if is_ivo or is_stv:
-                            new_invoice_vals.update({'synced': True, })  # add "synced" tag for STV and IVO created from Supply flow
+                            # add "synced" tag + real_doc_type for STV and IVO created from Supply flow
+                            real_doc_type = is_stv and 'stv' or 'ivo'
+                            new_invoice_vals.update({'synced': True,
+                                                     'real_doc_type': real_doc_type,
+                                                     })
                             origin_inv = 'origin' in new_invoice_vals and new_invoice_vals['origin'] or False
                             fo = move and move.sale_line_id and move.sale_line_id.order_id or False
                             new_origin = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)

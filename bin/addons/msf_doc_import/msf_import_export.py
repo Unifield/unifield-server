@@ -567,7 +567,8 @@ class msf_import_export(osv.osv_memory):
             return res
 
     def button_import_xml(self, cr, uid, ids, context=None):
-        return self.import_xml(cr, uid, ids, context=context)
+        self.import_xml(cr, uid, ids, context=context)
+        return True
 
     def import_xml(self, cr, uid, ids, raise_on_error=False, context=None):
         """Create a thread to import the data after import checking

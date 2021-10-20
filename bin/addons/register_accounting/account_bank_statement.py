@@ -325,7 +325,7 @@ class account_bank_statement(osv.osv):
         i = self.pool.get('wizard.account.invoice').search(cr, uid, [('currency_id','=',currency), ('register_id', '=', ids[0])])
         if not i:
             i = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'},
-                                                               context={'journal_type': 'purchase', 'type': 'in_invoice'})
+                                                               context={'journal_type': 'purchase', 'type': 'in_invoice', 'doc_type': 'di'})
         return {
             'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
@@ -338,6 +338,7 @@ class account_bank_statement(osv.osv):
             {
                 'active_id': ids[0],
                 'type': 'in_invoice',
+                'doc_type': 'di',
                 'journal_type': 'purchase',
                 'active_ids': ids,
                 'from_wizard_di': 1,
@@ -2816,11 +2817,10 @@ class account_bank_statement_line(osv.osv):
                 break
         if cash_return:
             invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
-            view_name = 'invoice_supplier_form_2'
             name = _('Supplier Invoice')
             # Search the customized view we made for Supplier Invoice (for * Register's users)
             irmd_obj = self.pool.get('ir.model.data')
-            view_ids = irmd_obj.search(cr, uid, [('name', '=', view_name), ('model', '=', 'ir.ui.view')])
+            view_ids = irmd_obj.search(cr, uid, [('name', '=', 'invoice_supplier_form'), ('module', '=', 'account'), ('model', '=', 'ir.ui.view')])
             # Préparation de l'élément permettant de trouver la vue à  afficher
             if view_ids:
                 view = irmd_obj.read(cr, uid, view_ids[0])
@@ -2830,6 +2830,7 @@ class account_bank_statement_line(osv.osv):
             context.update({
                 'active_id': ids[0],
                 'type': invoice.type,
+                'doc_type': invoice.doc_type,
                 'journal_type': invoice.journal_id.type,
                 'active_ids': ids,
                 'from_register': True,
@@ -2922,6 +2923,9 @@ class account_bank_statement_line(osv.osv):
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
+            'type': invoice.type,
+            'doc_type': invoice.doc_type,
+            'journal_type': invoice.journal_id.type,
         })
         # Open it!
         return {

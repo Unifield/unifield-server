@@ -302,8 +302,10 @@
     <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
 <% inv = invoices(data) %>
-<% doc_type_list = [('si_di', _('Supplier Invoices')), ('sr', _('Supplier Refunds')), ('donation', _('Donations')),
-                    ('ivi', _('Intermission Vouchers IN')), ('stv', _('Stock Transfer Vouchers')), ('cr', _('Customer Refunds')),
+<% doc_type_list = [('si_di', _('Supplier Invoices')), ('sr', _('Supplier Refunds')),
+                    ('isi', _('Intersection Supplier Invoices')), ('isr', _('Intersection Supplier Refunds')),
+                    ('donation', _('Donations')), ('ivi', _('Intermission Vouchers IN')),
+                    ('stv', _('Stock Transfer Vouchers')), ('str', _('Stock Transfer Refunds')), ('cr', _('Customer Refunds')),
                     ('dn', _('Debit Notes')), ('ivo', _('Intermission Vouchers OUT'))] %>
 % for (type, title) in doc_type_list:
    <Row >
