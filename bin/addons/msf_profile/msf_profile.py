@@ -81,9 +81,6 @@ class patch_scripts(osv.osv):
         # Configurable intermediate stocks & Internal Consumption Units: royalblue
         cr.execute("""UPDATE stock_location SET search_color = 'royalblue' WHERE id IN %s""", (tuple([conf, interm, iconsu]),))
 
-        # Configurable External Consumption Units: yellowgreen
-        cr.execute("""UPDATE stock_location SET search_color = 'yellowgreen' WHERE usage = 'customer' AND location_category = 'consumption_unit'""")
-
         # Quarantine (analyze): darkorange
         cr.execute("""UPDATE stock_location SET search_color = 'darkorange' WHERE id = %s""", (qua,))
 
