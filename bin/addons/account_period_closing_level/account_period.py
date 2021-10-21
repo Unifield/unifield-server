@@ -529,7 +529,22 @@ class account_period(osv.osv):
             eval_domain += [('date_invoice', '<=', period['date_stop']), ('state', 'in', ['draft', 'open'])]
 
         eval_context = safe_eval(act_context, globals_dict)
-        eval_context['search_default_draft'] = 0
+
+        model_name = hasattr(model_obj, '_name') and getattr(model_obj, '_name')
+        model_inherit_name = hasattr(model_obj, '_inherit') and getattr(model_obj, '_inherit')
+        if model_name == 'account.invoice' or model_inherit_name == 'account.invoice':
+            # activate the Draft and Open filters
+            eval_context['search_default_draft'] = 1
+            if eval_context.get('doc_type') == 'donation':
+                eval_context['search_default_open'] = 1
+                eval_context['search_cancel_state_donation'] = 0
+            else:
+                eval_context['search_default_unpaid'] = 1  # Open
+                eval_context['search_default_paid'] = 0
+                eval_context['search_default_closed'] = 0
+            if eval_context.get('doc_type') in ('ivo', 'stv'):
+                eval_context['search_default_cancel_state'] = 0
+
         act['context'] = eval_context
         act['domain'] = eval_domain
         act['target'] = 'current'
