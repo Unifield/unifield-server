@@ -276,7 +276,9 @@
                                 </tree>
                             </field>
                             <group col="1" colspan="2">
-                                <field name="tax_line" nolabel="1" attrs="{'invisible': [('vat_ok', '=', False)], 'readonly': ['|', ('state','!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}">
+                                <field name="tax_line" nolabel="1"
+                                       attrs="{'invisible': ['|', ('vat_ok', '=', False), ('doc_type', 'in', ('isi', 'isr'))],
+                                               'readonly': ['|', ('state','!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}">
                                     <tree editable="bottom" string="Taxes">
                                         <field name="invoice_id" invisible="True"/>
                                         <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)"/>
@@ -301,10 +303,13 @@
                                 </field>
                             </group>
                             <group col="4" colspan="2">
-                                <button colspan="2" name="button_reset_taxes" states="draft" string="Compute Taxes" type="object" icon="terp-stock_format-scientific" attrs="{'invisible': [('vat_ok', '=', False)], 'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="amount_untaxed" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
+                                <button colspan="2" name="button_reset_taxes" states="draft" string="Compute Taxes"
+                                        type="object" icon="terp-stock_format-scientific"
+                                        attrs="{'invisible': ['|', ('vat_ok', '=', False), ('doc_type', 'in', ('isi', 'isr'))],
+                                                'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="amount_untaxed" attrs="{'invisible': ['|', ('vat_ok', '=', False), ('doc_type', 'in', ('isi', 'isr'))]}"/>
                                 <label string="" colspan="2"/>
-                                <field name="amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}" />
+                                <field name="amount_tax" attrs="{'invisible': ['|', ('vat_ok', '=', False), ('doc_type', 'in', ('isi', 'isr'))]}" />
                                 <field name="reconciled"/>
                                 <field name="amount_total"/>
                                 <field name="state"/>
@@ -317,18 +322,39 @@
                                                                 ('type', 'in', ['in_refund', 'out_refund']),
                                                                 '&amp;', ('doc_type', '=', 'isi'), ('counterpart_inv_status', 'not in', ['inv_close', 'paid'])]}"
                                     />
-                                    <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
-                                    <field name="is_direct_invoice" invisible="1"/>
-                                    <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
-                                    <newline/>
-                                    <field name="can_merge_lines" invisible="1"/>
-                                    <button name="button_merge_lines" type="object"
-                                        colspan="3"
-                                        string="Merge Lines by Account" icon="gtk-convert"
-                                        confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
-                                        attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
+                                    <group attrs="{'invisible': [('doc_type', 'in', ('isi', 'isr'))]}">
+                                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
+                                        <field name="is_direct_invoice" invisible="1"/>
+                                        <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
+                                        <newline/>
+                                        <field name="can_merge_lines" invisible="1"/>
+                                        <button name="button_merge_lines" type="object"
+                                            colspan="3"
+                                            string="Merge Lines by Account" icon="gtk-convert"
+                                            confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
+                                            attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
+                                    </group>
 
                                 </group>
+                            </group>
+                            <!-- for ISI/STR the display of the buttons takes the whole width -->
+                            <group col="6" colspan="4" attrs="{'invisible': [('doc_type', 'not in', ('isi', 'isr'))]}">
+                                <button name="button_merge_lines2" type="object"
+                                        string="Merge Lines by Account"
+                                        icon="gtk-convert" colspan="2"
+                                        confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
+                                        attrs="{'invisible': [('can_merge_lines', '!=', True)]}"
+                                />
+                                <button name="button_split_invoice2" type="object"
+                                        string="Split Invoice"
+                                        icon="gtk-cut" colspan="2"
+                                        states="draft"
+                                />
+                                <button name="invoice_open2" type="object"
+                                        string="Validate"
+                                        icon="gtk-go-forward" colspan="2"
+                                        states="draft"
+                                />
                             </group>
                         </page>
                         <page string="Other Info">

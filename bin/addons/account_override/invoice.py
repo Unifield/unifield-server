@@ -195,14 +195,10 @@ class account_invoice(osv.osv):
             ids = [ids]
 
         for inv_br in self.browse(cr, uid, ids, context=context):
-            # US-357: allow merge of line only for draft SI
+            # allow to merge lines only for draft SI/ISI
             res[inv_br.id] = inv_br.state and inv_br.state == 'draft' \
                 and inv_br.invoice_line \
-                and inv_br.type == 'in_invoice' \
-                and not inv_br.is_direct_invoice \
-                and not inv_br.is_inkind_donation \
-                and not inv_br.is_debit_note \
-                and not inv_br.is_intermission \
+                and inv_br.doc_type in ('si', 'isi') \
                 or False
 
         return res
@@ -1022,6 +1018,12 @@ class account_invoice(osv.osv):
 
         return True
 
+    def invoice_open2(self, cr, uid, ids, context=None):
+        """
+        Alias for invoice_open (used to handle different characteristics on both buttons)
+        """
+        return self.invoice_open(cr, uid, ids, context=context)
+
     def invoice_open_with_confirmation(self, cr, uid, ids, context=None):
         """
         Simply calls "invoice_open" (asking for confirmation is done at form level)
@@ -1356,6 +1358,12 @@ class account_invoice(osv.osv):
             }
         return False
 
+    def button_split_invoice2(self, cr, uid, ids, context=None):
+        """
+        Alias for button_split_invoice (used to handle different characteristics on both buttons)
+        """
+        return self.button_split_invoice(cr, uid, ids, context=context)
+
     def button_donation_certificate(self, cr, uid, ids, context=None):
         """
         Open a view containing a list of all donation certificates linked to the given invoice.
@@ -1635,6 +1643,12 @@ class account_invoice(osv.osv):
             post_merge(inv_br)
 
         return res
+
+    def button_merge_lines2(self, cr, uid, ids, context=None):
+        """
+        Alias for button_merge_lines (used to handle different characteristics on both buttons)
+        """
+        return self.button_merge_lines(cr, uid, ids, context=context)
 
     def check_accounts_for_partner(self, cr, uid, ids, context=None,
                                    header_obj=False, lines_field='invoice_line',
