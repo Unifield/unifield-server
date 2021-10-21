@@ -767,7 +767,7 @@
             <field name="search_view_id" ref="view_account_invoice_filter"/>
             <field name="help">With Supplier Refunds you can manage the credit notes you receive from your suppliers. A refund is a document that credits an invoice completely or partially. You can easily generate refunds and reconcile them directly from the invoice form.</field>
         </record>
-        <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables" sequence="12"/>
+        <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables" sequence="15"/>
 
 
         <record id="generic_invoice_tree" model="ir.ui.view">

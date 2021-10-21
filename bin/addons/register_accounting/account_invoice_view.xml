@@ -264,7 +264,7 @@
         </record>
 
     <!-- Supplier Direct Invoices Menu -->
-        <menuitem action="action_direct_invoice" id="menu_action_direct_invoice" parent="account.menu_finance_payables" sequence="25"/>
+        <menuitem action="action_direct_invoice" id="menu_action_direct_invoice" parent="account.menu_finance_payables" sequence="12"/>
 
     </data>
 </openerp>
