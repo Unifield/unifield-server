@@ -2132,32 +2132,41 @@ class product_attributes(osv.osv):
                         obj = invoice.invoice_id
                         type_name = 'Invoice'
                         # Customer Refund
-                        if obj.type == 'out_refund':
+                        if obj.doc_type == 'cr':
                             type_name = 'Customer Refund'
                         # Supplier Refund
-                        elif obj.type == 'in_refund':
+                        elif obj.doc_type == 'sr':
                             type_name = 'Supplier Refund'
                         # Debit Note
-                        elif obj.type == 'out_invoice' and obj.is_debit_note and not obj.is_inkind_donation:
+                        elif obj.doc_type == 'dn':
                             type_name = 'Debit Note'
                         # Donation (in-kind donation)
-                        elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
+                        elif obj.doc_type == 'donation':
                             type_name = 'Finance document In-kind Donation'
                         # Intermission voucher out
-                        elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                        elif obj.doc_type == 'ivo':
                             type_name = 'Intermission Voucher Out'
                         # Intermission voucher in
-                        elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                        elif obj.doc_type == 'ivi':
                             type_name = 'Intermission Voucher In'
                         # Stock Transfer Voucher
-                        elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
+                        elif obj.doc_type == 'stv':
                             type_name = 'Stock Transfer Voucher'
                         # Supplier Invoice
-                        elif obj.type == 'in_invoice' and not obj.register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
+                        elif obj.doc_type == 'si':
                             type_name = 'Supplier Invoice'
                         # Supplier Direct Invoice
-                        elif obj.type == 'in_invoice' and obj.register_line_ids:
+                        elif obj.doc_type == 'di':
                             type_name = 'Supplier Direct Invoice'
+                        # Stock Transfer Refund
+                        elif obj.doc_type == 'str':
+                            type_name = 'Stock Transfer Refund'
+                        # Intersection Supplier Invoice
+                        elif obj.doc_type == 'isi':
+                            type_name = 'Intersection Supplier Invoice'
+                        # Intersection Supplier Refund
+                        elif obj.doc_type == 'isr':
+                            type_name = 'Intersection Supplier Refund'
 
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': type_name,
