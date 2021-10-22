@@ -420,6 +420,8 @@ class account_invoice(osv.osv):
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'can_merge_lines': lambda *a: False,
         'is_merged_by_account': lambda *a: False,
+        # set a default value on doc type so that the restrictions on fields apply even before the form is saved
+        'doc_type': lambda obj, cr, uid, c: c and c.get('doc_type') or False,
     }
 
     def import_data_web(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None,
