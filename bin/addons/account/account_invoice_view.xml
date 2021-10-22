@@ -320,7 +320,7 @@
                                         attrs="{'invisible': ['|', '|',
                                                                 ('state', '=', 'draft'),
                                                                 ('type', 'in', ['in_refund', 'out_refund']),
-                                                                '&amp;', ('doc_type', '=', 'isi'), ('counterpart_inv_status', 'not in', ['inv_close', 'paid'])]}"
+                                                                '&amp;', ('doc_type', '=', 'isi'), ('counterpart_inv_status', '!=', 'inv_close')]}"
                                     />
                                     <group attrs="{'invisible': [('doc_type', 'in', ('isi', 'isr'))]}">
                                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
