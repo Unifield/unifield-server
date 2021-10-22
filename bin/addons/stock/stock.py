@@ -301,6 +301,21 @@ class stock_location(osv.osv):
 
             return [('id', 'in', retrict)]
 
+    def _is_intermediate_parent(self, cr, uid, ids, name, args, context=None):
+        """
+        Check if the Parent Location is Intermediate Stocks
+        """
+        if context is None:
+            context = {}
+
+        interm = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                     'stock_location_intermediate_client_view')[1]
+
+        res = {}
+        for loc in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
+            res[loc.id] = loc.location_id and loc.location_id.id == interm or False
+        return res
+
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active', help="By unchecking the active field, you may hide a location without deleting it."),
@@ -368,6 +383,7 @@ class stock_location(osv.osv):
         'from_config': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_config, string='Set in Loc. Config', internal=1),
         'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=False, fnct_search=_search_initial_stock_inv_display, string='Display in Initial stock inventory', readonly=True),
         'search_color': fields.selection([('dimgray', 'Dim Gray'), ('darkorchid', 'Dark Orchid'), ('lightpink', 'Light Pink'), ('royalblue', 'Royal Blue'), ('yellowgreen', 'Yellow Green'), ('darkorange', 'Dark Orange'), ('sandybrown', 'Sandy Brown'), ], string="Color for Search views"),
+        'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?"),
     }
     _defaults = {
         'active': True,
