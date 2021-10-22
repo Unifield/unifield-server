@@ -329,16 +329,16 @@
                                         <newline/>
                                         <field name="can_merge_lines" invisible="1"/>
                                         <button name="button_merge_lines" type="object"
-                                            colspan="3"
-                                            string="Merge Lines by Account" icon="gtk-convert"
-                                            confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
-                                            attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
+                                                colspan="3"
+                                                string="Merge Lines by Account" icon="gtk-convert"
+                                                confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
+                                                attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
                                     </group>
 
                                 </group>
                             </group>
                             <!-- for ISI/STR the display of the buttons takes the whole width -->
-                            <group col="6" colspan="4" attrs="{'invisible': [('doc_type', 'not in', ('isi', 'isr'))]}">
+                            <group col="8" colspan="6" attrs="{'invisible': [('doc_type', 'not in', ('isi', 'isr'))]}">
                                 <button name="button_merge_lines2" type="object"
                                         string="Merge Lines by Account"
                                         icon="gtk-convert" colspan="2"
@@ -352,7 +352,7 @@
                                 />
                                 <button name="invoice_open2" type="object"
                                         string="Validate"
-                                        icon="gtk-go-forward" colspan="2"
+                                        icon="gtk-go-forward" colspan="4"
                                         states="draft"
                                 />
                             </group>
