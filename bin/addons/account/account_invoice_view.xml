@@ -838,7 +838,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'str')]</field>
-            <field name="context">{'doc_type': 'str', 'type': 'out_refund'}</field>
+            <field name="context">{'doc_type': 'str', 'type': 'out_refund', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Customer Refunds -->
         </record>
         <record id="action_str_tree" model="ir.actions.act_window.view">
@@ -863,7 +863,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'isi')]</field>
-            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice'}</field>
+            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Invoices -->
         </record>
         <record id="action_isi_tree" model="ir.actions.act_window.view">
@@ -888,7 +888,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'isr')]</field>
-            <field name="context">{'doc_type': 'isr', 'type': 'in_refund'}</field>
+            <field name="context">{'doc_type': 'isr', 'type': 'in_refund', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Refunds -->
         </record>
         <record id="action_isr_tree" model="ir.actions.act_window.view">
