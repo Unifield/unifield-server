@@ -112870,7 +112870,8 @@ msgstr "%s Avoir(s) de Transfert de Stock"
 msgid "Intersection Supplier Invoices"
 msgstr "Factures Fournisseur Intersection"
 
-#. modules: account_override, register_accounting
+#. modules: account_override, register_accounting, account
+#: report:account.invoice2:0
 #: selection:account.invoice,doc_type:0
 #: selection:account.invoice,real_doc_type:0
 #: selection:account.invoice.line,line_doc_type:0
@@ -112894,7 +112895,8 @@ msgstr "%s Facture(s) Fournisseur Intersection"
 msgid "Intersection Supplier Refunds"
 msgstr "Avoirs Fournisseur Intersection"
 
-#. modules: account_override, register_accounting
+#. modules: account_override, register_accounting, account
+#: report:account.invoice2:0
 #: selection:account.invoice,doc_type:0
 #: selection:account.invoice,real_doc_type:0
 #: selection:account.invoice.line,line_doc_type:0
