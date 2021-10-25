@@ -51,31 +51,30 @@ class account_invoice(osv.osv):
         inv_name = inv.number or inv.name or 'No_description'
         prefix = 'STV_'
 
-        if inv.type == 'out_refund': # Customer refund
+        if inv.doc_type == 'cr':
             prefix = 'CR_'
-        elif inv.type == 'in_refund': # Supplier refund
+        elif inv.doc_type == 'sr':
             prefix = 'SR_'
-        elif inv.type == 'out_invoice':
-            # Stock transfer voucher
+        elif inv.doc_type == 'stv':
             prefix = 'STV_'
-            # Debit note
-            if inv.is_debit_note and not inv.is_inkind_donation and not inv.is_intermission:
-                prefix = 'DN_'
-            # Intermission voucher OUT
-            elif not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IVO_'
-        elif inv.type == 'in_invoice':
-            # Supplier invoice
+        elif inv.doc_type == 'dn':
+            prefix = 'DN_'
+        elif inv.doc_type == 'ivo':
+            prefix = 'IVO_'
+        elif inv.doc_type == 'si':
             prefix = 'SI_'
-            # Intermission voucher IN
-            if not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IVI_'
-            # Direct invoice
-            elif inv.is_direct_invoice:
-                prefix = 'DI_'
-            # In-kind donation
-            elif not inv.is_debit_note and inv.is_inkind_donation:
-                prefix = 'DON_'
+        elif inv.doc_type == 'ivi':
+            prefix = 'IVI_'
+        elif inv.doc_type == 'di':
+            prefix = 'DI_'
+        elif inv.doc_type == 'donation':
+            prefix = 'DON_'
+        elif inv.doc_type == 'str':
+            prefix = 'STR_'
+        elif inv.doc_type == 'isi':
+            prefix = 'ISI_'
+        elif inv.doc_type == 'isr':
+            prefix = 'ISR_'
         return '%s%s' % (prefix, inv_name)
 
     def _get_journal(self, cr, uid, context=None):
