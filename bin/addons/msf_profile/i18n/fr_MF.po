@@ -40496,6 +40496,12 @@ msgstr "Monaco"
 msgid "Supplier Refunds"
 msgstr "Avoirs Fournisseur"
 
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:571
+#, python-format
+msgid "%s Supplier Refund(s)"
+msgstr "%s Avoir(s) Fournisseur"
+
 #. modules: sync_client, analytic_distribution
 #: model:ir.ui.menu,name:sync_client.ops_menu
 #: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_operation
@@ -80679,6 +80685,7 @@ msgstr "Entrées fournisseurs pour la Cash Request"
 #: code:addons/register_accounting/wizard/wizard_register_import.py:570
 #: report:addons/account/report/free_allocation_report.mako:205
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:606
+#: field:wizard.account.invoice.line,cost_center_id:0
 #: field:dest.cc.link,cc_id:0
 #, python-format
 msgid "Cost Center"
@@ -106035,6 +106042,11 @@ msgid "Wizard opened from an Intermission Voucher"
 msgstr "Assistant ouvert depuis un Bon Intermission"
 
 #. module: analytic_distribution
+#: field:account.invoice.refund,is_stv:0
+msgid "Wizard opened from a Stock Transfer Voucher"
+msgstr "Assistant ouvert depuis un Bon Client"
+
+#. module: analytic_distribution
 #: field:account.invoice.refund,is_isi:0
 msgid "Wizard opened from an Intersection Supplier Invoice"
 msgstr "Assistant ouvert depuis une Facture Fournisseur Intersection"
@@ -112847,7 +112859,7 @@ msgstr "Avoir de Transfert de Stock"
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:574
 #, python-format
-msgid "%s Stock Transfer Refunds(s)"
+msgid "%s Stock Transfer Refund(s)"
 msgstr "%s Avoir(s) de Transfert de Stock"
 
 #. modules: account_override, account, account_period_closing_level
@@ -112895,7 +112907,7 @@ msgstr "Avoir Fournisseur Intersection"
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:573
 #, python-format
-msgid "%s Intersection Supplier Refunds(s)"
+msgid "%s Intersection Supplier Refund(s)"
 msgstr "%s Avoir(s) Fournisseur Intersection"
 
 #. module: account_period_closing_level
