@@ -57,6 +57,7 @@ class patch_scripts(osv.osv):
     def us_9044_add_location_colors(self, cr, uid, *a, **b):
         '''
         Add the search_color to each location which needs one
+        Changes the name 'Quarantine' into 'Quarantine / For Scrap' where it is necessary
         Changes the name 'Quarantine (before scrap)' into 'Expired / Damaged / For Scrap' where it is necessary
         '''
         obj_data = self.pool.get('ir.model.data')
@@ -69,6 +70,7 @@ class patch_scripts(osv.osv):
         conf = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
         interm = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
         iconsu = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
+        p_qua = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_view')[1]
         qua = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
         exp = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
 
@@ -86,6 +88,9 @@ class patch_scripts(osv.osv):
 
         # Expired / Damaged / For Scrap: sandybrown
         cr.execute("""UPDATE stock_location SET name = 'Expired / Damaged / For Scrap', search_color = 'sandybrown' WHERE id = %s""", (exp,))
+
+        # Fix the name of Quarantine location
+        cr.execute("""UPDATE stock_location SET name = 'Quarantine / For Scrap' WHERE id = %s""", (p_qua,))
 
         # Fix the remote_location_name in stock_mission_report_line_location
         cr.execute("""UPDATE stock_mission_report_line_location SET remote_location_name = 'Expired / Damaged / For Scrap' 
