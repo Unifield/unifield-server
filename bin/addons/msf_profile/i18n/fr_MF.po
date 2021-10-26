@@ -78634,6 +78634,12 @@ msgstr "Comptes à Lettrer"
 msgid "You cannot cancel or delete a supplier invoice linked to a PO."
 msgstr "Vous ne pouvez pas annuler ou supprimer une facture fournisseur liée à un BdC."
 
+#. module: account_override
+#: code:addons/account_override/invoice.py:654
+#, python-format
+msgid "You cannot cancel or delete an Intersection Supplier Invoice linked to a PO."
+msgstr "Vous ne pouvez pas annuler ou supprimer une Facture Fournisseur Intersection liée à un BdC."
+
 #. module: account
 #: view:account.move.line:0
 msgid "Next Partner to reconcile"

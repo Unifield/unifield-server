@@ -636,19 +636,22 @@ class account_invoice(osv.osv):
 
     def check_po_link(self, cr, uid, ids, context=None):
         """
-        Check that invoice (only supplier invoices) has no link with a PO. This is because of commitments presence.
+        Checks that the invoices aren't linked to any PO (because of the commitments).
         """
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'is_intermission', 'state']):
-            if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
+        for inv in self.read(cr, uid, ids, ['purchase_ids', 'doc_type', 'state']):
+            if inv.get('doc_type', '') in ('ivi', 'si', 'isi'):
                 if inv.get('purchase_ids', False):
-                    if inv.get('is_intermission'):
+                    if inv['doc_type'] == 'ivi':
                         if inv.get('state', '') != 'draft':  # only draft IVIs can be deleted
                             raise osv.except_osv(_('Warning'),
                                                  _('Intermission Vouchers linked to a PO can be deleted only in Draft state.'))
+                    elif inv['doc_type'] == 'isi':
+                        raise osv.except_osv(_('Warning'),
+                                             _('You cannot cancel or delete an Intersection Supplier Invoice linked to a PO.'))
                     else:
                         # US-1702 Do not allow at all the deletion of SI coming from PO
                         raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
