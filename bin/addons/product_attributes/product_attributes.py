@@ -3004,6 +3004,19 @@ class product_deactivation_error_line(osv.osv_memory):
                 res['nodestroy'] = True
                 return res
 
+            # Invoices
+            if line.internal_type == 'account.invoice' and line.doc_id:
+                inv_obj = self.pool.get('account.invoice')
+                doc_type = inv_obj.read(cr, uid, line.doc_id, ['doc_type'], context=context)['doc_type']
+                action_xmlid = inv_obj._invoice_action_act_window.get(doc_type)
+                if not action_xmlid:
+                    raise osv.except_osv(_('Warning'), _('Impossible to retrieve the view to display.'))
+                res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xmlid, ['form', 'tree'], context=context)
+                res['res_id'] = line.doc_id
+                res['target'] = 'current'
+                res['nodestroy'] = True
+                return res
+
             view_id, context = self._get_view(cr, uid, line, context=context)
             return {'type': 'ir.actions.act_window',
                     'name': line.type,
@@ -3024,7 +3037,6 @@ class product_deactivation_error_line(osv.osv_memory):
             context = {}
 
         view_id = False
-        data_obj = self.pool.get('ir.model.data')
         obj = self.pool.get(line.internal_type).browse(cr, uid, line.doc_id)
 
         if line.internal_type == 'composition.kit':
@@ -3037,38 +3049,6 @@ class product_deactivation_error_line(osv.osv_memory):
             context.update({'procurement_request': obj.procurement_request})
         elif line.internal_type == 'purchase.order':
             context.update({'rfq_ok': obj.rfq_ok})
-        elif line.internal_type == 'account.invoice':
-            view_id = data_obj.get_object_reference(cr, uid, 'account', 'invoice_form')
-            # Customer Refund
-            if obj.type == 'out_refund':
-                context.update({'type':'out_refund', 'journal_type': 'sale_refund'})
-            # Supplier Refund
-            elif obj.type == 'in_refund':
-                context.update({'type':'in_refund', 'journal_type': 'purchase_refund'})
-            # Debit Note
-            elif obj.type == 'out_invoice' and obj.is_debit_note and not obj.is_inkind_donation:
-                context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
-            # Donation (in-kind donation)
-            elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
-                context.update({'type':'in_invoice', 'journal_type': 'inkind'})
-            # Intermission voucher out
-            elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
-                view_id = data_obj.get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
-                context.update({'type':'out_invoice', 'journal_type': 'intermission'})
-            # Intermission voucher in
-            elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
-                view_id = data_obj.get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
-                context.update({'type':'in_invoice', 'journal_type': 'intermission'})
-            # Stock Transfer Voucher
-            elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
-                context.update({'type':'out_invoice', 'journal_type': 'sale'})
-            # Supplier Invoice
-            elif obj.type == 'in_invoice' and not obj.register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
-                context.update({'type':'in_invoice', 'journal_type': 'purchase'})
-            # Supplier Direct Invoice
-            elif obj.type == 'in_invoice' and obj.register_line_ids:
-                context.update({'type':'in_invoice', 'journal_type': 'purchase'})
-
         if view_id:
             view_id = [view_id[1]]
 

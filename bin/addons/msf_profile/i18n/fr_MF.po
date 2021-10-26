@@ -112918,8 +112918,9 @@ msgstr "Avoir Fournisseur Intersection"
 msgid "%s Intersection Supplier Refund(s)"
 msgstr "%s Avoir(s) Fournisseur Intersection"
 
-#. module: account_period_closing_level
+#. modules: account_period_closing_level, product_attributes
 #: code:addons/account_period_closing_level/account_period.py:516
+#: code:addons/product_attributes/product_attributes.py:3013
 #, python-format
 msgid "Impossible to retrieve the view to display."
 msgstr "Impossible de récupérer la vue à afficher."
