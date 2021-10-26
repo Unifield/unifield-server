@@ -276,7 +276,9 @@
                                 </tree>
                             </field>
                             <group col="1" colspan="2">
-                                <field name="tax_line" nolabel="1" attrs="{'invisible': [('vat_ok', '=', False)], 'readonly': ['|', ('state','!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}">
+                                <field name="tax_line" nolabel="1"
+                                       attrs="{'invisible': ['|', ('vat_ok', '=', False), ('doc_type', 'in', ('isi', 'isr'))],
+                                               'readonly': ['|', ('state','!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}">
                                     <tree editable="bottom" string="Taxes">
                                         <field name="invoice_id" invisible="True"/>
                                         <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)"/>
@@ -301,10 +303,13 @@
                                 </field>
                             </group>
                             <group col="4" colspan="2">
-                                <button colspan="2" name="button_reset_taxes" states="draft" string="Compute Taxes" type="object" icon="terp-stock_format-scientific" attrs="{'invisible': [('vat_ok', '=', False)], 'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="amount_untaxed" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
+                                <button colspan="2" name="button_reset_taxes" states="draft" string="Compute Taxes"
+                                        type="object" icon="terp-stock_format-scientific"
+                                        attrs="{'invisible': ['|', ('vat_ok', '=', False), ('doc_type', 'in', ('isi', 'isr'))],
+                                                'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="amount_untaxed" attrs="{'invisible': ['|', ('vat_ok', '=', False), ('doc_type', 'in', ('isi', 'isr'))]}"/>
                                 <label string="" colspan="2"/>
-                                <field name="amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}" />
+                                <field name="amount_tax" attrs="{'invisible': ['|', ('vat_ok', '=', False), ('doc_type', 'in', ('isi', 'isr'))]}" />
                                 <field name="reconciled"/>
                                 <field name="amount_total"/>
                                 <field name="state"/>
@@ -315,20 +320,41 @@
                                         attrs="{'invisible': ['|', '|',
                                                                 ('state', '=', 'draft'),
                                                                 ('type', 'in', ['in_refund', 'out_refund']),
-                                                                '&amp;', ('doc_type', '=', 'isi'), ('counterpart_inv_status', 'not in', ['inv_close', 'paid'])]}"
+                                                                '&amp;', ('doc_type', '=', 'isi'), ('counterpart_inv_status', '!=', 'inv_close')]}"
                                     />
-                                    <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
-                                    <field name="is_direct_invoice" invisible="1"/>
-                                    <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
-                                    <newline/>
-                                    <field name="can_merge_lines" invisible="1"/>
-                                    <button name="button_merge_lines" type="object"
-                                        colspan="3"
-                                        string="Merge Lines by Account" icon="gtk-convert"
-                                        confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
-                                        attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
+                                    <group attrs="{'invisible': [('doc_type', 'in', ('isi', 'isr'))]}">
+                                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
+                                        <field name="is_direct_invoice" invisible="1"/>
+                                        <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
+                                        <newline/>
+                                        <field name="can_merge_lines" invisible="1"/>
+                                        <button name="button_merge_lines" type="object"
+                                                colspan="3"
+                                                string="Merge Lines by Account" icon="gtk-convert"
+                                                confirm="You are about to merge invoice lines; are you sure you want to proceed? THIS OPERATION CAN NOT BE UNDONE."
+                                                attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
+                                    </group>
 
                                 </group>
+                            </group>
+                            <!-- for ISI/STR the display of the buttons takes the whole width -->
+                            <group col="8" colspan="6" attrs="{'invisible': [('doc_type', 'not in', ('isi', 'isr'))]}">
+                                <button name="button_merge_lines2" type="object"
+                                        string="Merge Lines by Account"
+                                        icon="gtk-convert" colspan="2"
+                                        confirm="You are about to merge invoice lines; are you sure you want to proceed? THIS OPERATION CAN NOT BE UNDONE."
+                                        attrs="{'invisible': [('can_merge_lines', '!=', True)]}"
+                                />
+                                <button name="button_split_invoice2" type="object"
+                                        string="Split Invoice"
+                                        icon="gtk-cut" colspan="2"
+                                        states="draft"
+                                />
+                                <button name="invoice_open2" type="object"
+                                        string="Validate"
+                                        icon="gtk-go-forward" colspan="4"
+                                        states="draft"
+                                />
                             </group>
                         </page>
                         <page string="Other Info">
@@ -767,7 +793,7 @@
             <field name="search_view_id" ref="view_account_invoice_filter"/>
             <field name="help">With Supplier Refunds you can manage the credit notes you receive from your suppliers. A refund is a document that credits an invoice completely or partially. You can easily generate refunds and reconcile them directly from the invoice form.</field>
         </record>
-        <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables" sequence="12"/>
+        <menuitem action="action_invoice_tree4" id="menu_action_invoice_tree4" parent="menu_finance_payables" sequence="15"/>
 
 
         <record id="generic_invoice_tree" model="ir.ui.view">
@@ -812,7 +838,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'str')]</field>
-            <field name="context">{'doc_type': 'str', 'type': 'out_refund'}</field>
+            <field name="context">{'doc_type': 'str', 'type': 'out_refund', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Customer Refunds -->
         </record>
         <record id="action_str_tree" model="ir.actions.act_window.view">
@@ -837,7 +863,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'isi')]</field>
-            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice'}</field>
+            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Invoices -->
         </record>
         <record id="action_isi_tree" model="ir.actions.act_window.view">
@@ -862,7 +888,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'isr')]</field>
-            <field name="context">{'doc_type': 'isr', 'type': 'in_refund'}</field>
+            <field name="context">{'doc_type': 'isr', 'type': 'in_refund', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Refunds -->
         </record>
         <record id="action_isr_tree" model="ir.actions.act_window.view">

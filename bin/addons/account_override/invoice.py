@@ -51,31 +51,30 @@ class account_invoice(osv.osv):
         inv_name = inv.number or inv.name or 'No_description'
         prefix = 'STV_'
 
-        if inv.type == 'out_refund': # Customer refund
+        if inv.doc_type == 'cr':
             prefix = 'CR_'
-        elif inv.type == 'in_refund': # Supplier refund
+        elif inv.doc_type == 'sr':
             prefix = 'SR_'
-        elif inv.type == 'out_invoice':
-            # Stock transfer voucher
+        elif inv.doc_type == 'stv':
             prefix = 'STV_'
-            # Debit note
-            if inv.is_debit_note and not inv.is_inkind_donation and not inv.is_intermission:
-                prefix = 'DN_'
-            # Intermission voucher OUT
-            elif not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IVO_'
-        elif inv.type == 'in_invoice':
-            # Supplier invoice
+        elif inv.doc_type == 'dn':
+            prefix = 'DN_'
+        elif inv.doc_type == 'ivo':
+            prefix = 'IVO_'
+        elif inv.doc_type == 'si':
             prefix = 'SI_'
-            # Intermission voucher IN
-            if not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IVI_'
-            # Direct invoice
-            elif inv.is_direct_invoice:
-                prefix = 'DI_'
-            # In-kind donation
-            elif not inv.is_debit_note and inv.is_inkind_donation:
-                prefix = 'DON_'
+        elif inv.doc_type == 'ivi':
+            prefix = 'IVI_'
+        elif inv.doc_type == 'di':
+            prefix = 'DI_'
+        elif inv.doc_type == 'donation':
+            prefix = 'DON_'
+        elif inv.doc_type == 'str':
+            prefix = 'STR_'
+        elif inv.doc_type == 'isi':
+            prefix = 'ISI_'
+        elif inv.doc_type == 'isr':
+            prefix = 'ISR_'
         return '%s%s' % (prefix, inv_name)
 
     def _get_journal(self, cr, uid, context=None):
@@ -195,14 +194,10 @@ class account_invoice(osv.osv):
             ids = [ids]
 
         for inv_br in self.browse(cr, uid, ids, context=context):
-            # US-357: allow merge of line only for draft SI
+            # allow to merge lines only for draft SI/ISI
             res[inv_br.id] = inv_br.state and inv_br.state == 'draft' \
                 and inv_br.invoice_line \
-                and inv_br.type == 'in_invoice' \
-                and not inv_br.is_direct_invoice \
-                and not inv_br.is_inkind_donation \
-                and not inv_br.is_debit_note \
-                and not inv_br.is_intermission \
+                and inv_br.doc_type in ('si', 'isi') \
                 or False
 
         return res
@@ -424,6 +419,8 @@ class account_invoice(osv.osv):
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'can_merge_lines': lambda *a: False,
         'is_merged_by_account': lambda *a: False,
+        # set a default value on doc type so that the restrictions on fields apply even before the form is saved
+        'doc_type': lambda obj, cr, uid, c: c and c.get('doc_type') or False,
     }
 
     def import_data_web(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None,
@@ -639,19 +636,22 @@ class account_invoice(osv.osv):
 
     def check_po_link(self, cr, uid, ids, context=None):
         """
-        Check that invoice (only supplier invoices) has no link with a PO. This is because of commitments presence.
+        Checks that the invoices aren't linked to any PO (because of the commitments).
         """
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'is_intermission', 'state']):
-            if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
+        for inv in self.read(cr, uid, ids, ['purchase_ids', 'doc_type', 'state']):
+            if inv.get('doc_type', '') in ('ivi', 'si', 'isi'):
                 if inv.get('purchase_ids', False):
-                    if inv.get('is_intermission'):
+                    if inv['doc_type'] == 'ivi':
                         if inv.get('state', '') != 'draft':  # only draft IVIs can be deleted
                             raise osv.except_osv(_('Warning'),
                                                  _('Intermission Vouchers linked to a PO can be deleted only in Draft state.'))
+                    elif inv['doc_type'] == 'isi':
+                        raise osv.except_osv(_('Warning'),
+                                             _('You cannot cancel or delete an Intersection Supplier Invoice linked to a PO.'))
                     else:
                         # US-1702 Do not allow at all the deletion of SI coming from PO
                         raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
@@ -878,7 +878,7 @@ class account_invoice(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         """
         Delete register line if this invoice is a Direct Invoice.
-        Don't delete an invoice that is linked to a PO. This is only for supplier invoices.
+        Don't delete an invoice that is linked to a PO.
         """
         if not context:
             context = {}
@@ -1022,6 +1022,12 @@ class account_invoice(osv.osv):
 
         return True
 
+    def invoice_open2(self, cr, uid, ids, context=None):
+        """
+        Alias for invoice_open (used to handle different characteristics on both buttons)
+        """
+        return self.invoice_open(cr, uid, ids, context=context)
+
     def invoice_open_with_confirmation(self, cr, uid, ids, context=None):
         """
         Simply calls "invoice_open" (asking for confirmation is done at form level)
@@ -1087,7 +1093,7 @@ class account_invoice(osv.osv):
     def action_cancel(self, cr, uid, ids, *args):
         """
         Reverse move if this object is a In-kind Donation. Otherwise do normal job: cancellation.
-        Don't delete an invoice that is linked to a PO. This is only for supplier invoices.
+        Don't cancel an invoice that is linked to a PO.
         """
         # Oct. 2019: log if this method is used at least once (cf it may be dead code?)
         self.pool.get('ir.config_parameter').set_param(cr, 1, 'action_cancel.in_use', True)
@@ -1355,6 +1361,12 @@ class account_invoice(osv.osv):
                 }
             }
         return False
+
+    def button_split_invoice2(self, cr, uid, ids, context=None):
+        """
+        Alias for button_split_invoice (used to handle different characteristics on both buttons)
+        """
+        return self.button_split_invoice(cr, uid, ids, context=context)
 
     def button_donation_certificate(self, cr, uid, ids, context=None):
         """
@@ -1635,6 +1647,12 @@ class account_invoice(osv.osv):
             post_merge(inv_br)
 
         return res
+
+    def button_merge_lines2(self, cr, uid, ids, context=None):
+        """
+        Alias for button_merge_lines (used to handle different characteristics on both buttons)
+        """
+        return self.button_merge_lines(cr, uid, ids, context=context)
 
     def check_accounts_for_partner(self, cr, uid, ids, context=None,
                                    header_obj=False, lines_field='invoice_line',
@@ -1922,14 +1940,14 @@ class account_invoice_line(osv.osv):
             inv_fields = ['from_supply', 'synced', 'type', 'is_inkind_donation', 'partner_type']
             inv = inv_obj.browse(cr, uid, invoice_id, fields_to_fetch=inv_fields, context=context)
             if not inv.is_inkind_donation:  # never block manual line creation in Donations whatever the workflow and partner type
-                ivi_or_si_synced = inv.type == 'in_invoice' and inv.synced
+                ivi_or_isi_synced = inv.type == 'in_invoice' and inv.synced
                 intermission_or_section_from_supply = inv.partner_type in ('intermission', 'section') and inv.from_supply
                 from_split = context.get('from_split')
                 if context.get('from_inv_form'):
-                    if from_split and ivi_or_si_synced:
+                    if from_split and ivi_or_isi_synced:
                         raise osv.except_osv(_('Error'), _('This document has been generated via synchronization. '
                                                            'You can\'t split its lines.'))
-                    elif not from_split and (ivi_or_si_synced or intermission_or_section_from_supply):
+                    elif not from_split and (ivi_or_isi_synced or intermission_or_section_from_supply):
                         raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
                                                            'You can\'t add lines manually.'))
 

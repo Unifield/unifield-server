@@ -1540,6 +1540,7 @@ class account_invoice(osv.osv):
         view_data = self._get_invoice_act_window(cr, uid, ids[0], views_order=['form', 'tree'], context=context)
         view_data['res_id'] = ids[0]
         view_data['target'] = 'current'
+        view_data['keep_open'] = True
         if context.get('search_default_partner_id'):
             dom = []
             if view_data['domain']:

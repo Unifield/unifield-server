@@ -2299,12 +2299,6 @@ msgstr "Processus d'envoi passé en arrière plan ... vérifier le Monituer d'In
 msgid "- Reversals"
 msgstr "- Reversals"
 
-#. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:2744
-#, python-format
-msgid "View not found."
-msgstr "Écran non trouvé."
-
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:916
 #: code:addons/sync_client/sync_client.py:970
@@ -11943,6 +11937,13 @@ msgstr "Pas de fichier envoi.ini trouvé dans le fichier ZP donné!"
 #: view:wizard.account.invoice:0
 #: selection:wizard.account.invoice,type:0
 #: selection:account.invoice.line,invoice_type:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,invoice_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 #, python-format
 msgid "Supplier Invoice"
 msgstr "Facture Fournisseur"
@@ -14627,6 +14628,13 @@ msgstr "BARBADOS DOLLAR"
 #: report:account.invoice2:0
 #: selection:report.invoice.created,type:0
 #: selection:wizard.account.invoice,type:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,invoice_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 msgid "Supplier Refund"
 msgstr "Avoirs Fournisseur"
 
@@ -17008,11 +17016,6 @@ msgstr "Islande"
 msgid "No Sync on Write"
 msgstr "No Sync on Write"
 
-#. module: register_accounting
-#: selection:account.direct.invoice.wizard,type:0
-msgid "Customer Refund"
-msgstr "Remboursement Client"
-
 #. module: stock
 #: selection:stock.location,chained_auto_packing:0
 msgid "Manual Operation"
@@ -18142,7 +18145,6 @@ msgstr "Okay"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.act_account_journal_2_account_invoice_opened
-#: view:account.invoice:0
 msgid "Unpaid Invoices"
 msgstr "Factures impayées"
 
@@ -18469,18 +18471,6 @@ msgstr "Poids manquant"
 msgid "Number of Packs"
 msgstr "Nombre de Colis"
 
-#. module: account, account_override
-#: code:addons/account/invoice.py:652
-#: code:addons/account_override/invoice.py:421
-#, python-format
-msgid "Can't find any account journal of %s type for this company.\n"
-"\n"
-"You can create one in the menu: \n"
-"Configuration\\Financial Accounting\\Accounts\\Journals."
-msgstr "Ne trouve pas de journal de type %s pour cette société. \n"
-"Vous pouvez en créer un à partir du menu : \n"
-"Configuration\\Comptabilité Financière\\Comptes\\Journaux"
-
 #. module: base
 #: code:addons/base/module/wizard/base_module_configuration.py:37
 #, python-format
@@ -18704,7 +18694,7 @@ msgstr "datetime"
 #. module: account_override
 #: view:account.invoice:0
 msgid "Merge Lines by Account"
-msgstr "Merge Lines by Account"
+msgstr "Fusionner les Lignes par Compte"
 
 #. module: tender_flow
 #: view:tender:0
@@ -20952,12 +20942,18 @@ msgstr "Il n'y a aucun produit expiré"
 msgid "Open added action"
 msgstr "Action d'ouverture ajoutée"
 
-#. modules: account_override, account, account_period_closing_level
+#. modules: account_override, account, account_period_closing_level, register_accounting
 #: report:account.invoice2:0
 #: view:account.invoice:0
 #: model:ir.actions.act_window,name:account_override.action_debit_note
 #: model:ir.ui.menu,name:account_override.menu_action_debit_note
 #: view:account.period:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 msgid "Debit Note"
 msgstr "Note de débit"
 
@@ -29655,6 +29651,7 @@ msgstr "Certificat attaché ?"
 #: selection:replenishment.order_calc,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
+#: selection:wizard.account.invoice,counterpart_inv_status:0
 msgid "Closed"
 msgstr "Fermé"
 
@@ -30930,6 +30927,16 @@ msgstr "GMT+0"
 msgid "In-kind Donation"
 msgstr "Donation en nature"
 
+#. modules: account_override, register_accounting
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+msgid "Donation"
+msgstr "Donation"
+
 #. module: sourcing
 #: field:po.automation.config,name:0
 msgid "Run scheduler automatically ?"
@@ -31877,11 +31884,17 @@ msgstr "VENEZUELAN BOLÍVAR FUERTE"
 msgid "Message(s) processed: %d"
 msgstr "Messages exécutés:%d"
 
-#. modules: account_override, account, account_period_closing_level
+#. modules: account_override, account, account_period_closing_level, register_accounting
 #: report:account.invoice2:0
 #: model:ir.actions.act_window,name:account_override.action_intermission_out
 #: model:ir.ui.menu,name:account_override.menu_action_intermission_out
 #: view:account.period:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 msgid "Intermission Voucher OUT"
 msgstr "Bons Intermission OUT"
 
@@ -40478,6 +40491,12 @@ msgstr "Monaco"
 msgid "Supplier Refunds"
 msgstr "Avoirs Fournisseur"
 
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:571
+#, python-format
+msgid "%s Supplier Refund(s)"
+msgstr "%s Avoir(s) Fournisseur"
+
 #. modules: sync_client, analytic_distribution
 #: model:ir.ui.menu,name:sync_client.ops_menu
 #: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_operation
@@ -42754,12 +42773,18 @@ msgstr "cancel - (purchase.order.line)"
 msgid "ESC Message 2"
 msgstr "ESC Message 2"
 
-#. modules: register_accounting, analytic_distribution
+#. modules: register_accounting, analytic_distribution, account_override
 #: code:addons/register_accounting/account_bank_statement.py:2843
 #: code:addons/register_accounting/report/report_fully_report.py:60
 #: field:analytic.distribution.wizard,direct_invoice_id:0
 #: view:account.bank.statement:0
 #: model:ir.model,name:register_accounting.model_wizard_account_invoice
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 #, python-format
 msgid "Direct Invoice"
 msgstr "Facture Directe"
@@ -54099,11 +54124,6 @@ msgstr "Vous ne pouvez pas avoir de même code ou nom qu'une instance active!"
 msgid "Backup before automatic sync"
 msgstr "Sauvegarde avant la sync automatique"
 
-#. module: account
-#: view:account.invoice:0
-msgid "Proforma/Open/Paid Invoices"
-msgstr "Proforma/Open/Paid Invoices"
-
 #. module: purchase_compare_rfq
 #: view:wizard.compare.rfq.line:0
 msgid "Compared products"
@@ -55756,6 +55776,14 @@ msgstr "Liste de composition du Kit"
 #: selection:account.invoice.report,type:0
 #: selection:report.invoice.created,type:0
 #: selection:wizard.account.invoice,type:0
+#: selection:account.direct.invoice.wizard,type:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,invoice_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 msgid "Customer Refund"
 msgstr "Avoir Client"
 
@@ -56733,11 +56761,17 @@ msgstr "Année(s)"
 msgid "No journal code found."
 msgstr "No journal code found."
 
-#. modules: hr, register_accounting, base, analytic_distribution
+#. modules: hr, register_accounting, base, analytic_distribution, account_override
 #: selection:ir.module.module.dependency,state:0
 #: selection:hr.employee,gender:0
 #: selection:account.bank.statement.line,state:0
 #: selection:analytic.distribution.wizard,register_line_state:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 msgid "Unknown"
 msgstr "Inconnu"
 
@@ -59210,11 +59244,6 @@ msgstr "Sélecteur Analytique"
 #: field:sync.monitor,error:0
 msgid "Messages"
 msgstr "Messages"
-
-#. module: account
-#: view:account.invoice:0
-msgid "Proforma Invoices"
-msgstr "Factures Proforma"
 
 #. modules: account_override, account
 #: selection:account.journal.column,field:0
@@ -64997,10 +65026,10 @@ msgstr "True if the price has been manually changed during reception"
 msgid "free1"
 msgstr "option 1"
 
-#. module: account_override
+#. module: account
 #: view:account.invoice:0
-msgid "You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
-msgstr "You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
+msgid "You are about to merge invoice lines; are you sure you want to proceed? THIS OPERATION CAN NOT BE UNDONE."
+msgstr "Vous êtes sur le point de fusionner les lignes de facture ; voulez-vous continuer ? CETTE OPÉRATION NE PEUT PAS ÊTRE ANNULÉE."
 
 #. module: account
 #: help:account.payment.term.line,days:0
@@ -69069,11 +69098,6 @@ msgstr "Line %s, system error: %s"
 #, python-format
 msgid "Current instance already validated!"
 msgstr "Instance actuelle déjà validée!"
-
-#. module: account
-#: view:account.invoice:0
-msgid "(keep empty to use the current period)"
-msgstr "(A laisser vide pour utiliser la période en cours)"
 
 #. modules: stock_forecast, purchase, sales_followup
 #: selection:purchase.report,state:0
@@ -75589,8 +75613,14 @@ msgstr "Objet pour Recherche"
 msgid "Linked sale order line at synchro"
 msgstr "Linked sale order line at synchro"
 
-#. module: account_override
+#. modules: account, account_override, register_accounting
 #: view:account.invoice:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 msgid "Stock Transfer Voucher"
 msgstr "Bon Client"
 
@@ -78321,8 +78351,7 @@ msgstr "Supplier Catalogue"
 msgid "Journal: %s"
 msgstr "Journal : %s"
 
-#. modules: account_override, vertical_integration
-#: report:addons/account_override/report/open_invoices_xls.mako:306
+#. module: vertical_integration
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:271
 msgid "Customer Refunds"
 msgstr "Remboursement Client"
@@ -78598,6 +78627,12 @@ msgstr "Comptes à Lettrer"
 #, python-format
 msgid "You cannot cancel or delete a supplier invoice linked to a PO."
 msgstr "Vous ne pouvez pas annuler ou supprimer une facture fournisseur liée à un BdC."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:654
+#, python-format
+msgid "You cannot cancel or delete an Intersection Supplier Invoice linked to a PO."
+msgstr "Vous ne pouvez pas annuler ou supprimer une Facture Fournisseur Intersection liée à un BdC."
 
 #. module: account
 #: view:account.move.line:0
@@ -80650,6 +80685,7 @@ msgstr "Entrées fournisseurs pour la Cash Request"
 #: code:addons/register_accounting/wizard/wizard_register_import.py:570
 #: report:addons/account/report/free_allocation_report.mako:205
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:606
+#: field:wizard.account.invoice.line,cost_center_id:0
 #: field:dest.cc.link,cc_id:0
 #, python-format
 msgid "Cost Center"
@@ -87070,10 +87106,10 @@ msgid "No Intermission journal found for the current instance."
 msgstr "Pas de journal Intermission trouvé pour l'instance actuelle."
 
 #. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:209
+#: code:addons/account_override/account_invoice_sync.py:222
 #, python-format
-msgid "No Purchase journal found for the current instance."
-msgstr "Pas de journal des Achats trouvé pour l'instance actuelle."
+msgid "No Intersection Supplier Invoice journal found for the current instance."
+msgstr "Pas de journal Facture Fournisseur Intersection trouvé pour l'instance actuelle."
 
 #. module: msf_profile
 #: field:email.configuration,smtp_server:0
@@ -90249,10 +90285,11 @@ msgstr "Mode de Transport :"
 msgid "Applicable Type"
 msgstr "Type Applicable"
 
-#. modules: account, account_period_closing_level
+#. modules: account, account_period_closing_level, account_override
 #: model:ir.actions.act_window,name:account.action_invoice_tree3
 #: model:ir.ui.menu,name:account.menu_action_invoice_tree3
 #: view:account.period:0
+#: report:addons/account_override/report/open_invoices_xls.mako:308
 msgid "Customer Refunds"
 msgstr "Avoirs Client"
 
@@ -92290,11 +92327,17 @@ msgstr "\n"
 msgid "Mongolian / монгол"
 msgstr "Mongolian / монгол"
 
-#. modules: account_override, account, account_period_closing_level
+#. modules: account_override, account, account_period_closing_level, register_accounting
 #: report:account.invoice2:0
 #: model:ir.actions.act_window,name:account_override.action_intermission_in
 #: model:ir.ui.menu,name:account_override.menu_action_intermission_in
 #: view:account.period:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
 msgid "Intermission Voucher IN"
 msgstr "Bons Intermission IN"
 
@@ -92893,16 +92936,16 @@ msgid "3rd Party"
 msgstr "3rd Party"
 
 #. module: account
-#: code:addons/account/wizard/account_invoice_refund.py:148
+#: code:addons/account/wizard/account_invoice_refund.py:154
 #, python-format
-msgid "Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice"
-msgstr "Ne peut %s une facture qui est déjà lettrée, le lettrage de la facture devrait d'abord être annulé. Vous ne pouvez que Rembourser cette facture"
+msgid "Cannot %s an invoice which is already reconciled, it should be unreconciled first."
+msgstr "Ne peut %s une facture qui est déjà lettrée, son lettrage devrait d'abord être annulé."
 
 #. module: account
-#: code:addons/account/wizard/account_invoice_refund.py:161
+#: code:addons/account/wizard/account_invoice_refund.py:157
 #, python-format
-msgid "Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first."
-msgstr "Ne peut %s un Bon Intermission qui est déjà lettré, le lettrage du bon devrait d'abord être annulé."
+msgid "Cannot %s an invoice which is already reconciled, it should be unreconciled first. You can only Refund this invoice."
+msgstr "Ne peut %s une facture qui est déjà lettrée, son lettrage devrait d'abord être annulé. Vous ne pouvez que Rembourser cette facture."
 
 #. module: account
 #: code:addons/account/wizard/account_invoice_refund.py:0
@@ -105241,6 +105284,12 @@ msgstr "Filtre non mis en oeuvre sur les Destinations."
 msgid "Filter not implemented on Funding Pools."
 msgstr "Filtre non mis en oeuvre sur les Funding Pools."
 
+#. module: account_override
+#: code:addons/account_override/invoice.py:359
+#, python-format
+msgid "Filter not implemented yet."
+msgstr "Filtre pas encore mis en oeuvre."
+
 #. module: analytic_override
 #: code:addons/analytic_override/analytic_account.py:312
 #, python-format
@@ -105975,12 +106024,6 @@ msgid "The requested report is too heavy to generate: requested %d lines, maximu
 msgstr "Le rapport demandé est trop volumineux pour être généré, %d lignes demandées, %d autorisées. Veuillez utiliser plus de filtres pour que ce rapport puisse être généré"
 
 #. module: account
-#: code:addons/account/wizard/account_invoice_refund.py:148
-#, python-format
-msgid "Can not %s invoice which is already reconciled, invoice should be unreconciled first."
-msgstr "Ne peut %s une facture qui est déjà lettrée, le lettrage de la facture devrait d'abord être annulé."
-
-#. module: account
 #: code:addons/account/invoice.py:480
 #, python-format
 msgid "Invoice '%s' is %s."
@@ -106002,6 +106045,16 @@ msgstr "réglée"
 #: field:account.invoice.refund,is_intermission:0
 msgid "Wizard opened from an Intermission Voucher"
 msgstr "Assistant ouvert depuis un Bon Intermission"
+
+#. module: analytic_distribution
+#: field:account.invoice.refund,is_stv:0
+msgid "Wizard opened from a Stock Transfer Voucher"
+msgstr "Assistant ouvert depuis un Bon Client"
+
+#. module: analytic_distribution
+#: field:account.invoice.refund,is_isi:0
+msgid "Wizard opened from an Intersection Supplier Invoice"
+msgstr "Assistant ouvert depuis une Facture Fournisseur Intersection"
 
 #. module: account_override
 #: code:addons/account_override/invoice.py:1739
@@ -112840,3 +112893,105 @@ msgstr "Type de BE"
 msgid "Customer Commitment Vouchers already generated on this instance. If you deactivate this feature, the menu will not be hidden."
 msgstr "Des Bons d'Engagement Client existent sur cette instance. Le menu ne sera pas caché si vous désactivez cette fonctionnalité."
 
+#. modules: account_override, account, msf_instance, register_accounting
+#: field:account.journal,inv_doc_type:0
+#: field:account.invoice,doc_type:0
+#: field:account.invoice.line,line_doc_type:0
+#: field:account.journal.fake,inv_doc_type:0
+#: field:wizard.account.invoice,doc_type:0
+#: field:wizard.account.invoice.line,line_doc_type:0
+msgid "Document Type"
+msgstr "Type de Document"
+
+#. modules: account_override, register_accounting
+#: field:account.invoice,real_doc_type:0
+#: field:wizard.account.invoice,real_doc_type:0
+msgid "Real Document Type"
+msgstr "Type de Document Réel"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Display Invoice"
+msgstr "Afficher la Facture"
+
+#. modules: account_override, account, account_period_closing_level
+#: model:ir.actions.act_window,name:account.action_str
+#: model:ir.ui.menu,name:account.menu_action_str
+#: report:addons/account_override/report/open_invoices_xls.mako:308
+#: view:account.period:0
+msgid "Stock Transfer Refunds"
+msgstr "Avoirs de Transfert de Stock"
+
+#. modules: account_override, register_accounting
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+msgid "Stock Transfer Refund"
+msgstr "Avoir de Transfert de Stock"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:574
+#, python-format
+msgid "%s Stock Transfer Refund(s)"
+msgstr "%s Avoir(s) de Transfert de Stock"
+
+#. modules: account_override, account, account_period_closing_level
+#: model:ir.actions.act_window,name:account.action_isi
+#: model:ir.ui.menu,name:account.menu_action_isi
+#: report:addons/account_override/report/open_invoices_xls.mako:306
+#: view:account.period:0
+msgid "Intersection Supplier Invoices"
+msgstr "Factures Fournisseur Intersection"
+
+#. modules: account_override, register_accounting, account
+#: report:account.invoice2:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+msgid "Intersection Supplier Invoice"
+msgstr "Facture Fournisseur Intersection"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:572
+#, python-format
+msgid "%s Intersection Supplier Invoice(s)"
+msgstr "%s Facture(s) Fournisseur Intersection"
+
+#. modules: account_override, account, account_period_closing_level
+#: model:ir.actions.act_window,name:account.action_isr
+#: model:ir.ui.menu,name:account.menu_action_isr
+#: report:addons/account_override/report/open_invoices_xls.mako:306
+#: view:account.period:0
+msgid "Intersection Supplier Refunds"
+msgstr "Avoirs Fournisseur Intersection"
+
+#. modules: account_override, register_accounting, account
+#: report:account.invoice2:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+msgid "Intersection Supplier Refund"
+msgstr "Avoir Fournisseur Intersection"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:573
+#, python-format
+msgid "%s Intersection Supplier Refund(s)"
+msgstr "%s Avoir(s) Fournisseur Intersection"
+
+#. modules: account_period_closing_level, product_attributes, register_accounting
+#: code:addons/account_period_closing_level/account_period.py:516
+#: code:addons/product_attributes/product_attributes.py:3013
+#: code:addons/register_accounting/account_bank_statement.py:2823
+#, python-format
+msgid "Impossible to retrieve the view to display."
+msgstr "Impossible de récupérer la vue à afficher."

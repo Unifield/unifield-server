@@ -59,7 +59,8 @@
                         <field name="vat_ok" invisible="1" />
                         <field name="synced" invisible="1" />
                         <field name="line_doc_type" invisible="1" />
-                        <group colspan="4" col="4" attrs="{'invisible': ['|', ('vat_ok', '=', False), ('line_doc_type', '=', 'str')]}">
+                        <group colspan="4" col="4"
+                               attrs="{'invisible': ['|', ('vat_ok', '=', False), ('line_doc_type', 'in', ('str', 'isi', 'isr'))]}">
                             <separator colspan="4" string="Taxes"/>
                             <field colspan="4"
                                    name="invoice_line_tax_id"
