@@ -37,6 +37,7 @@
                 <search string="Search Account/Destination">
                     <filter icon="gtk-missing-image" name="active" string="Show Active" domain="[('disabled', '=', False)]" separator="1" />
                     <field name="account_id"/>
+                    <field name="destination_code"/>
                 </search>
             </field>
         </record>

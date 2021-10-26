@@ -62936,6 +62936,7 @@ msgstr "Si oui, référence de la réclamation"
 
 #. module: analytic_distribution
 #: field:account.destination.link,destination_id:0
+#: field:account.destination.link,destination_code:0
 msgid "Analytical Destination Account"
 msgstr "Compte de Destination Analytique "
 
