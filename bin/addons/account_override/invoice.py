@@ -878,7 +878,7 @@ class account_invoice(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         """
         Delete register line if this invoice is a Direct Invoice.
-        Don't delete an invoice that is linked to a PO. This is only for supplier invoices.
+        Don't delete an invoice that is linked to a PO.
         """
         if not context:
             context = {}
@@ -1093,7 +1093,7 @@ class account_invoice(osv.osv):
     def action_cancel(self, cr, uid, ids, *args):
         """
         Reverse move if this object is a In-kind Donation. Otherwise do normal job: cancellation.
-        Don't delete an invoice that is linked to a PO. This is only for supplier invoices.
+        Don't delete an invoice that is linked to a PO.
         """
         # Oct. 2019: log if this method is used at least once (cf it may be dead code?)
         self.pool.get('ir.config_parameter').set_param(cr, 1, 'action_cancel.in_use', True)
