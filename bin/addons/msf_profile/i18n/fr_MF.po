@@ -112770,3 +112770,9 @@ msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Termi
 #: view:account.commitment.line:0
 msgid "Do you really want to delete this line?"
 msgstr "Voulez-vous vraiment supprimer cette ligne ?"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:977
+#, python-format
+msgid "The correction entry (posting date: %s) should be in the same fiscal year as the original entry (posting date: %s)."
+msgstr "L'écriture de correction (date de comptabilisation : %s) doit être dans le même exercice comptable que l'écriture d'origine (date de comptabilisation : %s)."
