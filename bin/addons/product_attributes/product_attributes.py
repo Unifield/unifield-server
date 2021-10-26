@@ -1251,6 +1251,7 @@ class product_attributes(osv.osv):
             msg = ''
             st_cond = True
 
+
             if product.state.code == 'forbidden':
                 if sale_obj and partner_type == 'internal':
                     continue
@@ -1293,6 +1294,13 @@ class product_attributes(osv.osv):
                 st_type = st_cond and _('status') or _('product creator')
                 st_name = st_cond and product.state.name or product.international_status.name
 
+            if not error and vals.get('obj_type') == 'in' and not product.active:
+                error = True
+                st_type = _('status')
+                st_name = _('Inactive')
+                msg = _('be moved')
+
+            if error:
                 error_msg = ''
                 if vals.get('move'):
                     error_msg = _('%s line %s: ') % (vals['move'].picking_id.name, vals['move'].line_number)
