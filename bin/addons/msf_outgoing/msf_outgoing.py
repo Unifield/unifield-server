@@ -1920,6 +1920,16 @@ class stock_picking(osv.osv):
 
         return super(stock_picking, self).unlink(cr, uid, ids, context=context)
 
+    def copy_web(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+
+        context['web_copy'] = True
+        default.update({'sale_id': False})
+
+        return self.copy(cr, uid, id, default, context=context)
 
     def copy(self, cr, uid, copy_id, default=None, context=None):
         '''
