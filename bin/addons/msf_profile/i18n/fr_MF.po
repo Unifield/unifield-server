@@ -68598,6 +68598,7 @@ msgstr "Relevés sous statut brouillon"
 #: field:allocation.stock.setup,error_sm_cross_ids:0
 #: view:stock.move:0
 #: field:stock.picking.cancel.more.wizard,picking_id:0
+#: view:change.dest.location:0
 msgid "Picking"
 msgstr "Picking"
 
@@ -112776,3 +112777,20 @@ msgstr "Voulez-vous vraiment supprimer cette ligne ?"
 #, python-format
 msgid "The correction entry (posting date: %s) should be in the same fiscal year as the original entry (posting date: %s)."
 msgstr "L'écriture de correction (date de comptabilisation : %s) doit être dans le même exercice comptable que l'écriture d'origine (date de comptabilisation : %s)."
+
+#. modules: delivery_mechanism, stock_override
+#: view:enter.reason:0
+#: view:stock.move.cancel.wizard:0
+msgid "In this context C&R is not possible so order must be recreated if still needed."
+msgstr "Dans ce contexte l'action A&R n'est pas possible, en cas de besoin la commande doit être recrée "
+
+#. module: delivery_mechanism
+#: view:enter.reason:0
+msgid "Warning! There is a risk of producing inconsistent data if you cancel this IN before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization."
+msgstr "Attention! Si vous annulez la Livraison Entrante, il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro."
+
+#. module: stock_override
+#: view:stock.move.cancel.wizard:0
+msgid "Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization."
+msgstr "Attention! Si vous annulez cette ligne il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro."
+
