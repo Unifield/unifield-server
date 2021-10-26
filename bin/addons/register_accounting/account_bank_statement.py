@@ -2836,6 +2836,7 @@ class account_bank_statement_line(osv.osv):
             act['name'] = doc_name
             act['res_id'] = invoice.id
             act['view_mode'] = 'form'
+            act['help'] = False  # hide the Tip message displayed on top
             act['target'] = 'new'
             return act
 
