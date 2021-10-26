@@ -2782,20 +2782,18 @@ class account_bank_statement_line(osv.osv):
         inv_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id', 'in', move_ids)])
         if not inv_ids:
             raise osv.except_osv(_('Error'), _("No related invoice line"))
-        # Search journal type in order journal_id field not blank @invoice display
-        journal_type = []
-        for inv in self.pool.get('account.invoice').browse(cr, uid, inv_ids):
-            if inv.journal_id and inv.journal_id.type not in journal_type:
-                journal_type.append(inv.journal_id.type)
+        # open the generic tree view which can contain different invoice types
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'generic_invoice_tree')
+        view_id = view_id and view_id[1] or False
         return {
-            'name': "Supplier Invoices",
+            'name': _("Invoices"),
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
             'target': 'new',
-            'view_mode': 'tree,form',
+            'view_mode': 'tree',
             'view_type': 'form',
             'domain': [('id', 'in', inv_ids)],
-            'context': {'journal_type': journal_type}
+            'view_id': [view_id],
         }
 
     def button_open_invoice(self, cr, uid, ids, context=None):
