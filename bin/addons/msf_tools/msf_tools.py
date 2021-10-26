@@ -305,9 +305,9 @@ class data_tools(osv.osv):
         # quarantine analyze
         quarantine_anal = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
         context['common']['quarantine_anal'] = quarantine_anal
-        # quarantine before scrap
-        quarantine_scrap = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
-        context['common']['quarantine_scrap'] = quarantine_scrap
+        # expired / damaged / for scrap
+        exp_dam_scrap = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+        context['common']['exp_dam_scrap'] = exp_dam_scrap
         # log
         log = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
         context['common']['log'] = log
