@@ -2786,7 +2786,6 @@ class account_bank_statement_line(osv.osv):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'generic_invoice_tree')
         view_id = view_id and view_id[1] or False
         return {
-            'name': _("Invoices"),
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
             'target': 'new',

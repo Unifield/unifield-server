@@ -91058,7 +91058,6 @@ msgstr "Track different dates on products and production lots:\n"
 #: view:sale.order:0
 #: field:sale.order,invoice_ids:0
 #: field:wizard.cash.return,invoice_ids:0
-#: code:addons/register_accounting/account_bank_statement.py:2789
 msgid "Invoices"
 msgstr "Factures"
 
