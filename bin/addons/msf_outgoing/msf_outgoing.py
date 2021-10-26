@@ -4437,9 +4437,9 @@ class pack_family_memory(osv.osv):
             select
                 min(m.id) as id,
                 p.shipment_id as shipment_id,
+                from_pack as from_pack,
                 to_pack as to_pack,
                 array_agg(m.id) as move_lines,
-                min(from_pack) as from_pack,
                 min(packing_list) as packing_list,
                 bool_and(m.volume_set) as volume_set,
                 bool_and(m.weight_set) as weight_set,
@@ -4470,7 +4470,7 @@ class pack_family_memory(osv.osv):
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
+            group by p.shipment_id, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
     )
     ''')
 
