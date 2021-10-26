@@ -2299,12 +2299,6 @@ msgstr "Processus d'envoi passé en arrière plan ... vérifier le Monituer d'In
 msgid "- Reversals"
 msgstr "- Reversals"
 
-#. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:2744
-#, python-format
-msgid "View not found."
-msgstr "Écran non trouvé."
-
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:916
 #: code:addons/sync_client/sync_client.py:970
@@ -112918,9 +112912,10 @@ msgstr "Avoir Fournisseur Intersection"
 msgid "%s Intersection Supplier Refund(s)"
 msgstr "%s Avoir(s) Fournisseur Intersection"
 
-#. modules: account_period_closing_level, product_attributes
+#. modules: account_period_closing_level, product_attributes, register_accounting
 #: code:addons/account_period_closing_level/account_period.py:516
 #: code:addons/product_attributes/product_attributes.py:3013
+#: code:addons/register_accounting/account_bank_statement.py:2823
 #, python-format
 msgid "Impossible to retrieve the view to display."
 msgstr "Impossible de récupérer la vue à afficher."

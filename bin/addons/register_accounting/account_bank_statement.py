@@ -25,6 +25,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from tools.safe_eval import safe_eval
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import create_cashbox_lines
@@ -2806,6 +2807,7 @@ class account_bank_statement_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        inv_obj = self.pool.get('account.invoice')
 
         # special processing for cash_return
         cash_return = False
@@ -2817,35 +2819,25 @@ class account_bank_statement_line(osv.osv):
                 break
         if cash_return:
             invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
-            name = _('Supplier Invoice')
-            # Search the customized view we made for Supplier Invoice (for * Register's users)
-            irmd_obj = self.pool.get('ir.model.data')
-            view_ids = irmd_obj.search(cr, uid, [('name', '=', 'invoice_supplier_form'), ('module', '=', 'account'), ('model', '=', 'ir.ui.view')])
-            # Préparation de l'élément permettant de trouver la vue à  afficher
-            if view_ids:
-                view = irmd_obj.read(cr, uid, view_ids[0])
-                view_id = (view.get('res_id'), view.get('name'))
-            else:
-                raise osv.except_osv(_('Error'), _("View not found."))
-            context.update({
+            # get the doc name in the singular
+            doc_name = dict(inv_obj.fields_get(cr, uid, context=context)['doc_type']['selection']).get(invoice.doc_type)
+            action_xmlid = inv_obj._invoice_action_act_window.get(invoice.doc_type)
+            if not action_xmlid:
+                raise osv.except_osv(_('Warning'), _('Impossible to retrieve the view to display.'))
+            act = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xmlid, ['form', 'tree'], context=context)
+            act_context = act.get('context', "{}") or "{}"
+            eval_context = safe_eval(act_context)
+            eval_context.update({
                 'active_id': ids[0],
-                'type': invoice.type,
-                'doc_type': invoice.doc_type,
-                'journal_type': invoice.journal_id.type,
                 'active_ids': ids,
                 'from_register': True,
             })
-            return {
-                'name': name,
-                'type': 'ir.actions.act_window',
-                'res_model': 'account.invoice',
-                'target': 'new',
-                'view_mode': 'form',
-                'view_type': 'form',
-                'view_id': view_id,
-                'res_id': invoice.id,
-                'context': context,
-            }
+            act['context'] = eval_context
+            act['name'] = doc_name
+            act['res_id'] = invoice.id
+            act['view_mode'] = 'form'
+            act['target'] = 'new'
+            return act
 
         ## Direct Invoice processing using temp objects
 
