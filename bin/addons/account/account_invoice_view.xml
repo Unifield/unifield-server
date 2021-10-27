@@ -647,7 +647,6 @@
                         <separator orientation="vertical"/>
                         <field name="number"/>
                         <field name="partner_id"/>
-                        <filter domain="[('user_id','=',uid)]" help="My invoices" icon="terp-personal" separator="1"/>
                         <field name="origin"/>
                         <field name="amount_total"/>
                     </group>

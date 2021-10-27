@@ -61959,11 +61959,6 @@ msgstr "Détermine si le système gérera la paie."
 msgid "Select an Open Sale Order"
 msgstr "Sélectionner une Commande Terrain"
 
-#. module: account
-#: view:account.invoice:0
-msgid "My invoices"
-msgstr "My invoices"
-
 #. module: base
 #: help:ir.property,res_id:0
 msgid "If not set, acts as a default value for new resources"
