@@ -807,7 +807,7 @@
                     <field name="doc_type"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
-                    <field name="partner_id" />
+                    <field name="partner_id"/>
                     <field name="name"/>
                     <field name="date_due"/>
                     <field name="origin"/>
@@ -820,7 +820,7 @@
                 </tree>
             </field>
         </record>
-        <act_window context="{'search_default_partner_id':[active_id]}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner" view_id="generic_invoice_tree" view_mode="tree" search_view_id="view_account_invoice_filter"/>
+        <act_window context="{'search_default_partner_id': [active_id], 'generic_invoice': True}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner" view_id="generic_invoice_tree" view_mode="tree" search_view_id="view_account_invoice_filter"/>
 
 
         <act_window

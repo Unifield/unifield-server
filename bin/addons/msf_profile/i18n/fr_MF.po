@@ -49220,6 +49220,7 @@ msgstr "Montant total"
 #: field:account.tax,partner_id:0
 #: report:addons/account/report/invoice_excel_export.mako:80
 #: report:addons/account/report/export_invoice.mako:100
+#: code:addons/account/invoice.py:385
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"

@@ -2793,6 +2793,7 @@ class account_bank_statement_line(osv.osv):
             'view_type': 'form',
             'domain': [('id', 'in', inv_ids)],
             'view_id': [view_id],
+            'context': {'generic_invoice': True}
         }
 
     def button_open_invoice(self, cr, uid, ids, context=None):

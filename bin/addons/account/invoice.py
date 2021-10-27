@@ -380,9 +380,13 @@ class account_invoice(osv.osv):
             # (US-777) Remove the possibility to create new invoices through the "Advance Return" Wizard
             if context.get('from_wizard') and context.get('from_wizard')['model'] == 'wizard.cash.return':
                 doc.set('hide_new_button', 'True')
-            partner_string = _('Customer')
-            if context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
+            if context.get('generic_invoice'):
+                # for tree views combining Customer and Supplier Invoices
+                partner_string = _('Partner')
+            elif context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
                 partner_string = _('Supplier')
+            else:
+                partner_string = _('Customer')
             for node in nodes:
                 node.set('string', partner_string)
             res['arch'] = etree.tostring(doc)
