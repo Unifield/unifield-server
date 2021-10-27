@@ -128,8 +128,9 @@ class ir_model(osv.osv):
 
     def _get_exists(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
+        list_pool = self.pool.obj_list()
         for model in self.read(cr, uid, ids, ['model'], context=context):
-            res[model['id']] = model['model'] in self.pool
+            res[model['id']] = model['model'] in list_pool
         return res
 
     def _search_exists(self, cr, uid, model, name, domain, context=None):
