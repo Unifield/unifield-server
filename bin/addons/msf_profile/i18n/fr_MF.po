@@ -17463,7 +17463,7 @@ msgstr "Tchad"
 #: view:board.board:0
 #: model:ir.actions.act_window,name:account.action_draft_customer_invoices_dashboard
 msgid "Customer Invoices to Approve"
-msgstr "Bons client à Approuver"
+msgstr "Bons de Transfert de Stock à Approuver"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:292
@@ -44056,7 +44056,7 @@ msgstr "Type Principal"
 #: model:ir.actions.act_window,name:account.action_invoice_tree1
 #: model:ir.ui.menu,name:account.menu_action_invoice_tree1
 msgid "Customer Invoices"
-msgstr "Bons client"
+msgstr "Bons de Transfert de Stock"
 
 #. module: financing_contract
 #: report:financing.contract:0
@@ -48885,7 +48885,7 @@ msgstr "Qté à livrer"
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:271
 #: report:addons/account_override/report/open_invoices_xls.mako:306
 msgid "Stock Transfer Vouchers"
-msgstr "Bons Client"
+msgstr "Bons de Transfert de Stock"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:1447
@@ -75618,7 +75618,7 @@ msgstr "Linked sale order line at synchro"
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
 msgid "Stock Transfer Voucher"
-msgstr "Bon Client"
+msgstr "Bon de Transfert de Stock"
 
 #. module: product_asset
 #: model:ir.actions.act_window,name:product_asset.asset_2_events_normal_link
@@ -85718,7 +85718,7 @@ msgstr "Factures Fournisseurs en attente de validation"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Stock transfer vouchers"
-msgstr "Stock transfer vouchers"
+msgstr "Bons de transfert de stock"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -91769,7 +91769,7 @@ msgstr "Installez des plans comptables locaux pour correspondre aussi étroiteme
 #: code:addons/msf_partner/partner.py:580
 #, python-format
 msgid "%s Stock Transfer Voucher(s)"
-msgstr "%s Stock Transfer Voucher(s)"
+msgstr "%s Bon(s) de Transfert de Stock"
 
 #. module: tender_flow
 #: view:purchase.order.cancel.wizard:0
@@ -99202,7 +99202,7 @@ msgstr "Allumé "
 #: selection:wizard.account.invoice,type:0
 #: selection:account.invoice.line,invoice_type:0
 msgid "Customer Invoice"
-msgstr "Bon client"
+msgstr "Bon de Transfert de Stock"
 
 #. module: account
 #: field:account.analytic.Journal.report,date1:0
@@ -106040,7 +106040,7 @@ msgstr "Assistant ouvert depuis un Bon Intermission"
 #. module: analytic_distribution
 #: field:account.invoice.refund,is_stv:0
 msgid "Wizard opened from a Stock Transfer Voucher"
-msgstr "Assistant ouvert depuis un Bon Client"
+msgstr "Assistant ouvert depuis un Bon de Transfert de Stock"
 
 #. module: analytic_distribution
 #: field:account.invoice.refund,is_isi:0
@@ -109182,7 +109182,7 @@ msgstr "Fractionner Bon Intermission OUT"
 #: view:account.invoice:0
 #: code:addons/account_override/invoice.py:1272
 msgid "Split Stock Transfer Voucher"
-msgstr "Fractionner Bon Client"
+msgstr "Fractionner Bon de Transfert de Stock"
 
 #. module: account_override
 #: view:account.invoice:0
@@ -111679,7 +111679,7 @@ msgstr "Suivi Lignes Bons Interm. OUT"
 #: code:addons/account/invoice.py:2159
 #, python-format
 msgid "STV lines follow-up"
-msgstr "Suivi Lignes Bons Clients"
+msgstr "Suivi Lignes Bons de Transfert de Stock"
 
 #. module: account_override
 #: code:addons/account_override/invoice.py:1682
@@ -111729,7 +111729,7 @@ msgstr "Statut ligne CdT"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:367
 msgid "STV status"
-msgstr "Statut Bon Client"
+msgstr "Statut Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:367
@@ -111744,7 +111744,7 @@ msgstr "Statut Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:368
 msgid "Reverse corresponding AJI? (STV)"
-msgstr "Ligne Analytique Correspondante Contrepassée ? (Bon Client)"
+msgstr "Ligne Analytique Correspondante Contrepassée ? (Bon de Transf. de Stock)"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:368
@@ -111759,7 +111759,7 @@ msgstr "Ligne Analytique Correspondante Contrepassée ? (Fact. Fourniss.)"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:364
 msgid "STV line sub total"
-msgstr "Sous-total ligne Bon Client"
+msgstr "Sous-total ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:364
@@ -111774,7 +111774,7 @@ msgstr "Sous-total ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:366
 msgid "STV line sub total functional currency"
-msgstr "Sous-total ligne Bon Client en devise fonctionnelle"
+msgstr "Sous-total ligne Bon de Transf. de Stock en devise fonctionnelle"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:366
@@ -111789,7 +111789,7 @@ msgstr "Sous-total ligne Fact. Fourniss. en devise fonctionnelle"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:358
 msgid "STV number"
-msgstr "Num. Bon Client"
+msgstr "Num. Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:358
@@ -111809,7 +111809,7 @@ msgstr "Num. ligne CdT"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:359
 msgid "STV line number"
-msgstr "Num. ligne Bon Client"
+msgstr "Num. ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:359
@@ -111824,7 +111824,7 @@ msgstr "Num. ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:360
 msgid "STV line description"
-msgstr "Description ligne Bon Client"
+msgstr "Description ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:360
@@ -111839,7 +111839,7 @@ msgstr "Description ligne Fact. Fournisseur"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:362
 msgid "STV line quantity"
-msgstr "Quantité ligne Bon Client"
+msgstr "Quantité ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:362
@@ -111854,7 +111854,7 @@ msgstr "Quantité ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:361
 msgid "STV line unit price"
-msgstr "Prix Unitaire ligne Bon Client"
+msgstr "Prix Unitaire ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:361
@@ -111869,7 +111869,7 @@ msgstr "Prix Unitaire ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:363
 msgid "STV line expense account code"
-msgstr "Code Compte de Charge ligne Bon Client"
+msgstr "Code Compte de Charge ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:363
@@ -111884,7 +111884,7 @@ msgstr "Code Compte de Charge ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:365
 msgid "STV currency"
-msgstr "Devise Bon Client"
+msgstr "Devise Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:365
@@ -111919,7 +111919,7 @@ msgstr "DÉTAILS COMMANDES DE TERRAIN"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:410
 msgid "DETAILS STOCK TRANSFER VOUCHERS"
-msgstr "DÉTAILS BONS CLIENT"
+msgstr "DÉTAILS BONS DE TRANSFERT DE STOCK"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:410

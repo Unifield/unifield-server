@@ -974,7 +974,7 @@ class account_move(osv.osv):
                                       required=True, states={'posted':[('readonly',True)]},
                                       domain="[('type', 'not in', "
                                              " ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra', 'correction', 'correction_hq']),"
-                                             "('code', '!=', 'ISI'),"
+                                             "('code', '!=', 'ISI'), "
                                              "('instance_filter', '=', True)]",
                                       hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
