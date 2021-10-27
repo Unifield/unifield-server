@@ -137,7 +137,7 @@ class ir_model(osv.osv):
             return []
         field, operator, value = domain[0]
         if operator not in ['=']:
-            raise osv.except_osv(_('Invalid search criterions'), _('The osv_memory field can only be compared with = and != operator.'))
+            raise osv.except_osv(_('Invalid search'), _('The exists field can only be compared with = operator.'))
         return [('model', bool(value) and 'in' or 'not in', self.pool.obj_list())]
 
     _columns = {
