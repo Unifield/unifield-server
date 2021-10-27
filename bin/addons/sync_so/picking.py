@@ -1206,7 +1206,10 @@ class stock_picking(osv.osv):
                 move_lines_cancelled[po.id].append(move_data)
             else:
                 pick_data[po.id]['move_lines'].append((0, 0, move_data))
-            move_data['state'] = 'assigned'
+            if move_data['state'] == 'cancel':
+                move_data['state'] = 'assigned'
+            else:
+                move_data['state'] = 'done'
 
         if not pick_data:
             return "Ignored because old DPO flow no po found"

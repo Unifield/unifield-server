@@ -1644,14 +1644,15 @@ class stock_move(osv.osv):
             if pick_type == 'in' and move.purchase_line_id:
                 # cancel the linked PO line partially or fully:
                 resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or context.get('do_resource', False)
-                pol_info = self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['product_qty', 'in_qty_remaining']) # because value in move.purchase_line_id.product_qty has changed since
+                pol_info = self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['product_qty']) # because value in move.purchase_line_id.product_qty has changed since
                 pol_product_qty = pol_info['product_qty']
                 partially_cancelled = False
                 if pol_product_qty - move.product_qty != 0:
                     new_line = self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
                     self.write(cr, uid, [move.id], {'purchase_line_id': new_line}, context=context)
                     partially_cancelled = True
-                    if move.purchase_line_id.order_id.order_type == 'direct' and abs(pol_info['in_qty_remaining']) < 0.001:
+                    if move.purchase_line_id.order_id.order_type == 'direct' and \
+                            abs(self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['in_qty_remaining'])['in_qty_remaining']) < 0.001:
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
                 else:
                     if move.product_qty != 0.00:

@@ -1384,7 +1384,7 @@ class stock_move(osv.osv):
                         vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
             # If the source location and teh destination location are the same, the state should be 'Closed'
-            if vals.get('location_id', False) == vals.get('location_dest_id', False) and vals.get('state') != 'cancel':
+            if not sync_dpo_in and vals.get('location_id', False) == vals.get('location_dest_id', False):
                 vals['state'] = 'done'
 
         # Change the reason type of the picking if it is not the same
