@@ -5866,7 +5866,6 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: view:stock.production.lot.revision:0
 #: field:stock.production.lot.revision,description:0
 #: report:stock.card.report:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:294
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:255
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:151
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:430
@@ -10750,12 +10749,11 @@ msgstr "Date de Réception"
 msgid "Cancel and Resource"
 msgstr "Annuler et Ressourcer"
 
-#. modules: procurement, account, register_accounting, purchase, account_override, vertical_integration, msf_supply_doc_export
+#. modules: procurement, account, register_accounting, purchase, account_override, msf_supply_doc_export
 #: report:account.invoice2:0
 #: report:addons/account_override/report/open_invoices_xls.mako:340
 #: view:purchase.order.line:0
 #: field:account.direct.invoice.wizard,origin:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:297
 #: field:account.invoice,origin:0
 #: field:report.invoice.created,origin:0
 #: field:procurement.order,origin:0
@@ -15994,9 +15992,8 @@ msgstr "Ligne %s: Veuillez choisir un produit avant de confirmer la ligne"
 msgid "Select the Applications you want your system to cover. If you are not sure about your exact needs at this stage, you can easily install them later."
 msgstr "Choisir les Applications que vous voulez mettre en œuvre dans le système. Si vous n'êtes pas sûr de vos besoins précis à ce stade, vous pourrez facilement les installer plus tard."
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:348
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:301
 msgid "Residual amt func. ccy"
 msgstr "Mnt résiduel dev. fctionnelle"
 
@@ -17782,9 +17779,8 @@ msgstr "ATTENTION : la distribution analytique pour ce BdC n'est pas complète !
 msgid "Cannot backward the state of this period. All next periods must be at a lower state."
 msgstr "Cannot backward the state of this period. All next periods must be at a lower state."
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:350
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:302
 msgid "Total amt func. ccy"
 msgstr "Mnt total dev. fctionnelle"
 
@@ -22782,12 +22778,11 @@ msgstr "État du traitement"
 msgid "America/Monterrey"
 msgstr "America/Monterrey"
 
-#. modules: account_override, vertical_integration, financing_contract, register_accounting, finance
+#. modules: account_override, financing_contract, register_accounting, finance
 #: report:addons/account_override/report/open_invoices_xls.mako:346
 #: field:cash.request.liquidity.total,booking_currency_id:0
 #: report:addons/financing_contract/report/project_expenses_xls.mako:503
 #: report:addons/register_accounting/report/open_advances_xls.mako:155
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:300
 msgid "Booking Currency"
 msgstr "Devise d'Enregistrement"
 
@@ -23788,7 +23783,6 @@ msgstr "Lignes %s du fichier Excel of the Excel ont produits un fractionnement d
 #: model:ir.ui.menu,name:account.menu_action_invoice_tree2
 #: report:addons/account_override/report/open_invoices_xls.mako:305
 #: code:addons/purchase/wizard/purchase_line_invoice.py:156
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
 #, python-format
 msgid "Supplier Invoices"
 msgstr "Factures Fournisseur"
@@ -28164,9 +28158,8 @@ msgstr "De C."
 msgid "Account Common Account Report"
 msgstr "Compte - Rapport Compte Commun "
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:343
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:298
 msgid "Residual amt booking ccy"
 msgstr "Mnt résiduel dev. d'enreg."
 
@@ -29286,11 +29279,6 @@ msgstr "Décimal"
 #: model:ir.actions.server,name:supplier_catalogue.action_create_new_catalogue
 msgid "New Catalogue"
 msgstr "Nouveau Catalogue"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
-msgid "Supplier Refunds"
-msgstr "Remboursement Fournisseur"
 
 #. module: register_accounting
 #: field:wizard.import.cheque.lines,amount_currency:0
@@ -30861,7 +30849,7 @@ msgstr "International"
 msgid "Total Theoretical Quantity for product"
 msgstr "Quantité totale théorique du produit"
 
-#. modules: purchase, account, vertical_integration, register_accounting, stock
+#. modules: purchase, account, register_accounting, stock
 #: field:account.bank.statement,user_id:0
 #: view:account.invoice:0
 #: field:purchase.order,create_uid:0
@@ -30871,7 +30859,6 @@ msgstr "Quantité totale théorique du produit"
 #: field:account.bank.statement,responsible_ids:0
 #: field:physical.inventory,responsible:0
 #: field:stock.journal,user_id:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:295
 msgid "Responsible"
 msgstr "Responsable"
 
@@ -36043,9 +36030,8 @@ msgstr "Mouvement Correspondant à l'étape précédente"
 msgid "Shipment preparation"
 msgstr "Préparation Expédition"
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:351
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:303
 msgid "Func. Ccy"
 msgstr "Dev. Fct."
 
@@ -44827,9 +44813,8 @@ msgstr "Stock Virtuel"
 msgid "Etc/Greenwich"
 msgstr "Etc/Greenwich"
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:264
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:249
 msgid "OPEN INVOICES"
 msgstr "FACTURES OUVERTES"
 
@@ -48889,8 +48874,7 @@ msgstr "Amériques/Regina"
 msgid "Qty to deliver"
 msgstr "Qté à livrer"
 
-#. modules: account_override, vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:306
 msgid "Stock Transfer Vouchers"
 msgstr "Bons de Transfert de Stock"
@@ -64805,7 +64789,6 @@ msgstr "PO line to confirm"
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:162
 #: report:addons/register_accounting/report/open_advances_xls.mako:148
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:218
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:291
 #: report:account.invoice2:0
 #: field:hq.entries.split,date:0
 #: selection:integrity.finance.wizard,filter:0
@@ -70926,10 +70909,9 @@ msgstr "Afficher les boutons d'import"
 msgid "America/Indiana/Vincennes"
 msgstr "America/Indiana/Vincennes"
 
-#. modules: account_override, board, vertical_integration, msf_tolls
+#. modules: account_override, board, msf_tools
 #: report:addons/account_override/report/open_invoices_xls.mako:280
 #: report:addons/board/report/integrity.mako:82
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:265
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:74
 msgid "Report Date"
 msgstr "Date de génération"
@@ -75929,11 +75911,10 @@ msgstr "Correspondance des Taxes"
 msgid "BAHRAINI DINAR"
 msgstr "BAHRAINI DINAR"
 
-#. modules: account_override, vertical_integration
+#. modules: account_override
 #: view:account.invoice:0
 #: report:addons/account_override/report/open_invoices_xls.mako:238
 #: model:ir.actions.report.xml,name:account_override.open_invoices_2
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:230
 msgid "Open Invoices"
 msgstr "Factures Ouvertes"
 
@@ -78360,11 +78341,6 @@ msgstr "Supplier Catalogue"
 msgid "Journal: %s"
 msgstr "Journal : %s"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
-msgid "Customer Refunds"
-msgstr "Remboursement Client"
-
 #. module: msf_outgoing
 #: field:pack.family.memory,amount:0
 #: field:stock.move,amount:0
@@ -79108,12 +79084,11 @@ msgstr "Le compte analytique de la Funding Pool sélectionné (%s) est bloqué p
 msgid "Base"
 msgstr "Base"
 
-#. modules: account, stock_override, vertical_integration
+#. modules: account, stock_override
 #: field:account.cashbox.line,subtotal:0
 #: report:destruction.location:0
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:354
 msgid "Sub Total"
 msgstr "Sous-total"
 
@@ -81289,7 +81264,7 @@ msgstr "Adresse Professionnelle"
 msgid "Confirm the selected invoices"
 msgstr "Confirmer les factures sélectionnées"
 
-#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, vertical_integration, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
+#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
 #: field:account.entries.report,move_state:0
@@ -81476,7 +81451,6 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:supplier.catalogue,state:0
 #: field:tender.line,line_state:0
 #: field:sync_client.version,state:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:304
 #: field:automated.export.job,state:0
 #: field:sale.order,draft_cancelled:0
 #: field:finance.sync.query.activation_wizard,state:0
@@ -82100,9 +82074,8 @@ msgstr "Vous n'avez pas la permission d'écrire sur %s. Veuillez vérifier la co
 msgid "Uom to be defined"
 msgstr "UdM à définir"
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:345
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:299
 msgid "Total amt booking ccy"
 msgstr "Mnt total dev. d'enreg."
 
@@ -89852,12 +89825,11 @@ msgstr "Cette catégorie de commande n'est pas cohérente avec le(s) produit(s) 
 msgid "Kit Creation"
 msgstr "Création d'un Kit "
 
-#. modules: account_override, vertical_integration, board, finance
+#. modules: account_override, board, finance
 #: report:addons/account_override/report/open_invoices_xls.mako:272
 #: report:addons/board/report/integrity.mako:78
 #: field:cash.request.expense,prop_instance_id:0
 #: field:cash.request.recap.expense,instance_id:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:257
 msgid "Prop. Instance"
 msgstr "Instance Prop."
 
@@ -90754,7 +90726,6 @@ msgstr "Valeur de crédit ou débit erronée dans le modèle (Crédit + Débit d
 #: report:addons/account_override/report/open_invoices_xls.mako:329
 #: field:msf.accrual.line,entry_sequence:0
 #: field:account.direct.invoice.wizard,number:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:292
 msgid "Number"
 msgstr "Nombre"
 
@@ -95201,7 +95172,6 @@ msgstr "1er Délai de Transport"
 #: field:wizard.account.invoice,date_due:0
 #: field:wizard.import.cheque.lines,date_maturity:0
 #: report:addons/account_override/report/open_invoices_xls.mako:341
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:296
 msgid "Due Date"
 msgstr "Date d'Échéance"
 
@@ -95509,7 +95479,7 @@ msgstr "Prix changeant"
 msgid "wizard.export.po.validated"
 msgstr "wizard.export.po.validated"
 
-#. modules: account, account_mcdb, msf_homere_interface, register_accounting, account_hq_entries, account_override, msf_accrual, analytic_override, analytic_distribution, vertical_integration
+#. modules: account, account_mcdb, msf_homere_interface, register_accounting, account_hq_entries, account_override, msf_accrual, analytic_override, analytic_distribution
 #: report:combined.journals.report.pdf:0
 #: field:hq.entries,document_date:0
 #: report:account.analytic.line:0
@@ -95552,7 +95522,6 @@ msgstr "wizard.export.po.validated"
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:217
 #: field:wizard.advance.line,document_date:0
 #: field:wizard.invoice.line,document_date:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:290
 #: report:account.invoice2:0
 #: code:addons/account_override/res_company.py:40
 #: report:addons/account/report/export_invoice.mako:104
@@ -96853,7 +96822,6 @@ msgstr "product.likely.expire.report.item"
 #: selection:stock.location,chained_location_type:0
 #: view:stock.move:0
 #: view:report.batch.recall:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:293
 #: field:shipment.add.pack.processor,partner_id:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:901
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
