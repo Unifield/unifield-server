@@ -75911,7 +75911,7 @@ msgstr "Correspondance des Taxes"
 msgid "BAHRAINI DINAR"
 msgstr "BAHRAINI DINAR"
 
-#. modules: account_override
+#. module: account_override
 #: view:account.invoice:0
 #: report:addons/account_override/report/open_invoices_xls.mako:238
 #: model:ir.actions.report.xml,name:account_override.open_invoices_2

@@ -14415,7 +14415,6 @@ msgstr "Gestión de almacenes"
 #: help:audittrail.rule,log_workflow:0
 msgid "Select this if you want to keep track of workflow on any record of the object of this rule"
 msgstr "Seleccione esta opción si desea realizar un seguimiento del flujo de trabajo de cualquier registro del objeto de esta regla"
-msgstr "Seleccione esta opción si desea realizar un seguimiento del flujo de trabajo de cualquier registro del objeto de esta regla"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
