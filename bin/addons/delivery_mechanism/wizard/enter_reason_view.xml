@@ -9,9 +9,15 @@
             <form string="Enter Reason for Cancellation">
                 <separator string="Select a reason for Incoming Shipment cancellation" colspan="4"/>
                 <field name="in_from_dpo" invisible="1" />
+                <field name="display_warning" invisible="1" />
                    <group colspan="4" col="1" attrs="{'invisible': [('in_from_dpo', '=', False)]}">
                         <html>
                             <h4 style="text-align: center; margin: 10px"><translate>In this context C&amp;R is not possible so order must be recreated if still needed.</translate></h4>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1" attrs="{'invisible': [('display_warning', '=', False)]}">
+                        <html>
+                            <h2 style="text-align: center; margin: 10px"><translate>Warning! There is a risk of producing inconsistent data if you cancel this IN before it receives the delivery details and is changed into status "Available Shipped" after synchronization.</translate></h2>
                         </html>
                     </group>
                     <newline />

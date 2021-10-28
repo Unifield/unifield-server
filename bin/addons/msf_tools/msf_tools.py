@@ -305,9 +305,9 @@ class data_tools(osv.osv):
         # quarantine analyze
         quarantine_anal = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
         context['common']['quarantine_anal'] = quarantine_anal
-        # quarantine before scrap
-        quarantine_scrap = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
-        context['common']['quarantine_scrap'] = quarantine_scrap
+        # expired / damaged / for scrap
+        exp_dam_scrap = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+        context['common']['exp_dam_scrap'] = exp_dam_scrap
         # log
         log = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
         context['common']['log'] = log
@@ -961,6 +961,26 @@ class finance_tools(osv.osv):
                 else:
                     msg = _('Document date should be in posting date FY')
                 raise osv.except_osv(_('Error'), msg)
+
+    def check_correction_date_fy(self, original_date, correction_date, raise_error=True, context=None):
+        """
+        Checks that the correction entry is booked within the same Fiscal Year as the original entry.
+        If they are in different FY, raises an error if raise_error is set to True (by default), else returns False.
+
+        NOTE: the CONTEXT in parameter is not directly used in this method but enables the message translation.
+        """
+        res = True
+        date_tools_obj = self.pool.get('date.tools')
+        if original_date and correction_date:
+            orig_date_obj = date_tools_obj.orm2date(original_date)
+            corr_date_obj = date_tools_obj.orm2date(correction_date)
+            if isinstance(orig_date_obj, date) and isinstance(corr_date_obj, date) and orig_date_obj.year != corr_date_obj.year:
+                if raise_error:
+                    raise osv.except_osv(_('Error'), _('The correction entry (posting date: %s) should be in the same fiscal year '
+                                                       'as the original entry (posting date: %s).') % (correction_date, original_date))
+                else:
+                    res = False
+        return res
 
     def truncate_amount(self, amount, digits):
         stepper = pow(10.0, digits)

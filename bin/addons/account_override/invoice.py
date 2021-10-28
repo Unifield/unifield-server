@@ -219,19 +219,19 @@ class account_invoice(osv.osv):
         """
         Returns the list of possible types for the account.invoice document.
         """
-        return [('dn', 'Debit Note'),
-                ('donation', 'Donation'),
-                ('ivi', 'Intermission Voucher IN'),
-                ('ivo', 'Intermission Voucher OUT'),
-                ('di', 'Direct Invoice'),
-                ('si', 'Supplier Invoice'),
-                ('sr', 'Supplier Refund'),
-                ('stv', 'Stock Transfer Voucher'),
-                ('cr', 'Customer Refund'),
-                ('str', 'Stock Transfer Refund'),
-                ('isi', 'Intersection Supplier Invoice'),
-                ('isr', 'Intersection Supplier Refund'),
-                ('unknown', 'Unknown'),
+        return [('dn', _('Debit Note')),
+                ('donation', _('Donation')),
+                ('ivi', _('Intermission Voucher IN')),
+                ('ivo', _('Intermission Voucher OUT')),
+                ('di', _('Direct Invoice')),
+                ('si', _('Supplier Invoice')),
+                ('sr', _('Supplier Refund')),
+                ('stv', _('Stock Transfer Voucher')),
+                ('cr', _('Customer Refund')),
+                ('str', _('Stock Transfer Refund')),
+                ('isi', _('Intersection Supplier Invoice')),
+                ('isr', _('Intersection Supplier Refund')),
+                ('unknown', _('Unknown')),
                 ]
 
     _invoice_action_act_window = {

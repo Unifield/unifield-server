@@ -692,22 +692,18 @@ class purchase_order_line(osv.osv):
         """
         Check analytic distribution validity for given PO line.
         Also check that partner have a donation account (is PO is in_kind)
+
+        create_missing: deprecated, used in pre-SLL intermission push flow (US-3017)
         """
         # Objects
         ad_obj = self.pool.get('analytic.distribution')
         ccdl_obj = self.pool.get('cost.center.distribution.line')
         pol_obj = self.pool.get('purchase.order.line')
-        imd_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        try:
-            intermission_cc = imd_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')[1]
-        except ValueError:
-            intermission_cc = 0
 
         po_info = {}
         for pol in self.browse(cr, uid, ids, context=context):
@@ -718,31 +714,18 @@ class purchase_order_line(osv.osv):
                     if not po.partner_id.donation_payable_account:
                         raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
 
-                if po.partner_id and po.partner_id.partner_type == 'intermission':
-                    if not intermission_cc:
-                        raise osv.except_osv(_('Error'), _('No Intermission Cost Center found!'))
-
             po_info[po.id] = True
 
 
             distrib = pol.analytic_distribution_id or po.analytic_distribution_id or False
-
 
             # Raise an error if no analytic distribution found
             if not distrib:
                 # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
                 if po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
                     return True
-                if create_missing and po.partner_id and po.partner_id.partner_type == 'intermission':
-                    # intermission push flow, new line added: AD needed
-                    destination_id = pol.account_4_distribution and pol.account_4_distribution.default_destination_id and pol.account_4_distribution.default_destination_id.id or False
-                    ad_obj.create(cr, uid, {
-                        'purchase_line_ids': [(4, pol.id)],
-                        'cost_center_lines': [(0, 0, {'destination_id': destination_id, 'analytic_id': intermission_cc , 'percentage':'100', 'currency_id': po.currency_id.id})]
-                    })
-                else:
-                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
-                                         % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                     % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
             elif pol.analytic_distribution_state != 'valid':
                 id_ad = ad_obj.create(cr, uid, {})
@@ -771,7 +754,13 @@ class purchase_order_line(osv.osv):
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
 
+
             # check that the analytic accounts are active. Done at the end to use the newest AD of the pol (to re-browse)
+            if po.partner_id.partner_type in ('section', 'intermission', 'internal') and \
+                    ( pol.state in ('validated', 'sourced_sy', 'sourced_v') or pol.state == 'draft' and pol.created_by_sync):
+                # do not check on po line confirmation from instance
+                continue
+
             pol_ad = self.browse(cr, uid, pol.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
             ad = pol_ad or po.analytic_distribution_id or False
             if ad:

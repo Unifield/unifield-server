@@ -355,6 +355,19 @@ class account_invoice(osv.osv):
         'user_id': lambda s, cr, u, c: u,
     }
 
+    def _set_invoice_name(self, cr, uid, doc, context=None):
+        """
+        Sets the correct invoice name to be displayed depending on the doc_type
+        """
+        if context is None:
+            context = {}
+        if context.get('doc_type'):
+            for doc_type in self._get_invoice_type_list(cr, uid, context=context):
+                if context['doc_type'] in doc_type:
+                    doc.attrib['string'] = doc_type[1]
+                    break
+        return True
+
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         if context is None:
             context = {}
@@ -368,11 +381,7 @@ class account_invoice(osv.osv):
                 for node in nodes:
                     node.set('string', _('Amount to be refunded'))
             # adapt the form name depending on the doc_type (used e.g. when clicking on a res.log)
-            if context.get('doc_type'):
-                for doc_type in self._get_invoice_type_list(cr, uid, context=context):
-                    if context['doc_type'] in doc_type:
-                        doc.attrib['string'] = doc_type[1]
-                        break
+            self._set_invoice_name(cr, uid, doc, context=context)
             res['arch'] = etree.tostring(doc)
         elif view_type == 'tree':
             doc = etree.XML(res['arch'])
@@ -380,11 +389,17 @@ class account_invoice(osv.osv):
             # (US-777) Remove the possibility to create new invoices through the "Advance Return" Wizard
             if context.get('from_wizard') and context.get('from_wizard')['model'] == 'wizard.cash.return':
                 doc.set('hide_new_button', 'True')
-            partner_string = _('Customer')
-            if context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
+            if context.get('generic_invoice'):
+                # for tree views combining Customer and Supplier Invoices
+                partner_string = _('Partner')
+            elif context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
                 partner_string = _('Supplier')
+            else:
+                partner_string = _('Customer')
             for node in nodes:
                 node.set('string', partner_string)
+            # ensure that the doc name remains consistent even after clicking on a filter in the Search View
+            self._set_invoice_name(cr, uid, doc, context=context)
             res['arch'] = etree.tostring(doc)
         elif view_type == 'search':
             # remove the Cancel filter in all invoices but IVO and STV (in Donations the filter is named differently)
@@ -939,6 +954,7 @@ class account_invoice(osv.osv):
                 # UTP-594: Get ref and name
                 if inv.type == 'in_invoice':
                     is_ivi = inv.is_intermission and not inv.is_debit_note and not inv.is_inkind_donation
+                    # SI or ISI
                     is_si = not inv.is_direct_invoice and not inv.is_inkind_donation and not inv.is_debit_note and not inv.is_intermission
                     intersection = inv.partner_id.partner_type == 'section'
                     external = inv.partner_id.partner_type == 'external'

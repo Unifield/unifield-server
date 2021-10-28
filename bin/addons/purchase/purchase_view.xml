@@ -270,7 +270,7 @@
                                     <field name="original_changed" readonly="1" string="CHG"/>
                                     <field name="change_price_ok" invisible="1"/>
                                     <field name="old_price_unit" invisible="1"/>
-                                    <field name="date_planned"/>
+                                    <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                                     <field name="esti_dd" attrs="{'readonly': [('fake_state', 'not in', ['validated', 'validated_n'])]}"/>
                                     <field name="confirmed_delivery_date"/>
                                     <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
