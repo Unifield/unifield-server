@@ -11943,6 +11943,7 @@ msgstr "Pas de fichier envoi.ini trouvé dans le fichier ZP donné!"
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,invoice_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:227
 #, python-format
 msgid "Supplier Invoice"
 msgstr "Facture Fournisseur"
@@ -14627,6 +14628,7 @@ msgstr "BARBADOS DOLLAR"
 #: report:account.invoice2:0
 #: selection:report.invoice.created,type:0
 #: selection:wizard.account.invoice,type:0
+#: selection:account.direct.invoice.wizard,type:0
 #: selection:account.invoice,doc_type:0
 #: selection:account.invoice,real_doc_type:0
 #: selection:account.invoice.line,line_doc_type:0
@@ -14634,6 +14636,8 @@ msgstr "BARBADOS DOLLAR"
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,invoice_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account/invoice.py:255
+#: code:addons/account_override/invoice.py:228
 msgid "Supplier Refund"
 msgstr "Avoirs Fournisseur"
 
@@ -20953,6 +20957,7 @@ msgstr "Action d'ouverture ajoutée"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:222
 msgid "Debit Note"
 msgstr "Note de débit"
 
@@ -30933,6 +30938,7 @@ msgstr "Donation en nature"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:223
 msgid "Donation"
 msgstr "Donation"
 
@@ -31894,6 +31900,7 @@ msgstr "Messages exécutés:%d"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:225
 msgid "Intermission Voucher OUT"
 msgstr "Bons Intermission OUT"
 
@@ -42784,6 +42791,7 @@ msgstr "ESC Message 2"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:226
 #, python-format
 msgid "Direct Invoice"
 msgstr "Facture Directe"
@@ -55783,6 +55791,7 @@ msgstr "Liste de composition du Kit"
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,invoice_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:230
 msgid "Customer Refund"
 msgstr "Avoir Client"
 
@@ -56769,6 +56778,7 @@ msgstr "No journal code found."
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:234
 msgid "Unknown"
 msgstr "Inconnu"
 
@@ -75617,6 +75627,7 @@ msgstr "Linked sale order line at synchro"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:229
 msgid "Stock Transfer Voucher"
 msgstr "Bon de Transfert de Stock"
 
@@ -90102,13 +90113,6 @@ msgstr " "
 msgid "Sweden"
 msgstr "Suède"
 
-#. modules: account, register_accounting
-#: code:addons/account/invoice.py:397
-#: selection:account.direct.invoice.wizard,type:0
-#, python-format
-msgid "Supplier Refund"
-msgstr "Remboursement Fournisseur"
-
 #. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
 #: selection:products.situation.report,controlled_substance:0
@@ -92331,6 +92335,7 @@ msgstr "Mongolian / монгол"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:224
 msgid "Intermission Voucher IN"
 msgstr "Bons Intermission IN"
 
@@ -112849,6 +112854,7 @@ msgstr "Avoirs de Transfert de Stock"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:231
 msgid "Stock Transfer Refund"
 msgstr "Avoir de Transfert de Stock"
 
@@ -112874,6 +112880,7 @@ msgstr "Factures Fournisseur Intersection"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:232
 msgid "Intersection Supplier Invoice"
 msgstr "Facture Fournisseur Intersection"
 
@@ -112899,6 +112906,7 @@ msgstr "Avoirs Fournisseur Intersection"
 #: selection:wizard.account.invoice,doc_type:0
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:233
 msgid "Intersection Supplier Refund"
 msgstr "Avoir Fournisseur Intersection"
 
