@@ -453,7 +453,7 @@ product will be shown.""",
                     non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_distribution')[1])
                     # Quarantine (analyze)
                     non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1])
-                    # Quarantine (before scap)
+                    # Expired / Damaged / For Scrap
                     non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1])
 
                     domain.extend(['|', ('location_id', 'not in', non_standard_loc_ids), ('location_dest_id', 'not in', non_standard_loc_ids)])

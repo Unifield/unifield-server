@@ -6530,8 +6530,8 @@ msgstr "Daté avant :"
 
 #. module: msf_config_locations
 #: model:stock.location,name:msf_config_locations.stock_location_quarantine_view
-msgid "Quarantine"
-msgstr "Quarantaine"
+msgid "Quarantine / For Scrap"
+msgstr "Quarantaine / Pour Rebus"
 
 #. module: account
 #: model:process.transition,name:account.process_transition_analyticinvoice0
@@ -41686,8 +41686,8 @@ msgstr "Line of the wizard to return products from a PPL"
 
 #. module: stock_override
 #: model:stock.location,name:stock_override.stock_location_quarantine_scrap
-msgid "Quarantine (before scrap)"
-msgstr "Quarantaine (avant rebut)"
+msgid "Expired / Damaged / For Scrap"
+msgstr "Expiré / Endommagé / Pour Rebus"
 
 #. module: export_import_lang
 #: code:addons/export_import_lang/data_import.py:161
@@ -62971,6 +62971,7 @@ msgstr "Si oui, référence de la réclamation"
 
 #. module: analytic_distribution
 #: field:account.destination.link,destination_id:0
+#: field:account.destination.link,destination_code:0
 msgid "Analytical Destination Account"
 msgstr "Compte de Destination Analytique "
 
@@ -68632,6 +68633,7 @@ msgstr "Relevés sous statut brouillon"
 #: field:allocation.stock.setup,error_sm_cross_ids:0
 #: view:stock.move:0
 #: field:stock.picking.cancel.more.wizard,picking_id:0
+#: view:change.dest.location:0
 msgid "Picking"
 msgstr "Picking"
 
@@ -112923,3 +112925,25 @@ msgstr "%s Avoir(s) Fournisseur Intersection"
 #, python-format
 msgid "Impossible to retrieve the view to display."
 msgstr "Impossible de récupérer la vue à afficher."
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:977
+#, python-format
+msgid "The correction entry (posting date: %s) should be in the same fiscal year as the original entry (posting date: %s)."
+msgstr "L'écriture de correction (date de comptabilisation : %s) doit être dans le même exercice comptable que l'écriture d'origine (date de comptabilisation : %s)."
+
+#. modules: delivery_mechanism, stock_override
+#: view:enter.reason:0
+#: view:stock.move.cancel.wizard:0
+msgid "In this context C&R is not possible so order must be recreated if still needed."
+msgstr "Dans ce contexte l'action A&R n'est pas possible, en cas de besoin la commande doit être recrée "
+
+#. module: delivery_mechanism
+#: view:enter.reason:0
+msgid "Warning! There is a risk of producing inconsistent data if you cancel this IN before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization."
+msgstr "Attention! Si vous annulez la Livraison Entrante, il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro."
+
+#. module: stock_override
+#: view:stock.move.cancel.wizard:0
+msgid "Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization."
+msgstr "Attention! Si vous annulez cette ligne il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro."

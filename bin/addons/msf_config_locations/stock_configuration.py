@@ -179,7 +179,7 @@ class stock_location(osv.osv):
                     # Cross-docking locations
                     res = [('cross_docking_location_ok', '=' ,True)]
                 else:
-                    # All internal locations except Quarantine (both), Output (& children) and Input locations
+                    # All internal locations except Quarantine, Expired/Damaged/For Scrap, Output (& children) and Input locations
                     res = [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]
 
         return res

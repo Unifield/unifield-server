@@ -442,6 +442,8 @@ class analytic_line(osv.osv):
                     # these lines will be reverted, check if the reverted line is active
                     if not wiz_period_open:
                         expired_date_ids.append(aline.id)
+                    elif not self.pool.get('finance.tools').check_correction_date_fy(aline.date, wiz_date, raise_error=False, context=context):
+                        expired_date_ids.append(aline.id)
                     else:
                         oc_dest_date_start = max(aline.cost_center_id.date_start, aline.destination_id.date_start)
                         oc_dest_date_stop = min(aline.cost_center_id.date or '9999-01-01', aline.destination_id.date or '9999-01-01')
