@@ -611,7 +611,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         &payment_tab;
-                        <!-- display the Counterpart Invoice tab in STV, hide it in Customer Refunds -->
+                        <!-- display the Counterpart Invoice tab in STV, hide it in CR/STR -->
                         <page string="Counterpart Invoice" attrs="{'invisible': [('type', '!=', 'out_invoice')]}">
                             <field name="from_supply" invisible="1"/>
                             <field name="synced"

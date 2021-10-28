@@ -385,13 +385,16 @@ class account_invoice(osv.osv):
             res['arch'] = etree.tostring(doc)
         elif view_type == 'tree':
             doc = etree.XML(res['arch'])
-            nodes = doc.xpath("//field[@name='partner_id']")
             # (US-777) Remove the possibility to create new invoices through the "Advance Return" Wizard
             if context.get('from_wizard') and context.get('from_wizard')['model'] == 'wizard.cash.return':
                 doc.set('hide_new_button', 'True')
-            if context.get('generic_invoice'):
-                # for tree views combining Customer and Supplier Invoices
+            # adapt the name of the Partner field depending on the view
+            nodes = doc.xpath("//field[@name='partner_id']")
+            if context.get('generic_invoice') or context.get('journal_type') == 'intermission':
+                # for tree views combining Customer and Supplier Invoices, or for IVI/IVO
                 partner_string = _('Partner')
+            elif context.get('journal_type', False) == 'inkind':
+                partner_string = _('Donor')
             elif context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
                 partner_string = _('Supplier')
             else:

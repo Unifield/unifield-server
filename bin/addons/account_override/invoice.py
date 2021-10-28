@@ -659,22 +659,10 @@ class account_invoice(osv.osv):
 
 
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
-        """
-        Rename Supplier/Customer to "Donor" if view_type == tree
-        """
         if not context:
             context = {}
         res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'tree' and (context.get('journal_type', False) == 'inkind' or context.get('journal_type', False) == 'intermission'):
-            doc = etree.XML(res['arch'])
-            nodes = doc.xpath("//field[@name='partner_id']")
-            name = _('Donor')
-            if context.get('journal_type') == 'intermission':
-                name = _('Partner')
-            for node in nodes:
-                node.set('string', name)
-            res['arch'] = etree.tostring(doc)
-        elif view_type in ('tree', 'search') and (context.get('type') in ['out_invoice', 'out_refund'] or context.get('doc_type') == 'str'):
+        if view_type in ('tree', 'search') and (context.get('type') in ['out_invoice', 'out_refund'] or context.get('doc_type') == 'str'):
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='supplier_reference']")
             for node in nodes:
