@@ -1561,6 +1561,7 @@ class stock_picking(osv.osv):
             di = 'is_direct_invoice' in invoice_vals and invoice_vals['is_direct_invoice']
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
+            # SI or ISI
             is_si = in_invoice and not di and not inkind_donation and not debit_note and not intermission
             is_ivi = in_invoice and not debit_note and not inkind_donation and intermission
             po = picking and picking.purchase_id

@@ -954,6 +954,7 @@ class account_invoice(osv.osv):
                 # UTP-594: Get ref and name
                 if inv.type == 'in_invoice':
                     is_ivi = inv.is_intermission and not inv.is_debit_note and not inv.is_inkind_donation
+                    # SI or ISI
                     is_si = not inv.is_direct_invoice and not inv.is_inkind_donation and not inv.is_debit_note and not inv.is_intermission
                     intersection = inv.partner_id.partner_type == 'section'
                     external = inv.partner_id.partner_type == 'external'
