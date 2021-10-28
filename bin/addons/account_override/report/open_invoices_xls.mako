@@ -307,7 +307,7 @@
                     ('donation', _('Donations')), ('ivi', _('Intermission Vouchers IN')),
                     ('stv', _('Stock Transfer Vouchers')), ('str', _('Stock Transfer Refunds')), ('cr', _('Customer Refunds')),
                     ('dn', _('Debit Notes')), ('ivo', _('Intermission Vouchers OUT'))] %>
-% for (type, title) in doc_type_list:
+% for (doc_type, title) in doc_type_list:
    <Row >
     <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
     <Cell ss:StyleID="s24"/>
@@ -331,9 +331,9 @@
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-% if type in ['stv', 'ivo', 'dn', 'cr']:
+% if doc_type in ['stv', 'ivo', 'dn', 'cr', 'str']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
-% elif type in ['si_di', 'ivi', 'donation', 'sr']:
+% elif doc_type in ['si_di', 'ivi', 'donation', 'sr', 'isi', 'isr']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
 % else:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Partner')}</Data></Cell>
@@ -359,8 +359,8 @@
 
 <% nb_line = 0 %>
 
-% if type in inv:
-% for o in inv[type]:
+% if doc_type in inv:
+% for o in inv[doc_type]:
     <Row>
         <% nb_line += 1 %>
         <% update_percent(nb_line, context) %>
