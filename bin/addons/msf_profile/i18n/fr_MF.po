@@ -68719,12 +68719,12 @@ msgstr "Dépenses prévues"
 msgid "You have to define a valid Main Type (in tab \"Nomenclature Selection\"), i.e. not \"To be defined\"."
 msgstr "You have to define a valid Main Type (in tab \"Nomenclature Selection\"), i.e. not \"To be defined\"."
 
-#. modules: account_override, financing_contract, product_asset
+#. modules: account_override, financing_contract, product_asset, account
 #: view:account.invoice:0
 #: field:financing.contract.contract,donor_id:0
 #: view:financing.contract.donor:0
 #: report:product.asset:0
-#: code:addons/account_override/invoice.py:434
+#: code:addons/account/invoice.py:397
 #, python-format
 msgid "Donor"
 msgstr "Bailleur"
