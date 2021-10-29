@@ -291,7 +291,7 @@ class account_invoice(osv.osv):
 
     def _get_dom_by_doc_type(self, doc_type):
         """
-        Returns the domain matching to the doc type (see the list of types in _get_invoice_type_list).
+        Returns the domain matching with the doc type (see the list of types in _get_invoice_type_list).
         """
         if doc_type in ('str', 'isi', 'isr'):
             dom = [('real_doc_type', '=', doc_type)]
