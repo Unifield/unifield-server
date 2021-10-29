@@ -671,7 +671,7 @@ class account_invoice(osv.osv):
         elif view_type == 'form':
             """
             Restriction on allowed partners:
-            - for STV/STR: Intersection customers only
+            - for STV/STR: Intersection or External customers only
             - for ISI/ISR: Intersection suppliers only
             - for SI/SR: non-Intersection suppliers only
             """
@@ -680,7 +680,7 @@ class account_invoice(osv.osv):
                 context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and
                 not context.get('is_debit_note', False) and not context.get('is_intermission', False)
             ):
-                partner_domain = "[('partner_type', '=', 'section'), ('customer', '=', True)]"
+                partner_domain = "[('partner_type', 'in', ('section', 'external')), ('customer', '=', True)]"
             elif context.get('doc_type', '') in ('isi', 'isr'):
                 partner_domain = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
             elif (context.get('doc_type', '') in ('si', 'sr')) or \
@@ -1153,14 +1153,13 @@ class account_invoice(osv.osv):
         if inv_type is None:
             inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         # if a supplier/customer is expected for the doc: check that the partner used has the right flag
-        # note: SI/SR on Intersection partners and STV on external partners are blocked only at form level (the
-        # validation of old docs should still be possible)
+        # note: SI/SR on Intersection partners are blocked only at form level (the validation of old docs should still be possible)
         supplier_ko = inv_type in ('si', 'di', 'sr', 'ivi', 'donation', 'isi', 'isr') and not partner.supplier
         customer_ko = inv_type in ('ivo', 'stv', 'dn', 'cr', 'str') and not partner.customer
         if supplier_ko or customer_ko or inv_type in ('ivi', 'ivo') and p_type != 'intermission' or \
-            inv_type == 'stv' and p_type not in ('section', 'external') or \
+            inv_type in ('stv', 'str') and p_type not in ('section', 'external') or \
                 inv_type == 'donation' and p_type not in ('esc', 'external', 'section') or \
-                inv_type in ('isi', 'isr', 'str') and p_type != 'section':
+                inv_type in ('isi', 'isr') and p_type != 'section':
             raise osv.except_osv(_('Error'), _("The partner %s is not allowed for this document.") % partner.name)
 
     def _check_header_account(self, cr, uid, inv_id, inv_type=None, context=None):
