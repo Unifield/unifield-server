@@ -657,44 +657,6 @@ class account_invoice(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
-        if not context:
-            context = {}
-        res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type in ('tree', 'search') and (context.get('type') in ['out_invoice', 'out_refund'] or context.get('doc_type') == 'str'):
-            doc = etree.XML(res['arch'])
-            nodes = doc.xpath("//field[@name='supplier_reference']")
-            for node in nodes:
-                node.getparent().remove(node)
-            res['arch'] = etree.tostring(doc)
-        elif view_type == 'form':
-            """
-            Restriction on allowed partners:
-            - for STV/STR: Intersection or External customers only
-            - for ISI/ISR: Intersection suppliers only
-            - for SI/SR: non-Intersection suppliers only
-            """
-            partner_domain = ""
-            if context.get('doc_type', '') in ('stv', 'str') or (
-                context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and
-                not context.get('is_debit_note', False) and not context.get('is_intermission', False)
-            ):
-                partner_domain = "[('partner_type', 'in', ('section', 'external')), ('customer', '=', True)]"
-            elif context.get('doc_type', '') in ('isi', 'isr'):
-                partner_domain = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
-            elif (context.get('doc_type', '') in ('si', 'sr')) or \
-                (context.get('type') == 'in_invoice' and context.get('journal_type') == 'purchase') or \
-                (context.get('type') == 'in_refund' and context.get('journal_type') == 'purchase_refund'):
-                partner_domain = "[('partner_type', '!=', 'section'), ('supplier', '=', True)]"
-            if partner_domain:
-                doc = etree.XML(res['arch'])
-                partner_nodes = doc.xpath("//field[@name='partner_id']")
-                for node in partner_nodes:
-                    node.set('domain', partner_domain)
-                res['arch'] = etree.tostring(doc)
-        return res
-
     def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Fill in account and journal for intermission invoice

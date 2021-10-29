@@ -382,6 +382,28 @@ class account_invoice(osv.osv):
                     node.set('string', _('Amount to be refunded'))
             # adapt the form name depending on the doc_type (used e.g. when clicking on a res.log)
             self._set_invoice_name(cr, uid, doc, context=context)
+            """
+            Restriction on allowed partners:
+            - for STV/STR: Intersection or External customers only
+            - for ISI/ISR: Intersection suppliers only
+            - for SI/SR: non-Intersection suppliers only
+            """
+            partner_domain = ""
+            if context.get('doc_type', '') in ('stv', 'str') or (
+                context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and
+                not context.get('is_debit_note', False) and not context.get('is_intermission', False)
+            ):
+                partner_domain = "[('partner_type', 'in', ('section', 'external')), ('customer', '=', True)]"
+            elif context.get('doc_type', '') in ('isi', 'isr'):
+                partner_domain = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
+            elif (context.get('doc_type', '') in ('si', 'sr')) or \
+                (context.get('type') == 'in_invoice' and context.get('journal_type') == 'purchase') or \
+                (context.get('type') == 'in_refund' and context.get('journal_type') == 'purchase_refund'):
+                partner_domain = "[('partner_type', '!=', 'section'), ('supplier', '=', True)]"
+            if partner_domain:
+                partner_nodes = doc.xpath("//field[@name='partner_id']")
+                for node in partner_nodes:
+                    node.set('domain', partner_domain)
             res['arch'] = etree.tostring(doc)
         elif view_type == 'tree':
             doc = etree.XML(res['arch'])
@@ -416,6 +438,12 @@ class account_invoice(osv.osv):
                 if filter_node:
                     filter_node[0].getparent().remove(filter_node[0])
                 res['arch'] = etree.tostring(doc)
+        if view_type in ('tree', 'search') and (context.get('type') in ['out_invoice', 'out_refund'] or context.get('doc_type') == 'str'):
+            doc = etree.XML(res['arch'])
+            nodes = doc.xpath("//field[@name='supplier_reference']")
+            for node in nodes:
+                node.getparent().remove(node)
+            res['arch'] = etree.tostring(doc)
         return res
 
     def create(self, cr, uid, vals, context=None):
