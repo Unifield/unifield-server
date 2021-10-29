@@ -26,7 +26,6 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
-from lxml import etree
 from datetime import datetime
 from msf_partner import PARTNER_TYPE
 import re
@@ -657,44 +656,6 @@ class account_invoice(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
-        if not context:
-            context = {}
-        res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type in ('tree', 'search') and (context.get('type') in ['out_invoice', 'out_refund'] or context.get('doc_type') == 'str'):
-            doc = etree.XML(res['arch'])
-            nodes = doc.xpath("//field[@name='supplier_reference']")
-            for node in nodes:
-                node.getparent().remove(node)
-            res['arch'] = etree.tostring(doc)
-        elif view_type == 'form':
-            """
-            Restriction on allowed partners:
-            - for STV/STR: Intersection customers only
-            - for ISI/ISR: Intersection suppliers only
-            - for SI/SR: non-Intersection suppliers only
-            """
-            partner_domain = ""
-            if context.get('doc_type', '') in ('stv', 'str') or (
-                context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and
-                not context.get('is_debit_note', False) and not context.get('is_intermission', False)
-            ):
-                partner_domain = "[('partner_type', '=', 'section'), ('customer', '=', True)]"
-            elif context.get('doc_type', '') in ('isi', 'isr'):
-                partner_domain = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
-            elif (context.get('doc_type', '') in ('si', 'sr')) or \
-                (context.get('type') == 'in_invoice' and context.get('journal_type') == 'purchase') or \
-                    (context.get('type') == 'in_refund' and context.get('journal_type') == 'purchase_refund'):
-                partner_domain = "[('partner_type', '!=', 'section'), ('supplier', '=', True)]"
-            if partner_domain:
-                doc = etree.XML(res['arch'])
-                partner_nodes = doc.xpath("//field[@name='partner_id']")
-                for node in partner_nodes:
-                    node.set('domain', partner_domain)
-                res['arch'] = etree.tostring(doc)
-        return res
-
     def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Fill in account and journal for intermission invoice
@@ -1153,14 +1114,13 @@ class account_invoice(osv.osv):
         if inv_type is None:
             inv_type = self.read(cr, uid, inv_id, ['doc_type'])['doc_type']
         # if a supplier/customer is expected for the doc: check that the partner used has the right flag
-        # note: SI/SR on Intersection partners and STV on external partners are blocked only at form level (the
-        # validation of old docs should still be possible)
+        # note: SI/SR on Intersection partners are blocked only at form level (the validation of old docs should still be possible)
         supplier_ko = inv_type in ('si', 'di', 'sr', 'ivi', 'donation', 'isi', 'isr') and not partner.supplier
         customer_ko = inv_type in ('ivo', 'stv', 'dn', 'cr', 'str') and not partner.customer
         if supplier_ko or customer_ko or inv_type in ('ivi', 'ivo') and p_type != 'intermission' or \
-            inv_type == 'stv' and p_type not in ('section', 'external') or \
+            inv_type in ('stv', 'str') and p_type not in ('section', 'external') or \
                 inv_type == 'donation' and p_type not in ('esc', 'external', 'section') or \
-                inv_type in ('isi', 'isr', 'str') and p_type != 'section':
+                inv_type in ('isi', 'isr') and p_type != 'section':
             raise osv.except_osv(_('Error'), _("The partner %s is not allowed for this document.") % partner.name)
 
     def _check_header_account(self, cr, uid, inv_id, inv_type=None, context=None):
