@@ -59,8 +59,10 @@
                         <field name="vat_ok" invisible="1" />
                         <field name="synced" invisible="1" />
                         <field name="line_doc_type" invisible="1" />
+                        <!-- note: in STV and STR taxes are hidden even for external partners as these are in fact "false" external partners
+                             (e.g. instances for which the deployment of UniField hasn't been finished) -->
                         <group colspan="4" col="4"
-                               attrs="{'invisible': ['|', ('vat_ok', '=', False), ('line_doc_type', 'in', ('str', 'isi', 'isr'))]}">
+                               attrs="{'invisible': ['|', ('vat_ok', '=', False), ('line_doc_type', 'in', ('stv', 'str', 'isi', 'isr'))]}">
                             <separator colspan="4" string="Taxes"/>
                             <field colspan="4"
                                    name="invoice_line_tax_id"
