@@ -112794,3 +112794,20 @@ msgstr "Attention! Si vous annulez la Livraison Entrante, il y a un risque de g�
 msgid "Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization."
 msgstr "Attention! Si vous annulez cette ligne il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro."
 
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1926
+#, python-format
+msgid "%d FMC(s) removed on %d line(s)"
+msgstr "%d PMC(s) supprimées sur %d ligne(s)"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1898
+#, python-format
+msgid "No outdated FMC"
+msgstr "Aucune PMC dépassée"
+
+#. module: procurement_cycle
+#: view:replenishment.segment:0
+msgid "Remove outdated FMCs"
+msgstr "Supprimer les PMCs dépassées"
+
