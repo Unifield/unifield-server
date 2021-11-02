@@ -175,14 +175,14 @@ MODEL_DICT = {
         'domain_type': 'non_functionnal',
         'model': 'ir.model.access',
         'lang': 'en_MF',
-        'domain': [('from_system', '=', False)],
+        'domain': [('from_system', '=', False), ('model_id.exists', '=', True)],
     },
     'access_control_list_empty': {
         'name': 'Objects without ACL',
         'domain_type': 'non_functionnal',
         'model': 'ir.model.access.empty',
         'lang': 'en_MF',
-        'domain': [('model_id.osv_memory', '=', False)],
+        'domain': [('model_id.osv_memory', '=', False), ('model_id.exists','=', True)],
     },
     'field_access_rules': {
         'name': 'Field Access Rules',

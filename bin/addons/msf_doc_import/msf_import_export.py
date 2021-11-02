@@ -22,7 +22,7 @@
 import base64
 import time
 import logging
-
+import release
 import tools
 
 from osv import fields
@@ -99,6 +99,8 @@ class msf_import_export(osv.osv_memory):
         file_name = file_name.replace(' ', '_')
         if template_only:
             file_name = _('%s_Import_Template') % file_name
+        elif selection in ('user_groups', 'user_access', 'record_rules', 'access_control_list', 'access_control_list_empty', 'field_access_rules', 'field_access_rule_lines', 'button_access_rules', 'window_actions'):
+            file_name = _('%s_Export_%s_%s') % (file_name, release.version.split('-')[0], time.strftime('%Y%m%d'))
         else:
             file_name = _('%s_Export_%s') % (file_name, time.strftime('%Y%m%d'))
         return file_name
