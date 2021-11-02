@@ -112915,3 +112915,75 @@ msgstr "Attention! Si vous annulez la Livraison Entrante, il y a un risque de g�
 #: view:stock.move.cancel.wizard:0
 msgid "Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization."
 msgstr "Attention! Si vous annulez cette ligne il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro."
+
+#. module: account
+#: code:addons/account/invoice.py:1271
+#, python-format
+msgid "STV: "
+msgstr "BTS : "
+
+#. module: account
+#: code:addons/account/invoice.py:1272
+#, python-format
+msgid "STR: "
+msgstr "ATS : "
+
+#. module: account
+#: code:addons/account/invoice.py:1273
+#, python-format
+msgid "CR: "
+msgstr "AC : "
+
+#. module: account
+#: code:addons/account/invoice.py:1274
+#, python-format
+msgid "DN: "
+msgstr "ND : "
+
+#. module: account
+#: code:addons/account/invoice.py:1275
+#, python-format
+msgid "IVO: "
+msgstr "BIO : "
+
+#. module: account
+#: code:addons/account/invoice.py:1276
+#, python-format
+msgid "SI: "
+msgstr "FF : "
+
+#. module: account
+#: code:addons/account/invoice.py:1277
+#, python-format
+msgid "DI: "
+msgstr "FD : "
+
+#. module: account
+#: code:addons/account/invoice.py:1278
+#, python-format
+msgid "SR: "
+msgstr "AF : "
+
+#. module: account
+#: code:addons/account/invoice.py:1279
+#, python-format
+msgid "ISI: "
+msgstr "FFI : "
+
+#. module: account
+#: code:addons/account/invoice.py:1280
+#, python-format
+msgid "ISR: "
+msgstr "AFI : "
+
+#. module: account
+#: code:addons/account/invoice.py:1281
+#, python-format
+msgid "DON: "
+msgstr "DON : "
+
+#. module: account
+#: code:addons/account/invoice.py:1282
+#, python-format
+msgid "IVI: "
+msgstr "BII : "

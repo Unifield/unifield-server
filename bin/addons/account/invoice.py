@@ -1267,13 +1267,22 @@ class account_invoice(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not ids:
             return []
-        types = {
-            'out_invoice': 'CI: ',
-            'in_invoice': 'SI: ',
-            'out_refund': 'OR: ',
-            'in_refund': 'SR: ',
+        doc_types = {
+            'stv': _('STV: '),
+            'str': _('STR: '),
+            'cr': _('CR: '),
+            'dn': _('DN: '),
+            'ivo': _('IVO: '),
+            'si': _('SI: '),
+            'di': _('DI: '),
+            'sr': _('SR: '),
+            'isi': _('ISI: '),
+            'isr': _('ISR: '),
+            'donation': _('DON: '),
+            'ivi': _('IVI: '),
         }
-        return [(r['id'], (r['number']) or types[r['type']] + (r['name'] or '')) for r in self.read(cr, uid, ids, ['type', 'number', 'name'], context, load='_classic_write')]
+        return [(r['id'], (r['number']) or doc_types[r['doc_type']] + (r['name'] or '')) for r in
+                self.read(cr, uid, ids, ['doc_type', 'number', 'name'], context, load='_classic_write')]
 
     def name_search(self, cr, user, name, args=None, operator='ilike', context=None, limit=100):
         if not args:
