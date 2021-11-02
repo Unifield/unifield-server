@@ -46706,8 +46706,8 @@ msgstr "Signature"
 
 #. module: msf_doc_import
 #: selection:wizard.import.in.line.simulation.screen,type_change:0
-msgid "Del."
-msgstr "Del."
+msgid "Ign."
+msgstr "Ign."
 
 #. modules: purchase, account, product
 #: view:account.invoice.report:0
