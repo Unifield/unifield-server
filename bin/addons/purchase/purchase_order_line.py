@@ -165,6 +165,27 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_customer_name(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            return {}
+
+        cr.execute('''
+            select
+                pol.id, p.name
+            from
+                purchase_order_line pol
+            left join sale_order_line sol on pol.linked_sol_id = sol.id
+            left join sale_order so on sol.order_id = so.id
+            left join res_partner p on so.partner_id = p.id
+            where
+                pol.id in %s
+        ''', (tuple(ids),))
+
+        return dict(cr.fetchall())
+
     def _get_state_to_display(self, cr, uid, ids, field_name, args, context=None):
         '''
         return the purchase.order.line state to display
@@ -502,6 +523,7 @@ class purchase_order_line(osv.osv):
         'red_color': fields.boolean(string='Red color'),
         'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False,
                                         string="Customer ref.", multi='custo_ref_ir_name'),
+        'customer_name': fields.function(_get_customer_name, method=True, type='text', string='Customer Name'),
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16, 2), related_uom='product_uom'),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
@@ -593,6 +615,7 @@ class purchase_order_line(osv.osv):
         'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
+        'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
     }
 
     _defaults = {
@@ -1265,6 +1288,7 @@ class purchase_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
             'from_dpo_line_id': False,
+            'dates_modified': False,
         })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
@@ -1288,7 +1312,7 @@ class purchase_order_line(osv.osv):
             self.pool.get('product.product')._get_restriction_error(cr, uid, [pol.product_id.id],
                                                                     {'partner_id': pol.order_id.partner_id.id}, context=context)
 
-        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], 'cv_line_ids': [], })
+        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], 'cv_line_ids': [], 'dates_modified': False})
 
         for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref']:
             if field not in default:
@@ -1381,6 +1405,13 @@ class purchase_order_line(osv.osv):
                     new_vals.update({'link_so_id': linked_so})
                 elif vals.get('origin'):
                     new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), po_obj=line.order_id, context=context))
+
+            if line.state in ('validated', 'validated_n') and \
+                    line.linked_sol_id and \
+                    not line.linked_sol_id.order_id.procurement_request and \
+                    line.linked_sol_id.order_id.partner_type not in ('external', 'esc') and \
+                    ('esti_dd' in vals and vals['esti_dd'] != line.esti_dd or 'confirmed_delivery_date' in vals and vals['confirmed_delivery_date'] != line.confirmed_delivery_date):
+                new_vals['dates_modified'] = True
 
             if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
                 new_vals['from_fo'] = True
@@ -2121,6 +2152,28 @@ class purchase_order_line(osv.osv):
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
         self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
 
+
+    def update_dates_from_pol(self, cr, uid, source, data, context=None):
+        line_info = data.to_dict()
+        if line_info.get('linked_sol_id', {}).get('sync_local_id') and (line_info.get('esti_dd') or line_info.get('confirmed_delivery_date')):
+            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', line_info['linked_sol_id']['sync_local_id'])], limit=1, context=context)
+            if pol_id:
+                pol_record = self.browse(cr, uid, pol_id[0], fields_to_fetch=['line_number', 'order_id', 'state'], context=context)
+                if pol_record['state'] in ('sourced_v', 'sourced_n'):
+                    to_write = {}
+                    for date in ['confirmed_delivery_date', 'esti_dd']:
+                        if line_info.get(date):
+                            to_write[date] = line_info[date]
+                    self.write(cr, uid, pol_id, to_write, context)
+                    return "Dates updated on %s line number %s (id:%s)" % (pol_record.order_id.name, pol_record.line_number, pol_record.id)
+                elif pol_record['state'] in ('confirmed', 'done', 'cancel', 'cancel_r'):
+                    return "Message ignored %s line number %s (id:%s), state: %s" % (pol_record.order_id.name, pol_record.line_number, pol_record.id, pol_record['state'])
+                else:
+                    raise Exception, "%s line number %s (id:%s), dates not updated due to wrong state: %s" % (pol_record.order_id.name, pol_record.line_number, pol_record.id, pol_record['state'])
+
+            raise Exception, "PO line not found."
+
+        return True
 
     def update_date_expected(self, cr, uid, source, data, context=None):
         line_info = data.to_dict()
