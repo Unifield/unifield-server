@@ -616,7 +616,7 @@ msgstr "Cellule %s%d: %s"
 #. module: account
 #: view:account.move.bank.reconcile:0
 msgid "Open for bank reconciliation"
-msgstr "Ouvrir pour reconciliation des écritures bancaires"
+msgstr "Ouvrir pour réconciliation des écritures bancaires"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:1027
@@ -10310,12 +10310,14 @@ msgstr "Clôture Annuelle"
 #: selection:purchase.order.line,state_to_display:0
 #: code:addons/stock_override/report/delivery_order.py:61
 #: report:cash.inventory:0
+#: report:bank.reconciliation:0
 #, python-format
 msgid "Confirmed"
 msgstr "Confirmé"
 
 #. module: register_accounting
 #: report:cash.inventory:0
+#: report:bank.reconciliation:0
 msgid "Not confirmed"
 msgstr "Non confirmé"
 
@@ -22225,7 +22227,7 @@ msgstr "Filtrer par"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "End of month balance state:"
-msgstr "Statut de solde de fin de mois :"
+msgstr "Statut du solde de fin de mois :"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:848
@@ -22496,7 +22498,7 @@ msgstr "Facture à  traiter"
 #. module: account
 #: help:account.move.line,statement_id:0
 msgid "The bank statement used for bank reconciliation"
-msgstr "Relevé bancaire utilisé pour la reconciliation bancaire"
+msgstr "Relevé bancaire utilisé pour la réconciliation bancaire"
 
 #. modules: msf_doc_import, register_accounting, account
 #: code:addons/msf_doc_import/account.py:587
@@ -58640,7 +58642,7 @@ msgstr "Taxes used in Sales"
 #: view:account.move.bank.reconcile:0
 #: model:ir.actions.act_window,name:account.action_account_bank_reconcile_tree
 msgid "Bank reconciliation"
-msgstr "Reconciliation bancaire"
+msgstr "Réconciliation bancaire"
 
 #. module: kit
 #: field:composition.item,item_stock_move_id:0
@@ -60665,7 +60667,7 @@ msgstr "Nom du Compte Bancaire"
 #. module: account
 #: model:ir.actions.act_window,help:account.action_account_bank_reconcile_tree
 msgid "Bank Reconciliation consists of verifying that your bank statement corresponds with the entries (or records) of that account in your accounting system."
-msgstr "Une reconciliation bancaire consiste à vérifier que votre relevé bancaire corresponde aux écritures (ou enregistrements) de ce compte dans votre système comptable."
+msgstr "Une réconciliation bancaire consiste à vérifier que votre relevé bancaire corresponde aux écritures (ou enregistrements) de ce compte dans votre système comptable."
 
 #. module: consumption_calculation
 #: field:expiry.quantity.report.line,expired_qty:0
@@ -77968,7 +77970,7 @@ msgstr "Comparer les Demandes de Devis"
 #: report:bank.reconciliation:0
 #: model:ir.actions.report.xml,name:register_accounting.bank_reconciliation
 msgid "Bank Reconciliation"
-msgstr "Reconciliation Bancaire"
+msgstr "Réconciliation Bancaire"
 
 #. module: sales_followup
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:227
