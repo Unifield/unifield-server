@@ -278,7 +278,7 @@ msgstr "Le produit [%s] %s est déjà inactif."
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Accrual reversal entries"
-msgstr "Écritures d'extourne comptes de régul."
+msgstr "Ecritures d'extourne comptes de régul."
 
 #. module: account_mcdb
 #: view:account.analytic.line:0
@@ -43692,7 +43692,7 @@ msgstr "Vous ne pouvez pas valider cet appel d'offre car il contient une ligne a
 #: code:addons/account_period_closing_level/account_period.py:644
 #, python-format
 msgid "HQ entries"
-msgstr "Écritures HQ"
+msgstr "Ecritures HQ"
 
 #. module: account
 #: field:account.bank.statement,total_entry_encoding:0
@@ -62167,7 +62167,7 @@ msgstr "Pas de registre trouvé. Vous pouvez effacer ce journal manuellement."
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you import and validate HQ entries (ONLY FOR COORDO)?"
-msgstr "Avez-vous importé et validé les écritudes du HQ (SEULEMENT POUR LA COORDO) ?"
+msgstr "Avez-vous importé et validé les écritures du HQ (SEULEMENT POUR LA COORDO) ?"
 
 #. module: sale
 #: code:addons/sale/sale_order.py:2176
