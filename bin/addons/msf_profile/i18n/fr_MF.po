@@ -77963,6 +77963,7 @@ msgstr "Comparer les Demandes de Devis"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: model:ir.actions.report.xml,name:register_accounting.bank_reconciliation
+#: code:ir.actions.report.xml:name:bank.reconciliation
 msgid "Bank Reconciliation"
 msgstr "Réconciliation Bancaire"
 
@@ -88414,6 +88415,7 @@ msgstr "Certificat"
 #. module: register_accounting
 #: report:cash.inventory:0
 #: model:ir.actions.report.xml,name:register_accounting.cash_inventory
+#: code:ir.actions.report.xml:name:cash.inventory
 msgid "Cash Reconciliation"
 msgstr "Inventaire de Caisse"
 
