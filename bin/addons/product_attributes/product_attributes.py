@@ -2201,7 +2201,7 @@ class product_attributes(osv.osv):
             # reactivation of UD NSL prod must bypass UR : active allowed
             if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
                 real_uid = uid
-            self.write(cr, real_uid, ud_prod, {'active': False}, context=context)
+            self.write(cr, real_uid, ud_nsl_prod, {'active': False}, context=context)
         if ud_prod:
             self.write(cr, real_uid, ud_prod, {'active': False}, context=context)
         if other_prod:
