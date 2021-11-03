@@ -23404,7 +23404,7 @@ msgstr "Chemin de destination (succès)"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Supplier refunds"
-msgstr "Remboursement Fournisseur"
+msgstr "Avoirs Fournisseur"
 
 #. modules: account_hq_entries, msf_homere_interface
 #: code:addons/account_hq_entries/wizard/hq_entries_validation.py:428
