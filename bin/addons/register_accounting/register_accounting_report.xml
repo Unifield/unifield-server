@@ -86,7 +86,7 @@
 
         <report id="fully_report"
         string="Full Report"
-        target_filename="Full Report_${name}_${period_id.name}_%(year)s%(month)s%(day)s"
+        target_filename="${_('Full Report')}_${name}_${period_id.name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="fully.report"
         file="register_accounting/report/fully_report_xls.mako"

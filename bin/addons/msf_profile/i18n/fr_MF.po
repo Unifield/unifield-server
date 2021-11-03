@@ -43048,11 +43048,6 @@ msgstr "Processing error"
 msgid "Expat employee import"
 msgstr "Importation des travailleurs expatriés"
 
-#. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:469
-msgid "CHEQUE REGISTER"
-msgstr "REGISTRE DE CHÈQUE"
-
 #. modules: account, finance
 #: view:account.move:0
 #: view:cash.request:0
@@ -50113,6 +50108,7 @@ msgstr "Sélecteur - Analytique"
 
 #. module: register_accounting
 #: model:ir.actions.report.xml,name:register_accounting.fully_report
+#: code:ir.actions.report.xml:name:fully.report
 msgid "Full Report"
 msgstr "Rapport Complet"
 
@@ -53440,6 +53436,7 @@ msgstr "Balance Agée Partenaire"
 #: report:addons/account/report/free_allocation_report.mako:199
 #: report:addons/account/report/invoice_excel_export.mako:73
 #: report:addons/account/report/export_invoice.mako:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:576
 #, python-format
 msgid "Account"
 msgstr "Compte"
@@ -58287,11 +58284,6 @@ msgstr "Date de modification"
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:130
 msgid "Delivery address name"
 msgstr "Delivery address name"
-
-#. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:469
-msgid "CASH REGISTER"
-msgstr "REGISTRE DE CAISSE"
 
 #. module: account
 #: code:addons/account/wizard/account_move_journal.py:104
@@ -93283,11 +93275,6 @@ msgstr "Prix - Type"
 msgid "Duplicate events from an instance are not allowed."
 msgstr "La duplication des événements d'une instance n'est pas autorisé."
 
-#. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:469
-msgid "BANK REGISTER"
-msgstr "REGISTRE DE BANQUE"
-
 #. module: account
 #: view:account.tax.code.template:0
 msgid "Search tax template"
@@ -99484,14 +99471,19 @@ msgid "The Cheque %s has already been imported."
 msgstr "Le Chèque %s a déjà été importé."
 
 #. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:560
-msgid "Acct"
-msgstr "Cmpt"
+#: report:addons/register_accounting/report/fully_report_xls.mako:453
+msgid "CASH REGISTER FULL REPORT"
+msgstr "RAPPORT COMPLET DU REGISTRE DE CAISSE"
 
 #. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:469
-msgid "REPORT"
-msgstr "RAPPORT"
+#: report:addons/register_accounting/report/fully_report_xls.mako:453
+msgid "BANK REGISTER FULL REPORT"
+msgstr "RAPPORT COMPLET DU REGISTRE DE BANQUE"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:453
+msgid "CHEQUE REGISTER FULL REPORT"
+msgstr "RAPPORT COMPLET DU REGISTRE DE CHÈQUE"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:556
