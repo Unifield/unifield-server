@@ -1433,11 +1433,6 @@ msgstr "Dest. / Centre de Coût / Funding Pool ne sont pas compatibles pour l'é
 msgid "This is use as task responsible"
 msgstr "Ceci est utilisé comme responsable de tâche"
 
-#. module: register_accounting
-#: report:cash.inventory:0
-msgid "Cashbox"
-msgstr "Cashbox"
-
 #. module: kit
 #: code:addons/kit/kit.py:340
 #, python-format
@@ -10268,7 +10263,7 @@ msgstr "Base Language '%s' can not be deleted !"
 msgid "Yearly closure"
 msgstr "Clôture Annuelle"
 
-#. modules: msf_order_date, purchase, account, msf_outgoing, purchase_allocation_report, procurement, supplier_catalogue, documents_done, purchase_override, sale, sales_followup, out_step, sourcing, transport_mgmt, msf_supply_doc_export, stock_forecast, procurement_request, stock, stock_override
+#. modules: msf_order_date, purchase, account, msf_outgoing, purchase_allocation_report, procurement, supplier_catalogue, documents_done, purchase_override, sale, sales_followup, out_step, sourcing, transport_mgmt, msf_supply_doc_export, stock_forecast, procurement_request, stock, stock_override, register_accounting
 #: field:po.follow.up,confirmed_ok:0
 #: view:account.bank.statement:0
 #: selection:documents.done.wizard,display_state:0
@@ -10314,9 +10309,15 @@ msgstr "Clôture Annuelle"
 #: selection:sale.order.line,state_to_display:0
 #: selection:purchase.order.line,state_to_display:0
 #: code:addons/stock_override/report/delivery_order.py:61
+#: report:cash.inventory:0
 #, python-format
 msgid "Confirmed"
 msgstr "Confirmé"
+
+#. module: register_accounting
+#: report:cash.inventory:0
+msgid "Not confirmed"
+msgstr "Non confirmé"
 
 #. module: base
 #: selection:ir.sequence,implementation:0
@@ -19587,7 +19588,7 @@ msgstr "Qté d'Origine"
 #: field:account.bank.statement,balance_end_real:0
 #: view:account.bank.statement:0
 msgid "Closing Balance"
-msgstr "Solde de clôture"
+msgstr "Solde Final"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2397
@@ -22224,7 +22225,7 @@ msgstr "Filtrer par"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "End of month balance state:"
-msgstr "End of month balance state:"
+msgstr "Statut de solde de fin de mois :"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:848
@@ -23151,7 +23152,7 @@ msgstr "Ligne %s. Le compte %s est de type 'Donations' ce qui est interdit."
 #. module: register_accounting
 #: view:account.bank.statement:0
 msgid "Are you sure you want to freeze closing balance?"
-msgstr "Etes-vous certain de vouloir geler le solde de clôture ?"
+msgstr "Etes-vous certain de vouloir geler le solde final ?"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -25802,7 +25803,7 @@ msgstr "Vous ne pouvez pas créer d'Ecritures Comptables, le compte d'entrée d�
 #. module: register_accounting
 #: field:account.bank.statement,closing_balance_frozen:0
 msgid "Closing balance freezed?"
-msgstr "Solde de clôture gelé?"
+msgstr "Solde final gelé ?"
 
 #. module: account
 #: field:account.tax,tax_code_id:0
@@ -32528,7 +32529,7 @@ msgstr "A partir de Ligne BdC divisées"
 #. module: register_accounting
 #: field:account.bank.statement,closing_balance_frozen_date:0
 msgid "Closing balance frozen date"
-msgstr "Closing balance frozen date"
+msgstr "Date de gel du solde final"
 
 #. module: stock
 #: view:stock.change.product.qty:0
@@ -56577,7 +56578,7 @@ msgstr "Consommation -  Paramètres"
 #. module: account
 #: help:account.bank.statement,balance_end_cash:0
 msgid "Closing balance based on cashBox"
-msgstr "Solde de clôture basé sur la Caisse"
+msgstr "Solde final basé sur la Caisse"
 
 #. modules: threshold_value, product_nomenclature, order_nomenclature, consumption_calculation, specific_rules, kit, procurement_auto, procurement_cycle, mission_stock, procurement_report, stock
 #: view:monthly.review.consumption:0
@@ -69951,12 +69952,12 @@ msgstr "Frais"
 #: report:addons/account/report/account_liquidity_balance.mako:174
 #: report:cash.inventory:0
 msgid "Closing balance"
-msgstr "Solde de clôture"
+msgstr "Solde final"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:512
 msgid "Closing balance:"
-msgstr "Solde de Clôture :"
+msgstr "Solde final :"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:510
@@ -88418,7 +88419,7 @@ msgstr "Certificat"
 #: report:cash.inventory:0
 #: model:ir.actions.report.xml,name:register_accounting.cash_inventory
 msgid "Cash Reconciliation"
-msgstr "Cash Reconciliation"
+msgstr "Inventaire de Caisse"
 
 #. module: purchase
 #: help:purchase.report,date:0
@@ -93639,7 +93640,7 @@ msgstr "Test again"
 #: code:addons/register_accounting/account_cash_statement.py:221
 #, python-format
 msgid "Please confirm closing balance before closing register named '%s'"
-msgstr "Veuillez confirmer le solde de clôture avant de fermer le registre appelé '%s'"
+msgstr "Veuillez confirmer le solde final avant de fermer le registre appelé '%s'"
 
 #. module: stock
 #: field:product.product,track_incoming:0
@@ -109302,7 +109303,7 @@ msgstr "Le Solde Théorique n'est pas égal au Solde de Caisse."
 #. module: account
 #: constraint:account.cashbox.line:0
 msgid "The values of the Closing Balance lines must be unique per register."
-msgstr "Les valeurs des lignes du Solde de Clôture doivent être uniques par registre."
+msgstr "Les valeurs des lignes du Solde Final doivent être uniques par registre."
 
 #. module: account
 #: report:account.invoice2:0
@@ -112794,3 +112795,7 @@ msgstr "Attention! Si vous annulez la Livraison Entrante, il y a un risque de g�
 msgid "Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization."
 msgstr "Attention! Si vous annulez cette ligne il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro."
 
+#. module: register_accounting
+#: report:cash.inventory:0
+msgid "Theoretical balance = Calculated balance - Unrecorded advances - Unrecorded expenses."
+msgstr "Solde théorique = Solde calculé - Avances non enregistrées - Dépenses non enregistrées."
