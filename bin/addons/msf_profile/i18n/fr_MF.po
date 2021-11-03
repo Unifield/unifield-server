@@ -15928,7 +15928,7 @@ msgstr "Qté Commandée"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you import and validate all payroll entries?"
-msgstr "Avez-vous importé et validé les écritures de paye ?"
+msgstr "Avez-vous importé et validé les écritures de paie ?"
 
 #. module: specific_rules
 #: model:ir.model,name:specific_rules.model_unconsistent_stock_report
@@ -30962,7 +30962,7 @@ msgstr "Date d'Expiration Manquante"
 #: code:addons/msf_homere_interface/hr_payroll.py:369
 #, python-format
 msgid "Payroll B/S lines"
-msgstr "Lignes de paye du bilan"
+msgstr "Lignes de paie du bilan"
 
 #. module: msf_tools
 #: view:export.report.inconsistencies:0
