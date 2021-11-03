@@ -1310,6 +1310,7 @@ class shipment(osv.osv):
     def shipment_create_invoice(self, cr, uid, ids, context=None):
         '''
         Create invoices for validated shipment
+            see: _create_invoice, is_invoice_needed, action_invoice_create for invoices created from OUT
         '''
         invoice_obj = self.pool.get('account.invoice')
         line_obj = self.pool.get('account.invoice.line')
@@ -1319,6 +1320,8 @@ class shipment(osv.osv):
         sale_obj = self.pool.get('sale.order')
         company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
 
+        rt_delivery_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+
         if not context:
             context = {}
 
@@ -1326,25 +1329,27 @@ class shipment(osv.osv):
             ids = [ids]
 
         for shipment in self.browse(cr, uid, ids, context=context):
+            partner = shipment.partner_id2
+            # US-952 / US-3822: No invoice created when a shipment is generated on an external or internal customer
+            if partner and partner.partner_type in ('external', 'esc', 'internal'):
+                continue
+
             make_invoice = False
-            move = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
-                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
+                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking') and move.reason_type_id.id == rt_delivery_id:
                         make_invoice = True
+                        break
+                if make_invoice:
+                    break
 
             if not make_invoice:
                 continue
 
-            payment_term_id = False
-            partner = shipment.partner_id2
             if not partner:
                 raise osv.except_osv(_('Error, no partner !'),
                                      _('Please put a partner on the shipment if you want to generate invoice.'))
 
-            # (US-952) No STV created when a shipment is generated on an external supplier
-            if partner.partner_type in ('external', 'esc'):
-                continue
 
             account_id = partner.property_account_receivable.id
             payment_term_id = partner.property_payment_term and partner.property_payment_term.id or False
@@ -1378,6 +1383,7 @@ class shipment(osv.osv):
                     raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
                 invoice_vals['is_intermission'] = True
                 invoice_vals['account_id'] = company.intermission_default_counterpart.id
+                invoice_vals['currency_id'] = company.currency_id.id
                 journal_type = 'intermission'
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
                                                                             ('is_current_instance', '=', True)])
@@ -1388,16 +1394,11 @@ class shipment(osv.osv):
             # US-1669 Use cases "IVO from supply / Shipment" and "STV from supply / Shipment":
             # - add FO to the Source Doc. WARNING: only one FO ref is taken into account even if there are several FO
             # - add Customer References (partner + PO) to the Description
-            out_invoice = True
             debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
-            is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
-            is_stv = out_invoice and not debit_note and not inkind_donation and not intermission
-
-            # US-3822 Block STV creation if the partner is internal
-            if is_stv and partner.partner_type == 'internal':
-                continue
+            is_ivo = not debit_note and not inkind_donation and intermission
+            is_stv = not debit_note and not inkind_donation and not intermission
 
             invoice_id_by_fo = {}
             # For each stock moves, create an invoice line
@@ -1409,6 +1410,9 @@ class shipment(osv.osv):
                         continue
 
                     if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
+                        continue
+
+                    if move.reason_type_id.id != rt_delivery_id:
                         continue
 
                     # create 1 FO = 1 Invoice
@@ -1431,19 +1435,9 @@ class shipment(osv.osv):
                             new_name_inv = name_inv and fo and fo.client_order_ref and "%s : %s" % (fo.client_order_ref, name_inv)
                             if new_name_inv:
                                 new_invoice_vals.update({'name': new_name_inv})
-                            # this one does not work (check with new pps process US-5859)
-                            #new_invoice_vals['picking_id'] = pack.draft_packing_id and pack.draft_packing_id.id or False
 
                         invoice_id = invoice_obj.create(cr, uid, new_invoice_vals,
                                                         context=context)
-
-                        # Change currency for the intermission invoice
-                        if shipment.partner_id2.partner_type == 'intermission':
-                            company_currency = company.currency_id and company.currency_id.id or False
-                            if not company_currency:
-                                raise osv.except_osv(_('Warning'), _('No company currency found!'))
-                            wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
-                            self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
 
                         invoice_id_by_fo[order_id] = invoice_id
 
