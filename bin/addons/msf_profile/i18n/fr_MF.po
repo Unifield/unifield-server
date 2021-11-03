@@ -278,7 +278,7 @@ msgstr "Le produit [%s] %s est déjà inactif."
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Accrual reversal entries"
-msgstr "Accrual reversal entries"
+msgstr "Écritures d'extourne comptes de régul."
 
 #. module: account_mcdb
 #: view:account.analytic.line:0
@@ -1988,7 +1988,7 @@ msgstr "Gabon"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you generate and post all recurring entries?"
-msgstr "Did you generate and post all recurring entries?"
+msgstr "Avez-vous généré et comptabilisé les écritures périodiques ?"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:743
@@ -15928,7 +15928,7 @@ msgstr "Qté Commandée"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you import and validate all payroll entries?"
-msgstr "Did you import and validate all payroll entries?"
+msgstr "Avez-vous importé et validé les écritures de paye ?"
 
 #. module: specific_rules
 #: model:ir.model,name:specific_rules.model_unconsistent_stock_report
@@ -26159,7 +26159,7 @@ msgstr "Création Bon de Commande - Cycle de Commande"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Cash registers"
-msgstr "Cash registers"
+msgstr "Registres de caisse"
 
 #. module: stock
 #: model:ir.actions.act_window,help:stock.action_picking_tree
@@ -26420,7 +26420,7 @@ msgstr "Aujourd'hui"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you validate all the draft commitment vouchers?"
-msgstr "Did you validate all the draft commitment vouchers?"
+msgstr "Avez-vous validé les bons d'engagement en brouillon ?"
 
 #. module: consumption_calculation
 #: report:product.likely.expire.report_pdf:0
@@ -29243,7 +29243,7 @@ msgstr "Cannot close this period at the HQ level. All previous periods must be c
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Recurring entries"
-msgstr "Recurring entries"
+msgstr "Ecritures périodiques"
 
 #. module: stock_schedule
 #: field:stock.frequence,monthly_choose_day:0
@@ -29618,7 +29618,7 @@ msgstr "Contrat - Information"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you check that exchange rates have been updated for the period?"
-msgstr "Did you check that exchange rates have been updated for the period?"
+msgstr "Avez-vous vérifié que le taux de change est à jour pour la période ?"
 
 #. module: sale
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:131
@@ -43438,7 +43438,7 @@ msgstr "Date à laquelle le bon de commande a été approuvé"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you post Accrual Reversal entries?"
-msgstr "Did you post Accrual Reversal entries?"
+msgstr "Avez-vous comptabilisé les écritures d'extourne des comptes de régularisation ?"
 
 #. module: base
 #: model:res.currency,currency_name:base.MKD
@@ -43692,7 +43692,7 @@ msgstr "Vous ne pouvez pas valider cet appel d'offre car il contient une ligne a
 #: code:addons/account_period_closing_level/account_period.py:644
 #, python-format
 msgid "HQ entries"
-msgstr "HQ entries"
+msgstr "Écritures HQ"
 
 #. module: account
 #: field:account.bank.statement,total_entry_encoding:0
@@ -45667,7 +45667,7 @@ msgstr "Ligne Déclaration d'Avance"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you close all your registers?"
-msgstr "Did you close all your registers?"
+msgstr "Avez-vous fermé tous les registres ?"
 
 #. module: analytic_override
 #: field:account.analytic.account,intermission_restricted:0
@@ -52138,7 +52138,7 @@ msgstr "Mise à jour en cours"
 #: view:account.entries.report:0
 #: view:account.period:0
 msgid "Unreconciled entries"
-msgstr "Unreconciled entries"
+msgstr "Ecritures non lettrées"
 
 #. module: base
 #: field:ir.model.fields,relation_field:0
@@ -62167,7 +62167,7 @@ msgstr "Pas de registre trouvé. Vous pouvez effacer ce journal manuellement."
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you import and validate HQ entries (ONLY FOR COORDO)?"
-msgstr "Did you import and validate HQ entries (ONLY FOR COORDO)?"
+msgstr "Avez-vous importé et validé les écritudes du HQ (SEULEMENT POUR LA COORDO) ?"
 
 #. module: sale
 #: code:addons/sale/sale_order.py:2176
@@ -75371,7 +75371,7 @@ msgstr "Jour(s)"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you check open entries booked on accounts that can be reconciled?"
-msgstr "Did you check open entries booked on accounts that can be reconciled?"
+msgstr "Avez-vous vérifié les écritures enregistrées et non lettrées ?"
 
 #. module: msf_outgoing
 #: model:ir.module.module,description:msf_outgoing.module_meta_information
@@ -79687,7 +79687,7 @@ msgstr "Prévisions"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Supplier direct invoices"
-msgstr "Supplier direct invoices"
+msgstr "Factures directes fournisseur"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:697
@@ -85691,7 +85691,7 @@ msgstr "Factures Fournisseurs en attente de validation"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Stock transfer vouchers"
-msgstr "Stock transfer vouchers"
+msgstr "Bons de transfert de stock"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -96852,7 +96852,7 @@ msgstr "Chaque"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Bank registers"
-msgstr "Bank registers"
+msgstr "Registres de banque"
 
 #. module: product_asset
 #: field:product.asset,hq_ref:0
@@ -98360,7 +98360,7 @@ msgstr "Rapport de prévision périodique"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Cheque registers"
-msgstr "Cheque registers"
+msgstr "Registres de chèque"
 
 #. module: stock
 #: help:product.product,valuation:0
@@ -99209,7 +99209,7 @@ msgstr "Type d'export"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you validate the Month End Revaluation (ONLY FOR OCA COORDO)?"
-msgstr "Did you validate the Month End Revaluation (ONLY FOR OCA COORDO)?"
+msgstr "Avez-vous validé la réévaluation de fin de mois ? (seulement pour OCA COORDO)"
 
 #. module: specific_rules
 #: model:ir.module.module,shortdesc:specific_rules.module_meta_information
