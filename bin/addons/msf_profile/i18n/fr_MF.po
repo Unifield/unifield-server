@@ -41962,6 +41962,7 @@ msgid "\n"
 "          ${eval(function)} => Return the value of the function. The function is a \n"
 "                               method of the object like function(self, cr, uid, ids)\n"
 "\n"
+"          ${_('String')}    => translate String\n"
 "          %(year)s          => Current year (e.g: 2013, 2014, ...)\n"
 "          %(month)s         => Current month number (e.g: 01, 02, ..., 12)\n"
 "          %(day)s           => Current day of month number (e.g: 25)\n"
@@ -41986,6 +41987,7 @@ msgstr "\n"
 "          ${eval(function)} => Retourne la valeur d'une fonction. La fonction est une \n"
 "                               méthode de l'objet comme function(self, cr, uid, ids)\n"
 "\n"
+"          ${_('String')}    => traduire String\n"
 "          %(year)s          => Année courante (e.g: 2013, 2014, ...)\n"
 "          %(month)s         => Numéro du mois courant (e.g: 01, 02, ..., 12)\n"
 "          %(day)s           => Numéro du jour du mois courant (e.g: 25)\n"
@@ -88611,7 +88613,7 @@ msgstr " et "
 #. module: register_accounting
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:132
 msgid "CHEQUE INVENTORY"
-msgstr "CHEQUE INVENTORY"
+msgstr "CHÈQUE INVENTAIRE"
 
 #. modules: documents_done, stock
 #: field:documents.done.wizard,expected_date:0
@@ -98182,6 +98184,8 @@ msgstr "Nom du Registre "
 
 #. module: register_accounting
 #: model:ir.actions.report.xml,name:register_accounting.cheque_inventory_2
+#: code:ir.actions.report.xml:name:cheque.inventory.2
+#, python-format
 msgid "Cheque Inventory"
 msgstr "Chèque - Inventaire"
 

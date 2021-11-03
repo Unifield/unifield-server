@@ -34,7 +34,7 @@
         id="cheque_inventory_2"
         string="Cheque Inventory"
         view_ids="register_accounting.view_cheque_register_tree,register_accounting.view_cheque_register_form"
-        target_filename="Cheque Inventory_${name}_%(year)s%(month)s%(day)s"
+        target_filename="${_('Cheque Inventory')}_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="cheque.inventory.2"
         file="register_accounting/report/cheque_inventory_xls.mako"
