@@ -112794,3 +112794,8 @@ msgstr "Attention! Si vous annulez la Livraison Entrante, il y a un risque de g�
 msgid "Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization."
 msgstr "Attention! Si vous annulez cette ligne il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro."
 
+#. module: sync_client
+#: code:addons/sync_client/wizard/view_entity_id.py:44
+#, python-format
+msgid "Last update: %s"
+msgstr "Dernière mise à jour de sync: %s"
