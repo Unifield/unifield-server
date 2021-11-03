@@ -29784,7 +29784,7 @@ msgstr "Cette fenêtre"
 #. module: account_period_closing_level
 #: field:account.period,is_system:0
 msgid "System period ?"
-msgstr "System period ?"
+msgstr "Période système ?"
 
 #. modules: specific_rules, msf_tools, msf_supply_doc_export, stock_override, stock
 #: view:export.report.inconsistencies:0
@@ -66419,7 +66419,7 @@ msgstr "Field %s, xmlid %s not found"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Do closing period (Field) process"
-msgstr "Do closing period (Field) process"
+msgstr "Effectuer la clôture de la période (Terrain)"
 
 #. module: return_claim
 #: model:ir.model,name:return_claim.model_add_event
