@@ -90712,17 +90712,9 @@ msgstr "Impression Liste de Commandes"
 msgid "Wrong credit or debit value in model (Credit + Debit Must Be greater \"0\")!"
 msgstr "Valeur de crédit ou débit erronée dans le modèle (Crédit + Débit doit être supérieur à \"0\") !"
 
-#. modules: account, register_accounting, analytic_distribution, account_override, vertical_integration, msf_accrual
-#: field:account.cashbox.line,number:0
-#: field:account.invoice,number:0
-#: field:account.commitment,name:0
+#. modules: account, register_accounting
 #: report:cash.inventory:0
-#: field:wizard.account.invoice,number:0
-#: field:wizard.import.cheque.lines,number:0
-#: report:addons/account_override/report/open_invoices_xls.mako:329
-#: field:msf.accrual.line,entry_sequence:0
-#: field:account.direct.invoice.wizard,number:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:292
+#: field:account.cashbox.line,number:0
 msgid "Number"
 msgstr "Nombre"
 
@@ -90730,6 +90722,17 @@ msgstr "Nombre"
 #: report:addons/account/report/export_invoice.mako:88
 msgid "Number"
 msgstr "Numéro"
+
+#. modules: account_override, account, msf_accrual, register_accounting, analytic_distribution
+#: field:account.invoice,number:0
+#: field:account.commitment,name:0
+#: field:msf.accrual.line,entry_sequence:0
+#: field:wizard.import.cheque.lines,number:0
+#: field:wizard.account.invoice,number:0
+#: field:account.direct.invoice.wizard,number:0
+#: report:addons/account_override/report/open_invoices_xls.mako:329
+msgid "Number"
+msgstr "Entrée - séquence"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:303
