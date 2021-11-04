@@ -25825,10 +25825,20 @@ msgstr "Lignes d'erreur"
 msgid "No first period found in the fiscal year %s."
 msgstr "No first period found in the fiscal year %s."
 
-#. modules: res_currency_functional, register_accounting
+#. module: res_currency_functional
 #: field:account.bank.statement.line,functional_out:0
 msgid "Func. Out"
 msgstr "Mnt Sortant"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/pending_cheque_xls.mako:229
+msgid "Func. Out"
+msgstr "Montant Sortant Fonc."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/pending_cheque_xls.mako:227
+msgid "Book. Out"
+msgstr "Montant Sortant Enreg."
 
 #. module: account
 #: model:process.transition,note:account.process_transition_validentries0
@@ -41020,7 +41030,7 @@ msgstr "Resourced at state"
 #. module: register_accounting
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:179
 msgid "PENDING CHEQUE"
-msgstr "PENDING CHEQUE"
+msgstr "RAPPORT DES CHÈQUES EN ATTENTE"
 
 #. modules: msf_processes, account
 #: model:process.transition,name:account.process_transition_supplierreconcilepaid0
@@ -58734,7 +58744,6 @@ msgstr "L'utilisateur %s n'a pas le droit d'accéder au journal %s !"
 #: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:57
 #: field:account.bank.statement.line,amount_in:0
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:170
-#: report:addons/register_accounting/report/pending_cheque_xls.mako:226
 #, python-format
 msgid "Amount In"
 msgstr "Montant Entrant"
@@ -65779,7 +65788,6 @@ msgstr "Condition"
 #: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:57
 #: field:account.bank.statement.line,amount_out:0
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:171
-#: report:addons/register_accounting/report/pending_cheque_xls.mako:227
 #, python-format
 msgid "Amount Out"
 msgstr "Montant Sortant"
@@ -76501,11 +76509,20 @@ msgstr "Numéros de lots"
 msgid "Draft Picking Ticket"
 msgstr "Brouillon Bon de Picking"
 
-#. modules: register_accounting, res_currency_functional
+#. module: res_currency_functional
 #: field:account.bank.statement.line,functional_in:0
-#: report:addons/register_accounting/report/pending_cheque_xls.mako:228
 msgid "Func. In"
 msgstr "Montant Entrant"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/pending_cheque_xls.mako:228
+msgid "Func. In"
+msgstr "Montant Entrant Fonc."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/pending_cheque_xls.mako:226
+msgid "Book. In"
+msgstr "Montant Entrant Enreg."
 
 #. module: base
 #: model:res.currency,currency_name:base.SDG
@@ -92338,8 +92355,9 @@ msgstr "DL Calculée"
 
 #. module: register_accounting
 #: model:ir.actions.report.xml,name:register_accounting.pending_cheque
+#: code:ir.actions.report.xml:name:pending.cheque
 msgid "Pending Cheque"
-msgstr "Pending Cheque"
+msgstr "Rapport des chèques en attente"
 
 #. module: financing_contract
 #: field:financing.contract.format.line,project_real_value:0

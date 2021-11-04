@@ -48,7 +48,7 @@
         id="pending_cheque"
         string="Pending Cheque"
         view_ids="register_accounting.view_cheque_register_tree,register_accounting.view_cheque_register_form"
-        target_filename="Pending Cheque_${name}_%(year)s%(month)s%(day)s"
+        target_filename="${_('Pending Cheque')}_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="pending.cheque"
         file="register_accounting/report/pending_cheque_xls.mako"

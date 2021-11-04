@@ -223,8 +223,8 @@
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Reference')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Account')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Third Parties')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount In')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount Out')}</Data></Cell>
+		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Book. In')}</Data></Cell>
+		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Book. Out')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. In')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. Out')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. CCY')}</Data></Cell>
