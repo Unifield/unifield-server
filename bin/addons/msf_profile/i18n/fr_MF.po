@@ -1640,7 +1640,7 @@ msgstr "Arrêté"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:268
 msgid "LIQUIDITY POSITION"
-msgstr "POSITION DE LIQUIDITE"
+msgstr "POINT DE TRÉSORERIE"
 
 #. module: base
 #: selection:ir.translation,type:0
@@ -47807,7 +47807,7 @@ msgstr "Méthode de calcul du montant de taxe"
 #: code:addons/register_accounting/account_cash_statement.py:433
 #, python-format
 msgid "Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."
-msgstr "Le bon de commande sélectionné dans 'AV. OP. LIÉE A BDC' est déjà lié à une autre ligne de registre."
+msgstr "Le bon de commande sélectionné dans 'AV. OP. LIÉE À BDC' est déjà lié à une autre ligne de registre."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:108
@@ -74377,7 +74377,7 @@ msgstr "Registre de Banque"
 #. module: register_accounting
 #: field:account.bank.statement.line,cash_register_op_advance_po_id:0
 msgid "OPE ADV - LINK TO PO"
-msgstr "AV. OP. LIÉE A BDC"
+msgstr "AV. OP. LIÉE À BDC"
 
 #. module: procurement_report
 #: model:ir.actions.act_window,name:procurement_report.action_order_cycle_rules_report
