@@ -5737,6 +5737,7 @@ msgstr "Si coché, le système utilisera la consommation moyenne mensuelle pour 
 #: view:cash.request:0
 #: model:ir.actions.report.xml,name:register_accounting.liquidity_position
 #: model:ir.actions.act_window,name:register_accounting.action_report_liquidity_position
+#: code:ir.actions.report.xml:name:liquidity.position.2
 msgid "Liquidity Position"
 msgstr "Point de trésorerie"
 
@@ -15027,6 +15028,7 @@ msgstr "More than one corresponding line from this one: %s"
 #: report:addons/account_override/report/open_invoices_xls.mako:238
 #: model:ir.actions.act_window,name:account_override.action_paid_invoices_menu
 #: model:ir.actions.report.xml,name:account_override.paid_invoices
+#: code:addons/account_override/wizard/report_paid_invoices.py:61
 msgid "Paid Invoices"
 msgstr "Factures Payées"
 
@@ -47805,7 +47807,7 @@ msgstr "Méthode de calcul du montant de taxe"
 #: code:addons/register_accounting/account_cash_statement.py:433
 #, python-format
 msgid "Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."
-msgstr "Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."
+msgstr "Le bon de commande sélectionné dans 'AV. OP. LIÉE A BDC' est déjà lié à une autre ligne de registre."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:108
@@ -58751,7 +58753,7 @@ msgstr "Montant Entrant"
 #. module: register_accounting
 #: report:addons/register_accounting/report/open_advances_xls.mako:132
 msgid "OPEN ADVANCES"
-msgstr "OPEN ADVANCES"
+msgstr "AVANCES EN COURS"
 
 #. modules: msf_order_date, purchase
 #: code:addons/msf_order_date/order_dates.py:693
@@ -74375,7 +74377,7 @@ msgstr "Registre de Banque"
 #. module: register_accounting
 #: field:account.bank.statement.line,cash_register_op_advance_po_id:0
 msgid "OPE ADV - LINK TO PO"
-msgstr "OPE ADV - LINK TO PO"
+msgstr "AV. OP. LIÉE A BDC"
 
 #. module: procurement_report
 #: model:ir.actions.act_window,name:procurement_report.action_order_cycle_rules_report
@@ -75903,11 +75905,11 @@ msgstr "Correspondance des Taxes"
 msgid "BAHRAINI DINAR"
 msgstr "BAHRAINI DINAR"
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: view:account.invoice:0
 #: report:addons/account_override/report/open_invoices_xls.mako:238
 #: model:ir.actions.report.xml,name:account_override.open_invoices_2
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:230
+#: code:ir.actions.report.xml:name:open.invoices.2
 msgid "Open Invoices"
 msgstr "Factures Ouvertes"
 
@@ -98619,6 +98621,7 @@ msgstr "%s (in %s)"
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:506
 #: model:ir.actions.report.xml,name:register_accounting.open_advances_2
+#: code:ir.actions.report.xml:name:open.advances.2
 #, python-format
 msgid "Open Advances"
 msgstr "Avances en cours"

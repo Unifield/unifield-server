@@ -62,7 +62,7 @@
         id="open_advances_2"
         string="Open Advances"
         view_ids="account.view_bank_statement_tree,account.view_bank_statement_form,register_accounting.view_cash_statement_tree,account.view_bank_statement_form2"
-        target_filename="Open Advances_${instance_id.code}_%(year)s%(month)s%(day)s"
+        target_filename="${_('Open Advances')}_${instance_id.code}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="open.advances.2"
         file="register_accounting/report/open_advances_xls.mako"
@@ -75,7 +75,7 @@
         <!-- # US_336: Now liquidity position run with a wizard -->
         <report id="liquidity_position"
         string="Liquidity Position"
-        target_filename="Liquidity Position_${instance_id.code}_%(year)s%(month)s%(day)s"
+        target_filename="${_('Liquidity Position')}_${instance_id.code}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="liquidity.position.2"
         file="register_accounting/report/liquidity_position_xls.mako"
