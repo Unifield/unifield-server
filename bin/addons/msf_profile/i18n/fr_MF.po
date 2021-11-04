@@ -112815,3 +112815,8 @@ msgstr "Aucune PMC dépassée"
 msgid "Remove outdated FMCs"
 msgstr "Supprimer les PMCs dépassées"
 
+#. module: sync_client
+#: code:addons/sync_client/wizard/view_entity_id.py:44
+#, python-format
+msgid "Last update: %s"
+msgstr "Dernière mise à jour de sync: %s"
