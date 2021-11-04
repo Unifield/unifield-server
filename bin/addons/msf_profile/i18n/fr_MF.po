@@ -5738,6 +5738,7 @@ msgstr "Si coché, le système utilisera la consommation moyenne mensuelle pour 
 #: model:ir.actions.report.xml,name:register_accounting.liquidity_position
 #: model:ir.actions.act_window,name:register_accounting.action_report_liquidity_position
 #: code:ir.actions.report.xml:name:liquidity.position.2
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:253
 msgid "Liquidity Position"
 msgstr "Point de trésorerie"
 
@@ -27855,7 +27856,7 @@ msgstr "Mouvement(s) dans les derniers"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:609
 msgid "Total Cheque:"
-msgstr "Total Cheque:"
+msgstr "Total Chèques en Attente :"
 
 #. module: sync_client
 #: help:sync.client.sync_server_connection,automatic_patching_hour_from:0
@@ -37326,6 +37327,7 @@ msgstr "Macao"
 #: report:addons/account/report/account_partner_ledger.mako:364
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:235
 #: report:addons/account/report/invoice_excel_export.mako:71
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:0
 msgid "Subtotal"
 msgstr "Sous-total"
 
@@ -70640,6 +70642,7 @@ msgstr "You have to define a valid UOM, i.e. not \"To be define\"."
 #: selection:cash.request.liquidity.cheque,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:310
 msgid "Bank"
 msgstr "Banque"
 
@@ -75736,6 +75739,16 @@ msgstr "C'est le nombre de jours ajoutés à ce que vous aviez promis au client 
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:462
 msgid "Pending Cheques"
 msgstr "Chèques en Attente"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:310
+msgid "Cash"
+msgstr "Espèces (cash)"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:446
+msgid "Total Cash:"
+msgstr "Total Espèces (cash) :"
 
 #. module: account
 #: view:account.unreconcile:0
@@ -112823,3 +112836,8 @@ msgstr "Attention! Si vous annulez cette ligne il y a un risque de générer des
 #: report:cash.inventory:0
 msgid "Theoretical balance = Calculated balance - Unrecorded advances - Unrecorded expenses."
 msgstr "Solde théorique = Solde calculé - Avances non enregistrées - Dépenses non enregistrées."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:448
+msgid "Total Bank:"
+msgstr "Total Banque :"
