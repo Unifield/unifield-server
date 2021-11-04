@@ -84,6 +84,17 @@
         auto="False"
         menu="False"/>
 
+        <report id="liquidity_position_pdf"
+        string="Liquidity Position"
+        target_filename="${_('Liquidity Position')}_${instance_id.code}_%(year)s%(month)s%(day)s"
+        model="account.bank.statement"
+        name="liquidity.position.pdf"
+        rml="register_accounting/report/liquidity_position_pdf.rml"
+        header="False"
+        auto="False"
+        menu="False"
+        />
+
         <report id="fully_report"
         string="Full Report"
         target_filename="${_('Full Report')}_${name}_${period_id.name}_%(year)s%(month)s%(day)s"

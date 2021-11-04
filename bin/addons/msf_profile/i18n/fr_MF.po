@@ -5739,6 +5739,7 @@ msgstr "Si coché, le système utilisera la consommation moyenne mensuelle pour 
 #: model:ir.actions.act_window,name:register_accounting.action_report_liquidity_position
 #: code:ir.actions.report.xml:name:liquidity.position.2
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:253
+#: report:liquidity.position.pdf:0
 msgid "Liquidity Position"
 msgstr "Point de trésorerie"
 
@@ -6702,8 +6703,9 @@ msgstr "Ministère de la Santé"
 #. modules: register_accounting, finance
 #: field:cash.request.liquidity.cheque,pending_cheque_amount_booking:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:488
+#: report:liquidity.position.pdf:0
 msgid "Pending cheque amount in register currency"
-msgstr "Montant des chèques en attente dans la devise du registre"
+msgstr "Montant des chèques en attente en devise du registre"
 
 #. module: account_override
 #: view:account.invoice:0
@@ -13618,7 +13620,7 @@ msgstr "ir.attachment"
 #: field:cash.request.liquidity.cheque,opening_balance:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:330
 msgid "Starting Balance in register currency"
-msgstr "Solde Initial dans la devise du registre"
+msgstr "Solde Initial en devise du registre"
 
 #. module: kit
 #: model:ir.model,name:kit.model_kit_selection_sale_line
@@ -17573,7 +17575,7 @@ msgstr "Europe/Vilnius"
 #: field:cash.request.liquidity.cheque,calculated_balance_booking:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:333
 msgid "Calculated Balance in register currency"
-msgstr "Solde Calculé dans la devise du registre"
+msgstr "Solde Calculé en devise du registre"
 
 #. module: base
 #: model:res.currency,currency_name:base.THB
@@ -27831,10 +27833,11 @@ msgstr "Solde du Relevé Bancaire en devise fonctionnelle"
 msgid "Representation of the current instance"
 msgstr "Représentation de l'instance actuelle"
 
-#. module: finance
+#. modules: finance, register_accounting
 #: field:cash.request.liquidity.total,amount_booking:0
+#: report:liquidity.position.pdf:0
 msgid "Grand Total Register Currency"
-msgstr "Total Général dans la Devise du Registre"
+msgstr "Total Général en Devise du Registre"
 
 #. module: base_setup
 #: help:base.setup.installer,auction:0
@@ -27857,6 +27860,11 @@ msgstr "Mouvement(s) dans les derniers"
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:609
 msgid "Total Cheque:"
 msgstr "Total Chèques en Attente :"
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Total Cheque"
+msgstr "Total Chèques en Attente"
 
 #. module: sync_client
 #: help:sync.client.sync_server_connection,automatic_patching_hour_from:0
@@ -40671,7 +40679,7 @@ msgstr "Importer Numéros de Lot"
 #: field:cash.request.liquidity.cash,cashbox_balance_booking:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:337
 msgid "Cash Box Balance in register currency"
-msgstr "Solde de Caisse dans la devise du registre"
+msgstr "Solde de Caisse en devise du registre"
 
 #. module: msf_outgoing
 #: view:shipment:0
@@ -47153,6 +47161,11 @@ msgstr "Bengladesh"
 msgid "Journal Name"
 msgstr "Nom du Journal"
 
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Journal Code - Journal Name"
+msgstr "Code Journal - Nom du Journal"
+
 #. module: finance
 #: model:ir.actions.act_window,name:finance.hr_payroll_board
 msgid "Payroll entries to be validated"
@@ -48206,10 +48219,11 @@ msgstr "Qté. Min."
 msgid "The entry %s has already been corrected."
 msgstr "L'écriture %s a déjà été corrigée."
 
-#. module: finance
+#. modules: finance, register_accounting
 #: field:cash.request.liquidity.total,amount_functional:0
+#: report:liquidity.position.pdf:0
 msgid "Grand Total Functional Currency"
-msgstr "Total Général Devise Fonctionnelle"
+msgstr "Total Général en Devise Fonctionnelle"
 
 #. module: account
 #: field:account.tax.code,name:0
@@ -52921,6 +52935,7 @@ msgstr "Ignorer l'Exception"
 #: field:replenishment.order_calc,instance_id:0
 #: field:replenishment.segment.date.generation,instance_id:0
 #: field:replenishment.segment.line.amc,instance_id:0
+#: report:liquidity.position.pdf:0
 msgid "Instance"
 msgstr "Instance"
 
@@ -53458,6 +53473,7 @@ msgstr "Compte"
 #. modules: register_accounting, finance
 #: field:cash.request.liquidity.cheque,pending_cheque_amount_functional:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:494
+#: report:liquidity.position.pdf:0
 msgid "Pending cheque amount in functional currency"
 msgstr "Montant des chèques en attente en devise fonctionnelle"
 
@@ -61128,6 +61144,7 @@ msgstr "Save new settings and close the wizard"
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
 #: field:account.bank.statement,balance_start:0
+#: report:liquidity.position.pdf:0
 msgid "Starting Balance"
 msgstr "Solde Initial"
 
@@ -67939,6 +67956,7 @@ msgstr "DE:"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:277
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:183
+#: report:liquidity.position.pdf:0
 msgid "Period end date:"
 msgstr "Date de fin de période:"
 
@@ -70405,6 +70423,11 @@ msgstr "Numéro de Taxe sur la Valeur Ajoutée. Cochez cette case si le partenai
 #, python-format
 msgid "Report date:"
 msgstr "Rapport - date:"
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Report date:"
+msgstr "Date du rapport :"
 
 #. module: purchase
 #: help:purchase.order,shipped:0
@@ -75737,6 +75760,7 @@ msgstr "C'est le nombre de jours ajoutés à ce que vous aviez promis au client 
 #. modules: register_accounting, finance
 #: view:cash.request:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:462
+#: report:liquidity.position.pdf:0
 msgid "Pending Cheques"
 msgstr "Chèques en Attente"
 
@@ -81504,6 +81528,11 @@ msgstr "Confirmer les factures sélectionnées"
 msgid "State"
 msgstr "Statut"
 
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "State"
+msgstr "Etat"
+
 #. module: sourcing
 #: view:sale.order.line:0
 msgid "Lines to source"
@@ -85274,6 +85303,11 @@ msgstr "Linked FO line"
 #: field:account.bank.statement,msf_calculated_balance:0
 msgid "Calculated Balance"
 msgstr "Solde calculé (théorique) "
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Calculated Balance"
+msgstr "Solde Théorique"
 
 #. module: msf_budget
 #: field:imported.msf.budget.line,month6:0
@@ -91720,7 +91754,7 @@ msgstr "Stock forecast by week"
 #: field:cash.request.liquidity.bank,bank_statement_balance_booking:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:339
 msgid "Bank Statement Balance in register currency"
-msgstr "Solde du Relevé Bancaire dans la devise du registre"
+msgstr "Solde du Relevé Bancaire en devise du registre"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -112836,6 +112870,21 @@ msgstr "Attention! Si vous annulez cette ligne il y a un risque de générer des
 #: report:cash.inventory:0
 msgid "Theoretical balance = Calculated balance - Unrecorded advances - Unrecorded expenses."
 msgstr "Solde théorique = Solde calculé - Avances non enregistrées - Dépenses non enregistrées."
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Reg. ccy"
+msgstr "Dev. du reg."
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Fun. ccy"
+msgstr "Dev. fonc."
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Bank Journal Code - Bank Journal Name"
+msgstr "Code du Journal de Banque – Nom du Journal de Banque"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:448
