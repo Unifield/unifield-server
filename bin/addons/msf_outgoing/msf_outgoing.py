@@ -1346,13 +1346,8 @@ class shipment(osv.osv):
             if partner.partner_type in ('external', 'esc'):
                 continue
 
-            inv_type = 'out_invoice'
-
-            if inv_type in ('out_invoice', 'out_refund'):
-                account_id = partner.property_account_receivable.id
-                payment_term_id = partner.property_payment_term and partner.property_payment_term.id or False
-            else:
-                account_id = partner.property_account_payable.id
+            account_id = partner.property_account_receivable.id
+            payment_term_id = partner.property_payment_term and partner.property_payment_term.id or False
 
             addresses = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
             today = time.strftime('%Y-%m-%d', time.localtime())
@@ -1360,7 +1355,7 @@ class shipment(osv.osv):
             invoice_vals = {
                 'name': shipment.name,
                 'origin': shipment.name or '',
-                'type': inv_type,
+                'type': 'out_invoice',
                 'account_id': account_id,
                 'partner_id': partner.id,
                 'address_invoice_id': addresses['invoice'],
@@ -1393,7 +1388,7 @@ class shipment(osv.osv):
             # US-1669 Use cases "IVO from supply / Shipment" and "STV from supply / Shipment":
             # - add FO to the Source Doc. WARNING: only one FO ref is taken into account even if there are several FO
             # - add Customer References (partner + PO) to the Description
-            out_invoice = inv_type == 'out_invoice'
+            out_invoice = True
             debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
@@ -1459,18 +1454,16 @@ class shipment(osv.osv):
                     if move.picking_id.origin:
                         origin += ':' + move.picking_id.origin
 
-                    if inv_type in ('out_invoice', 'out_refund'):
+
+                    account_id = False
+                    if move.sale_line_id and move.sale_line_id.cv_line_ids:
+                        account_id = move.sale_line_id.cv_line_ids[0].account_id.id
+                    if not account_id:
                         account_id = move.product_id.product_tmpl_id.\
                             property_account_income.id
-                        if not account_id:
-                            account_id = move.product_id.categ_id.\
-                                property_account_income_categ.id
-                    else:
-                        account_id = move.product_id.product_tmpl_id.\
-                            property_account_expense.id
-                        if not account_id:
-                            account_id = move.product_id.categ_id.\
-                                property_account_expense_categ.id
+                    if not account_id:
+                        account_id = move.product_id.categ_id.\
+                            property_account_income_categ.id
 
                     # Compute unit price from FO line if the move is linked to
                     price_unit = move.product_id.list_price
@@ -1496,7 +1489,12 @@ class shipment(osv.osv):
 
                     distrib_id = False
                     if move.sale_line_id:
-                        sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
+                        sol_ana_dist_id = False
+                        if move.sale_line_id.cv_line_ids:
+                            sol_ana_dist_id = move.sale_line_id.cv_line_ids[0].analytic_distribution_id or move.sale_line_id.cv_line_ids[0].commit_id.analytic_distribution_id or False
+
+                        if not sol_ana_dist_id:
+                            sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
                         if sol_ana_dist_id:
                             distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
                             # create default funding pool lines (if no one)
@@ -1504,7 +1502,7 @@ class shipment(osv.osv):
 
                     # set UoS if it's a sale and the picking doesn't have one
                     uos_id = move.product_uos and move.product_uos.id or False
-                    if not uos_id and inv_type in ('out_invoice', 'out_refund'):
+                    if not uos_id:
                         uos_id = move.product_uom.id
                     account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
 
@@ -1523,6 +1521,8 @@ class shipment(osv.osv):
                     }
                     if move.sale_line_id:
                         line_data['sale_order_line_id'] = move.sale_line_id.id
+                        if move.sale_line_id.cv_line_ids:
+                            line_data['cv_line_ids'] = [(6, 0, [move.sale_line_id.cv_line_ids[0].id])]
 
                     line_id = line_obj.create(cr, uid, line_data, context=context)
 

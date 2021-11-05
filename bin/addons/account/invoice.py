@@ -1219,6 +1219,13 @@ class account_invoice(osv.osv):
         """
         Sets the invoice to Cancelled and not Synchronized
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        draft_invoice_ids = self.search(cr, uid, [('state', '=', 'draft'), ('id', 'in', ids)])
+        if draft_invoice_ids:
+            self.update_commitments(cr, uid, draft_invoice_ids)
+
         self.write(cr, uid, ids, {'state': 'cancel', 'synced': False})
         return True
 

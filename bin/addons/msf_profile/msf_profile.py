@@ -55,6 +55,23 @@ class patch_scripts(osv.osv):
     }
 
     # UF23.0
+    def us_8839_cv_from_fo(self, cr, uid, *a, **b):
+        if cr.column_exists('account_commitment_line', 'po_line_product_id'):
+            cr.execute('''update account_commitment_line set line_product_id=po_line_product_id, line_number=po_line_number''')
+            cr.execute('''update
+                account_commitment cv
+                set cv_flow_type='supplier'
+                from
+                    purchase_order po
+                where
+                    po.id = cv.purchase_id
+                ''')
+
+        # hide menu
+        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'menu_account_commitment_from_fo')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': False})
+        return True
+
     def us_8585_new_isi_journals(self, cr, uid, *a, **b):
         """
         Creates the ISI G/L and analytic journals in all existing instances.

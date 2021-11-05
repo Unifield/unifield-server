@@ -27,7 +27,7 @@ from osv import fields
 from tools.translate import _
 from base import currency_date
 import netsvc
-
+import time
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -130,38 +130,65 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        cv_obj = self.pool.get('account.commitment')
+        cv_line_obj = self.pool.get('account.commitment.line')
+        curr_obj = self.pool.get('res.currency')
+        check_cv_to_close = {}
         # Browse invoices
         for inv in self.browse(cr, uid, ids, context=context):
             grouped_invl_by_acc = {}
             grouped_invl_by_cvl = {}
-            co_ids = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', 'in', [x.id for x in inv.purchase_ids]), ('state', 'in', ['open', 'draft'])], order='date desc', context=context)
-            if not co_ids:
-                continue
+
+            invoice_curr = inv.currency_id.id
+
+
+            cv_on_po = cv_obj.search_exists(cr, uid, [('purchase_id', 'in', [x.id for x in inv.purchase_ids]), ('state', 'in', ['open', 'draft'])], context=context)
+            cv_on_fo = False
+            if not cv_on_po:
+                cv_on_fo = cv_obj.search_exists(cr, uid, [('sale_id', 'in', [x.id for x in inv.order_ids]), ('state', 'in', ['open', 'draft'])], context=context)
+                if not cv_on_fo:
+                    continue
 
             for invl in inv.invoice_line:
                 # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
-                if not invl.order_line_id and not inv.is_merged_by_account:
-                    continue
-                # exclude push flow
-                if invl.order_line_id and (invl.order_line_id.order_id.push_fo or invl.order_line_id.set_as_sourced_n):
-                    continue
-                old_cv_version = True
+                if cv_on_po:
+                    if not invl.order_line_id and not inv.is_merged_by_account:
+                        continue
+                    # exclude push flow
+                    if invl.order_line_id and (invl.order_line_id.order_id.push_fo or invl.order_line_id.set_as_sourced_n):
+                        continue
+                    old_cv_version = True
+                else:
+                    if not invl.sale_order_line_id:
+                        continue
+                    old_cv_version = False
+
                 # CV STARTING FROM VERSION 2
                 amount_to_subtract = invl.price_subtotal or 0.0
                 for cv_line in invl.cv_line_ids:
                     old_cv_version = False  # the field cv_line_ids exist for CVs starting from version 2
                     if abs(amount_to_subtract) <= 10**-3:
                         break
-                    cvl_amount_left = cv_line.amount or 0.0
-                    if cvl_amount_left:
-                        if cv_line.id not in grouped_invl_by_cvl:
-                            grouped_invl_by_cvl[cv_line.id] = 0
-                        if amount_to_subtract >= cvl_amount_left:
-                            grouped_invl_by_cvl[cv_line.id] += cvl_amount_left
-                            amount_to_subtract -= cvl_amount_left
-                        else:
-                            grouped_invl_by_cvl[cv_line.id] += amount_to_subtract
-                            amount_to_subtract = 0
+                    if cv_on_fo:
+                        # no group by accounts on IS/IM SI
+                        if invoice_curr != cv_line.commit_id.currency_id.id:
+                            curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
+
+                            amount_to_subtract = curr_obj.compute(cr, uid, invoice_curr, cv_line.commit_id.currency_id.id, amount_to_subtract, round=True,
+                                                                  context={'currency_date': curr_date or time.strftime('%Y-%m-%d')})
+                        check_cv_to_close[cv_line.commit_id.id] = True
+                        cv_line_obj._update_so_commitment_line(cr, uid, cv_line.id, amount_to_subtract, from_cancel=False, context=context)
+                    else:
+                        cvl_amount_left = cv_line.amount or 0.0
+                        if cvl_amount_left:
+                            if cv_line.id not in grouped_invl_by_cvl:
+                                grouped_invl_by_cvl[cv_line.id] = 0
+                            if amount_to_subtract >= cvl_amount_left:
+                                grouped_invl_by_cvl[cv_line.id] += cvl_amount_left
+                                amount_to_subtract -= cvl_amount_left
+                            else:
+                                grouped_invl_by_cvl[cv_line.id] += amount_to_subtract
+                                amount_to_subtract = 0
                 # CV IN VERSION 1
                 if old_cv_version:
                     # Fetch purchase order line account
@@ -183,9 +210,12 @@ class account_invoice(osv.osv):
                         grouped_invl_by_acc[a] = 0
                     grouped_invl_by_acc[a] += invl.price_subtotal
 
-            po_ids = [x.id for x in inv.purchase_ids]
-            self._update_commitments_lines(cr, uid, po_ids, account_amount_dic=grouped_invl_by_acc,
-                                           cvl_amount_dic=grouped_invl_by_cvl, from_cancel=False, context=context)
+            if cv_on_po:
+                po_ids = [x.id for x in inv.purchase_ids]
+                self._update_commitments_lines(cr, uid, po_ids, account_amount_dic=grouped_invl_by_acc,
+                                               cvl_amount_dic=grouped_invl_by_cvl, from_cancel=False, context=context)
+            if check_cv_to_close:
+                cv_obj.test_and_close_cv_so(cr, uid, check_cv_to_close.keys(), invoice_ids=ids, context=context)
 
         return True
 
@@ -356,17 +386,20 @@ class account_invoice(osv.osv):
         to_process = []
         # Verify if all invoice have a po that have a commitment
         for inv in self.browse(cr, uid, ids, context=context):
-            for po in inv.purchase_ids:
-                if po.commitment_ids:
-                    to_process.append(inv.id)
-                    # UTP-536 : Check if the PO is closed and all SI are draft, then close the CV
-                    po_states = ['done']
-                    if po.order_type == 'direct' and po.po_version == 1:
-                        # DPO v1 specific use case: CV and SI are both created at DPO confirmation
-                        # ==> close the CVs if the DPO is at least "Confirmed" and no SI is in Draft anymore
-                        po_states = ['confirmed', 'confirmed_p', 'done']
-                    if po.state in po_states and all(x.id in ids or x.state != 'draft' for x in po.invoice_ids):
-                        self.pool.get('purchase.order')._finish_commitment(cr, uid, [po.id], context=context)
+            if inv.order_ids:
+                to_process.append(inv.id)
+            else:
+                for po in inv.purchase_ids:
+                    if po.commitment_ids:
+                        to_process.append(inv.id)
+                        # UTP-536 : Check if the PO is closed and all SI are draft, then close the CV
+                        po_states = ['done']
+                        if po.order_type == 'direct' and po.po_version == 1:
+                            # DPO v1 specific use case: CV and SI are both created at DPO confirmation
+                            # ==> close the CVs if the DPO is at least "Confirmed" and no SI is in Draft anymore
+                            po_states = ['confirmed', 'confirmed_p', 'done']
+                        if po.state in po_states and all(x.id in ids or x.state != 'draft' for x in po.invoice_ids):
+                            self.pool.get('purchase.order')._finish_commitment(cr, uid, [po.id], context=context)
 
         # Process invoices
         self.update_commitments(cr, uid, to_process, context=context)

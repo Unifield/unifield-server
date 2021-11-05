@@ -1359,6 +1359,9 @@ class stock_picking(osv.osv):
             if move_line.sale_line_id:
                 ana_obj = self.pool.get('analytic.distribution')
                 vals.update({'sale_order_line_id': move_line.sale_line_id.id})
+                distrib_id = False
+                if move_line.sale_line_id.cv_line_ids:
+                    distrib_id = move_line.sale_line_id.cv_line_ids[0].analytic_distribution_id.id or move_line.sale_line_id.cv_line_ids[0].commit_id.analytic_distribution_id.id
                 distrib_id = move_line.sale_line_id.analytic_distribution_id and move_line.sale_line_id.analytic_distribution_id.id or False
                 if distrib_id:
                     new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
@@ -1659,23 +1662,31 @@ class stock_picking(osv.osv):
         else:
             name = move_line.name
 
-        cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
-            move_line.purchase_line_id.cv_line_ids[0] or False
-        cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
-        if inv_type in ('out_invoice', 'out_refund'):
-            account_id = move_line.product_id.product_tmpl_id.\
-                property_account_income.id
+        cv_version = 0
+        if move_line.picking_id.type == 'in':
+            cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
+                move_line.purchase_line_id.cv_line_ids[0] or False
+            cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
+            if cv_version > 1:
+                account_id = cv_line.account_id.id
+            else:
+                account_id = move_line.product_id.product_tmpl_id.\
+                    property_account_expense.id
+                if not account_id:
+                    account_id = move_line.product_id.categ_id.\
+                        property_account_expense_categ.id
+        elif move_line.picking_id.type == 'out':
+            account_id = False
+            if move_line.sale_line_id and move_line.sale_line_id.cv_line_ids and move_line.sale_line_id.cv_line_ids[0].account_id:
+                cv_line = move_line.sale_line_id.cv_line_ids[0] or False
+                account_id = move_line.sale_line_id.cv_line_ids[0].account_id.id
+                cv_version = 2
             if not account_id:
-                account_id = move_line.product_id.categ_id.\
-                    property_account_income_categ.id
-        elif cv_version > 1:
-            account_id = cv_line.account_id.id
-        else:
-            account_id = move_line.product_id.product_tmpl_id.\
-                property_account_expense.id
-            if not account_id:
-                account_id = move_line.product_id.categ_id.\
-                    property_account_expense_categ.id
+                account_id = move_line.product_id.product_tmpl_id.\
+                    property_account_income.id
+                if not account_id:
+                    account_id = move_line.product_id.categ_id.\
+                        property_account_income_categ.id
 
         price_unit = self._get_price_unit_invoice(cr, uid,
                                                   move_line, inv_type)
@@ -1703,13 +1714,15 @@ class stock_picking(osv.osv):
             'account_analytic_id': account_analytic_id,
         }
         if cv_version > 1:
-            inv_vals.update({'cv_line_ids': [(4, cv_line.id)],})
+            inv_vals.update({'cv_line_ids': [(4, cv_line.id)]})
+
         invoice_line_id = invoice_line_obj.create(cr, uid, inv_vals, context=context)
         self._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
 
         if picking.sale_id:
             for sale_line in picking.sale_id.order_line:
                 if sale_line.product_id.type == 'service' and sale_line.invoiced == False:
+                    # TODO: DEPRECATED ?
                     if group:
                         name = picking.name + '-' + sale_line.name
                     else:

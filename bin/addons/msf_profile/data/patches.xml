@@ -708,6 +708,10 @@
         </record>
 
         <!-- UF23.0 -->
+        <record id="us_8839_cv_from_fo" model="patch.scripts">
+            <field name="method">us_8839_cv_from_fo</field>
+        </record>
+
         <record id="us_8585_new_isi_journals" model="patch.scripts">
             <field name="method">us_8585_new_isi_journals</field>
         </record>
