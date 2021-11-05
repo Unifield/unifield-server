@@ -70428,12 +70428,8 @@ msgstr "Numéro de Taxe sur la Valeur Ajoutée. Cochez cette case si le partenai
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:353
 #: report:addons/financing_contract/report/project_expenses_xls.mako:363
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:299
-#, python-format
-msgid "Report date:"
-msgstr "Rapport - date:"
-
-#. module: register_accounting
 #: report:liquidity.position.pdf:0
+#, python-format
 msgid "Report date:"
 msgstr "Date du rapport :"
 
@@ -99462,7 +99458,7 @@ msgstr "Export des traductions %s %s "
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:217
 #: report:addons/consumption_calculation/report/expiry_report.mako:125
 msgid "Report date"
-msgstr "Rapport - date"
+msgstr "Date du rapport"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/register_opening.py:91
