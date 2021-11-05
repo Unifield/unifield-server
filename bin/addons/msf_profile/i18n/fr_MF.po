@@ -8596,7 +8596,6 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:replenishment.parent.segment,state_parent:0
 #: view:composition.item:0
 #: selection:wizard.return.from.unit.import,state:0
-#: code:addons/register_accounting/report/report_liquidity_position.py:164
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -29679,7 +29678,6 @@ msgstr "Certificat attaché ?"
 #: selection:replenishment.order_calc,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
-#: code:addons/register_accounting/report/report_liquidity_position.py:164
 msgid "Closed"
 msgstr "Fermé"
 
@@ -86781,7 +86779,6 @@ msgstr "GMDN Code"
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:92
 #: selection:account.invoice,counterpart_inv_status:0
 #: selection:wizard.account.invoice,counterpart_inv_status:0
-#: code:addons/register_accounting/report/report_liquidity_position.py:164
 #, python-format
 msgid "Open"
 msgstr "Ouvert"
