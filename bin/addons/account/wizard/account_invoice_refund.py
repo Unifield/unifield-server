@@ -32,13 +32,17 @@ class account_invoice_refund(osv.osv_memory):
 
     def _get_filter_refund(self, cr, uid, context=None):
         """
-        Returns the selectable Refund Types (no simple "Refund" in case of an IVO/IVI)
+        Returns the selectable Refund Types (no simple "Refund" in case of an IVO/IVI or STV, only Refund/Cancel in case of an ISI)
         """
         if context is None:
             context = {}
-        if context.get('is_intermission', False):
-            return [('modify', 'Modify'), ('cancel', 'Cancel')]
-        return [('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')]
+        refund_types = [('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')]
+        if context.get('is_intermission', False) or context.get('doc_type', '') == 'stv':
+            refund_types = [('modify', 'Modify'), ('cancel', 'Cancel')]
+        elif context.get('doc_type', '') == 'isi':
+            # note: Refund Cancel is allowed only if the counterpart invoice is closed (handled directly in ISI form)
+            refund_types = [('cancel', 'Cancel')]
+        return refund_types
 
     _columns = {
         'date': fields.date('Operation date', help='This date will be used as the invoice date for Refund Invoice and Period will be chosen accordingly!'),
@@ -49,34 +53,9 @@ class account_invoice_refund(osv.osv_memory):
         'filter_refund': fields.selection(_get_filter_refund, "Refund Type", required=True, help='Refund invoice based on this type. You can not Modify and Cancel if the invoice is already reconciled'),
     }
 
-    def _get_journal(self, cr, uid, context=None):
-        obj_journal = self.pool.get('account.journal')
-        if context is None:
-            context = {}
-        journal = obj_journal.search(cr, uid, [('type', '=', 'sale_refund')])
-        if context.get('type', False):
-            if context['type'] in ('in_invoice', 'in_refund'):
-                journal = obj_journal.search(cr, uid, [('type', '=', 'purchase_refund')])
-        return journal and journal[0] or False
-
     _defaults = {
-        'journal_id': _get_journal,
         'filter_refund': 'modify',
     }
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
-        journal_obj = self.pool.get('account.journal')
-        res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        type = context.get('journal_type', 'sale_refund')
-        if type in ('sale', 'sale_refund'):
-            type = 'sale_refund'
-        else:
-            type = 'purchase_refund'
-        for field in res['fields']:
-            if field == 'journal_id':
-                journal_select = journal_obj._name_search(cr, uid, '', [('type', '=', type)], context=context, limit=None, name_get_uid=1)
-                res['fields'][field]['selection'] = journal_select
-        return res
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
         """
@@ -94,11 +73,24 @@ class account_invoice_refund(osv.osv_memory):
         res = ['address_contact_id', 'address_invoice_id', 'partner_id', 'account_id', 'currency_id', 'payment_term', 'journal_id']
         return res
 
-    def _hook_create_invoice(self, cr, uid, data, form, *args):
+    def _get_invoice_context(self, context):
+        """
+        Gets the context to be used in _hook_create_invoice
+
+        US-8585: for now only "from_refund_button" is handled, the context is otherwise empty in order not to break the current behavior.
+        """
+        if context and context.get('from_refund_button'):
+            inv_context = {'from_refund_button': True}
+        else:
+            inv_context = {}
+        return inv_context
+
+    def _hook_create_invoice(self, cr, uid, data, form, context=None):
         """
         Permits to adapt invoice creation
         """
-        res = self.pool.get('account.invoice').create(cr, uid, data, {})
+        inv_context = self._get_invoice_context(context)
+        res = self.pool.get('account.invoice').create(cr, uid, data, context=inv_context)
         return res
 
     def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form, context=None):
@@ -134,7 +126,6 @@ class account_invoice_refund(osv.osv_memory):
         inv_obj = self.pool.get('account.invoice')
         reconcile_obj = self.pool.get('account.move.reconcile')
         account_m_line_obj = self.pool.get('account.move.line')
-        mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         wf_service = netsvc.LocalService('workflow')
         inv_tax_obj = self.pool.get('account.invoice.tax')
@@ -158,14 +149,13 @@ class account_invoice_refund(osv.osv_memory):
                 if mode in ('cancel', 'modify') and not inv.account_id.reconcile:
                     raise osv.except_osv(_('Error !'), _("Cannot Cancel / Modify if the account can't be reconciled."))
                 if mode in ('cancel', 'modify') and inv_obj.has_one_line_reconciled(cr, uid, [inv.id], context=context):
-                    if inv.is_intermission:
-                        # error specific to IVO/IVI for which there is no simple refund option
-                        raise osv.except_osv(_('Error !'), _('Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first.') % _(mode))
-                    if inv.state == 'inv_close':
-                        raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first.') % (mode))
+                    if inv.state == 'inv_close' or inv.is_intermission or inv.doc_type in ('stv', 'isi'):
+                        # error msg specific to UC where there is no simple refund option
+                        raise osv.except_osv(_('Error !'), _('Cannot %s an invoice which is already reconciled, '
+                                                             'it should be unreconciled first.') % _(mode))
                     else:
-                        raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice') % (mode))
-
+                        raise osv.except_osv(_('Error !'), _('Cannot %s an invoice which is already reconciled, '
+                                                             'it should be unreconciled first. You can only Refund this invoice.') % _(mode))
                 if mode == 'refund' and inv.state == 'inv_close':
                     raise osv.except_osv(_('Error !'), _('It is not possible to refund a Closed invoice'))
 
@@ -252,6 +242,7 @@ class account_invoice_refund(osv.osv_memory):
                         source_doc = invoice.get('number', False)
                         invoice.update({
                             'type': inv.type,
+                            'real_doc_type': inv.doc_type or '',
                             'date_invoice': date,
                             'state': 'draft',
                             'number': False,
@@ -264,7 +255,7 @@ class account_invoice_refund(osv.osv_memory):
                         })
                         for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
                             invoice[field] = invoice[field] and invoice[field][0]
-                        inv_id = self._hook_create_invoice(cr, uid, invoice, form)
+                        inv_id = self._hook_create_invoice(cr, uid, invoice, form, context=context)
                         if inv.payment_term.id:
                             data = inv_obj.onchange_payment_term_date_invoice(cr, uid, [inv_id], inv.payment_term.id, date)
                             if 'value' in data and data['value']:
@@ -283,28 +274,29 @@ class account_invoice_refund(osv.osv_memory):
                     ji_ids.extend([sr_ji.id for sr_ji in refund.move_id.line_id])
                     # write on JIs without recreating AJIs
                     account_m_line_obj.write(cr, uid, ji_ids, {'is_si_refund': True}, context=context, check=False, update_check=False)
-
-            if context.get('is_intermission', False):
-                module = 'account_override'
-                if inv.type == 'in_invoice':
-                    xml_id = 'action_intermission_out'
-                else:
-                    xml_id = 'action_intermission_in'
-            else:
-                module = 'account'
-                if inv.type in ('out_invoice', 'out_refund'):
-                    xml_id = 'action_invoice_tree3'
-                else:
-                    xml_id = 'action_invoice_tree4'
-            result = mod_obj.get_object_reference(cr, uid, module, xml_id)
-            id = result and result[1] or False
-            result = act_obj.read(cr, uid, id, context=context)
+            # return to a tree view containing the refund generated
+            from_doc_type = context.get('doc_type', '')
+            if from_doc_type == 'stv':
+                return_doc_type = 'str'
+            elif from_doc_type == 'ivo':
+                return_doc_type = 'ivi'
+            elif from_doc_type == 'ivi':
+                return_doc_type = 'ivo'
+            elif from_doc_type == 'isi':
+                return_doc_type = 'isr'
+            else:  # i.e. si, di
+                return_doc_type = 'sr'
+            action_act_window = inv_obj._invoice_action_act_window[return_doc_type]
+            result = act_obj.open_view_from_xmlid(cr, uid, action_act_window, context=context)
             invoice_domain = eval(result['domain'])
             invoice_domain.append(('id', 'in', created_inv))
             result['domain'] = invoice_domain
             return result
 
     def invoice_refund(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context.update({'from_refund_button': True})
         data_refund = self.read(cr, uid, ids[0], ['filter_refund'], context=context)['filter_refund']
         return self.compute_refund(cr, uid, ids, data_refund, context=context)
 

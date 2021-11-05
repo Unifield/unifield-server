@@ -708,6 +708,10 @@
         </record>
 
         <!-- UF23.0 -->
+        <record id="us_8585_new_isi_journals" model="patch.scripts">
+            <field name="method">us_8585_new_isi_journals</field>
+        </record>
+
         <record id="us_9044_add_location_colors" model="patch.scripts">
             <field name="method">us_9044_add_location_colors</field>
         </record>

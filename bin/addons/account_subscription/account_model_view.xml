@@ -26,7 +26,7 @@
                         <group col="6" colspan="4">
                             <group attrs="{'readonly': [('state', '=', 'done')]}" colspan="6" col="6">
                                 <field name="name"/>
-                                <field name="journal_id" domain="[('type', '=', 'purchase'), ('is_current_instance', '=', True)]"/>
+                                <field name="journal_id" domain="[('type', '=', 'purchase'), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)]"/>
                                 <field name="currency_id"/>
                             </group>
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">

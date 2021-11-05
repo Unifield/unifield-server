@@ -174,7 +174,7 @@ class account_invoice_sync(osv.osv):
         """
         Creates automatic counterpart invoice at synchro time.
         Intermission workflow: an IVO sent generates an IVI
-        Intersection workflow: an STV sent generates an SI
+        Intersection workflow: an STV sent generates an ISI
         """
         self._logger.info("+++ Create an account.invoice in %s matching the one sent by %s" % (cr.dbname, source))
         if context is None:
@@ -213,21 +213,24 @@ class account_invoice_sync(osv.osv):
         inv_lines = invoice_dict.get('invoice_line', [])
         po = False
         vals = {}
-        # STV in sending instance: generates an SI in the receiving instance
+        # STV in sending instance: generates an ISI in the receiving instance
         if journal_type == 'sale':
-            pur_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)], limit=1, context=context)
-            if not pur_journal_ids:
-                raise osv.except_osv(_('Error'), _("No Purchase journal found for the current instance."))
-            # for the SI use the Account Payable of the partner
-            si_account = partner.property_account_payable
-            if not si_account or posting_date < si_account.activation_date or \
-                    (si_account.inactivation_date and posting_date >= si_account.inactivation_date):
+            isi_journal_ids = journal_obj.search(cr, uid,
+                                                 [('type', '=', 'purchase'), ('code', '=', 'ISI'), ('is_current_instance', '=', True)],
+                                                 limit=1, context=context)
+            if not isi_journal_ids:
+                raise osv.except_osv(_('Error'), _("No Intersection Supplier Invoice journal found for the current instance."))
+            # for the ISI use the Account Payable of the partner
+            isi_account = partner.property_account_payable
+            if not isi_account or posting_date < isi_account.activation_date or \
+                    (isi_account.inactivation_date and posting_date >= isi_account.inactivation_date):
                 raise osv.except_osv(_('Error'), _("Account Payable not found or inactive for the partner %s.") % partner.name)
             vals.update(
                 {
-                    'journal_id': pur_journal_ids[0],
-                    'account_id': si_account.id,
+                    'journal_id': isi_journal_ids[0],
+                    'account_id': isi_account.id,
                     'type': 'in_invoice',
+                    'real_doc_type': 'isi',
                     'is_direct_invoice': False,
                     'is_inkind_donation': False,
                     'is_debit_note': False,
@@ -249,6 +252,7 @@ class account_invoice_sync(osv.osv):
                     'journal_id': int_journal_ids[0],
                     'account_id': ivi_account.id,
                     'type': 'in_invoice',
+                    'real_doc_type': 'ivi',
                     'is_inkind_donation': False,
                     'is_debit_note': False,
                     'is_intermission': True,
@@ -321,7 +325,7 @@ class account_invoice_sync(osv.osv):
         if inv_id:
             self._create_invoice_lines(cr, uid, inv_lines, inv_id, posting_date, po, from_supply, context=context)
             if journal_type == 'sale':
-                msg = "SI No. %s created successfully." % inv_id
+                msg = "ISI No. %s created successfully." % inv_id
             elif journal_type == 'intermission':
                 msg = "IVI No. %s created successfully." % inv_id
             self._logger.info(msg)
@@ -352,7 +356,7 @@ class account_invoice_sync(osv.osv):
             if counterpart_inv_number:
                 inv_ids = self.search(cr, uid, [('number', '=', counterpart_inv_number)], limit=1, context=context)
             elif not counterpart_inv_number and number:
-                # use case where the state of the IVO/STV is updated before the related IVI/SI has been opened
+                # use case where the state of the IVO/STV is updated before the related IVI/ISI has been opened
                 inv_ids = self.search(cr, uid, [('counterpart_inv_number', '=', number)], limit=1, context=context)
             if inv_ids:
                 self.write(cr, uid, inv_ids[0], vals, context=context)
