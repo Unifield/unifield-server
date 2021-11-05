@@ -8596,6 +8596,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:replenishment.parent.segment,state_parent:0
 #: view:composition.item:0
 #: selection:wizard.return.from.unit.import,state:0
+#: code:addons/register_accounting/report/report_liquidity_position.py:164
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -29678,6 +29679,7 @@ msgstr "Certificat attaché ?"
 #: selection:replenishment.order_calc,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
+#: code:addons/register_accounting/report/report_liquidity_position.py:164
 msgid "Closed"
 msgstr "Fermé"
 
@@ -37336,6 +37338,7 @@ msgstr "Macao"
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:235
 #: report:addons/account/report/invoice_excel_export.mako:71
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:0
+#: report:liquidity.position.pdf:0
 msgid "Subtotal"
 msgstr "Sous-total"
 
@@ -54916,6 +54919,11 @@ msgstr "You cannot post entries in a non-opened period: %s"
 msgid "Bank statement balance"
 msgstr "Solde du Relevé Bancaire"
 
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Bank Statement Balance"
+msgstr "Solde du Relevé Bancaire"
+
 #. module: financing_contract
 #: field:financing.contract.funding.pool.line,total_project:0
 msgid "Total project"
@@ -70666,6 +70674,7 @@ msgstr "You have to define a valid UOM, i.e. not \"To be define\"."
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:310
+#: report:liquidity.position.pdf:0
 msgid "Bank"
 msgstr "Banque"
 
@@ -75766,8 +75775,14 @@ msgstr "Chèques en Attente"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:310
+#: report:liquidity.position.pdf:0
 msgid "Cash"
 msgstr "Espèces (cash)"
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Total Cash"
+msgstr "Total Espèces (cash)"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:446
@@ -86770,6 +86785,7 @@ msgstr "GMDN Code"
 #: code:addons/sale/report/sale_loan_stock_moves_report.py:92
 #: selection:account.invoice,counterpart_inv_status:0
 #: selection:wizard.account.invoice,counterpart_inv_status:0
+#: code:addons/register_accounting/report/report_liquidity_position.py:164
 #, python-format
 msgid "Open"
 msgstr "Ouvert"
@@ -112885,6 +112901,16 @@ msgstr "Dev. fonc."
 #: report:liquidity.position.pdf:0
 msgid "Bank Journal Code - Bank Journal Name"
 msgstr "Code du Journal de Banque – Nom du Journal de Banque"
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Cash Box Balance"
+msgstr "Solde Physique de Caisse ou Coffre"
+
+#. module: register_accounting
+#: report:liquidity.position.pdf:0
+msgid "Total Bank"
+msgstr "Total Banque"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:448

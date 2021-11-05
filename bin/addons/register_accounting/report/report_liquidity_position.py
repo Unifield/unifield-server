@@ -161,7 +161,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 'journal_code': journal.code,
                 'journal_name': journal.name,
                 # for the state, get the value from the selection field ("Closed" instead of "confirm", etc.):
-                'state': reg.state and dict(reg_obj._columns['state'].selection).get(reg.state) or '',
+                'state': reg.state and _(dict(reg_obj._columns['state'].selection).get(reg.state)) or '',
                 'calculated_balance': calc_bal,
                 'register_balance': reg_bal,
                 'opening_balance': reg.balance_start,
@@ -214,7 +214,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
             # get the value from the selection field ("Closed" instead of "confirm", etc.)
             state = reg_for_selected_period.state and \
-                dict(reg_obj._columns['state'].selection).get(reg_for_selected_period.state) or ''
+                _(dict(reg_obj._columns['state'].selection).get(reg_for_selected_period.state)) or ''
         else:
             state = _('Not Created')
         return state
