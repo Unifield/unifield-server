@@ -386,7 +386,7 @@ msgstr "Extraction des Données Ok"
 #: code:addons/register_accounting/wizard/register_reopen.py:45
 #, python-format
 msgid "This action is only applied to closed registers!"
-msgstr "Cette action n'est effectuée que sur les registres fermés!"
+msgstr "Cette action ne s'applique qu'aux registres clôturés !"
 
 #. module: base
 #: help:ir.actions.report.xml,attachment_use:0
@@ -7581,7 +7581,7 @@ msgstr "po.automation.config"
 #: code:addons/register_accounting/account_bank_statement.py:272
 #, python-format
 msgid "All entries must be hard posted before closing this Register!"
-msgstr "Toutes les écritures doivent être comptabilisées définitivement avant de fermer ce Registre ! "
+msgstr "Toutes les écritures doivent être comptabilisées définitivement avant de clôturer ce Registre !"
 
 #. modules: purchase, account, sale, stock_schedule, board, stock, procurement_cycle
 #: selection:account.entries.report,month:0
@@ -40448,7 +40448,7 @@ msgstr "Mise à jour"
 #. module: register_accounting
 #: field:account.bank.statement,register_closed_by:0
 msgid "Register Closed by"
-msgstr "Registre Fermé par"
+msgstr "Registre Clôturé par"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -45690,7 +45690,7 @@ msgstr "Ligne Déclaration d'Avance"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you close all your registers?"
-msgstr "Avez-vous fermé tous les registres ?"
+msgstr "Avez-vous clôturé tous les registres ?"
 
 #. module: analytic_override
 #: field:account.analytic.account,intermission_restricted:0
@@ -45940,7 +45940,7 @@ msgstr "L1"
 #: field:account.bank.statement,ending_details_ids:0
 #: view:wizard.closing.cashbox:0
 msgid "Closing Cashbox"
-msgstr "Fermeture de Caisse"
+msgstr "Clôture de Caisse"
 
 #. module: base
 #: code:addons/base/publisher_warranty/publisher_warranty.py:124
@@ -49711,7 +49711,7 @@ msgstr "Date de comptabilisation pour \"%s\" est en dehors de la période de val
 #: code:addons/register_accounting/account_cash_statement.py:213
 #, python-format
 msgid "All entries must be hard posted before closing CashBox!"
-msgstr "Toutes les écritures doivent être comptabilisées définitivement avant de fermer la Caisse ! "
+msgstr "Toutes les écritures doivent être comptabilisées définitivement avant de clôturer la Caisse !"
 
 #. modules: msf_doc_import, msf_outgoing, return_claim, kit
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
@@ -79053,7 +79053,7 @@ msgstr "Vous pouvez importer des articles de remaplcement à partir de kits thé
 #. module: register_accounting
 #: view:wizard.closing.cashbox:0
 msgid "Closing CashBox - Wizard"
-msgstr "Fermer la Caisse - Assistant"
+msgstr "Clôturer la Caisse - Assistant"
 
 #. module: stock
 #: field:stock.location,posy:0
@@ -79626,7 +79626,7 @@ msgstr "Le compte de réévaluation par défaut \"%s - %s\" doit avoir une desti
 #: code:addons/register_accounting/register_tools.py:308
 #, python-format
 msgid "The previous register \"%s\" for period \"%s\" has not been closed properly."
-msgstr "Le registre précédent \"%s\" de la période \"%s\" n'a pas bien été fermé."
+msgstr "Le registre précédent \"%s\" de la période \"%s\" n'a pas bien été clôturé."
 
 #. module: account
 #: view:account.move:0
@@ -84610,7 +84610,7 @@ msgstr "Information sur le Mouvement"
 #: code:addons/register_accounting/account_bank_statement.py:286
 #, python-format
 msgid "Please close previous register before closing this one!"
-msgstr "Veuillez fermer le Registre précédent avant de fermer celui-ci !"
+msgstr "Veuillez clôturer le Registre précédent avant de clôturer celui-ci !"
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:784
@@ -87932,7 +87932,7 @@ msgstr "Ordered month of the sales order"
 #. module: register_accounting
 #: help:account.bank.statement,register_closed_by:0
 msgid "Name and position of the person who closes the register"
-msgstr "Nom et poste de la personne qui ferme le registre"
+msgstr "Nom et poste de la personne qui clôture le registre"
 
 #. module: msf_instance
 #: view:msf_instance.setup:0
@@ -88922,7 +88922,7 @@ msgstr "Qté indicative en stock"
 #: view:account.bank.statement:0
 #: model:ir.actions.act_window,name:register_accounting.act_wizard_closing_cashbox
 msgid "Close CashBox"
-msgstr "Fermer Caisse"
+msgstr "Clôturer la Caisse"
 
 #. module: msf_outgoing, msf_supply_doc_export
 #: field:shipment,in_ref:0
@@ -89281,7 +89281,7 @@ msgstr "Impossible de se connecter: %s"
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
 msgid "Close Register"
-msgstr "Fermer le Registre"
+msgstr "Clôturer le Registre"
 
 #. module: base
 #: model:res.currency,currency_name:base.MMK
@@ -93712,7 +93712,7 @@ msgstr "Test again"
 #: code:addons/register_accounting/account_cash_statement.py:221
 #, python-format
 msgid "Please confirm closing balance before closing register named '%s'"
-msgstr "Veuillez confirmer le solde final avant de fermer le registre appelé '%s'"
+msgstr "Veuillez confirmer le solde final avant de clôturer le registre appelé '%s'"
 
 #. module: stock
 #: field:product.product,track_incoming:0
