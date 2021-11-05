@@ -1468,6 +1468,8 @@ class claim_event(osv.osv):
         move_ids = [move.id for move in event_picking.move_lines]
         # confirm the moves but not the pick to be able to convert to OUT
         move_obj.action_confirm(cr, uid, move_ids, context=context)
+        # Update some fields.function data in the Pick
+        self.pool.get('stock.picking')._store_set_values(cr, uid, [event_picking_id], ['overall_qty', 'line_state'], context)
         # do we need replacement?
         self._process_replacement(cr, uid, obj, event_picking, context=context)
         context.update({'keep_prodlot': False, 'keepPoLine': False})
@@ -1631,6 +1633,8 @@ class claim_event(osv.osv):
         move_ids = [move.id for move in event_picking.move_lines]
         # confirm the moves but not the pick to be able to convert to OUT
         move_obj.action_confirm(cr, uid, move_ids, context=context)
+        # Update some fields.function data in the Pick
+        self.pool.get('stock.picking')._store_set_values(cr, uid, [event_picking_id], ['overall_qty', 'line_state'], context)
 
         context.update({'keep_prodlot': False})
 

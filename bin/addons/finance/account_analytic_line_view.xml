@@ -10,19 +10,34 @@
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
                 <tree editable="top" noteditable="1" string="Analytic Journal Items" hide_delete_button="1" hide_new_button="1">
+                    <field name="instance_id" readonly="1"/>
+                    <field name="is_reversal" invisible="1"/>
+                    <field name="journal_type" invisible="1"/>
+                    <field name="is_corrigible" invisible="1"/>
+                    <button name="button_corrections" type="object" string="Accounting info/correction"
+                            attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <field name="is_reallocated" invisible="1"/>
+                    <field name="last_corrected_id" invisible="1"/>
+                    <field name="is_engi" invisible="1"/>
+                    <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False), ('last_corrected_id', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
                     <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
-                    <field name="move_id"/>
+                    <field name="entry_sequence"/>
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="general_account_id"/>
+                    <field name="destination_id" string="Destination" invisible="not context.get('display_fp', False)"/>
+                    <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
                     <field name="account_id"/>
+                    <field name="partner_txt"/>
                     <field name="amount_currency" sum="Sum"/>
                     <field name="currency_id"/>
                     <field name="amount" sum="Sum"/>
                     <field name="functional_currency_id"/>
+                    <field name="output_amount"/>
+                    <field name="output_currency"/>
                     <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>
                 </tree>

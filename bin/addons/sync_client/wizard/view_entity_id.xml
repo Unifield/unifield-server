@@ -8,8 +8,8 @@
             <field name="arch" type="xml">
                 <form string="Entity Id" col="4">
                     <html>
-                        <h1><label string="name" align="0.0" colspan="4"/></h1>
-                        <h1><label string="sequence" align="0.0" colspan="4"/></h1>
+                        <h1><label id="name" string="name" align="0.0" colspan="4"/></h1>
+                        <h1><label id="sequence" string="sequence" align="0.0" colspan="4"/></h1>
                     </html>
                 </form>
             </field>

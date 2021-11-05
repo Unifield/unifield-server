@@ -59,7 +59,6 @@ For FR
                 "account",
                 ],
     "init_xml": [
-        "account_view.xml",
         "wizard/wizard_currency_revaluation_view.xml"],
     "update_xml": [],
     "demo_xml": [],

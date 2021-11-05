@@ -2294,12 +2294,6 @@ msgstr "Processus d'envoi passé en arrière plan ... vérifier le Monituer d'In
 msgid "- Reversals"
 msgstr "- Reversals"
 
-#. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:2744
-#, python-format
-msgid "View not found."
-msgstr "Écran non trouvé."
-
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:916
 #: code:addons/sync_client/sync_client.py:970
@@ -4687,7 +4681,7 @@ msgstr "Livraison en attente"
 msgid "Month:"
 msgstr "Mois :"
 
-#. modules: delivery_mechanism, account, msf_outgoing, stock_override, supplier_catalogue, sale, consumption_calculation, purchase_override, kit, account_override, order_line_number, msf_doc_import, msf_supply_doc_export, stock, procurement_cycle
+#. modules: delivery_mechanism, account, msf_outgoing, stock_override, supplier_catalogue, sale, consumption_calculation, purchase_override, kit, account_override, order_line_number, msf_doc_import, msf_supply_doc_export, stock, procurement_cycle, analytic_distribution
 #: view:account.invoice.line:0
 #: report:allocation.invoices.report:0
 #: field:product.likely.expire.report.item,line_id:0
@@ -4730,6 +4724,7 @@ msgstr "Mois :"
 #: field:product.stock_out.line,line_number:0
 #: report:kitting.order.report:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:117
+#: field:account.commitment.line,line_number:0
 #, python-format
 msgid "Line"
 msgstr "Ligne"
@@ -5870,7 +5865,6 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: view:stock.production.lot.revision:0
 #: field:stock.production.lot.revision,description:0
 #: report:stock.card.report:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:294
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:255
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:151
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:430
@@ -10763,12 +10757,11 @@ msgstr "Date de Réception"
 msgid "Cancel and Resource"
 msgstr "Annuler et Ressourcer"
 
-#. modules: procurement, account, register_accounting, purchase, account_override, vertical_integration, msf_supply_doc_export
+#. modules: procurement, account, register_accounting, purchase, account_override, msf_supply_doc_export
 #: report:account.invoice2:0
 #: report:addons/account_override/report/open_invoices_xls.mako:340
 #: view:purchase.order.line:0
 #: field:account.direct.invoice.wizard,origin:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:297
 #: field:account.invoice,origin:0
 #: field:report.invoice.created,origin:0
 #: field:procurement.order,origin:0
@@ -11949,6 +11942,14 @@ msgstr "Pas de fichier envoi.ini trouvé dans le fichier ZP donné!"
 #: view:wizard.account.invoice:0
 #: selection:wizard.account.invoice,type:0
 #: selection:account.invoice.line,invoice_type:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,invoice_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:227
 #, python-format
 msgid "Supplier Invoice"
 msgstr "Facture Fournisseur"
@@ -14633,6 +14634,16 @@ msgstr "BARBADOS DOLLAR"
 #: report:account.invoice2:0
 #: selection:report.invoice.created,type:0
 #: selection:wizard.account.invoice,type:0
+#: selection:account.direct.invoice.wizard,type:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,invoice_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account/invoice.py:255
+#: code:addons/account_override/invoice.py:228
 msgid "Supplier Refund"
 msgstr "Avoirs Fournisseur"
 
@@ -15990,9 +16001,8 @@ msgstr "Ligne %s: Veuillez choisir un produit avant de confirmer la ligne"
 msgid "Select the Applications you want your system to cover. If you are not sure about your exact needs at this stage, you can easily install them later."
 msgstr "Choisir les Applications que vous voulez mettre en œuvre dans le système. Si vous n'êtes pas sûr de vos besoins précis à ce stade, vous pourrez facilement les installer plus tard."
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:348
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:301
 msgid "Residual amt func. ccy"
 msgstr "Mnt résiduel dev. fctionnelle"
 
@@ -17015,11 +17025,6 @@ msgstr "Islande"
 msgid "No Sync on Write"
 msgstr "No Sync on Write"
 
-#. module: register_accounting
-#: selection:account.direct.invoice.wizard,type:0
-msgid "Customer Refund"
-msgstr "Remboursement Client"
-
 #. module: stock
 #: selection:stock.location,chained_auto_packing:0
 msgid "Manual Operation"
@@ -17468,7 +17473,7 @@ msgstr "Tchad"
 #: view:board.board:0
 #: model:ir.actions.act_window,name:account.action_draft_customer_invoices_dashboard
 msgid "Customer Invoices to Approve"
-msgstr "Bons client à Approuver"
+msgstr "Bons de Transfert de Stock à Approuver"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:292
@@ -17783,9 +17788,8 @@ msgstr "ATTENTION : la distribution analytique pour ce BdC n'est pas complète !
 msgid "Cannot backward the state of this period. All next periods must be at a lower state."
 msgstr "Cannot backward the state of this period. All next periods must be at a lower state."
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:350
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:302
 msgid "Total amt func. ccy"
 msgstr "Mnt total dev. fctionnelle"
 
@@ -18149,7 +18153,6 @@ msgstr "Okay"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.act_account_journal_2_account_invoice_opened
-#: view:account.invoice:0
 msgid "Unpaid Invoices"
 msgstr "Factures impayées"
 
@@ -18476,18 +18479,6 @@ msgstr "Poids manquant"
 msgid "Number of Packs"
 msgstr "Nombre de Colis"
 
-#. module: account, account_override
-#: code:addons/account/invoice.py:652
-#: code:addons/account_override/invoice.py:421
-#, python-format
-msgid "Can't find any account journal of %s type for this company.\n"
-"\n"
-"You can create one in the menu: \n"
-"Configuration\\Financial Accounting\\Accounts\\Journals."
-msgstr "Ne trouve pas de journal de type %s pour cette société. \n"
-"Vous pouvez en créer un à partir du menu : \n"
-"Configuration\\Comptabilité Financière\\Comptes\\Journaux"
-
 #. module: base
 #: code:addons/base/module/wizard/base_module_configuration.py:37
 #, python-format
@@ -18711,7 +18702,7 @@ msgstr "datetime"
 #. module: account_override
 #: view:account.invoice:0
 msgid "Merge Lines by Account"
-msgstr "Merge Lines by Account"
+msgstr "Fusionner les Lignes par Compte"
 
 #. module: tender_flow
 #: view:tender:0
@@ -20959,12 +20950,19 @@ msgstr "Il n'y a aucun produit expiré"
 msgid "Open added action"
 msgstr "Action d'ouverture ajoutée"
 
-#. modules: account_override, account, account_period_closing_level
+#. modules: account_override, account, account_period_closing_level, register_accounting
 #: report:account.invoice2:0
 #: view:account.invoice:0
 #: model:ir.actions.act_window,name:account_override.action_debit_note
 #: model:ir.ui.menu,name:account_override.menu_action_debit_note
 #: view:account.period:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:222
 msgid "Debit Note"
 msgstr "Note de débit"
 
@@ -22789,12 +22787,11 @@ msgstr "État du traitement"
 msgid "America/Monterrey"
 msgstr "America/Monterrey"
 
-#. modules: account_override, vertical_integration, financing_contract, register_accounting, finance
+#. modules: account_override, financing_contract, register_accounting, finance
 #: report:addons/account_override/report/open_invoices_xls.mako:346
 #: field:cash.request.liquidity.total,booking_currency_id:0
 #: report:addons/financing_contract/report/project_expenses_xls.mako:503
 #: report:addons/register_accounting/report/open_advances_xls.mako:155
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:300
 msgid "Booking Currency"
 msgstr "Devise d'Enregistrement"
 
@@ -23795,7 +23792,6 @@ msgstr "Lignes %s du fichier Excel of the Excel ont produits un fractionnement d
 #: model:ir.ui.menu,name:account.menu_action_invoice_tree2
 #: report:addons/account_override/report/open_invoices_xls.mako:305
 #: code:addons/purchase/wizard/purchase_line_invoice.py:156
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
 #, python-format
 msgid "Supplier Invoices"
 msgstr "Factures Fournisseur"
@@ -28187,9 +28183,8 @@ msgstr "De C."
 msgid "Account Common Account Report"
 msgstr "Compte - Rapport Compte Commun "
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:343
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:298
 msgid "Residual amt booking ccy"
 msgstr "Mnt résiduel dev. d'enreg."
 
@@ -29310,11 +29305,6 @@ msgstr "Décimal"
 msgid "New Catalogue"
 msgstr "Nouveau Catalogue"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
-msgid "Supplier Refunds"
-msgstr "Remboursement Fournisseur"
-
 #. module: register_accounting
 #: field:wizard.import.cheque.lines,amount_currency:0
 msgid "Amount currency"
@@ -29678,6 +29668,7 @@ msgstr "Certificat attaché ?"
 #: selection:replenishment.order_calc,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
+#: selection:wizard.account.invoice,counterpart_inv_status:0
 msgid "Closed"
 msgstr "Fermé"
 
@@ -30883,7 +30874,7 @@ msgstr "International"
 msgid "Total Theoretical Quantity for product"
 msgstr "Quantité totale théorique du produit"
 
-#. modules: purchase, account, vertical_integration, register_accounting, stock
+#. modules: purchase, account, register_accounting, stock
 #: field:account.bank.statement,user_id:0
 #: view:account.invoice:0
 #: field:purchase.order,create_uid:0
@@ -30893,7 +30884,6 @@ msgstr "Quantité totale théorique du produit"
 #: field:account.bank.statement,responsible_ids:0
 #: field:physical.inventory,responsible:0
 #: field:stock.journal,user_id:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:295
 msgid "Responsible"
 msgstr "Responsable"
 
@@ -30952,6 +30942,17 @@ msgstr "GMT+0"
 #: selection:wizard.register.opening.confirmation,register_type:0
 msgid "In-kind Donation"
 msgstr "Donation en nature"
+
+#. modules: account_override, register_accounting
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:223
+msgid "Donation"
+msgstr "Donation"
 
 #. module: sourcing
 #: field:po.automation.config,name:0
@@ -31900,11 +31901,18 @@ msgstr "VENEZUELAN BOLÍVAR FUERTE"
 msgid "Message(s) processed: %d"
 msgstr "Messages exécutés:%d"
 
-#. modules: account_override, account, account_period_closing_level
+#. modules: account_override, account, account_period_closing_level, register_accounting
 #: report:account.invoice2:0
 #: model:ir.actions.act_window,name:account_override.action_intermission_out
 #: model:ir.ui.menu,name:account_override.menu_action_intermission_out
 #: view:account.period:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:225
 msgid "Intermission Voucher OUT"
 msgstr "Bons Intermission OUT"
 
@@ -34177,7 +34185,7 @@ msgstr "Distribution analytique non valide!"
 msgid "IR/FO Order"
 msgstr "IR/FO Order"
 
-#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override, product, msf_accrual, procurement_cycle, msf_tools
+#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override, product, msf_accrual, procurement_cycle, msf_tools, product_nomenclature
 #: selection:account.entries.report,move_line_state:0
 #: selection:account.move.line,state:0
 #: selection:wizard.journal.items.corrections.lines,analytic_distribution_state:0
@@ -34209,6 +34217,7 @@ msgstr "IR/FO Order"
 #: code:addons/msf_tools/report/report_stock_pipe_per_product_instance.py:220
 #: selection:stock.pipe.per.product.instance.prod.lines,inst_uf_state:0
 #: selection:stock.pipe.per.product.instance.prod.lines,ud_state:0
+#: selection:product.nomenclature,status:0
 msgid "Valid"
 msgstr "Valide"
 
@@ -35487,6 +35496,7 @@ msgstr "    - %s :\n"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:235
 #: report:addons/register_accounting/report/open_advances_xls.mako:160
 #: view:composition.item:0
+#: field:product.nomenclature,status:0
 #, python-format
 msgid "Status"
 msgstr "Statut"
@@ -35936,8 +35946,8 @@ msgstr "Asia/Anadyr"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Manual Commitment Voucher"
-msgstr "Manual Commitment Voucher"
+msgid "Manual Commitment Vouchers"
+msgstr "Bons d'Engagement Manuels"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -36047,9 +36057,8 @@ msgstr "Mouvement Correspondant à l'étape précédente"
 msgid "Shipment preparation"
 msgstr "Préparation Expédition"
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:351
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:303
 msgid "Func. Ccy"
 msgstr "Dev. Fct."
 
@@ -40503,6 +40512,12 @@ msgstr "Monaco"
 msgid "Supplier Refunds"
 msgstr "Avoirs Fournisseur"
 
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:571
+#, python-format
+msgid "%s Supplier Refund(s)"
+msgstr "%s Avoir(s) Fournisseur"
+
 #. modules: sync_client, analytic_distribution
 #: model:ir.ui.menu,name:sync_client.ops_menu
 #: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_operation
@@ -42781,12 +42796,19 @@ msgstr "cancel - (purchase.order.line)"
 msgid "ESC Message 2"
 msgstr "ESC Message 2"
 
-#. modules: register_accounting, analytic_distribution
+#. modules: register_accounting, analytic_distribution, account_override
 #: code:addons/register_accounting/account_bank_statement.py:2843
 #: code:addons/register_accounting/report/report_fully_report.py:60
 #: field:analytic.distribution.wizard,direct_invoice_id:0
 #: view:account.bank.statement:0
 #: model:ir.model,name:register_accounting.model_wizard_account_invoice
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:226
 #, python-format
 msgid "Direct Invoice"
 msgstr "Facture Directe"
@@ -44054,7 +44076,7 @@ msgstr "Type Principal"
 #: model:ir.actions.act_window,name:account.action_invoice_tree1
 #: model:ir.ui.menu,name:account.menu_action_invoice_tree1
 msgid "Customer Invoices"
-msgstr "Bons client"
+msgstr "Bons de Transfert de Stock"
 
 #. module: financing_contract
 #: report:financing.contract:0
@@ -44817,9 +44839,8 @@ msgstr "Stock Virtuel"
 msgid "Etc/Greenwich"
 msgstr "Etc/Greenwich"
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:264
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:249
 msgid "OPEN INVOICES"
 msgstr "FACTURES OUVERTES"
 
@@ -44981,7 +45002,7 @@ msgstr "Les groupes servent à définir les droits d'accès aux objets, et la vi
 #: code:addons/res_currency_tables/res_currency.py:258
 #, python-format
 msgid "The currency you want to %s is used in at least one Commitment Voucher which isn't Done."
-msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Engagement non Terminé."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un Bon d'Engagement non Terminé."
 
 #. modules: account, resource, account_mcdb, msf_instance, analytic, base, msf_audittrail, msf_profile, product_attributes, sync_client
 #: view:account.journal:0
@@ -46119,8 +46140,8 @@ msgstr "Liste de Prix"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Commitment Voucher in Draft state"
-msgstr "Commitment Voucher in Draft state"
+msgid "Commitment Vouchers in Draft state"
+msgstr "Bons d'Engagement dans l'état Brouillon"
 
 #. module: base
 #: view:ir.actions.server:0
@@ -46727,8 +46748,8 @@ msgstr "Signature"
 
 #. module: msf_doc_import
 #: selection:wizard.import.in.line.simulation.screen,type_change:0
-msgid "Del."
-msgstr "Del."
+msgid "Ign."
+msgstr "Ign."
 
 #. modules: purchase, account, product
 #: view:account.invoice.report:0
@@ -48885,11 +48906,10 @@ msgstr "Amériques/Regina"
 msgid "Qty to deliver"
 msgstr "Qté à livrer"
 
-#. modules: account_override, vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:306
 msgid "Stock Transfer Vouchers"
-msgstr "Bons Client"
+msgstr "Bons de Transfert de Stock"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:1447
@@ -49092,7 +49112,7 @@ msgstr "Total Résiduel"
 msgid "Total amount"
 msgstr "Montant total"
 
-#. modules: account_hq_entries, account_override, purchase_allocation_report, register_accounting, msf_accrual, partner_modification, return_claim, account_mcdb, supplier_catalogue, import_data, stock_override, product_asset, analytic, stock_batch_recall, msf_doc_import, stock, msf_order_date, product, msf_homere_interface, service_purchasing, purchase_override, kit, base, sync_so, account_corrections, account, msf_outgoing, msf_partner, documents_done, sale, finance, sales_followup, sourcing, purchase, msf_audittrail
+#. modules: account_hq_entries, account_override, purchase_allocation_report, register_accounting, msf_accrual, partner_modification, return_claim, account_mcdb, supplier_catalogue, import_data, stock_override, product_asset, analytic, stock_batch_recall, msf_doc_import, stock, msf_order_date, product, msf_homere_interface, service_purchasing, purchase_override, kit, base, sync_so, account_corrections, account, msf_outgoing, msf_partner, documents_done, sale, finance, sales_followup, sourcing, purchase, msf_audittrail, analytic_distribution
 #: field:account.bank.statement.line,partner_id:0
 #: view:account.entries.report:0
 #: field:account.entries.report,partner_id:0
@@ -49224,6 +49244,8 @@ msgstr "Montant total"
 #: field:account.tax,partner_id:0
 #: report:addons/account/report/invoice_excel_export.mako:80
 #: report:addons/account/report/export_invoice.mako:100
+#: field:account.commitment,partner_id:0
+#: code:addons/account/invoice.py:385
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -53959,8 +53981,8 @@ msgstr "Line %s, incorrect column number src should not be empty."
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "ESC Commitment Voucher"
-msgstr "ESC Commitment Voucher"
+msgid "ESC Commitment Vouchers"
+msgstr "Bons d'Engagement ESC"
 
 #. module: account
 #: field:account.fiscalyear.close,period_id:0
@@ -54129,11 +54151,6 @@ msgstr "Vous ne pouvez pas avoir de même code ou nom qu'une instance active!"
 #: field:backup.config,beforeautomaticsync:0
 msgid "Backup before automatic sync"
 msgstr "Sauvegarde avant la sync automatique"
-
-#. module: account
-#: view:account.invoice:0
-msgid "Proforma/Open/Paid Invoices"
-msgstr "Proforma/Open/Paid Invoices"
 
 #. module: purchase_compare_rfq
 #: view:wizard.compare.rfq.line:0
@@ -55792,6 +55809,15 @@ msgstr "Liste de composition du Kit"
 #: selection:account.invoice.report,type:0
 #: selection:report.invoice.created,type:0
 #: selection:wizard.account.invoice,type:0
+#: selection:account.direct.invoice.wizard,type:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,invoice_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:230
 msgid "Customer Refund"
 msgstr "Avoir Client"
 
@@ -56133,6 +56159,8 @@ msgstr "Operational advance linked po invoices"
 #: field:msf_button_access_rights.view_config_wizard_install_results,progress:0
 #: field:commitment.import.setup,progress:0
 #: field:vat.setup,progress:0
+#: field:customer.commitment.setup,progress:0
+#: field:previous.fy.dates.setup,progress:0
 msgid "Configuration Progress"
 msgstr "Progression de la Configuration"
 
@@ -56767,11 +56795,18 @@ msgstr "Année(s)"
 msgid "No journal code found."
 msgstr "No journal code found."
 
-#. modules: hr, register_accounting, base, analytic_distribution
+#. modules: hr, register_accounting, base, analytic_distribution, account_override
 #: selection:ir.module.module.dependency,state:0
 #: selection:hr.employee,gender:0
 #: selection:account.bank.statement.line,state:0
 #: selection:analytic.distribution.wizard,register_line_state:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:234
 msgid "Unknown"
 msgstr "Inconnu"
 
@@ -59238,11 +59273,6 @@ msgstr "Sélecteur Analytique"
 #: field:sync.monitor,error:0
 msgid "Messages"
 msgstr "Messages"
-
-#. module: account
-#: view:account.invoice:0
-msgid "Proforma Invoices"
-msgstr "Factures Proforma"
 
 #. modules: account_override, account
 #: selection:account.journal.column,field:0
@@ -61961,11 +61991,6 @@ msgstr "Détermine si le système gérera la paie."
 #: view:purchase.order.line_invoice:0
 msgid "Select an Open Sale Order"
 msgstr "Sélectionner une Commande Terrain"
-
-#. module: account
-#: view:account.invoice:0
-msgid "My invoices"
-msgstr "My invoices"
 
 #. module: base
 #: help:ir.property,res_id:0
@@ -64803,7 +64828,6 @@ msgstr "PO line to confirm"
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:162
 #: report:addons/register_accounting/report/open_advances_xls.mako:148
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:218
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:291
 #: report:account.invoice2:0
 #: field:hq.entries.split,date:0
 #: selection:integrity.finance.wizard,filter:0
@@ -65027,10 +65051,10 @@ msgstr "True if the price has been manually changed during reception"
 msgid "free1"
 msgstr "option 1"
 
-#. module: account_override
+#. module: account
 #: view:account.invoice:0
-msgid "You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
-msgstr "You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
+msgid "You are about to merge invoice lines; are you sure you want to proceed? THIS OPERATION CAN NOT BE UNDONE."
+msgstr "Vous êtes sur le point de fusionner les lignes de facture ; voulez-vous continuer ? CETTE OPÉRATION NE PEUT PAS ÊTRE ANNULÉE."
 
 #. module: account
 #: help:account.payment.term.line,days:0
@@ -66051,6 +66075,7 @@ msgstr "Tester la connexion"
 
 #. module: analytic_distribution
 #: field:account.commitment,purchase_id:0
+#: field:account.commitment,sale_id:0
 msgid "Source document"
 msgstr "Document Source "
 
@@ -66389,8 +66414,8 @@ msgstr "Jours de sécurité"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Commitment Voucher in Validated state"
-msgstr "Commitment Voucher in Validated state"
+msgid "Commitment Vouchers in Validated state"
+msgstr "Bons d'Engagement dans l'état Validé"
 
 #. modules: purchase, tender_flow
 #: view:purchase.order:0
@@ -68717,12 +68742,12 @@ msgstr "Dépenses prévues"
 msgid "You have to define a valid Main Type (in tab \"Nomenclature Selection\"), i.e. not \"To be defined\"."
 msgstr "You have to define a valid Main Type (in tab \"Nomenclature Selection\"), i.e. not \"To be defined\"."
 
-#. modules: account_override, financing_contract, product_asset
+#. modules: account_override, financing_contract, product_asset, account
 #: view:account.invoice:0
 #: field:financing.contract.contract,donor_id:0
 #: view:financing.contract.donor:0
 #: report:product.asset:0
-#: code:addons/account_override/invoice.py:434
+#: code:addons/account/invoice.py:397
 #, python-format
 msgid "Donor"
 msgstr "Bailleur"
@@ -69100,11 +69125,6 @@ msgstr "Line %s, system error: %s"
 msgid "Current instance already validated!"
 msgstr "Instance actuelle déjà validée!"
 
-#. module: account
-#: view:account.invoice:0
-msgid "(keep empty to use the current period)"
-msgstr "(A laisser vide pour utiliser la période en cours)"
-
 #. modules: stock_forecast, purchase, sales_followup
 #: selection:purchase.report,state:0
 #: selection:purchase.order.line,po_state:0
@@ -69293,11 +69313,6 @@ msgstr "Choisir entre l'interface simplifiée et l'interface étendue"
 msgid "Indicate if the catalogue is currently active."
 msgstr "Indiquer si le catalogue est actuellement actif."
 
-#. module: analytic_distribution
-#: view:account.commitment:0
-msgid "Search Commitment Voucher"
-msgstr "Rechercher Bon d'Engagement"
-
 #. module: sales_followup
 #: code:addons/sales_followup/sale_followup.py:402
 #: code:addons/sales_followup/sale_followup.py:518
@@ -69469,13 +69484,13 @@ msgstr "Automatique - Intersection"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Intermission Commitment Voucher"
-msgstr "Bon d'Engagement Intermission"
+msgid "Intermission Commitment Vouchers"
+msgstr "Bons d'Engagement Intermission"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Intersection Commitment Voucher"
-msgstr "Bon d'Engagement Intersection"
+msgid "Intersection Commitment Vouchers"
+msgstr "Bons d'Engagement Intersection"
 
 #. module: procurement
 #: field:procurement.order,close_move:0
@@ -70932,10 +70947,9 @@ msgstr "Afficher les boutons d'import"
 msgid "America/Indiana/Vincennes"
 msgstr "America/Indiana/Vincennes"
 
-#. modules: account_override, board, vertical_integration, msf_tolls
+#. modules: account_override, board, msf_tools
 #: report:addons/account_override/report/open_invoices_xls.mako:280
 #: report:addons/board/report/integrity.mako:82
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:265
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:74
 msgid "Report Date"
 msgstr "Date de génération"
@@ -74059,12 +74073,6 @@ msgstr "Genre"
 msgid "The model this field belongs to"
 msgstr "Le modèle auquel ce champ appartient"
 
-#. module: account_override
-#: code:addons/account_override/invoice.py:904
-#, python-format
-msgid "The type of the document %s is unknown."
-msgstr "Le type du document %s est inconnu."
-
 #. module: product_attributes, msf_tools
 #: selection:product.product,standard_ok:0
 #: selection:stock.pipe.per.product.instance.prod.lines,standard_ok:0
@@ -75633,10 +75641,17 @@ msgstr "Objet pour Recherche"
 msgid "Linked sale order line at synchro"
 msgstr "Linked sale order line at synchro"
 
-#. module: account_override
+#. modules: account, account_override, register_accounting
 #: view:account.invoice:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:229
 msgid "Stock Transfer Voucher"
-msgstr "Bon Client"
+msgstr "Bon de Transfert de Stock"
 
 #. module: product_asset
 #: model:ir.actions.act_window,name:product_asset.asset_2_events_normal_link
@@ -78378,8 +78393,8 @@ msgstr "- Commitments"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Commitment Voucher in Done state"
-msgstr "Commitment Voucher in Done state"
+msgid "Commitment Vouchers in Done state"
+msgstr "Bons d'Engement dans l'état Terminé"
 
 #. module: supplier_catalogue
 #: model:ir.module.module,shortdesc:supplier_catalogue.module_meta_information
@@ -78391,12 +78406,6 @@ msgstr "Supplier Catalogue"
 #, python-format
 msgid "Journal: %s"
 msgstr "Journal : %s"
-
-#. modules: account_override, vertical_integration
-#: report:addons/account_override/report/open_invoices_xls.mako:306
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
-msgid "Customer Refunds"
-msgstr "Remboursement Client"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,amount:0
@@ -78669,6 +78678,12 @@ msgstr "Comptes à Lettrer"
 #, python-format
 msgid "You cannot cancel or delete a supplier invoice linked to a PO."
 msgstr "Vous ne pouvez pas annuler ou supprimer une facture fournisseur liée à un BdC."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:654
+#, python-format
+msgid "You cannot cancel or delete an Intersection Supplier Invoice linked to a PO."
+msgstr "Vous ne pouvez pas annuler ou supprimer une Facture Fournisseur Intersection liée à un BdC."
 
 #. module: account
 #: view:account.move.line:0
@@ -79135,12 +79150,11 @@ msgstr "Le compte analytique de la Funding Pool sélectionné (%s) est bloqué p
 msgid "Base"
 msgstr "Base"
 
-#. modules: account, stock_override, vertical_integration
+#. modules: account, stock_override
 #: field:account.cashbox.line,subtotal:0
 #: report:destruction.location:0
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:354
 msgid "Sub Total"
 msgstr "Sous-total"
 
@@ -80721,6 +80735,7 @@ msgstr "Entrées fournisseurs pour la Cash Request"
 #: code:addons/register_accounting/wizard/wizard_register_import.py:570
 #: report:addons/account/report/free_allocation_report.mako:205
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:606
+#: field:wizard.account.invoice.line,cost_center_id:0
 #: field:dest.cc.link,cc_id:0
 #, python-format
 msgid "Cost Center"
@@ -81302,8 +81317,8 @@ msgstr "Vous aide à gérer vos ressources humaines en saisissant la structure R
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "External Commitment Voucher"
-msgstr "External Commitment Voucher"
+msgid "External Commitment Vouchers"
+msgstr "Bons d'Engagement Externes"
 
 #. module: hr
 #: field:hr.employee,address_id:0
@@ -81315,7 +81330,7 @@ msgstr "Adresse Professionnelle"
 msgid "Confirm the selected invoices"
 msgstr "Confirmer les factures sélectionnées"
 
-#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, vertical_integration, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
+#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
 #: field:account.entries.report,move_state:0
@@ -81502,7 +81517,6 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:supplier.catalogue,state:0
 #: field:tender.line,line_state:0
 #: field:sync_client.version,state:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:304
 #: field:automated.export.job,state:0
 #: field:sale.order,draft_cancelled:0
 #: field:finance.sync.query.activation_wizard,state:0
@@ -82131,9 +82145,8 @@ msgstr "Vous n'avez pas la permission d'écrire sur %s. Veuillez vérifier la co
 msgid "Uom to be defined"
 msgstr "UdM à définir"
 
-#. modules: account_override, vertical_integration
+#. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:345
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:299
 msgid "Total amt booking ccy"
 msgstr "Mnt total dev. d'enreg."
 
@@ -82476,7 +82489,7 @@ msgstr "SFTP connection succeeded"
 #: view:replenishment.segment.line.amc.past_fmc:0
 #: view:replenishment.segment.line.min_max_auto_supply.history:0
 #: field:view.expired.expiring.stock.lines,product_id:0
-#: field:account.commitment.line,po_line_product_id:0
+#: field:account.commitment.line,line_product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -85563,6 +85576,8 @@ msgstr "Statistiques Ecritures Analytiques"
 #: report:addons/stock/report/stock_reception_report_xls.mako:228
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:881
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:228
+#: view:account.commitment:0
+#: selection:account.commitment,cv_flow_type:0
 #, python-format
 msgid "Supplier"
 msgstr "Fournisseur"
@@ -87149,10 +87164,10 @@ msgid "No Intermission journal found for the current instance."
 msgstr "Pas de journal Intermission trouvé pour l'instance actuelle."
 
 #. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:209
+#: code:addons/account_override/account_invoice_sync.py:222
 #, python-format
-msgid "No Purchase journal found for the current instance."
-msgstr "Pas de journal des Achats trouvé pour l'instance actuelle."
+msgid "No Intersection Supplier Invoice journal found for the current instance."
+msgstr "Pas de journal Facture Fournisseur Intersection trouvé pour l'instance actuelle."
 
 #. module: msf_profile
 #: field:email.configuration,smtp_server:0
@@ -89399,7 +89414,7 @@ msgstr "Vos Comptes de Banque et Caisse"
 #: code:addons/analytic_distribution/account_commitment.py:212
 #, python-format
 msgid "You can only delete done commitments!"
-msgstr "Vous ne pouvez effacer que des obligations remplies!"
+msgstr "Vous ne pouvez effacer que des engagements terminés!"
 
 #. modules: msf_button_access_rights, sync_so
 #: model:ir.model,name:msf_button_access_rights.model_msf_button_access_rights_button_access_rule
@@ -89889,12 +89904,11 @@ msgstr "Cette catégorie de commande n'est pas cohérente avec le(s) produit(s) 
 msgid "Kit Creation"
 msgstr "Création d'un Kit "
 
-#. modules: account_override, vertical_integration, board, finance
+#. modules: account_override, board, finance
 #: report:addons/account_override/report/open_invoices_xls.mako:272
 #: report:addons/board/report/integrity.mako:78
 #: field:cash.request.expense,prop_instance_id:0
 #: field:cash.request.recap.expense,instance_id:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:257
 msgid "Prop. Instance"
 msgstr "Instance Prop."
 
@@ -90152,13 +90166,6 @@ msgstr " "
 msgid "Sweden"
 msgstr "Suède"
 
-#. modules: account, register_accounting
-#: code:addons/account/invoice.py:397
-#: selection:account.direct.invoice.wizard,type:0
-#, python-format
-msgid "Supplier Refund"
-msgstr "Remboursement Fournisseur"
-
 #. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
 #: selection:products.situation.report,controlled_substance:0
@@ -90329,10 +90336,11 @@ msgstr "Mode de Transport :"
 msgid "Applicable Type"
 msgstr "Type Applicable"
 
-#. modules: account, account_period_closing_level
+#. modules: account, account_period_closing_level, account_override
 #: model:ir.actions.act_window,name:account.action_invoice_tree3
 #: model:ir.ui.menu,name:account.menu_action_invoice_tree3
 #: view:account.period:0
+#: report:addons/account_override/report/open_invoices_xls.mako:308
 msgid "Customer Refunds"
 msgstr "Avoirs Client"
 
@@ -91351,13 +91359,14 @@ msgstr "Zone - Adresse"
 msgid "Purchase Orders Waiting Confirmation"
 msgstr "Bons de Commandes en attente de Confirmation"
 
-#. modules: purchase, analytic_distribution, purchase_override, account_override, register_accounting
+#. modules: purchase, analytic_distribution, purchase_override, account_override, register_accounting, sale
 #: field:account.commitment,line_ids:0
 #: view:account.commitment.line:0
 #: field:purchase.order.line,cv_line_ids:0
 #: field:purchase.order.merged.line,cv_line_ids:0
 #: field:account.invoice.line,cv_line_ids:0
 #: field:wizard.account.invoice.line,cv_line_ids:0
+#: field:sale.order.line,cv_line_ids:0
 msgid "Commitment Voucher Lines"
 msgstr "Lignes de Bon d'Engagement"
 
@@ -91821,7 +91830,7 @@ msgstr "Installez des plans comptables locaux pour correspondre aussi étroiteme
 #: code:addons/msf_partner/partner.py:580
 #, python-format
 msgid "%s Stock Transfer Voucher(s)"
-msgstr "%s Stock Transfer Voucher(s)"
+msgstr "%s Bon(s) de Transfert de Stock"
 
 #. module: tender_flow
 #: view:purchase.order.cancel.wizard:0
@@ -92372,11 +92381,18 @@ msgstr "\n"
 msgid "Mongolian / монгол"
 msgstr "Mongolian / монгол"
 
-#. modules: account_override, account, account_period_closing_level
+#. modules: account_override, account, account_period_closing_level, register_accounting
 #: report:account.invoice2:0
 #: model:ir.actions.act_window,name:account_override.action_intermission_in
 #: model:ir.ui.menu,name:account_override.menu_action_intermission_in
 #: view:account.period:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:224
 msgid "Intermission Voucher IN"
 msgstr "Bons Intermission IN"
 
@@ -92976,16 +92992,16 @@ msgid "3rd Party"
 msgstr "3rd Party"
 
 #. module: account
-#: code:addons/account/wizard/account_invoice_refund.py:148
+#: code:addons/account/wizard/account_invoice_refund.py:154
 #, python-format
-msgid "Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice"
-msgstr "Ne peut %s une facture qui est déjà lettrée, le lettrage de la facture devrait d'abord être annulé. Vous ne pouvez que Rembourser cette facture"
+msgid "Cannot %s an invoice which is already reconciled, it should be unreconciled first."
+msgstr "Ne peut %s une facture qui est déjà lettrée, son lettrage devrait d'abord être annulé."
 
 #. module: account
-#: code:addons/account/wizard/account_invoice_refund.py:161
+#: code:addons/account/wizard/account_invoice_refund.py:157
 #, python-format
-msgid "Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first."
-msgstr "Ne peut %s un Bon Intermission qui est déjà lettré, le lettrage du bon devrait d'abord être annulé."
+msgid "Cannot %s an invoice which is already reconciled, it should be unreconciled first. You can only Refund this invoice."
+msgstr "Ne peut %s une facture qui est déjà lettrée, son lettrage devrait d'abord être annulé. Vous ne pouvez que Rembourser cette facture."
 
 #. module: account
 #: code:addons/account/wizard/account_invoice_refund.py:0
@@ -95236,7 +95252,6 @@ msgstr "1er Délai de Transport"
 #: field:wizard.account.invoice,date_due:0
 #: field:wizard.import.cheque.lines,date_maturity:0
 #: report:addons/account_override/report/open_invoices_xls.mako:341
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:296
 msgid "Due Date"
 msgstr "Date d'Échéance"
 
@@ -95544,7 +95559,7 @@ msgstr "Prix changeant"
 msgid "wizard.export.po.validated"
 msgstr "wizard.export.po.validated"
 
-#. modules: account, account_mcdb, msf_homere_interface, register_accounting, account_hq_entries, account_override, msf_accrual, analytic_override, analytic_distribution, vertical_integration
+#. modules: account, account_mcdb, msf_homere_interface, register_accounting, account_hq_entries, account_override, msf_accrual, analytic_override, analytic_distribution
 #: report:combined.journals.report.pdf:0
 #: field:hq.entries,document_date:0
 #: report:account.analytic.line:0
@@ -95587,7 +95602,6 @@ msgstr "wizard.export.po.validated"
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:217
 #: field:wizard.advance.line,document_date:0
 #: field:wizard.invoice.line,document_date:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:290
 #: report:account.invoice2:0
 #: code:addons/account_override/res_company.py:40
 #: report:addons/account/report/export_invoice.mako:104
@@ -96856,7 +96870,7 @@ msgstr "Aperçu"
 msgid "product.likely.expire.report.item"
 msgstr "product.likely.expire.report.item"
 
-#. modules: sales_followup, account, msf_outgoing, vertical_integration, msf_config_locations, sale, account_override, sourcing, base, return_claim, stock_batch_recall, stock, msf_supply_doc_export
+#. modules: sales_followup, account, msf_outgoing, vertical_integration, msf_config_locations, sale, account_override, sourcing, base, return_claim, stock_batch_recall, stock, msf_supply_doc_export, analytic_distribution
 #: selection:account.bank.statement.line,type:0
 #: view:account.invoice:0
 #: view:account.invoice.report:0
@@ -96888,11 +96902,12 @@ msgstr "product.likely.expire.report.item"
 #: selection:stock.location,chained_location_type:0
 #: view:stock.move:0
 #: view:report.batch.recall:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:293
 #: field:shipment.add.pack.processor,partner_id:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:901
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:317
+#: view:account.commitment:0
+#: selection:account.commitment,cv_flow_type:0
 #, python-format
 msgid "Customer"
 msgstr "Client"
@@ -97796,7 +97811,7 @@ msgstr "Comptabilité Analytique"
 msgid "Available Shipped"
 msgstr "Disponible expédié"
 
-#. module: product_attributes, product, procurement_cycle, msf_tools
+#. module: product_attributes, product, procurement_cycle, msf_tools, product_nomenclature
 #: selection:product.product,state_ud:0
 #: model:product.status,name:product_attributes.status_4
 #: selection:product.mass.update,product_state:0
@@ -97807,6 +97822,8 @@ msgstr "Disponible expédié"
 #: selection:stock.pipe.per.product.instance.prod.lines,ud_state:0
 #: view:replenishment.parent.segment:0
 #: selection:replenishment.parent.segment,state_parent:0
+#: view:product.nomenclature:0
+#: selection:product.nomenclature,status:0
 msgid "Archived"
 msgstr "Archivé"
 
@@ -99247,7 +99264,7 @@ msgstr "Allumé "
 #: selection:wizard.account.invoice,type:0
 #: selection:account.invoice.line,invoice_type:0
 msgid "Customer Invoice"
-msgstr "Bon client"
+msgstr "Bon de Transfert de Stock"
 
 #. module: account
 #: field:account.analytic.Journal.report,date1:0
@@ -105325,6 +105342,12 @@ msgstr "Filtre non mis en oeuvre sur les Destinations."
 msgid "Filter not implemented on Funding Pools."
 msgstr "Filtre non mis en oeuvre sur les Funding Pools."
 
+#. module: account_override
+#: code:addons/account_override/invoice.py:359
+#, python-format
+msgid "Filter not implemented yet."
+msgstr "Filtre pas encore mis en oeuvre."
+
 #. module: analytic_override
 #: code:addons/analytic_override/analytic_account.py:312
 #, python-format
@@ -106059,12 +106082,6 @@ msgid "The requested report is too heavy to generate: requested %d lines, maximu
 msgstr "Le rapport demandé est trop volumineux pour être généré, %d lignes demandées, %d autorisées. Veuillez utiliser plus de filtres pour que ce rapport puisse être généré"
 
 #. module: account
-#: code:addons/account/wizard/account_invoice_refund.py:148
-#, python-format
-msgid "Can not %s invoice which is already reconciled, invoice should be unreconciled first."
-msgstr "Ne peut %s une facture qui est déjà lettrée, le lettrage de la facture devrait d'abord être annulé."
-
-#. module: account
 #: code:addons/account/invoice.py:480
 #, python-format
 msgid "Invoice '%s' is %s."
@@ -106086,6 +106103,16 @@ msgstr "réglée"
 #: field:account.invoice.refund,is_intermission:0
 msgid "Wizard opened from an Intermission Voucher"
 msgstr "Assistant ouvert depuis un Bon Intermission"
+
+#. module: analytic_distribution
+#: field:account.invoice.refund,is_stv:0
+msgid "Wizard opened from a Stock Transfer Voucher"
+msgstr "Assistant ouvert depuis un Bon de Transfert de Stock"
+
+#. module: analytic_distribution
+#: field:account.invoice.refund,is_isi:0
+msgid "Wizard opened from an Intersection Supplier Invoice"
+msgstr "Assistant ouvert depuis une Facture Fournisseur Intersection"
 
 #. module: account_override
 #: code:addons/account_override/invoice.py:1739
@@ -109222,7 +109249,7 @@ msgstr "Fractionner Bon Intermission OUT"
 #: view:account.invoice:0
 #: code:addons/account_override/invoice.py:1272
 msgid "Split Stock Transfer Voucher"
-msgstr "Fractionner Bon Client"
+msgstr "Fractionner Bon de Transfert de Stock"
 
 #. module: account_override
 #: view:account.invoice:0
@@ -111719,7 +111746,7 @@ msgstr "Suivi Lignes Bons Interm. OUT"
 #: code:addons/account/invoice.py:2159
 #, python-format
 msgid "STV lines follow-up"
-msgstr "Suivi Lignes Bons Clients"
+msgstr "Suivi Lignes Bons de Transfert de Stock"
 
 #. module: account_override
 #: code:addons/account_override/invoice.py:1682
@@ -111769,7 +111796,7 @@ msgstr "Statut ligne CdT"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:367
 msgid "STV status"
-msgstr "Statut Bon Client"
+msgstr "Statut Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:367
@@ -111784,7 +111811,7 @@ msgstr "Statut Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:368
 msgid "Reverse corresponding AJI? (STV)"
-msgstr "Ligne Analytique Correspondante Contrepassée ? (Bon Client)"
+msgstr "Ligne Analytique Correspondante Contrepassée ? (Bon de Transf. de Stock)"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:368
@@ -111799,7 +111826,7 @@ msgstr "Ligne Analytique Correspondante Contrepassée ? (Fact. Fourniss.)"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:364
 msgid "STV line sub total"
-msgstr "Sous-total ligne Bon Client"
+msgstr "Sous-total ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:364
@@ -111814,7 +111841,7 @@ msgstr "Sous-total ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:366
 msgid "STV line sub total functional currency"
-msgstr "Sous-total ligne Bon Client en devise fonctionnelle"
+msgstr "Sous-total ligne Bon de Transf. de Stock en devise fonctionnelle"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:366
@@ -111829,7 +111856,7 @@ msgstr "Sous-total ligne Fact. Fourniss. en devise fonctionnelle"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:358
 msgid "STV number"
-msgstr "Num. Bon Client"
+msgstr "Num. Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:358
@@ -111849,7 +111876,7 @@ msgstr "Num. ligne CdT"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:359
 msgid "STV line number"
-msgstr "Num. ligne Bon Client"
+msgstr "Num. ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:359
@@ -111864,7 +111891,7 @@ msgstr "Num. ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:360
 msgid "STV line description"
-msgstr "Description ligne Bon Client"
+msgstr "Description ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:360
@@ -111879,7 +111906,7 @@ msgstr "Description ligne Fact. Fournisseur"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:362
 msgid "STV line quantity"
-msgstr "Quantité ligne Bon Client"
+msgstr "Quantité ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:362
@@ -111894,7 +111921,7 @@ msgstr "Quantité ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:361
 msgid "STV line unit price"
-msgstr "Prix Unitaire ligne Bon Client"
+msgstr "Prix Unitaire ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:361
@@ -111909,7 +111936,7 @@ msgstr "Prix Unitaire ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:363
 msgid "STV line expense account code"
-msgstr "Code Compte de Charge ligne Bon Client"
+msgstr "Code Compte de Charge ligne Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:363
@@ -111924,7 +111951,7 @@ msgstr "Code Compte de Charge ligne Fact. Fourniss."
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:365
 msgid "STV currency"
-msgstr "Devise Bon Client"
+msgstr "Devise Bon de Transf. de Stock"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:365
@@ -111959,7 +111986,7 @@ msgstr "DÉTAILS COMMANDES DE TERRAIN"
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:410
 msgid "DETAILS STOCK TRANSFER VOUCHERS"
-msgstr "DÉTAILS BONS CLIENT"
+msgstr "DÉTAILS BONS DE TRANSFERT DE STOCK"
 
 #. module: finance
 #: report:addons/finance/report/fo_follow_up_finance_xls.mako:410
@@ -112834,14 +112861,13 @@ msgstr "Type de Bon d'Engagement"
 
 #. module: analytic_distribution
 #: field:account.commitment.line,po_line_id:0
-#: field:account.commitment.line,po_line_number:0
 msgid "PO Line"
 msgstr "Ligne du BC"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
-msgid "Done (for Administrator only)"
-msgstr "Terminé (pour l'Administrateur uniquement)"
+msgid "Force Done"
+msgstr "Forcer Terminé"
 
 #. module: analytic_distribution
 #: view:account.commitment:0
@@ -112852,6 +112878,184 @@ msgstr "Vous êtes sur le point de passer ce Bon d'Engagement à l'état \"Termi
 #: view:account.commitment.line:0
 msgid "Do you really want to delete this line?"
 msgstr "Voulez-vous vraiment supprimer cette ligne ?"
+
+#. module: unifield_setup
+#: view:customer.commitment.setup:0
+#: model:ir.actions.act_window,name:unifield_setup.action_customer_commitment_voucher_setup
+msgid "Activate Customer Commitment Vouchers"
+msgstr "Activer les Bons d'Engagement Client"
+
+#. module: unifield_setup
+#: field:customer.commitment.setup,has_customer_commitment:0
+msgid "CCV already created"
+msgstr "BEC déjà créés"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Customer Commitment Voucher"
+msgstr "Bon d'Engagement Client"
+
+#. module: sale
+#: code:addons/sale/sale_order.py:1954
+#, python-format
+msgid "Customer Commitment Voucher %s has been created."
+msgstr "Le Bon d'Engagement Client %s a été créé."
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+#: model:ir.ui.menu,name:analytic_distribution.menu_account_commitment_from_fo
+msgid "Customer Commitment Vouchers"
+msgstr "Bons d'Engagement Client"
+
+#. module: unifield_setup
+#: field:customer.commitment.setup,customer_commitment:0
+#: field:unifield.setup.configuration,customer_commitment:0
+msgid "Does the system allow Customer Commitment Vouchers ?"
+msgstr "Est-ce que le système autorise les Bons d'Engagement Client ?"
+
+#. module: analytic_distribution
+#: field:account.commitment.line,so_line_id:0
+msgid "SO Line"
+msgstr "Ligne FO"
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+msgid "Supplier Commitment Voucher"
+msgstr "Bon d'Engagement Fournisseur"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:2919
+#, python-format
+msgid "Supplier Commitment Voucher %s has been created."
+msgstr "Le Bon d'Engagement Fournisseur %s a été créé."
+
+#. module: analytic_distribution
+#: view:account.commitment:0
+#: model:ir.ui.menu,name:analytic_distribution.menu_commitment_entries
+msgid "Supplier Commitment Vouchers"
+msgstr "Bons d'Engagement Fournisseur"
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:474
+#, python-format
+msgid "There is no income account defined for this line: %s (id:%d)"
+msgstr "Il n'y a pas de compte de produit défini pour cette ligne: %s (id:%d)"
+
+#. module: analytic_distribution
+#: field:account.commitment,cv_flow_type:0
+msgid "Type of CV"
+msgstr "Type de BE"
+
+#. module: unifield_setup
+#: view:customer.commitment.setup:0
+msgid "Customer Commitment Vouchers already generated on this instance. If you deactivate this feature, the menu will not be hidden."
+msgstr "Des Bons d'Engagement Client existent sur cette instance. Le menu ne sera pas caché si vous désactivez cette fonctionnalité."
+
+#. modules: account_override, account, msf_instance, register_accounting
+#: field:account.journal,inv_doc_type:0
+#: field:account.invoice,doc_type:0
+#: field:account.invoice.line,line_doc_type:0
+#: field:account.journal.fake,inv_doc_type:0
+#: field:wizard.account.invoice,doc_type:0
+#: field:wizard.account.invoice.line,line_doc_type:0
+msgid "Document Type"
+msgstr "Type de Document"
+
+#. modules: account_override, register_accounting
+#: field:account.invoice,real_doc_type:0
+#: field:wizard.account.invoice,real_doc_type:0
+msgid "Real Document Type"
+msgstr "Type de Document Réel"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Display Invoice"
+msgstr "Afficher la Facture"
+
+#. modules: account_override, account, account_period_closing_level
+#: model:ir.actions.act_window,name:account.action_str
+#: model:ir.ui.menu,name:account.menu_action_str
+#: report:addons/account_override/report/open_invoices_xls.mako:308
+#: view:account.period:0
+msgid "Stock Transfer Refunds"
+msgstr "Avoirs de Transfert de Stock"
+
+#. modules: account_override, register_accounting
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:231
+msgid "Stock Transfer Refund"
+msgstr "Avoir de Transfert de Stock"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:574
+#, python-format
+msgid "%s Stock Transfer Refund(s)"
+msgstr "%s Avoir(s) de Transfert de Stock"
+
+#. modules: account_override, account, account_period_closing_level
+#: model:ir.actions.act_window,name:account.action_isi
+#: model:ir.ui.menu,name:account.menu_action_isi
+#: report:addons/account_override/report/open_invoices_xls.mako:306
+#: view:account.period:0
+msgid "Intersection Supplier Invoices"
+msgstr "Factures Fournisseur Intersection"
+
+#. modules: account_override, register_accounting, account
+#: report:account.invoice2:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:232
+msgid "Intersection Supplier Invoice"
+msgstr "Facture Fournisseur Intersection"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:572
+#, python-format
+msgid "%s Intersection Supplier Invoice(s)"
+msgstr "%s Facture(s) Fournisseur Intersection"
+
+#. modules: account_override, account, account_period_closing_level
+#: model:ir.actions.act_window,name:account.action_isr
+#: model:ir.ui.menu,name:account.menu_action_isr
+#: report:addons/account_override/report/open_invoices_xls.mako:306
+#: view:account.period:0
+msgid "Intersection Supplier Refunds"
+msgstr "Avoirs Fournisseur Intersection"
+
+#. modules: account_override, register_accounting, account
+#: report:account.invoice2:0
+#: selection:account.invoice,doc_type:0
+#: selection:account.invoice,real_doc_type:0
+#: selection:account.invoice.line,line_doc_type:0
+#: selection:wizard.account.invoice,doc_type:0
+#: selection:wizard.account.invoice,real_doc_type:0
+#: selection:wizard.account.invoice.line,line_doc_type:0
+#: code:addons/account_override/invoice.py:233
+msgid "Intersection Supplier Refund"
+msgstr "Avoir Fournisseur Intersection"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:573
+#, python-format
+msgid "%s Intersection Supplier Refund(s)"
+msgstr "%s Avoir(s) Fournisseur Intersection"
+
+#. modules: account_period_closing_level, product_attributes, register_accounting
+#: code:addons/account_period_closing_level/account_period.py:516
+#: code:addons/product_attributes/product_attributes.py:3013
+#: code:addons/register_accounting/account_bank_statement.py:2823
+#, python-format
+msgid "Impossible to retrieve the view to display."
+msgstr "Impossible de récupérer la vue à afficher."
 
 #. module: msf_tools
 #: code:addons/msf_tools/msf_tools.py:977
@@ -112909,3 +113113,98 @@ msgstr "Total Banque"
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:448
 msgid "Total Bank:"
 msgstr "Total Banque :"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1926
+#, python-format
+msgid "%d FMC(s) removed on %d line(s)"
+msgstr "%d PMC(s) supprimées sur %d ligne(s)"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1898
+#, python-format
+msgid "No outdated FMC"
+msgstr "Aucune PMC dépassée"
+
+#. module: procurement_cycle
+#: view:replenishment.segment:0
+msgid "Remove outdated FMCs"
+msgstr "Supprimer les PMCs dépassées"
+
+#. module: sync_client
+#: code:addons/sync_client/wizard/view_entity_id.py:44
+#, python-format
+msgid "Last update: %s"
+msgstr "Dernière mise à jour de sync: %s"
+
+#. module: account
+#: code:addons/account/invoice.py:1271
+#, python-format
+msgid "STV: "
+msgstr "BTS : "
+
+#. module: account
+#: code:addons/account/invoice.py:1272
+#, python-format
+msgid "STR: "
+msgstr "ATS : "
+
+#. module: account
+#: code:addons/account/invoice.py:1273
+#, python-format
+msgid "CR: "
+msgstr "AC : "
+
+#. module: account
+#: code:addons/account/invoice.py:1274
+#, python-format
+msgid "DN: "
+msgstr "ND : "
+
+#. module: account
+#: code:addons/account/invoice.py:1275
+#, python-format
+msgid "IVO: "
+msgstr "BIO : "
+
+#. module: account
+#: code:addons/account/invoice.py:1276
+#, python-format
+msgid "SI: "
+msgstr "FF : "
+
+#. module: account
+#: code:addons/account/invoice.py:1277
+#, python-format
+msgid "DI: "
+msgstr "FD : "
+
+#. module: account
+#: code:addons/account/invoice.py:1278
+#, python-format
+msgid "SR: "
+msgstr "AF : "
+
+#. module: account
+#: code:addons/account/invoice.py:1279
+#, python-format
+msgid "ISI: "
+msgstr "FFI : "
+
+#. module: account
+#: code:addons/account/invoice.py:1280
+#, python-format
+msgid "ISR: "
+msgstr "AFI : "
+
+#. module: account
+#: code:addons/account/invoice.py:1281
+#, python-format
+msgid "DON: "
+msgstr "DON : "
+
+#. module: account
+#: code:addons/account/invoice.py:1282
+#, python-format
+msgid "IVI: "
+msgstr "BII : "

@@ -18,3 +18,4 @@ TRUE,CAS,Cash,cash
 TRUE,CHK,Cheque,cash
 TRUE,REV,Revaluation,revaluation
 TRUE,ENGI,International Engagement,engagement
+TRUE,ISI,Intersection Supplier Invoice,purchase

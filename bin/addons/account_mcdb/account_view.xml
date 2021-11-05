@@ -87,30 +87,6 @@
             </field>
         </record>
 
-    <!-- Account analytic line tree view -->
-        <record model="ir.ui.view" id="account_analytic_line_default">
-            <field name="name">account.analytic.line.default</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
-            <field name="priority" eval="40"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree/field[@name='journal_id']" position="before">
-                        <field name="is_reversal" invisible="1"/>
-                        <field name="journal_type" invisible="1"/>
-                        <field name="is_corrigible" invisible="1"/>
-                        <button name="button_corrections" type="object" string="Accounting info/correction"
-                            attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
-                        <field name="is_reallocated" invisible="1"/>
-                        <field name="last_corrected_id" invisible="1"/>
-                        <field name="is_engi" invisible="1"/>
-                        <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False), ('last_corrected_id', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
-                   </xpath>
-                </data>
-            </field>
-        </record>
-
     <!-- Actions -->
         <act_window id="analytic_distribution.action_mass_reallocation"
             name="Mass reallocation"
