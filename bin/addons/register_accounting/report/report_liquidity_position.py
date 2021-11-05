@@ -38,7 +38,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.total_func_calculated_balance = 0
         self.total_func_register_balance = 0
         self.grand_total_reg_currency = {}
-        self.reg_states = []
 
         self.localcontext.update({
             'getRegistersByType': self.getRegistersByType,
@@ -97,17 +96,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
         journal_obj = self.pool.get('account.journal')
         journals = journal_obj.browse(self.cr, self.uid, self.getPendingCheques()['registers'].keys(), fields_to_fetch=['code'])
         return [journal.id for journal in sorted(journals, key=lambda j: j.code)]
-
-    def _get_reg_state(self, reg):
-        """
-        Returns the String corresponding to the state of the register in the current language.
-        """
-        if not self.reg_states:
-            # register states as a list of tuples (key, value with the right language context)
-            self.reg_states = self.pool.get('account.bank.statement').\
-                fields_get(self.cr, self.uid, ['state'], context={'lang': self.localcontext.get('lang')})['state']['selection']
-        reg_state = reg.state and [v for k, v in self.reg_states if k == reg.state] or []
-        return reg_state and reg_state[0] or ''
 
     def getRegistersByType(self):
         reg_types = {}
@@ -172,7 +160,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 'instance': reg.instance_id.name,
                 'journal_code': journal.code,
                 'journal_name': journal.name,
-                'state': self._get_reg_state(reg),
+                'state': reg.state and self.getSel(reg, 'state') or '',
                 'calculated_balance': calc_bal,
                 'register_balance': reg_bal,
                 'opening_balance': reg.balance_start,
@@ -210,7 +198,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_data = self.getRegisters()[reg_type]['registers']
         return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])
 
-    def getRegisterStateByPeriod(self, reg, report_period_id=None):
+    def getRegisterState(self, reg, report_period_id=None):
         '''
         Returns the register state (String) for the period of the report.
         If the register doesn't exist for this period, returns 'Not Created'.
@@ -223,7 +211,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                                                                         ('period_id', '=', report_period_id)])
         if reg_for_selected_period_id:
             reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
-            state = self._get_reg_state(reg_for_selected_period)
+            state = reg_for_selected_period.state and self.getSel(reg_for_selected_period, 'state') or ''
         else:
             state = _('Not Created')
         return state
@@ -343,7 +331,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                     'instance': reg.instance_id.name,
                     'journal_code': journal.code,
                     'journal_name': journal.name,
-                    'state': self.getRegisterStateByPeriod(reg),
+                    'state': self.getRegisterState(reg),
                     'bank_journal_code': journal.bank_journal_id.code,
                     'bank_journal_name': journal.bank_journal_id.name,
                     'amount_reg_currency': amount_reg_currency,

@@ -1173,7 +1173,7 @@ class cash_request_liquidity(osv.osv):
         reg = reg_obj.browse(cr, uid, reg_id, context=context)
         state = ''
         if liquidity_pos_report and reg and period_ids:
-            state = liquidity_pos_report.getRegisterStateByPeriod(reg, report_period_id=period_ids[0])
+            state = liquidity_pos_report.getRegisterState(reg, report_period_id=period_ids[0])
         return state
 
     def create(self, cr, uid, vals, context=None):
