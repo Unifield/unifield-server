@@ -309,6 +309,7 @@ class so_po_common(osv.osv_memory):
         return label_ids
 
     def retrieve_so_header_data(self, cr, uid, source, header_result, header_info, context):
+        partner_obj = self.pool.get('res.partner')
         if 'notes' in header_info:
             header_result['notes'] = header_info.get('notes')
             header_result['note'] = header_info.get('notes')
@@ -344,7 +345,7 @@ class so_po_common(osv.osv_memory):
 
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context=context)
-        del_inv_addr_ids = self.pool.get('res.partner').address_get(cr, uid, [partner_id], ['delivery', 'invoice'])
+        del_inv_addr_ids = partner_obj.address_get(cr, uid, [partner_id], ['delivery', 'invoice'])
 
         price_list = False
         # US-379: Fixed the price list retrieval
@@ -368,6 +369,19 @@ class so_po_common(osv.osv_memory):
         header_result['partner_invoice_id'] = del_inv_addr_ids['invoice']
         header_result['pricelist_id'] = price_list
         header_result['currency_id'] = currency_id
+
+        if header_info.get('dest_partner_id') and header_info.get('dest_partner_id', {}).get('name'):
+            if header_info['dest_partner_id'].get('partner_type') == 'external':
+                dpo_partner_type = 'external'
+            else:
+                dpo_partner_type = partner_type
+            dpo_partner_ids = partner_obj.search(cr, uid, [('name', '=',  header_info['dest_partner_id']['name']), ('active', '=', True), ('partner_type', '=', dpo_partner_type)], context=context)
+            if not dpo_partner_ids:
+                raise Exception, "%s partner %s, not found. Please create the partner." % (dpo_partner_type, header_info['dest_partner_id']['name'])
+            header_result['dpo_partner_id'] = dpo_partner_ids[0]
+            header_result['partner_shipping_id'] = partner_obj.address_get(cr, uid, [dpo_partner_ids[0]], ['delivery'])['delivery']
+            header_result['order_type'] = 'regular'
+
         return header_result
 
     def check_merge(self, cr, uid, prod_id):

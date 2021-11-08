@@ -389,7 +389,7 @@ class sale_order_line(osv.osv):
             ('type', '=', picking_data['type']),
             ('subtype', '=', picking_data['subtype']),
             ('sale_id', '=', picking_data['sale_id']),
-            ('partner_id2', '=', sol.order_partner_id.id),
+            ('partner_id2', '=', sol.order_id.partner_shipping_id.partner_id.id),
             ('state', 'in', state_dom),
         ]
 

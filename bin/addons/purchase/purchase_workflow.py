@@ -780,7 +780,7 @@ class purchase_order_line(osv.osv):
                     created = True
                 incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)
                 if created:
-                    if sourced_on_dpo:
+                    if sourced_on_dpo and (not pol.from_dpo_partner_type or pol.from_dpo_partner_type == 'external'):
                         wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_shipped', cr)
                     else:
                         wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
