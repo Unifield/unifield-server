@@ -321,7 +321,7 @@
           <Data ss:Type="String">${_('Journal Name')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Status')|x}</Data>
+          <Data ss:Type="String">${_('State')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Period')|x}</Data>
@@ -477,7 +477,7 @@
           <Data ss:Type="String">${_('Journal Name')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Status')|x}</Data>
+          <Data ss:Type="String">${_('State')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Period')|x}</Data>

@@ -35459,8 +35459,6 @@ msgstr "    - %s :\n"
 #: field:cash.request.liquidity.cash,status:0
 #: field:cash.request.liquidity.cheque,status:0
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:173
-#: report:addons/register_accounting/report/liquidity_position_xls.mako:324
-#: report:addons/register_accounting/report/liquidity_position_xls.mako:476
 #: field:product.history.consumption,fake_status:0
 #: field:product.history.consumption,status:0
 #: field:product.likely.expire.report,fake_status:0
@@ -81548,6 +81546,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:replenishment.consolidated_oc.import,state:0
 #: field:replenishment.parent.segment,state_parent:0
 #: field:wizard.return.from.unit.import,state:0
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:0
 #: report:liquidity.position.pdf:0
 #, python-format
 msgid "State"
