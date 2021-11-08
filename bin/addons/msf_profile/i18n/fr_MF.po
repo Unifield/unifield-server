@@ -81548,14 +81548,10 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:replenishment.consolidated_oc.import,state:0
 #: field:replenishment.parent.segment,state_parent:0
 #: field:wizard.return.from.unit.import,state:0
+#: report:liquidity.position.pdf:0
 #, python-format
 msgid "State"
 msgstr "Statut"
-
-#. module: register_accounting
-#: report:liquidity.position.pdf:0
-msgid "State"
-msgstr "Etat"
 
 #. module: sourcing
 #: view:sale.order.line:0
