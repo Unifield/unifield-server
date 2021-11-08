@@ -113096,3 +113096,9 @@ msgstr "BII : "
 #, python-format
 msgid "Several products have been selected (ticked). This report can only be displayed for one product"
 msgstr "Plusieurs produits ont été sélectionnés (cochés). Ce rapport est uniquement utilisable avec un seul produit"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1870
+#, python-format
+msgid "%s activation is not allowed at project"
+msgstr "%s activation non autorisée au projet"
