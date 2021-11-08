@@ -38757,6 +38757,7 @@ msgstr "PO with name %s not found"
 #: view:res.currency.table:0
 #: field:res.currency.table,currency_ids:0
 #: view:product.pricelist:0
+#: code:addons/account_period_closing_level/account_period.py:646
 msgid "Currencies"
 msgstr "Devises"
 
@@ -95692,12 +95693,6 @@ msgstr "UdM livrée"
 #: view:import_category:0
 msgid "Import category in progress"
 msgstr "Import Catégorie en cours"
-
-#. module: account_period_closing_level
-#: code:addons/account_period_closing_level/account_period.py:623
-#, python-format
-msgid "Curencies"
-msgstr "Curencies"
 
 #. module: sale
 #: help:sale.order,parent_order_name:0

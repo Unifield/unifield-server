@@ -643,7 +643,7 @@ class account_period(osv.osv):
         # Default buttons
         context.update({'search_default_active': 1})
         return {
-            'name': _('Curencies'),
+            'name': _('Currencies'),
             'type': 'ir.actions.act_window',
             'res_model': 'res.currency',
             'target': 'current',
