@@ -29,7 +29,7 @@ COMPATS = {
     'loan':          ['internal', 'intermission', 'section', 'external'],
     'donation_exp':  ['internal', 'intermission', 'section'],
     'in_kind':       ['external', 'esc'],
-    'direct':        ['external', 'esc'],
+    'direct':        ['external', 'esc', 'intermission', 'section'],
     'purchase_list': ['external'],
 }
 
