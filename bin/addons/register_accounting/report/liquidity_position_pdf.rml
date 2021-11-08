@@ -56,7 +56,7 @@
 
         <blockTable htmlSpans="1" style="table_header" colWidths="256mm">
         <tr>
-          <td><para style="center"><b>[[ reg_type.title() ]]</b></para></td>
+          <td><para style="center"><b>[[ translate(reg_type.title()) ]]</b></para></td>
         </tr>
       </blockTable>
       <blockTable htmlSpans="1" style="table_header" colWidths="36mm,36mm,14mm,30mm,30mm,30mm,10mm,30mm,30mm,10mm">
@@ -66,10 +66,10 @@
           <td><para style="text">State</para></td>
           <td><para style="text">Starting Balance</para></td>
           <td><para style="text">Calculated Balance</para></td>
-          <td><para style="text">[[ reg_type == 'cash' and 'Cash Box Balance' or 'Bank Statement Balance']]</para></td>
+          <td><para style="text">[[ reg_type == 'cash' and translate("Cash Box Balance") or translate("Bank Statement Balance")]]</para></td>
           <td><para style="text">Reg. ccy</para></td>
           <td><para style="text">Calculated Balance</para></td>
-          <td><para style="text">[[ reg_type == 'cash' and 'Cash Box Balance' or 'Bank Statement Balance']]</para></td>
+          <td><para style="text">[[ reg_type == 'cash' and translate("Cash Box Balance") or translate("Bank Statement Balance")]]</para></td>
           <td><para style="text">Fun. ccy</para></td>
         </tr>
         <tr>
@@ -105,7 +105,7 @@
 
       <blockTable htmlSpans="1" style="table_header" colWidths="186mm,30mm,30mm,10mm">
         <tr>
-          <td><para style="right"><b>Total [[ reg_type ]]</b></para></td>
+          <td><para style="right"><b>[[ reg_type == 'cash' and translate("Total Cash") or translate("Total Bank") ]]</b></para></td>
           <td><para style="right">[[ formatLang(getReg()[reg_type]['func_amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
           <td><para style="right">[[ formatLang(getReg()[reg_type]['func_amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
           <td><para style="text">[[ getFuncCurrency() ]] </para></td>
