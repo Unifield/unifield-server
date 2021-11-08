@@ -113090,3 +113090,9 @@ msgstr "DON : "
 #, python-format
 msgid "IVI: "
 msgstr "BII : "
+
+#. module: specific_rules
+#: code:addons/specific_rules/specific_rules.py:1252
+#, python-format
+msgid "Several products have been selected (ticked). This report can only be displayed for one product"
+msgstr "Plusieurs produits ont été sélectionnés (cochés). Ce rapport est uniquement utilisable avec un seul produit"
