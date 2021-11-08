@@ -181,8 +181,8 @@
         </tr>
         <tr>
             <td class="side_spacing" align="left">
-                This wizard will export all data that matches the current search criteria to a CSV file.
-                You can export all data or only the fields that can be reimported after modification.
+                ${_("This wizard will export all data that matches the current search criteria to a CSV file. "
+                    "You can export all data or only the fields that can be reimported after modification.")}
             </td>
         </tr>
         <tr>
@@ -206,7 +206,7 @@
                             </select>
                         </td>
                         <td class="label">
-                            <label for="all_records">Export all query results: (<span style="color: #ff0000;">could impact machine performance</span>):</label>
+                            <label for="all_records">${_("Export all query results:")} (<span style="color: #ff0000;">${_("could impact machine performance")}</span>):</label>
                         </td>
                         <td>
                             <input type="checkbox" id="all_records" name="all_records" value="1"
