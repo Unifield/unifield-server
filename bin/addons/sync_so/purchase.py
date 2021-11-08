@@ -24,7 +24,6 @@ import netsvc
 
 import logging
 import time
-from tools.translate import _
 import uuid
 
 from sync_client import get_sale_purchase_logger
@@ -470,97 +469,6 @@ class purchase_order_line_sync(osv.osv):
 purchase_order_line_sync()
 
 
-class purchase_order_line_to_split(osv.osv):
-    _name = 'purchase.order.line.to.split'
-    _rec_name = 'line_id'
-
-    _columns = {
-        'line_id': fields.many2one(
-            'purchase.order.line',
-            string='Original line',
-            readonly=True,
-            required=False,
-            ondelete='cascade',
-        ),
-        'order_id': fields.many2one(
-            'purchase.order',
-            string='Purchase order',
-            readonly=True,
-            required=False,
-            ondelete='cascade',
-        ),
-        'original_qty': fields.float(
-            string='Original qty',
-            required=False,
-            readonly=True,
-        ),
-        'new_line_qty': fields.float(
-            digits=(16,2),
-            string='New line qty',
-            required=True,
-            readonly=True,
-        ),
-        'sync_order_line_db_id': fields.text(
-            string='Sync Order line DB ID of the new created line',
-            readonly=True,
-            required=True,
-            index=1,
-        ),
-        'new_sync_order_line_db_id': fields.text(
-            string='Sync Order line DB ID of the new created line',
-            readonly=True,
-            required=True,
-            index=1,
-        ),
-        'splitted': fields.boolean(
-            string='Is ran ?',
-            readonly=True,
-            index=1,
-        ),
-    }
-
-    def create_from_sync_message(self, cr, uid, source, line_info, context=None):
-        """
-        Create a record of purchase.order.line.to.split from the sync. messages
-        """
-        pol_obj = self.pool.get('purchase.order.line')
-
-        if context is None:
-            context = {}
-
-        lid = line_info.to_dict()
-        line_vals = {}
-        if 'old_sync_order_line_db_id' in lid:
-            pol_ids = pol_obj.search(cr, uid, [
-                ('sync_order_line_db_id', '=', lid['old_sync_order_line_db_id'])
-            ], context=context)
-            if not pol_ids:
-                line_vals.update({
-                    'original_qty': 0.00,
-                    'new_line_qty': lid.get('new_line_qty', 0.00),
-                    'sync_order_line_db_id': lid.get('old_sync_order_line_db_id'),
-                    'new_sync_order_line_db_id': lid.get('new_sync_order_line_db_id'),
-                })
-            else:
-                pol_brw = pol_obj.browse(cr, uid, pol_ids[0], context=context)
-                line_vals.update({
-                    'line_id': pol_brw.id,
-                    'order_id': pol_brw.order_id.id,
-                    'original_qty': lid.get('old_line_qty', pol_brw.product_qty),
-                    'new_line_qty': lid.get('new_line_qty', 0.00),
-                    'sync_order_line_db_id': lid.get('new_sync_order_line_db_id'),
-                    'new_sync_order_line_db_id': lid.get('new_sync_order_line_db_id'),
-                })
-            self.create(cr, uid, line_vals, context=context)
-        else:
-            raise Exception, "No Order line DB ID given in the sync. message"
-
-        return
-
-
-purchase_order_line_to_split()
-
-
 class purchase_order_sync(osv.osv):
     _inherit = "purchase.order"
     _logger = logging.getLogger('------sync.purchase.order')
@@ -603,54 +511,6 @@ class purchase_order_sync(osv.osv):
         'po_updated_by_sync': False,
         'is_validated_and_synced': False,
     }
-
-    def manage_split_po_lines(self, cr, uid, po_id, context=None):
-        """
-        Split the PO lines according to split FO lines
-        """
-        split_po_line_ids = self.pool.get('purchase.order.line.to.split').search(cr, uid, [
-            ('splitted', '=', False),
-        ], context=context)
-
-        done_ids = []
-        for spl_brw in self.pool.get('purchase.order.line.to.split').browse(cr, uid, split_po_line_ids, context=context):
-            pol_id = False
-            if not spl_brw.line_id:
-                already_pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
-                                                                              [('sync_order_line_db_id', '=',
-                                                                                spl_brw.new_sync_order_line_db_id)],
-                                                                              limit=1, order='NO_ORDER', context=context)
-                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', spl_brw.sync_order_line_db_id)], context=context)
-                if not pol_ids or already_pol_ids:
-                    continue
-                else:
-                    pol_id = pol_ids[0]
-            else:
-                pol_id = spl_brw.line_id.id
-
-            pol_brw = self.pool.get('purchase.order.line').browse(cr, uid, pol_id, context=context)
-            if pol_brw.order_id.id != po_id:
-                continue
-
-            if pol_brw.product_qty < spl_brw.new_line_qty + 1:
-                self.pool.get('purchase.order.line').write(cr, uid, [pol_brw.id], {'product_qty': pol_brw.product_qty + spl_brw.new_line_qty}, context=context)
-                pol_brw = self.pool.get('purchase.order.line').browse(cr, uid, pol_brw.id, context=context)
-
-            split_id = self.pool.get('split.purchase.order.line.wizard').create(cr, uid, {
-                'purchase_line_id': pol_brw.id,
-                'original_qty': pol_brw.product_qty,
-                'old_line_qty': pol_brw.product_qty - spl_brw.new_line_qty,
-                'new_line_qty': spl_brw.new_line_qty,
-            }, context=context)
-            context['split_sync_order_line_db_id'] = spl_brw.new_sync_order_line_db_id
-            self.pool.get('split.purchase.order.line.wizard').split_line(cr, uid, split_id, context=context)
-            del context['split_sync_order_line_db_id']
-
-            done_ids.append(spl_brw.id)
-
-        self.pool.get('purchase.order.line.to.split').write(cr, uid, done_ids, {'splitted': True}, context=context)
-
-        return
 
 
     # UF-2267: Added a new method to update the reference of the FO back to the PO
@@ -770,63 +630,6 @@ class purchase_order_sync(osv.osv):
         return po_ids[0]
 
 
-    def check_mandatory_fields(self, cr, uid, so_dict):
-        if not so_dict.get('delivery_confirmed_date'):
-            raise Exception, "The delivery confirmed date is missing - please verify the values of the sync message!"
-
-        if not so_dict.get('state'):
-            raise Exception, "The state of the split FO is missing - please verify the values of the sync message!"
-
-    # UTP-872: If the PO is a split one, then still allow it to be confirmed without po_line
-    def _hook_check_po_no_line(self, po, context):
-        if not po.split_po and not po.order_line:
-            raise osv.except_osv(_('Error !'), _('You can not confirm purchase order without Purchase Order Lines.'))
-
-    def validated_fo_update_original_po(self, cr, uid, source, so_info, context=None):
-        if not context:
-            context = {}
-        self._logger.info("+++ Update the original PO at %s when the relevant FO at %s got validated"%(cr.dbname, source))
-
-        so_po_common = self.pool.get('so.po.common')
-        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
-
-        # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner
-        if not po_id:
-            if context.get('restore_flag'):
-                # UF-1830: Create a message to remove the invalid reference to the inexistent document
-                so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)
-                return "Recovery: the FO " + so_info.name + " does not exist any more due to recovery. The reference to it will be set to void"
-            raise Exception, "Cannot find the original PO with the given info."
-
-        so_dict = so_info.to_dict()
-
-        self.manage_split_po_lines(cr, uid, po_id, context=context)
-
-        header_result = {}
-        so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, po_id, False, True, False, context)
-
-        header_result['po_updated_by_sync'] = True
-
-        # UTP-952: If the partner is section or intermission, remove the AD
-        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
-        if partner_type in ['section', 'intermission'] and 'analytic_distribution_id' in header_result:
-            del header_result['analytic_distribution_id']
-
-        original_po = self.browse(cr, uid, po_id, context=context)
-        # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
-        header_result['cross_docking_ok'] = original_po['cross_docking_ok']
-        header_result['location_id'] = original_po.location_id.id
-
-        default = {}
-        default.update(header_result)
-
-        self.write(cr, uid, po_id, default, context=context)
-
-        message = "The PO " + original_po.name + " is updated by sync as its partner FO " + so_info.name + " got updated at " + source
-        self._logger.info(message)
-        return message
-
     def msg_close_filter(self, cr, uid, rule, context=None):
         """
         Called by PO close message rule at RW
@@ -852,98 +655,5 @@ class purchase_order_sync(osv.osv):
         logger = get_sale_purchase_logger(cr, uid, self, id, context=context)
         logger.action_type = 'creation'
         logger.is_product_added |= (len(values.get('order_line', [])) > 0)
-
-    def create_split_po(self, cr, uid, source, so_info, context=None):
-        # deprecated used only to manage SLL migration
-
-        so_po_common = self.pool.get('so.po.common')
-        pol_obj = self.pool.get('purchase.order.line')
-        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
-        if not po_id:
-            message = 'Received message to split po %s, but PO not found' % (so_info.name, )
-            self._logger.info(message)
-            return message
-
-        original_po = self.browse(cr, uid, po_id, context=context)
-        if original_po.name[-2] == '-' and original_po.name[-1] in ['1', '2', '3']:
-            message = "The PO split " + original_po.name + " exists already in the system, linked to " + so_info.name + " at " + source + ". The message is ignored."
-            self._logger.info(message)
-            return message
-
-        for x in so_info.order_line:
-            if x.sync_order_line_db_id and 'FO' in x.sync_order_line_db_id and x.source_sync_line_id:
-                pol_ids = pol_obj.search(cr, uid, [('order_id', '=', po_id), ('sync_order_line_db_id', '=', x.source_sync_line_id), ('sync_linked_sol', '=', False)])
-                if pol_ids:
-                    pol_obj.write(cr, uid, pol_ids, {'sync_linked_sol': so_po_common.migrate_ref(x.sync_order_line_db_id)}, context=context)
-
-        self.write(cr, uid, [po_id], {'split_during_sll_mig': True})
-        return True
-
-    def update_split_po(self, cr, uid, source, so_info, context=None):
-        # deprecated used only to manage ssl migration
-        if not context:
-            context = {}
-        self._logger.info("+++ Update the split POs at %s when the sourced FO at %s got confirmed"%(cr.dbname, source))
-        so_po_common = self.pool.get('so.po.common')
-
-        so_dict = so_info.to_dict()
-        so_po_common = self.pool.get('so.po.common')
-        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
-
-
-        if not po_id:
-            raise Exception, "The split PO linked to " + so_info.name + "at " + source + " not found!"
-
-        self.check_mandatory_fields(cr, uid, so_dict)
-
-        self.manage_split_po_lines(cr, uid, po_id, context=context)
-
-        header_result = {}
-        so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, source=source, line_values=so_info, po_id=po_id, so_id=False, for_update=False, so_called=False, context=context)
-        header_result['po_updated_by_sync'] = True
-
-        updated_lines = []
-        sync_order_line_db_id = []
-        for x in header_result['order_line']:
-            if x[0] == 1:
-                updated_lines.append(x[1])
-                if x[2].get('sync_linked_sol'):
-                    sync_order_line_db_id.append(x[2]['sync_linked_sol'])
-            elif x[0] == 0 and x[2].get('sync_linked_sol'):
-                sync_order_line_db_id.append(x[2]['sync_linked_sol'])
-
-        to_del_ids = self.pool.get('purchase.order.line').search(cr, uid, [
-            ('order_id', '=', po_id),
-            ('id', 'not in', updated_lines),
-            ('state', 'not in', ['draft', 'done', 'cancel', 'cancel_r']),
-            '|', ('sync_order_line_db_id', '=like', so_info.name+'_%'), ('sync_linked_sol', '=like', so_info.name+'/%')
-        ], context=context)
-
-        if to_del_ids:
-            self.pool.get('purchase.order.line').action_cancel(cr, uid, to_del_ids, context=context)
-
-        # UTP-952: If the partner is section or intermission, remove the AD
-        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
-        if partner_type in ['section', 'intermission'] and 'analytic_distribution_id' in header_result:
-            del header_result['analytic_distribution_id']
-
-        default = {}
-        default.update(header_result)
-        self.write(cr, uid, po_id, default, context=context)
-        if partner_type == 'intermission':
-            self.check_analytic_distribution(cr, uid, [po_id], context=context, create_missing=True)
-
-        if sync_order_line_db_id:
-            po_line_obj = self.pool.get('purchase.order.line')
-            po_line_ids = po_line_obj.search(cr, uid, [('order_id', '=', po_id), ('sync_linked_sol', 'in', sync_order_line_db_id)], context=context)
-            if po_line_ids:
-                po_line_obj.action_validate(cr, uid, po_line_ids, context=context)
-                if so_info.state != 'validated':
-                    po_line_obj.action_confirmed(cr, uid, po_line_ids, context=context)
-
-        message = "The split PO "+ str(po_id)  + " is updated by sync as its partner FO " + so_info.name + " got updated at " + source
-        self._logger.info(message)
-        return message
 
 purchase_order_sync()

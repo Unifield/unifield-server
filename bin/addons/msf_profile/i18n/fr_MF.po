@@ -206,7 +206,6 @@ msgstr "Choisir un type de vue"
 
 #. modules: purchase_allocation_report, sync_so
 #: view:purchase.order.line.allocation.report:0
-#: field:purchase.order.line.to.split,order_id:0
 msgid "Purchase order"
 msgstr "Bon de commande"
 
@@ -9651,11 +9650,6 @@ msgstr "Annuler ce journal et tous les registres connexes"
 #: selection:ir.actions.server,trigger_name:0
 msgid "sourced_v - (sale.order.line)"
 msgstr "sourced_v - (sale.order.line)"
-
-#. module: sync_so
-#: model:ir.model,name:sync_so.model_purchase_order_line_to_split
-msgid "purchase.order.line.to.split"
-msgstr "purchase.order.line.to.split"
 
 #. modules: register_accounting, analytic_distribution, register_accounting
 #: code:addons/register_accounting/invoice.py:39
@@ -32251,7 +32245,6 @@ msgstr "%s_Modèle_d_import"
 #: field:purchase.order.merged.line,original_line_id:0
 #: field:purchase.order.merged.line,resourced_original_line:0
 #: field:sale.order.line,resourced_original_line:0
-#: field:purchase.order.line.to.split,line_id:0
 msgid "Original line"
 msgstr "Ligne d'origine"
 
@@ -41714,7 +41707,6 @@ msgstr "Le nom de Kit doit être une chaîne de valeur"
 
 #. modules: sync_so, msf_profile
 #: field:patch.scripts,run:0
-#: field:purchase.order.line.to.split,splitted:0
 msgid "Is ran ?"
 msgstr "Est exécuté?"
 
@@ -48440,7 +48432,6 @@ msgstr "Une zone avec un nom similaire existe déjà."
 
 #. modules: sale, sync_so
 #: field:sync.sale.order.line.split,new_line_qty:0
-#: field:purchase.order.line.to.split,new_line_qty:0
 msgid "New line qty"
 msgstr "New line qty"
 
@@ -64018,11 +64009,6 @@ msgstr "Date de Livraison Confirmée*"
 msgid "Qty required per kit"
 msgstr "Qté requise par kit"
 
-#. module: sync_so
-#: field:purchase.order.line.to.split,original_qty:0
-msgid "Original qty"
-msgstr "Qté Originale"
-
 #. module: res_currency_tables
 #: code:addons/res_currency_tables/res_currency.py:246
 #, python-format
@@ -79374,12 +79360,6 @@ msgstr "Référence Interne"
 #, python-format
 msgid "You cannot remove a batch number which has stock !"
 msgstr "Vous ne pouvez pas supprimer un numéro de lot qui a du stock !"
-
-#. module: sync_so
-#: field:purchase.order.line.to.split,new_sync_order_line_db_id:0
-#: field:purchase.order.line.to.split,sync_order_line_db_id:0
-msgid "Sync Order line DB ID of the new created line"
-msgstr "Sync Order line DB ID of the new created line"
 
 #. module: account_mcdb
 #: view:account.mcdb:0

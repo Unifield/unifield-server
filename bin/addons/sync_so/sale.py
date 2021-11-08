@@ -184,14 +184,6 @@ class sale_order_sync(osv.osv):
                 po_cur = self.pool.get('res.currency').read(cr, uid, header_result['currency_id'], ['name'], context=context)
                 raise Exception, "Wrong FO/PO Currency on partner: please set FO/PO currency to %s on partner %s" % (po_cur['name'], source)
 
-        header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, False, False, True, context)
-        # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
-        order_line = []
-        for line in header_result['order_line']:
-            line[2].update({'confirmed_delivery_date': False, 'source_sync_line_id': line[2]['sync_order_line_db_id'], 'sync_linked_pol': so_po_common_obj.migrate_ref(line[2]['sync_order_line_db_id'])})
-            order_line.append((0, 0, line[2]))
-        header_result['order_line'] = order_line
-
         default = {}
         default.update(header_result)
         default['fo_created_by_po_sync'] = True
@@ -199,7 +191,7 @@ class sale_order_sync(osv.osv):
 
         context['procurement_request'] = False
 
-        so_id = self.create(cr, uid, default , context=context)
+        so_id = self.create(cr, uid, default, context=context)
         name = self.browse(cr, uid, so_id, context).name
         if 'order_type' in header_result:
             if header_result['order_type'] == 'loan':
@@ -217,13 +209,6 @@ class sale_order_sync(osv.osv):
                         # link the FO loan to this PO loan
                         po_object.write(cr, uid, po_ids, {'origin': name}, context=context)
 
-        # reset confirmed_delivery_date to all lines
-#        so_line_obj = self.pool.get('sale.order.line')
-
-        # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
-#        for order in self.browse(cr, uid, [so_id], context=context):
-#            for line in order.order_line:
-#                so_line_obj.write(cr, uid, [line.id], {'confirmed_delivery_date': False})
 
         so_po_common_obj.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)
 
@@ -232,31 +217,6 @@ class sale_order_sync(osv.osv):
         self._logger.info(message)
         return message
 
-    def validated_po_update_validated_so(self, cr, uid, source, po_info, context=None):
-        self._logger.info("+++ Update the validated FO at %s when the relevant PO got validated at %s"%(cr.dbname, source))
-        if not context:
-            context = {}
-        context['no_check_line'] = True
-
-        po_dict = po_info.to_dict()
-        so_po_common_obj = self.pool.get('so.po.common')
-
-        header_result = {}
-        so_po_common_obj.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        so_id = so_po_common_obj.get_original_so_id(cr, uid, po_info.partner_ref, context)
-
-        header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, so_id, True, False, context)
-
-        default = {}
-        default.update(header_result)
-
-        self.write(cr, uid, so_id, default, context=context)
-
-        # Just to print the result message when the sync message got executed
-        name = self.browse(cr, uid, so_id, context).name
-        message = "The FO " + name + " updated successfully, as its PO partner got updated " + po_info.name + " at " + source
-        self._logger.info(message)
-        return message
 
     def update_sub_so_ref(self, cr, uid, source, po_info, context=None):
         self._logger.info("+++ Update the PO references from %s to the FO, including its sub-FOs at %s"%(source, cr.dbname))
