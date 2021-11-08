@@ -1960,6 +1960,8 @@ class orm_template(object):
 
             inherit_result = etree.fromstring(encode(result['arch']))
             result['arch'] = _inherit_apply_rec(inherit_result, sql_res[3])
+            if view_id_kept:
+                result['arch'] = _inherit_apply_rec(result['arch'], view_id_kept)
             result['name'] = sql_res[1]
             result['field_parent'] = sql_res[2] or False
         else:

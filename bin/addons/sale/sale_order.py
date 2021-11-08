@@ -37,7 +37,7 @@ from . import SALE_ORDER_SPLIT_SELECTION
 from . import SALE_ORDER_LINE_STATE_SELECTION
 from . import SALE_ORDER_LINE_DISPLAY_STATE_SELECTION
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
-
+from account_override.period import get_period_from_date
 
 
 class sale_shop(osv.osv):
@@ -1912,6 +1912,60 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
+    def create_commitment_voucher_from_so(self, cr, uid, ids, cv_date, context=None):
+        '''
+        Create a new commitment voucher from the given PO
+        @param ids id of the Purchase order
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        commit_id = False
+        for so in self.pool.get('sale.order').browse(cr, uid, ids, context=context):
+            engagement_ids = self.pool.get('account.analytic.journal').search(cr, uid, [
+                ('type', '=', 'engagement'),
+                ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id)
+            ], limit=1, context=context)
+
+            so_partner_type = so.partner_id.partner_type
+            if so_partner_type == 'intermission':
+                cv_type = 'intermission'
+            else:
+                cv_type = 'intersection'
+
+            vals = {
+                'journal_id': engagement_ids and engagement_ids[0] or False,
+                'currency_id': so.currency_id and so.currency_id.id or False,
+                'partner_id': so.partner_id and so.partner_id.id or False,
+                'sale_id': so.id or False,
+                'type': cv_type,
+            }
+            period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)
+            period_id = period_ids and period_ids[0] or False
+            if not period_id:
+                raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (cv_date, ))
+            vals.update({
+                'date': cv_date,
+                'period_id': period_id,
+            })
+            commit_id = self.pool.get('account.commitment').create(cr, uid, vals, context=context)
+
+            commit_data = self.pool.get('account.commitment').read(cr, uid, commit_id, ['name'], context=context)
+            message = _("Customer Commitment Voucher %s has been created.") % commit_data.get('name', '')
+            self.pool.get('account.commitment').log(cr, uid, commit_id, message, action_xmlid='analytic_distribution.action_account_commitment_from_fo')
+            self.infolog(cr, uid, message)
+
+            if so.analytic_distribution_id:
+                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, so.analytic_distribution_id.id, {'sale_id': False, 'commitment_id': commit_id}, context=context)
+                # Create funding pool lines if needed
+                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
+                # Update commitment with new analytic distribution
+                self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
+
+        return commit_id
+
 sale_order()
 
 
@@ -2182,6 +2236,7 @@ class sale_order_line(osv.osv):
         'counterpart_po_line_id': fields.many2one('purchase.order.line', 'PO line counterpart'),
         'pol_external_ref': fields.function(_get_pol_external_ref, method=True, type='char', size=256, string="Linked PO line's External Ref.", store=False),
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
+        'cv_line_ids': fields.one2many('account.commitment.line', 'so_line_id', string="Commitment Voucher Lines"),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2334,6 +2389,7 @@ class sale_order_line(osv.osv):
             'cancelled_by_sync': False,
             'dpo_line_id': False,
             'sync_pushed_from_po': False,
+            'cv_line_ids': False,
         })
 
         reset_if_not_set = ['ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'instance_sync_order_ref']
@@ -2378,6 +2434,7 @@ class sale_order_line(osv.osv):
             'stock_take_date': False,
             'dpo_line_id': False,
             'sync_pushed_from_po': False,
+            'cv_line_ids': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False

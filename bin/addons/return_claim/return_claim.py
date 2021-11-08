@@ -1353,7 +1353,7 @@ class claim_event(osv.osv):
         '''
         process logic for scrap event
 
-        - destination of picking moves becomes Quarantine (before scrap)
+        - destination of picking moves becomes Expired/Damaged/For Scrap
         '''
         context = context.copy()
         context.update({'keep_prodlot': True, 'keepPoLine': True})
@@ -1379,7 +1379,7 @@ class claim_event(osv.osv):
         picking_tools.check_assign(cr, uid, event_picking.id, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
-        move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_scrap']}, context=context)
+        move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['exp_dam_scrap']}, context=context)
         # validate the event picking if not from picking wizard or doesn't need replacement
         if not obj.from_picking_wizard_claim_event and not obj.replacement_picking_expected_claim_event:
             self._validate_picking(cr, uid, event_picking.id, context=context)
@@ -1468,6 +1468,8 @@ class claim_event(osv.osv):
         move_ids = [move.id for move in event_picking.move_lines]
         # confirm the moves but not the pick to be able to convert to OUT
         move_obj.action_confirm(cr, uid, move_ids, context=context)
+        # Update some fields.function data in the Pick
+        self.pool.get('stock.picking')._store_set_values(cr, uid, [event_picking_id], ['overall_qty', 'line_state'], context)
         # do we need replacement?
         self._process_replacement(cr, uid, obj, event_picking, context=context)
         context.update({'keep_prodlot': False, 'keepPoLine': False})
@@ -1631,6 +1633,8 @@ class claim_event(osv.osv):
         move_ids = [move.id for move in event_picking.move_lines]
         # confirm the moves but not the pick to be able to convert to OUT
         move_obj.action_confirm(cr, uid, move_ids, context=context)
+        # Update some fields.function data in the Pick
+        self.pool.get('stock.picking')._store_set_values(cr, uid, [event_picking_id], ['overall_qty', 'line_state'], context)
 
         context.update({'keep_prodlot': False})
 

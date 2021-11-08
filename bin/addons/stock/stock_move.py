@@ -905,7 +905,8 @@ class stock_move(osv.osv):
                             m.type = 'in' and
                             m.date_expected != %s and
                             m.id in %s and
-                            sol.state = 'confirmed'
+                            sol.state = 'confirmed' and
+                            so.procurement_request = 'f'
                 ''', (vals['date_expected'], tuple(ids)))
                 for x in cr.fetchall():
                     self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', x[0], {},
@@ -973,6 +974,8 @@ class stock_move(osv.osv):
             # UF-1797: when we duplicate a doc we delete the link with the poline
             if 'purchase_line_id' not in defaults and not context.get('keepPoLine', False):
                 defaults.update(purchase_line_id=False)
+            if context.get('web_copy', False) and 'sale_line_id' not in defaults:
+                defaults.update(sale_line_id=False)
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
                 input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]

@@ -2,61 +2,6 @@
 <openerp>
     <data>
 
-        <record model="ir.ui.view" id="view_account_activable_form">
-            <field name="name">account.account_activable.form</field>
-            <field name="model">account.account</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="account.view_account_form"/>
-            <field name="priority">20</field>
-            <field name="arch" type="xml">
-                <field name="company_id" position="replace"/>
-                <page string="General Information" position="replace">
-                    <page string="General Information">
-                        <group col="6" colspan="4">
-                            <field name="activation_date"/>
-                            <field name="inactivation_date"/>
-                            <group col="2" colspan="2">
-                                <field name="reconcile" on_change="onchange_reconcile(reconcile)"/>
-                                <field name="prevent_multi_curr_rec" attrs="{'readonly': [('reconcile', '=', False)]}"/>
-                                <field name="reconciliation_debit_account_id"/>
-                                <field name="reconciliation_credit_account_id"/>
-                            </group>
-                        </group>
-                    </page>
-                </page>
-
-                <page string="Notes" position="before">
-                    <page string="Allowed Partner types">
-                        <group col="4" colspan="4">
-                            <group col="2" colspan="2">
-                                <field name="has_partner_type_internal" />
-                                <field name="has_partner_type_external" />
-                                <field name="has_partner_type_esc" />
-                                <newline />
-                                <field name="has_partner_type_local" />
-                                <field name="has_partner_type_ex" />
-                                <field name="has_partner_type_empty" />
-                                <newline />
-                                <field name="has_partner_type_book" />
-                            </group>
-
-                            <group col="2" colspan="2">
-                                <field name="has_partner_type_intermission" />
-                                <field name="has_partner_type_section" />
-
-                                <label /><label />
-                                <newline />
-                                <label /><label />
-                                <label /><label />
-                                <newline />
-                                <label /><label />
-                            </group>
-                        </group>
-                    </page>
-                </page>
-            </field>
-        </record>
-
     <!-- Tree view for Balance by Account result: granularity by parent account -->
         <record model="ir.ui.view" id="balance_account_tree">
             <field name="name">balance.account.tree</field>
@@ -95,46 +40,6 @@
                     <field name="balance"/>
                     <field name="activation_date" invisible="1"/>
                     <field name="inactivation_date" invisible="1"/>
-                </tree>
-            </field>
-        </record>
-
-    <!-- Tree view for chart of account result -->
-        <record model="ir.ui.view" id="account.view_account_tree">
-            <field name="name">account.account_activable.tree</field>
-            <field name="model">account.account</field>
-            <field name="type">tree</field>
-            <field name="field_parent">child_id</field>
-            <field name="priority" eval="12"/>
-            <field name="arch" type="xml">
-                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1" nolink="1">
-                    <field name="code"/>
-                    <field name="name"/>
-                    <field name="note"/>
-                    <field name="type" invisible="1"/>
-                    <field name="user_type" invisible="1"/>
-                    <field name="activation_date" invisible="1"/>
-                    <field name="inactivation_date" invisible="1"/>
-                    <field name="parent_id" invisible="1"/>
-                    <field name="is_analytic_addicted" invisible="1"/>
-                </tree>
-            </field>
-        </record>
-
-    <!-- Tree view for default tree view of accounts -->
-        <record id="account.view_account_list" model="ir.ui.view">
-            <field name="name">account.account_activable.list</field>
-            <field name="model">account.account</field>
-            <field name="type">tree</field>
-            <field name="field_parent">child_id</field>
-            <field name="priority" eval="10"/>
-            <field name="arch" type="xml">
-                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" nolink="1">
-                    <field name="code"/>
-                    <field name="name"/>
-                    <field name="type"/>
-                    <field name="activation_date"/>
-                    <field name="inactivation_date"/>
                 </tree>
             </field>
         </record>

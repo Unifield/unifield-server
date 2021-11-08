@@ -337,13 +337,16 @@ class stock_picking(osv.osv):
             # locations
             warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
             location_input_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
-            location_output_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_stock_id'])[0]['lot_stock_id'][0]
+            msf_supplier_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')[1]
+
+            partner_id = self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0]
 
             in_claim_dict = {
                 'claim': pick_dict.get('claim', False),
                 'min_date': pick_dict.get('min_date', False),
                 'note': pick_dict.get('note', False),
-                'partner_id': self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0],
+                'partner_id': partner_id,
+                'partner_id2': partner_id,
                 'origin': pick_dict.get('origin', False),
                 'partner_type_stock_picking': pick_dict.get('partner_type_stock_picking', False),
                 'reason_type_id': context['common']['rt_goods_return'],
@@ -366,7 +369,7 @@ class stock_picking(osv.osv):
                     'product_uom': uom_obj.search(cr, uid, [('name', '=', x.get('product_uom', False)['name'])],
                                                   limit=1, context=context)[0],
                     'reason_type_id': context['common']['rt_goods_return'],
-                    'location_id': location_output_id,
+                    'location_id': msf_supplier_id,
                     'location_dest_id': location_input_id,
                 }) for x in pick_dict.get('move_lines', False)]
             }

@@ -1090,8 +1090,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if ('supplier' in vals and not vals.get('supplier')) or ('po_cft' in vals and vals.get('po_cft') in ('cft', 'rfq')):
             vals['related_sourcing_id'] = False
 
+        # Remove supplier if the selected PO/CFT is Tender
+        if vals.get('po_cft') == 'cft':
+            vals['supplier'] = False
+
         # UFTP-139: if make_to_stock and no location, put Stock as location
-        if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
+        if ids and 'type' in vals and vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
             # Define Stock as location_id for each line without location_id
             for line in self.read(cr, uid, ids, ['location_id'], context=context):
                 line_vals = vals.copy()

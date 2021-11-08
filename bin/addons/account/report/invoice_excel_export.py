@@ -37,8 +37,10 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_distribution_lines(self, inv_line):
         """
-        Returns distrib. line data related to the invoice line in parameter, as a list of dicts
-        Note: it gives a result even for lines without AD: the line subtotal is retrieved in any cases
+        Returns distrib. line data related to the invoice line in parameter, as a list of dicts.
+        Notes:
+            - it gives a result even for lines without AD: the line subtotal is retrieved in any cases
+            - only CC and Dest are retrieved, FP is excluded.
         """
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_lines = []
@@ -69,18 +71,19 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_shipment_number(self, inv):
         """
-        Returns the "shipment" or "simple OUT" number having generated the IVO if linked to a supply workflow
-        Displayed for both the IVO and the IVI.
+        Returns the "shipment" or "simple OUT" number having generated the IVO/STV if linked to a supply workflow
+        Displayed for both the IVO/STV and the IVI.
         """
         if self.invoices.get(inv.id, {}).get('shipment', None) is not None:
             # process only once per invoice
             return self.invoices[inv.id]['shipment']
         ship_or_out_ref = ''
-        if inv.from_supply and inv.is_intermission:
-            if inv.type == 'out_invoice':  # IVO
+        if inv.from_supply:
+            inv_type = self.pool.get('account.invoice').read(self.cr, self.uid, inv.id, ['doc_type'])['doc_type']
+            if inv_type in ('ivo', 'stv'):
                 if inv.name:
                     ship_or_out_ref = inv.name.split()[-1]
-            elif inv.type == 'in_invoice':  # IVI
+            elif inv_type == 'ivi':
                 if inv.picking_id:
                     ship_or_out_ref = inv.picking_id.shipment_ref or ''
         self.invoices.setdefault(inv.id, {}).update({'shipment': ship_or_out_ref})
@@ -88,20 +91,21 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_fo_number(self, inv):
         """
-        Returns the FO number related to the IVO if any.
-        Displayed for both the IVO and the IVI.
+        Returns the FO number related to the IVO/STV if any.
+        Displayed for both the IVO/STV and the IVI.
         """
         if self.invoices.get(inv.id, {}).get('fo', None) is not None:
             # process only once per invoice
             return self.invoices[inv.id]['fo']
         fo_number = ''
-        if inv.from_supply and inv.is_intermission:
-            if inv.type == 'out_invoice':  # IVO
+        if inv.from_supply:
+            inv_type = self.pool.get('account.invoice').read(self.cr, self.uid, inv.id, ['doc_type'])['doc_type']
+            if inv_type in ('ivo', 'stv'):
                 if inv.origin:
                     inv_source_doc_split = inv.origin.split(':')
                     if inv_source_doc_split:
                         fo_number = inv_source_doc_split[-1]
-            elif inv.type == 'in_invoice':  # IVI
+            elif inv_type == 'ivi':
                 if inv.main_purchase_id:
                     fo_number = inv.main_purchase_id.short_partner_ref or ''
         self.invoices.setdefault(inv.id, {}).update({'fo': fo_number})
@@ -109,25 +113,26 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_po_number(self, inv_line):
         """
-        Returns the PO number for Intermission Voucher Lines linked to a supply workflow.
-        For the IVO: PO to the external partner in order to buy the goods
+        Returns the PO number for the lines linked to a supply workflow.
+        For the IVO/STV: PO to the external partner in order to buy the goods
         For the IVI: PO to the intermission partner which triggered the creation of the FO
         """
         inv = inv_line.invoice_id
-        ivo_from_supply = inv.is_intermission and inv.type == 'out_invoice' and inv.from_supply
-        if not ivo_from_supply and self.invoices.get(inv.id, {}).get('po', None) is not None:
-            # process only once per invoice except for IVO from Supply where the check must be done line by line
+        inv_type = self.pool.get('account.invoice').read(self.cr, self.uid, inv.id, ['doc_type'])['doc_type']
+        out_inv_from_supply = inv_type in ('ivo', 'stv') and inv.from_supply
+        if not out_inv_from_supply and self.invoices.get(inv.id, {}).get('po', None) is not None:
+            # process only once per invoice except for IVO/STV from Supply where the check must be done line by line
             return self.invoices[inv.id]['po']
         po_number = ''
         po_line_obj = self.pool.get('purchase.order.line')
-        if inv.from_supply and inv.is_intermission:
-            if inv.type == 'out_invoice':  # IVO
+        if inv.from_supply:
+            if inv_type in ('ivo', 'stv'):
                 fo_line = inv_line.sale_order_line_id
                 if fo_line and fo_line.type == 'make_to_order':  # the line is sourced on a PO
                     pol_ids = po_line_obj.search(self.cr, self.uid, [('sale_order_line_id', '=', fo_line.id)])
                     if pol_ids:
                         po_number = po_line_obj.browse(self.cr, self.uid, pol_ids[0], fields_to_fetch=['order_id']).order_id.name
-            elif inv.type == 'in_invoice':  # IVI
+            elif inv_type == 'ivi':
                 if inv.main_purchase_id:
                     po_number = inv.main_purchase_id.name
         self.invoices.setdefault(inv.id, {}).update({'po': po_number})
