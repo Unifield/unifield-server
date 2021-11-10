@@ -287,7 +287,7 @@ class account_invoice_refund(osv.osv_memory):
             else:  # i.e. si, di
                 return_doc_type = 'sr'
             action_act_window = inv_obj._invoice_action_act_window[return_doc_type]
-            result = act_obj.open_view_from_xmlid(cr, uid, action_act_window, context=context)
+            result = act_obj.open_view_from_xmlid(cr, uid, action_act_window, new_tab=True, context=context)
             invoice_domain = eval(result['domain'])
             invoice_domain.append(('id', 'in', created_inv))
             result['domain'] = invoice_domain
