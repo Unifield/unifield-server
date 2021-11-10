@@ -1361,7 +1361,7 @@ class stock_picking(osv.osv):
                 vals.update({'sale_order_line_id': move_line.sale_line_id.id})
                 distrib_id = False
                 if not move_line.sale_line_id.cv_line_ids:
-                    # ad from FO line CV already set in fetch_analytic_distribution
+                    # AD on FO line from CV: already set in fetch_analytic_distribution
                     distrib_id = move_line.sale_line_id.analytic_distribution_id and move_line.sale_line_id.analytic_distribution_id.id or False
                 if distrib_id:
                     new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
