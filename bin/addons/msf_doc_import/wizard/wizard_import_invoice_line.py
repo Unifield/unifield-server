@@ -384,6 +384,7 @@ Importation completed in %s!
             invoice_id = wiz_obj['invoice_id']
             view_data = self.pool.get('account.invoice')._get_invoice_act_window(cr, uid, invoice_id, views_order=['form', 'tree'], context=context)
             view_data['res_id'] = invoice_id
+            view_data['help'] = False  # hide the Tip message displayed on top
             return view_data
 
     def close_import(self, cr, uid, ids, context=None):
