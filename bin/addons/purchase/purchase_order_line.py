@@ -1406,7 +1406,6 @@ class purchase_order_line(osv.osv):
                 elif vals.get('origin'):
                     new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), po_obj=line.order_id, context=context))
 
-            print line.state, line.linked_sol_id
             if line.state in ('validated', 'validated_n', 'sourced_v', 'sourced_n') and \
                     line.linked_sol_id and \
                     not line.linked_sol_id.order_id.procurement_request and \
