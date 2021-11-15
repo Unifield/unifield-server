@@ -51754,7 +51754,7 @@ msgstr "Canada/Mountain"
 #. module: account
 #: view:account.invoice.refund:0
 msgid "Modify Invoice: Cancels the current invoice and creates a new copy of it ready for editing."
-msgstr "Modifier la facture : Annule la facture en cours et créée une nouvelle copie de cette facture prête à être modifiée."
+msgstr "Modifier la facture : Annule la facture en cours et crée une nouvelle copie de cette facture prête à être modifiée."
 
 #. module: product_nomenclature
 #: code:addons/product_nomenclature/product_nomenclature.py:301
