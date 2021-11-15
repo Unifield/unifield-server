@@ -753,7 +753,7 @@ stock moves will be posted in this account. If not set on the product, the one f
                     raise osv.except_osv(_('Error'), _('No Product Category found for %s. Please contact an accounting member to create a new one for this family.')
                                          % vals['nomenclature_description'])
 
-        if vals.get('nomen_manda_3') and self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_3']).status != 'valid' and \
+        if vals.get('nomen_manda_3') and self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_3'], fields_to_fetch=['status']).status != 'valid' and \
                 not (context.get('sync_update_creation') or context.get('sync_update_execution')):
             raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
 
