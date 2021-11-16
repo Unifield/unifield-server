@@ -154,7 +154,7 @@ class ir_model(osv.osv):
         'modules': fields.function(_in_modules, method=True, type='char', size=128, string='In modules', help='List of modules in which the object is defined or inherited'),
         'view_ids': fields.function(_view_ids, method=True, type='one2many', obj='ir.ui.view', string='Views'),
         'default_order': fields.function(_get_default_order, method=True, string="Default Order", type="char"),
-        'exists': fields.function(_get_exists, method=True, string='Model in-use', type='boolean', fnct_search=_search_exists),
+        'model_exists': fields.function(_get_exists, method=True, string='Model in-use', type='boolean', fnct_search=_search_exists),
     }
 
     _defaults = {
