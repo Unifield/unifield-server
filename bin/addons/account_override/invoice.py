@@ -692,7 +692,7 @@ class account_invoice(osv.osv):
             new_doc_type = inv.doc_type == 'si' and _("an Intersection Supplier Invoice") or _("an Intersection Supplier Refund")
             raise osv.except_osv(_('Warning'), _("This invoice can't be duplicated because it has an Intersection partner: "
                                                  "please create %s instead.") % new_doc_type)
-        return self.copy(cr, uid, inv_id, default, context=context)
+        return super(account_invoice, self).copy_web(cr, uid, inv_id, default, context=context)
 
     def copy(self, cr, uid, inv_id, default=None, context=None):
         """
