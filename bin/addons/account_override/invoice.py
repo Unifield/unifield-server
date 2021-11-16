@@ -681,6 +681,19 @@ class account_invoice(osv.osv):
                     defaults['journal_id'] = defaults['fake_journal_id']
         return defaults
 
+    def copy_web(self, cr, uid, inv_id, default=None, context=None):
+        """
+        Blocks manual duplication of old SI/SR with an Intersection Partner (replaced by ISI/ISR since US-8585)
+        """
+        if context is None:
+            context = {}
+        inv = self.browse(cr, uid, inv_id, fields_to_fetch=['partner_id', 'doc_type'], context=context)
+        if inv.partner_id.partner_type == 'section' and inv.doc_type in ('si', 'sr'):
+            new_doc_type = inv.doc_type == 'si' and _("an Intersection Supplier Invoice") or _("an Intersection Supplier Refund")
+            raise osv.except_osv(_('Warning'), _("This invoice can't be duplicated because it has an Intersection partner: "
+                                                 "please create %s instead.") % new_doc_type)
+        return self.copy(cr, uid, inv_id, default, context=context)
+
     def copy(self, cr, uid, inv_id, default=None, context=None):
         """
         Delete period_id from invoice.
