@@ -113007,6 +113007,12 @@ msgstr "Factures Fournisseur Intersection"
 msgid "Intersection Supplier Invoice"
 msgstr "Facture Fournisseur Intersection"
 
+#. module: account_override
+#: code:addons/account_override/invoice.py:692
+#, python-format
+msgid "an Intersection Supplier Invoice"
+msgstr "une Facture Fournisseur Intersection"
+
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:572
 #, python-format
@@ -113033,11 +113039,23 @@ msgstr "Avoirs Fournisseur Intersection"
 msgid "Intersection Supplier Refund"
 msgstr "Avoir Fournisseur Intersection"
 
+#. module: account_override
+#: code:addons/account_override/invoice.py:692
+#, python-format
+msgid "an Intersection Supplier Refund"
+msgstr "un Avoir Fournisseur Intersection"
+
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:573
 #, python-format
 msgid "%s Intersection Supplier Refund(s)"
 msgstr "%s Avoir(s) Fournisseur Intersection"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:693
+#, python-format
+msgid "This invoice can't be duplicated because it has an Intersection partner: please create %s instead."
+msgstr "Cette facture ne peut pas être dupliquée car elle a un partenaire de type Intersection : veuillez créer %s à la place."
 
 #. modules: account_period_closing_level, product_attributes, register_accounting
 #: code:addons/account_period_closing_level/account_period.py:516
