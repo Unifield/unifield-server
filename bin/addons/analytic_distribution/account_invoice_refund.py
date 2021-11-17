@@ -57,6 +57,7 @@ class account_invoice_refund(osv.osv_memory):
                 args = [('type', '=', 'purchase_refund')]
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
+        # get the first journal created matching with the defined criteria
         journal = obj_journal.search(cr, uid, args, order='id', limit=1, context=context)
         return journal and journal[0] or False
 
@@ -76,24 +77,29 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         journal_obj = self.pool.get('account.journal')
         res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if context.get('doc_type', '') == 'stv':
-            jtype = 'sale'
-        elif context.get('doc_type', '') == 'isi':
-            jtype = 'purchase'
+        if context.get('doc_type', '') in ('ivo', 'ivi'):
+            # only the fist Intermission journal created (INT)
+            int_journal_id = self.pool.get('account.invoice')._get_int_journal_for_current_instance(cr, uid, context=context)
+            journal_domain = [('id', '=', int_journal_id)]
         else:
-            jtype = 'sale_refund'
-            if context.get('journal_type'):
-                jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
-            if jtype in ('sale', 'sale_refund'):
+            if context.get('doc_type', '') == 'stv':
+                jtype = 'sale'
+            elif context.get('doc_type', '') == 'isi':
+                jtype = 'purchase'
+            else:
                 jtype = 'sale_refund'
-            elif jtype != 'intermission':  # for IVO/IVI keep using the Interm. journal
-                jtype = 'purchase_refund'
+                if context.get('journal_type'):
+                    jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
+                if jtype in ('sale', 'sale_refund'):
+                    jtype = 'sale_refund'
+                else:
+                    jtype = 'purchase_refund'
+            journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True)]
+        if context.get('doc_type', '') == 'isi':
+            journal_domain.append(('code', '=', 'ISI'))
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         for field in res['fields']:
             if field == 'journal_id' and user.company_id.instance_id:
-                journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True)]
-                if context.get('doc_type', '') == 'isi':
-                    journal_domain.append(('code', '=', 'ISI'))
                 journal_select = journal_obj._name_search(cr, uid, '', journal_domain, context=context, limit=None, name_get_uid=1)
                 res['fields'][field]['selection'] = journal_select
                 res['fields'][field]['domain'] = journal_domain
