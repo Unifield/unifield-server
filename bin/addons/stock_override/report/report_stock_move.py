@@ -65,7 +65,9 @@ class report_stock_move(osv.osv):
         'picking_id': fields.many2one('stock.picking', 'Reference', readonly=True),
         'type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal'), ('other', 'Others')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
         'location_id': fields.many2one('stock.location', 'Source Location', readonly=True, select=True, help="Sets a location if you produce at a fixed location. This can be a partner location if you subcontract the manufacturing operations."),
+        'location_name': fields.related('location_id', 'name', string='Source Location', type='char', size=64, write_relate=False, store=True),
         'location_dest_id': fields.many2one('stock.location', 'Dest. Location', readonly=True, select=True, help="Location where the system will stock the finished products."),
+        'location_dest_name': fields.related('location_dest_id', 'name', string='Dest. Location', type='char', size=64, write_relate=False, store=True),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True),
         'product_qty': fields.float('Quantity', readonly=True, related_uom='product_uom'),
         'categ_id': fields.many2one('product.nomenclature', 'Family', ),
@@ -107,9 +109,11 @@ class report_stock_move(osv.osv):
                         al.curr_day_diff1 as day_diff1,
                         al.curr_day_diff2 as day_diff2,
                         al.location_id as location_id,
+                        al.location_name as location_name,
                         al.picking_id as picking_id,
                         al.company_id as company_id,
                         al.location_dest_id as location_dest_id,
+                        al.location_dest_name as location_dest_name,
                         al.product_qty,
                         al.out_qty as product_qty_out,
                         al.in_qty as product_qty_in,
@@ -175,7 +179,9 @@ class report_stock_move(osv.osv):
                             sm.state as state,
                             pt.uom_id as product_uom,
                             sp.type as type,
-                            sp.stock_journal_id AS stock_journal
+                            sp.stock_journal_id AS stock_journal,
+                        sl.name as location_name,
+                        sld.name as location_dest_name
                     FROM
                         stock_move sm
                         LEFT JOIN stock_picking sp ON (sm.picking_id=sp.id)
@@ -184,17 +190,19 @@ class report_stock_move(osv.osv):
                         LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
                         LEFT JOIN product_uom u ON (pt.uom_id = u.id)
                         LEFT JOIN stock_location sl ON (sm.location_id = sl.id)
+                        LEFT JOIN stock_location sld ON (sm.location_dest_id = sld.id)
 
                     GROUP BY
                         sm.id,sp.type, sm.date,sp.partner_id2,
                         sm.product_id,sm.state,pt.uom_id,sm.date_expected, sm.origin,
                         sm.product_id,pt.standard_price, sm.picking_id, sm.product_qty, sm.prodlot_id, sm.comment, sm.tracking_id,
-                        sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.nomen_manda_2, sp.stock_journal_id, sm.reason_type_id)
+                        sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.nomen_manda_2, sp.stock_journal_id, 
+                        sm.reason_type_id, sl.name, sld.name)
                     AS al
 
                     GROUP BY
                         al.out_qty,al.in_qty,al.curr_year,al.curr_month,
-                        al.curr_day,al.curr_day_diff,al.curr_day_diff1,al.curr_day_diff2,al.dp,al.location_id,al.location_dest_id,
+                        al.curr_day,al.curr_day_diff,al.curr_day_diff1,al.curr_day_diff2,al.dp,al.location_id,al.location_dest_id,al.location_name,al.location_dest_name,
                         al.partner_id,al.product_id,al.state,al.product_uom, al.sm_id, al.origin,
                         al.picking_id,al.company_id,al.type,al.product_qty, al.categ_id, al.stock_journal, al.tracking_id, al.comment, al.prodlot_id, al.reason_type_id
                )

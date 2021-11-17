@@ -111043,16 +111043,16 @@ msgstr "Date d'Export"
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:64
 #: field:stock.mission.report.line,quarantine_qty:0
-msgid "Quarantine Qty."
-msgstr "Qté. Quarantaine"
+msgid "Quarantine / For Scrap Qty."
+msgstr "Qté. Quarantaine / Pour Rebus"
 
 #. module: mission_stock
 #: code:addons/mission_stock/mission_stock.py:59
 #: code:addons/mission_stock/mission_stock.py:77
 #: code:addons/mission_stock/mission_stock.py:516
 #, python-format
-msgid "Quarantine Qty"
-msgstr "Qté Quarantaine"
+msgid "Quarantine / For Scrap Qty"
+msgstr "Qté Quarantaine / Pour Rebus"
 
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:65
