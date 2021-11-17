@@ -386,7 +386,7 @@ class account_invoice(osv.osv):
             Restriction on allowed partners:
             - for STV/STR: Intersection or External customers only
             - for ISI/ISR: Intersection suppliers only
-            - for SI/SR: non-Intersection suppliers only
+            - for SI/SR/DI: non-Intersection suppliers only
             """
             partner_domain = ""
             if context.get('doc_type', '') in ('stv', 'str') or (
@@ -396,7 +396,7 @@ class account_invoice(osv.osv):
                 partner_domain = "[('partner_type', 'in', ('section', 'external')), ('customer', '=', True)]"
             elif context.get('doc_type', '') in ('isi', 'isr'):
                 partner_domain = "[('partner_type', '=', 'section'), ('supplier', '=', True)]"
-            elif (context.get('doc_type', '') in ('si', 'sr')) or \
+            elif (context.get('doc_type', '') in ('si', 'sr', 'di')) or \
                 (context.get('type') == 'in_invoice' and context.get('journal_type') == 'purchase') or \
                     (context.get('type') == 'in_refund' and context.get('journal_type') == 'purchase_refund'):
                 partner_domain = "[('partner_type', '!=', 'section'), ('supplier', '=', True)]"
