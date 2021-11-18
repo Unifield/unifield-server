@@ -122,6 +122,7 @@ class ViewTree(Form):
 
     def parse(self, root, fields=None):
 
+        append_invisible = []
         for node in root.childNodes:
 
             if not node.nodeType==node.ELEMENT_NODE:
@@ -132,8 +133,11 @@ class ViewTree(Form):
             field = fields.get(attrs['name'])
             if field:
                 field.update(attrs)
-                self.headers.append(field)
-                if attrs.get('invisible'):
+                if not attrs.get('invisible'):
+                    self.headers.append(field)
+                else:
+                    append_invisible.append(field)
                     self.invisible_headers.append(attrs['name'])
+        self.headers += append_invisible
 
 # vim: ts=4 sts=4 sw=4 si et

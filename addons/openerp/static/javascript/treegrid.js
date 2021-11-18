@@ -215,6 +215,7 @@ TreeGrid.prototype = {
         }, this.headers);
 
         tree.setHeaders(headers);
+        tree.setInvisible(this.invisible_headers);
         tree.ajax_url = this.ajax_url;
         tree.ajax_params = MochiKit.Base.clone(this.ajax_params);
 
