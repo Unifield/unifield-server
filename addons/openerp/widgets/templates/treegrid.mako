@@ -8,6 +8,7 @@
             'expandall': ${(expandall and 'true') or 'false'},
             'linktarget': ${linktarget}
         });
+        treeGrids['${name}'].setInvisible(${invisible_headers|n});
         treeGrids['${name}'].setHeaders(${headers|n});
         treeGrids['${name}'].setRecords('${url}', ${url_params|n});
         jQuery(document).ready(jQuery.proxy(treeGrids['${name}'], 'render'));

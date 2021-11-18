@@ -80,6 +80,10 @@ TreeGrid.prototype = {
         });
     },
 
+    setInvisible: function(invisible) {
+            this.invisible_headers = invisible || [];
+    },
+
     setHeaders : function(headers/*, params */) {
         this.headers = headers;
 
@@ -176,6 +180,9 @@ TreeGrid.prototype = {
                 'align': header.align
             });
 
+            if (this.invisible_headers && jQuery.inArray(header.name, this.invisible_headers) != -1) {
+                th.style.display = 'none';
+            };
             MochiKit.Signal.connect(th, 'onclick', this,
                     MochiKit.Base.partial(this._onHeaderClick, header));
             th.style.cursor = 'pointer';
@@ -208,6 +215,7 @@ TreeGrid.prototype = {
         }, this.headers);
 
         tree.setHeaders(headers);
+        tree.setInvisible(this.invisible_headers);
         tree.ajax_url = this.ajax_url;
         tree.ajax_params = MochiKit.Base.clone(this.ajax_params);
 
@@ -335,7 +343,11 @@ TreeNode.prototype = {
             var key = header.name;
             var value = this.record.items[key];
 
-            var td = MochiKit.DOM.TD({'class': header.type || null, 'width' : header.width || null, 'style':{'color':this.record.items['color']}});
+            style = {'color':this.record.items['color']};
+            if (this.tree.invisible_headers && jQuery.inArray(key, this.tree.invisible_headers) != -1) {
+                style['display'] = 'none';
+            }
+            var td = MochiKit.DOM.TD({'class': header.type || null, 'width' : header.width || null, 'style':style});
             if (i == 0) { // first column
 
                 var row = [];

@@ -4,7 +4,7 @@
     <title>UniField</title>
 
     <script type="text/javascript" src="/openerp/static/javascript/accordion.js"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/treegrid.js"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/treegrid.js?v=uf23.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/notebook/notebook.js"></script>
 
     <script type="text/javascript">

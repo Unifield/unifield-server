@@ -29,11 +29,11 @@ class TreeGrid(TinyWidget):
 
     template = "/openerp/widgets/templates/treegrid.mako"
     params = ['headers', 'showheaders', 'expandall', 'linktarget',
-    'onselection', 'onbuttonclick', 'onheaderclick', 'url', 'url_params']
+    'onselection', 'onbuttonclick', 'onheaderclick', 'url', 'url_params', 'invisible_headers']
 
-    javascript = [JSLink("openerp", "javascript/treegrid.js")]
+    javascript = [JSLink("openerp", "javascript/treegrid.js?v=23.0")]
 
-    def __init__(self, name, model, headers, url, field_parent=None, ids=[], domain=[], context={}, **kw):
+    def __init__(self, name, model, headers, url, field_parent=None, ids=[], domain=[], context={}, invisible_headers=None, **kw):
 
         super(TreeGrid, self).__init__(name=name, model=model, url=url, **kw)
 
@@ -41,6 +41,9 @@ class TreeGrid(TinyWidget):
         self.domain = domain or []
         self.context = context or {}
         self.headers = simplejson.dumps(headers)
+        self.invisible_headers = ""
+        if invisible_headers:
+            self.invisible_headers = simplejson.dumps(invisible_headers)
 
         fields = [field['name'] for field in headers]
         icon_name = headers[0].get('icon')
