@@ -19401,6 +19401,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: field:stock.delivery.wizard,location_id:0
 #: report:kitting.order.report:0
 #: field:view.expired.expiring.stock.lines,location_id:0
+#: field:report.stock.move,location_name:0
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -71289,7 +71290,6 @@ msgid "Dashboard Definition"
 msgstr "Définition du Tableau de Bord"
 
 #. modules: stock_override, stock_move_tracking, stock
-#: view:report.stock.move:0
 #: view:stock.move:0
 #: view:stock.move:0
 msgid "Dest. Location"
@@ -81146,6 +81146,8 @@ msgstr "\n"
 #: field:stock.picking,location_dest_id:0
 #: field:stock.reception.wizard,location_dest_id:0
 #: field:stock.delivery.wizard,location_dest_id:0
+#: view:report.stock.move:0
+#: field:report.stock.move,location_dest_name:0
 msgid "Dest. Location"
 msgstr "Zone Dest."
 
