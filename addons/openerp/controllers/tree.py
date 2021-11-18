@@ -56,7 +56,7 @@ FORMATTERS = {
     'date': lambda value, _i: format_datetime(value, 'date'),
     'datetime': lambda value, _i: format_datetime(value, 'datetime'),
     'one2one': lambda value, _i: value[1],
-    'many2one': lambda value, _i: value[1],
+    'many2one': lambda value, _i: value[1] if isinstance(value, (list, tuple)) else value,
     'selection': lambda value, info: dict(info['selection']).get(value, ''),
 }
 
