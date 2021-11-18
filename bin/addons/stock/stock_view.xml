@@ -634,8 +634,12 @@
             <field name="field_parent">child_ids</field>
             <field name="priority">17</field>
             <field name="arch" type="xml">
-                <tree toolbar="1">
+                <tree toolbar="1" colors="dimgray:search_color=='dimgray';darkorchid:search_color=='darkorchid';lightpink:search_color=='lightpink';royalblue:search_color=='royalblue' or (usage=='internal' and location_category=='consumption_unit') or intermediate_parent==True;yellowgreen:usage=='customer' and location_category=='consumption_unit';darkorange:search_color=='darkorange';sandybrown:search_color=='sandybrown'">
                     <field icon="icon" name="name"/>
+                    <field name="usage" invisible="1" />
+                    <field name="location_category" invisible="1" />
+                    <field name="search_color" invisible="1" />
+                    <field name="intermediate_parent" invisible="1" />
                 </tree>
             </field>
         </record>
