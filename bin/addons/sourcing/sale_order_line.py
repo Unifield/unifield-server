@@ -1595,6 +1595,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             'product_qty': sourcing_line.product_uom_qty,
                             'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
                             'partner_id': sourcing_line.order_partner_id.id,
+                            'sync_order_line_db_id': sourcing_line.sync_order_line_db_id,
                         }
                         cp_po_line_id = self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                         so_line_data['counterpart_po_line_id'] = cp_po_line_id
@@ -1671,7 +1672,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             'stock_take_date': sourcing_line.stock_take_date or False,
                             'original_product': sourcing_line.original_product and sourcing_line.original_product.id or False,
                             'original_qty': sourcing_line.original_qty,
-                            'original_uom': sourcing_line.original_uom.id
+                            'original_uom': sourcing_line.original_uom.id,
+                            'sync_order_line_db_id': sourcing_line.sync_order_line_db_id,
                         }
                         if not sourcing_line.product_id:
                             pol_values['name'] = sourcing_line.comment
@@ -1730,6 +1732,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             'original_product': sourcing_line.original_product and sourcing_line.original_product.id or False,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
+                            'sync_order_line_db_id': sourcing_line.sync_order_line_db_id,
                         }
                         self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
                         self.pool.get('purchase.order').update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)

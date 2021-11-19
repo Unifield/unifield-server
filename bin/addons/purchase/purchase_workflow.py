@@ -273,6 +273,8 @@ class purchase_order_line(osv.osv):
                     sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False
                     sol_values['resourced_original_remote_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.sync_linked_pol or False
 
+                if pol.sync_order_line_db_id:
+                    sol_values['sync_order_line_db_id'] = pol.sync_order_line_db_id
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 pol_to_write = {'linked_sol_id': new_sol, 'location_dest_id': self.final_location_dest(cr, uid, pol, fo_obj=sale_order, context=context), 'link_so_id': sale_order.id}
                 if not pol.origin:
@@ -407,6 +409,7 @@ class purchase_order_line(osv.osv):
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'set_as_sourced_n': True,
                 'created_by_sync': True,
+                'sync_order_line_db_id': pol.sync_order_line_db_id or False,
             }
 
             if pol.resourced_original_line:
@@ -754,14 +757,19 @@ class purchase_order_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
 
             sourced_on_dpo = pol.from_dpo_line_id
+            external_dpo = pol.from_dpo_line_id and (not pol.from_dpo_partner_type or pol.from_dpo_partner_type == 'external')
 
             if pol.order_type != 'direct' and not pol.from_synchro_return_goods:
                 # create incoming shipment (IN):
 
                 if sourced_on_dpo:
+                    if external_dpo:
+                        pick_state = 'shipped'
+                    else:
+                        pick_state = 'assigned'
                     in_domain = [
                         ('purchase_id', '=', pol.order_id.id),
-                        ('state', '=', 'shipped'),
+                        ('state', '=', pick_state),
                         ('type', '=', 'in'),
                         ('dpo_incoming', '=', True),
                         ('dpo_id_incoming', '=', pol.from_dpo_id),
@@ -780,7 +788,7 @@ class purchase_order_line(osv.osv):
                     created = True
                 incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)
                 if created:
-                    if sourced_on_dpo:
+                    if external_dpo:
                         wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_shipped', cr)
                     else:
                         wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)

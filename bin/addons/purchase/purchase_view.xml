@@ -245,6 +245,8 @@
                                 default_selector="'3'" o2m_selectable="2"
                                 >
                                 <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" editable="both">
+                                    <!-- DEBUG -->
+                                    <field name="sync_order_line_db_id" displayon="noteditable"/>
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>

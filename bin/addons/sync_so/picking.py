@@ -181,6 +181,7 @@ class stock_picking(osv.osv):
             'note': data.get('note', False),
             'comment': data.get('comment'),
             'sale_line_id': data.get('sale_line_id', False) and data['sale_line_id'].get('id', False) or False,
+            'sync_order_line_db_id': data.get('sale_line_id', False) and data['sale_line_id'].get('sync_order_line_db_id', False) or False,
             'resourced_original_remote_line': data.get('sale_line_id', False) and data['sale_line_id'].get('resourced_original_remote_line', False) or False,
 
         }
@@ -249,6 +250,106 @@ class stock_picking(osv.osv):
             already_shipped_moves[move_id] = quantity
 
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, *pick_info, **kwargs):
+        context = kwargs.get('context')
+        pol_obj = self.pool.get('purchase.order.line')
+        move_obj = self.pool.get('stock.move')
+        move_proc = self.pool.get('stock.move.in.processor')
+        pack_info_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
+        pick_dict = pick_info[0].to_dict()
+        ignored_lines = []
+        error_lines = []
+        sync_message = []
+
+        shipment = pick_dict.get('shipment_id', False)
+        if shipment:
+            shipment_ref = shipment['name'] # shipment made
+        else:
+            shipment_ref = pick_dict.get('name', False) # the case of OUT
+
+        pack_data = self.package_data_update_in(cr, uid, source, pick_info, context=context)
+        """
+        import pprint
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(pack_data)
+        """
+        pack_info_created = {}
+        data_grouped_by_in = {}
+        for line in pack_data:
+            line_data = pack_data[line]
+            for data in line_data['data']:
+                if not data.get('quantity', 0) or data.get('state', 'cancel') == 'cancel':
+                    continue
+                pol_line = pol_obj.search(cr, uid, [('sync_order_line_db_id', '=', data['sync_order_line_db_id']), ('state', '=', 'confirmed')], context=context)
+                if not pol_line:
+                    if pol_obj.search_exists(cr, uid, [('sync_order_line_db_id', '=', data['sync_order_line_db_id']), ('state', 'in', ['done', 'cancel'])], context=context):
+                        ignored_lines.append('Line %s ignored because orignal line number %s forced in %s' % (data.get('line_number'), ))
+                    else:
+                        error_lines.append('Line %s not found on PO' % (data.get('line_number'), ))
+                    continue
+                move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_line), ('state', 'not in', ['done', 'cancel']), ('in_forced', '=', False)], context=context)
+                if not move_ids:
+                    error_lines.append('Line %s, move not found' % (data.get('line_number'), ))
+                    continue
+                pick_id = False
+                for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['picking_id', 'line_number', 'product_qty'], context=context):
+                    if move.picking_id.state != 'assigned':
+                        continue
+                    if not pick_id:
+                        pick_id = move.picking_id.id
+                    elif pick_id != move.picking_id.id:
+                        error_lines.append('Multiple pick')
+                        break
+                    data.setdefault('move_ids', []).append({'move_id': move.id, 'line_number': move.line_number, 'product_qty': move.product_qty})
+                if not pick_id:
+                    error_lines('Pick not found line %s'%(data.get('line_number'),))
+                    continue
+                data_grouped_by_in.setdefault(pick_id, []).append(data)
+
+        for in_id in data_grouped_by_in:
+            in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
+            context['InShipOut'] = "IN"
+            for line in data_grouped_by_in[in_id]:
+                if line.get('move_ids'):
+                    pack_key = False
+                    if line.get('from_pack') and line.get('to_pack'):
+                        pack_key = '%s-%s-%s' % (line.get('from_pack'), line.get('to_pack'), line.get('ppl_name'))
+                        if pack_key not in pack_info_created:
+                            pack_info_created[pack_key] = pack_info_obj.create(cr, uid, {
+                                'parcel_from': line['from_pack'],
+                                'parcel_to': line['to_pack'],
+                                'total_weight': line['weight'],
+                                'total_height': line['height'],
+                                'total_length': line['length'],
+                                'total_width': line['width'],
+                                'packing_list': line.get('packing_list'),
+                                'ppl_name': line.get('ppl_name'),
+                            })
+                        data['pack_info_id'] = pack_info_created[pack_key]
+                    proc_data = {
+                        'move_id': line['move_ids'][0]['move_id'],
+                        'line_number': line['move_ids'][0]['line_number'],
+                        'wizard_id': in_processor,
+                        'quantity': line['quantity'],
+                        'ordered_quantity': line['move_ids'][0]['product_qty'],
+                        'product_id': line['product_id'],
+                        'uom_id': line['uom_id'],
+                        'prodlot_id': line['prodlot_id'],
+                        'asset_id': line['asset_id'],
+                    }
+                    if pack_key:
+                        proc_data['pack_info_id'] = pack_info_created[pack_key]
+                    if line.get('comment'):
+                        proc_data['comment'] = line['comment']
+                    move_proc.create(cr, uid, proc_data, context=context)
+            new_picking = self.do_incoming_shipment(cr, uid, in_processor, shipment_ref=shipment_ref, context=context)
+            new_picking_data = self.browse(cr, uid, new_picking, fields_to_fetch=['name', 'purchase_id'], context=context)
+            sync_message.append("The INcoming  %s (%s) has now become shipped available!" % (new_picking_data.name, new_picking_data.purchase_id.name))
+
+        message = "\n".join(sync_message+ignored_lines+error_lines)
+        self._logger.info(message)
+        return message
+
+    def old_partial_shipped_fo_updates_in_po(self, cr, uid, source, *pick_info, **kwargs):
         '''
         ' This sync method is used for updating the IN of Project side when the OUT/PICK at Coordo side became done.
         ' In partial shipment/OUT, when the last shipment/OUT is made, the original IN will become Available Shipped, no new IN will

@@ -142,6 +142,7 @@ class purchase_order_line_sync(osv.osv):
         pol_values['modification_comment'] = sol_dict.get('modification_comment', False)
         pol_values['from_dpo_line_id'] = sol_dict.get('dpo_line_id') and sol_dict.get('dpo_line_id', {}).get('.id', False) or False
         pol_values['from_dpo_id'] = sol_dict.get('dpo_id') and sol_dict.get('dpo_id', {}).get('.id', False) or False
+        pol_values['from_dpo_partner_type'] = sol_dict.get('dpo_id') and sol_dict.get('dpo_id', {}).get('partner_type', False) or False
         pol_values['esti_dd'] = sol_dict.get('esti_dd', False)
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
@@ -245,6 +246,8 @@ class purchase_order_line_sync(osv.osv):
             if sol_dict['state'] in ['cancel', 'cancel_r']:
                 pol_values['cancelled_by_sync'] = True
             try:
+                if sol_dict.get('sync_order_line_db_id'):
+                    pol_values['sync_order_line_db_id'] = sol_dict['sync_order_line_db_id']
                 new_pol = self.create(cr, uid, pol_values, context=context)
             except Exception, e:
                 raise SyncException(hasattr(e, 'value') and e.value or '%s' % e , target_object='purchase.order', target_id=po_ids[0])

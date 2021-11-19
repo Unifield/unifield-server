@@ -287,7 +287,8 @@ class stock_picking(osv.osv):
             default = {}
         if context is None:
             context = {}
-        default.update(shipment_ref=False)
+        if 'shipment_ref' not in default:
+            default['shipment_ref'] = False
 
         if not 'from_wkf_sourcing' in default:
             default['from_wkf_sourcing'] = False

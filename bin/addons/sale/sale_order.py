@@ -597,6 +597,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return ret
 
+    def _get_dpo_partner_shipping_id(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+        ret = {}
+        for so in self.read(cr, uid, ids, ['partner_shipping_id'], context=context):
+            ret[so['id']] = so['partner_shipping_id']
+        return ret
+
+    def _set_dpo_partner_shipping_id(self, cr, uid, id, name, value, fnct_inv_arg, context):
+        cr.execute('update sale_order set partner_shipping_id=%s where id=%s', (value or 'NULL', id))
+
+        return True
+
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
@@ -661,7 +674,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan')],
                                        string='Order Type', required=True, readonly=True),
         'dpo_partner_id': fields.many2one('res.partner', 'DPO Customer', readonly=True),
-        'dpo_address_id': fields.many2one('res.partner.address', 'DPO Shipping Address', readonly=True),
+        'dpo_partner_shipping_id': fields.function(_get_dpo_partner_shipping_id, type='many2one', relation='res.partner.address', method=True, fnct_inv=_set_dpo_partner_shipping_id, string='Shipping Address'),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}, add_empty=True),
@@ -2392,6 +2405,7 @@ class sale_order_line(osv.osv):
             'cv_line_ids': False,
         })
 
+        # TODO: remove dpo_partner_id, reset partner_shipping_id
         reset_if_not_set = ['ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'instance_sync_order_ref']
         for to_reset in reset_if_not_set:
             if to_reset not in default:

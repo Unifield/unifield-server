@@ -128,7 +128,7 @@ class local_message_rule(osv.osv):
             model_obj = self.pool.get(model_name)
 
             if model_name == 'sale.order.line' and real_uid == self.pool.get('res.users')._get_sync_user_id(cr):
-                if model_obj.search_exists(cr, uid, [('id', '=', res_id), ('dpo_line_id', '!=', False)], context=context):
+                if model_obj.search_exists(cr, uid, [('id', '=', res_id), ('dpo_line_id', '!=', False), ('state', '!=', 'confirmed')], context=context):
                     # COO: FO lines sourced to DPO are updated by IN sync message from project: do not trigger message from COO
                     cr.execute("update ir_model_data set sync_date=last_modification where model='sale.order.line' and res_id = %s" , (res_id,))
                     return

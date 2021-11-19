@@ -1026,6 +1026,8 @@ class stock_picking(osv.osv):
                     'physical_reception_date': wizard.physical_reception_date or False,
                 }
 
+                if shipment_ref:
+                    initial_vals_copy['shipment_ref'] = shipment_ref
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                     initial_vals_copy.update({
                         'already_replicated': False,
@@ -1122,6 +1124,8 @@ class stock_picking(osv.osv):
                 for tc_data in track_changes_to_create:
                     tc_data['transaction_name'] = _('Reception %s') % backorder_name
 
+                self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
+                           context=context)
                 if sync_in:
                     # UF-1617: When it is from the sync., then just send the IN to shipped, then return the backorder_id
                     if context.get('for_dpo', False):
@@ -1136,8 +1140,6 @@ class stock_picking(osv.osv):
                     }, context=context)
                     return backorder_id
 
-                self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
-                           context=context)
 
                 # Claim specific code
                 current_backorder = picking_obj.read(cr, uid, backorder_id, ['backorder_id'], context=context)

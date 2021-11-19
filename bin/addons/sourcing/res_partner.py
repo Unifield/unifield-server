@@ -59,7 +59,7 @@ class res_partner(osv.osv):
                 elif arg[2] == 'dpo':
                     company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
                     res.append(('id', '!=', company_id))
-                    res.append(('partner_type', 'in', ('external', 'esc')))
+                    res.append(('partner_type', '!=', 'internal'))
                     res.append(('supplier', '=', True))
 
         return res

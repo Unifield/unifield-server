@@ -194,14 +194,19 @@
                     <notebook colspan="5">
                         <page string="Sales Order">
                             <field name="company_id2" invisible="1"/>
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" 
-                                context="{'search_default_customer':1}" 
-                                domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"
-                                attrs="{'readonly': ['|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft')]}"/>
+                            <group colspan="2" col="4">
+                                <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" 
+                                    context="{'search_default_customer':1}" 
+                                    domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"
+                                    attrs="{'readonly': ['|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft')]}"/>
+                                <field name="dpo_partner_id" attrs="{'invisible': [('dpo_partner_id', '=', False)]}"/>
+                            </group>
                             <field name="partner_type"/>
                             <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
                             <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
-                            <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
+                            <!-- <field domain="[('filter_fo_shipping','=',{'partner_id': partner_id , 'dpo_partner_id': dpo_partner_id})]" name="partner_shipping_id" required="1"/>  RO if state not in draft, draft_p, validated : _columns -->
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" attrs="{'required': [('dpo_partner_id', '=', False)], 'invisible': [('dpo_partner_id', '!=', False)]}" />
+                            <field domain="[('partner_id','=',dpo_partner_id)]" name="dpo_partner_shipping_id" attrs="{'required': [('dpo_partner_id', '!=', False)], 'invisible': [('dpo_partner_id', '=', False)], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                             <group colspan="2" col="3">
                                 <field name="no_line" invisible="1"/>
                                 <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', '|', ('no_line', '=', False), ('state', 'not in', ['draft']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]"/>
@@ -360,6 +365,8 @@
                                 </form>
                                 <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}">
                                     <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
+                                    <!-- DEBUG -->
+                                    <field name="sync_order_line_db_id" />
                                     <field name="line_number"/>
                                     <field name="default_code"/>
                                     <field name="default_name"/>

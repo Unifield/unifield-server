@@ -25,7 +25,7 @@ from osv import fields,osv
 import tools
 import pooler
 from tools.translate import _
-
+from tools.misc import get_fake
 
 class res_payterm(osv.osv):
     _description = 'Payment term'
@@ -304,6 +304,24 @@ class res_partner_address(osv.osv):
     _description ='Partner Addresses'
     _name = 'res.partner.address'
     _order = 'id'
+
+    def _search_filter_fo_shipping(self, cr, uid, obj, name, args, context=None):
+        '''
+            return a domain to filter shipping addresses on FO
+        '''
+        dom = []
+        for arg in args:
+            if arg[0] == 'filter_fo_shipping':
+                if arg[1] != '=' or not isinstance(arg[2], dict) or 'partner_id' not in arg[2] or 'dpo_partner_id' not in arg[2]:
+                    raise osv.except_osv(_('Error'), _('Wrong usage of filter_fo_shipping on res.partner.address'))
+
+                if arg[2]['dpo_partner_id']:
+                    dom.append(('partner_id', '=', arg[2]['dpo_partner_id']))
+                else:
+                    dom.append(('partner_id', '=', arg[2]['partner_id']))
+            else:
+                dom.append(arg)
+        return dom
     _columns = {
         'partner_id': fields.many2one('res.partner', 'Partner Name', ondelete='set null', select=True, help="Keep empty for a private address, not related to partner."),
         'type': fields.selection( [ ('default','Default'),('invoice','Invoice'), ('delivery','Delivery'), ('contact','Contact'), ('other','Other') ],'Address Type', help="Used to select automatically the right address according to the context in sales and purchases documents."),
@@ -326,6 +344,7 @@ class res_partner_address(osv.osv):
         'active': fields.boolean('Active', help="Uncheck the active field to hide the contact."),
         #        'company_id': fields.related('partner_id','company_id',type='many2one',relation='res.company',string='Company', store=True),
         'company_id': fields.many2one('res.company', 'Company',select=1),
+        'filter_fo_shipping': fields.function(get_fake, type='boolean', string='Filter FO Shipping', fnct_search=_search_filter_fo_shipping),
     }
     _defaults = {
         'active': lambda *a: 1,

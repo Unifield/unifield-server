@@ -65,6 +65,7 @@ class sale_order_line_sync(osv.osv):
             sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
             sol_values['order_id'] = sale_order_ids[0]
             sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
+            sol_values['sync_order_line_db_id'] = pol_dict.get('sync_order_line_db_id', False)
             sol_values['ir_name_from_sync'] = pol_dict.get('ir_name_for_sync', False)
             if line_info.product_id and not sol_values.get('product_id'):
                 raise Exception('FO: %s , Product %s not found' % (so_name, line_info.default_code or ''))

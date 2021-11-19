@@ -615,6 +615,7 @@ class purchase_order_line(osv.osv):
         'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
+        'from_dpo_partner_type': fields.selection(PARTNER_TYPE, 'DPO partner type on remote', readonly=1, internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
     }
 
@@ -1288,6 +1289,8 @@ class purchase_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
             'from_dpo_line_id': False,
+            'from_dpo_id': False,
+            'from_dpo_partner_type': False,
             'dates_modified': False,
         })
 
@@ -1304,6 +1307,8 @@ class purchase_order_line(osv.osv):
 
 
         default['from_dpo_line_id'] = False
+        default['from_dpo_id'] = False
+        default['from_dpo_partner_type'] = False
         # do not copy canceled purchase.order.line:
         pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id', 'product_id'], context=context)
         if pol.state in ['cancel', 'cancel_r'] and not context.get('allow_cancelled_pol_copy', False):
