@@ -3188,7 +3188,11 @@ class sale_order_line(osv.osv):
 
         if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
             if vals.get('order_id', False):
-                name = so_obj.browse(cr, uid, vals.get('order_id'), context=context).name
+                so_data = so_obj.browse(cr, uid, vals.get('order_id'), fields_to_fetch=['name', 'company_id', 'procurement_request'], context=context)
+                if so_data.procurement_request:
+                    name = '%s/%s' % (self.pool.get('res.company')._get_instance_record(cr, uid).instance, so_data.name)
+                else:
+                    name = so_data.name
                 super(sale_order_line, self).write(cr, uid, so_line_id, {'sync_order_line_db_id': name + "_" + str(so_line_id), } , context=context)
 
         if vals.get('stock_take_date'):
