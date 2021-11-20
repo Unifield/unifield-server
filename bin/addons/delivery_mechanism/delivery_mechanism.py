@@ -1178,8 +1178,13 @@ class stock_picking(osv.osv):
                     'close_in': _('In progress'),
                 }, context=context)
 
+                in_to_write = {}
                 if wizard.physical_reception_date:
-                    self.write(cr, uid, picking_id, {'physical_reception_date': wizard.physical_reception_date})
+                    in_to_write['physical_reception_date'] = wizard.physical_reception_date
+                if shipment_ref:
+                    in_to_write['shipment_ref'] = shipment_ref
+                if in_to_write:
+                    self.write(cr, uid, picking_id, in_to_write)
 
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking_id, context=context)
