@@ -265,6 +265,8 @@ class stock_picking(osv.osv):
             shipment_ref = shipment['name'] # shipment made
         else:
             shipment_ref = pick_dict.get('name', False) # the case of OUT
+        if shipment_ref:
+            shipment_ref = '%s.%s' % (source, shipment_ref)
 
         pack_data = self.package_data_update_in(cr, uid, source, pick_info, context=context)
         """

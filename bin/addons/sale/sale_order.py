@@ -606,9 +606,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         return ret
 
     def _set_dpo_partner_shipping_id(self, cr, uid, id, name, value, fnct_inv_arg, context):
-        if not value:
-            cr.execute('update sale_order set partner_shipping_id=NULL where id=%s', (id,))
-        else:
+        if value:
             cr.execute('update sale_order set partner_shipping_id=%s where id=%s', (value, id))
 
         return True
