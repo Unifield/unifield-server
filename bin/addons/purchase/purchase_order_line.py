@@ -1150,14 +1150,14 @@ class purchase_order_line(osv.osv):
                 _('You have to select a product UOM in the same '
                   'category than the purchase UOM of the product !'))
 
-    def set_sync_order_line_db_id(self, cr, uid, ids, context=None):
+    def _set_sync_order_line_db_id(self, cr, uid, ids, context=None):
         """
             called by wkf start activity
             set value at early creation to propagate it to the FO line creation
 
         """
         cr.execute('''
-            update purchase_order_line pol set sync_order_line_db_id=po.name||'/'||pol.id
+            update purchase_order_line pol set sync_order_line_db_id=po.name||'_'||pol.id
                 from purchase_order po
                 where
                     po.id = pol.order_id and

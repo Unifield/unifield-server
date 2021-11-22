@@ -250,6 +250,7 @@ class stock_picking(osv.osv):
             already_shipped_moves[move_id] = quantity
 
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, *pick_info, **kwargs):
+        # TODO: split DPO / PO methods + patch script to set sync_order_line_db_id ?
         context = kwargs.get('context')
         pol_obj = self.pool.get('purchase.order.line')
         move_obj = self.pool.get('stock.move')

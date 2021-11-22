@@ -14,7 +14,7 @@
             <field name="wkf_id" ref="wkf_purchase_order_line"/>
             <field name="flow_start">True</field>
             <field name="kind">function</field>
-            <field name="action">set_sync_order_line_db_id()</field>
+            <field name="action">_set_sync_order_line_db_id()</field>
         </record>
         <record id="act_pol_validated_n" model="workflow.activity">
             <field name="name">validated_n</field>
