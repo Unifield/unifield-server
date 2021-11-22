@@ -37,6 +37,7 @@ import traceback
 from msf_field_access_rights.osv_override import _get_instance_level
 import cStringIO
 import csv
+import zlib
 
 
 class patch_scripts(osv.osv):
@@ -52,6 +53,158 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    # UF23.0
+    def us_8839_cv_from_fo(self, cr, uid, *a, **b):
+        if cr.column_exists('account_commitment_line', 'po_line_product_id'):
+            cr.execute('''update account_commitment_line set line_product_id=po_line_product_id, line_number=po_line_number''')
+            cr.execute('''update
+                account_commitment cv
+                set cv_flow_type='supplier'
+                from
+                    purchase_order po
+                where
+                    po.id = cv.purchase_id
+                ''')
+
+        # hide menu
+        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'menu_account_commitment_from_fo')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': False})
+        return True
+
+    def us_8585_new_isi_journals(self, cr, uid, *a, **b):
+        """
+        Creates the ISI G/L and analytic journals in all existing instances.
+        This is done in Python as the objects created must sync normally.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # ISI analytic journal
+            isi_analytic_journal_ids = analytic_journal_obj.search(cr, uid,
+                                                                   [('code', '=', 'ISI'),
+                                                                    ('type', '=', 'purchase'),
+                                                                    ('is_current_instance', '=', True)])
+            if isi_analytic_journal_ids:  # just in case the journal has been created before the release
+                isi_analytic_journal_id = isi_analytic_journal_ids[0]
+            else:
+                isi_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ISI',
+                    'name': 'Intersection Supplier Invoice',
+                    'type': 'purchase',
+                }
+                isi_analytic_journal_id = analytic_journal_obj.create(cr, uid, isi_analytic_vals)
+            # ISI G/L journal
+            if not journal_obj.search_exist(cr, uid, [('code', '=', 'ISI'),  # just in case the journal has been created before the release
+                                                      ('type', '=', 'purchase'),
+                                                      ('is_current_instance', '=', True),
+                                                      ('analytic_journal_id', '=', isi_analytic_journal_id)]):
+                isi_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ISI',
+                    'name': 'Intersection Supplier Invoice',
+                    'type': 'purchase',
+                    'analytic_journal_id': isi_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, isi_vals)
+        return True
+
+    def us_9044_add_location_colors(self, cr, uid, *a, **b):
+        '''
+        Add the search_color to each location which needs one
+        Changes the name 'Quarantine' into 'Quarantine / For Scrap' where it is necessary
+        Changes the name 'Quarantine (before scrap)' into 'Expired / Damaged / For Scrap' where it is necessary
+        '''
+        obj_data = self.pool.get('ir.model.data')
+        # Get the locations ids
+        stock = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        med = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+        log = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+        cd = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        inp = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        p_qua = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_view')[1]
+        qua = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+        exp = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+
+        # Main stocks (Stock, LOG, MED): dimgray
+        cr.execute("""UPDATE stock_location SET search_color = 'dimgray' WHERE id IN %s""", (tuple([stock, med, log]),))
+
+        # Cross docking & Input: darkorchid
+        cr.execute("""UPDATE stock_location SET search_color = 'darkorchid' WHERE id IN %s""", (tuple([cd, inp]),))
+
+        # Quarantine (analyze): darkorange
+        cr.execute("""UPDATE stock_location SET search_color = 'darkorange' WHERE id = %s""", (qua,))
+
+        # Expired / Damaged / For Scrap: sandybrown
+        cr.execute("""UPDATE stock_location SET name = 'Expired / Damaged / For Scrap', search_color = 'sandybrown' WHERE id = %s""", (exp,))
+
+        # Fix the name of Quarantine location
+        cr.execute("""UPDATE stock_location SET name = 'Quarantine / For Scrap' WHERE id = %s""", (p_qua,))
+
+        # Fix the remote_location_name in stock_mission_report_line_location
+        cr.execute("""UPDATE stock_mission_report_line_location SET remote_location_name = 'Expired / Damaged / For Scrap' 
+            WHERE id IN (SELECT id FROM stock_mission_report_line_location WHERE remote_location_name = 'Quarantine (before scrap)')""")
+        return True
+
+    # UF22.1
+    def us_8336_update_msr_used(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+
+        if _get_instance_level(self, cr, uid) == 'hq':
+            # exclude hq
+            return True
+
+        doc_field_error_dom = [
+            ('stock_move', 'product_id'),
+            ('stock_production_lot', 'product_id'),
+            ('purchase_order_line', 'product_id'),
+            ('sale_order_line', 'product_id'),
+            ('tender_line', 'product_id'),
+            ('physical_inventory_counting', 'product_id'),
+            ('initial_stock_inventory_line', 'product_id'),
+            ('real_average_consumption_line', 'product_id'),
+            ('replenishment_segment_line', 'product_id'),
+            ('product_list_line', 'name'),
+            ('composition_kit', 'composition_product_id'),
+            ('composition_item', 'item_product_id'),
+        ]
+        report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)])
+        if not report_ids:
+            return True
+        report_id = report_ids[0]
+        for table, foreign_field in doc_field_error_dom:
+            # set used_in_transaction='t'
+            cr.execute('''
+                update
+                    stock_mission_report_line l
+                set
+                    used_in_transaction='t'
+                from
+                    ''' + table + ''' ft
+                where
+                    coalesce(l.used_in_transaction,'f')='f' and
+                    l.mission_report_id = %s and
+                    ft.''' + foreign_field + ''' = l.product_id
+                ''', (report_id, )) # not_a_user_entry
+
+        cr.execute('''
+            select d.name
+            from ir_model_data d, stock_mission_report_line l
+            where
+                l.id = d.res_id and
+                used_in_transaction='t' and
+                d.model='stock.mission.report.line' and
+                l.mission_report_id = %s
+        ''', (report_id,))
+        if cr.rowcount:
+            zipstr = base64.b64encode(zlib.compress(','.join([x[0] for x in cr.fetchall()])))
+            self.pool.get('sync.trigger.something.up').create(cr, uid, {'name': 'msr_used', 'args': zipstr})
+        return True
 
     # UF22.0
     def us_9003_partner_im_is_currencies(self, cr, uid, *a, **b):
@@ -4962,7 +5115,17 @@ class sync_tigger_something_up(osv.osv):
                 if remote_id:
                     cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
                     _logger.warn('Reset %d mission stock CU Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
-
+            elif vals.get('name') == 'msr_used':
+                cr.execute('''
+                    update stock_mission_report_line l
+                        set used_in_transaction='t'
+                    from
+                        ir_model_data d
+                    where
+                        d.model='stock.mission.report.line' and
+                        d.res_id = l.id and
+                        d.name in %s
+                ''', (tuple((zlib.decompress(base64.b64decode(vals.get('args'))).split(','))),))
         return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
 
 sync_tigger_something_up()

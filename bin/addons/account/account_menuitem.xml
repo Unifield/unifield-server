@@ -8,7 +8,7 @@
             web_icon_hover="images/accounting-hover.png"/>
         <menuitem id="menu_finance_receivables" name="Customers" parent="menu_finance" sequence="2"/>
         <menuitem id="menu_finance_payables" name="Suppliers" parent="menu_finance" sequence="3"/>
-        <menuitem id="menu_finance_bank_and_cash" name="Bank and Cash" parent="menu_finance" sequence="4"
+        <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="1" />
             groups="group_account_user,group_account_manager"/>
         <menuitem id="menu_finance_periodical_processing" name="Periodical Processing" parent="menu_finance" sequence="9" groups="group_account_user,group_account_manager"/>
         <!-- This menu is used in account_code module -->

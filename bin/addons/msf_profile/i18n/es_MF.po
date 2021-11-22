@@ -1093,11 +1093,6 @@ msgstr "Wisconsin"
 msgid "Full Report"
 msgstr "Full Report"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
-msgid "Supplier Refunds"
-msgstr "Supplier Refunds"
-
 #. module: msf_config_locations
 #: field:stock.location,non_stockable_ok:0
 msgid "Non-stockable"
@@ -4823,7 +4818,6 @@ msgstr "No puede crear una partida contable en una cuenta vista."
 #: field:wizard.register.import.errors,name:0
 #: field:wizard.register.import.lines,description:0
 #: report:stock.card.report:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:294
 msgid "Description"
 msgstr "Description"
 
@@ -9205,11 +9199,6 @@ msgstr "Teórico"
 #: field:product.deactivation.error.line,type:0
 msgid "Documents type"
 msgstr "Tipo de Documentos"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:300
-msgid "Booking Currency"
-msgstr "Booking Currency"
 
 #. module: product
 #: help:product.template,purchase_ok:0
@@ -14427,11 +14416,6 @@ msgstr "Gestión de almacenes"
 msgid "Select this if you want to keep track of workflow on any record of the object of this rule"
 msgstr "Seleccione esta opción si desea realizar un seguimiento del flujo de trabajo de cualquier registro del objeto de esta regla"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:301
-msgid "Residual amt func. ccy"
-msgstr "Residual amt func. ccy"
-
 #. module: msf_outgoing
 #: view:stock.picking:0
 msgid "Pack..."
@@ -18502,11 +18486,6 @@ msgid "No active version for the selected pricelist !\n"
 "Please create or activate one."
 msgstr "¡Ninguna versión activa de la lista de precios seleccionada! Por favor, cree o active una."
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:257
-msgid "Prop. Instance"
-msgstr "Prop. Instance"
-
 #. module: base
 #: view:partner.sms.send:0
 msgid "SMS - Gateway: clickatell"
@@ -20862,11 +20841,6 @@ msgstr "Validar tique de picking"
 msgid "An unexpected error occurred. Please contact an administrator."
 msgstr "An unexpected error occurred. Please contact an administrator."
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:303
-msgid "Func. Ccy"
-msgstr "Func. Ccy"
-
 #. module: msf_audittrail
 #: report:msf.log.line:0
 msgid ",'o')]]"
@@ -21697,11 +21671,6 @@ msgstr "Activo específico de un producto"
 #: field:purchase.order,invoice_method:0
 msgid "Invoicing Control"
 msgstr "Control de facturación"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
-msgid "Supplier Invoices"
-msgstr "Supplier Invoices"
 
 #. module: account_period_closing_level
 #: view:account.period:0
@@ -28227,11 +28196,6 @@ msgstr "SAMOAN TALA"
 msgid "Only specify a value if you want to change the user password. This user will have to logout and login again!"
 msgstr "Especifique un valor solo si desea cambiar la contraseña de usuario. ¡El usuario tendrá que cerrar la sesión y volver a concectarse!"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:302
-msgid "Total amt func. ccy"
-msgstr "Total amt func. ccy"
-
 #. module: msf_button_access_rights
 #: model:ir.actions.act_window,name:msf_button_access_rights.msf_button_access_rights_view_config_wizard_act_window
 msgid "Generate Button Access Rules"
@@ -31615,11 +31579,6 @@ msgstr "Cuando vende productos a un cliente, puede darle un recibo o una factura
 msgid "Unit of Measure Properties"
 msgstr "Propiedades de unidad de medida"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:292
-msgid "Number"
-msgstr "Number"
-
 #. module: base
 #: model:res.currency,currency_name:base.KWD
 msgid "KUWAITI DINAR"
@@ -32342,11 +32301,6 @@ msgstr "Debido a limitaciones técnicas, no se puede utilizar el operador \"like
 #: report:msf.log.line:0
 msgid "New value"
 msgstr "Nuevo valor"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:265
-msgid "Report Date"
-msgstr "Report Date"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:207
@@ -36876,9 +36830,8 @@ msgstr "¡El nombre del idioma debe ser único!"
 msgid "Latest version"
 msgstr "Última versión"
 
-#. modules: vertical_integration, account_mcdb
+#. module: account_mcdb
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:79
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:291
 msgid "Posting Date"
 msgstr "Posting Date"
 
@@ -47274,13 +47227,12 @@ msgstr "Conductor:"
 msgid "G/L Selector"
 msgstr "Selector contable"
 
-#. modules: msf_doc_import, register_accounting, vertical_integration, account_hq_entries, stock_override
+#. modules: msf_doc_import, register_accounting, account_hq_entries, stock_override
 #: field:hq.entries.split.lines,state:0
 #: field:msf.doc.import.accounting,state:0
 #: field:wizard.import.int.line,state:0
 #: field:wizard.register.import,state:0
 #: field:change.dest.location,state:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:304
 msgid "State"
 msgstr "State"
 
@@ -53833,11 +53785,6 @@ msgstr "Embalajes de cliente"
 msgid "In - draft"
 msgstr "In - borrador"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:249
-msgid "OPEN INVOICES"
-msgstr "OPEN INVOICES"
-
 #. module: account_voucher
 #: model:ir.actions.act_window,name:account_voucher.action_purchase_receipt
 #: model:ir.ui.menu,name:account_voucher.menu_action_purchase_receipt
@@ -54262,11 +54209,6 @@ msgstr "Reembolso de cliente"
 #: report:internal.move:0
 msgid "Reference :"
 msgstr "Reference :"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
-msgid "Customer Refunds"
-msgstr "Customer Refunds"
 
 #. module: base
 #: view:ir.values:0
@@ -55471,11 +55413,6 @@ msgstr "("
 #: field:kit.selection.sale.line,wizard_id_kit_selection_sale_line:0
 msgid "Kit Selection wizard"
 msgstr "Asistente de selección de kit"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:293
-msgid "Customer"
-msgstr "Customer"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -59393,11 +59330,6 @@ msgstr "Factura basada en órdenes de venta"
 msgid "Trigger Date"
 msgstr "Fecha desencadenante"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:298
-msgid "Residual amt booking ccy"
-msgstr "Residual amt booking ccy"
-
 #. modules: register_accounting, res_currency_functional
 #: view:account.move.line:0
 #: view:account.move.line:0
@@ -59461,11 +59393,6 @@ msgstr "maintenance.contract"
 #, python-format
 msgid "No open period found for this date: %s"
 msgstr "No se encontró ningún periodo abierto para esta fecha: %s"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:296
-msgid "Due Date"
-msgstr "Due Date"
 
 #. module: sourcing
 #: field:sale.order,sourcing_trace_ok:0
@@ -62486,11 +62413,6 @@ msgstr "Debe indicar un activo para el producto %s."
 msgid "You cannot change Journal Items that comes from the system!"
 msgstr "¡No se pueden cambiar partidas contables originadas en el sistema!"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:230
-msgid "Open Invoices"
-msgstr "Open Invoices"
-
 #. module: account
 #: help:account.addtmpl.wizard,cparent_id:0
 msgid "Creates an account with the selected template under this existing parent."
@@ -64395,11 +64317,6 @@ msgstr "Cargue el informe modificado"
 #: field:kit.selection,corresponding_so_line_id_kit_selection:0
 msgid "Corresponding Fo Line"
 msgstr "Línea de pedido de terreno correspondiente.  "
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:271
-msgid "Stock Transfer Vouchers"
-msgstr "Stock Transfer Vouchers"
 
 #. module: msf_outgoing
 #: report:picking.ticket:0
@@ -69052,11 +68969,6 @@ msgstr "¿Es un informe local?"
 msgid "Left parent"
 msgstr "Principal a la izquierda"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:297
-msgid "Source Document"
-msgstr "Source Document"
-
 #. module: msf_order_date
 #: field:purchase.order,confirmed_date_by_synchro:0
 #: field:sale.order,confirmed_date_by_synchro:0
@@ -69796,11 +69708,10 @@ msgstr "Importar archivo"
 msgid "You cannot inactivate this product due to below reasons :"
 msgstr "No puede desactivar este producto debido a las razones siguientes:"
 
-#. modules: vertical_integration, register_accounting, account_mcdb
+#. modules: register_accounting, account_mcdb
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:79
 #: field:wizard.advance.line,document_date:0
 #: field:wizard.invoice.line,document_date:0
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:290
 msgid "Document Date"
 msgstr "Document Date"
 
@@ -72651,11 +72562,6 @@ msgstr "Modo de reaprovisionamiento"
 msgid "Method of computation"
 msgstr "Método de cálculo"
 
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:299
-msgid "Total amt booking ccy"
-msgstr "Total amt booking ccy"
-
 #. module: base
 #: help:res.lang,grouping:0
 msgid "The Separator Format should be like [,n] where 0 < n :starting from Unit digit.-1 will end the separation. e.g. [3,2,-1] will represent 106500 to be 1,06,500;[1,2,-1] will represent it to be 106,50,0;[3] will represent it as 106,500. Provided ',' as the thousand separator in each case."
@@ -73801,11 +73707,6 @@ msgstr "Pedido de terreno"
 #: selection:account.entries.report,type:0
 msgid "Payable"
 msgstr "Proveedor"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:295
-msgid "Responsible"
-msgstr "Responsible"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -76640,11 +76541,6 @@ msgstr "Palet"
 #, python-format
 msgid "Couldn't find previous ir.actions.todo"
 msgstr "No se pudo encontrar ir.actions.todo anterior"
-
-#. module: vertical_integration
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:354
-msgid "Sub Total"
-msgstr "Sub Total"
 
 #. module: account
 #: view:account.tax.template:0

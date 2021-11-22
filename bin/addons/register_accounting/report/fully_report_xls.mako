@@ -450,7 +450,7 @@
       <Column ss:Width="36" ss:Span="1"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
-          <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER') or o.journal_id.type == 'bank' and _('BANK REGISTER') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER') or ''|x} ${_('REPORT')|x}</Data>
+          <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER FULL REPORT') or o.journal_id.type == 'bank' and _('BANK REGISTER FULL REPORT') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER FULL REPORT') or ''|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
@@ -573,7 +573,7 @@
           </Cell>
         % endif
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">${_('Acct')|x}</Data>
+          <Data ss:Type="String">${_('Account')|x}</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">${_('Third Parties')|x}</Data>

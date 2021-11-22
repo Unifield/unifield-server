@@ -524,22 +524,29 @@ class product_likely_expire_report(osv.osv):
                     product_lot_ids = lot_obj.search(new_cr, uid, domain, order='life_date', context=context)
 
                     tmp_last_expiry_date = False
-                    # Create an item line for each lot and each location
                     for product_lot in lot_obj.browse(new_cr, uid, product_lot_ids, context=context):
+                        # each BN that expires in the month ordered by life_date
                         if from_segment and segment_product_fmc:
                             life_date = DateFrom(product_lot.life_date)
                             consum = 0
+                            # consum is the sum of FMC for the period:
+                            #   period is: from today to expiry_date for the 1st BN
+                            #              or from previous_bn_expiry to expiry_date if previous BN found
+                            # note: the period may be covered by several FMC intervals
+
+                            # ignore FMC if BN is already expired
                             if life_date > last_expiry_date:
                                 tmp_last_expiry_date = last_expiry_date
                                 for fmc in segment_product_fmc.setdefault(lot.product_id.id, []):
                                     if life_date >= fmc['from'] and tmp_last_expiry_date <= fmc['to']:
+                                        # if the given period overlaps FMC interval
                                         end_fmc = min(life_date, fmc['to'])
                                         lot_days = Age(DateFrom(end_fmc), tmp_last_expiry_date)
                                         consum += fmc['fmc'] * (lot_days.years*364.8 + lot_days.months*30.44 + lot_days.days)/30.44
-                                    if life_date <= fmc['to']:
-                                        break
-                                    else:
                                         tmp_last_expiry_date = end_fmc
+                                    if life_date <= fmc['to']:
+                                        # no need to check other FMCs
+                                        break
 
                         else:
                             lot_days = Age(DateFrom(product_lot.life_date), last_expiry_date)
@@ -568,6 +575,7 @@ class product_likely_expire_report(osv.osv):
                         lot_context = context.copy()
                         lot_context.update({'prodlot_id': product_lot.id})
                         lot_expired_qty = l_expired_qty
+                        # Create an item line for each lot and each location
                         for location in location_ids:
                             new_lot_context = lot_context.copy()
                             new_lot_context.update({'location': location, 'compute_child': False})

@@ -6,7 +6,7 @@
             string="Open Invoices"
             model="account.invoice"
             name="open.invoices.2"
-            target_filename="Open Invoices_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
+            target_filename="${_('Open Invoices')}_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
             file="account_override/report/open_invoices_xls.mako"
             report_type="webkit"
             header="False"

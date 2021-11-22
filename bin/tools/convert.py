@@ -500,7 +500,11 @@ form: module.record_id""" % (xml_id,)
             'usage': usage,
             'limit': limit,
             'auto_refresh': auto_refresh,
+            'search_view_id': False,
         }
+
+        if rec.get('search_view_id'):
+            res['search_view_id'] = self.id_get(cr, rec.get('search_view_id'))
 
         if rec.get('groups'):
             g_names = rec.get('groups','').split(',')

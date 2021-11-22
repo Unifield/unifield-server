@@ -2916,9 +2916,8 @@ class purchase_order(osv.osv):
 
             # Display a message to inform that a commitment was created
             commit_data = self.pool.get('account.commitment').read(cr, uid, commit_id, ['name'], context=context)
-            message = _("Commitment Voucher %s has been created.") % commit_data.get('name', '')
-            view_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'account_commitment_form')
-            self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_ids and view_ids[1] or False})
+            message = _("Supplier Commitment Voucher %s has been created.") % commit_data.get('name', '')
+            self.pool.get('account.commitment').log(cr, uid, commit_id, message, action_xmlid='analytic_distribution.action_account_commitment_tree')
             self.infolog(cr, uid, message)
 
             # Add analytic distribution from purchase

@@ -57,7 +57,7 @@ HEADER_DICT = {
         (_('Cross-Docking Qty.'), 'l_cross_qty'),
         (_('Secondary Stock Qty.'), 'l_secondary_qty'),
         (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
-        (_('Quarantine Qty'), 'l_quarantine_qty'),
+        (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
         (_('Input Qty'), 'l_input_qty'),
         (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
         (_('AMC'), 'product_amc'),
@@ -76,7 +76,7 @@ HEADER_DICT = {
         (_('Cross-Docking Qty.'), 'l_cross_qty'),
         (_('Secondary Stock Qty.'), 'l_secondary_qty'),
         (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
-        (_('Quarantine Qty'), 'l_quarantine_qty'),
+        (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
         (_('Input Qty'), 'l_input_qty'),
         (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
         (_('AMC'), 'product_amc'),
@@ -526,7 +526,7 @@ class stock_mission_report(osv.osv):
             (_('Cross-Docking Qty.'), 'l_cross_qty'),
             (_('Secondary Stock Qty.'), 'l_secondary_qty'),
             (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
-            (_('Quarantine Qty'), 'l_quarantine_qty'),
+            (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
             (_('Input Qty'), 'l_input_qty'),
             (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
             (_('AMC'), 'product_amc'),
@@ -1019,6 +1019,7 @@ class stock_mission_report(osv.osv):
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
 
                 vals['in_pipe_qty'] += qty
+                vals['used_in_transaction'] = True
 
                 if partner == coordo_id:
                     vals['in_pipe_coor_qty'] += qty
@@ -1047,6 +1048,53 @@ class stock_mission_report(osv.osv):
             ''')
             res = cr.fetchall()
             all_move_ids = []
+            doc_field_error_dom = [
+                ('stock_move', 'product_id'),
+                ('stock_production_lot', 'product_id'),
+                ('purchase_order_line', 'product_id'),
+                ('sale_order_line', 'product_id'),
+                ('tender_line', 'product_id'),
+                ('physical_inventory_counting', 'product_id'),
+                ('initial_stock_inventory_line', 'product_id'),
+                ('real_average_consumption_line', 'product_id'),
+                ('replenishment_segment_line', 'product_id'),
+                ('product_list_line', 'name'),
+                ('composition_kit', 'composition_product_id'),
+                ('composition_item', 'item_product_id'),
+            ]
+
+            timer_used = time.time()
+            # record the current value in transaction_updated
+            cr.execute("update stock_mission_report_line set transaction_updated=coalesce(used_in_transaction, 'f'), used_in_transaction='f' where mission_report_id=%s", (report_id, ))
+            for table, foreign_field in doc_field_error_dom:
+                # set used_in_transaction='t'
+                cr.execute('''
+                    update
+                        stock_mission_report_line l
+                    set
+                        used_in_transaction='t'
+                    from
+                        ''' + table + ''' ft
+                    where
+                        coalesce(l.used_in_transaction,'f')='f' and
+                        l.mission_report_id = %s and
+                        ft.''' + foreign_field + ''' = l.product_id
+                    ''', (report_id, )) # not_a_user_entry
+
+            # trigger sync update
+            cr.execute('''
+                update ir_model_data d
+                    set last_modification=NOW(), touched='[''used_in_transaction'']'
+                from
+                    stock_mission_report_line l
+                where
+                    l.id = d.res_id and
+                    l.transaction_updated!=used_in_transaction and
+                    d.model='stock.mission.report.line' and
+                    l.mission_report_id = %s
+            ''', (report_id, ))
+            logging.getLogger('MSR').info("""___ computation of used in transaction in %.2f sec.""" % (time.time() - timer_used))
+
             for move in res:
                 all_move_ids.append(move[0])
                 product = product_obj.browse(cr, uid, move[1],
@@ -1056,17 +1104,19 @@ class stock_mission_report(osv.osv):
                 if line_id:
                     line = line_obj.browse(cr, uid, line_id[0])
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[2], move[3], product.uom_id.id)
-                    vals = {'internal_qty': line.internal_qty or 0.00,
-                            'stock_qty': line.stock_qty or 0.00,
-                            'cross_qty': line.cross_qty or 0.00,
-                            'secondary_qty': line.secondary_qty or 0.00,
-                            'cu_qty': line.cu_qty or 0.00,
-                            'quarantine_qty': line.quarantine_qty or 0.00,
-                            'input_qty': line.input_qty or 0.00,
-                            'opdd_qty': line.opdd_qty or 0.00,
-                            'updated': True,
-                            'product_state': line.product_id.state and line.product_id.state.code,}
-
+                    vals = {
+                        'internal_qty': line.internal_qty or 0.00,
+                        'stock_qty': line.stock_qty or 0.00,
+                        'cross_qty': line.cross_qty or 0.00,
+                        'secondary_qty': line.secondary_qty or 0.00,
+                        'cu_qty': line.cu_qty or 0.00,
+                        'quarantine_qty': line.quarantine_qty or 0.00,
+                        'input_qty': line.input_qty or 0.00,
+                        'opdd_qty': line.opdd_qty or 0.00,
+                        'updated': True,
+                        'product_state': line.product_id.state and line.product_id.state.code,
+                        'used_in_transaction': True
+                    }
                     if move[4] in internal_loc:
                         vals['internal_qty'] -= qty
                     if move[4] in stock_loc:
@@ -1500,8 +1550,8 @@ class stock_mission_report_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade", select=1),
         'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True, write_relate=False),
         'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True, write_relate=False, _fnct_migrate=xmlid_code_migration),
-        'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
-        'name': fields.related('product_id', 'name', string='Name', type='char'),
+        'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char', write_relate=False),
+        'name': fields.related('product_id', 'name', string='Name', type='char', write_relate=False),
         'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
                                    store={'product.template': (_get_template, ['type'], 10),
                                           'stock.mission.report.line': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 10)},
@@ -1526,17 +1576,17 @@ class stock_mission_report_line(osv.osv):
         ),
         'product_state': fields.char(size=128, string='Unifield state'),
         # mandatory nomenclature levels
-        'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type'),
-        'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group'),
-        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', type='many2one', relation='product.nomenclature', string='Family'),
-        'nomen_manda_3': fields.related('product_id', 'nomen_manda_3', type='many2one', relation='product.nomenclature', string='Root'),
+        'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type', write_relate=False),
+        'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group', write_relate=False),
+        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', type='many2one', relation='product.nomenclature', string='Family', write_relate=False),
+        'nomen_manda_3': fields.related('product_id', 'nomen_manda_3', type='many2one', relation='product.nomenclature', string='Root', write_relate=False),
         # optional nomenclature levels
-        'nomen_sub_0': fields.related('product_id', 'nomen_sub_0', type='many2one', relation='product.nomenclature', string='Sub Class 1'),
-        'nomen_sub_1': fields.related('product_id', 'nomen_sub_1', type='many2one', relation='product.nomenclature', string='Sub Class 2'),
-        'nomen_sub_2': fields.related('product_id', 'nomen_sub_2', type='many2one', relation='product.nomenclature', string='Sub Class 3'),
-        'nomen_sub_3': fields.related('product_id', 'nomen_sub_3', type='many2one', relation='product.nomenclature', string='Sub Class 4'),
-        'nomen_sub_4': fields.related('product_id', 'nomen_sub_4', type='many2one', relation='product.nomenclature', string='Sub Class 5'),
-        'nomen_sub_5': fields.related('product_id', 'nomen_sub_5', type='many2one', relation='product.nomenclature', string='Sub Class 6'),
+        'nomen_sub_0': fields.related('product_id', 'nomen_sub_0', type='many2one', relation='product.nomenclature', string='Sub Class 1', write_relate=False),
+        'nomen_sub_1': fields.related('product_id', 'nomen_sub_1', type='many2one', relation='product.nomenclature', string='Sub Class 2', write_relate=False),
+        'nomen_sub_2': fields.related('product_id', 'nomen_sub_2', type='many2one', relation='product.nomenclature', string='Sub Class 3', write_relate=False),
+        'nomen_sub_3': fields.related('product_id', 'nomen_sub_3', type='many2one', relation='product.nomenclature', string='Sub Class 4', write_relate=False),
+        'nomen_sub_4': fields.related('product_id', 'nomen_sub_4', type='many2one', relation='product.nomenclature', string='Sub Class 5', write_relate=False),
+        'nomen_sub_5': fields.related('product_id', 'nomen_sub_5', type='many2one', relation='product.nomenclature', string='Sub Class 6', write_relate=False),
         'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
@@ -1552,8 +1602,8 @@ class stock_mission_report_line(osv.osv):
         'product_amc': fields.float('AMC'),
         'product_consumption': fields.float('FMC'),
 
-        'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
-        'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
+        'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.', write_relate=False),
+        'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price', write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
                                  store={
                                      'product.template': (_get_template, ['type'], 10),
@@ -1582,15 +1632,17 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'updated': fields.boolean(string='Updated'),
-        'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
+        'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True, write_relate=False),
         'instance_id': fields.many2one(
             'msf.instance',
             string='HQ Instance',
             required=True,
         ),
-        'quarantine_qty': fields.float(digits=(16, 2), string='Quarantine Qty.', related_uom='uom_id'),
+        'quarantine_qty': fields.float(digits=(16, 2), string='Quarantine / For Scrap Qty.', related_uom='uom_id'),
         'input_qty': fields.float(digits=(16, 2), string='Input Qty.', related_uom='uom_id'),
         'opdd_qty': fields.float(digits=(16, 2), string='Output/Packing/Dispatch/Distribution Qty.', related_uom='uom_id'),
+        'used_in_transaction': fields.boolean('Used in a transaction'),
+        'transaction_updated': fields.boolean('Used changed', help='temporary value used to touch ir.model.data'),
     }
 
     @tools.cache(skiparg=2)
@@ -1642,7 +1694,8 @@ class stock_mission_report_line(osv.osv):
                             sum(l.internal_qty)*t.standard_price AS internal_val,
                             sum(l.quarantine_qty) AS quarantine_qty,
                             sum(l.input_qty) AS input_qty,
-                            sum(l.opdd_qty) AS opdd_qty
+                            sum(l.opdd_qty) AS opdd_qty,
+                            bool_or(used_in_transaction) AS used_in_transaction
                      FROM stock_mission_report_line l
                        LEFT JOIN
                           stock_mission_report m
@@ -1683,10 +1736,10 @@ class stock_mission_report_line(osv.osv):
                     internal_qty=%s, stock_qty=%s,
                     cross_qty=%s, secondary_qty=%s,
                     cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
-                    wh_qty=%s, quarantine_qty=%s, input_qty=%s, opdd_qty=%s
+                    wh_qty=%s, quarantine_qty=%s, input_qty=%s, opdd_qty=%s, used_in_transaction=%s
                     WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00, line[3] or 0.00, line[4] or 0.00,
                                       line[5] or 0.00, line[6] or 0.00, line[7] or 0.00,
-                                      (line[2] or 0.00) + (line[3] or 0.00), line[9], line[10], line[11], line_id)) # not_a_user_entry
+                                      (line[2] or 0.00) + (line[3] or 0.00), line[9], line[10], line[11], line[12] or False, line_id)) # not_a_user_entry
         return True
 
 

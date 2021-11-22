@@ -126,6 +126,21 @@ class ir_model(osv.osv):
                     res[obj['id']] = rel_obj._order
         return res
 
+    def _get_exists(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        list_pool = self.pool.obj_list()
+        for model in self.read(cr, uid, ids, ['model'], context=context):
+            res[model['id']] = model['model'] in list_pool
+        return res
+
+    def _search_exists(self, cr, uid, model, name, domain, context=None):
+        if not domain:
+            return []
+        field, operator, value = domain[0]
+        if operator not in ['=']:
+            raise osv.except_osv(_('Invalid search'), _('The exists field can only be compared with = operator.'))
+        return [('model', bool(value) and 'in' or 'not in', self.pool.obj_list())]
+
     _columns = {
         'name': fields.char('Object Name', size=64, translate=True, required=True),
         'model': fields.char('Object', size=64, required=True, select=1),
@@ -139,6 +154,7 @@ class ir_model(osv.osv):
         'modules': fields.function(_in_modules, method=True, type='char', size=128, string='In modules', help='List of modules in which the object is defined or inherited'),
         'view_ids': fields.function(_view_ids, method=True, type='one2many', obj='ir.ui.view', string='Views'),
         'default_order': fields.function(_get_default_order, method=True, string="Default Order", type="char"),
+        'model_exists': fields.function(_get_exists, method=True, string='Model in-use', type='boolean', fnct_search=_search_exists),
     }
 
     _defaults = {
@@ -216,7 +232,6 @@ class ir_model(osv.osv):
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         model = self.browse(cr, uid, res_id, fields_to_fetch=['model'])
         a = 'ir_model_%s' % model.model.replace('.', '')
-        print a
         return a
 
 ir_model()

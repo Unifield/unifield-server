@@ -62,8 +62,10 @@ class delivery_order(report_sxw.rml_parse):
             'assigned': _('Available'),
             'shipped': _('Available Shipped'),
             'done': _('Closed'),
+            'dispatched': _('Dispatched'),
             'cancel': _('Cancelled'),
             'import': _('Import in progress'),
+            'received': _('Received'),
         }
         return states.get(state, '')
 

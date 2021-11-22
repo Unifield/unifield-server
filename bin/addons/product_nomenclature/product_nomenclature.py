@@ -481,6 +481,7 @@ class product_nomenclature(osv.osv):
 
         'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'), ('optional', 'Optional')], string='Nomenclature type', fnct_search=_search_nomen_type_s),
         'msfid': fields.char('MSFID', size=128, select=True),
+        'status': fields.selection([('valid', 'Valid'), ('archived', 'Archived')], 'Status', readonly=True),
     }
 
     _defaults = {
@@ -489,6 +490,7 @@ class product_nomenclature(osv.osv):
         'sub_level': lambda *a: '0',
         'sequence': _getDefaultSequence,
         'active': True,
+        'status': 'valid',
     }
 
     _order = "sequence, level, msfid, id"
@@ -751,6 +753,10 @@ stock moves will be posted in this account. If not set on the product, the one f
                     raise osv.except_osv(_('Error'), _('No Product Category found for %s. Please contact an accounting member to create a new one for this family.')
                                          % vals['nomenclature_description'])
 
+        if vals.get('nomen_manda_3') and self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_3'], fields_to_fetch=['status']).status != 'valid' and \
+                not (context.get('sync_update_creation') or context.get('sync_update_execution')):
+            raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
+
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
 
@@ -849,6 +855,7 @@ class product_product(osv.osv):
             vals['xmlid_code'] = RANDOM_XMLID_CODE_PREFIX + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(14))
 
         sale._setNomenclatureInfo(cr, uid, vals, context)
+
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 
