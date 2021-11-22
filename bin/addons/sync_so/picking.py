@@ -274,6 +274,7 @@ class stock_picking(osv.osv):
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(pack_data)
         """
+        # TODO: claim
         pack_info_created = {}
         data_grouped_by_in = {}
         for line in pack_data:
@@ -283,14 +284,19 @@ class stock_picking(osv.osv):
                     continue
                 pol_line = pol_obj.search(cr, uid, [('sync_order_line_db_id', '=', data['sync_order_line_db_id']), ('state', '=', 'confirmed')], context=context)
                 if not pol_line:
-                    if pol_obj.search_exists(cr, uid, [('sync_order_line_db_id', '=', data['sync_order_line_db_id']), ('state', 'in', ['done', 'cancel'])], context=context):
-                        ignored_lines.append('Line %s ignored because orignal line number %s forced in %s' % (data.get('line_number'), ))
+                    if pol_obj.search_exists(cr, uid, [('sync_order_line_db_id', '=', data['sync_order_line_db_id']), ('state', 'in', ['done', 'cancel', 'cancel_r'])], context=context):
+                        ignored_lines.append('Line %s ignored because original line forced' % (data.get('line_number'), ))
                     else:
                         error_lines.append('Line %s not found on PO' % (data.get('line_number'), ))
                     continue
-                move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_line), ('state', 'not in', ['done', 'cancel']), ('in_forced', '=', False)], context=context)
+                move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_line), ('state', 'not in', ['done', 'cancel']), ('type', '=', 'in'), ('in_forced', '=', False)], context=context)
                 if not move_ids:
-                    error_lines.append('Line %s, move not found' % (data.get('line_number'), ))
+                    forced_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_line), ('in_forced', '=', True), ('type', '=', 'in')], limit=1, order='state desc', context=context)
+                    if forced_ids:
+                        move_forced = move_obj.browse(cr, uid, forced_ids[0], fields_to_fetch=['picking_id', 'purchase_line_id'], context=context)
+                        ignored_lines.append('Line %s ignored because orignal line number %s forced in %s' % (data.get('line_number'), move_forced.purchase_line_id.line_number, move_forced.picking_id.name))
+                    else:
+                        error_lines.append('Line %s: move not found' % (data.get('line_number'), ))
                     continue
                 pick_id = False
                 for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['picking_id', 'line_number', 'product_qty'], context=context):
@@ -299,7 +305,7 @@ class stock_picking(osv.osv):
                     if not pick_id:
                         pick_id = move.picking_id.id
                     elif pick_id != move.picking_id.id:
-                        error_lines.append('Multiple pick')
+                        error_lines.append('Multiple pick on line %s, pick1: %s, pick2: %s' % (data.get('line_number'), pick_id, move.picking_id.id))
                         break
                     data.setdefault('move_ids', []).append({'move_id': move.id, 'line_number': move.line_number, 'product_qty': move.product_qty})
                 if not pick_id:
@@ -347,8 +353,13 @@ class stock_picking(osv.osv):
             new_picking_data = self.browse(cr, uid, new_picking, fields_to_fetch=['name', 'purchase_id'], context=context)
             sync_message.append("The INcoming  %s (%s) has now become shipped available!" % (new_picking_data.name, new_picking_data.purchase_id.name))
 
+        if ignored_lines and not error_lines:
+            context['partial_sync_run'] = True
+
         message = "\n".join(sync_message+ignored_lines+error_lines)
         self._logger.info(message)
+        if error_lines:
+            raise Exception(message)
         return message
 
     def old_partial_shipped_fo_updates_in_po(self, cr, uid, source, *pick_info, **kwargs):
