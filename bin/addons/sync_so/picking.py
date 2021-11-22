@@ -1274,10 +1274,10 @@ class stock_picking(osv.osv):
             dpo_line_id = move_data['dpo_line_id']
             if not dpo_line_id:
                 continue
-            move_data['dpo_line_id'] = False
             move_data['sync_dpo'] = False
             move_data['purchase_line_id'] = dpo_line_id
-            pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id', 'confirmation_date'], context=context)
+            pol = purchase_line_obj.browse(cr, uid, dpo_line_id, fields_to_fetch=['order_id', 'sale_order_line_id', 'confirmation_date', 'from_dpo_line_id', 'from_dpo_id'], context=context)
+            move_data['dpo_line_id'] = pol.from_dpo_line_id or False
             po = pol.order_id
             if po.order_type != 'direct':
                 raise Exception('PO %s is not a DPO !' % (po.name,))
@@ -1287,6 +1287,10 @@ class stock_picking(osv.osv):
                 continue
             if po.id not in pick_data:
                 pick_data[po.id] = pick_data_header.copy()
+                if pol.from_dpo_line_id:
+                    # TODO: split IN ?
+                    pick_data[po.id]['dpo_incoming'] = True
+                    pick_data[po.id]['dpo_id_incoming'] = pol.from_dpo_id
                 pick_data[po.id]['move_lines'] = []
                 pick_data[po.id]['purchase_id'] = po.id
                 pick_data[po.id]['partner_id'] = po.partner_id.id

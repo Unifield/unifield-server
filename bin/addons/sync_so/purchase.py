@@ -142,7 +142,12 @@ class purchase_order_line_sync(osv.osv):
         pol_values['modification_comment'] = sol_dict.get('modification_comment', False)
         pol_values['from_dpo_line_id'] = sol_dict.get('dpo_line_id') and sol_dict.get('dpo_line_id', {}).get('.id', False) or False
         pol_values['from_dpo_id'] = sol_dict.get('dpo_id') and sol_dict.get('dpo_id', {}).get('.id', False) or False
-        pol_values['from_dpo_partner_type'] = sol_dict.get('dpo_id') and sol_dict.get('dpo_id', {}).get('partner_type', False) or False
+        pol_values['from_dpo_partner_type'] = False
+        if sol_dict.get('dpo_id'):
+            if sol_dict.get('resync_dpo_partner_type'):
+                pol_values['from_dpo_partner_type'] = sol_dict['resync_dpo_partner_type']
+            else:
+                pol_values['from_dpo_partner_type'] = sol_dict.get('dpo_id', {}).get('partner_type', False)
         pol_values['esti_dd'] = sol_dict.get('esti_dd', False)
         if 'line_number' in pol_values:
             del(pol_values['line_number'])

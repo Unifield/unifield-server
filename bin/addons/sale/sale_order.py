@@ -2146,10 +2146,10 @@ class sale_order_line(osv.osv):
 
         ret = {}
         for _id in ids:
-            ret[_id] = False
+            ret[_id] = {'dpo_id': False, 'resync_dpo_partner_type': False}
 
         cr.execute('''
-            select sol.id, pol.order_id
+            select sol.id, pol.order_id, pol.from_dpo_partner_type
             from
                 sale_order_line sol
             left join
@@ -2158,7 +2158,7 @@ class sale_order_line(osv.osv):
                 sol.id in %s
         ''', (tuple(ids),))
         for x in cr.fetchall():
-            ret[x[0]] = x[1]
+            ret[x[0]] = {'dpo_id': x[1], 'resync_dpo_partner_type': x[2]}
         return ret
 
 
@@ -2224,7 +2224,8 @@ class sale_order_line(osv.osv):
         'created_by_rfq': fields.many2one('purchase.order', string='Created by RfQ'),
         'created_by_rfq_line': fields.many2one('purchase.order.line', string='Created by RfQ line'),
         'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
-        'dpo_id': fields.function(_get_dpo_id, method=True, type='many2one', relation='purchase.order', string='DPO'),
+        'dpo_id': fields.function(_get_dpo_id, method=True, type='many2one', relation='purchase.order', string='DPO', multi='dpo_info'),
+        'resync_dpo_partner_type': fields.function(_get_dpo_id, method=True, type='char', string='Resourced on DPO', multi='dpo_info'),
         'sync_sourced_origin': fields.char(string='Sync. Origin', size=256),
         'cancel_split_ok': fields.float(
             digits=(16,2),

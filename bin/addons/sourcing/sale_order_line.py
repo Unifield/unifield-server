@@ -1380,7 +1380,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             elif sourcing_line.po_cft == 'dpo':  # Direct Purchase Order
                 po_values.update({
                     'order_type': 'direct',
-                    'dest_partner_id': sourcing_line.order_id.partner_id.id,
+                    'dest_partner_id': sourcing_line.order_id.dpo_partner_id and sourcing_line.order_id.dpo_partner_id.id or sourcing_line.order_id.partner_id.id,
                     'dest_address_id': sourcing_line.order_id.partner_shipping_id.id,
                 })
                 #if sourcing_line.order_id.partner_id.partner_type in ('esc', 'external'):

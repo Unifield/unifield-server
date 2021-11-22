@@ -579,13 +579,20 @@ class purchase_order(osv.osv):
             if po.po_from_fo or po.po_from_ir:
                 src_type = set()
                 sale_ids = self.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
+                previous_partner = False
+                remove_direct = False
                 if sale_ids:
-                    for sale in self.pool.get('sale.order').read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
+                    for sale in self.pool.get('sale.order').read(cr, uid, sale_ids, ['procurement_request', 'order_type', 'partner_id'], context=context):
                         if sale['procurement_request'] or sale['order_type'] == 'regular':
                             src_type.add('regular')
                             src_type.add('purchase_list')
 
                         if not sale['procurement_request']:
+                            so_partner_id = sale['partner_id'][0]
+                            if not previous_partner:
+                                previous_partner = so_partner_id
+                            elif previous_partner != so_partner_id:
+                                remove_direct = True
                             if sale['order_type'] == 'regular':
                                 src_type.add('direct')
                             elif sale['order_type'] == 'loan':
@@ -594,6 +601,12 @@ class purchase_order(osv.osv):
                                 src_type.add('donation_exp')
                             elif sale['order_type'] == 'donation_st':
                                 src_type.add('donation_st')
+                if remove_direct:
+                    try:
+                        src_type.remove('direct')
+                    except KeyError:
+                        pass
+
                 res[po.id] = json.dumps(list(src_type))
             else:
                 res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
@@ -2275,7 +2288,7 @@ class purchase_order(osv.osv):
         if ids:  # Even if the browse is None, it would still go in the for in some cases and trigger an error
             for po in self.browse(cr, uid, ids, context=context):
                 for pol in po.order_line:
-                    if pol.linked_sol_id:
+                    if pol.linked_sol_id and pol.state not in ('cancel', 'cancel_r'):
                         so_ids.add(pol.linked_sol_id.order_id.id)
 
         return list(so_ids)
