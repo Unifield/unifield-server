@@ -1150,6 +1150,23 @@ class purchase_order_line(osv.osv):
                 _('You have to select a product UOM in the same '
                   'category than the purchase UOM of the product !'))
 
+    def set_sync_order_line_db_id(self, cr, uid, ids, context=None):
+        """
+            called by wkf start activity
+            set value at early creation to propagate it to the FO line creation
+
+        """
+        cr.execute('''
+            update purchase_order_line pol set sync_order_line_db_id=po.name||'/'||pol.id
+                from purchase_order po
+                where
+                    po.id = pol.order_id and
+                    pol.sync_order_line_db_id is NULL and
+                    pol.id in %s
+        ''', (tuple(ids), ))
+
+        return True
+
     def create(self, cr, uid, vals, context=None):
         '''
         Create or update a merged line
@@ -1252,11 +1269,6 @@ class purchase_order_line(osv.osv):
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
-        if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
-            name = order.name
-            super(purchase_order_line, self).write(cr, uid, [po_line_id],
-                                                   {'sync_order_line_db_id': name + "_" + str(po_line_id), },
-                                                   context=context)
 
         if vals.get('stock_take_date'):
             self._check_stock_take_date(cr, uid, po_line_id, context=context)
