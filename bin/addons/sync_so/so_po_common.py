@@ -370,7 +370,7 @@ class so_po_common(osv.osv_memory):
         header_result['pricelist_id'] = price_list
         header_result['currency_id'] = currency_id
 
-        if header_info.get('dest_partner_id') and header_info.get('dest_partner_id', {}).get('name'):
+        if header_result['order_type'] == 'direct' and header_info.get('dest_partner_id') and header_info.get('dest_partner_id', {}).get('name'):
             if header_info['dest_partner_id'].get('partner_type') == 'external':
                 dpo_partner_type = 'external'
             else:
