@@ -204,7 +204,6 @@
                             <field name="partner_type"/>
                             <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
                             <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
-                            <!-- <field domain="[('filter_fo_shipping','=',{'partner_id': partner_id , 'dpo_partner_id': dpo_partner_id})]" name="partner_shipping_id" required="1"/>  RO if state not in draft, draft_p, validated : _columns -->
                             <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" attrs="{'required': [('dpo_partner_id', '=', False)], 'invisible': [('dpo_partner_id', '!=', False)]}" />
                             <field domain="[('partner_id','=',dpo_partner_id)]" name="dpo_partner_shipping_id" attrs="{'required': [('dpo_partner_id', '!=', False)], 'invisible': [('dpo_partner_id', '=', False)], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                             <group colspan="2" col="3">
