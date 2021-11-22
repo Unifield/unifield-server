@@ -1361,37 +1361,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return order.name
 
-    def create_resource_order(self, cr, uid, order, context=None):
-        '''
-        Create a new FO to re-source the needs.
-        '''
-        context = context or {}
-
-        # Get the name of the original FO
-        old_order_name = order.name
-
-        order_ids = self.search(cr, uid, [('active', 'in', ('t', 'f')), ('fo_to_resource', '=', True), ('parent_order_name', '=', old_order_name)], context=dict(context, procurement_request=True))
-        for old_order in self.read(cr, uid, order_ids, ['name', 'state'], context=context):
-            if old_order['state'] == 'draft':
-                return old_order['id']
-
-        order_id = self.copy(cr, uid, order.id, {'order_line': [],
-                                                 'state': 'draft',
-                                                 'parent_order_name': old_order_name,
-                                                 'fo_to_resource': True}, context=context)
-
-
-        order_data = self.read(cr, uid, [order_id], ['name', 'procurement_request'], context=context)[0]
-        order_name = order_data['name']
-        order_type = order_data['procurement_request'] and _('Internal request') or _('Field order')
-
-        self.log(cr, uid, order_id, _('The %s %s has been created to re-source the canceled needs') % (
-            order_name,
-            order_type,
-        ), context=dict(context, procurement_request=order.procurement_request))
-
-        return order_id
-
     def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):
         '''
         receive the list of sale order ids
@@ -1761,6 +1730,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         res = {}
         for fo in self.browse(cr, uid, ids, context=context):
             res[fo.id] = True
+            print fo.state
             if fo.state in ('cancel', 'done', 'draft'):
                 res[fo.id] = False
                 continue
@@ -1789,42 +1759,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-    def open_cancel_wizard(self, cr, uid, ids, context=None):
-        """
-        Create and open the asking cancelation wizard
-        """
-        wiz_obj = self.pool.get('sale.order.cancelation.wizard')
-        wiz_line_obj = self.pool.get('sale.order.leave.close')
-        data_obj = self.pool.get('ir.model.data')
-
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        wiz_id = wiz_obj.create(cr, uid, {}, context=context)
-        for id in ids:
-            wiz_line_obj.create(cr, uid, {
-                'wizard_id': wiz_id,
-                'order_id': id,
-            }, context=context)
-
-        view_id = data_obj.get_object_reference(cr, uid, 'sale', 'sale_order_cancelation_ask_wizard_form_view')[1]
-
-        if context.get('view_id'):
-            del context['view_id']
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'sale.order.cancelation.wizard',
-            'res_id': wiz_id,
-            'view_id': [view_id],
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': context,
-        }
 
     def _manual_create_sync_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return
@@ -2817,72 +2751,6 @@ class sale_order_line(osv.osv):
 
         return so_to_cancel_id
 
-    def add_resource_line(self, cr, uid, line, order_id, qty_diff, context=None):
-        '''
-        Add a copy of the original line (line) into the new order (order_id)
-        created to resource needs.
-        Update the product qty with the qty_diff in case of split or backorder moves
-        before cancelation
-        '''
-        # Documents
-        order_obj = self.pool.get('sale.order')
-        ad_obj = self.pool.get('analytic.distribution')
-        data_obj = self.pool.get('ir.model.data')
-        wf_service = netsvc.LocalService("workflow")
-
-        if context is None:
-            context = {}
-        if isinstance(line, (int, long)):
-            line = self.browse(cr, uid, line, context=context)
-
-        if not order_id:
-            order_id = order_obj.create_resource_order(cr, uid, line.order_id, context=context)
-
-        if not qty_diff:
-            qty_diff = line.product_uom_qty
-
-        values = {
-            'order_id': order_id,
-            'resourced_original_line': line.id,
-            'resourced_original_remote_line': line.sync_linked_pol,
-            'resourced_at_state': line.state,
-            'product_uom_qty': qty_diff,
-            'product_uos_qty': qty_diff,
-        }
-        context['keepDateAndDistrib'] = True
-        if not line.analytic_distribution_id and line.order_id and line.order_id.analytic_distribution_id:
-            new_distrib = ad_obj.copy(cr, uid, line.order_id.analytic_distribution_id.id, {}, context=context)
-            values['analytic_distribution_id'] = new_distrib
-
-        line_id = self.copy(cr, uid, line.id, values, context=context)
-        wf_service.trg_validate(uid, 'sale.order.line', line_id, 'validated', cr)
-
-        order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
-
-        if line.order_id and line.order_id.procurement_request:
-            view_id = data_obj.get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
-        else:
-            resource_line_sync_id = self.read(cr, uid, line_id, ['sync_order_line_db_id'])['sync_order_line_db_id']
-            self.pool.get('sale.order.line.cancel').create(cr, uid, {'sync_order_line_db_id': line.sync_order_line_db_id,
-                                                                     'partner_id': line.order_id.partner_id.id,
-                                                                     'partner_type': line.order_id.partner_id.partner_type,
-                                                                     'resource_sync_line_db_id': resource_line_sync_id}, context=context)
-            view_id = data_obj.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
-        context.update({'view_id': view_id})
-
-        """UFTP-90
-        put a 'clean' context for 'log' without potential 'Enter a reason' wizard infos
-        _terp_view_name, wizard_name, ..., these causes a wrong name of the FO/IR linked view
-        form was opened with 'Enter a Reason for Incoming cancellation' name
-        we just keep the view id (2 distincts ids for FO/IR)"""
-        self.pool.get('sale.order').log(cr, uid, order_id,
-                                        _('A line was added to the %s %s to re-source the canceled line.') % (
-                                            line.order_id and line.order_id.procurement_request and _('Internal Request') or _('Field Order'),
-                                            order_name
-                                        ),
-                                        context={'view_id': context.get('view_id', False)})
-
-        return line_id
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -3756,21 +3624,6 @@ class sale_order_sourcing_progress_mem(osv.osv_memory):
 
 sale_order_sourcing_progress_mem()
 
-class sale_order_line_cancel(osv.osv):
-    _name = 'sale.order.line.cancel'
-    _rec_name = 'sync_order_line_db_id'
-
-    _columns = {
-        'sync_order_line_db_id': fields.text(string='Sync order line DB ID', required=True),
-        'partner_id': fields.many2one('res.partner', string='Destination'),
-        'resource_ok': fields.boolean(string='Is resourced ?'),
-        'resource_sync_line_db_id': fields.text(string='DB ID of the line that resource the cancel line'),
-        'fo_sync_order_line_db_id': fields.text(string='DB ID of the FO/IR line that is resourced'),
-        'partner_type': fields.char(size=64, string='Partner type'),
-    }
-
-sale_order_line_cancel()
-
 
 class expected_sale_order_line(osv.osv):
     _name = 'expected.sale.order.line'
@@ -3859,141 +3712,6 @@ class sale_order_unlink_wizard(osv.osv_memory):
 
 sale_order_unlink_wizard()
 
-
-class sale_order_cancelation_wizard(osv.osv_memory):
-    _name = 'sale.order.cancelation.wizard'
-
-    _columns = {
-        'order_id': fields.many2one('sale.order', 'Order to delete', required=False),
-        'order_ids': fields.one2many(
-            'sale.order.leave.close',
-            'wizard_id',
-            string='Orders to check',
-        ),
-    }
-
-    def leave_it(self, cr, uid, ids, context=None):
-        """
-        Close the window or open another window according to context
-        """
-        if context is None:
-            context = {}
-
-        if context.get('from_po') and context.get('po_ids'):
-            po_obj = self.pool.get('purchase.order')
-            return po_obj.check_empty_po(cr, uid, context.get('po_ids'), context=context)
-        elif context.get('from_tender') and context.get('tender_ids'):
-            tender_obj = self.pool.get('tender')
-            return tender_obj.check_empty_tender(cr, uid, context.get('tender_ids'), context=context)
-
-        return {'type': 'ir.actions.act_window_close'}
-
-    def close_fo(self, cr, uid, ids, context=None):
-        """
-        Make a trg_write on FO to check if it can be canceled
-        """
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            for lc in wiz.order_ids:
-                if not lc.action:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('You must choose an action for each order'),
-                    )
-
-        return self.leave_it(cr, uid, ids, context=context)
-
-    def only_cancel(self, cr, uid, ids, context=None):
-        '''
-        Cancel the FO w/o re-sourcing lines
-        '''
-        # Objects
-        sale_obj = self.pool.get('sale.order')
-
-        # Variables initialization
-        if not context:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [id]
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            sale_obj.action_cancel(cr, uid, [wiz.order_id.id], context=context)
-
-        return {'type': 'ir.actions.act_window_close'}
-
-    def resource_lines(self, cr, uid, ids, context=None):
-        '''
-        Cancel the FO and re-source all lines
-        '''
-        # Objects
-        line_obj = self.pool.get('sale.order.line')
-
-        # Variables initialization
-        if not context:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        wf_service = netsvc.LocalService("workflow")
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            # Re-source lines
-            for line in wiz.order_id.order_line:
-                line_obj.add_resource_line(cr, uid, line.id, line.order_id.id, line.product_uom_qty, context=context)
-
-            # Cancel FO
-            wf_service.trg_validate(uid, 'sale.order', wiz.order_id.id, 'cancel', cr)
-
-        return {'type': 'ir.actions.act_window_close'}
-
-sale_order_cancelation_wizard()
-
-
-class sale_order_leave_close(osv.osv_memory):
-    _name = 'sale.order.leave.close'
-    _rec_name = 'order_id'
-
-    _columns = {
-        'wizard_id': fields.many2one(
-            'sale.order.cancelation.wizard',
-            string='Wizard',
-            required=True,
-            ondelete='cascade',
-        ),
-        'order_id': fields.many2one(
-            'sale.order',
-            string='Order name',
-            required=True,
-            ondelete='cascade',
-        ),
-        'order_state': fields.related(
-            'order_id',
-            'state',
-            type='selection',
-            string='Order state',
-            selection=SALE_ORDER_STATE_SELECTION,
-        ),
-        'action': fields.selection(
-            selection=[
-                ('close', 'Close it'),
-                ('leave', 'Leave it open'),
-            ],
-            string='Action to do',
-        ),
-    }
-
-    _defaults = {
-        'action': lambda *a: False,
-    }
-
-sale_order_leave_close()
 
 
 class sale_order_line_state(osv.osv):

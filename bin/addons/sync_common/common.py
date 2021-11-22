@@ -127,7 +127,6 @@ WHITE_LIST_MODEL = [
     'return.claim',
     'sale.order',
     'sale.order.line',
-    'sale.order.line.cancel',
     'shipment',
     'stock.frequence',
     'stock.inventory',

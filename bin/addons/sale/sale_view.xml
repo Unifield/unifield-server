@@ -1015,53 +1015,6 @@
             </field>
         </record>
 
-        <record id="sale_order_cancelation_wizard_form_view" model="ir.ui.view">
-            <field name="name">sale.order.cancelation.wizard.form.view</field>
-            <field name="model">sale.order.cancelation.wizard</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Cancel Field Order">
-                    <group colspan="4" col="1">
-                        <html>
-                            <h4 style="text-align: center; margin: 10px">Do you want to re-source all lines of this order ?</h4>
-                        </html>
-                    </group>
-                    <newline/>
-                    <button colspan="2" type="object" icon="gtk-execute" name="resource_lines" string="Yes"/>
-                    <button colspan="2" type="object" icon="gtk-execute" name="only_cancel" string="No"/>
-                </form>
-            </field>
-        </record>
-
-        <record id="sale_order_cancelation_ask_wizard_form_view" model="ir.ui.view">
-            <field name="name">sale.order.cancelation.ask.wizard.form.view</field>
-            <field name="model">sale.order.cancelation.wizard</field>
-            <field name="type">form</field>
-            <field name="priority" eval="100" />
-            <field name="arch" type="xml">
-                <form string="Cancel Field Order">
-                    <group colspan="4" col="1">
-                        <html>
-                            <p style="text-align:center; font-weight: bold; font-size: 1.2em;">
-                                WARNING: The line that you canceled has removed/canceled the last line of the following FO/IR.
-                                Would you cancel these FO/IR or leave them in their current status ?
-                            </p>
-                        </html>
-                        <field name="order_ids" nolabel="1" colspan="4" mode="tree">
-                            <tree string="Field orders / Internal request" editable="top" hide_new_button="1" hide_delete_button="1">
-                                <field name="order_id" readonly="1" />
-                                <field name="order_state" readonly="1" />
-                                <field name="action" required="1" />
-                            </tree>
-                        </field>
-                    </group>
-                    <newline />
-                    <label colspan="2" string=" " />
-                    <button colspan="2" type="object" icon="gtk-execute" name="close_fo" string="Do selected actions" />
-                </form>
-            </field>
-        </record>
-
         <!-- Sourcing progress -->
         <record id="sale_order_sourcing_progress_view" model="ir.ui.view">
             <field name="name">sale.order.sourcing.progress.view</field>

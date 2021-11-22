@@ -90,36 +90,6 @@ class sale_order_line_sync(osv.osv):
 sale_order_line_sync()
 
 
-class sale_order_line_cancel(osv.osv):
-    _inherit = 'sale.order.line.cancel'
-    _logger = logging.getLogger('------sale.order.line.cancel')
-
-    def create_line(self, cr, uid, source, line_info, context=None):
-        self._logger.info("+++ Create an sale.order.line.cancel at %s from a sale.order.line.cancel at %s"%(cr.dbname, source))
-        if not context:
-            context = {}
-
-        line_dict = line_info.to_dict()
-        line_dict['partner_id'] = False
-
-        sync_order_line_db_id = line_dict.get('sync_order_line_db_id', False)
-        so_order_line_db_id = False
-        if sync_order_line_db_id:
-            pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id)], context=context)
-            sol_ids = self.pool.get('purchase.order.line').get_sol_ids_from_pol_ids(cr, uid, pol_ids, context=context)
-            if sol_ids:
-                so_order_line_db_id = self.pool.get('sale.order.line').read(cr, uid, sol_ids[0], ['sync_order_line_db_id'], context=context)['sync_order_line_db_id']
-
-        if so_order_line_db_id:
-            line_dict['fo_sync_order_line_db_id'] = so_order_line_db_id
-
-        self.create(cr, uid, line_dict, context=context)
-
-        return True
-
-
-sale_order_line_cancel()
-
 
 class sale_order_sync(osv.osv):
     _inherit = "sale.order"

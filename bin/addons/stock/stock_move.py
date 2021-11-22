@@ -1597,7 +1597,6 @@ class stock_move(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
-        solc_obj = self.pool.get('sale.order.line.cancel')
         wf_service = netsvc.LocalService("workflow")
 
         if context is None:
@@ -1667,11 +1666,6 @@ class stock_move(osv.osv):
                     continue
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                    # If the line will be sourced in another way, do not cancel the OUT move
-                    if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
-                                       limit=1, order='NO_ORDER', context=context):
-                        continue
-
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.picking_id.partner_id2.partner_type not in ['internal', 'section', 'intermission'] and not partially_cancelled:
                         sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=resource, context=context)

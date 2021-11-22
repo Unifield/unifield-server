@@ -307,27 +307,6 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         'cancel_linked_tender': fields.boolean(string='This is the last open RfQ linked the the Tender'),
     }
 
-    def _get_last_lines(self, cr, uid, order_id, context=None):
-        """
-        Returns True if the deletion of the PO will delete the last lines
-        of the FO/IR.
-        """
-        exp_sol_obj = self.pool.get('expected.sale.order.line')
-        po_obj = self.pool.get('purchase.order')
-
-        po_so_ids, po_ids, so_ids, sol_nc_ids = po_obj.sourcing_document_state(cr, uid, [order_id], context=context)
-        if order_id in po_ids:
-            po_ids.remove(order_id)
-
-        exp_sol_ids = exp_sol_obj.search(cr, uid,
-                                         [('order_id', 'in', po_so_ids),
-                                          ('po_id', '!=', order_id)],
-                                         limit=1, order='NO_ORDER', context=context)
-
-        if not exp_sol_ids and not po_ids:
-            return True
-
-        return False
 
     def fields_view_get(self, cr, uid, view_id=False, view_type='form', context=None, toolbar=False, submenu=False):
         return super(purchase_order_cancel_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)

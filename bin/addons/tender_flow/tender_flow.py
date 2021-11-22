@@ -1769,7 +1769,6 @@ class tender_line_cancel_wizard(osv.osv_memory):
         # Objects
         line_obj = self.pool.get('tender.line')
         tender_obj = self.pool.get('tender')
-        so_obj = self.pool.get('sale.order')
         pol_obj = self.pool.get('purchase.order.line')
         wf_service = netsvc.LocalService("workflow")
 
@@ -1801,20 +1800,6 @@ class tender_line_cancel_wizard(osv.osv_memory):
         tender_so_ids, po_ids, so_ids, sol_nc_ids = tender_obj.sourcing_document_state(cr, uid, list(tender_ids), context=context)
         for po_id in po_ids:
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
-
-        so_to_cancel_ids = []
-        if tender_so_ids:
-            for so_id in tender_so_ids:
-                if so_obj._get_ready_to_cancel(cr, uid, so_id, context=context)[so_id]:
-                    so_to_cancel_ids.append(so_id)
-
-        if so_to_cancel_ids:
-            # Ask user to choose what must be done on the FO/IR
-            context.update({
-                'from_tender': True,
-                'tender_ids': list(tender_ids),
-            })
-            return so_obj.open_cancel_wizard(cr, uid, set(so_to_cancel_ids), context=context)
 
         return tender_obj.check_empty_tender(cr, uid, list(tender_ids), context=context)
 
@@ -1865,7 +1850,6 @@ class tender_cancel_wizard(osv.osv_memory):
         '''
         # Objects
         line_obj = self.pool.get('tender.line')
-        so_obj = self.pool.get('sale.order')
 
         # Variables
         if context is None:
@@ -1897,16 +1881,6 @@ class tender_cancel_wizard(osv.osv_memory):
 
         for tender in tender_ids:
             wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)
-
-        so_to_cancel_ids = []
-        if so_ids:
-            for so_id in so_ids:
-                if so_obj._get_ready_to_cancel(cr, uid, so_id, context=context)[so_id]:
-                    so_to_cancel_ids.append(so_id)
-
-        if so_to_cancel_ids:
-            # Ask user to choose what must be done on the FO/IR
-            return so_obj.open_cancel_wizard(cr, uid, set(so_to_cancel_ids), context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
