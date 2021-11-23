@@ -113251,3 +113251,8 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: stock_override
+#: report:delivery.order:0
+msgid "DELIVERY ORDER"
+msgstr "BON DE LIVRAISON"
