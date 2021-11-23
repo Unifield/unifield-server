@@ -284,7 +284,7 @@ class act_window(osv.osv):
         'view_id': fields.many2one('ir.ui.view', 'View Ref.', ondelete='cascade'),
         'domain': fields.char('Domain Value', size=250,
                               help="Optional domain filtering of the destination data, as a Python expression"),
-        'context': fields.char('Context Value', size=250, required=True,
+        'context': fields.char('Context Value', size=512, required=True,
                                help="Context dictionary as Python expression, empty by default (Default: {})"),
         'res_model': fields.char('Object', size=64, required=True,
                                  help="Model name of the object to open in the view window"),

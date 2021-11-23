@@ -2,42 +2,6 @@
 <openerp>
     <data>
 
-    <!-- Add icon ahead analytic line to inform if this line have been reallocated or not -->
-        <record id="inherit2_view_account_analytic_line_tree" model="ir.ui.view">
-            <field name="name">account.analytic.line.tree</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
-            <field name="priority" eval="11"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree/field[@name='move_id']" position='replace'>
-                        <field name="entry_sequence"/>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='functional_currency_id']" position="after">
-                      <field name="output_amount"/>
-                      <field name="output_currency"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-    <!-- View for Analytic Journal Items (FUNDING POOL) -->
-        <record id="view_account_analytic_line_tree" model="ir.ui.view">
-            <field name="name">account.analytic.line.tree</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
-            <field name="priority" eval="12"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree/field[@name='account_id']" position='before'>
-                        <field name="destination_id" string="Destination" invisible="not context.get('display_fp', False)"/>
-                        <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
 
     <!-- Action for Analytic Journal Items (FUNDING POOL) -->
         <record id="account.action_account_analytic_journal_open_form" model="ir.actions.act_window">
@@ -45,7 +9,7 @@
             <field name="res_model">account.analytic.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="view_account_analytic_line_tree"/>
+            <field name="view_id" ref="account.view_account_analytic_line_tree"/>
             <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
             <field name="context">{'display_fp': True, 'target_filename_prefix': 'Analytic Journal Items'}</field>
         </record>
@@ -60,7 +24,7 @@
             <field name="res_model">account.analytic.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="view_account_analytic_line_tree"/>
+            <field name="view_id" ref="account.view_account_analytic_line_tree"/>
             <field name="domain">[('account_id.category', '=', 'FREE1')]</field>
             <field name="context">{'display_fp': False, 'categ': 'FREE1'}</field>
         </record>
@@ -75,7 +39,7 @@
             <field name="res_model">account.analytic.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="view_account_analytic_line_tree"/>
+            <field name="view_id" ref="account.view_account_analytic_line_tree"/>
             <field name="domain">[('account_id.category', '=', 'FREE2')]</field>
             <field name="context">{'display_fp': False, 'categ': 'FREE2'}</field>
         </record>

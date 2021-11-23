@@ -1406,7 +1406,7 @@ class purchase_order_line(osv.osv):
                 elif vals.get('origin'):
                     new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), po_obj=line.order_id, context=context))
 
-            if line.state in ('validated', 'validated_n') and \
+            if line.state in ('validated', 'validated_n', 'sourced_v', 'sourced_n') and \
                     line.linked_sol_id and \
                     not line.linked_sol_id.order_id.procurement_request and \
                     line.linked_sol_id.order_id.partner_type not in ('external', 'esc') and \
@@ -1955,7 +1955,7 @@ class purchase_order_line(osv.osv):
                     'analytic_distribution_id': distrib_id,
                 }
                 if cv_version > 1:
-                    commit_line_vals.update({'po_line_id': pol.id, })
+                    commit_line_vals.update({'po_line_id': pol.id, 'line_number': pol.line_number, 'line_product_id': pol.product_id.id})
                 else:
                     commit_line_vals.update({'purchase_order_line_ids': [(4, pol.id)], })
                 commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, commit_line_vals, context=context)

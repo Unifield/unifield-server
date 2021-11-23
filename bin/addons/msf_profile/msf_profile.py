@@ -54,8 +54,64 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-
     # UF23.0
+    def us_8839_cv_from_fo(self, cr, uid, *a, **b):
+        if cr.column_exists('account_commitment_line', 'po_line_product_id'):
+            cr.execute('''update account_commitment_line set line_product_id=po_line_product_id, line_number=po_line_number''')
+            cr.execute('''update
+                account_commitment cv
+                set cv_flow_type='supplier'
+                from
+                    purchase_order po
+                where
+                    po.id = cv.purchase_id
+                ''')
+
+        # hide menu
+        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'menu_account_commitment_from_fo')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': False})
+        return True
+
+    def us_8585_new_isi_journals(self, cr, uid, *a, **b):
+        """
+        Creates the ISI G/L and analytic journals in all existing instances.
+        This is done in Python as the objects created must sync normally.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # ISI analytic journal
+            isi_analytic_journal_ids = analytic_journal_obj.search(cr, uid,
+                                                                   [('code', '=', 'ISI'),
+                                                                    ('type', '=', 'purchase'),
+                                                                    ('is_current_instance', '=', True)])
+            if isi_analytic_journal_ids:  # just in case the journal has been created before the release
+                isi_analytic_journal_id = isi_analytic_journal_ids[0]
+            else:
+                isi_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ISI',
+                    'name': 'Intersection Supplier Invoice',
+                    'type': 'purchase',
+                }
+                isi_analytic_journal_id = analytic_journal_obj.create(cr, uid, isi_analytic_vals)
+            # ISI G/L journal
+            if not journal_obj.search_exist(cr, uid, [('code', '=', 'ISI'),  # just in case the journal has been created before the release
+                                                      ('type', '=', 'purchase'),
+                                                      ('is_current_instance', '=', True),
+                                                      ('analytic_journal_id', '=', isi_analytic_journal_id)]):
+                isi_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ISI',
+                    'name': 'Intersection Supplier Invoice',
+                    'type': 'purchase',
+                    'analytic_journal_id': isi_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, isi_vals)
+        return True
+
     def us_9044_add_location_colors(self, cr, uid, *a, **b):
         '''
         Add the search_color to each location which needs one
@@ -69,9 +125,6 @@ class patch_scripts(osv.osv):
         log = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
         cd = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         inp = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-        conf = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
-        interm = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
-        iconsu = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
         p_qua = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_view')[1]
         qua = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
         exp = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
@@ -81,9 +134,6 @@ class patch_scripts(osv.osv):
 
         # Cross docking & Input: darkorchid
         cr.execute("""UPDATE stock_location SET search_color = 'darkorchid' WHERE id IN %s""", (tuple([cd, inp]),))
-
-        # Configurable intermediate stocks & Internal Consumption Units: royalblue
-        cr.execute("""UPDATE stock_location SET search_color = 'royalblue' WHERE id IN %s""", (tuple([conf, interm, iconsu]),))
 
         # Quarantine (analyze): darkorange
         cr.execute("""UPDATE stock_location SET search_color = 'darkorange' WHERE id = %s""", (qua,))
@@ -97,7 +147,6 @@ class patch_scripts(osv.osv):
         # Fix the remote_location_name in stock_mission_report_line_location
         cr.execute("""UPDATE stock_mission_report_line_location SET remote_location_name = 'Expired / Damaged / For Scrap' 
             WHERE id IN (SELECT id FROM stock_mission_report_line_location WHERE remote_location_name = 'Quarantine (before scrap)')""")
-
         return True
 
     # UF22.1

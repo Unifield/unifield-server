@@ -227,9 +227,10 @@
     [[ ((o.type == 'out_invoice' and o.state == 'draft') or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">[[ o.is_debit_note and translate('Cancelled Debit Note') or o.is_intermission and translate('Cancelled Intermission Voucher OUT') or o.is_inkind_donation and translate('Cancelled In-kind Donation') or translate('Cancelled Invoice') ]] [[ o.number or '' ]]
     [[ (((o.type == 'out_invoice' or o.is_inkind_donation) and o.state == 'cancel') or removeParentNode('para')) and '' ]]</para>
-    <para style="terp_header">Refund [[ (o.type=='out_refund' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
-    <para style="terp_header">Supplier Refund [[ (o.type=='in_refund' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
-    <para style="terp_header">[[ o.is_inkind_donation == True and translate('In-kind Donation') or o.is_intermission and translate('Intermission Voucher IN') or ( o.type == 'in_invoice' and not o.register_line_ids ) and translate('Supplier Invoice') or translate('Supplier Direct Invoice') ]] [[ o.number ]]
+    <para style="terp_header">Refund [[ (o.doc_type in ('cr', 'str') or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
+    <para style="terp_header">Supplier Refund [[ (o.doc_type == 'sr' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
+    <para style="terp_header">Intersection Supplier Refund [[ (o.doc_type == 'isr' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
+    <para style="terp_header">[[ o.doc_type == 'donation' and translate('In-kind Donation') or o.doc_type == 'ivi' and translate('Intermission Voucher IN') or o.doc_type == 'si' and translate('Supplier Invoice') or o.doc_type == 'isi' and translate('Intersection Supplier Invoice') or translate('Supplier Direct Invoice') ]] [[ o.number ]]
     [[ (o.type == 'in_invoice' and (not o.is_inkind_donation or o.state != 'cancel') or removeParentNode('para')) and '' ]]</para>
     <para style="terp_default_8">
       <font color="white"> </font>

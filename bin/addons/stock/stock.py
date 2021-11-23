@@ -1359,7 +1359,10 @@ class stock_picking(osv.osv):
             if move_line.sale_line_id:
                 ana_obj = self.pool.get('analytic.distribution')
                 vals.update({'sale_order_line_id': move_line.sale_line_id.id})
-                distrib_id = move_line.sale_line_id.analytic_distribution_id and move_line.sale_line_id.analytic_distribution_id.id or False
+                distrib_id = False
+                if not move_line.sale_line_id.cv_line_ids:
+                    # AD on FO line from CV: already set in fetch_analytic_distribution
+                    distrib_id = move_line.sale_line_id.analytic_distribution_id and move_line.sale_line_id.analytic_distribution_id.id or False
                 if distrib_id:
                     new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
                     if not new_invl_distrib_id:
@@ -1578,6 +1581,7 @@ class stock_picking(osv.osv):
             di = 'is_direct_invoice' in invoice_vals and invoice_vals['is_direct_invoice']
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
+            # SI or ISI
             is_si = in_invoice and not di and not inkind_donation and not debit_note and not intermission
             is_ivi = in_invoice and not debit_note and not inkind_donation and intermission
             po = picking and picking.purchase_id
@@ -1606,12 +1610,15 @@ class stock_picking(osv.osv):
             if origin_ivi:
                 invoice_vals.update({'origin': origin_ivi})
 
-            # Add "synced" tag for STV and IVO created from Supply flow
+            # Add "synced" tag + real_doc_type for STV and IVO created from Supply flow
             out_invoice = inv_type == 'out_invoice'
             is_stv = out_invoice and not di and not inkind_donation and not intermission
             is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
             if is_stv or is_ivo:
-                invoice_vals.update({'synced': True, })
+                real_doc_type = is_stv and 'stv' or 'ivo'
+                invoice_vals.update({'synced': True,
+                                     'real_doc_type': real_doc_type,
+                                     })
 
             # Update Payment terms and due date for the Supplier Invoices and Refunds
             if is_si or inv_type == 'in_refund':
@@ -1655,23 +1662,31 @@ class stock_picking(osv.osv):
         else:
             name = move_line.name
 
-        cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
-            move_line.purchase_line_id.cv_line_ids[0] or False
-        cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
-        if inv_type in ('out_invoice', 'out_refund'):
-            account_id = move_line.product_id.product_tmpl_id.\
-                property_account_income.id
+        cv_version = 0
+        if move_line.picking_id.type == 'in':
+            cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
+                move_line.purchase_line_id.cv_line_ids[0] or False
+            cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
+            if cv_version > 1:
+                account_id = cv_line.account_id.id
+            else:
+                account_id = move_line.product_id.product_tmpl_id.\
+                    property_account_expense.id
+                if not account_id:
+                    account_id = move_line.product_id.categ_id.\
+                        property_account_expense_categ.id
+        elif move_line.picking_id.type == 'out':
+            account_id = False
+            if move_line.sale_line_id and move_line.sale_line_id.cv_line_ids and move_line.sale_line_id.cv_line_ids[0].account_id:
+                cv_line = move_line.sale_line_id.cv_line_ids[0] or False
+                account_id = move_line.sale_line_id.cv_line_ids[0].account_id.id
+                cv_version = 2
             if not account_id:
-                account_id = move_line.product_id.categ_id.\
-                    property_account_income_categ.id
-        elif cv_version > 1:
-            account_id = cv_line.account_id.id
-        else:
-            account_id = move_line.product_id.product_tmpl_id.\
-                property_account_expense.id
-            if not account_id:
-                account_id = move_line.product_id.categ_id.\
-                    property_account_expense_categ.id
+                account_id = move_line.product_id.product_tmpl_id.\
+                    property_account_income.id
+                if not account_id:
+                    account_id = move_line.product_id.categ_id.\
+                        property_account_income_categ.id
 
         price_unit = self._get_price_unit_invoice(cr, uid,
                                                   move_line, inv_type)
@@ -1699,13 +1714,15 @@ class stock_picking(osv.osv):
             'account_analytic_id': account_analytic_id,
         }
         if cv_version > 1:
-            inv_vals.update({'cv_line_ids': [(4, cv_line.id)],})
+            inv_vals.update({'cv_line_ids': [(4, cv_line.id)]})
+
         invoice_line_id = invoice_line_obj.create(cr, uid, inv_vals, context=context)
         self._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
 
         if picking.sale_id:
             for sale_line in picking.sale_id.order_line:
                 if sale_line.product_id.type == 'service' and sale_line.invoiced == False:
+                    # TODO: DEPRECATED ?
                     if group:
                         name = picking.name + '-' + sale_line.name
                     else:

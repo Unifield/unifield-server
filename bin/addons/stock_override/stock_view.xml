@@ -173,11 +173,13 @@
             <field name="field_parent">child_ids</field>
             <field name="priority">18</field>
             <field name="arch" type="xml">
-                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" toolbar="1" expand_button="1">
+                <tree string="Stock Location" colors="dimgray:search_color=='dimgray';darkorchid:search_color=='darkorchid';lightpink:search_color=='lightpink';royalblue:search_color=='royalblue' or (usage=='internal' and location_category=='consumption_unit') or intermediate_parent==True;yellowgreen:usage=='customer' and location_category=='consumption_unit';darkorange:search_color=='darkorange';sandybrown:search_color=='sandybrown'" toolbar="1" expand_button="1">
                     <field name="name"/>
                     <field name="usage"/>
                     <field name="stock_real_uom_rounding" />
                     <field name="stock_virtual_uom_rounding" />
+                    <field name="search_color" invisible="1" />
+                    <field name="intermediate_parent" invisible="1" />
                 </tree>
             </field>
         </record>

@@ -18,6 +18,9 @@
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" colspan="1" type="object" />
                     <field name="hide_column_error_ok" invisible="1" colspan="1" />
                     <newline />
+                    <field name="old_version_id" colspan="2" domain="[('composition_product_id', '=', composition_product_id), ('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" attrs="{'invisible': [('composition_type', '!=', 'theoretical')], 'readonly': [('state', '!=', 'draft')]}" />
+                    <button name="import_from_old_version" string="Import products from other version" type="object" colspan="2" icon="gtk-sort-descending" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('state', '!=', 'draft')]}"/>
+                    <newline />
                     <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                 </group>
                 </xpath>
