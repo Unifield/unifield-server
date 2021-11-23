@@ -953,6 +953,7 @@ class stock_picking(osv.osv):
                             processed_out_moves.append(out_move.id)
                             processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
                         elif uom_partial_qty > out_move.product_qty and out_move.id not in processed_out_moves:
+                            out_qty = out_move.product_qty
                             if out_moves[out_moves.index(out_move)] != out_moves[-1]:
                                 # Just update the out move with the value of the out move with UoM of IN
                                 out_qty = out_move.product_qty
@@ -960,14 +961,6 @@ class stock_picking(osv.osv):
                                     out_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, out_move.product_qty, line.uom_id.id)
                                 remaining_out_qty -= out_qty
                             else:
-                                # last move we have extra qty
-                                # extra: total IN - remanining OUT - already focred
-                                if extra_qty > 0 and not context.get('auto_import_ok'):
-                                    # IN pre-processing : do not add extra qty in OUT, it will be added later on IN processing
-                                    out_qty = out_move.product_qty + extra_qty
-                                    extra_qty = 0
-                                else:
-                                    out_qty = out_move.product_qty
                                 remaining_out_qty = 0
 
                             out_values.update({
@@ -976,16 +969,39 @@ class stock_picking(osv.osv):
                                 'in_out_updated': in_out_updated,
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                            if extra_qty > 0:
+                                # Put the extra_qty in a new out move
+                                n_out_values = {
+                                    'product_qty': extra_qty,
+                                    'product_uom': line.uom_id.id,
+                                    'in_out_updated': in_out_updated,
+                                }
+                                context['keepLineNumber'] = True
+                                extra_move_id = move_obj.copy(cr, uid, out_move.id, n_out_values, context=context)
+                                context['keepLineNumber'] = False
+                                move_obj.action_confirm(cr, uid, extra_move_id, context=context)
+                                extra_qty = 0
+                                # Update some fields.function data in the Pick
+                                self.pool.get('stock.picking')._store_set_values(cr, uid, [out_move.picking_id.id], ['overall_qty', 'line_state'], context)
+                                move_obj.action_assign(cr, uid, [extra_move_id])
+                                move_obj.force_assign(cr, uid, [extra_move_id])
+
                             processed_out_moves.append(out_move.id)
                             processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
                         else:
                             # OK all OUT lines processed and still have extra qty !
                             if extra_qty > 0 and not context.get('auto_import_ok'):
-                                product_qty = move_obj.read(cr, uid, out_move.id, ['product_qty'], context=context)['product_qty'] + extra_qty
-                                move_obj.write(cr, uid, out_move.id, {'product_qty': product_qty}, context=context)
+                                # Put the extra_qty in a new out move
+                                context['keepLineNumber'] = True
+                                extra_move_id = move_obj.copy(cr, uid, out_move.id, {'product_qty': extra_qty}, context=context)
+                                context['keepLineNumber'] = False
+                                move_obj.action_confirm(cr, uid, extra_move_id, context=context)
                                 extra_qty = 0
+                                # Update some fields.function data in the Pick
+                                self.pool.get('stock.picking')._store_set_values(cr, uid, [out_move.picking_id.id], ['overall_qty', 'line_state'], context)
+                                move_obj.action_assign(cr, uid, [extra_move_id])
+                                move_obj.force_assign(cr, uid, [extra_move_id])
                             remaining_out_qty = 0
-
 
                 # Decrement the inital move, cannot be less than zero
                 diff_qty = move.product_qty - count
