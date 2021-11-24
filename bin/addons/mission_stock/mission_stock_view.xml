@@ -145,6 +145,7 @@
                 <field name="cross_qty" />
                 <!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="secondary_qty" />
+                <field name="eprep_qty" />
                 <!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="cu_qty" />
                 <field name="quarantine_qty" />
@@ -182,6 +183,7 @@
                 <field name="cross_qty" />
                 <!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="secondary_qty" />
+                <field name="eprep_qty" />
                 <!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="cu_qty" />
                 <field name="quarantine_qty" />

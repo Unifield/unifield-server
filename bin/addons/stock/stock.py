@@ -316,6 +316,16 @@ class stock_location(osv.osv):
             res[loc.id] = loc.location_id and loc.location_id.id == interm or False
         return res
 
+    def _search_intermediate_parent(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            itermediate_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                                      'stock_location_intermediate_client_view')[1]
+            return [('location_id', 'child_of', itermediate_view_id)]
+        return []
+
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active', help="By unchecking the active field, you may hide a location without deleting it."),
@@ -383,7 +393,9 @@ class stock_location(osv.osv):
         'from_config': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_config, string='Set in Loc. Config', internal=1),
         'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=False, fnct_search=_search_initial_stock_inv_display, string='Display in Initial stock inventory', readonly=True),
         'search_color': fields.selection([('dimgray', 'Dim Gray'), ('darkorchid', 'Dark Orchid'), ('lightpink', 'Light Pink'), ('royalblue', 'Royal Blue'), ('yellowgreen', 'Yellow Green'), ('darkorange', 'Dark Orange'), ('sandybrown', 'Sandy Brown'), ], string="Color for Search views"),
-        'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?"),
+        'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?", fnct_search=_search_intermediate_parent),
+        'moved_location': fields.boolean('Eprep location moved from Intermediate Stock', internal=1, readonly=1),
+
     }
     _defaults = {
         'active': True,
@@ -396,7 +408,15 @@ class stock_location(osv.osv):
         'posz': 0,
         'icon': False,
         'scrap_location': False,
+        'moved_location': False,
     }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if 'moved_location' not in default:
+            default['moved_location'] = False
+        return super(stock_location, self).copy(cr, uid, id, default, context)
 
     def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
         return kwargs.get('result', None)

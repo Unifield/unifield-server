@@ -98,7 +98,37 @@
 		<menuitem id="menu_stock_remove_location_wizard"
 				  action="action_stock_remove_location_wizard"
 				  parent="stock.menu_warehouse_config" />
-				  
+		
+        <record id="stock_location_convert_form" model="ir.ui.view">
+			<field name="name">stock.location.convert_eprep.form</field>
+			<field name="model">stock.location.convert_eprep</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Convert Location from Intermediate Stock to Eprep">
+					<html colspan="4"><h3 style="text-align: center; margin: 10px"><translate>The conversion of an Intermediate Stock to an Eprep Stock is irreversible. The reverse operation does not exist.</translate></h3>
+                    <br /><br /></html>
+					<newline />
+					<field name="location_id" />
+					<newline />
+					<html colspan="4"><br /><br /></html>
+					<button type="object" name="convert_location" icon="terp-camera_test" string="Convert to Eprep" colspan="2" confirm="Do you want to convert this location to an Eprep Location ?"/>
+					<button special="cancel" icon="gtk-cancel" string="Cancel" colspan="2"/>
+				</form>
+			</field>
+		</record>
+
+		<record id="action_stock_location_convert_eprep" model="ir.actions.act_window">
+			<field name="name">Convert Intermediate Stock to Eprep</field>
+			<field name="res_model">stock.location.convert_eprep</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="target">new</field>
+		</record>
+		
+		<menuitem id="menu_stock_location_convert_eprep"
+				  action="action_stock_location_convert_eprep"
+				  parent="useability_dashboard_and_menu.menu_reg_wh_mngt" />
+
 		<record id="view_location_tree" model="ir.ui.view">
 		    <field name="name">view.location.tree</field>
 		    <field name="model">stock.location</field>
