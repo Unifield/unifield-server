@@ -127,6 +127,7 @@
 		
 		<menuitem id="menu_stock_location_convert_eprep"
 				  action="action_stock_location_convert_eprep"
+                  parent="stock.menu_warehouse_config" />
 				  parent="useability_dashboard_and_menu.menu_reg_wh_mngt" />
 
 		<record id="view_location_tree" model="ir.ui.view">
