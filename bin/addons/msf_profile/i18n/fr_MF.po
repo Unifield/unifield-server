@@ -47458,8 +47458,8 @@ msgstr "Tout est OK."
 #. modules: account_override, register_accounting
 #: field:account.invoice,is_merged_by_account:0
 #: field:wizard.account.invoice,is_merged_by_account:0
-msgid "Is merged by account"
-msgstr "Is merged by account"
+msgid "Is merged by account (deprecated)"
+msgstr "Est fusionné par compte (obsolète)"
 
 #. module: resource
 #: field:resource.calendar.leaves,calendar_id:0
@@ -108857,8 +108857,8 @@ msgstr "Les factures importées, même partiellement, soient directement dans ce
 
 #. module: account_override
 #: field:account.invoice.line,merged_line:0
-msgid "Merged Line"
-msgstr "Ligne Fusionnée"
+msgid "Merged Line (deprecated)"
+msgstr "Ligne Fusionnée (obsolète)"
 
 #. module: account_override
 #: help:account.invoice.line,merged_line:0
