@@ -145,12 +145,6 @@ msgstr "Accounts filter"
 msgid "Advance Return"
 msgstr "Retour d'avance"
 
-#. module: account_override
-#: code:addons/account_override/invoice.py:1187
-#, python-format
-msgid "Invoice has no line to merge by account"
-msgstr "Invoice has no line to merge by account"
-
 #. module: account
 #: view:account.addtmpl.wizard:0
 #: model:ir.actions.act_window,name:account.action_account_addtmpl_wizard_form
@@ -64607,12 +64601,6 @@ msgstr "PP futur"
 msgid "Add all Analytic Journals"
 msgstr "Ajouter tous les Journaux Analytiques"
 
-#. modules: account_override, register_accounting
-#: field:account.invoice,can_merge_lines:0
-#: field:wizard.account.invoice,can_merge_lines:0
-msgid "Can merge lines ?"
-msgstr "Can merge lines ?"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:344
 #, python-format
@@ -65050,11 +65038,6 @@ msgstr "True if the price has been manually changed during reception"
 #: selection:account.analytic.line,distrib_line_id:0
 msgid "free1"
 msgstr "option 1"
-
-#. module: account
-#: view:account.invoice:0
-msgid "You are about to merge invoice lines; are you sure you want to proceed? THIS OPERATION CAN NOT BE UNDONE."
-msgstr "Vous êtes sur le point de fusionner les lignes de facture ; voulez-vous continuer ? CETTE OPÉRATION NE PEUT PAS ÊTRE ANNULÉE."
 
 #. module: account
 #: help:account.payment.term.line,days:0
@@ -99069,12 +99052,6 @@ msgstr "Générer BC"
 #: model:ir.actions.server,name:financing_contract.act_allocated_expenses_report
 msgid "Allocated Expenses"
 msgstr "Dépenses allouées"
-
-#. module: account_override
-#: code:addons/account_override/invoice.py:1171
-#, python-format
-msgid "Invoice not eligible for lines merging"
-msgstr "Invoice not eligible for lines merging"
 
 #. module: finance
 #: report:cash.request.export:0

@@ -184,23 +184,6 @@ class account_invoice(osv.osv):
 
         return res
 
-    def _get_can_merge_lines(self, cr, uid, ids, field_name, args,
-                             context=None):
-        res = {}
-        if not ids:
-            return res
-        if isinstance(ids, (int, long, )):
-            ids = [ids]
-
-        for inv_br in self.browse(cr, uid, ids, context=context):
-            # allow to merge lines only for draft SI/ISI
-            res[inv_br.id] = inv_br.state and inv_br.state == 'draft' \
-                and inv_br.invoice_line \
-                and inv_br.doc_type in ('si', 'isi') \
-                or False
-
-        return res
-
     def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
         """
         Returns the number of lines for each selected invoice
@@ -396,7 +379,6 @@ class account_invoice(osv.osv):
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'st_lines': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register lines", readonly=True, help="Register lines that have a link to this invoice."),
-        'can_merge_lines': fields.function(_get_can_merge_lines, method=True, type='boolean', string='Can merge lines ?'),
         'is_merged_by_account': fields.boolean("Is merged by account"),
         'partner_type': fields.related('partner_id', 'partner_type', string='Partner Type', type='selection',
                                        selection=PARTNER_TYPE, readonly=True, store=False),
@@ -416,7 +398,6 @@ class account_invoice(osv.osv):
         'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
         'is_direct_invoice': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
-        'can_merge_lines': lambda *a: False,
         'is_merged_by_account': lambda *a: False,
         # set a default value on doc type so that the restrictions on fields apply even before the form is saved
         'doc_type': lambda obj, cr, uid, c: c and c.get('doc_type') or False,
@@ -1358,262 +1339,9 @@ class account_invoice(osv.osv):
         return True
 
     def button_merge_lines(self, cr, uid, ids, context=None):
-        # US-357 merge lines (by account) button for draft SIs
-        def check(inv_br):
-            if not inv_br.can_merge_lines:
-                raise osv.except_osv(_('Error'),
-                                     _("Invoice not eligible for lines merging"))
-
-            account_iterations = {}
-            for l in inv_br.invoice_line:
-                account_iterations[l.account_id.id] = \
-                    account_iterations.setdefault(l.account_id.id, 0) + 1
-
-            any_to_merge = False
-            if account_iterations:
-                for a in account_iterations:
-                    if account_iterations[a] > 1:
-                        any_to_merge = True
-                        break
-
-            if not any_to_merge:
-                raise osv.except_osv(_('Error'),
-                                     _("Invoice has no line to merge by account"))
-
-        def is_tax_included(inv_br):
-            '''
-            Returns True if ALL the invoice lines have an "included tax", else returns False
-            Note: a "tax included" and a "tax excluded" within the same line wouldn't make sense
-            '''
-            tax_included = True
-            for inv_line in inv_br.invoice_line:
-                if not inv_line.invoice_line_tax_id or not inv_line.invoice_line_tax_id[0].price_include:
-                    tax_included = False
-                    break
-            return tax_included
-
-        def check_tax_lines(inv_br, vals):
-            '''
-            Returns vals.
-            vals['invoice_line_tax_id'] will contain the tax lines to use for the whole invoice,
-            if all lines to merge have the same taxes.
-            Otherwise vals['invoice_line_tax_id'] will contain False
-            '''
-            for l in inv_br.invoice_line:
-                # get rid of the product tax line if <> between merged lines
-                if vals['invoice_line_tax_id'] is None:
-                    # first tax line browsed for the account
-                    if l.invoice_line_tax_id:
-                        vals['invoice_line_tax_id'] = [ t.id for t in l.invoice_line_tax_id ]
-                    else:
-                        vals['invoice_line_tax_id'] = False
-                elif vals['invoice_line_tax_id'] and l.invoice_line_tax_id:
-                    # track <> tax lines, if it's the case abort tax(es) in merge
-                    tax_ids = [ t.id for t in l.invoice_line_tax_id ]
-                    if cmp(vals['invoice_line_tax_id'], tax_ids) != 0:
-                        vals['invoice_line_tax_id'] = False
-                else:
-                    # no tax(es) for this line, abort tax(es) in merge
-                    vals['invoice_line_tax_id'] = False
-                if not vals['invoice_line_tax_id']:
-                    break
-            return vals
-
-        def compute_merge(inv_br):
-            """
-            :result:
-                - A: lines vals by line number
-                - B: and list of inv id to keep (1 line by account (not merged))
-            :rtype : [dict, list]
-
-            NOTES:
-            - no impact on 'import_invoice_id', 'is_corrected' as the 
-              invoice is draft so not imported, and no accounting entries
-            - for order_line_id and sale_order_line_id these m2o are used
-              for AD at line level but when merging we keep only AD from header
-            """
-            index = 1
-            vals_template = {
-                '_index_': index,  # internal merged line index
-
-                'account_id': False,
-                'company_id': inv_br.company_id.id,
-                'discount': 0.,
-                'invoice_id': inv_br.id,
-                'invoice_line_tax_id': None,  # m2m (None to distinguished False)
-                'name': '',
-                'partner_id': inv_br.partner_id.id,
-                'price_unit': 0.,
-                'quantity': 1.,
-            }
-
-            by_account_vals = {}  # key: account_id
-            for l in inv_br.invoice_line:
-                # get current merge vals for account or create new
-                if l.account_id.id in by_account_vals:
-                    vals = by_account_vals[l.account_id.id]
-                    if l.order_line_id:
-                        vals.setdefault('purchase_order_line_ids', []).append(l.order_line_id.id)
-                    if l.cv_line_ids:
-                        vals.setdefault('cv_line_ids', []).extend([cvl.id for cvl in l.cv_line_ids])
-                else:
-                    # new account to merge
-                    vals = vals_template.copy()
-                    vals.update({
-                        '_index_': index,
-                        'account_id': l.account_id.id,
-                        'purchase_order_line_ids': [],
-                        'cv_line_ids': [],
-                    })
-                    if l.order_line_id:
-                        vals['purchase_order_line_ids'].append(l.order_line_id.id)
-                    if l.cv_line_ids:
-                        vals['cv_line_ids'].extend([cvl.id for cvl in l.cv_line_ids])
-                    index += 1
-
-                '''
-                There is only one case where the "base" used for computation must be "tax included":
-                when taxes are the same for ALL lines and that taxes are included in the price.
-                In all other cases, the untaxed amount should be used:
-                - if taxes are identical for each line and are excluded, the tax computation is based on the untaxed amount
-                - if taxes are different, only the untaxed amount is kept (the user has to review the tax amount and change it manually)
-                '''
-                if vals['invoice_line_tax_id'] is None:
-                    vals = check_tax_lines(inv_br, vals)
-                if vals['invoice_line_tax_id'] and is_tax_included(inv_br):
-                    vals['price_unit'] += (l.price_unit * (1-(l.discount or 0.0)/100.0)) * l.quantity
-                    if l.invoice_id.currency_id.rounding:
-                        rounding = l.invoice_id.currency_id.rounding
-                        vals['price_unit'] = round(vals['price_unit'] / rounding) * rounding
-                else:
-                    vals['price_unit'] += l.price_subtotal  # qty 1 and price
-
-                # update merge line
-                by_account_vals[l.account_id.id] = vals
-
-                # internal merged lines ids
-                if not '_ids_' in by_account_vals[l.account_id.id]:
-                    by_account_vals[l.account_id.id]['_ids_'] = []
-                by_account_vals[l.account_id.id]['_ids_'].append(l.id)
-
-            # result by index
-            res = [{}, []]
-            for a in by_account_vals:
-                if len(by_account_vals[a]['_ids_']) > 1:
-                    # more than 1 inv line by account
-                    index = by_account_vals[a]['_index_']
-                    del by_account_vals[a]['_index_']
-                    del by_account_vals[a]['_ids_']
-                    res[0][index] = by_account_vals[a]
-                else:
-                    res[1].append(by_account_vals[a]['_ids_'][0])
-            return res
-
-        def delete_lines(inv_br, skip_ids):
-            # get ids to delete
-            ad_to_del_ids = []
-            line_to_del_ids = []
-
-            for l in inv_br.invoice_line:
-                if l.id in skip_ids:
-                    continue  # line not to del (1 by account)
-                # delete AD
-                if l.analytic_distribution_id \
-                        and not l.analytic_distribution_id.id in ad_to_del_ids:
-                    ad_to_del_ids.append(l.analytic_distribution_id.id)
-                line_to_del_ids.append(l.id)
-
-            # delete ADs
-            if ad_to_del_ids:
-                ad_obj.unlink(cr, uid, ad_to_del_ids, context=context)
-
-            # delete lines
-            if line_to_del_ids:
-                ail_obj.unlink(cr, uid, line_to_del_ids, context=context)
-
-        def do_merge(inv_br, lines_vals, not_merged_ids):
-            """
-            :param lines_vals: lines vals in order
-            :type lines_vals: dict
-            """
-            # the invoice is reviewed with merge lines
-            # => reset the line number sequence from 1
-            if inv_br.sequence_id:
-                inv_br.sequence_id.write({'number_next': 1}, context=context)
-
-            # create merge lines
-            for ln in sorted(lines_vals.keys()):
-                vals = lines_vals[ln]
-
-                # post encode tax m2m
-                vals['invoice_line_tax_id'] = vals['invoice_line_tax_id'] \
-                    and [(6, 0, vals['invoice_line_tax_id'])] or False
-
-                vals['purchase_order_line_ids'] = vals['purchase_order_line_ids'] and [(6, 0, vals['purchase_order_line_ids'])] or False
-
-                vals['cv_line_ids'] = vals['cv_line_ids'] and [(6, 0, vals['cv_line_ids'])] or False
-
-                # create merge line
-                vals.update({'merged_line': True})
-                if not self.pool.get('account.invoice.line').create(cr, uid,
-                                                                    vals, context=context):
-                    break
-
-            # recompute seq number for not merged lines
-            ail_obj = self.pool.get('account.invoice.line')
-            if not_merged_ids:
-                for lid in not_merged_ids:
-                    ln = inv_br.sequence_id.get_id(code_or_id='id')
-                    ail_obj.write(cr, uid, [lid], {
-                        'line_number': ln,
-                    })
-
-        def merge_invoice(inv_br):
-            check(inv_br)
-            merge_res = compute_merge(inv_br)
-            delete_lines(inv_br, merge_res[1])
-            do_merge(inv_br, merge_res[0], merge_res[1])
-
-            # set merged flag
-            inv_br.write({'is_merged_by_account': True}, context=context)
-
-            # recompute taxes (reset not manual ones)
-            self.button_reset_taxes(cr, uid, [inv_br.id], context=context)
-
-        def post_merge(inv_br):
-            inv_br.write({
-                # update check total for accurate check amount at validation
-                'check_total':
-                    inv_br.amount_total or inv_br.check_amount or 0.,
-            }, context=context)
-
         res = {}
-        if context is None:
-            context = {}
-        if not ids:
-            return False
-        if isinstance(ids, (int, long, )):
-            ids = [ids]
-
-        ail_obj = self.pool.get('account.invoice.line')
-        ad_obj = self.pool.get('analytic.distribution')
-
-        # merging
         context.update({'from_merge': True})
-        for inv_br in self.browse(cr, uid, ids, context=context):
-            merge_invoice(inv_br)
-
-        # post processing (reload invoices)
-        for inv_br in self.browse(cr, uid, ids, context=context):
-            post_merge(inv_br)
-
         return res
-
-    def button_merge_lines2(self, cr, uid, ids, context=None):
-        """
-        Alias for button_merge_lines (used to handle different characteristics on both buttons)
-        """
-        return self.button_merge_lines(cr, uid, ids, context=context)
 
     def check_accounts_for_partner(self, cr, uid, ids, context=None,
                                    header_obj=False, lines_field='invoice_line',
