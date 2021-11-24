@@ -993,11 +993,12 @@ class stock_location_convert_eprep(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Location can not be moved !'))
 
         data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
         eprep_view = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')
         if not eprep_view:
             raise osv.except_osv(_('Error'), _('Eprep stock not found !'))
 
-        self.pool.get('stock.location').write(cr, uid, convert.location_id.id, {
+        loc_obj.write(cr, uid, convert.location_id.id, {
             'location_category': 'eprep',
             'location_id': eprep_view[1],
             'search_color': 'lightpink',
@@ -1005,6 +1006,7 @@ class stock_location_convert_eprep(osv.osv_memory):
         }, context=context)
         return_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_location_tree')
 
+        self.pool.get('res.log').create(cr, uid, {'name': 'Location %s (id:%d) converted to Eprep' % (convert.location_id.name, convert.location_id.id)}, context=context)
         return {
             'type': 'ir.actions.act_window',
             'name': 'Locations Structure',
