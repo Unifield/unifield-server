@@ -21586,11 +21586,6 @@ msgstr "Un bon de commande génère une facture fournisseur dès qu'il est confi
 msgid "Patch"
 msgstr "Patch"
 
-#. module: reason_types_moves
-#: field:stock.location,is_replenishment:0
-msgid "Is replenishment ?"
-msgstr "Est-ce un réapprovisionnement ?"
-
 #. module: base
 #: selection:ir.module.module,state:0
 msgid "Not Installable"
@@ -52226,11 +52221,6 @@ msgid " ---------------------------------\n"
 msgstr " ---------------------------------\n"
 " Rapport d'erreur : \n"
 ""
-
-#. module: reason_types_moves
-#: help:stock.location,is_replenishment:0
-msgid "Is True, the location could be used in replenishment rules"
-msgstr "Si Vrai, la Zone pourrait être utilisée pour les règles de réapprovisionnement"
 
 #. module: threshold_value
 #: view:threshold.value:0

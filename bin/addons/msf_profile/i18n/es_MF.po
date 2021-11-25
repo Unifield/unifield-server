@@ -44186,11 +44186,6 @@ msgstr "periodo contable"
 msgid "delivery.process.setup"
 msgstr "delivery.process.setup"
 
-#. module: reason_types_moves
-#: field:stock.location,is_replenishment:0
-msgid "Is replenishment ?"
-msgstr "¿Es un reabastecimiento?"
-
 #. module: account
 #: code:addons/account/account.py:986
 #, python-format
@@ -60832,11 +60827,6 @@ msgstr "assign.to.kit.line"
 #: view:ir.property:0
 msgid "Generic"
 msgstr "Genérico"
-
-#. module: reason_types_moves
-#: help:stock.location,is_replenishment:0
-msgid "Is True, the location could be used in replenishment rules"
-msgstr "Si Verdadero, la ubicación puede usarse en reglas de reabastecimiento"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/tender.py:140
