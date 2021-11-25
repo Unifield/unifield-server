@@ -788,6 +788,7 @@ class stock_remove_location_wizard(osv.osv_memory):
         configurable_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
         intermediate_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
         internal_cu_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
+        eprep_view_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1]
 
         for wizard in self.browse(cr, uid, ids, context=context):
             if (wizard.error and not wizard.can_force) or wizard.has_child or wizard.not_empty or wizard.move_from:
@@ -798,7 +799,7 @@ class stock_remove_location_wizard(osv.osv_memory):
         location_obj.write(cr, uid, [location.id], {'active': False}, context=context)
 
         # Check if parent location should be also de-activated
-        if location.location_id.id in (intermediate_loc_id, internal_cu_loc_id, configurable_loc_id):
+        if location.location_id.id in (intermediate_loc_id, internal_cu_loc_id, configurable_loc_id, eprep_view_id):
             empty = True
             for child in location.location_id.child_ids:
                 if child.active:
@@ -992,11 +993,16 @@ class stock_location_convert_eprep(osv.osv_memory):
         if not convert.location_id or not convert.location_id.intermediate_parent:
             raise osv.except_osv(_('Error'), _('Location can not be moved !'))
 
+        current_parent_id = convert.location_id.location_id.id
+
         data_obj = self.pool.get('ir.model.data')
         loc_obj = self.pool.get('stock.location')
         eprep_view = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')
         if not eprep_view:
             raise osv.except_osv(_('Error'), _('Eprep stock not found !'))
+
+        if not loc_obj.browse(cr, uid, eprep_view[1], fields_to_fetch=['active'], context=context).active:
+            loc_obj.write(cr, uid, eprep_view[1], {'active': True}, context=context)
 
         loc_obj.write(cr, uid, convert.location_id.id, {
             'location_category': 'eprep',
@@ -1009,6 +1015,9 @@ class stock_location_convert_eprep(osv.osv_memory):
         self.pool.get('res.log').create(cr, uid, {'name': 'Location %s (id:%d) converted to Eprep' % (convert.location_id.name, convert.location_id.id), 'read': True}, context=context)
         self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'stock.location', convert.location_id.id, {},
                                                                               'stock.location.instance.create_record', logger=None, check_identifier=False, context=context, force_domain=False)
+
+        if not loc_obj.search_exists(cr, uid, [('location_id', '=', current_parent_id), ('active', '=', True)], context=context):
+            loc_obj.write(cr, uid, current_parent_id, {'active': False}, context=context)
 
         return {
             'type': 'ir.actions.act_window',

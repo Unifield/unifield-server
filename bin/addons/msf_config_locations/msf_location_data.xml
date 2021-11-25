@@ -348,14 +348,14 @@
     </record>
 
     <record id="stock_location_eprep_view" model="stock.location">
-        <field name="name">EPREP stocks</field>
+        <field name="name">EPREP Stocks</field>
         <field name="location_category">other</field>
         <field name="location_id" ref="stock_location_internal_client_view" />
         <field name="usage">view</field>
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
-        <field name="active" eval="True" />
+        <field name="active" eval="False" />
         <field name="optional_loc" eval="True" />
         <field name="search_color">lightpink</field>
         <field name="posz">30</field>

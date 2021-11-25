@@ -98,6 +98,7 @@ prevent_deletion =  {
         ('stock', 'stock_location_company'),
         ('msf_config_locations', 'stock_location_internal_client_view'),
         ('msf_config_locations', 'stock_location_quarantine_view'),
+        ('msf_config_locations', 'stock_location_eprep_view'),
         ('stock', 'stock_location_internal_suppliers_view'),
         ('msf_config_locations', 'stock_location_internal_customers_view'),
         ('stock', 'location_production'),
