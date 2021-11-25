@@ -113251,3 +113251,10 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:335
+#: field:res.partner,instance_creator:0
+#, python-format
+msgid "Instance Creator"
+msgstr "Instance de Création"
