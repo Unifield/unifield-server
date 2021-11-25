@@ -5067,12 +5067,6 @@ msgstr "Días de trabajo"
 msgid "Default account used for partner in Intermission Voucher IN/OUT"
 msgstr "Cuenta predeterminada utilizada para el tercero en los bonos entre misiones IN/OUT"
 
-#. modules: stock_override, stock
-#: view:stock.location.product:0
-#: view:stock.analyze.view:0
-msgid "Stock Location Analysis"
-msgstr "Análisis de ubicación de stock"
-
 #. module: procurement_report
 #: view:procurement.min.max.compute.all:0
 msgid "POs Creation Min/Max Parameters"
@@ -9440,12 +9434,6 @@ msgstr "KC / DG"
 msgid "Modify"
 msgstr "Modificar"
 
-#. module: stock_override
-#: model:ir.actions.act_window,name:stock_override.action_view_stock_analyze_view
-#: view:stock.analyze.view:0
-msgid "Stock Analyze View"
-msgstr "Vista de análisis de stock "
-
 #. module: kit
 #: constraint:kit.creation.to.consume:0
 msgid "Constraint error on Kit Creation to Consume."
@@ -9516,11 +9504,6 @@ msgstr "Categoría de tercero"
 #: field:hr.contract.msf,date_end:0
 msgid "Contract's ending date"
 msgstr "Fecha de finalización del contrato"
-
-#. module: stock_override
-#: view:stock.analyze.view:0
-msgid "(Keep empty to open the current situation. Adjust HH:MM to 00:00 to filter all resources of the day for the 'From' date and 23:59 for the 'To' date)"
-msgstr "(Mantenga vacío para abrir la situación actual. Ajuste HH:MM a 00:00 para filtrar todos los recursos del día para el fecha  \"De\" y 23:59 para la fecha \"hasta\")"
 
 #. modules: delivery_mechanism, msf_cross_docking, purchase, stock_override, product_asset, specific_rules, kit, msf_doc_import, return_claim, stock
 #: model:ir.model,name:delivery_mechanism.model_stock_partial_picking
@@ -22751,7 +22734,6 @@ msgstr "Expedidor:"
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
 #: field:stock.location.product,from_date:0
-#: field:stock.analyze.view,from_date:0
 #: field:supplier.catalogue,period_from:0
 #: field:supplier.historical.catalogue,from_date:0
 msgid "From"
@@ -24314,11 +24296,6 @@ msgstr "Nombre del método que se aplicará al objeto cuando se ejecuta este pla
 #: field:msf.budget,decision_moment_order:0
 msgid "Decision Moment Order"
 msgstr "Momento de decisión pedido"
-
-#. module: stock_override
-#: model:ir.model,name:stock_override.model_stock_analyze_view
-msgid "Stock analyze view"
-msgstr "Vista de análisis de stock "
 
 #. modules: supplier_catalogue, msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:88
@@ -29209,7 +29186,6 @@ msgstr " (SdL)"
 #: view:stock.move.track:0
 #: view:stock.picking:0
 #: view:stock.split.into:0
-#: view:stock.analyze.view:0
 #, python-format
 msgid "_Cancel"
 msgstr "_Cancelar"
@@ -39443,7 +39419,6 @@ msgstr "Crédito saliente"
 
 #. modules: stock_override, stock
 #: view:stock.location.product:0
-#: view:stock.analyze.view:0
 msgid "Open Product"
 msgstr "Abrir producto"
 
@@ -73683,7 +73658,6 @@ msgstr "Import INT Lines from Excel sheet"
 #: field:product.likely.expire.report,date_to:0
 #: selection:wizard.transfer.with.change,type:0
 #: field:stock.location.product,to_date:0
-#: field:stock.analyze.view,to_date:0
 #: field:supplier.catalogue,period_to:0
 #: field:supplier.historical.catalogue,to_date:0
 msgid "To"

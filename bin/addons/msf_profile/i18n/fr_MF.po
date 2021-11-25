@@ -8710,7 +8710,6 @@ msgstr "Obligatoire"
 
 #. modules: stock_override, stock
 #: view:stock.location.product:0
-#: view:stock.analyze.view:0
 msgid "Stock Location Analysis"
 msgstr "Analyse Zone Stock"
 
@@ -37276,7 +37275,6 @@ msgstr "Do reconfigure..."
 #: report:purchase.order.merged:0
 #: field:stock.location.product,from_date:0
 #: field:export.report.stock.move,date_from:0
-#: field:stock.analyze.view,from_date:0
 #: report:stock.card.report:0
 #: field:supplier.catalogue,period_from:0
 #: field:supplier.historical.catalogue,from_date:0
@@ -54440,7 +54438,6 @@ msgstr "Espagnol / Español"
 
 #. modules: stock_override, stock
 #: view:stock.location.product:0
-#: view:stock.analyze.view:0
 msgid "Open Product"
 msgstr "Ouvrir le Produit"
 
@@ -74125,11 +74122,6 @@ msgstr "Analytic Lines (Free 2)"
 msgid "Is Syncing"
 msgstr "Is Syncing"
 
-#. module: stock_override
-#: view:stock.analyze.view:0
-msgid "(Keep empty to open the current situation. Adjust HH:MM to 00:00 to filter all resources of the day for the 'From' date and 23:59 for the 'To' date)"
-msgstr "(Veuillez garder vide pour ouvrir la situation actuelle. Ajustez HH:MM à 00:00 pour filtrer toute les ressources du jour pour la date \"A partir de\" et 23:59 pour la date \"Jusqu'à\")"
-
 #. modules: register_accounting, analytic_distribution
 #: help:account.invoice.line,analytic_lines:0
 #: help:wizard.account.invoice.line,analytic_lines:0
@@ -76732,12 +76724,6 @@ msgstr "Consommation Interne - Valeur Unitaire"
 #: help:operations.event,remote_id:0
 msgid "Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during event centralization."
 msgstr "Conserve l'ID de ligne des lignes importées d'une instance à distance. Non utilisé à l'exception de la déduplication lors de la centralisation des événements."
-
-#. module: stock_override
-#: model:ir.actions.act_window,name:stock_override.action_view_stock_analyze_view
-#: view:stock.analyze.view:0
-msgid "Stock Analyze View"
-msgstr "Vue Analyse Stock"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -83969,11 +83955,6 @@ msgstr "Tous(tes)"
 msgid "The UoM \"%s\" was not consistent with the UoM's category (\"%s\") of the product \"%s\"."
 msgstr "The UoM \"%s\" was not consistent with the UoM's category (\"%s\") of the product \"%s\"."
 
-#. module: stock_override
-#: model:ir.model,name:stock_override.model_stock_analyze_view
-msgid "Stock analyze view"
-msgstr "Affichage de l'analyse du stock"
-
 #. module: msf_budget
 #: selection:monthly.budget.wizard,extension:0
 msgid "XLS"
@@ -85895,7 +85876,6 @@ msgstr "Associer les Événements aux Actions"
 #: view:stock.move:0
 #: view:stock.picking:0
 #: view:stock.split.into:0
-#: view:stock.analyze.view:0
 #: view:change.product.move.processor:0
 #: view:split.move.processor:0
 #, python-format
@@ -87024,7 +87004,6 @@ msgstr "À déf."
 #: field:product.likely.expire.report,consumption_to:0
 #: field:product.likely.expire.report,date_to:0
 #: field:stock.location.product,to_date:0
-#: field:stock.analyze.view,to_date:0
 #: field:supplier.catalogue,period_to:0
 #: field:supplier.historical.catalogue,to_date:0
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:102

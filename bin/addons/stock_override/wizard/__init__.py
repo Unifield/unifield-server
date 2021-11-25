@@ -20,7 +20,6 @@
 ##############################################################################
 
 import change_dest_location
-import stock_analyze_view
 import stock_card_wizard
 import stock_invoice_onshipping
 
