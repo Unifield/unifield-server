@@ -1751,7 +1751,7 @@ class account_invoice_line(osv.osv):
             - compute total amount (check_total field)
             - write total to the register line
         - Raise error msg if the related inv. has been generated via Sync. or by a Supply workflow (for Intermission/Intersection partners)
-          (for SI from Supply: merging lines is always allowed, deleting lines is allowed only for manual lines not having been merged.)
+          (for SI from Supply: deleting lines is allowed only for manual lines not having been merged (merging is deprecated since US-9241))
         """
         if not context:
             context = {}
@@ -1782,7 +1782,7 @@ class account_invoice_line(osv.osv):
                     elif (supp_inv or donation) and (invl.order_line_id or invl.merged_line):
                         deletion_allowed = False
                 if not deletion_allowed:
-                    # will be displayed when trying to delete lines manually / merge lines / or split invoices
+                    # will be displayed when trying to delete lines manually or split invoices
                     if donation:
                         raise osv.except_osv(_('Error'),
                                              _("This donation has been generated via a Supply workflow. Existing lines can't be deleted."))
