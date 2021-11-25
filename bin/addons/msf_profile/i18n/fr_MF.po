@@ -18693,11 +18693,6 @@ msgstr "Faux signifie pour tous les utilisateurs"
 msgid "datetime"
 msgstr "datetime"
 
-#. module: account_override
-#: view:account.invoice:0
-msgid "Merge Lines by Account"
-msgstr "Fusionner les Lignes par Compte"
-
 #. module: tender_flow
 #: view:tender:0
 msgid "Update Product's Suppliers"
