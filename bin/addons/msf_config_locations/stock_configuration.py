@@ -1007,6 +1007,9 @@ class stock_location_convert_eprep(osv.osv_memory):
         return_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_location_tree')
 
         self.pool.get('res.log').create(cr, uid, {'name': 'Location %s (id:%d) converted to Eprep' % (convert.location_id.name, convert.location_id.id)}, context=context)
+        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'stock.location', convert.location_id.id, {},
+                                                                              'stock.location.instance.create_record', logger=None, check_identifier=False, context=context, force_domain=False)
+
         return {
             'type': 'ir.actions.act_window',
             'name': 'Locations Structure',
