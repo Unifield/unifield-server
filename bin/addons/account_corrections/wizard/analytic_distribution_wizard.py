@@ -500,6 +500,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             ('is_reallocated', '=', False),
             ('account_id.category', '=', 'FUNDING'),  # exclude free lines
         ], order='NO_ORDER', context=context)
+        # in case of no REV/COR, set the AJIs as ad_updated to show that the Corr. Wizard has been used
+        if not has_generated_cor and all_aji_ids:
+            ana_line_obj.write(cr, uid, all_aji_ids, {'ad_updated': True}, context=context)
         max_line = {'amount': 0, 'aji_bro': False}
         aji_fields = ['amount_currency', 'period_id', 'currency_id', 'source_date', 'document_date', 'date']
         for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=aji_fields, context=context):
@@ -597,6 +600,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'date': ml.date,
                     'source_date': curr_date,
                     'document_date': orig_document_date,
+                    'ad_updated': True,
                 })
                 # update the distib line
                 self.pool.get(obj_name).write(cr, uid, [line.distribution_line_id.id], {
@@ -614,8 +618,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                 })
                 # create the ana line
                 # the posting date is the one of the entry corrected
-                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=ml.date,
-                                                              document_date=orig_document_date, source_date=curr_date, ref=ml.ref)
+                free_line_dict = self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=ml.date,
+                                                                               document_date=orig_document_date, source_date=curr_date,
+                                                                               ref=ml.ref)
+                for dist_l_id in free_line_dict:
+                    free_l_id = free_line_dict.get(dist_l_id)
+                    if free_l_id:
+                        ana_line_obj.write(cr, uid, free_l_id, {'ad_updated': True}, context=context)
         # Set move line as corrected upstream if needed
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
