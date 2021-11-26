@@ -324,6 +324,7 @@ class analytic_line(osv.osv):
                         fieldname: account_id,
                         'date': aline.date,
                         'source_date': curr_date,
+                        'ad_updated': True,
                     }
                     self.write(cr, uid, [aline.id], vals, context=context)
                 # else reverse line before recreating them with right values
@@ -395,7 +396,7 @@ class analytic_line(osv.osv):
                         cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, rev_cor_id))
             else:
                 # Update account
-                self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
+                self.write(cr, uid, [aline.id], {'account_id': account_id, 'ad_updated': True}, context=context)
             # Set line as corrected upstream if we are in COORDO/HQ instance
             if aline.move_id:
                 self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [aline.move_id.id], context=context)

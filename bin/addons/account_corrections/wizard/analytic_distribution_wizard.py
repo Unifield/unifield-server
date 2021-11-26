@@ -627,7 +627,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             all_analytic_lines_ids = ana_line_obj.search(cr, uid, [
                 ('move_id', '=', ml.id),
                 ('is_reversal', '=', False),  # no need to include the REV lines...
-                ('is_reallocated', '=', False),  # ...or the lines set as reallocated
+                ('is_reallocated', '=', False),  # ...or the lines set as reallocated from a previous corr.
             ], order='NO_ORDER', context=context)
             if all_analytic_lines_ids:
                 ana_line_obj.write(cr, uid, all_analytic_lines_ids, {'ad_updated': True}, context=context)
