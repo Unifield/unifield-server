@@ -17,6 +17,9 @@ import math
 import re
 import hashlib
 from . import normalize_td
+from report.report_sxw import _float_format
+from lxml import etree
+
 
 life_cycle_status = [('active', _('Active')), ('new', _('New')), ('replaced', _('Replaced')), ('replacing', _('Replacing')), ('phasingout', _('Phasing Out')), ('activereplacing', _('Active-Replacing'))]
 class replenishment_location_config(osv.osv):
@@ -812,8 +815,13 @@ class replenishment_segment(osv.osv):
             'minmax': _('Min'),
             'auto': _('None'),
         }
+        dict_label = {
+            'cycle': _('RR FMC'),
+            'minmax': _('Min'),
+            'auto': _('Auto. Supply Qty'),
+        }
         for seg in self.read(cr, uid, ids, ['rule'], context=context):
-            ret[seg['id']] = dict_d.get(seg['rule'],'')
+            ret[seg['id']] = {'rule_alert': dict_d.get(seg['rule'],''), 'rr_label': dict_label.get(seg['rule'],'')}
         return ret
 
 
@@ -903,7 +911,7 @@ class replenishment_segment(osv.osv):
         'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
 
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1, add_empty=True),
-        'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char'),
+        'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char', multi='alert_label'),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
         'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'State', readonly=1),
         'fake_state': fields.related('state', string='State internal', readonly=1, write_relate=False, type='char'),
@@ -917,11 +925,14 @@ class replenishment_segment(osv.osv):
         'have_product': fields.function(_get_have_product, type='boolean', method=1, internal=1, string='Products are set'),
         'missing_order_calc': fields.function(_missing_instances, type='char', method=1, string='Missing OC data', multi='_missing_instances'),
         'missing_inv_review': fields.function(_missing_instances, type='char', method=1, string='Missing Inv.R data', multi='_missing_instances'),
+        'specific_period': fields.boolean('Specific Period Only'),
+        'rr_label': fields.function(_get_rule_alert, method=1, string="Field Label", internal=1, type="char", multi='alert_label'),
     }
 
     _defaults = {
         'state': 'draft',
         'have_product': False,
+        'specific_period': False,
     }
 
     _sql_constraints = [
@@ -2095,6 +2106,121 @@ class replenishment_segment_line(osv.osv):
     _rec_name = 'product_id'
     _order = 'product_id, segment_id'
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view = super(replenishment_segment_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type == 'form':
+            arch = etree.fromstring(view['arch'])
+
+            added = '''<group colspan="4" col="4">
+                <separator string="%s" colspan="2" />
+                <separator string="From" colspan="1" />
+                <separator string="To" colspan="1" />
+                <newline />
+            ''' % context.get('rule')
+
+            print context.get('rule'), context.get('specific_period')
+            if context.get('rule') in ('cycle', 'auto'):
+                added += '''<field name="rr_fmc_1" />'''
+            elif context.get('rule') == 'minmax':
+                added += '''<field name="rr_min_max_1" />'''
+
+            if context.get('rule') == 'cycle' or context.get('specific_period'):
+                added += '''
+                    <field name="rr_fmc_from_1" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1, False)"  nolabel="1"/>
+                    <field name="rr_fmc_to_1" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1, True)" nolabel="1" depends="rr_fmc_from_1"/>
+                '''
+
+                for n in range(2, 19):
+                    if context.get('rule') == 'minmax':
+                        added += ''' <field name="rr_min_max_%(n)s" /> ''' % {'n': n}
+                    else:
+                        added += ''' <field name="rr_fmc_%(n)s"  /> ''' % {'n': n}
+
+                    added += '''
+                            <field name="rr_fmc_from_%(n)s" readonly="1" nolabel="1"/>
+                            <field name="rr_fmc_to_%(n)s" attrs="{'required': [('rr_fmc_%(n)s', '!=', False)]}" on_change="change_fmc('to', '%(n)s', rr_fmc_to_%(n)s, True)" nolabel="1" depends="rr_fmc_to_%(n-1)s"/>
+                        ''' % {'n': n, 'n-1': n-1}
+
+                added += "</group>"
+
+                added_etree = etree.fromstring(added)
+
+                fields = arch.xpath('//group[@name="list_values"]')
+                parent_node = fields[0].getparent()
+                parent_node.remove(fields[0])
+                parent_node.append(added_etree)
+
+                xarch, xfields = super(replenishment_segment_line, self)._view_look_dom_arch(cr, uid, arch, view_id, context=context)
+                view['arch'] = xarch
+                view['fields'] = xfields
+
+        return view
+
+
+    def _get_merge_minmax(self, cr, uid, ids, field_name, arg, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        to_read = ['uom_id']
+        numbers = []
+        for f in field_name:
+            pattern = re.search('(\d+)$', f)
+            if pattern:
+                n = int(pattern.group(1))
+                numbers.append(n)
+                to_read += ['rr_fmc_%d' % n , 'rr_max_%d' % n]
+
+        _fields_process = {
+            'float': _float_format
+        }
+
+        for data in self.browse(cr, uid, ids, fields_to_fetch=to_read, context=context, fields_process=_fields_process):
+            for n in numbers:
+                ret.setdefault(data['id'], {}).update({'rr_min_max_%d' % n: '%s / %s' % (data['rr_fmc_%d' % n] or '', data['rr_max_%d' % n] or '')})
+        return ret
+
+
+    def _set_merge_minmax(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+        str_n = name.split('_')[-1]
+        try:
+            n = int(str_n)
+        except:
+            pass
+        if value:
+            value = value.strip()
+        if not value or value == '/':
+            cr.execute('update replenishment_segment_line set rr_fmc_' + str_n + '=NULL, rr_max_' + str_n +'=NULL where id=%s', (id, ))
+        elif '/' not in value:
+            raise osv.except_osv(_('Error !'), _('Invalide Min / Max %d value') % n)
+        else:
+            decimal = False
+            thousands = False
+            if context.get('lang'):
+                cr.execute('select decimal_point,thousands_sep from res_lang where code=%s', (context['lang'], ))
+                decimal, thousands = cr.fetchone()
+                if decimal and decimal != '.':
+                    value = value.replace(decimal, '.')
+                if thousands:
+                    value = value.replace(thousands, '')
+
+            value_split = value.split('/')
+            cr.execute('update replenishment_segment_line set rr_fmc_' + str_n + '=%s, rr_max_' + str_n +'=%s where id=%s', (value_split[0] or None, value_split[1] or None, id, ))
+
+        return True
+
+    def __init__(self, pool, cr):
+
+        for x in range(1, 19):
+            self._columns.update({
+                'rr_fmc_%d' %x : fields.float_null('RR FMC %d' % x, related_uom='uom_id', digits=(16, 2)),
+                'rr_max_%d' % x: fields.float_null('Max %d' % x, related_uom='uom_id', digits=(16, 2)),
+                'rr_fmc_from_%d' % x: fields.date('From %d' % x),
+                'rr_fmc_to_%d' % x: fields.date('To %d' % x),
+                'rr_min_max_%d' % x: fields.function(lambda self, *a, **b: self._get_merge_minmax(*a, **b), method=1, string="Min / Max %d" % x, type='char', fnct_inv=lambda self, *a, **b: self._set_merge_minmax(*a, **b),multi='merge_minmax'),
+            })
+        super(replenishment_segment_line, self).__init__(pool, cr)
+
     def _get_main_list(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
         for x in ids:
@@ -2267,7 +2393,11 @@ class replenishment_segment_line(osv.osv):
                             date_txt = '%s - %s' % (misc.month_abbr[rr_from_dt.month], misc.month_abbr[rr_to_dt.month])
                     else:
                         date_txt = '%s/%s - %s/%s' % (misc.month_abbr[rr_from_dt.month], rr_from_dt.year, misc.month_abbr[rr_to_dt.month], rr_to_dt.year)
-                    add.append("%s: %s" % (date_txt, round(rr_fmc)))
+                    if line.rule == 'minmax':
+                        max_value = getattr(line, 'rr_max_%d'%x) or 0
+                        add.append("%s: %s/%s" % (date_txt, round(rr_fmc), round(max_value)))
+                    else:
+                        add.append("%s: %s" % (date_txt, round(rr_fmc)))
                 else:
                     break
             ret[line.id] = ' | '.join(add)
@@ -2339,6 +2469,7 @@ class replenishment_segment_line(osv.osv):
     _columns = {
         'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
         'line_state_parent': fields.related('segment_id', 'state', string='Segment Status', type='char', readonly=True, write_relate=False),
+        'line_rule_parent': fields.related('segment_id', 'rule', string='Segment Rule', type='char', readonly=True, write_relate=False),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
@@ -2355,60 +2486,6 @@ class replenishment_segment_line(osv.osv):
         'pipeline_between_rdd_oc': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline between RDD and OC', multi='get_pipeline_before'),
         'rr_amc': fields.function(_get_real_stock, type='float', method=True, string='RR-AMC', multi='get_stock_amc'),
         'list_fmc': fields.function(_get_list_fmc, method=1, type='char', string='more FMC'),
-        'rr_fmc_1': fields.float_null('RR FMC 1', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_1': fields.date('From 1'),
-        'rr_fmc_to_1': fields.date('To 1'),
-        'rr_fmc_2': fields.float_null('RR FMC 2', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_2': fields.date('From 2'),
-        'rr_fmc_to_2': fields.date('To 2'),
-        'rr_fmc_3': fields.float_null('RR FMC 3', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_3': fields.date('From 3'),
-        'rr_fmc_to_3': fields.date('To 3'),
-        'rr_fmc_4': fields.float_null('RR FMC 4', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_4': fields.date('From 4'),
-        'rr_fmc_to_4': fields.date('To 4'),
-        'rr_fmc_5': fields.float_null('RR FMC 5', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_5': fields.date('From 5'),
-        'rr_fmc_to_5': fields.date('To 5'),
-        'rr_fmc_6': fields.float_null('RR FMC 6', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_6': fields.date('From 6'),
-        'rr_fmc_to_6': fields.date('To 6'),
-        'rr_fmc_7': fields.float_null('RR FMC 7', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_7': fields.date('From 7'),
-        'rr_fmc_to_7': fields.date('To 7'),
-        'rr_fmc_8': fields.float_null('RR FMC 8', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_8': fields.date('From 8'),
-        'rr_fmc_to_8': fields.date('To 8'),
-        'rr_fmc_9': fields.float_null('RR FMC 9', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_9': fields.date('From 9'),
-        'rr_fmc_to_9': fields.date('To 9'),
-        'rr_fmc_10': fields.float_null('RR FMC 10', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_10': fields.date('From 10'),
-        'rr_fmc_to_10': fields.date('To 10'),
-        'rr_fmc_11': fields.float_null('RR FMC 11', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_11': fields.date('From 11'),
-        'rr_fmc_to_11': fields.date('To 11'),
-        'rr_fmc_12': fields.float_null('RR FMC 12', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_12': fields.date('From 12'),
-        'rr_fmc_to_12': fields.date('To 12'),
-        'rr_fmc_13': fields.float_null('RR FMC 13', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_13': fields.date('From 13'),
-        'rr_fmc_to_13': fields.date('To 13'),
-        'rr_fmc_14': fields.float_null('RR FMC 14', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_14': fields.date('From 14'),
-        'rr_fmc_to_14': fields.date('To 14'),
-        'rr_fmc_15': fields.float_null('RR FMC 15', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_15': fields.date('From 15'),
-        'rr_fmc_to_15': fields.date('To 15'),
-        'rr_fmc_16': fields.float_null('RR FMC 16', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_16': fields.date('From 16'),
-        'rr_fmc_to_16': fields.date('To 16'),
-        'rr_fmc_17': fields.float_null('RR FMC 17', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_17': fields.date('From 17'),
-        'rr_fmc_to_17': fields.date('To 17'),
-        'rr_fmc_18': fields.float_null('RR FMC 18', related_uom='uom_id', digits=(16, 2)),
-        'rr_fmc_from_18': fields.date('From 18'),
-        'rr_fmc_to_18': fields.date('To 18'),
         'replacing_product_id': fields.many2one('product.product', 'Replacing product', select=1),
         'replaced_product_id': fields.many2one('product.product', 'Replaced product', select=1),
         'warning': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
@@ -2425,8 +2502,7 @@ class replenishment_segment_line(osv.osv):
         error = []
         has_error = False
         line_ids = self.search(cr, uid, [('id', 'in', ids), ('segment_id.rule', '=', 'cycle')], context=context)
-        if not line_ids:
-            return True
+
         for line in self.browse(cr, uid, line_ids, context=context):
             prev_to = False
             md5_data = []
@@ -2439,38 +2515,39 @@ class replenishment_segment_line(osv.osv):
                     rr_from = datetime.strptime(rr_from, '%Y-%m-%d')
                     if rr_from.day != 1:
                         if x == 1:
-                            error.append(_('%s, FMC FROM %d must start the 1st day of the month') % (line.product_id.default_code, x))
+                            error.append(_('%s, FROM %d must start the 1st day of the month') % (line.product_id.default_code, x))
                         else:
                             # do not display error for computed value
                             has_error = True
                     if not rr_to:
                         if not rr_fmc:
                             continue
-                        error.append(_("%s, FMC TO %d can't be empty if FMC from is set") % (line.product_id.default_code, x))
+                        error.append(_("%s, TO %d can't be empty if FMC from is set") % (line.product_id.default_code, x))
                     else:
                         rr_to = datetime.strptime(rr_to, '%Y-%m-%d')
                         if rr_to + relativedelta(months=1, day=1, days=-1) != rr_to:
-                            error.append(_("%s, FMC TO %d must be the last day of the month") % (line.product_id.default_code, x))
+                            error.append(_("%s, TO %d must be the last day of the month") % (line.product_id.default_code, x))
                         if rr_from > rr_to:
-                            error.append(_("%s, FMC TO %d must be later than FMC FROM") % (line.product_id.default_code, x))
+                            error.append(_("%s, TO %d must be later than FMC FROM") % (line.product_id.default_code, x))
 
                         if prev_to:
                             if prev_to + relativedelta(days=1) != rr_from:
-                                error.append(_("%s, FMC FROM %d must be a day after FMC TO %d") % (line.product_id.default_code, x, x-1))
+                                error.append(_("%s, FROM %d must be a day after FMC TO %d") % (line.product_id.default_code, x, x-1))
                             if prev_to > rr_from:
-                                error.append(_("%s, FMC FROM %d must be later than FMC TO %d") % (line.product_id.default_code, x, x-1))
+                                error.append(_("%s, FROM %d must be later than FMC TO %d") % (line.product_id.default_code, x, x-1))
                     prev_to = rr_to
             if error or has_error:
                 raise osv.except_osv(_('Error'), _('Please correct the following FMC values:\n%s') % ("\n".join(error)))
 
-            fmc_version = hashlib.md5(''.join(md5_data)).hexdigest()
-            cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s and coalesce(fmc_version, '')!=%s returning id", (fmc_version, line.id, fmc_version))
-            updated = cr.fetchone()
-            if updated and line.segment_id.state == 'complete':
-                instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
-                cr.execute('update replenishment_segment_date_generation gen_date set full_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s', (updated[0], ))
-                cr.execute('update replenishment_segment_date_generation gen_date set review_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s and instance_id=%s', (updated[0], instance_id))
-            return True
+            if line.id in line_ids:
+                fmc_version = hashlib.md5(''.join(md5_data)).hexdigest()
+                cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s and coalesce(fmc_version, '')!=%s returning id", (fmc_version, line.id, fmc_version))
+                updated = cr.fetchone()
+                if updated and line.segment_id.state == 'complete':
+                    instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+                    cr.execute('update replenishment_segment_date_generation gen_date set full_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s', (updated[0], ))
+                    cr.execute('update replenishment_segment_date_generation gen_date set review_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s and instance_id=%s', (updated[0], instance_id))
+        return True
 
     def _uniq_prod_location(self, cr, uid, ids, context=None):
         # delete line in hidden seg
@@ -2514,6 +2591,7 @@ class replenishment_segment_line(osv.osv):
     _defaults = {
         'status': 'active',
         'line_state_parent': 'draft',
+        'line_rule_parent': lambda self, cr, uid, c: c and c.get('rule'),
     }
 
     def _clean_data(self, cr, uid, vals, context=None):
@@ -2540,29 +2618,6 @@ class replenishment_segment_line(osv.osv):
             ids = [ids]
 
         self._clean_data(cr, uid, vals, context=context)
-        if not context.get('sync_update_execution') and ( 'min_qty' in vals or 'max_qty' in vals or 'auto_qty' in vals):
-            histo_obj = self.pool.get('replenishment.segment.line.min_max_auto_supply.history')
-            cr.execute("""
-                select
-                    l.id, l.min_qty, l.max_qty, l.auto_qty, s.rule
-                from
-                    replenishment_segment_line l, replenishment_segment s
-                where
-                    s.id = l.segment_id and
-                    l.id in %s and
-                        (
-                            s.rule = 'minmax' and (coalesce(min_qty, 0)!=%s or coalesce(max_qty, 0)!=%s)
-                            or
-                            s.rule = 'auto' and coalesce(auto_qty, 0)!=%s
-                        )
-            """, (tuple(ids), vals.get('min_qty') or 0, vals.get('max_qty') or 0, vals.get('auto_qty') or 0))
-            for change in cr.dictfetchall():
-                if change['rule'] == 'auto':
-                    histo_obj.create(cr, 1, {'line_id': change['id'], 'old_value': '%d' % (change['auto_qty'] or 0, ), 'new_value': '%d' % (vals.get('auto_qty') or 0, ), 'field': 'auto'}, context=context)
-                else:
-
-                    histo_obj.create(cr, 1, {'line_id': change['id'], 'old_value': '%d / %d' % (change['min_qty'] or 0, change['max_qty'] or 0), 'new_value': '%d / %d' % (vals.get('min_qty', change['min_qty']) or 0 , vals.get('max_qty', change['max_qty']) or 0), 'field': 'minmax'}, context=context)
-
         return super(replenishment_segment_line, self).write(cr, uid, ids, vals, context=context)
 
     def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
@@ -2600,10 +2655,10 @@ class replenishment_segment_line(osv.osv):
         except:
             return {}
         if ch_type == 'from' and fmc_date.day != 1:
-            msg =  _('FMC FROM %s must be the first day of the month') % (nb,)
+            msg =  _('FROM %s must be the first day of the month') % (nb,)
         elif ch_type == 'to':
             if fmc_date + relativedelta(months=1, day=1, days=-1) != fmc_date:
-                msg = _('FMC TO %s must be the last day of the month') % (nb, )
+                msg = _('TO %s must be the last day of the month') % (nb, )
             if update_next:
                 value = {'rr_fmc_from_%s'%(int(nb)+1): fmc_date and (fmc_date + relativedelta(days=1)).strftime('%Y-%m-%d') or False}
 

@@ -441,6 +441,7 @@
             <rng:optional><rng:attribute name="attrs"/></rng:optional>
             <rng:optional><rng:attribute name="class"/></rng:optional>
             <rng:optional><rng:attribute name="string"/></rng:optional>
+            <rng:optional><rng:attribute name="v_string"/></rng:optional>
             <rng:optional><rng:attribute name="completion"/></rng:optional>
             <rng:optional><rng:attribute name="width"/></rng:optional>
             <rng:optional><rng:attribute name="type"/></rng:optional>
