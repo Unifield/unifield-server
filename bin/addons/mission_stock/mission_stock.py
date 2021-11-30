@@ -337,7 +337,7 @@ class stock_mission_report(osv.osv):
                     font: height 220;
                     font: name Calibri;
                     align: wrap on, vert center, horiz center;
-                """)
+                """, num_format_str='0.000')
             row_style.borders = borders
 
             data_row_style = easyxf("""
@@ -469,7 +469,7 @@ class stock_mission_report(osv.osv):
                 font: height 220;
                 font: name Calibri;
                 align: wrap on, vert center, horiz center;
-            """)
+            """, num_format_str='0.000')
 
         book = Workbook()
         add_palette_colour("custom_colour_1", 0x21)
