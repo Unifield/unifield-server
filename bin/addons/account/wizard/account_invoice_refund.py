@@ -270,11 +270,13 @@ class account_invoice_refund(osv.osv_memory):
                     account_m_line_obj.set_as_corrected(cr, uid, ml_list, manual=False, context=None)
                     # blocks the refund Cancel or Modify in case the AD of one of the related AJI has been updated
                     # Note that the case where REV/COR have been generated is handled in "set_as_corrected", which is also used out of refunds.
-                    for ml in self.browse(cr, uid, ml_list, fields_to_fetch=['move_id'], context=context):
-                        if aal_obj.search_exist(cr, uid, [('move_id', '=', ml.id), ('ad_updated', '=', True)], context=context):
-                            raise osv.except_osv(_('Error'),
-                                                 _('The Analytic Distribution of one of the Analytic Journal Items '
-                                                   'related to the entry %s has been modified.') % ml.move_id.name)
+                    for ml_id in ml_list:
+                        if aal_obj.search_exist(cr, uid, [('move_id', '=', ml_id), ('ad_updated', '=', True)], context=context):
+                            move_name = account_m_line_obj.browse(cr, uid, ml_id, fields_to_fetch=['move_id'], context=context).move_id.name
+                            raise osv.except_osv(_('Error'), _('The Analytic Distribution linked to the entry %s has '
+                                                               'been updated since the invoice validation.\n'
+                                                               'Refunds of type "Modify" and "Cancel" are not allowed.')
+                                                 % move_name)
                     # all JI lines of the SI and SR (including header) should be not corrigible, no matter if they
                     # are marked as corrected, reversed...
                     ji_ids = []
