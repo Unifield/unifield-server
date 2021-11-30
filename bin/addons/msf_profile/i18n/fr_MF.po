@@ -14834,10 +14834,9 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 msgid "Not implemented"
 msgstr "Non mis en œuvre"
 
-#. modules: stock_override, procurement_request, msf_outgoing, kit
+#. modules: stock_override, msf_outgoing, kit
 #: report:delivery.order:0
 #: report:internal.move:0
-#: report:procurement.request.report:0
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
 #: report:kitting.order.report:0
@@ -33023,9 +33022,8 @@ msgstr "Facture Ouverte"
 msgid "The certificate ID of the module must be unique !"
 msgstr "L'Identité du certificat du module doit être unique !"
 
-#. modules: stock_override, procurement_request, kit
+#. modules: stock_override, kit
 #: report:delivery.order:0
-#: report:procurement.request.report:0
 #: report:internal.move:0
 #: report:kitting.order.report:0
 msgid "Logistics / Supply :"
@@ -113251,3 +113249,13 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: procurement_request
+#: report:procurement.request.report:0
+msgid "Technical Responsible :"
+msgstr "Responsable Technique :"
+
+#. module: procurement_request
+#: report:procurement.request.report:0
+msgid "Supply Responsible :"
+msgstr "Responsable Approvisionnement :"
