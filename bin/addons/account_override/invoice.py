@@ -88,7 +88,7 @@ class account_invoice(osv.osv):
 
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
-        Fake method for 'ready_for_import_in_debit_note' field
+        Returns False for all ids
         """
         res = {}
         for i in ids:
@@ -366,6 +366,20 @@ class account_invoice(osv.osv):
                 dom.extend(self._get_dom_by_doc_type(doc_type))
         return dom
 
+    def _search_open_fy(self, cr, uid, obj, name, args, context):
+        """
+        Returns a domain. POC!!!
+        """
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], bool):
+            raise osv.except_osv(_('Error'), _('Filter not implemented yet.'))
+        if context is None:
+            context = {}
+        if args[0][2]:
+            dom = [('id', '<', 3)]
+        return dom
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -406,6 +420,8 @@ class account_invoice(osv.osv):
         'real_doc_type': fields.selection(_get_invoice_type_list, 'Real Document Type', readonly=True),
         'doc_type': fields.function(_get_doc_type, method=True, type='selection', selection=_get_invoice_type_list,
                                     string='Document Type', store=False, fnct_search=_search_doc_type),
+        'open_fy': fields.function(_get_fake, method=True, type='boolean', string='Open Fiscal Year', store=False,
+                                   fnct_search=_search_open_fy),
     }
 
     _defaults = {
