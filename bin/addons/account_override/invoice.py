@@ -368,7 +368,22 @@ class account_invoice(osv.osv):
 
     def _search_open_fy(self, cr, uid, obj, name, args, context):
         """
-        Returns a domain. POC!!!
+        Returns a domain with:
+        - Draft Invoices: all
+        - Cancelled Invoices: those without date or those with a date within an Open Fiscal Year
+        - Other Invoices: those with a date within an Open Fiscal Year.
+
+        Example of domain generated:
+        dom = [
+         '|', '|',
+         ('state', '=', 'draft'),
+         '&', ('state', '=', 'cancel'), ('date_invoice', '=', False),
+         '&', '&', '&',
+         '&', ('state', '!=', 'draft'), ('date_invoice', '!=', False),
+         '&', ('date_invoice', '>=', '2020-01-01'), ('date_invoice', '<=', '2020-12-31'),
+         '&', ('date_invoice', '>=', '2021-01-01'), ('date_invoice', '<=', '2021-12-31'),
+         '&', ('date_invoice', '>=', '2022-01-01'), ('date_invoice', '<=', '2022-12-31'),
+        ]
         """
         if not args:
             return []
@@ -376,8 +391,20 @@ class account_invoice(osv.osv):
             raise osv.except_osv(_('Error'), _('Filter not implemented yet.'))
         if context is None:
             context = {}
-        if args[0][2]:
-            dom = [('id', '<', 3)]
+        fy_obj = self.pool.get('account.fiscalyear')
+        dom = [
+            '|', '|',
+            ('state', '=', 'draft'),
+            '&', ('state', '=', 'cancel'), ('date_invoice', '=', False),
+        ]
+        open_fy_ids = fy_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER')  # "draft" = "Open" in the interface
+        for i in range(len(open_fy_ids)):
+            dom.append('&')
+        dom.extend(['&', ('state', '!=', 'draft'), ('date_invoice', '!=', False)])
+        for open_fy in fy_obj.browse(cr, uid, open_fy_ids, context=context):
+            dom.append('&')
+            dom.append(('date_invoice', '>=', open_fy.date_start))
+            dom.append(('date_invoice', '<=', open_fy.date_stop))
         return dom
 
     _columns = {
