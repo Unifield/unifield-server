@@ -439,9 +439,7 @@ class account_invoice(osv.osv):
                     filter_node[0].getparent().remove(filter_node[0])
                 res['arch'] = etree.tostring(doc)
             # remove the Open FY filter in all invoices but IVO, STV, IVI and ISI
-            context_ivi = context.get('doc_type') == 'ivi'
-            context_isi = context.get('doc_type') == 'isi'
-            if not context_ivo and not context_stv and not context_ivi and not context_isi:
+            if not context.get('doc_type', '') in ('ivo', 'stv', 'ivi', 'isi'):
                 doc = etree.XML(res['arch'])
                 filter_node = doc.xpath("/search/group[1]/filter[@name='open_fy']")
                 if filter_node:

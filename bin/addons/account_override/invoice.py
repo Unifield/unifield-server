@@ -372,7 +372,7 @@ class account_invoice(osv.osv):
         """
         if not args:
             return []
-        if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], bool):
+        if args[0][1] != '=' or not args[0][2] or not args[0][2] is True:
             raise osv.except_osv(_('Error'), _('Filter not implemented yet.'))
         if context is None:
             context = {}

@@ -105335,7 +105335,7 @@ msgid "Filter not implemented on Funding Pools."
 msgstr "Filtre non mis en oeuvre sur les Funding Pools."
 
 #. module: account_override
-#: code:addons/account_override/invoice.py:359
+#: code:addons/account_override/invoice.py:0
 #, python-format
 msgid "Filter not implemented yet."
 msgstr "Filtre pas encore mis en oeuvre."
@@ -113251,3 +113251,13 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Open FY"
+msgstr "Exerc. Compt. Ouvert"
+
+#. module: account_override
+#: field:account.invoice,open_fy:0
+msgid "Open Fiscal Year"
+msgstr "Exercice Comptable Ouvert"
