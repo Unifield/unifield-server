@@ -25,6 +25,18 @@
                 <field name="consumption_type" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                 <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                 <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
+                <field name="src_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}">
+                    <tree string="Source">
+                        <field name="name" />
+                        <field name="usage" />
+                    </tree>
+                </field>
+                <field name="dest_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}">
+                    <tree string="Destination">
+                        <field name="name" />
+                        <field name="usage" />
+                    </tree>
+                </field>
                 <group colspan="2" col="2" attrs="{'invisible': [('consumption_type', '=', 'rac')]}">
                     <field name="remove_negative_amc" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <html colspan="2">
@@ -131,8 +143,8 @@
                 <field name="date_from" />
                 <field name="date_to" />
                 <field name="consumption_type" />
-                <field name="location_id" />
-                <field name="location_dest_id" />
+                <field name="txt_source" />
+                <field name="txt_destination" />
                 <field name="sublist_id" />
                 <field name="nomen_manda_0" />
                 <field name="nomen_manda_1" />

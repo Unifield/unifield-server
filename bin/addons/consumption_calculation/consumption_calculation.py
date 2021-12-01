@@ -1815,6 +1815,7 @@ class product_product(osv.osv):
 
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id))]
+        int_return_qery = False
 
         # Add locations filters in domain if locations are passed in context
         if context.get('amc_location_ids'):
@@ -1832,6 +1833,113 @@ class product_product(osv.osv):
             # ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id, replacement_id), ('location_id', 'in', out_locations), ('location_dest_id', 'in', locations)
             # select p2.name from stock_move m1, stock_move m2, stock_picking p2 where m1.type='in' and m2.id = m1.move_dest_id and m2.picking_id=p2.id;
 
+        elif 'histo_src_location_ids' in context:
+            return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+            replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+
+            src_locations = context['histo_src_location_ids']
+            dest_locations = context.get('histo_dest_location_ids')
+            if src_locations and not dest_locations:
+                # SRC INTERNAL // SAME AS RR (?)
+                #single OUT: type: out, location_id: context['histo_src_location_ids'] (neg pour claim return ?)
+                #Shipment: type: ?, initial_location: context['histo_src_location_ids'], location_dest_id type customer (neg pour claim ?)
+                #  =>
+                out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
+                domain += [
+                    '|',
+                    '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
+                    '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id, replacement_id]), ('location_dest_id', 'in', src_locations)
+                ]
+
+
+                #INT chained to a IN reason_type_return_from_unit  with location_dest_id in histo_src_location_ids
+                int_return_qery = '''
+                    select
+                        move_int.id
+                    from
+                        stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
+                    where
+                        move_int.picking_id = pick_int.id and
+                        move_in.picking_id = pick_in.id and
+                        move_in.reason_type_id in %(return_reason)s and
+                        move_int.type = 'internal' and
+                        pick_int.previous_chained_pick_id = pick_in.id and
+                        move_int.product_id in %(product_ids)s and
+                        move_int.location_dest_id in %(src_locations)s and
+                        move_int.state = 'done' and
+                        move_int.date >= %(from_date)s and
+                        move_int.date <= %(to_date)s
+                '''
+
+            elif context.get('histo_dest_location_ids') and not context.get('histo_src_location_ids'): # external only
+                # DEST EXTERNAL
+                #single OUT: type: out, location_dest_id = context['histo_dest_location_ids'] (neg pour claim return ?)
+                input_loc = get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+                out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
+                domain += [ '|',
+                    '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations),
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id, replacement_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
+                ]
+
+                #Shipment XX (not applicable)
+
+                #IN reason type reason_type_return_from_unit,  location_id=context['histo_dest_location_ids'] + chained INT in case of cancelled INT ?
+                #    => ('type', '=', 'in'), (reason_type_id, in return_id, return_good_id, replacement_id), ('location_id', 'in', dest_location), ('location_dest_id', '!=', input_loc)
+
+                int_return_qery = '''
+                    select
+                        move_int.id
+                    from
+                        stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
+                    where
+                        move_int.picking_id = pick_int.id and
+                        move_in.picking_id = pick_in.id and
+                        move_in.reason_type_id in %(return_reason)s and
+                        move_int.type = 'internal' and
+                        pick_int.previous_chained_pick_id = pick_in.id and
+                        move_int.product_id in %(product_ids)s and
+                        move_in.location_id in %(dest_locations)s and
+                        move_int.state = 'done' and
+                        move_int.date >= %(from_date)s and
+                        move_int.date <= %(to_date)s
+                '''
+
+            else: # dest & src
+                # SRC INTERNAL, DEST: EXTERNAL
+                #Simple OUT src/dest
+                domain += ['|', '|', '|',
+                # DEST & SRC: internal
+                    '&', '&', '&', '&', '&',
+                        ('type', '=', 'internal'), ('location_id', 'in', src_locations), ('location_id', 'not in', dest_locations), ('location_dest_id', 'in', dest_locations), ('location_dest_id', 'not in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                    '&', '&', '&', '&', '&',
+                        ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', 'in', [return_id, return_good_id, replacement_id]),
+                # SRC INTERNAL , DEST: EXTERNAL
+                    '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('location_id', 'in', src_locations),
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id, replacement_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
+                ]
+
+                #INT chained return from unit wher src.In= dest and dest.INT = src
+                int_return_qery = '''
+                    select
+                        move_int.id
+                    from
+                        stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
+                    where
+                        move_int.picking_id = pick_int.id and
+                        move_in.picking_id = pick_in.id and
+                        move_in.reason_type_id in %(return_reason)s and
+                        move_int.type = 'internal' and
+                        pick_int.previous_chained_pick_id = pick_in.id and
+                        move_int.product_id in %(product_ids)s and
+                        move_in.location_id in %(dest_locations)s and
+                        move_int.location_dest_id in %(src_locations)s and
+                        move_int.state = 'done' and
+                        move_int.date >= %(from_date)s and
+                        move_int.date <= %(to_date)s
+                '''
+
+
         else:
             locations = self.pool.get('stock.location').search(cr, uid,
                                                                [('usage', 'in', ('internal', 'customer'))], context=context,
@@ -1839,7 +1947,7 @@ class product_product(osv.osv):
             domain.append(('location_id', 'in', locations))
             domain.append(('location_dest_id', 'in', locations))
 
-        return domain
+        return domain, int_return_qery
 
     def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False, remove_negative_amc=False, rounding=True):
         '''
@@ -1874,13 +1982,13 @@ class product_product(osv.osv):
         amc_by_month = {}
         get_object_reference = self.pool.get('ir.model.data').get_object_reference
 
-        domain = self._get_domain_compute_amc(cr, uid, context)
-        domain.append(('product_id', 'in', ids))
+        domain, extra_sql = self._get_domain_compute_amc(cr, uid, context)
+        domain.insert(0, ('product_id', 'in', ids))
 
         if to_date:
-            domain.append(('date', '<=', to_date))
+            domain.insert(0, ('date', '<=', to_date))
         if from_date:
-            domain.append(('date', '>=', from_date))
+            domain.insert(0, ('date', '>=', from_date))
 
         # Search all real consumption line included in the period
         # If no period found, take all stock moves
@@ -1896,6 +2004,11 @@ class product_product(osv.osv):
             if context.get('amc_location_ids'):
                 rcr_domain = ['&', ('rac_id.cons_location_id', 'in', context.get('amc_location_ids'))] + rcr_domain
 
+            if context.get('histo_src_location_ids'):
+                rcr_domain = ['&', ('rac_id.cons_location_id', 'in', context.get('histo_src_location_ids'))] + rcr_domain
+            if context.get('histo_dest_location_ids'):
+                rcr_domain = ['&', ('rac_id.activity_id', 'in', context.get('histo_src_location_ids'))] + rcr_domain
+
 
             racl_obj = self.pool.get('real.average.consumption.line')
             rcr_line_ids = racl_obj.search(cr, uid, rcr_domain, context=context, order='NO_ORDER')
@@ -1908,11 +2021,28 @@ class product_product(osv.osv):
                     res[line.product_id.id] += self._get_period_consumption(cr, uid, line, from_date, to_date, context=context)
 
             if report_move_ids:
-                domain.append(('id', 'not in', report_move_ids))
+                domain.insert(0, ('id', 'not in', report_move_ids))
 
         out_move_ids = move_obj.search(cr, uid, domain, context=context,
                                        order='NO_ORDER')
 
+
+        return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+        replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+
+        if extra_sql:
+            cr.execute(extra_sql, {
+                'from_date': from_date or '1970-01-01 00:00:00',
+                'to_date': to_date or '2300-01-01 00:00:00',
+                'product_ids': tuple(ids),
+                'src_locations': tuple(context['histo_src_location_ids']),
+                'dest_locations': tuple(context['histo_dest_location_ids']),
+                'return_reason': (return_id, return_good_id, replacement_id),
+            })
+            out_move_ids += [x[0] for x in cr.fetchall()]
+
+        print out_move_ids, domain
         move_result = move_obj.read(cr, uid, out_move_ids, ['location_id',
                                                             'reason_type_id', 'product_uom', 'product_qty', 'product_id',
                                                             'location_dest_id', 'date'], context=context)
@@ -1933,19 +2063,20 @@ class product_product(osv.osv):
                                           context=context)
         product_dict = dict((x['id'], x) for x in product_result)
 
-        if move_result:
-            return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-            return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
-            replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
 
         for move in move_result:
             sign = False
-            if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id) and location_dict[move['location_id'][0]]['usage'] == 'customer':
-                sign = -1
+            if 'histo_src_location_ids' not in context:
+                if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id) and location_dict[move['location_id'][0]]['usage'] == 'customer':
+                    sign = -1
 
-            elif location_dict[move['location_dest_id'][0]]['usage'] == 'customer':
-                sign = 1
-
+                elif location_dict[move['location_dest_id'][0]]['usage'] == 'customer':
+                    sign = 1
+            else:
+                if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id):
+                    sign = -1
+                else:
+                    sign = 1
             if sign is not False:
                 qty = sign * uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
                 res[move['product_id'][0]] += qty
@@ -1959,7 +2090,6 @@ class product_product(osv.osv):
                 from_date = move['date']
             if not context.get('to_date') and (not to_date or move['date'] > to_date):
                 to_date = move['date']
-
         if remove_negative_amc:
             for prod in amc_by_month:
                 for period in amc_by_month[prod]:
@@ -1990,7 +2120,14 @@ class product_product(osv.osv):
 
         adjusted_qty = {}
         adjusted_day = {}
-        if context.get('amc_location_ids'):
+        adjusted_period_day = {}
+        adjusted_period_qty = {}
+        # TODO remove True
+        if context.get('amc_location_ids') or (context.get('histo_src_location_ids') and not context.get('histo_dest_location_ids') and context.get('stock_out')) or True:
+            if 'amc_location_ids' in context:
+                stock_out_loc = context.get('amc_location_ids')
+            else:
+                stock_out_loc = context.get('histo_src_location_ids')
             cr.execute('''
                 select line.product_id, line.from_date, line.to_date, line.qty_missed, substitute_1_product_id, substitute_1_qty, substitute_2_product_id, substitute_2_qty,substitute_3_product_id, substitute_3_qty
                     from product_stock_out_line line, product_stock_out st
@@ -2001,24 +2138,54 @@ class product_product(osv.osv):
                         ( line.product_id in %(product)s or substitute_1_product_id in %(product)s or substitute_2_product_id in %(product)s or substitute_3_product_id in %(product)s ) and
                         st.location_id in %(location)s and
                         (from_date, to_date) OVERLAPS (%(from)s, %(to)s)
-            ''', {'product': tuple(res.keys()), 'location': tuple(context.get('amc_location_ids')), 'from': from_date, 'to': to_date})
+            ''', {'product': tuple(res.keys()), 'location': tuple(stock_out_loc), 'from': from_date, 'to': to_date})
 
             for x in cr.fetchall():
                 from_over = max(from_date, x[1])
                 to_over = min(to_date, x[2])
-                overlap_days = (strptime(to_over, '%Y-%m-%d') - strptime(from_over, '%Y-%m-%d')).days
+                dt_to_over = strptime(to_over, '%Y-%m-%d')
+                dt_from_over = strptime(from_over, '%Y-%m-%d')
+                overlap_days = (dt_to_over - dt_from_over).days
                 if x[0] in res.keys():
                     if  x[3] is None:
                         # qty no set
                         adjusted_day.setdefault(x[0], 0)
                         adjusted_day[x[0]] -= overlap_days
+                        if compute_amc_by_month:
+                            tmp_dt_from_over = dt_from_over
+                            while tmp_dt_from_over <= dt_to_over:
+                                period = tmp_dt_from_over.strftime('%Y-%m')
+                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1, days=-1)
+                                adjusted_period_day.setdefault(x[0], {}).setdefault(period, 0)
+                                adjusted_period_day[x[0]][period] -= (min(last_period_day, dt_to_over) - tmp_dt_from_over).days
+                                tmp_dt_from_over += RelativeDateTime(months=1, day=1)
+
                     else:
                         adjusted_qty.setdefault(x[0], 0)
-                        adjusted_qty[x[0]] += (x[3]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
+                        adjusted_qty_by_day = x[3]/float((strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days)
+                        adjusted_qty[x[0]] += adjusted_qty_by_day * overlap_days
+                        if compute_amc_by_month:
+                            tmp_dt_from_over = dt_from_over
+                            while tmp_dt_from_over <= dt_to_over:
+                                period = tmp_dt_from_over.strftime('%Y-%m')
+                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1, days=-1)
+                                adjusted_period_qty.setdefault(x[0], {}).setdefault(period, 0)
+                                adjusted_period_qty[x[0]][period] += (min(last_period_day, dt_to_over) - tmp_dt_from_over).days * adjusted_qty_by_day
+                                tmp_dt_from_over += RelativeDateTime(months=1, day=1)
+
                 for idx in [4, 6, 8]:
                     if x[idx] in res.keys() and x[idx+1]:
                         adjusted_qty.setdefault(x[idx], 0)
-                        adjusted_qty[x[idx]] -= (x[idx+1]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
+                        adjusted_qty_by_day = x[idx+1]/float((strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days)
+                        adjusted_qty[x[idx]] -= adjusted_qty_by_day * overlap_days
+                        if compute_amc_by_month:
+                            tmp_dt_from_over = dt_from_over
+                            while tmp_dt_from_over <= dt_to_over:
+                                period = tmp_dt_from_over.strftime('%Y-%m')
+                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1, days=-1)
+                                adjusted_period_qty.setdefault(x[idx], {}).setdefault(period, 0)
+                                adjusted_period_qty[x[idx]][period] -= (min(last_period_day, dt_to_over) - tmp_dt_from_over).days * adjusted_qty_by_day
+                                tmp_dt_from_over += RelativeDateTime(months=1, day=1)
 
 
             nb_months = ((to_date_str-from_date_str).days + 1)/30.44
@@ -2040,7 +2207,21 @@ class product_product(osv.osv):
         if compute_amc_by_month:
             for p_id in amc_by_month:
                 for m in amc_by_month[p_id]:
-                    amc_by_month[p_id][m] = amc_by_month[p_id][m]
+                    adj = False
+                    if adjusted_period_day.get(p_id, {}).get(m):
+                        adj = True
+                        print 'ADJ 1', p_id, amc_by_month[p_id][m]
+                        amc_by_month[p_id][m] = (amc_by_month[p_id][m]/(30.44-adjusted_period_day[p_id][m])) * 30.44
+                        print 'ADJ 1', p_id, '=', amc_by_month[p_id][m]
+                    if adjusted_period_qty.get(p_id, {}).get(m):
+                        adj = True
+                        print 'ADJ 2', p_id, m, amc_by_month[p_id][m]
+                        amc_by_month[p_id][m] += adjusted_period_qty[p_id][m]
+                        print 'ADJ 2', p_id, m, '=', amc_by_month[p_id][m]
+                    if adj and p_id in product_dict and rounding:
+                        prod_uom = product_dict[p_id]['uom_id'][0]
+                        amc_by_month[p_id][m] = uom_obj._compute_qty(cr, uid, prod_uom, amc_by_month[p_id][m], prod_uom)
+            # TODO remove negative
             return res, amc_by_month
 
         return res

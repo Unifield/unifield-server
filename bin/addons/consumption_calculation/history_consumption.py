@@ -48,15 +48,29 @@ class product_history_consumption(osv.osv):
 
         return res
 
+    def _get_txt_loc(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['consumption_type', 'location_id', 'location_dest_id', 'src_location_ids', 'dest_location_ids'], context=context):
+            if x.consumption_type == 'rac':
+                res[x.id] = {'txt_source': x.location_id.name, 'txt_destination': x.location_dest_id.name}
+            elif x.consumption_type == 'rr-amc':
+                res[x.id] = {'txt_source': ', '.join([loc.name for loc in x.src_location_ids or []]), 'txt_destination': ', '.join([loc.name for loc in x.dest_location_ids or []])}
+            else:
+                es[x.id] = {'txt_source': False, 'txt_destination': False}
+        return res
     _columns = {
         'date_from': fields.date(string='From date'),
         'date_to': fields.date(string='To date'),
         'month_ids': fields.one2many('product.history.consumption.month', 'history_id', string='Months'),
-        'consumption_type': fields.selection([('rac', 'Real Average Consumption'), ('amc', 'Average Monthly Consumption')],
+        'consumption_type': fields.selection([('rac', 'Real Average Consumption'), ('amc', 'Average Monthly Consumption'), ('rr-amc', 'RR-AMC')],
                                              string='Consumption type'),
         'remove_negative_amc': fields.boolean('Remove Negative AMCs'),
         'location_id': fields.many2one('stock.location', string='Source Location', domain="[('usage', '=', 'internal')]"),
         'location_dest_id': fields.many2one('stock.location', string='Destination Location', domain="[('usage', '=', 'customer')]"),
+        'src_location_ids': fields.many2many('stock.location', 'src_location_hist_consumption_rel',  'histo_id', 'location_id', 'Source', domain="[('usage', '=', 'internal'), ('from_histo', '=', dest_location_ids), ('location_category', '!=', 'transition')]"),
+        'dest_location_ids': fields.many2many('stock.location', 'dest_location_hist_consumption_rel',  'histo_id', 'location_id', 'Destination', domain="[('usage', 'in', ['internal', 'customer']), ('from_histo', '=', src_location_ids), ('location_category', '!=', 'transition')]", context={'dest_location': True}),
+        'txt_source': fields.function(_get_txt_loc, type='char', method=1, string='Source', multi='get_txt'),
+        'txt_destination': fields.function(_get_txt_loc, type='char', method=1, string='Destination', multi='get_txt'),
         'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level', ondelete='set null'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
@@ -224,8 +238,12 @@ class product_history_consumption(osv.osv):
             domain.append(('in_product_list', '=', obj.sublist_id.id))
 
         new_context = context.copy()
-        new_context.update({'amc': obj.consumption_type == 'amc' and 'AMC' or 'RAC', 'obj_id': obj.id, 'history_cons': True, 'need_thread': True})
-        if obj.consumption_type == 'amc' and obj.remove_negative_amc:
+        ctx_type = {
+            'amc': 'AMC',
+            'rr-amc': 'RR-AMC',
+        }
+        new_context.update({'amc': ctx_type.get(obj.consumption_type, 'RAC'), 'obj_id': obj.id, 'history_cons': True, 'need_thread': True})
+        if obj.consumption_type in ('amc', 'rr-amc') and obj.remove_negative_amc:
             new_context['remove_negative_amc'] = True
 
         return domain, new_context
@@ -296,12 +314,22 @@ class product_history_consumption(osv.osv):
                 FROM real_average_consumption_line
                 WHERE move_id IS NOT NULL
                 ''')
-        else:
+        elif res.consumption_type == 'amc':
             cr.execute('''
               SELECT distinct(s.product_id)
               FROM stock_move s
                 LEFT JOIN stock_location l ON l.id = s.location_id OR l.id = s.location_dest_id
               WHERE l.usage in ('customer', 'internal')
+            ''')
+        else:
+            context['histo_src_location_ids'] = [x.id for x in res.src_location_ids]
+            context['histo_dest_location_ids'] = [x.id for x in res.dest_location_ids]
+            # TODO
+            cr.execute('''
+                SELECT distinct(s.product_id)
+                FROM stock_move s
+                WHERE
+                    state = 'done'
             ''')
         product_ids = [x[0] for x in cr.fetchall()]
         if domain:
@@ -324,14 +352,14 @@ class product_history_consumption(osv.osv):
         context['to_date'] = res.date_to
         for slice_ids in slices:
             try:
-                if res.consumption_type == 'amc':
+                if res.consumption_type in ('amc', 'rr-amc'):
                     avg, month_amc = self.pool.get('product.product').compute_amc(cr, uid, slice_ids, context=context, compute_amc_by_month=True, remove_negative_amc=res.remove_negative_amc, rounding=False)
                     for product in slice_ids:
                         cons_prod_obj.create(cr, uid, {
                             'name': 'average',
                             'product_id': product,
                             'consumption_id': res.id,
-                            'cons_type': 'amc',
+                            'cons_type': res.consumption_type,
                             'value': avg.get(product, 0)}, context=context)
 
                         for month in all_months:
@@ -340,7 +368,7 @@ class product_history_consumption(osv.osv):
                                 'name': month_dt.strftime('%m_%Y'),
                                 'product_id': product,
                                 'consumption_id': res.id,
-                                'cons_type': 'amc',
+                                'cons_type': res.consumption_type,
                                 'value': month_amc.get(product, {}).get(month_dt.strftime('%Y-%m'), 0)}, context=context)
                 else:
                     total_by_prod = {}
@@ -666,8 +694,11 @@ class product_product(osv.osv):
             ('product_id', 'in', ids),
             ('consumption_id', '=', obj_id)
         ]
+
         if context.get('amc') == 'AMC':
             cons_prod_domain.append(('cons_type', '=', 'amc'))
+        elif context.get('amc') == 'RR-AMC':
+            cons_prod_domain.append(('cons_type', '=', 'rr-amc'))
         else:
             cons_prod_domain.append(('cons_type', '=', 'fmc'))
 
@@ -691,7 +722,7 @@ class product_history_consumption_product(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', select=1),
         'name': fields.char(size=64, string='Name', select=1),
         'value': fields.float(digits=(16,2), string='Value'),
-        'cons_type': fields.selection([('amc', 'AMC'), ('fmc', 'FMC')], string='Consumption type', select=1),
+        'cons_type': fields.selection([('amc', 'AMC'), ('fmc', 'FMC'), ('rr-amc', 'RR-AMC')], string='Consumption type', select=1),
     }
 
     def read(self, cr, uid, ids, fields, context=None, load='_classic_read'):
