@@ -378,8 +378,9 @@ class account_invoice(osv.osv):
          '|', '|',
          ('state', '=', 'draft'),
          '&', ('state', '=', 'cancel'), ('date_invoice', '=', False),
-         '&', '&', '&',
+         '&',
          '&', ('state', '!=', 'draft'), ('date_invoice', '!=', False),
+         '|', '|',
          '&', ('date_invoice', '>=', '2020-01-01'), ('date_invoice', '<=', '2020-12-31'),
          '&', ('date_invoice', '>=', '2021-01-01'), ('date_invoice', '<=', '2021-12-31'),
          '&', ('date_invoice', '>=', '2022-01-01'), ('date_invoice', '<=', '2022-12-31'),
@@ -396,11 +397,12 @@ class account_invoice(osv.osv):
             '|', '|',
             ('state', '=', 'draft'),
             '&', ('state', '=', 'cancel'), ('date_invoice', '=', False),
+            '&',
+            '&', ('state', '!=', 'draft'), ('date_invoice', '!=', False),
         ]
         open_fy_ids = fy_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER')  # "draft" = "Open" in the interface
-        for i in range(len(open_fy_ids)):
-            dom.append('&')
-        dom.extend(['&', ('state', '!=', 'draft'), ('date_invoice', '!=', False)])
+        for i in range(len(open_fy_ids) - 1):
+            dom.append('|')
         for open_fy in fy_obj.browse(cr, uid, open_fy_ids, context=context):
             dom.append('&')
             dom.append(('date_invoice', '>=', open_fy.date_start))
