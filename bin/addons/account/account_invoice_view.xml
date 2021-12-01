@@ -649,7 +649,6 @@
                         <field name="number"/>
                         <field name="partner_id"/>
                         <field name="origin"/>
-                        <field name="amount_total"/>
                     </group>
                     <newline/>
                     <group col="10" colspan="4">
@@ -657,6 +656,7 @@
                         <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="supplier_reference"/>
                         <field name="name"/>
+                        <field name="amount_total"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
