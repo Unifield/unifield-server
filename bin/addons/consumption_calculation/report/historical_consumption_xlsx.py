@@ -64,6 +64,13 @@ class historical_parser(XlsxReportParser):
         if h_amc.consumption_type == 'amc':
             full_title = _('AMC')
             sub_title = _('MC')
+        elif h_amc.consumption_type == 'rr-amc':
+            if h_amc.adjusted_rr_amc:
+                full_title = _('Adj. RR-AMC')
+                sub_title = _('Adj. RR-MC')
+            else:
+                full_title = _('RR-AMC')
+                sub_title = _('RR-MC')
         else:
             full_title = _('RAC')
             sub_title = _('RC')

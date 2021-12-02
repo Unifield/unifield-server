@@ -7,7 +7,7 @@
 	    <field name="model">product.history.consumption</field>
 	    <field name="type">form</field>
 	    <field name="arch" type="xml">
-            <form string="Product historical consumption" hide_new_button="1" hide_duplicate_button="1">
+            <form string="Product historical consumption" hide_duplicate_button="1">
                 <field name="status" invisible="1" />
                 <group colspan="2" col="2">
 	    		<separator colspan="2" string="Period parameters" />
@@ -21,17 +21,31 @@
     		    </group>
 
             <group colspan="2" col="2">
-			<separator colspan="2" string="Consumption parameters" />
+                <separator colspan="2" string="Consumption parameters" />
                 <field name="consumption_type" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                 <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                 <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
+                <field name="src_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}">
+                    <tree string="Source">
+                        <field name="name" />
+                        <field name="usage" />
+                    </tree>
+                </field>
+                <field name="dest_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_dest_location_ids(dest_location_ids)">
+                    <tree string="Destination">
+                        <field name="name" />
+                        <field name="usage" />
+                    </tree>
+                </field>
+                <field name="disable_adjusted_rr_amc" invisible="1" />
+                <field name="adjusted_rr_amc"  attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('disable_adjusted_rr_amc', '=', True)]}" />
                 <group colspan="2" col="2" attrs="{'invisible': [('consumption_type', '=', 'rac')]}">
                     <field name="remove_negative_amc" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <html colspan="2">
                         <i><translate>If ticked it means that for periods/months where there are more returns (via return INs) than Outs, the standard calculation would display a negative Consumption/AMC quantity, but in this case (if ticked) the figure is set to zero.</translate></i>
                     </html>
                 </group>
-			<separator colspan="2" string="Product parameters" />
+            <separator colspan="2" string="Product parameters" />
             <field name="sublist_id" attrs="{'readonly': ['|', ('nomen_manda_0', '!=', False), ('status', '!=', 'draft')]}" />
             <group colspan="2" col="4">
                 <field name="nomen_manda_0"
@@ -131,14 +145,15 @@
                 <field name="date_from" />
                 <field name="date_to" />
                 <field name="consumption_type" />
-                <field name="location_id" />
-                <field name="location_dest_id" />
+                <field name="txt_source" />
+                <field name="txt_destination" />
                 <field name="sublist_id" />
                 <field name="nomen_manda_0" />
                 <field name="nomen_manda_1" />
                 <field name="nomen_manda_2" />
                 <field name="nomen_manda_3" />
                 <field name="remove_negative_amc" />
+                <field name="adjusted_rr_amc" />
                 <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
                 <button name="open_report" type="object" icon="terp-check" string="Open report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', True)]}"/>
                 <button name="report_amc_with_negative" type="object" icon="xlsx.png" string="Generate historical report" attrs="{'invisible': ['|', ('status', '!=', 'ready'), ('remove_negative_amc', '=', True)]}"/>
