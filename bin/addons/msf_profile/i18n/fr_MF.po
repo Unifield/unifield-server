@@ -30683,11 +30683,6 @@ msgstr "Infos sur groupes"
 msgid "Available for outgoing movements ?"
 msgstr "Disponible pour mouvements sortants ?"
 
-#. module: reason_types_moves
-#: field:stock.reason.type,is_return:0
-msgid "Count as a return"
-msgstr "Considéré comme un retour"
-
 #. module: analytic_distribution_supply
 #: code:addons/analytic_distribution_supply/invoice.py:147
 #, python-format

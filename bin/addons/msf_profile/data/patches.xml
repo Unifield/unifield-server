@@ -720,9 +720,5 @@
             <field name="method">us_9044_add_location_colors</field>
         </record>
 
-        <record id="us_9266_flag_return_reason_type" model="patch.scripts">
-            <field name="method">us_9266_flag_return_reason_type</field>
-        </record>
-
     </data>
 </openerp>

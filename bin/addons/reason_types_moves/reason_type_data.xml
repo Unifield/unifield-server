@@ -24,7 +24,6 @@
             <field name="code">4</field>
             <field name="incoming_ok">True</field>
             <field name="outgoing_ok">True</field>
-            <field name="is_return">True</field>
         </record>
         
         <record id="reason_type_external_supply" model="stock.reason.type">
@@ -138,7 +137,6 @@
             <field name="internal_ok">True</field>
             <field name="incoming_ok">True</field>
             <field name="outgoing_ok">True</field>
-            <field name="is_return">True</field>
         </record>
         
         <record id="reason_type_goods_replacement" model="stock.reason.type">
@@ -147,7 +145,6 @@
             <field name="internal_ok">True</field>
             <field name="incoming_ok">True</field>
             <field name="outgoing_ok">True</field>
-            <field name="is_return">True</field>
         </record>
 
         <record id="reason_type_stock_initialization" model="stock.reason.type">
@@ -161,10 +158,9 @@
         <record id="reason_type_internal_return" model="stock.reason.type">
             <field name="name">Internal Return</field>
             <field name="code">19</field>
-            <field name="internal_ok">False</field>
-            <field name="incoming_ok">True</field>
-            <field name="outgoing_ok">False</field>
-            <field name="is_return">True</field>
+            <field name="internal_ok">True</field>
+            <field name="incoming_ok" eval="False" />
+            <field name="outgoing_ok" eval="False" />
         </record>
     
     </data>
