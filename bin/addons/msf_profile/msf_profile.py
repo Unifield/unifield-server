@@ -54,6 +54,15 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
+    def us_9266_flag_return_reason_type(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        cr.execute("update stock_reason_type set is_return='t' where code in (4, 16, 17, 19)")
+        return True
+
+
     # UF23.0
     def us_8839_cv_from_fo(self, cr, uid, *a, **b):
         if cr.column_exists('account_commitment_line', 'po_line_product_id'):

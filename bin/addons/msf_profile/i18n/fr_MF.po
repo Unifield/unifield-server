@@ -30683,6 +30683,11 @@ msgstr "Infos sur groupes"
 msgid "Available for outgoing movements ?"
 msgstr "Disponible pour mouvements sortants ?"
 
+#. module: reason_types_moves
+#: field:stock.reason.type,is_return:0
+msgid "Count as a return"
+msgstr "Considéré comme un retour"
+
 #. module: analytic_distribution_supply
 #: code:addons/analytic_distribution_supply/invoice.py:147
 #, python-format
@@ -85399,6 +85404,11 @@ msgstr "Mouvement Interne"
 #: model:stock.reason.type,name:reason_types_moves.reason_type_goods_return
 msgid "Goods Return"
 msgstr "Retour de marchandises"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_internal_return
+msgid "Internal Return"
+msgstr "Retour Interne"
 
 #. module: msf_profile
 #: code:addons/msf_profile/user_access_configurator.py:318
