@@ -393,7 +393,7 @@ class account_invoice(osv.osv):
         if context is None:
             context = {}
         fy_obj = self.pool.get('account.fiscalyear')
-        open_fy_ids = fy_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER')  # "draft" = "Open" in the interface
+        open_fy_ids = fy_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)  # "draft" = "Open" in the interface
         if open_fy_ids:
             dom = [
                 '|', '|',
@@ -404,7 +404,7 @@ class account_invoice(osv.osv):
             ]
             for i in range(len(open_fy_ids) - 1):
                 dom.append('|')
-            for open_fy in fy_obj.browse(cr, uid, open_fy_ids, context=context):
+            for open_fy in fy_obj.browse(cr, uid, open_fy_ids, fields_to_fetch=['date_start', 'date_stop'], context=context):
                 dom.append('&')
                 dom.append(('date_invoice', '>=', open_fy.date_start))
                 dom.append(('date_invoice', '<=', open_fy.date_stop))
