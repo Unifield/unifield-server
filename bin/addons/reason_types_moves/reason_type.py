@@ -131,7 +131,15 @@ class stock_reason_type(osv.osv):
         'incoming_ok': fields.boolean(string='Available for incoming shipment ?'),
         'internal_ok': fields.boolean(string='Available for internal picking ?'),
         'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
+        'is_return': fields.boolean('Count as a return'),
     }
+
+    _default = {
+        'is_return': False,
+    }
+
+    def get_return_type_ids(self, cr, uid, ids, context=None):
+        return self.search(cr, uid, [('is_return', '=', True)], context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         '''
