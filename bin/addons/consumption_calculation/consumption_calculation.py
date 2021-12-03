@@ -2136,7 +2136,7 @@ class product_product(osv.osv):
                             tmp_dt_from_over = dt_from_over
                             while tmp_dt_from_over <= dt_to_over:
                                 period = tmp_dt_from_over.strftime('%Y-%m')
-                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1, days=-1)
+                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1)
                                 adjusted_period_day.setdefault(x[0], {}).setdefault(period, 0)
                                 adjusted_period_day[x[0]][period] -= (min(last_period_day, dt_to_over) - tmp_dt_from_over).days
                                 tmp_dt_from_over += RelativeDateTime(months=1, day=1)
@@ -2149,11 +2149,10 @@ class product_product(osv.osv):
                             tmp_dt_from_over = dt_from_over
                             while tmp_dt_from_over <= dt_to_over:
                                 period = tmp_dt_from_over.strftime('%Y-%m')
-                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1, days=-1)
+                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1)
                                 adjusted_period_qty.setdefault(x[0], {}).setdefault(period, 0)
                                 adjusted_period_qty[x[0]][period] += (min(last_period_day, dt_to_over) - tmp_dt_from_over).days * adjusted_qty_by_day
                                 tmp_dt_from_over += RelativeDateTime(months=1, day=1)
-
                 for idx in [4, 6, 8]:
                     if x[idx] in res.keys() and x[idx+1]:
                         adjusted_qty.setdefault(x[idx], 0)
@@ -2163,7 +2162,7 @@ class product_product(osv.osv):
                             tmp_dt_from_over = dt_from_over
                             while tmp_dt_from_over <= dt_to_over:
                                 period = tmp_dt_from_over.strftime('%Y-%m')
-                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1, days=-1)
+                                last_period_day = tmp_dt_from_over + RelativeDateTime(months=1, day=1)
                                 adjusted_period_qty.setdefault(x[idx], {}).setdefault(period, 0)
                                 adjusted_period_qty[x[idx]][period] -= (min(last_period_day, dt_to_over) - tmp_dt_from_over).days * adjusted_qty_by_day
                                 tmp_dt_from_over += RelativeDateTime(months=1, day=1)
