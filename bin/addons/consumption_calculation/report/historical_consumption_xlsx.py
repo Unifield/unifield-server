@@ -34,6 +34,10 @@ class historical_parser(XlsxReportParser):
         else:
             self.duplicate_row_dimensions(range(2, 3))
             row_index = 2
+
+        if h_amc.consumption_type == 'rr-amc':
+            row_index += 2
+
         self.duplicate_column_dimensions(default_width=10.75)
         sheet.freeze_panes = 'D%d' % (row_index+1)
 
@@ -47,6 +51,19 @@ class historical_parser(XlsxReportParser):
         if h_amc.remove_negative_amc:
             sheet.append([self.cell_ro(_('This report hides negative AMC / MCs (they are set to 0)'), 'title_style')])
             sheet.merged_cells.ranges.append("A1:C1")
+
+        if h_amc.consumption_type == 'rr-amc':
+            sheet.append([
+                self.cell_ro(_('Source'), 'header_style'),
+                self.cell_ro(h_amc.txt_source, 'prod_style')
+            ])
+            sheet.merged_cells.ranges.append("B%(idx)s:C%(idx)s" % {'idx': row_index-3})
+            sheet.append([
+                self.cell_ro(_('Destination'), 'header_style'),
+                self.cell_ro(h_amc.txt_destination, 'prod_style')
+            ])
+            sheet.merged_cells.ranges.append("B%(idx)s:C%(idx)s" % {'idx': row_index-2})
+
 
         nb_month = len(list_months) + 3
         sheet.auto_filter.ref = "A%(idx)d:%(last_month)s%(idx)d" % {'idx': row_index, 'last_month': get_column_letter(nb_month)}
