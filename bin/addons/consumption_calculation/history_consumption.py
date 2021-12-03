@@ -170,9 +170,19 @@ class product_history_consumption(osv.osv):
                 search_ids = month_obj.search(cr, uid, [('name', '=', current_date.strftime('%m/%Y')), ('history_id', 'in', ids)], context=context)
                 # If the month is in the period and not in the list, create it
                 if not search_ids:
-                    res['value']['month_ids'].append({'name': current_date.strftime('%m/%Y'),
-                                                      'date_from': current_date.strftime('%Y-%m-%d'),
-                                                      'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+                    if ids:
+                        new_month = month_obj.create(cr, uid, {
+                            'history_id': ids[0],
+                            'name': current_date.strftime('%m/%Y'),
+                            'date_from': current_date.strftime('%Y-%m-%d'),
+                            'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+                        }, context=context)
+                        res['value']['month_ids'].append(new_month)
+                    else:
+                        # new record not saved
+                        res['value']['month_ids'].append({'name': current_date.strftime('%m/%Y'),
+                                                          'date_from': current_date.strftime('%Y-%m-%d'),
+                                                          'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
                 else:
                     res['value']['month_ids'].extend(search_ids)
                 current_date = current_date + RelativeDateTime(months=1)
