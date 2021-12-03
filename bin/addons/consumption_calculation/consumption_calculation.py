@@ -1820,23 +1820,11 @@ class product_product(osv.osv):
         return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1] # code 4
         return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1] # code 16
         # Add locations filters in domain if locations are passed in context
-        if context.get('amc_location_ids'):
-            locations = context['amc_location_ids']
-            out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
-            # initial_location: to match Ship with src loc on Pick
-            domain += [ '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), '|', ('location_id', 'in', locations), ('initial_location', 'in', locations)]
-
-            # TODO JFB RR
-            # get IN / INT
-            # move_dest_id
-            # ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id, replacement_id), ('location_id', 'in', out_locations), ('location_dest_id', 'in', locations)
-            # select p2.name from stock_move m1, stock_move m2, stock_picking p2 where m1.type='in' and m2.id = m1.move_dest_id and m2.picking_id=p2.id;
-
-        elif 'histo_src_location_ids' in context:
+        if 'histo_src_location_ids' in context or 'amc_location_ids' in context:
             replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1] # code 17
             internal_return = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_return')[1] # code 18
 
-            src_locations = context['histo_src_location_ids']
+            src_locations = context.get('histo_src_location_ids') or context.get('amc_location_ids')
             dest_locations = context.get('histo_dest_location_ids')
             if src_locations and not dest_locations:
                 # SRC INTERNAL // SAME AS RR (?)
@@ -2026,6 +2014,7 @@ class product_product(osv.osv):
         out_move_ids = move_obj.search(cr, uid, domain, context=context,
                                        order='NO_ORDER')
 
+        int_return = []
         if extra_sql:
             cr.execute(extra_sql, {
                 'from_date': from_date or '1970-01-01 00:00:00',
@@ -2035,9 +2024,9 @@ class product_product(osv.osv):
                 'dest_locations': tuple(context['histo_dest_location_ids']),
                 'return_reason': tuple([return_id, return_good_id]),
             })
-            out_move_ids += [x[0] for x in cr.fetchall()]
+            int_return = [x[0] for x in cr.fetchall()]
+            out_move_ids += int_return
 
-        # TODO
         move_result = move_obj.read(cr, uid, out_move_ids, ['location_id',
                                                             'reason_type_id', 'product_uom', 'product_qty', 'product_id',
                                                             'location_dest_id', 'date', 'type'], context=context)
@@ -2062,7 +2051,7 @@ class product_product(osv.osv):
                 elif move['location_dest_id'][0] in customer_locations_ids and  move['reason_type_id'][0] not in [return_id, return_good_id, replacement_id]:
                     sign = 1
             else:
-                if move['reason_type_id'][0] in [return_id, return_good_id, internal_return]:
+                if move['reason_type_id'][0] in [return_id, return_good_id, internal_return] or move['id'] in int_return:
                     sign = -1
                 else:
                     sign = 1
@@ -2079,6 +2068,7 @@ class product_product(osv.osv):
                 from_date = move['date']
             if not context.get('to_date') and (not to_date or move['date'] > to_date):
                 to_date = move['date']
+
         if remove_negative_amc:
             for prod in amc_by_month:
                 for period in amc_by_month[prod]:
@@ -2103,7 +2093,9 @@ class product_product(osv.osv):
         except ValueError:
             from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
 
+        to_date_str = min(now(), to_date_str)
         nb_months = self._get_date_diff(from_date_str, to_date_str)
+
         if not nb_months:
             nb_months = 1
 
@@ -2181,11 +2173,17 @@ class product_product(osv.osv):
 
         for p_id in res:
             p_nb_nb_months = float(nb_months)
+            adj = False
             if p_id in adjusted_day:
+                adj = True
                 p_nb_nb_months += adjusted_day[p_id]/30.44
 
             if p_id in adjusted_qty:
+                adj = True
                 res[p_id] += adjusted_qty[p_id]
+
+            if adj and remove_negative_amc and res[p_id] < 0:
+                res[p_id] = 0
 
             if p_id in product_dict and rounding:
                 prod_uom = product_dict[p_id]['uom_id'][0]
@@ -2210,9 +2208,11 @@ class product_product(osv.osv):
                         amc_by_month[p_id][m] += adjusted_period_qty[p_id][m]
                         print 'ADJ 2', p_id, m, '=', amc_by_month[p_id][m]
                     if adj and p_id in product_dict and rounding:
-                        prod_uom = product_dict[p_id]['uom_id'][0]
-                        amc_by_month[p_id][m] = uom_obj._compute_qty(cr, uid, prod_uom, amc_by_month[p_id][m], prod_uom)
-            # TODO remove negative
+                        if remove_negative_amc and amc_by_month[p_id][m] < 0:
+                            amc_by_month[p_id][m] = 0
+                        else:
+                            prod_uom = product_dict[p_id]['uom_id'][0]
+                            amc_by_month[p_id][m] = uom_obj._compute_qty(cr, uid, prod_uom, amc_by_month[p_id][m], prod_uom)
             return res, amc_by_month
 
         return res
@@ -2250,7 +2250,7 @@ class product_product(osv.osv):
                     nb_days_in_month = days_in_month(from_date.month, from_date.year)
                     # We divided the # of days between the two dates by the # of days in month
                     # to have a percentage of the number of month
-                    res += round((to_date.day-from_date.day+1)/nb_days_in_month, 2)
+                    res += (to_date.day-from_date.day+1)/float(nb_days_in_month)
                     break
                 elif to_date.month - from_date.month > 1 or to_date.year - from_date.year > 0:
                     res += 1
@@ -2259,10 +2259,10 @@ class product_product(osv.osv):
                     # Number of month till the end of from month
                     fr_nb_days_in_month = days_in_month(from_date.month, from_date.year)
                     nb_days = fr_nb_days_in_month - from_date.day + 1
-                    res += round(nb_days/fr_nb_days_in_month, 2)
+                    res += nb_days/float(fr_nb_days_in_month)
                     # Number of month till the end of from month
                     to_nb_days_in_month = days_in_month(to_date.month, to_date.year)
-                    res += round(to_date.day/to_nb_days_in_month, 2)
+                    res += to_date.day/float(to_nb_days_in_month)
                     break
 
         return res
