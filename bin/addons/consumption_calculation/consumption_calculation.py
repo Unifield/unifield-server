@@ -2192,26 +2192,15 @@ class product_product(osv.osv):
 
         if compute_amc_by_month:
             for p_id in amc_by_month:
-                for m in amc_by_month[p_id]:
-                    adj = False
-                    if adjusted_period_day.get(p_id, {}).get(m):
-                        adj = True
-                        # TODO
-                        print 'ADJ 1', p_id, amc_by_month[p_id][m]
-                        amc_by_month[p_id][m] = (amc_by_month[p_id][m]/(30.44-adjusted_period_day[p_id][m])) * 30.44
-                        print 'ADJ 1', p_id, '=', amc_by_month[p_id][m]
-                    if adjusted_period_qty.get(p_id, {}).get(m):
-                        adj = True
-                        # TODO
-                        print 'ADJ 2', p_id, m, amc_by_month[p_id][m]
-                        amc_by_month[p_id][m] += adjusted_period_qty[p_id][m]
-                        print 'ADJ 2', p_id, m, '=', amc_by_month[p_id][m]
-                    if adj and p_id in product_dict and rounding:
-                        if remove_negative_amc and amc_by_month[p_id][m] < 0:
-                            amc_by_month[p_id][m] = 0
-                        else:
-                            prod_uom = product_dict[p_id]['uom_id'][0]
-                            amc_by_month[p_id][m] = uom_obj._compute_qty(cr, uid, prod_uom, amc_by_month[p_id][m], prod_uom)
+                for adj_period in adjusted_period_day.get(p_id, {}):
+                    if amc_by_month[p_id].get(adj_period):
+                        amc_by_month[p_id][adj_period] = round((amc_by_month[p_id][adj_period]/(30.44-adjusted_period_day[p_id][adj_period])) * 30.44, 2)
+                for period in adjusted_period_qty.get(p_id, {}):
+                    amc_by_month[p_id].setdefault(period, 0)
+                    amc_by_month[p_id][period] = round(amc_by_month[p_id][period] + adjusted_period_qty[p_id][period], 2)
+                    if remove_negative_amc and amc_by_month[p_id][period] < 0:
+                        amc_by_month[p_id][period] = 0
+
             return res, amc_by_month
 
         return res
