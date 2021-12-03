@@ -68,7 +68,7 @@ class product_history_consumption(osv.osv):
         'adjusted_rr_amc': fields.boolean('Adjusted RR-AMC'),
         'location_id': fields.many2one('stock.location', string='Source Location', domain="[('usage', '=', 'internal')]"),
         'location_dest_id': fields.many2one('stock.location', string='Destination Location', domain="[('usage', '=', 'customer')]"),
-        'src_location_ids': fields.many2many('stock.location', 'src_location_hist_consumption_rel',  'histo_id', 'location_id', 'Source', domain="[('usage', '=', 'internal'), ('from_histo', '=', dest_location_ids), ('location_category', '!=', 'transition')]"),
+        'src_location_ids': fields.many2many('stock.location', 'src_location_hist_consumption_rel',  'histo_id', 'location_id', 'Source', domain="[('usage', '=', 'internal'), ('from_histo', '=', dest_location_ids), '|', ('location_category', '!=', 'transition'), ('cross_docking_location_ok', '=', True)]"),
         'dest_location_ids': fields.many2many('stock.location', 'dest_location_hist_consumption_rel',  'histo_id', 'location_id', 'Destination', domain="[('usage', 'in', ['internal', 'customer']), ('from_histo', '=', src_location_ids), ('location_category', '!=', 'transition')]", context={'dest_location': True}),
         'txt_source': fields.function(_get_txt_loc, type='char', method=1, string='Source', multi='get_txt'),
         'txt_destination': fields.function(_get_txt_loc, type='char', method=1, string='Destination', multi='get_txt'),
