@@ -3,92 +3,96 @@
     <data>
 
         <record id="product_history_consumption_form" model="ir.ui.view">
-	    <field name="name">product.history.consumption.form</field>
-	    <field name="model">product.history.consumption</field>
-	    <field name="type">form</field>
-	    <field name="arch" type="xml">
+            <field name="name">product.history.consumption.form</field>
+            <field name="model">product.history.consumption</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
             <form string="Product historical consumption">
                 <field name="status" invisible="1" />
                 <group colspan="2" col="2">
-	    		<separator colspan="2" string="Period parameters" />
-                <field name="hidden_date_from" invisible="1" />
-                <field name="date_from" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" depends="hidden_date_from"/>
-   		        	<field name="date_to" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
-                    <field name="month_ids" nolabel="1" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}">
-    			    <tree string="Months" hide_new_button="1" noteditable="True" editable="top">
-	    		        <field name="name" />
-		    	    </tree>
-		            </field>
-    		    </group>
+                    <separator colspan="2" string="Period parameters" />
+                    <field name="hidden_date_from" invisible="1" />
+                    <field name="date_from" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" depends="hidden_date_from"/>
+                        <field name="date_to" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                        <field name="month_ids" nolabel="1" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}">
+                        <tree string="Months" hide_new_button="1" noteditable="True" editable="top">
+                            <field name="name" />
+                        </tree>
+                        </field>
+                </group>
 
-            <group colspan="2" col="2">
-                <separator colspan="2" string="Consumption parameters" />
-                <field name="consumption_type" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
-                <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
-                <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
-                <group colspan="2" col="4">
-                    <field name="src_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" nolabel="1">
-                        <tree string="Source">
-                            <field name="name" />
-                            <field name="usage" />
-                        </tree>
-                    </field>
-                    <field name="dest_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_dest_location_ids(dest_location_ids)" nolabel="1">
-                        <tree string="Destination">
-                            <field name="name" />
-                            <field name="usage" />
-                        </tree>
-                    </field>
+                <group colspan="2" col="2">
+                    <separator colspan="2" string="Consumption parameters" />
+                    <field name="consumption_type" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
+                    <group colspan="2" col="4">
+                        <field name="src_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" nolabel="1">
+                            <tree string="Source">
+                                <field name="name" />
+                                <field name="usage" />
+                            </tree>
+                        </field>
+                        <field name="dest_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_dest_location_ids(dest_location_ids)" nolabel="1">
+                            <tree string="Destination">
+                                <field name="name" />
+                                <field name="usage" />
+                            </tree>
+                        </field>
+                    </group>
+                    <field name="disable_adjusted_rr_amc" invisible="1" />
+                    <field name="adjusted_rr_amc"  attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('disable_adjusted_rr_amc', '=', True)]}" />
+                    <group colspan="2" col="2" attrs="{'invisible': [('consumption_type', '=', 'rac')]}">
+                        <field name="remove_negative_amc" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                        <html colspan="2">
+                            <i><translate>If ticked it means that for periods/months where there are more returns (via return INs) than Outs, the standard calculation would display a negative Consumption/AMC quantity, but in this case (if ticked) the figure is set to zero.</translate></i>
+                        </html>
+                    </group>
+                    <separator colspan="2" string="Product parameters" />
+                    <field name="sublist_id" attrs="{'readonly': ['|', ('nomen_manda_0', '!=', False), ('status', '!=', 'draft')]}" />
+                    <group colspan="2" col="4">
+                        <field name="nomen_manda_0"
+                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                            widget="selection"
+                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            attrs="{'readonly': [('status', '!=', 'draft')]}" 
+                        />
+                        <field name="nomen_manda_1"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            attrs="{'readonly': [('status', '!=', 'draft')]}" 
+                        />
+                        <field name="nomen_manda_2"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            attrs="{'readonly': [('status', '!=', 'draft')]}" 
+                        />
+                        <field name="nomen_manda_3"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            attrs="{'readonly': [('status', '!=', 'draft')]}" 
+                        />
+                    </group>
+                    <separator colspan="2" string="Actions" />
+                    <group colspan="2" attrs="{'invisible': [('consumption_type', '=', 'amc'), ('remove_negative_amc', '=', True)]}">
+                        <button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')], 'invisible': [('status', '=', 'ready')]}" />
+                        <button name="open_report" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'invisible': [('status', '!=', 'ready')]}" />
+                    </group>
+                    <button name="report_amc_with_negative" type="object" string="Historical data report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', False)]}" />
+                    <button name="report_amc_no_negative" type="object" string="Generate historical report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', True)]}" />
                 </group>
-                <field name="disable_adjusted_rr_amc" invisible="1" />
-                <field name="adjusted_rr_amc"  attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('disable_adjusted_rr_amc', '=', True)]}" />
-                <group colspan="2" col="2" attrs="{'invisible': [('consumption_type', '=', 'rac')]}">
-                    <field name="remove_negative_amc" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}" />
-                    <html colspan="2">
-                        <i><translate>If ticked it means that for periods/months where there are more returns (via return INs) than Outs, the standard calculation would display a negative Consumption/AMC quantity, but in this case (if ticked) the figure is set to zero.</translate></i>
-                    </html>
-                </group>
-            <separator colspan="2" string="Product parameters" />
-            <field name="sublist_id" attrs="{'readonly': ['|', ('nomen_manda_0', '!=', False), ('status', '!=', 'draft')]}" />
-            <group colspan="2" col="4">
-                <field name="nomen_manda_0"
-                    domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
-                    widget="selection"
-                    on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                    attrs="{'readonly': [('status', '!=', 'draft')]}" 
-                />
-                <field name="nomen_manda_1"
-                    domain="[('id','=', 0)]"
-                    widget="selection"
-                    get_selection="get_nomen"
-                    on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                    attrs="{'readonly': [('status', '!=', 'draft')]}" 
-                />
-                <field name="nomen_manda_2"
-                    domain="[('id','=', 0)]"
-                    widget="selection"
-                    get_selection="get_nomen"
-                    on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                    attrs="{'readonly': [('status', '!=', 'draft')]}" 
-                />
-                <field name="nomen_manda_3"
-                    domain="[('id','=', 0)]"
-                    widget="selection"
-                    get_selection="get_nomen"
-                    on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                    attrs="{'readonly': [('status', '!=', 'draft')]}" 
-                />
+                <group colspan="4" col="4" string="Error" attrs="{'invisible': [('status', '!=', 'error')]}">
+                    <field name="error_msg" nolabel="1" colspan="4" />
+                    <button name="reset_to_draft" type="object" string="Reset to draft" icon="gtk-go-forward" colspan="2" />
             </group>
-			<separator colspan="2" string="Actions" />
-            <group colspan="2" attrs="{'invisible': [('consumption_type', '=', 'amc'), ('remove_negative_amc', '=', True)]}">
-                <button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')], 'invisible': [('status', '=', 'ready')]}" />
-                <button name="open_report" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'invisible': [('status', '!=', 'ready')]}" />
-            </group>
-            <button name="report_amc_with_negative" type="object" string="Historical data report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', False)]}" />
-            <button name="report_amc_no_negative" type="object" string="Generate historical report" icon="xlsx.png" colspan="2" attrs="{'invisible': ['|', ('consumption_type', '=', 'rac'), ('remove_negative_amc', '=', True)]}" />
-		    </group>
-		</form>
-	    </field>
+        </form>
+        </field>
     </record>
 
     <record id="history_consumption_waiting_view" model="ir.ui.view">
@@ -142,7 +146,7 @@
         <field name="model">product.history.consumption</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Historical consumptions" noteditable="1" colors="grey:status=='in_progress';green:status=='ready'">
+            <tree string="Historical consumptions" noteditable="1" colors="grey:status=='in_progress';green:status=='ready';red:status=='error'">
                 <field name="requestor_date" />
                 <field name="requestor_id" />
                 <field name="date_from" />

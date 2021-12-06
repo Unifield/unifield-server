@@ -1819,114 +1819,111 @@ class product_product(osv.osv):
 
         return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1] # code 4
         return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1] # code 16
-        # Add locations filters in domain if locations are passed in context
-        if 'histo_src_location_ids' in context or 'amc_location_ids' in context:
-            replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1] # code 17
-            internal_return = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_return')[1] # code 18
+        replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1] # code 17
+        internal_return = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_return')[1] # code 18
 
-            src_locations = context.get('histo_src_location_ids') or context.get('amc_location_ids')
-            dest_locations = context.get('histo_dest_location_ids')
-            if src_locations and not dest_locations:
-                # SRC INTERNAL // SAME AS RR (?)
-                #single OUT: type: out, location_id: context['histo_src_location_ids'] (neg pour claim return ?)
-                #Shipment: type: ?, initial_location: context['histo_src_location_ids'], location_dest_id type customer (neg pour claim ?)
-                #  =>
-                out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
-                domain += [
-                    '|',
-                    '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
-                    '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_dest_id', 'in', src_locations)
-                ]
+        src_locations = context.get('histo_src_location_ids') or context.get('amc_location_ids')
+        dest_locations = context.get('histo_dest_location_ids')
+        if src_locations and not dest_locations:
+            # SRC INTERNAL // SAME AS RR (?)
+            #single OUT: type: out, location_id: context['histo_src_location_ids'] (neg pour claim return ?)
+            #Shipment: type: ?, initial_location: context['histo_src_location_ids'], location_dest_id type customer (neg pour claim ?)
+            #  =>
+            out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
+            domain += [
+                '|',
+                '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
+                '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_dest_id', 'in', src_locations)
+            ]
 
 
-                #INT chained to a IN reason_type_return_from_unit  with location_dest_id in histo_src_location_ids
-                int_return_qery = '''
-                    select
-                        move_int.id
-                    from
-                        stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
-                    where
-                        move_int.picking_id = pick_int.id and
-                        move_in.picking_id = pick_in.id and
-                        move_in.reason_type_id in %(return_reason)s and
-                        move_int.type = 'internal' and
-                        pick_int.previous_chained_pick_id = pick_in.id and
-                        move_int.product_id in %(product_ids)s and
-                        move_int.location_dest_id in %(src_locations)s and
-                        move_int.state = 'done' and
-                        move_int.date >= %(from_date)s and
-                        move_int.date <= %(to_date)s
-                '''
+            #INT chained to a IN reason_type_return_from_unit  with location_dest_id in histo_src_location_ids
+            int_return_qery = '''
+                select
+                    move_int.id
+                from
+                    stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
+                where
+                    move_int.picking_id = pick_int.id and
+                    move_in.picking_id = pick_in.id and
+                    move_in.reason_type_id in %(return_reason)s and
+                    move_int.type = 'internal' and
+                    pick_int.previous_chained_pick_id = pick_in.id and
+                    move_int.product_id in %(product_ids)s and
+                    move_int.location_dest_id in %(src_locations)s and
+                    move_int.state = 'done' and
+                    move_int.date >= %(from_date)s and
+                    move_int.date <= %(to_date)s
+            '''
 
-            elif context.get('histo_dest_location_ids') and not context.get('histo_src_location_ids'): # external only
-                # DEST EXTERNAL
-                #single OUT: type: out, location_dest_id = context['histo_dest_location_ids'] (neg pour claim return ?)
-                input_loc = get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-                out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
-                domain += [ '|',
-                            '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
-                            '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
-                            ]
+        elif context.get('histo_dest_location_ids') and not context.get('histo_src_location_ids'): # external only
+            # DEST EXTERNAL
+            #single OUT: type: out, location_dest_id = context['histo_dest_location_ids'] (neg pour claim return ?)
+            input_loc = get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+            out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
+            domain += [ '|',
+                        '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                        '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
+                        ]
 
-                #Shipment XX (not applicable)
+            #Shipment XX (not applicable)
 
-                #IN reason type reason_type_return_from_unit,  location_id=context['histo_dest_location_ids'] + chained INT in case of cancelled INT ?
-                #    => ('type', '=', 'in'), (reason_type_id, in return_id, return_good_id, replacement_id), ('location_id', 'in', dest_location), ('location_dest_id', '!=', input_loc)
+            #IN reason type reason_type_return_from_unit,  location_id=context['histo_dest_location_ids'] + chained INT in case of cancelled INT ?
+            #    => ('type', '=', 'in'), (reason_type_id, in return_id, return_good_id, replacement_id), ('location_id', 'in', dest_location), ('location_dest_id', '!=', input_loc)
 
-                int_return_qery = '''
-                    select
-                        move_int.id
-                    from
-                        stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
-                    where
-                        move_int.picking_id = pick_int.id and
-                        move_in.picking_id = pick_in.id and
-                        move_in.reason_type_id in %(return_reason)s and
-                        move_int.type = 'internal' and
-                        pick_int.previous_chained_pick_id = pick_in.id and
-                        move_int.product_id in %(product_ids)s and
-                        move_in.location_id in %(dest_locations)s and
-                        move_int.state = 'done' and
-                        move_int.date >= %(from_date)s and
-                        move_int.date <= %(to_date)s
-                '''
+            int_return_qery = '''
+                select
+                    move_int.id
+                from
+                    stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
+                where
+                    move_int.picking_id = pick_int.id and
+                    move_in.picking_id = pick_in.id and
+                    move_in.reason_type_id in %(return_reason)s and
+                    move_int.type = 'internal' and
+                    pick_int.previous_chained_pick_id = pick_in.id and
+                    move_int.product_id in %(product_ids)s and
+                    move_in.location_id in %(dest_locations)s and
+                    move_int.state = 'done' and
+                    move_int.date >= %(from_date)s and
+                    move_int.date <= %(to_date)s
+            '''
 
-            else: # dest & src
-                # SRC INTERNAL, DEST: EXTERNAL
-                #Simple OUT src/dest
-                domain += ['|', '|', '|',
-                           # DEST & SRC: internal
-                           '&', '&', '&', '&', '&',
-                           ('type', '=', 'internal'), ('location_id', 'in', src_locations), ('location_id', 'not in', dest_locations), ('location_dest_id', 'in', dest_locations), ('location_dest_id', 'not in', src_locations), ('reason_type_id', '!=', internal_return),
-                           '&', '&', '&', '&', '&',
-                           ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
-                           # SRC INTERNAL , DEST: EXTERNAL
-                           '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('location_id', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
-                           '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
-                           ]
+        elif context.get('histo_dest_location_ids') and context.get('histo_src_location_ids'):
+            # SRC INTERNAL, DEST: EXTERNAL
+            #Simple OUT src/dest
+            domain += ['|', '|', '|',
+                       # DEST & SRC: internal
+                       '&', '&', '&', '&', '&',
+                       ('type', '=', 'internal'), ('location_id', 'in', src_locations), ('location_id', 'not in', dest_locations), ('location_dest_id', 'in', dest_locations), ('location_dest_id', 'not in', src_locations), ('reason_type_id', '!=', internal_return),
+                       '&', '&', '&', '&', '&',
+                       ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
+                       # SRC INTERNAL , DEST: EXTERNAL
+                       '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('location_id', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                       '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
+                       ]
 
-                #INT chained return from unit wher src.In= dest and dest.INT = src
-                int_return_qery = '''
-                    select
-                        move_int.id
-                    from
-                        stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
-                    where
-                        move_int.picking_id = pick_int.id and
-                        move_in.picking_id = pick_in.id and
-                        move_in.reason_type_id in %(return_reason)s and
-                        move_int.type = 'internal' and
-                        pick_int.previous_chained_pick_id = pick_in.id and
-                        move_int.product_id in %(product_ids)s and
-                        move_in.location_id in %(dest_locations)s and
-                        move_int.location_dest_id in %(src_locations)s and
-                        move_int.state = 'done' and
-                        move_int.date >= %(from_date)s and
-                        move_int.date <= %(to_date)s
-                '''
-
-
+            #INT chained return from unit wher src.In= dest and dest.INT = src
+            int_return_qery = '''
+                select
+                    move_int.id
+                from
+                    stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
+                where
+                    move_int.picking_id = pick_int.id and
+                    move_in.picking_id = pick_in.id and
+                    move_in.reason_type_id in %(return_reason)s and
+                    move_int.type = 'internal' and
+                    pick_int.previous_chained_pick_id = pick_in.id and
+                    move_int.product_id in %(product_ids)s and
+                    move_in.location_id in %(dest_locations)s and
+                    move_int.location_dest_id in %(src_locations)s and
+                    move_int.state = 'done' and
+                    move_int.date >= %(from_date)s and
+                    move_int.date <= %(to_date)s
+            '''
         else:
+            # no src, no dst
             internal_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context, order='NO_ORDER')
             customer_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
             domain += ['|', '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations), '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id])]
@@ -1947,6 +1944,11 @@ class product_product(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if not ids:
+            if compute_amc_by_month:
+                return {}, {}
+            return {}
 
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')

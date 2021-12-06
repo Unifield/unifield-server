@@ -24,14 +24,14 @@ from osv import fields
 from mx.DateTime import DateFrom, RelativeDateTime, now
 from lxml import etree
 from tools.translate import _
-from tools.misc import to_xml
+from tools.misc import to_xml, get_traceback
 import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import time
 
-HIST_STATUS = [('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Ready')]
+HIST_STATUS = [('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Ready'), ('error', 'Error')]
 
 class product_history_consumption(osv.osv):
     _name = 'product.history.consumption'
@@ -85,6 +85,7 @@ class product_history_consumption(osv.osv):
         'requestor_date': fields.datetime(string='Date of the demand'),
         'fake_status': fields.function(_get_status, method=True, type='selection', selection=HIST_STATUS, readonly=True, string='Status'),
         'status': fields.selection(HIST_STATUS, string='Status'),
+        'error_msg': fields.text('Error'),
     }
 
     _defaults = {
@@ -107,6 +108,9 @@ class product_history_consumption(osv.osv):
 
         return new_default
 
+    def reset_to_draft(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'status': 'draft', 'error_msg': False}, context=context)
+        return True
 
     def change_dest_location_ids(self, cr, uid, ids, dest, context=None):
         if not dest or not isinstance(dest, list) or not dest[0] or not isinstance(dest[0], tuple) or len(dest[0]) != 3 or not dest[0][2]:
@@ -132,7 +136,7 @@ class product_history_consumption(osv.osv):
 
         if vals.get('status') == 'draft' and vals.get('consumption_type'):
             # click on the report button in draft mode, must lock the fields
-            if self.search_exists(cr, uid, [('id', 'in', ids), ('status', '!=', 'draft')], context=context):
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('status', 'not in', ['draft', 'error'])], context=context):
                 return True
 
         self.clean_remove_negative_amc(cr, uid, vals, context)
@@ -335,79 +339,79 @@ class product_history_consumption(osv.osv):
         import pooler
         cr = pooler.get_db(dbname).cursor()
 
-        prod_obj = self.pool.get('product.product')
-        cons_prod_obj = self.pool.get('product.history.consumption.product')
+        try:
+            prod_obj = self.pool.get('product.product')
+            cons_prod_obj = self.pool.get('product.history.consumption.product')
 
-        res = self.browse(cr, uid, ids[0], context=context)
-        if res.consumption_type == 'rac':
-            if res.location_dest_id:
+            res = self.browse(cr, uid, ids[0], context=context)
+            if res.consumption_type == 'rac':
+                if res.location_dest_id:
+                    cr.execute('''
+                    SELECT distinct(r.product_id)
+                    FROM real_average_consumption_line r, stock_move m
+                    WHERE r.move_id = m.id and m.location_dest_id = %s
+                    ''', (res.location_dest_id.id,))
+                else:
+                    cr.execute('''
+                    SELECT distinct(product_id)
+                    FROM real_average_consumption_line
+                    WHERE move_id IS NOT NULL
+                    ''')
+            elif res.consumption_type == 'amc' or (not res.src_location_ids and not res.dest_location_ids):
                 cr.execute('''
-                SELECT distinct(r.product_id)
-                FROM real_average_consumption_line r, stock_move m
-                WHERE r.move_id = m.id and m.location_dest_id = %s
-                ''', (res.location_dest_id.id,))
-            else:
-                cr.execute('''
-                SELECT distinct(product_id)
-                FROM real_average_consumption_line
-                WHERE move_id IS NOT NULL
+                  SELECT distinct(s.product_id)
+                  FROM stock_move s
+                    LEFT JOIN stock_location l ON l.id = s.location_id OR l.id = s.location_dest_id
+                  WHERE l.usage in ('customer', 'internal')
                 ''')
-        elif res.consumption_type == 'amc':
-            cr.execute('''
-              SELECT distinct(s.product_id)
-              FROM stock_move s
-                LEFT JOIN stock_location l ON l.id = s.location_id OR l.id = s.location_dest_id
-              WHERE l.usage in ('customer', 'internal')
-            ''')
-        else:
-            context['histo_src_location_ids'] = [x.id for x in res.src_location_ids]
-            context['histo_dest_location_ids'] = [x.id for x in res.dest_location_ids]
-            if not context['histo_dest_location_ids'] and res.adjusted_rr_amc:
-                context['adjusted_rr_amc'] = True
+            else:
+                context['histo_src_location_ids'] = [x.id for x in res.src_location_ids]
+                context['histo_dest_location_ids'] = [x.id for x in res.dest_location_ids]
+                if not context['histo_dest_location_ids'] and res.adjusted_rr_amc:
+                    context['adjusted_rr_amc'] = True
 
-            cr.execute('''
-                SELECT distinct(s.product_id)
-                FROM stock_move s
-                WHERE
-                    location_id in %s or location_dest_id in %s
-            ''', (tuple(context['histo_src_location_ids'] or [0]), tuple(context['histo_dest_location_ids'] or [0])))
+                cr.execute('''
+                    SELECT distinct(s.product_id)
+                    FROM stock_move s
+                    WHERE
+                        location_id in %s or location_dest_id in %s
+                ''', (tuple(context['histo_src_location_ids'] or [0]), tuple(context['histo_dest_location_ids'] or [0])))
 
-        product_ids = [x[0] for x in cr.fetchall()]
+            product_ids = [x[0] for x in cr.fetchall()]
 
-        if res.consumption_type == 'rr-amc' and res.adjusted_rr_amc and res.src_location_ids:
-            cr.execute('''
-                select distinct(line.product_id)
-                from product_stock_out_line line, product_stock_out st
-                 where
-                        line.stock_out_id = st.id and
-                        st.state = 'closed' and
-                        st.adjusted_amc = 't' and
-                        st.location_id in %(location)s and
-                        (from_date, to_date) OVERLAPS (%(from)s, %(to)s) and
-                        coalesce(line.qty_missed, 0) > 0
-                ''', {'location': tuple([x.id for x in res.src_location_ids]), 'from': res.date_from, 'to': res.date_to})
-            product_ids += [x[0] for x in cr.fetchall()]
+            if res.consumption_type == 'rr-amc' and res.adjusted_rr_amc and res.src_location_ids:
+                cr.execute('''
+                    select distinct(line.product_id)
+                    from product_stock_out_line line, product_stock_out st
+                     where
+                            line.stock_out_id = st.id and
+                            st.state = 'closed' and
+                            st.adjusted_amc = 't' and
+                            st.location_id in %(location)s and
+                            (from_date, to_date) OVERLAPS (%(from)s, %(to)s) and
+                            coalesce(line.qty_missed, 0) > 0
+                    ''', {'location': tuple([x.id for x in res.src_location_ids]), 'from': res.date_from, 'to': res.date_to})
+                product_ids += [x[0] for x in cr.fetchall()]
 
-        if domain:
-            product_ids = prod_obj.search(cr, uid, domain + [('id', 'in', product_ids)], context=context)
+            if domain:
+                product_ids = prod_obj.search(cr, uid, domain + [('id', 'in', product_ids)], context=context)
 
-        # split ids into slices to not read a lot record in the same time (memory)
-        ids_len = len(product_ids)
-        slice_len = 500
-        if ids_len > slice_len:
-            slice_count = ids_len / slice_len
-            if ids_len % slice_len:
-                slice_count = slice_count + 1
-            # http://www.garyrobinson.net/2008/04/splitting-a-pyt.html
-            slices = [product_ids[i::slice_count] for i in range(slice_count)]
-        else:
-            slices = [product_ids]
+            # split ids into slices to not read a lot record in the same time (memory)
+            ids_len = len(product_ids)
+            slice_len = 500
+            if ids_len > slice_len:
+                slice_count = ids_len / slice_len
+                if ids_len % slice_len:
+                    slice_count = slice_count + 1
+                # http://www.garyrobinson.net/2008/04/splitting-a-pyt.html
+                slices = [product_ids[i::slice_count] for i in range(slice_count)]
+            else:
+                slices = [product_ids]
 
-        all_months = self.get_months(cr, uid, [res.id], context=context)
-        context['from_date'] = res.date_from
-        context['to_date'] = res.date_to
-        for slice_ids in slices:
-            try:
+            all_months = self.get_months(cr, uid, [res.id], context=context)
+            context['from_date'] = res.date_from
+            context['to_date'] = res.date_to
+            for slice_ids in slices:
                 if res.consumption_type in ('amc', 'rr-amc'):
                     avg, month_amc = self.pool.get('product.product').compute_amc(cr, uid, slice_ids, context=context, compute_amc_by_month=True, remove_negative_amc=res.remove_negative_amc, rounding=False)
                     for product in slice_ids:
@@ -464,11 +468,13 @@ class product_history_consumption(osv.osv):
                             'value': round(total_by_prod.get(product,0)/float(nb_months), 2)}, context=context)
 
 
-            except Exception:
-                logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
-                cr.rollback()
 
-        self.write(cr, uid, ids, {'status': 'ready'}, context=context)
+            self.write(cr, uid, ids, {'status': 'ready'}, context=context)
+
+        except Exception as e:
+            logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
+            cr.rollback()
+            self.write(cr, uid, ids, {'status': 'error', 'error_msg':  get_traceback(e)}, context=context)
 
         cr.commit()
         cr.close(True)
