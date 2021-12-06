@@ -21,12 +21,13 @@
 
 from osv import osv
 from osv import fields
-from mx.DateTime import DateFrom, RelativeDateTime
+from mx.DateTime import DateFrom, RelativeDateTime, now
 from lxml import etree
 from tools.translate import _
 from tools.misc import to_xml
 import logging
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 import time
 
@@ -86,7 +87,7 @@ class product_history_consumption(osv.osv):
     }
 
     _defaults = {
-        'date_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
+        'date_to': lambda *a: (now() + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d'),
         'requestor_id': lambda obj, cr, uid, c: uid,
         'requestor_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'status': 'draft',
@@ -402,10 +403,20 @@ class product_history_consumption(osv.osv):
                         'location_id': res.location_id.id,
                         'location_dest_id': res.location_dest_id.id,
                     }
+                    nb_months = 0
                     for month in all_months:
                         cons_context['from_date'] = month.get('date_from')
                         cons_context['to_date'] = month.get('date_to')
+
+                        dt_to_date = min(datetime.now(), datetime.strptime(month.get('date_to'), '%Y-%m-%d'))
+                        nb_of_days = (dt_to_date + relativedelta(months=1, day=1, days=-1)).day
+                        if dt_to_date.day == nb_of_days:
+                            nb_months += 1
+                        else:
+                            nb_months += dt_to_date.day/float(nb_of_days)
+
                         month_dt = datetime.strptime(month.get('date_from'), '%Y-%m-%d').strftime('%m_%Y')
+
                         for product in self.pool.get('product.product').browse(cr, uid, slice_ids, fields_to_fetch=['monthly_consumption'], context=cons_context):
                             total_by_prod.setdefault(product.id, 0)
                             total_by_prod[product.id] += product.monthly_consumption or 0
@@ -421,8 +432,7 @@ class product_history_consumption(osv.osv):
                             'product_id': product,
                             'consumption_id': res.id,
                             'cons_type': 'fmc',
-                            'value': round(total_by_prod.get(product,0)/float(len(all_months)), 2)}, context=context)
-
+                            'value': round(total_by_prod.get(product,0)/float(nb_months), 2)}, context=context)
 
 
             except Exception:
