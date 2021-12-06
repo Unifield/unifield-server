@@ -96,6 +96,18 @@ class product_history_consumption(osv.osv):
         'adjusted_rr_amc': False,
     }
 
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+
+        new_default = super(product_history_consumption, self).copy_data(cr, uid, id, default, context=context)
+        for remove in ['requestor_id', 'requestor_date', 'status']:
+            if remove not in default and remove in new_default:
+                del(new_default[remove])
+
+        return new_default
+
+
     def change_dest_location_ids(self, cr, uid, ids, dest, context=None):
         if not dest or not isinstance(dest, list) or not dest[0] or not isinstance(dest[0], tuple) or len(dest[0]) != 3 or not dest[0][2]:
             return {'value': {'disable_adjusted_rr_amc': False}}
