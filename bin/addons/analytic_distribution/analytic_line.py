@@ -502,7 +502,7 @@ class analytic_line(osv.osv):
                     # UC1: the Funding Pool is PF ==> only check Acc/Dest compatibility
                     fp_acc_dest_ok = account_id in [x.id for x in aline.general_account_id.destination_ids]
                 else:
-                    # UC2: the Funding Pool is NOT PF ==> check the FP compatibilty with the Acc/Dest (Acc/Dest compatibility check is included)
+                    # UC2: the Funding Pool is NOT PF ==> check the FP compatibility with the Acc/Dest (Acc/Dest compat. check is included)
                     fp_acc_dest_ok = ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
                                                                             account_id, context=context)
                 cc_id = aline.cost_center_id and aline.cost_center_id.id or False
