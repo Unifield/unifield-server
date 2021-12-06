@@ -2191,12 +2191,12 @@ class product_product(osv.osv):
                 res[p_id] = round(res[p_id]/p_nb_nb_months, 4)
 
         if compute_amc_by_month:
-            for p_id in amc_by_month:
+            for p_id in res:
                 for adj_period in adjusted_period_day.get(p_id, {}):
-                    if amc_by_month[p_id].get(adj_period):
+                    if amc_by_month.get(p_id, {}).get(adj_period):
                         amc_by_month[p_id][adj_period] = round((amc_by_month[p_id][adj_period]/(30.44-adjusted_period_day[p_id][adj_period])) * 30.44, 2)
                 for period in adjusted_period_qty.get(p_id, {}):
-                    amc_by_month[p_id].setdefault(period, 0)
+                    amc_by_month.setdefault(p_id, {}).setdefault(period, 0)
                     amc_by_month[p_id][period] = round(amc_by_month[p_id][period] + adjusted_period_qty[p_id][period], 2)
                     if remove_negative_amc and amc_by_month[p_id][period] < 0:
                         amc_by_month[p_id][period] = 0

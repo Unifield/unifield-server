@@ -11,7 +11,8 @@
                 <field name="status" invisible="1" />
                 <group colspan="2" col="2">
 	    		<separator colspan="2" string="Period parameters" />
-                <field name="date_from" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                <field name="hidden_date_from" invisible="1" />
+                <field name="date_from" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" depends="hidden_date_from"/>
    		        	<field name="date_to" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <field name="month_ids" nolabel="1" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}">
     			    <tree string="Months" hide_new_button="1" noteditable="True" editable="top">

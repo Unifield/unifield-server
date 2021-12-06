@@ -60,6 +60,7 @@ class product_history_consumption(osv.osv):
                 res[x.id] = {'txt_source': False, 'txt_destination': False}
         return res
     _columns = {
+        'hidden_date_from': fields.date(string='Used to a default month on date from'),
         'date_from': fields.date(string='From date'),
         'date_to': fields.date(string='To date'),
         'month_ids': fields.one2many('product.history.consumption.month', 'history_id', string='Months'),
@@ -87,6 +88,7 @@ class product_history_consumption(osv.osv):
     }
 
     _defaults = {
+        'hidden_date_from': lambda *a: (now() + RelativeDateTime(months=-1, day=1)).strftime('%Y-%m-%d'),
         'date_to': lambda *a: (now() + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d'),
         'requestor_id': lambda obj, cr, uid, c: uid,
         'requestor_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -117,10 +119,10 @@ class product_history_consumption(osv.osv):
             return True
 
         if vals.get('status') == 'draft' and vals.get('consumption_type'):
-            # remove sent by UI if data already generated
+            # click on the report button in draft mode, must lock the fields
             if self.search_exists(cr, uid, [('id', 'in', ids), ('status', '!=', 'draft')], context=context):
-                vals = {}
-        # click on the report button in draft mode, must lock the fields
+                return True
+
         self.clean_remove_negative_amc(cr, uid, vals, context)
 
         if vals.get('sublist_id',False):
@@ -355,10 +357,25 @@ class product_history_consumption(osv.osv):
                 SELECT distinct(s.product_id)
                 FROM stock_move s
                 WHERE
-                    location_id in %s or location_dest_id in %s 
+                    location_id in %s or location_dest_id in %s
             ''', (tuple(context['histo_src_location_ids'] or [0]), tuple(context['histo_dest_location_ids'] or [0])))
 
         product_ids = [x[0] for x in cr.fetchall()]
+
+        if res.consumption_type == 'rr-amc' and res.adjusted_rr_amc and res.src_location_ids:
+            cr.execute('''
+                select distinct(line.product_id)
+                from product_stock_out_line line, product_stock_out st
+                 where
+                        line.stock_out_id = st.id and
+                        st.state = 'closed' and
+                        st.adjusted_amc = 't' and
+                        st.location_id in %(location)s and
+                        (from_date, to_date) OVERLAPS (%(from)s, %(to)s) and
+                        coalesce(line.qty_missed, 0) > 0
+                ''', {'location': tuple([x.id for x in res.src_location_ids]), 'from': res.date_from, 'to': res.date_to})
+            product_ids += [x[0] for x in cr.fetchall()]
+
         if domain:
             product_ids = prod_obj.search(cr, uid, domain + [('id', 'in', product_ids)], context=context)
 
