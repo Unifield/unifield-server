@@ -520,16 +520,6 @@ class product_history_consumption(osv.osv):
             }
         return self.return_waiting_screen(cr, uid, ids, context=context)
 
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        Remove the data saved in DB
-        '''
-        hist_obj = self.pool.get('product.history.consumption.product')
-        for cons in self.browse(cr, uid, ids, context=context):
-            hist_ids = hist_obj.search(cr, uid, [('consumption_id', '=', cons.id)], context=context)
-            hist_obj.unlink(cr, uid, hist_ids, context=context)
-        return super(product_history_consumption, self).unlink(cr, uid, ids, context=context)
-
     def in_progress(self, cr, uid, ids, context=None):
         '''
         Return dummy
