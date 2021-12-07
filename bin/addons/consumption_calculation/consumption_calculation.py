@@ -2012,7 +2012,7 @@ class product_product(osv.osv):
             # RR from Segment
             src_locations = context.get('amc_location_ids')
         else:
-            src_locations = False
+            src_locations = None
             # get cusomer locations
             customer_locations_ids = self.pool.get('stock.location').search(cr, uid, [('active', 'in', ['t', 'f']), ('usage', '=', 'customer')])
 
@@ -2044,7 +2044,7 @@ class product_product(osv.osv):
 
         for move in move_result:
             sign = False
-            if not src_locations:
+            if src_locations is None:
                 if move['reason_type_id'][0] in [return_id, return_good_id] and move['type'] == 'in':
                     sign = -1
 
