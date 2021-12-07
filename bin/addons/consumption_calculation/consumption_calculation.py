@@ -2003,17 +2003,36 @@ class product_product(osv.osv):
             if report_move_ids:
                 domain.insert(0, ('id', 'not in', report_move_ids))
 
-        out_move_ids = move_obj.search(cr, uid, domain, context=context,
-                                       order='NO_ORDER')
 
+        customer_locations_ids = []
+        if 'histo_src_location_ids' in context:
+            # Histo RR-AMC
+            src_locations = context['histo_src_location_ids']
+        elif 'amc_location_ids' in context:
+            # RR from Segment
+            src_locations = context.get('amc_location_ids')
+        else:
+            src_locations = False
+            # get cusomer locations
+            customer_locations_ids = self.pool.get('stock.location').search(cr, uid, [('active', 'in', ['t', 'f']), ('usage', '=', 'customer')])
+
+
+        # get uom_id of all product_id
+        product_result = self.pool.get('product.product').read(cr, uid, ids, ['uom_id'],
+                                                               context=context)
+        product_dict = dict((x['id'], x) for x in product_result)
+
+
+
+        out_move_ids = move_obj.search(cr, uid, domain, context=context, order='NO_ORDER')
         int_return = []
         if extra_sql:
             cr.execute(extra_sql, {
                 'from_date': from_date or '1970-01-01 00:00:00',
                 'to_date': to_date or '2300-01-01 00:00:00',
                 'product_ids': tuple(ids),
-                'src_locations': tuple(context['histo_src_location_ids']),
-                'dest_locations': tuple(context['histo_dest_location_ids']),
+                'src_locations': tuple(src_locations),
+                'dest_locations': tuple(context.get('histo_dest_location_ids', [])),
                 'return_reason': tuple([return_id, return_good_id]),
             })
             int_return = [x[0] for x in cr.fetchall()]
@@ -2023,20 +2042,9 @@ class product_product(osv.osv):
                                                             'reason_type_id', 'product_uom', 'product_qty', 'product_id',
                                                             'location_dest_id', 'date', 'type'], context=context)
 
-        # get cusomer locations
-        customer_locations_ids = self.pool.get('stock.location').search(cr, uid, [('active', 'in', ['t', 'f']), ('usage', '=', 'customer')])
-
-        # get all product_id
-        product_ids = list(set([x['product_id'][0] for x in move_result if x['product_id']]))
-        product_obj = self.pool.get('product.product')
-        product_result = product_obj.read(cr, uid, product_ids, ['uom_id'],
-                                          context=context)
-        product_dict = dict((x['id'], x) for x in product_result)
-
-
         for move in move_result:
             sign = False
-            if 'histo_src_location_ids' not in context:
+            if not src_locations:
                 if move['reason_type_id'][0] in [return_id, return_good_id] and move['type'] == 'in':
                     sign = -1
 
@@ -2104,6 +2112,7 @@ class product_product(osv.osv):
                     stock_out_loc = context.get('histo_src_location_ids')
                 else:
                     stock_out_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context, order='NO_ORDER')
+
             cr.execute('''
                 select line.product_id, line.from_date, line.to_date, line.qty_missed, substitute_1_product_id, substitute_1_qty, substitute_2_product_id, substitute_2_qty,substitute_3_product_id, substitute_3_qty
                     from product_stock_out_line line, product_stock_out st
