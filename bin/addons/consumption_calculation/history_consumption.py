@@ -695,7 +695,7 @@ class product_product(osv.osv):
             # Remove the Group by group from the product view
             xml_view = etree.fromstring(res['arch'])
             for element in xml_view.iter("group"):
-                if element.get('string', '') == 'Group by...':
+                if element.get('name', '') == 'group_by':
                     xml_view.remove(element)
 
             # UTP-501 Positive AMC filter
