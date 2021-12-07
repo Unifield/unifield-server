@@ -60,7 +60,7 @@ class product_history_consumption(osv.osv):
                 res[x.id] = {'txt_source': False, 'txt_destination': False}
         return res
     _columns = {
-        'hidden_date_from': fields.date(string='Used to a default month on date from'),
+        'hidden_date_from': fields.date(string='Used to set a default month on date from'),
         'date_from': fields.date(string='From date'),
         'date_to': fields.date(string='To date'),
         'month_ids': fields.one2many('product.history.consumption.month', 'history_id', string='Months'),
