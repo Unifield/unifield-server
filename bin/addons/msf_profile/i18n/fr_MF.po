@@ -76489,7 +76489,7 @@ msgstr "Statut de la commande"
 #. module: consumption_calculation
 #: view:product.history.consumption:0
 msgid "View historical data"
-msgstr "Vues de l historique des données "
+msgstr "Vue de l historique des données"
 
 #. module: base
 #: field:ir.module.module,demo:0

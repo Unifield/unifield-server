@@ -54,13 +54,15 @@ class historical_parser(XlsxReportParser):
 
         if h_amc.consumption_type == 'rr-amc':
             sheet.append([
-                self.cell_ro(_('Source'), 'header_style'),
-                self.cell_ro(h_amc.txt_source, 'prod_style')
+                self.cell_ro(_('Source'), 'sub_header_style'),
+                self.cell_ro(h_amc.txt_source, 'sub_header_style'),
+                self.cell_ro('', 'sub_header_style'),
             ])
             sheet.merged_cells.ranges.append("B%(idx)s:C%(idx)s" % {'idx': row_index-3})
             sheet.append([
-                self.cell_ro(_('Destination'), 'header_style'),
-                self.cell_ro(h_amc.txt_destination, 'prod_style')
+                self.cell_ro(_('Destination'), 'sub_header_style'),
+                self.cell_ro(h_amc.txt_destination, 'sub_header_style'),
+                self.cell_ro('', 'sub_header_style'),
             ])
             sheet.merged_cells.ranges.append("B%(idx)s:C%(idx)s" % {'idx': row_index-2})
 
