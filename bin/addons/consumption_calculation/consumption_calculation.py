@@ -1889,7 +1889,7 @@ class product_product(osv.osv):
                        '&', '&', '&', '&', '&',
                        ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
                        # SRC INTERNAL , DEST: EXTERNAL
-                       '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('location_id', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                       '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
                        '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
                        ]
 
