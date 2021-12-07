@@ -1825,10 +1825,7 @@ class product_product(osv.osv):
         src_locations = context.get('histo_src_location_ids') or context.get('amc_location_ids')
         dest_locations = context.get('histo_dest_location_ids')
         if src_locations and not dest_locations:
-            # SRC INTERNAL // SAME AS RR (?)
-            #single OUT: type: out, location_id: context['histo_src_location_ids'] (neg pour claim return ?)
-            #Shipment: type: ?, initial_location: context['histo_src_location_ids'], location_dest_id type customer (neg pour claim ?)
-            #  =>
+            # SRC INTERNAL // SAME AS RR
             out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
             domain += [
                 '|',
@@ -1856,20 +1853,13 @@ class product_product(osv.osv):
                     move_int.date <= %(to_date)s
             '''
 
-        elif context.get('histo_dest_location_ids') and not context.get('histo_src_location_ids'): # external only
+        elif not context.get('histo_src_location_ids') and context.get('histo_dest_location_ids'):
             # DEST EXTERNAL
-            #single OUT: type: out, location_dest_id = context['histo_dest_location_ids'] (neg pour claim return ?)
             input_loc = get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-            out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
             domain += [ '|',
                         '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
                         '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
                         ]
-
-            #Shipment XX (not applicable)
-
-            #IN reason type reason_type_return_from_unit,  location_id=context['histo_dest_location_ids'] + chained INT in case of cancelled INT ?
-            #    => ('type', '=', 'in'), (reason_type_id, in return_id, return_good_id, replacement_id), ('location_id', 'in', dest_location), ('location_dest_id', '!=', input_loc)
 
             int_return_qery = '''
                 select
@@ -1889,9 +1879,9 @@ class product_product(osv.osv):
                     move_int.date <= %(to_date)s
             '''
 
-        elif context.get('histo_dest_location_ids') and context.get('histo_src_location_ids'):
-            # SRC INTERNAL, DEST: EXTERNAL
-            #Simple OUT src/dest
+        elif context.get('histo_src_location_ids') and context.get('histo_dest_location_ids'):
+            # SRC INTERNAL
+            # DEST: INTERNAL OR EXTERNAL
             domain += ['|', '|', '|',
                        # DEST & SRC: internal
                        '&', '&', '&', '&', '&',
@@ -2106,11 +2096,14 @@ class product_product(osv.osv):
         adjusted_period_day = {}
         adjusted_period_qty = {}
 
-        if context.get('amc_location_ids') or (context.get('histo_src_location_ids') and not context.get('histo_dest_location_ids') and context.get('adjusted_rr_amc')):
+        if context.get('amc_location_ids') or (not context.get('histo_dest_location_ids') and context.get('adjusted_rr_amc')):
             if 'amc_location_ids' in context:
                 stock_out_loc = context.get('amc_location_ids')
             else:
-                stock_out_loc = context.get('histo_src_location_ids')
+                if context.get('histo_src_location_ids'):
+                    stock_out_loc = context.get('histo_src_location_ids')
+                else:
+                    stock_out_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context, order='NO_ORDER')
             cr.execute('''
                 select line.product_id, line.from_date, line.to_date, line.qty_missed, substitute_1_product_id, substitute_1_qty, substitute_2_product_id, substitute_2_qty,substitute_3_product_id, substitute_3_qty
                     from product_stock_out_line line, product_stock_out st
