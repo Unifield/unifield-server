@@ -9,6 +9,10 @@ from openpyxl.utils.cell import get_column_letter
 class historical_parser(XlsxReportParser):
 
     def generate(self, context=None):
+        if context is None:
+            context = {}
+
+        context['limit_location'] = 0
         history_obj = self.pool.get('product.history.consumption')
         product_obj = self.pool.get('product.product')
         month_fields_to_read = []

@@ -49,13 +49,26 @@ class product_history_consumption(osv.osv):
 
         return res
 
+    def _limit_number_location(self, loc_records, limit, context=None):
+        if not loc_records:
+            return ''
+
+        size = len(loc_records)
+        if not limit or size <= limit:
+            return ', '.join([loc.name for loc in loc_records])
+        hidden = size - limit
+        return ', '.join([loc.name for loc in loc_records[0:limit]]+['... +%d'%hidden])
+
     def _get_txt_loc(self, cr, uid, ids, field_name, args, context=None):
         res = {}
+        if context is None:
+            context = {}
         for x in self.browse(cr, uid, ids, fields_to_fetch=['consumption_type', 'location_id', 'location_dest_id', 'src_location_ids', 'dest_location_ids'], context=context):
             if x.consumption_type == 'rac':
                 res[x.id] = {'txt_source': x.location_id.name, 'txt_destination': x.location_dest_id.name}
             elif x.consumption_type == 'rr-amc':
-                res[x.id] = {'txt_source': ', '.join([loc.name for loc in x.src_location_ids or []]), 'txt_destination': ', '.join([loc.name for loc in x.dest_location_ids or []]), 'disable_adjusted_rr_amc': bool(x.dest_location_ids)}
+                limit = context.get('limit_location', 10)
+                res[x.id] = {'txt_source': self._limit_number_location(x.src_location_ids, limit, context), 'txt_destination': self._limit_number_location(x.dest_location_ids, limit, context), 'disable_adjusted_rr_amc': bool(x.dest_location_ids)}
             else:
                 res[x.id] = {'txt_source': False, 'txt_destination': False}
         return res
