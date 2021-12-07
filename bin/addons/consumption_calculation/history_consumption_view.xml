@@ -41,7 +41,7 @@
                         </field>
                     </group>
                     <field name="disable_adjusted_rr_amc" invisible="1" />
-                    <field name="adjusted_rr_amc"  attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('disable_adjusted_rr_amc', '=', True)]}" />
+                    <field name="adjusted_rr_amc"  attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': ['|', ('disable_adjusted_rr_amc', '=', True), ('status', '!=', 'draft')]}" />
                     <group colspan="2" col="2" attrs="{'invisible': [('consumption_type', '=', 'rac')]}">
                         <field name="remove_negative_amc" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                         <html colspan="2">
@@ -80,7 +80,7 @@
                         />
                     </group>
                     <separator colspan="2" string="Actions" />
-                    <group colspan="2" attrs="{'invisible': [('consumption_type', '=', 'amc'), ('remove_negative_amc', '=', True)]}">
+                    <group colspan="2" attrs="{'invisible': [('consumption_type', 'in', ['rr-amc', 'amc']), ('remove_negative_amc', '=', True)]}">
                         <button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')], 'invisible': [('status', '=', 'ready')]}" />
                         <button name="open_report" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'invisible': [('status', '!=', 'ready')]}" />
                     </group>

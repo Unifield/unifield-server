@@ -691,25 +691,54 @@ class product_product(osv.osv):
             if res['type'] == 'tree':
                 res['arch'] = line_view
         elif context.get('history_cons', False) and view_type == 'search':
-            # Hard method !!!!!!
+            histo = self.pool.get('product.history.consumption').browse(cr, uid, context['obj_id'], context=context)
             # Remove the Group by group from the product view
             xml_view = etree.fromstring(res['arch'])
             for element in xml_view.iter("group"):
                 if element.get('string', '') == 'Group by...':
                     xml_view.remove(element)
-            res['arch'] = etree.tostring(xml_view)
 
             # UTP-501 Positive AMC filter
-            xml_view = etree.fromstring(res['arch'])
             new_separator = """<separator orientation="vertical" />"""
             separator_node = etree.fromstring(new_separator)
             xml_view.insert(0, separator_node)
             new_filter = """<filter string="%s%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('average', '>', 0)]" />""" % (_('Av.'), _(context.get('amc', 'AMC')))
-            # generate new xml form$
+
+            # generate new xml form
             filter_node = etree.fromstring(new_filter)
             xml_view.insert(0, filter_node)
-            res['arch'] = etree.tostring(xml_view)
 
+            # display filters on tree view
+            filter_info = []
+            if histo.adjusted_rr_amc:
+                filter_info.append(_('Adjusted'))
+            filter_info.append({'amc': _('AMC'), 'rr-amc': _('RR-AMC'), 'rac': _('RAC')}.get(histo.consumption_type, ''))
+            if histo.remove_negative_amc:
+                filter_info.append(_('(Negative figures set to zero)'))
+
+            list_infos = ['%s: %s' % (_('Type'), ' '.join(filter_info))]
+            if histo.txt_source:
+                list_infos.append('%s: %s' % (_('Source'), histo.txt_source))
+            if histo.txt_destination:
+                list_infos.append('%s: %s' % (_('Destination'), histo.txt_destination))
+            if histo.sublist_id:
+                list_infos.append('%s: %s' % (_('List'), histo.sublist_id.name))
+            nomen_list = []
+            for title, nomen in [(_('Main'), histo.nomen_manda_0), (_('Group'), histo.nomen_manda_1), (_('Family'), histo.nomen_manda_2), (_('Root'), histo.nomen_manda_3)]:
+                if nomen:
+                    nomen_list.append('%s: %s' % (title, nomen.name))
+            if nomen_list:
+                list_infos.append(', '.join(nomen_list))
+            html_node = "<group> <html>"
+            for list_info in list_infos:
+                html_node += '<h3>%s</h3>' % to_xml(list_info)
+
+            html_node += "</html></group>"
+            if html_node:
+                xml_view.append(etree.fromstring(html_node))
+
+
+            res['arch'] = etree.tostring(xml_view)
         return res
 
     def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
