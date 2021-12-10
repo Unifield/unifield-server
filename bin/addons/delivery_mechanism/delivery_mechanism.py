@@ -975,6 +975,7 @@ class stock_picking(osv.osv):
                                     'product_qty': extra_qty,
                                     'product_uom': line.uom_id.id,
                                     'in_out_updated': in_out_updated,
+                                    'from_excess_in_qty': True,
                                 }
                                 context['keepLineNumber'] = True
                                 extra_move_id = move_obj.copy(cr, uid, out_move.id, n_out_values, context=context)
@@ -992,8 +993,13 @@ class stock_picking(osv.osv):
                             # OK all OUT lines processed and still have extra qty !
                             if extra_qty > 0 and not context.get('auto_import_ok'):
                                 # Put the extra_qty in a new out move
+                                n_out_values = {
+                                    'product_qty': extra_qty,
+                                    'in_out_updated': in_out_updated,
+                                    'from_excess_in_qty': True,
+                                }
                                 context['keepLineNumber'] = True
-                                extra_move_id = move_obj.copy(cr, uid, out_move.id, {'product_qty': extra_qty}, context=context)
+                                extra_move_id = move_obj.copy(cr, uid, out_move.id, n_out_values, context=context)
                                 context['keepLineNumber'] = False
                                 move_obj.action_confirm(cr, uid, extra_move_id, context=context)
                                 extra_qty = 0

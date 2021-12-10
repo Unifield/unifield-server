@@ -1198,6 +1198,44 @@ class stock_move(osv.osv):
                     not move.in_forced:
                 vals['display_warning'] = True
 
+            if move.type == 'out':
+                se_domain_excess = [
+                    ('picking_id', '=', move.picking_id.id),
+                    ('line_number', '=', move.line_number),
+                    ('from_excess_in_qty', '=', True),
+                    ('state', 'not in', ['done', 'cancel'])
+                ]
+                excess_move_ids = self.search(cr, uid, se_domain_excess, context=context)
+                excess_qty_done = False
+                if excess_move_ids:  # Check if all the qties have been used
+                    cr.execute("""
+                    SELECT SUM(m.product_qty) 
+                    FROM stock_move m 
+                        LEFT JOIN stock_move m2 ON m2.id = m.backmove_id 
+                        LEFT JOIN stock_picking p ON p.id = m.picking_id
+                        LEFT JOIN pack_family_memory fm ON fm.ppl_id = p.id 
+                    WHERE m2.id IN %s AND p.type='out' AND p.subtype = 'ppl' AND m.state = 'done' AND fm.state = 'done'
+                    HAVING SUM(m.product_qty) = (
+                        SELECT SUM(COALESCE(product_qty, 0) + COALESCE(qty_processed, 0)) FROM stock_move 
+                        WHERE line_number = %s AND picking_id = %s AND from_excess_in_qty = 't' AND state != 'cancel'
+                    )
+                    """, (tuple(excess_move_ids), move.line_number, move.picking_id.id))
+                    q_res = cr.fetchone()
+                    excess_qty_done = q_res and q_res[0] and True or False
+                if move.from_excess_in_qty:
+                    vals['cancel_only'] = True
+                    wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
+
+                    return {'type': 'ir.actions.act_window',
+                            'res_model': 'stock.move.cancel.wizard',
+                            'view_type': 'form',
+                            'view_mode': 'form',
+                            'target': 'new',
+                            'res_id': wiz_id,
+                            'context': context}
+                elif not move.from_excess_in_qty and excess_move_ids and not excess_qty_done:
+                    raise osv.except_osv(_('Error'), _('One or more lines with excess quantities coming from an IN have been created for the line %s. You must process/cancel them before cancelling this one.') % (move.line_number,))
+
             if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and move.purchase_line_id.linked_sol_id):
                 if 'from_int' in context:
                     """UFTP-29: we are in a INT stock move - line by line cancel
@@ -1220,6 +1258,7 @@ class stock_move(osv.osv):
                         'target': 'new',
                         'res_id': wiz_id,
                         'context': context}
+
             if move.type == 'in' and move.purchase_line_id:
                 if not move.purchase_line_id.linked_sol_id:
                     vals['cancel_only'] = True
@@ -1235,7 +1274,6 @@ class stock_move(osv.osv):
                         'target': 'new',
                         'res_id': wiz_id,
                         'context': context}
-
 
         return self.unlink(cr, uid, ids, context=context)
 
