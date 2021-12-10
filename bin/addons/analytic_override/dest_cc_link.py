@@ -28,7 +28,7 @@ class dest_cc_link(osv.osv):
     _name = "dest.cc.link"
     _description = "Destination / Cost Center Combination"
     _rec_name = "cc_id"
-    _trace = True
+    _trace = False
 
     def _get_current_id(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -110,6 +110,7 @@ class dest_cc_link(osv.osv):
                         dcl_dom.append(('date', '<', dcl.active_from))
                     if dcl.inactive_from:
                         dcl_dom.append(('date', '>=', dcl.inactive_from))
+                    # TODO US-9384: this takes long.
                     if aal_obj.search_exist(cr, uid, dcl_dom, context=context):
                         self.log(cr, uid, dcl.id, _('At least one Analytic Journal Item using the combination \"%s - %s\" '
                                                     'has a Posting Date outside the activation dates selected.') %
@@ -127,10 +128,13 @@ class dest_cc_link(osv.osv):
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
         res = super(dest_cc_link, self).create(cr, uid, vals, context=context)
-        self._check_analytic_lines(cr, uid, res, context=context)
-        dest_id = self.read(cr, uid, res, ['dest_id'], context=context)['dest_id'][0]
-        if analytic_acc_obj.search_exist(cr, uid, [('id', '=', dest_id), ('allow_all_cc', '=', True)], context=context):
-            analytic_acc_obj.write(cr, uid, dest_id, {'allow_all_cc': False}, context=context)
+        if vals.get('active_from') or vals.get('inactive_from'):
+            self._check_analytic_lines(cr, uid, res, context=context)
+
+        # TODO US-9384: deactivate only in case of import
+        #dest_id = self.read(cr, uid, res, ['dest_id'], context=context)['dest_id'][0]
+        #if analytic_acc_obj.search_exist(cr, uid, [('id', '=', dest_id), ('allow_all_cc', '=', True)], context=context):
+        #    analytic_acc_obj.write(cr, uid, dest_id, {'allow_all_cc': False}, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -138,7 +142,8 @@ class dest_cc_link(osv.osv):
         See _check_analytic_lines
         """
         res = super(dest_cc_link, self).write(cr, uid, ids, vals, context=context)
-        self._check_analytic_lines(cr, uid, ids, context=context)
+        if vals.get('active_from') or vals.get('inactive_from'):
+            self._check_analytic_lines(cr, uid, ids, context=context)
         return res
 
     def is_inactive_dcl(self, cr, uid, dest_id, cc_id, posting_date, context=None):

@@ -150,7 +150,8 @@ class Cursor(object):
             self.__logger.warn("SQL queries cannot contain %d or %f anymore. "
                                "Use only %s")
 
-        if self.sql_log:
+        debug_sql = False
+        if debug_sql:
             now = mdt.now()
 
         try:
@@ -193,22 +194,17 @@ class Cursor(object):
                 self.__logger.exception("bad query: %s", query)
             raise
 
-        if self.sql_log:
+        if debug_sql:
             delay = mdt.now() - now
             delay = delay.seconds * 1E6 + delay.microseconds
 
-            self.__logger.log(logging.DEBUG_SQL, "query: %s", self._obj.query)
-            self.sql_log_count+=1
-            res_from = re_from.match(query.lower())
-            if res_from:
-                self.sql_from_log.setdefault(res_from.group(1), [0, 0])
-                self.sql_from_log[res_from.group(1)][0] += 1
-                self.sql_from_log[res_from.group(1)][1] += delay
-            res_into = re_into.match(query.lower())
-            if res_into:
-                self.sql_into_log.setdefault(res_into.group(1), [0, 0])
-                self.sql_into_log[res_into.group(1)][0] += 1
-                self.sql_into_log[res_into.group(1)][1] += delay
+            #self.__logger.info("query: %s %s", self._obj.query, delay)
+            print "Request : %s / Duration : %s" % (self.mogrify(self._obj.query), delay)
+
+            # TODO US-9384: remove debug code
+            # total_seconds = int(round(delay.total_seconds()))
+            # if total_seconds > 0:
+            #     print "Request : %s.\nDuration : %s." % (self.mogrify(self._obj.query), total_seconds)
         return res
 
 

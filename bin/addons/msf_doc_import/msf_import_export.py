@@ -1082,6 +1082,7 @@ class msf_import_export(osv.osv_memory):
                 # Destinations
                 dest_cc_tuple_list = []
                 if import_brw.model_list_selection == 'destinations':
+                    #dt1 = datetime.now()
                     context['from_import_menu'] = True
                     data['category'] = 'DEST'
                     # Parent Analytic Account
@@ -1097,6 +1098,9 @@ class msf_import_export(osv.osv_memory):
                     # Type
                     if data['type'] not in ['normal', 'view']:
                         raise Exception(_('The Type must be either "Normal" or "View".'))
+                    # dt2 = datetime.now()
+                    # td = dt2 - dt1
+                    # print "Beginning : %s" % int(round(td.total_seconds()))
                     # Cost Centers
                     dest_cc_list = []
                     if data.get('dest_cc_link_ids'):
@@ -1116,6 +1120,9 @@ class msf_import_export(osv.osv_memory):
                             else:
                                 raise Exception(_('Cost Center "%s" not found.') % cc)
                     self._handle_dest_cc_dates(cr, uid, data, dest_cc_list, dest_cc_tuple_list, context=context)
+                    # dt3 = datetime.now()
+                    # td = dt3 - dt2
+                    # print "Cost Centers : %s" % int(round(td.total_seconds()))
                     # Accounts
                     if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
                         acc_list = []
@@ -1135,6 +1142,9 @@ class msf_import_export(osv.osv_memory):
                         data['destination_ids'] = [(6, 0, acc_list)]
                     else:
                         data['destination_ids'] = [(6, 0, [])]
+                    # dt4 = datetime.now()
+                    # td = dt4 - dt3
+                    # print "Destinations : %s" % int(round(td.total_seconds()))
                     # if the code matches with an existing destination: update it
                     if data.get('code'):
                         ids_to_update = impobj.search(cr, uid, [('category', '=', 'DEST'), ('code', '=', data['code'])],
@@ -1157,6 +1167,9 @@ class msf_import_export(osv.osv_memory):
                                                                 ('disabled', '=', True)], context=context)
                                 if link_ids:
                                     acc_dest_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
+                    # dt5 = datetime.now()
+                    # td = dt5 - dt4
+                    # print "Dest/CC Links (PART 1) : %s" % int(round(td.total_seconds()))
 
                 # Cost Centers
                 if import_brw.model_list_selection == 'cost_centers':
@@ -1240,7 +1253,11 @@ class msf_import_export(osv.osv_memory):
                     processed.append((row_index+1, line_data))
                     if allow_partial:
                         cr.commit()
+                # dt6 = datetime.now()
+                # td = dt6 - dt5
+                # print "Update or Creation : %s" % int(round(td.total_seconds()))
                 # For Dest CC Links: create, update or delete the links if necessary
+                dcl_dt1 = datetime.now()
                 if import_brw.model_list_selection == 'destinations':
                     if isinstance(ids_to_update, (int, long)):
                         ids_to_update = [ids_to_update]
@@ -1249,6 +1266,9 @@ class msf_import_export(osv.osv_memory):
                         old_dcl_ids = dest_cc_link_obj.search(cr, uid, [('dest_id', 'in', ids_to_update)], order='NO_ORDER', context=context)
                         if old_dcl_ids:
                             dest_cc_link_obj.unlink(cr, uid, old_dcl_ids, context=context)
+                        dcl_dt2 = datetime.now()
+                        td = dcl_dt2 - dcl_dt1
+                        print "UC1 : %s" % int(round(td.total_seconds()))
                     else:
                         # UC2: new dest
                         if id_created:
@@ -1256,11 +1276,16 @@ class msf_import_export(osv.osv_memory):
                                 dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': id_created,
                                                                   'active_from': active_date, 'inactive_from': inactive_date},
                                                         context=context)
+                            dcl_dt2 = datetime.now()
+                            td = dcl_dt2 - dcl_dt1
+                            print "UC2 : %s" % int(round(td.total_seconds()))
                         elif ids_to_update:
                             for dest_id in ids_to_update:
                                 dest = acc_analytic_obj.browse(cr, uid, dest_id, fields_to_fetch=['dest_cc_link_ids'], context=context)
-                                current_cc_ids = [dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids]
+                                # TODO US-9384: it's quicker to use a dict than a list
+                                current_cc_ids = {}.fromkeys([dest_cc_link.cc_id.id for dest_cc_link in dest.dest_cc_link_ids])
                                 new_cc_ids = []
+                                print "Before UC3 / UC4 / UC5"
                                 for cc, active_date, inactive_date in dest_cc_tuple_list:
                                     new_cc_ids.append(cc)
                                     # UC3: new combinations in existing Destinations
@@ -1268,26 +1293,26 @@ class msf_import_export(osv.osv_memory):
                                         dest_cc_link_obj.create(cr, uid, {'cc_id': cc, 'dest_id': dest_id,
                                                                           'active_from': active_date, 'inactive_from': inactive_date},
                                                                 context=context)
+                                        print "UC3"
                                     else:
                                         # UC4: combinations to be updated with new dates
+                                        # TODO US-9384: try to only use a Search?
                                         dcl_ids = dest_cc_link_obj.search(cr, uid,
-                                                                          [('dest_id', '=', dest_id), ('cc_id', '=', cc)],
+                                                                          [('dest_id', '=', dest_id), ('cc_id', '=', cc),
+                                                                           '|', ('active_from', '!=', active_date), ('inactive_from', '!=', inactive_date)],
                                                                           limit=1, context=context)
+                                        """
+                                        KO for the UC "currently no date => a date in the file". To test in SQL?
+                                        
+                                        select id from dest_cc_link where dest_id=%s and cc_id=%s and 
+                                        (COALESCE(active_from,'0001-01-01')!=%s or COALESCE(inactive_from,'0001-01-01')!=%s)
+                                         limit 1", (dest_id, cc, active_date or '0001-01-01', inactive_date or '0001-01-01')
+                                        """
                                         if dcl_ids:
-                                            dest_cc_link = dest_cc_link_obj.read(cr, uid, dcl_ids[0],
-                                                                                 ['active_from', 'inactive_from'], context=context)
-                                            if dest_cc_link['active_from']:
-                                                current_active_dt = datetime.strptime(dest_cc_link['active_from'], "%Y-%m-%d")
-                                            else:
-                                                current_active_dt = False
-                                            if dest_cc_link['inactive_from']:
-                                                current_inactive_dt = datetime.strptime(dest_cc_link['inactive_from'], "%Y-%m-%d")
-                                            else:
-                                                current_inactive_dt = False
-                                            if (current_active_dt != active_date) or (current_inactive_dt != inactive_date):
-                                                dest_cc_link_obj.write(cr, uid, dest_cc_link['id'],
-                                                                       {'active_from': active_date, 'inactive_from': inactive_date},
-                                                                       context=context)
+                                            dest_cc_link_obj.write(cr, uid, dest_cc_link['id'],
+                                                                   {'active_from': active_date, 'inactive_from': inactive_date},
+                                                                   context=context)
+                                        print "UC4"
                                 # UC5: combinations to be deleted in existing Destinations
                                 cc_to_be_deleted = [c for c in current_cc_ids if c not in new_cc_ids]
                                 if cc_to_be_deleted:
@@ -1295,6 +1320,18 @@ class msf_import_export(osv.osv_memory):
                                                                                 [('dest_id', '=', dest_id), ('cc_id', 'in', cc_to_be_deleted)],
                                                                                 order='NO_ORDER', context=context)
                                     dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
+                                    print "UC5"
+                            dcl_dt2 = datetime.now()
+                            td = dcl_dt2 - dcl_dt1
+                            total_sec = int(round(td.total_seconds()))
+                            if total_sec > 0:
+                                dest_code = self.pool.get('account.analytic.account').read(cr, uid, dest_id, ['code'])['code']
+                                print "UC3 / UC4 / UC5 : %s (%s)" % (total_sec, dest_code)
+                            else:
+                                print "UC3 / UC4 / UC5 : %s" % total_sec
+                    # dt7 = datetime.now()
+                    # td = dt7 - dt6
+                    # print "Dest/CC Links (PART 2) : %s" % int(round(td.total_seconds()))
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 if raise_on_error:

@@ -108,9 +108,9 @@ class account_analytic_line(osv.osv):
 
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code', ondelete='restrict'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code', ondelete='restrict', select=1),
         'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]", ondelete='restrict'),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]", ondelete='restrict', select=1),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'free_account': fields.function(_get_is_free, fnct_search=_search_is_free, method=True, type='boolean', string='Free account?', help="Does that line come from a Free 1 or Free 2 account?"),
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed.", select=1),
