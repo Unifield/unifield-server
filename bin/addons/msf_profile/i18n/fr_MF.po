@@ -9805,6 +9805,12 @@ msgstr "Prix Net"
 msgid "Location 'MSF Customer' not found in the instance or is not activated !"
 msgstr "Localisation 'Client MSF' ne peut être trouvée dans ce cas ou n'est pas activée!"
 
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:514
+#, python-format
+msgid "The location name must contain the word \"EPREP\""
+msgstr "Le nom de la Zone doit contenir le mot \"EPREP\""
+
 #. modules: account, finance, account_mcdb
 #: selection:account.journal.column,field:0
 #: field:account.move.line,credit:0
@@ -38943,7 +38949,12 @@ msgstr "Raison du Changement"
 #: model:ir.actions.act_window,help:stock_override.action_destruction_location_report
 #: view:stock.move:0
 msgid "Destruction Location"
-msgstr "Zone Destruction "
+msgstr "Zone Destruction"
+
+#. module: specific_locations
+#: field:stock.location,eprep_location:0
+msgid "Eprep Location"
+msgstr "Zone Eprep"
 
 #. module: account_mcdb
 #: view:account.mcdb:0

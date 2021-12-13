@@ -490,6 +490,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
 
             search_color = False
             # Check if all parent locations are activated in the system
+            eprep_location = False
             if wizard.location_usage in ('stock', 'eprep') or (wizard.location_type == 'internal' and wizard.location_usage == 'consumption_unit'):
                 # Check if 'Configurable locations' location is active − If not, activate it !
                 location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')
@@ -501,14 +502,16 @@ class stock_location_configuration_wizard(osv.osv_memory):
 
                 if wizard.location_usage in ('stock', 'eprep'):
                     location_usage = 'internal'
+                    location_category = 'stock'
                     if wizard.location_usage == 'stock':
-                        location_category = 'stock'
                         # Check if 'Intermediate Stocks' is active − If note activate it !
                         parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
                         if not parent_location_id:
                             raise osv.except_osv(_('Error'), _('Location \'Intermediate Stocks\' not found in the instance or is not activated !'))
                     else:
-                        location_category = 'eprep'
+                        if not location_name or 'eprep' not in location_name.lower():
+                            raise osv.except_osv(_('Error'), _('The location name must contain the word "EPREP"'))
+                        eprep_location = True
                         search_color = 'lightpink'
                         parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')
                         if not parent_location_id:
@@ -564,6 +567,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
                                           'chained_location_id': chained_location_id,
                                           'optional_loc': True,
                                           'search_color': search_color,
+                                          'eprep_location': eprep_location,
                                           }, context=context)
         else:
             # Reactivate the location
@@ -1005,7 +1009,8 @@ class stock_location_convert_eprep(osv.osv_memory):
             loc_obj.write(cr, uid, eprep_view[1], {'active': True}, context=context)
 
         loc_obj.write(cr, uid, convert.location_id.id, {
-            'location_category': 'eprep',
+            'location_category': 'stock',
+            'eprep_location': True,
             'location_id': eprep_view[1],
             'search_color': 'lightpink',
             'moved_location': True,

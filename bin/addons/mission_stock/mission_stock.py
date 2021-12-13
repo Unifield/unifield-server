@@ -933,7 +933,7 @@ class stock_mission_report(osv.osv):
             secondary_location_id = secondary_location_id[1]
             secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
 
-        eprep_locations = location_obj.search(cr, uid, [('location_category', '=', 'eprep')], context=context)
+        eprep_locations = location_obj.search(cr, uid, [('eprep_location', '=', True)], context=context)
         if cu_loc:
             cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
 
