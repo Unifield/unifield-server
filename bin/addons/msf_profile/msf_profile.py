@@ -54,6 +54,15 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_8451_split_rr(self, cr, uid, *a, **b):
+        for x in range(1, 19):
+            cr.execute('''
+            insert into replenishment_segment_line_period (line_id, value, from_date, to_date)
+                select id, rr_fmc_%(x)s, rr_fmc_from_%(x)s, rr_fmc_to_%(x)s
+                from replenishment_segment_line
+                where rr_fmc_%(x)s is not null
+            ''', {'x': x})
+        return True
     # UF23.0
     def us_8839_cv_from_fo(self, cr, uid, *a, **b):
         if cr.column_exists('account_commitment_line', 'po_line_product_id'):
