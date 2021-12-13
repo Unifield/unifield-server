@@ -113251,3 +113251,9 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: purchase
+#: field:purchase.order,dest_partner_type:0
+msgid "DPO Dest Partner Type"
+msgstr "Type du partenaire destination du BCD"
+
