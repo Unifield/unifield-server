@@ -113287,7 +113287,7 @@ msgid "Closed Inventory Export"
 msgstr "Export Inventaire Clôturé"
 
 #. module: stock
-#: code:ir.actions.report.xml:name:report_closed_physical_inventory
+#: code:ir.actions.report.xml:name:stock.report_closed_physical_inventory
 #, python-format
 msgid "Closed Inventory Report"
 msgstr "Rapport Inventaire Clôturé"
