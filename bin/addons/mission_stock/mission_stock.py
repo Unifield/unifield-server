@@ -252,13 +252,13 @@ class stock_mission_report(osv.osv):
     def xls_write_styled_header(self, sheet, cell_list):
         column_count = 0
         for style, column in cell_list:
-            sheet.write(3, column_count, _(column), style)
+            sheet.write(4, column_count, _(column), style)
             column_count += 1
 
     def xls_write_header(self, sheet, cell_list, style):
         column_count = 0
         for column in cell_list:
-            sheet.write(4, column_count, _(column), style)
+            sheet.write(3, column_count, _(column), style)
             column_count += 1
 
     def xls_write_row(self, sheet, cell_list, row_count, style):
@@ -313,7 +313,7 @@ class stock_mission_report(osv.osv):
             writer = UnicodeWriter(export_file, dialect=excel_semicolon)
             # Write common data: Current Instance, Instance Selection, Generation Date, Export Date
             writer.writerows([[_("Generating instance"), instance_name], [_("Instance selection"), report_name],
-                              [_("Last update"), report_last_updt], [_("Export Date"), time.strftime('%Y-%m-%d %H:%M:%S')]])
+                              [_("Last update"), report_last_updt]])
             # write headers of the csv file
             writer.writerow(header_row)
 
@@ -360,20 +360,17 @@ class stock_mission_report(osv.osv):
             # Third Line
             sheet.write(2, 0, _("Last update"), row_style)
             sheet.write(2, 1,  report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '', data_row_style)
-            # Fourth Line
-            sheet.write(3, 0, _("Export Date"), row_style)
-            sheet.write(3, 1, Formula('IF(D2=0;NOW();D2)'), data_row_style)
 
             self.xls_write_header(sheet, header_row, header_style)
 
             # tab header bigger height:
-            sheet.row(4).height_mismatch = True
-            sheet.row(4).height = 45*20
-            sheet.col(0).width=8000
-            sheet.col(1).width=10000
+            sheet.row(3).height_mismatch = True
+            sheet.row(3).height = 45*20
+            sheet.col(0).width = 8000
+            sheet.col(1).width = 10000
 
         # write the lines
-        row_count = 5
+        row_count = 4
         for row in request_result:
             try:
                 data_list = []
@@ -418,11 +415,13 @@ class stock_mission_report(osv.osv):
         # close file
         export_file.close()
 
-    def generate_full_xls(self, cr, uid, xls_name):
+    def generate_full_xls(self, cr, uid, report_id, xls_name):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
         instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
         uom_obj = self.pool.get('product.uom')
+
+        report_last_updt = self.read(cr, uid, report_id, ['last_update'])['last_update']
 
         instance_dict = {}
         for x in instance_obj.read(cr, uid, instance_ids, ['name']):
@@ -470,6 +469,11 @@ class stock_mission_report(osv.osv):
                 font: name Calibri;
                 align: wrap on, vert center, horiz center;
             """)
+        date_row_style = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                align: wrap on, vert center, horiz center;
+            """, num_format_str='DD/MMM/YYYY HH:MM')
 
         book = Workbook()
         add_palette_colour("custom_colour_1", 0x21)
@@ -493,20 +497,22 @@ class stock_mission_report(osv.osv):
 
         header_styles = [header_style1, header_style2]
         row_style.borders = borders
+        date_row_style.borders = borders
 
         sheet = book.add_sheet('Sheet 1')
         sheet.row_default_height = 60*20
 
         sheet.write(0, 0, _("Generating instance"), row_style)
-        instance_name = local_instance.name
-        sheet.write(0, 1, instance_name, row_style)
-        sheet.col(0).width=5000
+        sheet.write(0, 1, local_instance.name, row_style)
+        sheet.col(0).width = 5000
         sheet.write(1, 0, _("Instance selection"), row_style)
-        report_name = _('All loc')
-        sheet.write(1, 1, report_name, row_style)
-        sheet.col(1).width=5000
+        sheet.write(1, 1, _('All loc'), row_style)
+        sheet.col(1).width = 5000
+        sheet.write(2, 0, _("Last update"), row_style)
+        sheet.write(2, 1, report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '', date_row_style)
+        sheet.col(2).width = 5000
 
-        sheet.set_horz_split_pos(4)
+        sheet.set_horz_split_pos(5)
         sheet.set_vert_split_pos(5)
         sheet.panes_frozen = True
         sheet.remove_splits = True
@@ -542,7 +548,7 @@ class stock_mission_report(osv.osv):
         begin = len(fixed_data)
         for inst_id in all_instances:
             max_size = begin + len(repeated_data) + len(instance_loc.get(inst_id, [])) - 1
-            sheet.write_merge(2, 2, begin, max_size, instance_dict[inst_id], style=header_styles[i])
+            sheet.write_merge(3, 3, begin, max_size, instance_dict[inst_id], style=header_styles[i])
             begin = max_size + 1
             i = 1 - i
 
@@ -557,12 +563,13 @@ class stock_mission_report(osv.osv):
         self.xls_write_styled_header(sheet, header_row)
 
         # tab header bigger height:
-        sheet.row(2).height_mismatch = True
+        sheet.row(3).height_mismatch = True
         sheet.row(0).height = 45*20
         sheet.row(1).height = 45*20
         sheet.row(2).height = 45*20
-        sheet.row(3).height_mismatch = True
         sheet.row(3).height = 45*20
+        sheet.row(4).height_mismatch = True
+        sheet.row(4).height = 45*20
 
 
         report_id_by_instance_id = {}
@@ -586,7 +593,7 @@ class stock_mission_report(osv.osv):
 
         p_code = False
         last_stock_level_line = cr1.dictfetchone()
-        row_count = 4
+        row_count = 5
         data = {}
         srl = cr.dictfetchone()
         while srl:
@@ -884,7 +891,7 @@ class stock_mission_report(osv.osv):
                                  context=context)
 
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
-                    self.generate_full_xls(cr, uid, 'consolidate_mission_stock.xls')
+                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls')
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
