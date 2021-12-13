@@ -123,11 +123,13 @@ class stock_location(osv.osv):
                                                        ('transition', 'Transition'),
                                                        ('eprep', 'EPrep'),
                                                        ('other', 'Other'),], string='Location Category', required=True),
+                'eprep_location': fields.boolean('Eprep Location', readonly=1),
                 # could be used after discussion with Magali
                 #'check_quarantine': fields.function(_get_false, fnct_search=search_check_quarantine, string='Check Quarantine', type="boolean", readonly=True, method=True),
                 }
-    _defaults = { 
+    _defaults = {
         'location_category': 'stock',
+        'eprep_location': False,
     }
 
     _constraints = [(_check_parent,

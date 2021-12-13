@@ -2888,6 +2888,7 @@ class product_attributes(osv.osv):
             'stock_qty', 'stock_val',
             'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
             'secondary_qty', 'secondary_val',
+            'eprep_qty',
             'cu_qty', 'cu_val',
             'cross_qty', 'cross_val',
             'wh_qty', 'internal_qty',

@@ -56,6 +56,7 @@ HEADER_DICT = {
         (_('Stock Qty.'), 'l_stock_qty'),
         (_('Cross-Docking Qty.'), 'l_cross_qty'),
         (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+        (_('Eprep Qty.'), 'l_eprep_qty'),
         (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
         (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
         (_('Input Qty'), 'l_input_qty'),
@@ -75,6 +76,7 @@ HEADER_DICT = {
         (_('Stock Qty.'), 'l_stock_qty'),
         (_('Cross-Docking Qty.'), 'l_cross_qty'),
         (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+        (_('Eprep Qty.'), 'l_eprep_qty'),
         (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
         (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
         (_('Input Qty'), 'l_input_qty'),
@@ -94,6 +96,7 @@ GET_EXPORT_REQUEST = '''SELECT
         trim(to_char(l.wh_qty, '999999999999.999')) as l_wh_qty,
         trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
         trim(to_char(l.secondary_qty, '999999999999.999')) as l_secondary_qty,
+        trim(to_char(l.eprep_qty, '999999999999.999')) as l_eprep_qty,
         trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
         trim(to_char(l.in_pipe_qty, '999999999999.999')) as l_in_pipe_qty,
         trim(to_char(l.stock_qty, '999999999999.999')) as l_stock_qty,
@@ -525,6 +528,7 @@ class stock_mission_report(osv.osv):
             (_('Stock Qty.'), 'l_stock_qty'),
             (_('Cross-Docking Qty.'), 'l_cross_qty'),
             (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+            (_('Eprep Qty.'), 'l_eprep_qty'),
             (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
             (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
             (_('Input Qty'), 'l_input_qty'),
@@ -929,6 +933,7 @@ class stock_mission_report(osv.osv):
             secondary_location_id = secondary_location_id[1]
             secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
 
+        eprep_locations = location_obj.search(cr, uid, [('eprep_location', '=', True)], context=context)
         if cu_loc:
             cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
 
@@ -1039,12 +1044,17 @@ class stock_mission_report(osv.osv):
                 'in_pipe_coor_qty': 0.00,
             }, context=context)
 
+            reset_flag_location = {}
             # All other moves
             cr.execute('''
-                        SELECT id, product_id, product_uom, product_qty, location_id, location_dest_id
-                        FROM stock_move
-                        WHERE state = 'done'
-                        AND included_in_mission_stock='f'
+                        SELECT m.id, m.product_id, m.product_uom, m.product_qty, m.location_id, m.location_dest_id, m.included_in_mission_stock
+                        FROM stock_move m, stock_location src, stock_location dest
+                        WHERE
+                            m.state = 'done' AND
+                            src.id = m.location_id AND
+                            dest.id = m.location_dest_id AND
+                            m.location_id != m.location_dest_id AND
+                            ( m.included_in_mission_stock='f' or src.moved_location = 't' or dest.moved_location = 't' )
             ''')
             res = cr.fetchall()
             all_move_ids = []
@@ -1109,6 +1119,7 @@ class stock_mission_report(osv.osv):
                         'stock_qty': line.stock_qty or 0.00,
                         'cross_qty': line.cross_qty or 0.00,
                         'secondary_qty': line.secondary_qty or 0.00,
+                        'eprep_qty': line.eprep_qty or 0.00,
                         'cu_qty': line.cu_qty or 0.00,
                         'quarantine_qty': line.quarantine_qty or 0.00,
                         'input_qty': line.input_qty or 0.00,
@@ -1117,44 +1128,61 @@ class stock_mission_report(osv.osv):
                         'product_state': line.product_id.state and line.product_id.state.code,
                         'used_in_transaction': True
                     }
-                    if move[4] in internal_loc:
-                        vals['internal_qty'] -= qty
-                    if move[4] in stock_loc:
-                        vals['stock_qty'] -= qty
-                    if move[4] in cross_loc:
-                        vals['cross_qty'] -= qty
-                    if move[4] in secondary_location_ids:
-                        vals['secondary_qty'] -= qty
-                    if move[4] in cu_loc:
-                        vals['cu_qty'] -= qty
-                    if move[4] in quarantine_loc:
-                        vals['quarantine_qty'] -= qty
-                    if move[4] in input_loc:
-                        vals['input_qty'] -= qty
-                    if move[4] in opdd_loc:
-                        vals['opdd_qty'] -= qty
+                    if move[6]:
+                        # stock move already processed in previous msr, but location has moved from secondary to eprep
+                        if move[4] in eprep_locations:
+                            vals['secondary_qty'] += qty
+                            reset_flag_location[move[4]] = True
+                            vals['eprep_qty'] -= qty
+                        if move[5] in eprep_locations:
+                            vals['secondary_qty'] -= qty
+                            reset_flag_location[move[5]] = True
+                            vals['eprep_qty'] += qty
+                    else:
+                        if move[4] in internal_loc:
+                            vals['internal_qty'] -= qty
+                        if move[4] in stock_loc:
+                            vals['stock_qty'] -= qty
+                        if move[4] in cross_loc:
+                            vals['cross_qty'] -= qty
+                        if move[4] in secondary_location_ids:
+                            vals['secondary_qty'] -= qty
+                        if move[4] in eprep_locations:
+                            vals['eprep_qty'] -= qty
+                        if move[4] in cu_loc:
+                            vals['cu_qty'] -= qty
+                        if move[4] in quarantine_loc:
+                            vals['quarantine_qty'] -= qty
+                        if move[4] in input_loc:
+                            vals['input_qty'] -= qty
+                        if move[4] in opdd_loc:
+                            vals['opdd_qty'] -= qty
 
-                    if move[5] in internal_loc:
-                        vals['internal_qty'] += qty
-                    if move[5] in stock_loc:
-                        vals['stock_qty'] += qty
-                    if move[5] in cross_loc:
-                        vals['cross_qty'] += qty
-                    if move[5] in secondary_location_ids:
-                        vals['secondary_qty'] += qty
-                    if move[5] in cu_loc:
-                        vals['cu_qty'] += qty
-                    if move[5] in quarantine_loc:
-                        vals['quarantine_qty'] += qty
-                    if move[5] in input_loc:
-                        vals['input_qty'] += qty
-                    if move[5] in opdd_loc:
-                        vals['opdd_qty'] += qty
+                        if move[5] in internal_loc:
+                            vals['internal_qty'] += qty
+                        if move[5] in stock_loc:
+                            vals['stock_qty'] += qty
+                        if move[5] in cross_loc:
+                            vals['cross_qty'] += qty
+                        if move[5] in secondary_location_ids:
+                            vals['secondary_qty'] += qty
+                        if move[5] in eprep_locations:
+                            vals['eprep_qty'] += qty
+                        if move[5] in cu_loc:
+                            vals['cu_qty'] += qty
+                        if move[5] in quarantine_loc:
+                            vals['quarantine_qty'] += qty
+                        if move[5] in input_loc:
+                            vals['input_qty'] += qty
+                        if move[5] in opdd_loc:
+                            vals['opdd_qty'] += qty
 
-                    vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
+                        vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
                     line_obj.write(cr, uid, line.id, vals)
             if all_move_ids:
                 cr.execute("update stock_move set included_in_mission_stock='t' where id in %s", (tuple(all_move_ids), ))
+            if reset_flag_location:
+                cr.execute("update stock_location set moved_location='f' where id in %s", (tuple(reset_flag_location.keys()), ))
         return True
 
     def delete_previous_reports_attachments(self, cr, uid, ids, context=None):
@@ -1625,6 +1653,7 @@ class stock_mission_report_line(osv.osv):
         'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
         'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.', related_uom='uom_id'),
         'secondary_val': fields.float(digits=(16,2), string='Secondary Stock Val.'),
+        'eprep_qty': fields.float(digits=(16,2), string='Eprep Qty.', related_uom='uom_id'),
         'cu_qty': fields.float(digits=(16,2), string='Internal Cons. Unit Qty.', related_uom='uom_id'),
         'cu_val': fields.float(digits=(16,2), string='Internal Cons. Unit Val.'),
         'in_pipe_qty': fields.float(digits=(16,2), string='In Pipe Qty.', related_uom='uom_id'),
@@ -1667,6 +1696,7 @@ class stock_mission_report_line(osv.osv):
         'cross_val': 0.00,
         'secondary_qty': 0.00,
         'secondary_val': 0.00,
+        'eprep_qty': 0.00,
         'cu_qty': 0.00,
         'cu_val': 0.00,
         'in_pipe_qty': 0.00,
@@ -1695,7 +1725,8 @@ class stock_mission_report_line(osv.osv):
                             sum(l.quarantine_qty) AS quarantine_qty,
                             sum(l.input_qty) AS input_qty,
                             sum(l.opdd_qty) AS opdd_qty,
-                            bool_or(used_in_transaction) AS used_in_transaction
+                            bool_or(used_in_transaction) AS used_in_transaction,
+                            sum(l.eprep_qty) AS eprep_qty
                      FROM stock_mission_report_line l
                        LEFT JOIN
                           stock_mission_report m
@@ -1736,10 +1767,10 @@ class stock_mission_report_line(osv.osv):
                     internal_qty=%s, stock_qty=%s,
                     cross_qty=%s, secondary_qty=%s,
                     cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
-                    wh_qty=%s, quarantine_qty=%s, input_qty=%s, opdd_qty=%s, used_in_transaction=%s
+                    wh_qty=%s, quarantine_qty=%s, input_qty=%s, opdd_qty=%s, used_in_transaction=%s, eprep_qty=%s
                     WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00, line[3] or 0.00, line[4] or 0.00,
                                       line[5] or 0.00, line[6] or 0.00, line[7] or 0.00,
-                                      (line[2] or 0.00) + (line[3] or 0.00), line[9], line[10], line[11], line[12] or False, line_id)) # not_a_user_entry
+                                      (line[2] or 0.00) + (line[3] or 0.00), line[9], line[10], line[11], line[12] or False, line[13], line_id)) # not_a_user_entry
         return True
 
 

@@ -332,19 +332,6 @@
         <field name="search_color">royalblue</field>
         <field name="posz">1</field>
     </record>
-    
-<!--     <record id="stock_location_eprep" model="stock.location">
-        <field name="name">EPREP</field>
-        <field name="location_category">eprep</field>
-        <field name="usage">internal</field>
-        <field name="location_id" ref="stock_location_intermediate_client_view" />
-        <field name="chained_location_type">fixed</field>
-        <field name="chained_location_id" ref="stock.stock_location_stock" />
-        <field name="chained_auto_packing">manual</field>
-        <field name="active" eval="False" />
-        <field name="optional_loc" eval="True" />
-        <field name="chained_picking_type">internal</field>
-    </record> -->
 
     <record id="stock_location_consumption_units_view" model="stock.location">
         <field name="name">Internal Consumption Units</field>
@@ -359,7 +346,21 @@
         <field name="search_color">royalblue</field>
         <field name="posz">2</field>
     </record>
-    
+
+    <record id="stock_location_eprep_view" model="stock.location">
+        <field name="name">EPREP Stocks</field>
+        <field name="location_category">other</field>
+        <field name="location_id" ref="stock_location_internal_client_view" />
+        <field name="usage">view</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
+        <field name="search_color">lightpink</field>
+        <field name="posz">30</field>
+    </record>
+
     <record id="stock.stock_location_internal_suppliers_view" model="stock.location">
         <field name="name">Supplier</field>
         <field name="location_id" ref="stock.stock_location_locations_partner" />
