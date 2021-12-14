@@ -146,12 +146,13 @@ class closed_physical_inventory_parser(XlsxReportParser):
         specifications = {'is_kc': _('CC'), 'is_dg': _('DG'), 'is_cs': _('CS')}
         line_order = []
         for disc_line in pi.discrepancy_line_ids:
+            disc_qty = disc_line.discrepancy_qty
             if disc_line.product_id.id not in disc_lines:
                 disc_lines.update({disc_line.product_id.id: {
                     'product_code': disc_line.product_id.default_code,
                     'description': disc_line.product_id.name,
                     'uom': disc_line.product_uom_id.name,
-                    'total_qty': disc_line.counted_qty + abs(disc_line.discrepancy_qty),
+                    'total_qty': disc_line.counted_qty + (disc_qty < 0 and abs(disc_qty) or 0),
                     'specification': ','.join([name for attribute, name in specifications.items() if getattr(disc_line.product_id, attribute, False)]),
                     'need_bn': disc_line.product_id.batch_management and _('Y') or _('N'),
                     'need_ed': disc_line.product_id.perishable and _('Y') or _('N'),
@@ -160,12 +161,12 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 line_order.append(disc_line.product_id.id)
             else:
                 disc_lines[disc_line.product_id.id].update({
-                    'total_qty': disc_lines[disc_line.product_id.id]['total_qty'] + disc_line.counted_qty + abs(disc_line.discrepancy_qty),
+                    'total_qty': disc_lines[disc_line.product_id.id]['total_qty'] + disc_line.counted_qty + (disc_qty < 0 and abs(disc_qty) or 0),
                 })
             disc_lines[disc_line.product_id.id]['lines'].append({
                 'line_number': disc_line.line_no,
                 'qty_counted': disc_line.counted_qty,
-                'qty_ignored': abs(disc_line.discrepancy_qty),
+                'qty_ignored': (disc_qty < 0 and abs(disc_qty) or 0),
                 'prodlot': disc_line.batch_number or '',
                 'expiry_date': disc_line.expiry_date and datetime.strptime(disc_line.expiry_date[0:10], '%Y-%m-%d') or '',
                 'reason_type': disc_line.reason_type_id.complete_name,
