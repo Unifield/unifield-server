@@ -1853,6 +1853,7 @@ class account_invoice_line(osv.osv):
         # - an invoice line can be linked to several CV lines => e.g. merge invoice lines by account
         'cv_line_ids': fields.many2many('account.commitment.line', 'inv_line_cv_line_rel', 'inv_line_id', 'cv_line_id',
                                         string='Commitment Voucher Lines'),
+        'allow_no_account': fields.boolean(string='Allow an empty account on the line', readonly=True),
     }
 
     _defaults = {
@@ -1863,6 +1864,11 @@ class account_invoice_line(osv.osv):
     }
 
     _order = 'line_number'
+
+    _sql_constraints = [
+        ('ck_invl_account', "CHECK(account_id IS NOT NULL OR COALESCE(allow_no_account, 'f') = 't')",
+         'The invoice lines must have an account.')
+    ]
 
     def _check_on_invoice_line_big_amounts(self, cr, uid, ids, context=None):
         """
