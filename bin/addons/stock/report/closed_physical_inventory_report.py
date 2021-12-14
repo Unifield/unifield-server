@@ -170,7 +170,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 'prodlot': disc_line.batch_number or '',
                 'expiry_date': disc_line.expiry_date and datetime.strptime(disc_line.expiry_date[0:10], '%Y-%m-%d') or '',
                 'reason_type': disc_line.reason_type_id.complete_name,
-                'comment': disc_line.comment,
+                'comment': disc_line.comment or '',
             })
 
         for product_id in line_order:
