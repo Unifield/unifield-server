@@ -252,6 +252,7 @@
                                     />
                                     <field name="account_id"
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                           required="1"
                                     />
                                     <field name="invoice_line_tax_id" view_mode="2" context="{'type':parent.type}" domain="[('parent_id','=',False)]"/>
                                     <field name="inactive_product" invisible="1" />
@@ -502,6 +503,7 @@
                                     />
                                     <field name="account_id"
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                           required="1"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type}"
                                     />
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
