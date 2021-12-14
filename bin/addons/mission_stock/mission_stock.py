@@ -1047,7 +1047,7 @@ class stock_mission_report(osv.osv):
             reset_flag_location = {}
             # All other moves
             cr.execute('''
-                        SELECT m.id, m.product_id, m.product_uom, m.product_qty, m.location_id, m.location_dest_id, m.included_in_mission_stock
+                        SELECT m.id, m.product_id, m.product_uom, m.product_qty, m.location_id, m.location_dest_id, m.included_in_mission_stock, src.moved_location, dest.moved_location
                         FROM stock_move m, stock_location src, stock_location dest
                         WHERE
                             m.state = 'done' AND
@@ -1130,11 +1130,11 @@ class stock_mission_report(osv.osv):
                     }
                     if move[6]:
                         # stock move already processed in previous msr, but location has moved from secondary to eprep
-                        if move[4] in eprep_locations:
+                        if move[7]:
                             vals['secondary_qty'] += qty
                             reset_flag_location[move[4]] = True
                             vals['eprep_qty'] -= qty
-                        if move[5] in eprep_locations:
+                        if move[8]:
                             vals['secondary_qty'] -= qty
                             reset_flag_location[move[5]] = True
                             vals['eprep_qty'] += qty
