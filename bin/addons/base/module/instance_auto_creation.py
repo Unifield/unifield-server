@@ -309,10 +309,10 @@ class instance_auto_creation(osv.osv):
                 if entity_id:
                     entity_data = entity_obj.read(cr, uid, entity_id[0])
                     entity_obj.write(cr, uid, entity_id[0], data)
-                    instance_identifier = entity_data['instance_identifier']
+                    instance_identifier = entity_data['identifier']
                 else:
                     instance_identifier = str(uuid.uuid1())
-                    data['instance_identifier'] = instance_identifier
+                    data['identifier'] = instance_identifier
                     entity_obj.create(cr, uid, data)
                 wiz_data = {'email': 'www', 'oc': oc}
                 wizard = pool.get('sync.client.register_entity')
