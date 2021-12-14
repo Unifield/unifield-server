@@ -1861,6 +1861,7 @@ class account_invoice_line(osv.osv):
         'is_corrected': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'merged_line': lambda *a: False,
+        'allow_no_account': lambda *a: False,
     }
 
     _order = 'line_number'

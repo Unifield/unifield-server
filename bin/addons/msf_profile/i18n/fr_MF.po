@@ -113251,3 +113251,13 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: account_override
+#: field:account.invoice.line,allow_no_account:0
+msgid "Allow an empty account on the line"
+msgstr "Autoriser un compte vide sur la ligne"
+
+#. module: account_override
+#: sql_constraint:account.invoice.line:0
+msgid "The invoice lines must have an account."
+msgstr "Les lignes de facture doivent avoir un compte."
