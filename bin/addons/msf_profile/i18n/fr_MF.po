@@ -113261,3 +113261,9 @@ msgstr "Autoriser un compte vide sur la ligne"
 #: sql_constraint:account.invoice.line:0
 msgid "The invoice lines must have an account."
 msgstr "Les lignes de facture doivent avoir un compte."
+
+#. module: register_accounting
+#: code:addons/register_accounting/invoice.py:369
+#, python-format
+msgid "The account is missing on the line No. %s."
+msgstr "Il manque le compte sur la ligne N°%s."
