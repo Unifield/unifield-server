@@ -180,6 +180,7 @@
                     <field name="stock_virtual_uom_rounding" />
                     <field name="search_color" invisible="1" />
                     <field name="intermediate_parent" invisible="1" />
+                    <field name="location_category" invisible="1" />
                 </tree>
             </field>
         </record>
