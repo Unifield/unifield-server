@@ -239,7 +239,7 @@
                            </group>
 
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
-                                <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:analytic_distribution_state in ('none','valid') and inactive_product == False">
+                                <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:analytic_distribution_state in ('none', 'valid') and inactive_product == False and account_id">
                                     <field name="from_supply" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
                                     <field name="invoice_type" invisible="1"/>
