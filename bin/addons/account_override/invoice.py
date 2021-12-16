@@ -1741,20 +1741,26 @@ class account_invoice_line(osv.osv):
 
         return new_id
 
-    def copy_data(self, cr, uid, inv_id, default=None, context=None):
+    def copy_data(self, cr, uid, invl_id, default=None, context=None):
         """
         Copy an invoice line without its move lines,
         without the link to a reversed invoice line,
         and without link to PO/FO/CV lines when the duplication is manual
-        Reset the merged_line tag.
+        Reset the merged_line and allow_no_account tags.
+        Prevent the manual duplication of invoices lines with no account.
         """
         if context is None:
             context = {}
         if default is None:
             default = {}
+        # The only way to get invoice lines without account should be via synchro and not via duplication
+        # (display a specific error message instead of the SQL error)
+        if context.get('from_copy_web') and not self.read(cr, uid, invl_id, ['account_id'], context=context)['account_id']:
+            raise osv.except_osv(_('Warning'), _("Duplication not allowed. Please set an account on all lines first."))
         default.update({'move_lines': False,
                         'reversed_invoice_line_id': False,
                         'merged_line': False,
+                        'allow_no_account': False,
                         })
         # Manual duplication should generate a "manual document not created through the supply workflow"
         # so we don't keep the link to PO/FO/CV at line level
@@ -1766,7 +1772,7 @@ class account_invoice_line(osv.osv):
                 'purchase_order_line_ids': [],
                 'cv_line_ids': [(6, 0, [])],
             })
-        return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
+        return super(account_invoice_line, self).copy_data(cr, uid, invl_id, default, context)
 
     def unlink(self, cr, uid, ids, context=None):
         """

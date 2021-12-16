@@ -113239,3 +113239,9 @@ msgstr "Les lignes de facture doivent avoir un compte."
 #, python-format
 msgid "The account is missing on the line No. %s."
 msgstr "Il manque le compte sur la ligne N°%s."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:1759
+#, python-format
+msgid "Duplication not allowed. Please set an account on all lines first."
+msgstr "Duplication non autorisée. Veuillez d'abord définir un compte sur toutes les lignes."
