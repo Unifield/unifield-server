@@ -345,8 +345,9 @@
                                                      ('state', '!=', 'draft'),
                                                      '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}" />
                         <newline/>
+                        <field name="doc_type" invisible="1"/>
                         <field string="Partner" name="partner_id"
-                               on_change="onchange_partner_id(type,partner_id, date_invoice,payment_term, partner_bank_id, company_id, False, is_intermission, False, False, account_id)"
+                               on_change="onchange_partner_id(type, partner_id, date_invoice, payment_term, partner_bank_id, company_id, False, is_intermission, False, False, account_id, doc_type, from_supply)"
                                domain="[('by_invoice_type', '=', True), ('partner_type', '=', 'intermission')]"
                                context="{'type': context.get('type')}"
                                attrs="{'readonly': ['|', '|',
