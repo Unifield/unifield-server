@@ -1331,6 +1331,9 @@ class account_invoice(osv.osv):
             if 'analytic_line_ids' in line:
                 line['analytic_line_ids'] = False
 
+            if 'allow_no_account' in line:
+                line['allow_no_account'] = False
+
             for field in (
                     'company_id', 'partner_id', 'account_id', 'product_id',
                     'uos_id', 'account_analytic_id', 'tax_code_id', 'base_code_id','account_tax_id',
