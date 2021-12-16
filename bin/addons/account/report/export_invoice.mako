@@ -145,7 +145,7 @@
         % endif
         <Data ss:Type="String">${inv_line.product_id and inv_line.product_id.default_code or ''|x}</Data></Cell>
 
-        <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.account_id.code|x}</Data></Cell>
+        <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code or ''|x}</Data></Cell>
 
         % if is_ro:
             <Cell ss:StyleID="non_editable_number">
