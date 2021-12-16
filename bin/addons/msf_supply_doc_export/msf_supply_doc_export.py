@@ -636,7 +636,7 @@ class po_follow_up_mixin(object):
             self.cr.execute("""
                 SELECT pl.id, pl.state, pl.line_number, adl.id, ppr.id, ppr.default_code, COALESCE(tr.value, pt.name), 
                     uom.id, uom.name, pl.confirmed_delivery_date, pl.date_planned, pl.product_qty, pl.price_unit, 
-                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin
+                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd
                 FROM purchase_order_line pl
                     LEFT JOIN analytic_distribution adl ON pl.analytic_distribution_id = adl.id
                     LEFT JOIN product_product ppr ON pl.product_id = ppr.id
@@ -757,7 +757,7 @@ class po_follow_up_mixin(object):
         po = []
         self.cr.execute("""
             SELECT p.id, p.state, p.name, p.date_order, ad.id, ppar.name, p.partner_ref, p.order_type, c.name, 
-                p.delivery_confirmed_date, p.details
+                p.delivery_confirmed_date, p.details, p.delivery_requested_date_modified
             FROM purchase_order p
                 LEFT JOIN analytic_distribution ad ON p.analytic_distribution_id = ad.id
                 LEFT JOIN res_partner ppar ON p.partner_id = ppar.id
@@ -791,6 +791,7 @@ class po_follow_up_mixin(object):
                     other_product.append(inl)
 
             first_line = True
+            edd = line[17] or po[11] or False
             # Display information of the initial reception
             if not same_product_same_uom:
                 report_line = {
@@ -798,6 +799,7 @@ class po_follow_up_mixin(object):
                     'order_created': po[3],
                     'order_confirmed_date': line[9],
                     'delivery_requested_date': line[10],
+                    'estimated_delivery_date': edd,
                     'raw_state': line[1],
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
                                            context=self.localcontext) or '',
@@ -840,6 +842,7 @@ class po_follow_up_mixin(object):
                     'order_created': po[3],
                     'order_confirmed_date': spsul.get('date_expected') or line[9] or po[9],
                     'delivery_requested_date': line[10],
+                    'estimated_delivery_date': edd,
                     'raw_state': line[1],
                     'order_status': po_state,
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
@@ -892,6 +895,7 @@ class po_follow_up_mixin(object):
                     'order_created': po[3],
                     'order_confirmed_date': spl.get('date_expected') or line[9] or po[9],
                     'delivery_requested_date': line[10],
+                    'estimated_delivery_date': edd,
                     'raw_state': line[1],
                     'order_status': po_state,
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
@@ -945,6 +949,7 @@ class po_follow_up_mixin(object):
                     'order_created': po[3],
                     'order_confirmed_date': ol.get('date_expected') or line[9] or po[9],
                     'delivery_requested_date': line[10],
+                    'estimated_delivery_date': edd,
                     'raw_state': line[1],
                     'order_status': po_state,
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
@@ -1058,6 +1063,7 @@ class po_follow_up_mixin(object):
             _('Total value received (Functional Currency)'),
             _('Created'),
             _('Delivery Requested Date'),
+            _('Estimated Delivery Date'),
             _('Delivery Confirmed Date'),
             _('PO Line Status'),
             _('PO Document Status'),
@@ -1234,7 +1240,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 rp.id, -- 25
                 sp.id, -- 26
                 p.order_type, -- 27
-                fo_partner.name -- 28
+                fo_partner.name, -- 28
+                COALESCE(pl.esti_dd, p.delivery_requested_date_modified) --29
             FROM purchase_order_line pl
                 LEFT JOIN purchase_order p ON p.id = pl.order_id
                 LEFT JOIN product_product pp ON pp.id = pl.product_id
@@ -1347,6 +1354,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 'po_vali_date': line[7],
                 'po_conf_date': line[8],
                 'po_rdd': line[12],
+                'po_edd': line[29],
                 'po_cdd': line[9],
                 'in_receipt_date': line[23],
                 'days_crea_vali': self.get_diff_date_days(line[6], line[7]),

@@ -182,7 +182,7 @@
 
     <section>
             [[ repeatIn(getOrders(r, only_bo=r.only_bo), 'o', 'section') ]]
-        <blockTable colWidths="32.0,80.0,130.0,110.0,45.0,40.0,45.0,40.0,45.0,70.0,41.0,47.0,47.0" style="LinesTable" repeatRows="2">
+        <blockTable colWidths="31.0,75.0,120.0,90.0,45.0,40.0,45.0,40.0,45.0,70.0,41.0,42.0,44.0,44.0" style="LinesTable" repeatRows="2">
 	    	<tr>
 	    		<td colspan="2">
                     <para style="Lines">Order ref:</para>
@@ -259,6 +259,9 @@
                     <para style="Lines"><i>Line Status</i></para>
 	    		</td>
 	    		<td>
+                    <para style="Lines"><i>EDD</i></para>
+	    		</td>
+	    		<td>
                     <para style="Lines"><i>CDD</i></para>
 	    		</td>
                 <td>
@@ -313,6 +316,10 @@
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('state_display', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
+	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
+	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
+                </td>
+                <td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('cdd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('cdd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
                 </td>

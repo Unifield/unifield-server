@@ -105,81 +105,83 @@
     <Table x:FullColumns="1" x:FullRows="1">
         ## Supplier
         <Column ss:AutoFitWidth="1" ss:Width="130.0" />
-        ## PO Reference
+        ## PO Reference
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
-        ## IN Reference
+        ## IN Reference
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
-        ## SI Reference
+        ## SI Reference
         <Column ss:AutoFitWidth="1" ss:Width="130.0" />
-        ## Line number
+        ## Line number
         <Column ss:AutoFitWidth="1" ss:Width="55.0" />
-        ## Product Code
+        ## Product Code
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
-        ## Product Description
+        ## Product Description
         <Column ss:AutoFitWidth="1" ss:Width="300.0" />
-        ## Status
+        ## Status
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Qty Ordered
+        ## Qty Ordered
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Qty Received
+        ## Qty Received
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Currency
+        ## Currency
         <Column ss:AutoFitWidth="1" ss:Width="50.0" />
-        ## Catalogue Unit Price
+        ## Catalogue Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## PO Unit Price
+        ## PO Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## IN Unit Price
+        ## IN Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## SI Unit Price
+        ## SI Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## Discrepancy IN to PO
+        ## Discrepancy IN to PO
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## Discrepancy SI to PO
+        ## Discrepancy SI to PO
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## Catalogue Unit Price (functional)
+        ## Catalogue Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## PO Unit Price (functional)
+        ## PO Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## IN Unit Price (functional)
+        ## IN Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## SI Unit Price (functional)
+        ## SI Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## Discrepancy IN to PO (functional)
+        ## Discrepancy IN to PO (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## Discrepancy SI to PO (functional)
+        ## Discrepancy SI to PO (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## PO Creation Date
+        ## PO Creation Date
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Validation Date
+        ## Validation Date
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Confirmation Date
+        ## Confirmation Date
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Delivery Requested Date (RDD)
+        ## Requested Delivery Date (RDD)
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Delivery Confirmed Date (CDD)
+        ## Estimated Delivery Date (EDD)
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Physical Reception Date
+        ## Confirmed Delivery Date (CDD)
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Order Type
+        ## Physical Reception Date
+        <Column ss:AutoFitWidth="1" ss:Width="65.0" />
+        ## Order Type
         <Column ss:AutoFitWidth="1" ss:Width="140.0" />
-        ## Customer
+        ## Customer
         <Column ss:AutoFitWidth="1" ss:Width="165.0" />
-        ## Days to validate
+        ## Days to validate
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
-        ## Days to confirm
+        ## Days to confirm
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
-        ## Delay b/w actual delivery and CDD (days)
+        ## Delay b/w actual delivery and CDD (days)
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
-        ## Delay b/w actual delivery and RDD (days)
+        ## Delay b/w actual delivery and RDD (days)
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
-        ## Internal Lead Time (days PO creation to reception)
+        ## Internal Lead Time (days PO creation to reception)
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
-        ## Actual Supplier Lead Time (days PO validation to reception)
+        ## Actual Supplier Lead Time (days PO validation to reception)
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
-        ## Configured Supplier Lead Time
+        ## Configured Supplier Lead Time
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
-        ## Discrepancy b/w actual Lead Time and Supplier Lead Time
+        ## Discrepancy b/w actual Lead Time and Supplier Lead Time
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
 
         ## WORKSHEET HEADER
@@ -255,8 +257,9 @@
             _('PO Creation Date'),
             _('Validation Date'),
             _('Confirmation Date'),
-            _('Delivery Requested Date (RDD)'),
-            _('Delivery Confirmed Date (CDD)'),
+            _('Requested Delivery Date (RDD)'),
+            _('Estimated Delivery Date (EDD)'),
+            _('Confirmed Delivery Date (CDD)'),
             _('Physical Reception Date'),
             _('Order Type'),
             _('Customer'),
@@ -365,6 +368,11 @@
                 % endif
                 % if line['po_rdd'] and isDate(line['po_rdd']):
                 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['po_rdd'])|n}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
+                % if line['po_rdd'] and isDate(line['po_edd']):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['po_edd'])|n}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
