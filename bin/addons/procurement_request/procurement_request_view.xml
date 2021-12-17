@@ -184,7 +184,7 @@
                         <field name="name" />
                         <field name="origin" />
                         <field name="requestor" />
-                        <field name="warehouse_id" />
+                        <field name="location_requestor_id" />
                     </group>
                     <newline />
                     <group string="Group By...">
