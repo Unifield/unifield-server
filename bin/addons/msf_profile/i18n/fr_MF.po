@@ -106211,12 +106211,6 @@ msgid "Impossible to retrieve the line description."
 msgstr "Impossible de récupérer la description de la ligne."
 
 #. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:128
-#, python-format
-msgid "The account \"%s - %s\" is inactive."
-msgstr "Le compte \"%s - %s\" est inactif."
-
-#. module: account_override
 #: code:addons/account_override/account_invoice_sync.py:135
 #, python-format
 msgid "Unit of Measure %s not found."

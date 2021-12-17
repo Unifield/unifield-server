@@ -169,10 +169,15 @@ class account_invoice_sync(osv.osv):
                 raise osv.except_osv(_('Error'), _("Error when retrieving the account at line level."))
             if line_account_id:
                 line_account = account_obj.browse(cr, uid, line_account_id,
-                                                  fields_to_fetch=['activation_date', 'inactivation_date'], context=context)
+                                                  fields_to_fetch=['activation_date', 'inactivation_date', 'code'], context=context)
                 if inv_posting_date < line_account.activation_date or \
                         (line_account.inactivation_date and inv_posting_date >= line_account.inactivation_date):
-                    raise osv.except_osv(_('Error'), _('The account "%s - %s" is inactive.') % (line_account.code, line_account.name))
+                    context['partial_sync_run'] = True
+                    allow_no_account = True
+                    line_account_id = False
+                    if partially_run_msg:
+                        partially_run_msg += "\n"
+                    partially_run_msg += 'Line "%s": Account %s inactive.' % (line_name, line_account.code)
             inv_line_vals.update({'account_id': line_account_id or False,
                                   'allow_no_account': allow_no_account,
                                   'product_id': product_id,
