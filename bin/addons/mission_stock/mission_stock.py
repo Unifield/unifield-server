@@ -261,9 +261,12 @@ class stock_mission_report(osv.osv):
             sheet.write(4, column_count, _(column), style)
             column_count += 1
 
-    def xls_write_row(self, sheet, cell_list, row_count, style):
+    def xls_write_row(self, sheet, cell_list, row_count, style, style_price):
         for column_count, column in enumerate(cell_list):
-            sheet.write(row_count, column_count, _(column), style)
+            if column_count == 4:  # style for price
+                sheet.write(row_count, column_count, _(column), style_price)
+            else:
+                sheet.write(row_count, column_count, _(column), style)
         sheet.row(row_count).height = 60*20
 
 
@@ -337,8 +340,14 @@ class stock_mission_report(osv.osv):
                     font: height 220;
                     font: name Calibri;
                     align: wrap on, vert center, horiz center;
-                """, num_format_str='0.000')
+                """)
             row_style.borders = borders
+            row_style_price = easyxf("""
+                    font: height 220;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='0.000')
+            row_style_price.borders = borders
 
             data_row_style = easyxf("""
                     font: height 220;
@@ -396,7 +405,7 @@ class stock_mission_report(osv.osv):
                         continue
 
                 if file_type == 'xls':
-                    self.xls_write_row(sheet, data_list, row_count, row_style)
+                    self.xls_write_row(sheet, data_list, row_count, row_style, row_style_price)
                 else:
                     writer.writerow(data_list)
                 row_count += 1
@@ -469,6 +478,11 @@ class stock_mission_report(osv.osv):
                 font: height 220;
                 font: name Calibri;
                 align: wrap on, vert center, horiz center;
+            """)
+        row_style_price = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                align: wrap on, vert center, horiz center;
             """, num_format_str='0.000')
 
         book = Workbook()
@@ -493,6 +507,7 @@ class stock_mission_report(osv.osv):
 
         header_styles = [header_style1, header_style2]
         row_style.borders = borders
+        row_style_price.borders = borders
 
         sheet = book.add_sheet('Sheet 1')
         sheet.row_default_height = 60*20
@@ -619,7 +634,7 @@ class stock_mission_report(osv.osv):
                     for x in instance_loc.get(inst_id, []):
                         to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
-                self.xls_write_row(sheet, to_write, row_count, row_style)
+                self.xls_write_row(sheet, to_write, row_count, row_style, row_style_price)
                 row_count += 1
 
 
