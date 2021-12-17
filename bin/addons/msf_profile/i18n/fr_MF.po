@@ -106168,12 +106168,6 @@ msgid "Internal field indicating whether the document is related to a Supply wor
 msgstr "Champ interne indiquant si le document est lié à un flux \"Supply\""
 
 #. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:120
-#, python-format
-msgid "Account code %s not found."
-msgstr "Code comptable %s non trouvé."
-
-#. module: account_override
 #: code:addons/account_override/account_invoice_sync.py:189
 #, python-format
 msgid "Impossible to retrieve the currency."

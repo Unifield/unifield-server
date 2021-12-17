@@ -96,7 +96,9 @@ class account_invoice_sync(osv.osv):
         product_uom_obj = self.pool.get('product.uom')
         inv_line_obj = self.pool.get('account.invoice.line')
         pol_obj = self.pool.get('purchase.order.line')
+        partially_run_msg = ""
         for inv_line in inv_lines_data:
+            allow_no_account = False
             line_name = inv_line.get('name', '')
             if not line_name:  # required field
                 raise osv.except_osv(_('Error'), _("Impossible to retrieve the line description."))
@@ -156,19 +158,43 @@ class account_invoice_sync(osv.osv):
                     raise osv.except_osv(_('Error'), _("Impossible to retrieve the account code at line level."))
                 account_ids = account_obj.search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
                 if not account_ids:
-                    raise osv.except_osv(_('Error'), _("Account code %s not found.") % account_code)
-                line_account_id = account_ids[0]
-            if not line_account_id:
+                    context['partial_sync_run'] = True
+                    allow_no_account = True
+                    if partially_run_msg:
+                        partially_run_msg += "\n"
+                    partially_run_msg += 'Line "%s": Account %s not found.' % (line_name, account_code)
+                else:
+                    line_account_id = account_ids[0]
+            if not line_account_id and not allow_no_account:
                 raise osv.except_osv(_('Error'), _("Error when retrieving the account at line level."))
-            line_account = account_obj.browse(cr, uid, line_account_id,
-                                              fields_to_fetch=['activation_date', 'inactivation_date'], context=context)
-            if inv_posting_date < line_account.activation_date or \
-                    (line_account.inactivation_date and inv_posting_date >= line_account.inactivation_date):
-                raise osv.except_osv(_('Error'), _('The account "%s - %s" is inactive.') % (line_account.code, line_account.name))
-            inv_line_vals.update({'account_id': line_account_id,
+            if line_account_id:
+                line_account = account_obj.browse(cr, uid, line_account_id,
+                                                  fields_to_fetch=['activation_date', 'inactivation_date'], context=context)
+                if inv_posting_date < line_account.activation_date or \
+                        (line_account.inactivation_date and inv_posting_date >= line_account.inactivation_date):
+                    raise osv.except_osv(_('Error'), _('The account "%s - %s" is inactive.') % (line_account.code, line_account.name))
+            inv_line_vals.update({'account_id': line_account_id or False,
+                                  'allow_no_account': allow_no_account,
                                   'product_id': product_id,
                                   })
             inv_line_obj.create(cr, uid, inv_line_vals, context=context)
+        return partially_run_msg
+
+    def _get_msg(self, journal_type, partially_run_msg, inv_id):
+        """
+        Returns the message to be printed in the Messages Received
+        """
+        if journal_type == 'sale':
+            msg_prefix = 'The ISI No.'
+        elif journal_type == 'intermission':
+            msg_prefix = 'The IVI No.'
+        else:
+            msg_prefix = 'The Invoice No.'
+        if partially_run_msg:
+            msg_suffix = "is Partially Not Run.\n\n%s" % partially_run_msg
+        else:
+            msg_suffix = "has been created successfully."
+        return "%s %s %s" % (msg_prefix, inv_id, msg_suffix)
 
     def create_invoice_from_sync(self, cr, uid, source, invoice_data, context=None):
         """
@@ -323,11 +349,8 @@ class account_invoice_sync(osv.osv):
         )
         inv_id = self.create(cr, uid, vals, context=context)
         if inv_id:
-            self._create_invoice_lines(cr, uid, inv_lines, inv_id, posting_date, po, from_supply, context=context)
-            if journal_type == 'sale':
-                msg = "ISI No. %s created successfully." % inv_id
-            elif journal_type == 'intermission':
-                msg = "IVI No. %s created successfully." % inv_id
+            partially_run_msg = self._create_invoice_lines(cr, uid, inv_lines, inv_id, posting_date, po, from_supply, context=context)
+            msg = self._get_msg(journal_type, partially_run_msg, inv_id)
             self._logger.info(msg)
             return msg
 
