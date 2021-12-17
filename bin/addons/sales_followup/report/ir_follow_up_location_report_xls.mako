@@ -226,11 +226,11 @@
         ## Qty to deliver
         <Column ss:AutoFitWidth="1" ss:Width="50.5" />
         ## EDD
-        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="50.0" />
         ## CDD
-        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="50.0" />
         ## RTS Date
-        <Column ss:AutoFitWidth="1" ss:Width="50" />
+        <Column ss:AutoFitWidth="1" ss:Width="50.0" />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('INTERNAL REQUEST FOLLOW-UP per LOCATION')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
