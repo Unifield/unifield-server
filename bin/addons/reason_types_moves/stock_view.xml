@@ -156,6 +156,7 @@
                         <newline />
                         <field name="date" string="Creation date" />
                         <field name="min_date" string="Expected date" />
+                        <field name="shipment_ref" />
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8">
