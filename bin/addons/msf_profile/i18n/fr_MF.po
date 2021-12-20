@@ -64922,8 +64922,8 @@ msgstr "En Cours à partir de la Coordination"
 #: selection:stock.move,integrity_error:0
 #: selection:stock.move.in.processor,sequence_issue:0
 #: code:addons/msf_outgoing/__init__.py:64
-msgid "Does not exist in selected IN/OUT"
-msgstr "N'existe pas dans le IN/OUT sélectionné"
+msgid "Prod/BN/ED not available in the IN/OUT"
+msgstr "Prod/BL/DE non disponible dans le IN/OUT"
 
 #. module: reason_types_moves
 #: model:stock.reason.type,name:reason_types_moves.reason_type_loss
