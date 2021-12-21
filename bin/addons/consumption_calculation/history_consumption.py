@@ -672,7 +672,7 @@ class product_product(osv.osv):
         res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=ctx, toolbar=toolbar, submenu=submenu)
 
         if context.get('history_cons', False) and view_type == 'tree':
-            line_view = """<tree string="%s" hide_new_button="1">
+            line_view = """<tree string="%s" hide_new_button="1" hide_delete_button="1">
                    <field name="default_code"/>
                    <field name="name" />""" % (to_xml(_('Historical consumption')),)
 
