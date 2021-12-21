@@ -230,7 +230,7 @@
 
     % for prd in lines:
         % for line in prd['lines'].itervalues():
-          % if line['qty'] or prd['with_zero']:
+          % if line['qty'] or (prd['with_zero'] and prd['moves_in_months']):
           <Row ss:AutoFitHeight="1">
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>

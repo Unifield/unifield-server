@@ -26,8 +26,9 @@ class product_merged_wizard(osv.osv_memory):
         if error_used:
             raise osv.except_osv(_('Warning'), _('The selected UD product has already been used in the past. Merge cannot be done for this product.'))
 
-        if prod_obj._has_pipe(cr, uid, wiz.new_product_id.id):
-            raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore this product cannot be merged.'))
+        has_pipe = prod_obj._has_pipe(cr, uid, wiz.new_product_id.id)
+        if has_pipe:
+            raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore this product cannot be merged. Instances: %s') % (has_pipe[0][1], ))
 
         block_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, blocker=True, context=context)
         if block_msg:

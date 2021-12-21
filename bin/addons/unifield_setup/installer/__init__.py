@@ -33,3 +33,4 @@ import payroll
 import commitment_import
 import vat_setup
 import previous_fy_dates_setup
+import customer_commitment_voucher_setup

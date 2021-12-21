@@ -83,6 +83,7 @@ class account_destination_link(osv.osv):
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]", readonly=True, select=1),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", readonly=True, select=1),
+        'destination_code': fields.related('destination_id', 'code', string="Analytical Destination Account", type='char', store=False),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
         'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True,
                                 store={

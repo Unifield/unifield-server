@@ -78,9 +78,8 @@
         </tr>
       </blockTable>
 
-      <spacer length="5"/>
+      <spacer length="18"/>
 
-      <para style="text"><b>Cashbox</b></para>
       <blockTable colWidths="30mm,30mm,30mm,30mm,30mm,30mm" style="table_reconciliation_balance">
         <tr>
           <td><para style="center"><b>Starting balance</b></para></td>
@@ -147,8 +146,9 @@
           </td>
         </tr>
       </blockTable>
+      <para style="text"><i>Theoretical balance = Calculated balance - Unrecorded advances - Unrecorded expenses.</i></para>
 
-      <spacer length="5"/>
+      <spacer length="10"/>
 
       <para style="text"><b>Comments:</b></para>
       <blockTable colWidths="180mm" rowHeights="20mm" style="table_comments">
@@ -160,7 +160,7 @@
       <spacer length="5"/>
       <para style="text">Register opening date: <b>[[ o.date and formatLang(o.date, date=True) or '' ]]</b></para>
       <para style="text">Register state: <b>[[ getSel(o, 'state') ]]</b></para>
-      <para style="text">End of month balance state: <b>[[ o.closing_balance_frozen and 'Confirmed' or 'Not confirmed' ]][[ o.closing_balance_frozen and o.closing_balance_frozen_date and (' ' + formatLang(o.closing_balance_frozen_date, date=True)) or '' ]]</b></para>
+      <para style="text">End of month balance state: <b>[[ o.closing_balance_frozen and translate('Confirmed') or translate('Not confirmed') ]][[ o.closing_balance_frozen and o.closing_balance_frozen_date and (' ' + formatLang(o.closing_balance_frozen_date, date=True)) or '' ]]</b></para>
       <para style="text">Register closing date: <b>[[ o.closing_date and o.closing_date != "False" and formatLang(o.closing_date, date=True) or '']]</b></para>
       <para style="text">Report date: <b>[[ formatLang(getNow(show_datetime=True), date_time=True) ]]</b></para>
       <para style="text"></para>

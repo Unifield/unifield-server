@@ -17,8 +17,8 @@
                     <field name="company_id" invisible="1"/>
                     <field name="partner_id" invisible="1" context="{'contact_display':'partner'}" />
                     <field name="picking_id" invisible="1"/>
-                    <field name="location_id" invisible="1"/>
-                    <field name="location_dest_id" invisible="1"/>
+                    <field name="location_name" invisible="1"/>
+                    <field name="location_dest_name" invisible="1"/>
                     <field name="product_id" invisible="0"/>
                     <field name="categ_id" invisible="1"/>
                     <field name="state" invisible="1"/>
@@ -98,8 +98,8 @@
                         <filter name="group_product_uom" string="UoM" icon="terp-accessories-archiver" context="{'group_by':'product_uom'}"/>
                         <filter name="group_prodlot" string="Batch" icon="terp-accessories-archiver" context="{'group_by':'prodlot_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Source Location" name="src_location" icon="terp-gtk-jump-to-rtl" context="{'group_by':'location_id'}"/>
-                        <filter string="Dest. Location" name="dest_location" icon="terp-gtk-jump-to-ltr"  context="{'group_by':'location_dest_id'}"/>
+                        <filter string="Source Location" name="src_location" icon="terp-gtk-jump-to-rtl" context="{'group_by':'location_name'}"/>
+                        <filter string="Dest. Location" name="dest_location" icon="terp-gtk-jump-to-ltr"  context="{'group_by':'location_dest_name'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Type" name="group_type" icon="terp-stock_symbol-selection" context="{'group_by':'type'}" help="Shipping type specify, goods coming in or going out"/>
                         <filter string="State" name="group_state" icon="terp-stock_effects-object-colorize" context="{'group_by':'state'}"/>

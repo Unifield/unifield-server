@@ -192,40 +192,6 @@
             </field>
         </record>
 
-        <!--
-            New account attribute for HQ entries corrections
-        -->
-
-        <record id="inherit_view_account_form2" model="ir.ui.view">
-            <field name='name'>inherit.view.account.form2</field>
-            <field name='model'>account.account</field>
-            <field name="type">form</field>
-            <field name='inherit_id' ref='account.view_account_form'/>
-            <field name="priority">30</field>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="is_not_hq_correctible" on_change="onchange_is_not_hq_correctible(is_not_hq_correctible)"/>
-                    <newline/>
-                    <label string="" colspan="2"/>
-                    <field name="is_not_ad_correctable" on_change="onchange_is_not_ad_correctable(is_not_ad_correctable)"/>
-                </xpath>
-            </field>
-        </record>
-
-        <record id="inherit_view_account_tree2" model="ir.ui.view">
-            <field name='name'>inherit.view.account.tree2</field>
-            <field name='model'>account.account</field>
-            <field name="type">tree</field>
-            <field name='inherit_id' ref='account.view_account_tree'/>
-            <field name="priority" eval="20"/>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='activation_date']" position="before">
-                    <field name="is_not_hq_correctible" invisible="1"/>
-                </xpath>
-            </field>
-        </record>
-
-
     <!-- Actions: Menu actions -->
         <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
             <field name="name">Import HQ Entries</field>

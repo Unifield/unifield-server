@@ -1220,7 +1220,7 @@ class replenishment_segment(osv.osv):
                                )
                     pipe_data = {}
                     for x in cr.fetchall():
-                        pipe_data[datetime.strptime('%s 23:59:59' % (x[0].split(' ')[0], ), '%Y-%m-%d %H:%M:%S')] = x[1]
+                        pipe_data[datetime.strptime('%s 00:00:00' % (x[0].split(' ')[0], ), '%Y-%m-%d %H:%M:%S')] = x[1]
 
                     pipe_date = sorted(pipe_data.keys())
 
@@ -1272,21 +1272,21 @@ class replenishment_segment(osv.osv):
                                     period_conso = month*num_fmc
                                     if period_conso <= pas_full:
                                         pas_full -= period_conso
-                                    else:
-                                        # missing stock to cover the full period
                                         for x in pipe_date[:]:
-                                            # add pipe before period
-                                            if x <= begin:
+                                            # add pipe before end of period
+                                            if x <= end:
                                                 pas_full += pipe_data[x]
                                                 pipe_date.pop(0)
                                             else:
                                                 break
+                                    else:
+                                        # missing stock to cover the full period
                                         if period_conso > pas_full:
                                             # still not enough stock
                                             for x in pipe_date[:]:
                                                 if x <= end:
                                                     # compute missing just before the next pipe
-                                                    ndays = (x - new_begin).days + 1
+                                                    ndays = (x - new_begin).days
                                                     qty = num_fmc/30.44*ndays
                                                     pas_full -= qty
                                                     if pas_full < 0:
@@ -1888,6 +1888,43 @@ class replenishment_segment(osv.osv):
             return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message='\n'.join(error))
 
         return wizard_obj.message_box_noclose(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
+
+    def remove_outdated_fmcs(self, cr, uid, ids, context=None):
+        seg_line_obj = self.pool.get('replenishment.segment.line')
+
+        now = datetime.now().strftime('%Y-%m-%d')
+        outdated_line_ids = seg_line_obj.search(cr, uid, [('segment_id', 'in', ids), ('rr_fmc_to_1', '<', now)], context=context)
+        if not outdated_line_ids:
+            self.pool.get('res.log').create(cr, uid, {'name': _('No outdated FMC')}, context=context)
+
+            return True
+        new_data_tmpl = {}
+        for x in range(1, 19):
+            new_data_tmpl.update({
+                'rr_fmc_%d' % x : False,
+                'rr_fmc_from_%d' % x: False,
+                'rr_fmc_to_%d' % x: False,
+            })
+        nb_line = len(outdated_line_ids)
+        nb_fmc = 0
+        for line in seg_line_obj.browse(cr, uid, outdated_line_ids, context=context):
+            new_data = new_data_tmpl.copy()
+            index = 1
+            for x in range(1, 19):
+                if not getattr(line, 'rr_fmc_to_%d' % x):
+                    break
+                if getattr(line, 'rr_fmc_to_%d' % x) >= now:
+                    new_data.update({
+                        'rr_fmc_%d' % index : getattr(line, 'rr_fmc_%d' % x),
+                        'rr_fmc_from_%d' % index: getattr(line, 'rr_fmc_from_%d' % x),
+                        'rr_fmc_to_%d' % index: getattr(line, 'rr_fmc_to_%d' % x),
+                    })
+                    index += 1
+                else:
+                    nb_fmc += 1
+            seg_line_obj.write(cr, uid, line.id, new_data, context=context)
+        self.pool.get('res.log').create(cr, uid, {'name': _('%d FMC(s) removed on %d line(s)') % (nb_fmc, nb_line)}, context=context)
+        return True
 
     def completed(self, cr, uid, ids, context=None):
         for x in self.read(cr, uid, ids, ['name_seg', 'date_next_order_received_modified', 'date_next_order_received', 'rule'], context=context):

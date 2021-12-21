@@ -124,19 +124,6 @@
                 </tree>
             </field>
         </record>
-        <!-- Redefine analytic line tree -->
-        <record id="view_account_analytic_line_instance_tree" model="ir.ui.view">
-            <field name="name">account.analytic.line.instance.tree</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
-            <field eval="18" name="priority"/>
-            <field name="arch" type="xml">
-                <field name="journal_id" position="before">
-                    <field name="instance_id" readonly="1"/>
-                </field>
-            </field>
-        </record>
         <!-- Redefine analytic journal -->
         <record id="view_account_analytic_journal_instance_tree" model="ir.ui.view">
             <field name="name">account.analytic.journal.instance.tree</field>

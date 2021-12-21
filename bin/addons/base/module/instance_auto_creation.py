@@ -486,6 +486,11 @@ class instance_auto_creation(osv.osv):
                 else:
                     previous_fy_dates_allowed = False
 
+                if config.has_option('reconfigure', 'customer_commitment'):
+                    customer_commitment = config.getboolean('reconfigure', 'customer_commitment')
+                else:
+                    customer_commitment = False
+
                 if config.has_option('reconfigure', 'payroll_ok'):
                     payroll_ok = config.getboolean('reconfigure', 'payroll_ok')
                 else:
@@ -538,6 +543,9 @@ class instance_auto_creation(osv.osv):
                     },
                     'previous.fy.dates.setup': {
                         'previous_fy_dates_allowed': previous_fy_dates_allowed,
+                    },
+                    'customer.commitment.setup': {
+                        'customer_commitment': customer_commitment,
                     }
                 }
                 if country_id:
@@ -714,6 +722,9 @@ class instance_auto_creation(osv.osv):
                         unifield_prop = [unifield_prop]
                     for uf_prop in unifield_prop:
                         vals[uf_prop] = account_id
+
+            if config.has_option('company', 'additional_allocation'):
+                vals['additional_allocation'] = config.getboolean('company', 'additional_allocation')
 
             if vals.get('ye_pl_cp_for_bs_debit_bal_account') and vals.get('ye_pl_cp_for_bs_credit_bal_account'):
                 vals['has_move_regular_bs_to_0'] = True

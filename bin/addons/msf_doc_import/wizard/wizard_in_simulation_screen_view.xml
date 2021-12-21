@@ -80,7 +80,7 @@
             <field name="model">wizard.import.in.line.simulation.screen</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Stock Moves" colors="grey: type_change in ('del', 'new'); red: type_change == 'error'; blue: type_change=='split';">
+                <tree string="Stock Moves" colors="grey: type_change in ('ign', 'new'); red: type_change == 'error'; blue: type_change=='split';">
                     <field name="move_id" invisible="1" />
                     <field name="move_product_id" />
                     <field name="move_product_qty" />

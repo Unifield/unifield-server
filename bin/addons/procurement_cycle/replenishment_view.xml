@@ -562,7 +562,8 @@
                             <field name="file_to_import" colspan="2" />
                             <button name="import_lines" string="Import Lines" type="object" colspan="3" icon="gtk-dnd" />
                             <button name="delete_multiple_lines" type="object" icon="gtk-remove" string="Delete selected lines" colspan="3" confirm="Do you want to delete these %%(number_selected)s line(s) ?" set_ids="line_ids" />
-                            <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="8" />
+                            <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="5" />
+                            <button name="remove_outdated_fmcs" type="object" icon="gtk-media-rewind" string="Remove outdated FMCs" attrs="{'invisible':[('rule', '!=', 'cycle')]}" colspan="3"/>
                         </group>
                             <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule" scroll="1" attrs="{'readonly': [('state', 'not in', ['draft', 'complete'])]}" o2m_selectable="2">
                                 <tree editable="top" editable_style="new" colors="red: not status or (display_paired_icon and not status_tooltip and status!='phasingout')">

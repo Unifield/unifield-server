@@ -1066,10 +1066,10 @@ Nothing has been imported because of %s. See below:
                     # Commit modifications
                     cr.commit()
 
-                # Lines to delete
+                # Lines to ignore
                 for in_line in SIMU_LINES[wiz.id]['line_ids']:
                     l_d = wl_obj.read(cr, uid, in_line, ['move_uom_id'], context=context)
-                    wl_obj.write(cr, uid, in_line, {'type_change': 'del', 'imp_uom_id': l_d['move_uom_id'] and l_d['move_uom_id'][0]}, context=context)
+                    wl_obj.write(cr, uid, in_line, {'type_change': 'ign', 'imp_uom_id': l_d['move_uom_id'] and l_d['move_uom_id'][0]}, context=context)
 
                 '''
                 We generate the message which will be displayed on the simulation
@@ -1184,7 +1184,7 @@ Nothing has been imported because of %s. See below:
         if simu_id.physical_reception_date:
             to_write['physical_reception_date'] = simu_id.physical_reception_date
         partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, to_write, context=context)
-        line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
+        line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('ign', 'error', 'new')), ('type_change', '=', False)], context=context)
 
         mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, fields_as_ro=fields_as_ro, context=context)
 
@@ -1380,7 +1380,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'type_change': fields.selection([('', ''),
                                          ('split', 'Split'),
                                          ('error', 'Error'),
-                                         ('del', 'Del.'),
+                                         ('ign', 'Ign.'),
                                          ('new', 'New')], string='CHG', readonly=True),
         'error_msg': fields.text(string='Error message', readonly=True),
         'parent_line_id': fields.many2one('wizard.import.in.line.simulation.screen', string='Parent line', readonly=True),
@@ -1834,7 +1834,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         mem_move_ids = []
         lot_cache = {}
         for line in self.browse(cr, uid, ids, context=context):
-            if line.type_change in ('del', 'error', 'new'):
+            if line.type_change in ('ign', 'error', 'new'):
                 continue
 
             move = False

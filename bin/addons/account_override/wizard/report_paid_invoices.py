@@ -22,7 +22,9 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 from datetime import datetime
+
 
 class wizard_report_paid_invoice(osv.osv_memory):
     _name = 'wizard.report.paid.invoice'
@@ -56,7 +58,7 @@ class wizard_report_paid_invoice(osv.osv_memory):
         inst_code = instance and instance.code or ''
         report_date = datetime.today().strftime('%Y%m%d')
         report_name = 'paid.invoices'
-        data['target_filename'] = 'Paid Invoices_%s_%s' % (inst_code, report_date)
+        data['target_filename'] = '%s_%s_%s' % (_('Paid Invoices'), inst_code, report_date)
         # make the report run in background
         background_id = bg_obj.create(cr, uid,
                                       {'file_name': data['target_filename'],
