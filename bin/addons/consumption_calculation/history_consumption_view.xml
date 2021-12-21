@@ -190,7 +190,7 @@
         <field name="type">tree</field>
         <field name="priority">200</field>
         <field name="arch" type="xml">
-            <tree string="Historical consumptions">
+            <tree string="Historical consumptions" hide_delete_button="1">
                 <field name="default_code" />
                 <field name="name" />
             </tree>
