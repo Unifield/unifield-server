@@ -32,14 +32,24 @@ class historical_parser(XlsxReportParser):
         self.create_style_from_template('prod_style', 'A4')
         self.create_style_from_template('amc_style', 'C4')
 
+        idx = 1
         if h_amc.remove_negative_amc:
-            self.duplicate_row_dimensions(range(1, 3))
+            sheet.row_dimensions[1].height = 24
+            idx = 2
             row_index = 3
         else:
-            self.duplicate_row_dimensions(range(2, 3))
             row_index = 2
 
         if h_amc.consumption_type == 'rr-amc':
+            if h_amc.txt_source and len(h_amc.txt_source) > 30:
+                sheet.row_dimensions[idx].height = 50
+            else:
+                sheet.row_dimensions[idx].height = 20
+
+            if h_amc.txt_destination and len(h_amc.txt_destination) > 30:
+                sheet.row_dimensions[idx+1].height = 50
+            else:
+                sheet.row_dimensions[idx+1].height = 20
             row_index += 2
 
         self.duplicate_column_dimensions(default_width=10.75)
