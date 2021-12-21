@@ -1372,7 +1372,7 @@ msgstr "US/Pacific"
 #: code:addons/msf_doc_import/wizard/__init__.py:63
 #, python-format
 msgid "fo_import_drd"
-msgstr "Date de livraison demandée"
+msgstr "Date de Livraison Demandée"
 
 #. module: analytic_distribution
 #: field:analytic.distribution.wizard.f1.lines,wizard_id:0
@@ -23752,7 +23752,7 @@ msgstr "\n"
 #: field:purchase.order.followup,delivery_requested_date:0
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:212
 msgid "Delivery requested date"
-msgstr "Date de livraison demandée"
+msgstr "Date de Livraison Demandée"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:481
@@ -79869,10 +79869,15 @@ msgstr "Check this attribute if you want to consolidate entries on this account 
 msgid "Current available quantity of products with this Batch Numbre Number in company warehouses"
 msgstr "Quantité de produits actuellement disponibles sous ce Numéro de Lot dans les entrepôts de la société."
 
-#. modules: msf_doc_import, msf_supply_doc_export
+#. modules: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:75
+#, python-format
+msgid "Delivery Request Date"
+msgstr "Date de Livraison Demandée"
+
+#. modules: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:58
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:249
-#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:75
 #, python-format
 msgid "Delivery Request Date"
 msgstr "Date de Livraison Requise"
@@ -85906,7 +85911,7 @@ msgstr "Vous ne pouvez pas selectionner 'Instance prop. parente' car 'Instances'
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:283
 #: report:addons/procurement_cycle/report/chronogram.mako:2149
 msgid "RDD"
-msgstr "DLS"
+msgstr "DLD"
 
 #. module: account
 #: field:account.tax,child_ids:0
@@ -105690,12 +105695,12 @@ msgstr "Date de Confirmation"
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:254
 msgid "Delivery Requested Date (RDD)"
-msgstr "Date de Livraison Demandée (RDD)"
+msgstr "Date de Livraison Demandée (DLD)"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:255
 msgid "Delivery Confirmed Date (CDD)"
-msgstr "Date de Livraison Confirmée (CDD)"
+msgstr "Date de Livraison Confirmée (DLC)"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:257
@@ -105710,12 +105715,12 @@ msgstr "Jours pour confirmer"
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:260
 msgid "Delay b/w actual delivery and RDD (days)"
-msgstr "Délai entre la réception physique et la RDD (jours)"
+msgstr "Délai entre la réception physique et la DLD (jours)"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:259
 msgid "Delay b/w actual delivery and CDD (days)"
-msgstr "Délai entre la réception physique et la CDD (jours)"
+msgstr "Délai entre la réception physique et la DLC (jours)"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:261
