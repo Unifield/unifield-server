@@ -172,6 +172,23 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_ret_from_unit_rt(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if the IN is from scratch and has Return from Unit as Reason Type
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        res = {}
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=['reason_type_id'], context=context):
+            res[pick.id] = pick.reason_type_id.id == return_reason_type_id
+
+        return res
+
     _columns = {
         'state': fields.selection([
             ('draft', 'Draft'),
@@ -241,6 +258,7 @@ class stock_picking(osv.osv):
         'incoming_id': fields.many2one('stock.picking', string='Incoming ref', readonly=True),
         'from_pick_cancel_id': fields.many2one('stock.picking', string='Linked Picking/Out', readonly=True,
                                                help='Picking or Out that created this Internal Move after cancellation'),
+        'ret_from_unit_rt': fields.function(_get_ret_from_unit_rt, method=True, type='boolean', string='Check if the Reason Type is Return from Unit', store=False),
     }
 
     _defaults = {
@@ -254,7 +272,6 @@ class stock_picking(osv.osv):
         'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
         'from_pick_cancel_id': False,
     }
-
 
     def on_change_ext_cu(self, cr, uid, ids, ext_cu, context=None):
         if context is None:
