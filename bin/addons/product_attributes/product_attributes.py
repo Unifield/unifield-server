@@ -3021,7 +3021,7 @@ class product_deactivation_error_line(osv.osv_memory):
                 res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'],context=context)
                 res['res_id'] = line.doc_id
                 res['target'] = 'current'
-                res['nodestroy'] = True
+                res['keep_open'] = True
                 return res
 
             # Invoices
@@ -3034,7 +3034,7 @@ class product_deactivation_error_line(osv.osv_memory):
                 res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xmlid, ['form', 'tree'], context=context)
                 res['res_id'] = line.doc_id
                 res['target'] = 'current'
-                res['nodestroy'] = True
+                res['keep_open'] = True
                 return res
 
             view_id, context = self._get_view(cr, uid, line, context=context)
@@ -3046,7 +3046,7 @@ class product_deactivation_error_line(osv.osv_memory):
                     'view_type': 'form',
                     'target': 'current',
                     'view_id': view_id,
-                    'nodestroy': True,
+                    'keep_open': True,
                     'context': context}
 
     def _get_view(self, cr, uid, line, context=None):

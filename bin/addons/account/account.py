@@ -589,7 +589,9 @@ class account_journal(osv.osv):
 
     def _search_inv_doc_type(self, cr, uid, obj, name, args, context=None):
         """
-        Returns a domain (based on the context) to get all journals matching with the doc type of the selected invoice
+        Returns a domain (based on the context) to get all journals matching with the doc type of the selected invoice.
+
+        Note: this method is currently not used for IVO and IVI which use a fake_journal_id forced to INT instead of the regular journal_id.
         """
         if context is None:
             context = {}

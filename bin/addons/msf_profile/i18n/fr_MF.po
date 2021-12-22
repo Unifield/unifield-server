@@ -19401,6 +19401,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: field:stock.delivery.wizard,location_id:0
 #: report:kitting.order.report:0
 #: field:view.expired.expiring.stock.lines,location_id:0
+#: field:report.stock.move,location_name:0
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -51754,7 +51755,7 @@ msgstr "Canada/Mountain"
 #. module: account
 #: view:account.invoice.refund:0
 msgid "Modify Invoice: Cancels the current invoice and creates a new copy of it ready for editing."
-msgstr "Modifier la facture : Annule la facture en cours et créée une nouvelle copie de cette facture prête à être modifiée."
+msgstr "Modifier la facture : Annule la facture en cours et crée une nouvelle copie de cette facture prête à être modifiée."
 
 #. module: product_nomenclature
 #: code:addons/product_nomenclature/product_nomenclature.py:301
@@ -71289,7 +71290,6 @@ msgid "Dashboard Definition"
 msgstr "Définition du Tableau de Bord"
 
 #. modules: stock_override, stock_move_tracking, stock
-#: view:report.stock.move:0
 #: view:stock.move:0
 #: view:stock.move:0
 msgid "Dest. Location"
@@ -81146,6 +81146,8 @@ msgstr "\n"
 #: field:stock.picking,location_dest_id:0
 #: field:stock.reception.wizard,location_dest_id:0
 #: field:stock.delivery.wizard,location_dest_id:0
+#: view:report.stock.move:0
+#: field:report.stock.move,location_dest_name:0
 msgid "Dest. Location"
 msgstr "Zone Dest."
 
@@ -111043,16 +111045,16 @@ msgstr "Date d'Export"
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:64
 #: field:stock.mission.report.line,quarantine_qty:0
-msgid "Quarantine Qty."
-msgstr "Qté. Quarantaine"
+msgid "Quarantine / For Scrap Qty."
+msgstr "Qté. Quarantaine / Pour Rebus"
 
 #. module: mission_stock
 #: code:addons/mission_stock/mission_stock.py:59
 #: code:addons/mission_stock/mission_stock.py:77
 #: code:addons/mission_stock/mission_stock.py:516
 #, python-format
-msgid "Quarantine Qty"
-msgstr "Qté Quarantaine"
+msgid "Quarantine / For Scrap Qty"
+msgstr "Qté Quarantaine / Pour Rebus"
 
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:65
@@ -113007,6 +113009,12 @@ msgstr "Factures Fournisseur Intersection"
 msgid "Intersection Supplier Invoice"
 msgstr "Facture Fournisseur Intersection"
 
+#. module: account_override
+#: code:addons/account_override/invoice.py:692
+#, python-format
+msgid "an Intersection Supplier Invoice"
+msgstr "une Facture Fournisseur Intersection"
+
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:572
 #, python-format
@@ -113033,11 +113041,23 @@ msgstr "Avoirs Fournisseur Intersection"
 msgid "Intersection Supplier Refund"
 msgstr "Avoir Fournisseur Intersection"
 
+#. module: account_override
+#: code:addons/account_override/invoice.py:692
+#, python-format
+msgid "an Intersection Supplier Refund"
+msgstr "un Avoir Fournisseur Intersection"
+
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:573
 #, python-format
 msgid "%s Intersection Supplier Refund(s)"
 msgstr "%s Avoir(s) Fournisseur Intersection"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:693
+#, python-format
+msgid "This invoice can't be duplicated because it has an Intersection partner: please create %s instead."
+msgstr "Cette facture ne peut pas être dupliquée car elle a un partenaire de type Intersection : veuillez créer %s à la place."
 
 #. modules: account_period_closing_level, product_attributes, register_accounting
 #: code:addons/account_period_closing_level/account_period.py:516

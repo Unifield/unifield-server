@@ -125,9 +125,6 @@ class patch_scripts(osv.osv):
         log = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
         cd = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         inp = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-        conf = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
-        interm = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
-        iconsu = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
         p_qua = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_view')[1]
         qua = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
         exp = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
@@ -137,9 +134,6 @@ class patch_scripts(osv.osv):
 
         # Cross docking & Input: darkorchid
         cr.execute("""UPDATE stock_location SET search_color = 'darkorchid' WHERE id IN %s""", (tuple([cd, inp]),))
-
-        # Configurable intermediate stocks & Internal Consumption Units: royalblue
-        cr.execute("""UPDATE stock_location SET search_color = 'royalblue' WHERE id IN %s""", (tuple([conf, interm, iconsu]),))
 
         # Quarantine (analyze): darkorange
         cr.execute("""UPDATE stock_location SET search_color = 'darkorange' WHERE id = %s""", (qua,))

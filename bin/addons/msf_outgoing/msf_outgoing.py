@@ -1400,6 +1400,7 @@ class shipment(osv.osv):
                 continue
 
             invoice_id_by_fo = {}
+            header_ad_on_inv = {}
             # For each stock moves, create an invoice line
             for pack in shipment.pack_family_memory_ids:
                 if pack.not_shipped:
@@ -1491,9 +1492,14 @@ class shipment(osv.osv):
                     if move.sale_line_id:
                         sol_ana_dist_id = False
                         if move.sale_line_id.cv_line_ids:
-                            sol_ana_dist_id = move.sale_line_id.cv_line_ids[0].analytic_distribution_id or move.sale_line_id.cv_line_ids[0].commit_id.analytic_distribution_id or False
+                            sol_ana_dist_id = move.sale_line_id.cv_line_ids[0].analytic_distribution_id or False
+                            if not header_ad_on_inv.get(invoice_id) and move.sale_line_id.cv_line_ids[0].commit_id.analytic_distribution_id:
+                                # set AD invoice header from 1st CV AD header
+                                header_ad_on_inv[invoice_id] = True
+                                ad_header_id = distrib_obj.copy(cr, uid, move.sale_line_id.cv_line_ids[0].commit_id.analytic_distribution_id.id, context=context)
+                                self.pool.get('account.invoice').write(cr, uid, [invoice_id], {'analytic_distribution_id': ad_header_id})
 
-                        if not sol_ana_dist_id:
+                        else:
                             sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
                         if sol_ana_dist_id:
                             distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
