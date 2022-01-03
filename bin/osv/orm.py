@@ -4840,7 +4840,7 @@ class orm(orm_template):
             m2o_order = m2o_order_list
             if m2o_order == ['id']:
                 # default order on m2o table is "id", not need to join table
-                return order_field
+                return qualified_field
 
 
         # Join the dest m2o table if it's not joined yet. We use [LEFT] OUTER join here
