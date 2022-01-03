@@ -374,7 +374,7 @@ class account_move_line(osv.osv):
         'is_si_refund': lambda *a: False,
     }
 
-    _order = 'move_id DESC'
+    _order = 'move_id DESC, id'
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
