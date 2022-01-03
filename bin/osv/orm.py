@@ -4839,7 +4839,9 @@ class orm(orm_template):
                 m2o_order_list.append(order_part.strip().split(" ",1)[0].strip())
             m2o_order = m2o_order_list
             if m2o_order == ['id']:
-                return
+                # default order on m2o table is "id", not need to join table
+                return order_field
+
 
         # Join the dest m2o table if it's not joined yet. We use [LEFT] OUTER join here
         # as we don't want to exclude results that have NULL values for the m2o
