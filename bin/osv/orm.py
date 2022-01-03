@@ -1015,7 +1015,6 @@ class orm_template(object):
                     else:
                         while pos < len(datas):
                             res2 = process_liness(self, datas, prefix + [field[len(prefix)]], current_module, relation_obj._name, newfd, pos, first)
-                            print res2
                             if not res2:
                                 break
                             (newrow, pos, w2, data_res_id2, xml_id2) = res2
@@ -2069,7 +2068,7 @@ class orm_template(object):
         or approximate.
         :return: (count, boolean) boolean is True in case of approximation
         """
-        if not args:
+        if not args or (self._table in ['account_move_line', 'account_move'] and args == [('period_id.number', '!=', 0)]):
             cr.execute("""
                 SELECT reltuples::BIGINT AS approximate_row_count
                 FROM pg_class WHERE relname = '%s'
@@ -4839,6 +4838,8 @@ class orm(orm_template):
             for order_part in m2o_order.split(","):
                 m2o_order_list.append(order_part.strip().split(" ",1)[0].strip())
             m2o_order = m2o_order_list
+            if m2o_order == ['id']:
+                return
 
         # Join the dest m2o table if it's not joined yet. We use [LEFT] OUTER join here
         # as we don't want to exclude results that have NULL values for the m2o
