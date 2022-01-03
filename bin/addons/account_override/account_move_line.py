@@ -375,6 +375,7 @@ class account_move_line(osv.osv):
     }
 
     _order = 'move_id DESC, id'
+    # see account_move_line_move_id_id_index on account_move_line
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
