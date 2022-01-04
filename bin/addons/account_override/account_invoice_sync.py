@@ -84,6 +84,21 @@ class account_invoice_sync(osv.osv):
                 fp_distrib_line_obj.create(cr, uid, distrib_vals, context=context)
             vals.update({'analytic_distribution_id': distrib_id,})
 
+    def _set_partially_run(self, line_name, partially_run_msg, new_msg, context):
+        """
+        Sets the invoices in Partially Run:
+        - updates contexts accordingly
+        - updates the partially_run_msg with the new_msg
+        - at line level sets the account to False and the tag allow_no_account to True
+        """
+        context['partial_sync_run'] = True
+        line_account_id = False
+        allow_no_account = True
+        if partially_run_msg:
+            partially_run_msg += "\n"
+        partially_run_msg += 'Line "%s": %s' % (line_name, new_msg)
+        return line_account_id, allow_no_account, partially_run_msg
+
     def _create_invoice_lines(self, cr, uid, inv_lines_data, inv_id, inv_posting_date, inv_linked_po, from_supply, context=None):
         """
         Creates the lines of the automatic counterpart invoice (inv_id) generated at synchro time.
@@ -155,29 +170,29 @@ class account_invoice_sync(osv.osv):
             elif not line_account_id:
                 account_code = inv_line.get('account_id', {}).get('code', '')
                 if not account_code:
-                    raise osv.except_osv(_('Error'), _("Impossible to retrieve the account code at line level."))
-                account_ids = account_obj.search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
-                if not account_ids:
-                    context['partial_sync_run'] = True
-                    allow_no_account = True
-                    if partially_run_msg:
-                        partially_run_msg += "\n"
-                    partially_run_msg += 'Line "%s": Account %s not found.' % (line_name, account_code)
+                    new_msg = "Impossible to retrieve the account code"
+                    line_account_id, allow_no_account, partially_run_msg = self._set_partially_run(line_name,
+                                                                                                   partially_run_msg,
+                                                                                                   new_msg, context)
                 else:
-                    line_account_id = account_ids[0]
+                    account_ids = account_obj.search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
+                    if not account_ids:
+                        new_msg = "Account %s not found." % (account_code,)
+                        line_account_id, allow_no_account, partially_run_msg = self._set_partially_run(line_name, partially_run_msg,
+                                                                                                       new_msg, context)
+                    else:
+                        line_account_id = account_ids[0]
             if not line_account_id and not allow_no_account:
-                raise osv.except_osv(_('Error'), _("Error when retrieving the account at line level."))
+                new_msg = "Error when retrieving the account."
+                line_account_id, allow_no_account, partially_run_msg = self._set_partially_run(line_name, partially_run_msg, new_msg, context)
             if line_account_id:
                 line_account = account_obj.browse(cr, uid, line_account_id,
                                                   fields_to_fetch=['activation_date', 'inactivation_date', 'code'], context=context)
                 if inv_posting_date < line_account.activation_date or \
                         (line_account.inactivation_date and inv_posting_date >= line_account.inactivation_date):
-                    context['partial_sync_run'] = True
-                    allow_no_account = True
-                    line_account_id = False
-                    if partially_run_msg:
-                        partially_run_msg += "\n"
-                    partially_run_msg += 'Line "%s": Account %s inactive.' % (line_name, line_account.code)
+                    new_msg = "Account %s inactive." % (line_account.code,)
+                    line_account_id, allow_no_account, partially_run_msg = self._set_partially_run(line_name, partially_run_msg,
+                                                                                                   new_msg, context)
             inv_line_vals.update({'account_id': line_account_id or False,
                                   'allow_no_account': allow_no_account,
                                   'product_id': product_id,

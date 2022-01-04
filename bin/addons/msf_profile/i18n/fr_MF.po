@@ -106173,24 +106173,12 @@ msgstr "Champ interne indiquant si le document est lié à un flux \"Supply\""
 msgid "Impossible to retrieve the currency."
 msgstr "Impossible de récupérer la devise."
 
-#. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:117
-#, python-format
-msgid "Impossible to retrieve the account code at line level."
-msgstr "Impossible de récupérer le code comptable au niveau d'une ligne."
-
 #. modules: account_override, account
 #: code:addons/account_override/account_invoice_sync.py:193
 #: code:addons/account/wizard/account_invoice_import.py:107
 #, python-format
 msgid "Currency %s not found or inactive."
 msgstr "Devise %s non trouvée ou inactive."
-
-#. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:123
-#, python-format
-msgid "Error when retrieving the account at line level."
-msgstr "Erreur lors de la récupération du compte au niveau d'une ligne."
 
 #. module: account_override
 #: code:addons/account_override/account_invoice_sync.py:235
