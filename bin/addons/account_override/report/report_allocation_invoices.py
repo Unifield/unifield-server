@@ -34,6 +34,7 @@ class allocation_invoice_report(report_sxw.rml_parse):
             'time': time,
             'get_data': self.get_data,
             'get_total_amount': self.get_total_amount,
+            'get_doc_type': self.get_doc_type,
             'get_journal_code': self.get_journal_code,
         })
 
@@ -98,11 +99,24 @@ class allocation_invoice_report(report_sxw.rml_parse):
     def get_total_amount(self):
         return self.total_amount
 
+    def get_doc_type(self, inv):
+        """
+        Returns the String corresponding to the invoice type.
+        Note that using "getSel" doesn't work because "doc_type" is a fields.function.
+        """
+        inv_doc_type = ""
+        inv_obj = self.pool.get('account.invoice')
+        for doc_type in inv_obj._get_invoice_type_list(self.cr, self.uid):
+            if len(doc_type) >= 2 and inv.doc_type == doc_type[0]:
+                inv_doc_type = doc_type[1]
+                break
+        return inv_doc_type
+
     def get_journal_code(self, inv):
-        '''
+        """
         If the SI has been (partially or totally) imported in a register, return the Journal Code
         It the SI has been partially imported in several registers, return : "code1 / code2 / code3"
-        '''
+        """
         journal_code_list = []
         if inv and inv.move_id:
             absl_ids = self.pool.get('account.bank.statement.line').search(self.cr, self.uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])])
