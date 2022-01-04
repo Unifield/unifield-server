@@ -45,6 +45,7 @@ class allocation_invoice_report(report_sxw.rml_parse):
         - an AD defined at line level (first SELECT)
         - an AD defined at header level (second SELECT)
         - no AD (third SELECT)
+        - no account - in that case the AD is seen as empty (fourth SELECT)
         """
         self._cr.execute("""SELECT line_number,NULLIF('[' || default_code || '] ' || name_template, '[] ') as product,i.name as description, ac.code || ' ' || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, ROUND(percentage, 2) as percentage, ROUND(price_subtotal*percentage/100, 2) as sub_total, y.name as currency, n1.code as destination, n2.code as cost_center, n3.code as funding_pool
             FROM funding_pool_distribution_line a
@@ -56,7 +57,7 @@ class allocation_invoice_report(report_sxw.rml_parse):
             INNER JOIN account_account ac ON ac.id = i.account_id
             LEFT JOIN product_product p ON p.id = i.product_id
             LEFT JOIN res_currency y ON y.id = s.currency_id
-            WHERE i.invoice_id=%s
+            WHERE i.invoice_id=%s AND i.account_id IS NOT NULL
             UNION ALL
             SELECT line_number,NULLIF('[' || default_code || '] ' || name_template, '[] ') as product,i.name as description, ac.code || ' ' || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, ROUND(percentage, 2) as percentage, ROUND(price_subtotal*percentage/100, 2) as sub_total, y.name as currency, n1.code as destination, n2.code as cost_center, n3.code as funding_pool
             FROM funding_pool_distribution_line a
@@ -68,7 +69,7 @@ class allocation_invoice_report(report_sxw.rml_parse):
             INNER JOIN account_analytic_account n3 ON n3.id = a.analytic_id
             INNER JOIN res_currency y ON y.id = s.currency_id
             LEFT JOIN product_product p ON p.id = i.product_id
-            WHERE s.id=%s AND ac.is_analytic_addicted = True
+            WHERE s.id=%s AND i.account_id IS NOT NULL AND ac.is_analytic_addicted = True
             UNION ALL
             SELECT line_number, NULLIF('[' || default_code || '] ' || name_template, '[] ') as product, i.name as description, 
             ac.code || ' ' || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, NULL, 
@@ -78,9 +79,18 @@ class allocation_invoice_report(report_sxw.rml_parse):
             INNER JOIN account_account ac ON ac.id = i.account_id
             INNER JOIN res_currency y ON y.id = s.currency_id
             LEFT JOIN product_product p ON p.id = i.product_id
-            WHERE s.id=%s and is_analytic_addicted = False
+            WHERE s.id=%s AND i.account_id IS NOT NULL AND is_analytic_addicted = False
+            UNION ALL
+            SELECT line_number, NULLIF('[' || default_code || '] ' || name_template, '[] ') as product, i.name as description, 
+            '' as account, quantity, ROUND(price_unit, 2) as price_unit, NULL, 
+            ROUND(price_subtotal, 2) as sub_total, y.name as currency, NULL, NULL, NULL
+            FROM account_invoice_line i
+            INNER JOIN account_invoice s ON s.id = i.invoice_id
+            INNER JOIN res_currency y ON y.id = s.currency_id
+            LEFT JOIN product_product p ON p.id = i.product_id
+            WHERE s.id=%s AND i.account_id IS NULL
             ORDER BY line_number, destination, cost_center, funding_pool
-            """, (invoice_id, invoice_id, invoice_id))
+            """, (invoice_id, invoice_id, invoice_id, invoice_id))
         res = self._cr.fetchall()
         self.total_amount = sum([line[7] or 0.0 for line in res])
         return res
