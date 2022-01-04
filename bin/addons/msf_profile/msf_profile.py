@@ -69,7 +69,7 @@ class patch_scripts(osv.osv):
                         where
                             po.partner_type='esc' and
                             po.state in ('validated_p', 'validated') and
-                            po.analytic_distribution_id = dist_line.id and
+                            po.analytic_distribution_id = dist_line.distribution_id and
                             dist_line.destination_id != %(dest)s
                     ''', {'dest': dest_id[0]})
 
@@ -81,7 +81,7 @@ class patch_scripts(osv.osv):
                         where
                             po.partner_type='esc' and
                             po.state in ('validated_p', 'validated') and
-                            po.analytic_distribution_id = dist_line.id and
+                            po.analytic_distribution_id = dist_line.distribution_id and
                             dist_line.destination_id != %(dest)s
                     ''', {'dest': dest_id[0]})
                 header_cc = cr.rowcount
@@ -95,7 +95,7 @@ class patch_scripts(osv.osv):
                             po.partner_type='esc' and
                             pol.order_id = po.id and
                             pol.state in ('validated_n', 'validated') and
-                            pol.analytic_distribution_id = dist_line.id and
+                            pol.analytic_distribution_id = dist_line.distribution_id and
                             dist_line.destination_id != %(dest)s
                     ''', {'dest': dest_id[0]})
 
@@ -108,7 +108,7 @@ class patch_scripts(osv.osv):
                             po.partner_type='esc' and
                             pol.order_id = po.id and
                             pol.state in ('validated_n', 'validated') and
-                            pol.analytic_distribution_id = dist_line.id and
+                            pol.analytic_distribution_id = dist_line.distribution_id and
                             dist_line.destination_id != %(dest)s
                     ''', {'dest': dest_id[0]})
                 line_cc = cr.rowcount
