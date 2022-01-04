@@ -86,7 +86,7 @@ class account_invoice_sync(osv.osv):
 
     def _set_partially_run(self, line_name, partially_run_msg, new_msg, context):
         """
-        Sets the invoices in Partially Run:
+        Sets the invoices in Partially (Not) Run:
         - updates contexts accordingly
         - updates the partially_run_msg with the new_msg
         - at line level sets the account to False and the tag allow_no_account to True
@@ -170,7 +170,7 @@ class account_invoice_sync(osv.osv):
             elif not line_account_id:
                 account_code = inv_line.get('account_id', {}).get('code', '')
                 if not account_code:
-                    new_msg = "Impossible to retrieve the account code"
+                    new_msg = "Impossible to retrieve the account code."
                     line_account_id, allow_no_account, partially_run_msg = self._set_partially_run(line_name,
                                                                                                    partially_run_msg,
                                                                                                    new_msg, context)
