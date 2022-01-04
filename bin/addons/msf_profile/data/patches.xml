@@ -719,5 +719,9 @@
         <record id="us_9044_add_location_colors" model="patch.scripts">
             <field name="method">us_9044_add_location_colors</field>
         </record>
+
+        <record id="us_9143_oca_change_dest_on_esc_po" model="patch.scripts">
+            <field name="method">us_9143_oca_change_dest_on_esc_po</field>
+        </record>
     </data>
 </openerp>

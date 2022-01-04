@@ -54,6 +54,68 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9143_oca_change_dest_on_esc_po(self, cr, uid, *a, **b):
+        oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+        cr.execute(oc_sql)
+        oc = cr.fetchone()[0]
+        if oc == 'oca':
+            dest_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'OPS'), ('category', '=', 'DEST')])
+            if dest_id:
+                # header AD
+                cr.execute('''
+                    update funding_pool_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po
+                        where
+                            po.partner_type='esc' and
+                            po.state in ('validated_p', 'validated') and
+                            po.analytic_distribution_id = dist_line.id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+
+                header_fp = cr.rowcount
+                cr.execute('''
+                    update cost_center_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po
+                        where
+                            po.partner_type='esc' and
+                            po.state in ('validated_p', 'validated') and
+                            po.analytic_distribution_id = dist_line.id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+                header_cc = cr.rowcount
+
+                # AD line
+                cr.execute('''
+                    update funding_pool_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po, purchase_order_line pol
+                        where
+                            po.partner_type='esc' and
+                            pol.order_id = po.id and
+                            pol.state in ('validated_n', 'validated') and
+                            pol.analytic_distribution_id = dist_line.id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+
+                line_fp = cr.rowcount
+                cr.execute('''
+                    update cost_center_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po, purchase_order_line pol
+                        where
+                            po.partner_type='esc' and
+                            pol.order_id = po.id and
+                            pol.state in ('validated_n', 'validated') and
+                            pol.analytic_distribution_id = dist_line.id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+                line_cc = cr.rowcount
+
+                self.log_info(cr, uid, 'US-9143: Dest changed on headers: fp: %d, cc: %d, on lines fp: %d, cc: %d' % (header_fp, header_cc, line_fp, line_cc))
+        return True
+
     # UF23.0
     def us_8839_cv_from_fo(self, cr, uid, *a, **b):
         if cr.column_exists('account_commitment_line', 'po_line_product_id'):
