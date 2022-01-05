@@ -605,9 +605,23 @@ class account_invoice(osv.osv):
                                                             noupdate=noupdate, context=context, filename=filename,
                                                             display_all_errors=display_all_errors, has_header=has_header)
 
+    def synch_auto_tick(self, cr, uid, res, partner_id, doc_type, from_supply):
+        """
+        Updates res for manual IVO and STV:
+        - automatically ticks the Synchronized box if the selected partner is Intermission or Intersection
+        - automatically unticks the Synchronized box if the selected partner has another type.
+        """
+        if partner_id and doc_type in ('ivo', 'stv') and not from_supply:
+            partner_type = self.pool.get('res.partner').read(cr, uid, partner_id, ['partner_type'])['partner_type']
+            if partner_type in ['intermission', 'section']:
+                res['value']['synced'] = True
+            else:
+                res['value']['synced'] = False
+        return True
+
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id, date_invoice=False, payment_term=False, partner_bank_id=False,
                             company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False,
-                            account_id=False):
+                            account_id=False, doc_type=None, from_supply=None):
         """
         Get default donation account for Donation invoices.
         Get default intermission account for Intermission Voucher IN/OUT invoices.
@@ -651,6 +665,7 @@ class account_invoice(osv.osv):
         # UFTP-168: If debit note, set account to False value
         if is_debit_note:
             res['value'].update({'account_id': False})
+        self.synch_auto_tick(cr, uid, res, partner_id, doc_type, from_supply)
         return res
 
     def _check_document_date(self, cr, uid, ids):

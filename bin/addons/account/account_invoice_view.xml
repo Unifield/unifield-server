@@ -431,7 +431,7 @@
                         <newline/>
                         <field string="Customer" name="partner_id"
                                domain="[('customer', '=', True)]"
-                               on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)"
+                               on_change="onchange_partner_id(type, partner_id, date_invoice, payment_term, partner_bank_id, company_id, False, False, False, False, False, doc_type, from_supply)"
                                groups="base.group_user" context="{'search_default_customer': 1}"
                                attrs="{'readonly': ['|',
                                                     ('state', '!=', 'draft'),
