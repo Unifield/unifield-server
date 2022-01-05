@@ -428,6 +428,11 @@ class analytic_line(osv.osv):
         cmp_dates = {}
         wiz_period_open = period_obj.search_exist(cr, uid, [('date_start', '<=', wiz_date), ('date_stop', '>=', wiz_date),
                                                             ('special', '=', False), ('state', '=', 'draft')], context=context)
+        try:
+            pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                                        'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            pf_id = 0
         for aline in self.browse(cr, uid, ids):
             # UTP-800: Change date comparison regarding FP. If FP, use document date. Otherwise use date.
             aline_cmp_date = aline.date
@@ -494,12 +499,15 @@ class analytic_line(osv.osv):
                     res.append(aline.id)
         elif account_type == "DEST":
             for aline in self.browse(cr, uid, ids, context=context):
-                # the following check is included into check_fp_acc_dest_compatibility:
-                # account_id in [x.id for x in aline.general_account_id.destination_ids]
+                if aline.account_id.id == pf_id:
+                    # UC1: the Funding Pool is PF ==> only check Acc/Dest compatibility
+                    fp_acc_dest_ok = account_id in [x.id for x in aline.general_account_id.destination_ids]
+                else:
+                    # UC2: the Funding Pool is NOT PF ==> check the FP compatibility with the Acc/Dest (Acc/Dest compat. check is included)
+                    fp_acc_dest_ok = ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
+                                                                            account_id, context=context)
                 cc_id = aline.cost_center_id and aline.cost_center_id.id or False
-                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, cc_id, context=context) and \
-                    ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
-                                                           account_id, context=context) and \
+                if fp_acc_dest_ok and ad_obj.check_dest_cc_compatibility(cr, uid, account_id, cc_id, context=context) and \
                         not dest_cc_link_obj.is_inactive_dcl(cr, uid, account_id, cc_id, cmp_dates[aline.id], context=context):
                     res.append(aline.id)
         else:
