@@ -735,6 +735,7 @@ class account_invoice(osv.osv):
         """
         if context is None:
             context = {}
+        context.update({'from_copy_web': True})
         inv = self.browse(cr, uid, inv_id, fields_to_fetch=['partner_id', 'doc_type'], context=context)
         if inv.partner_id.partner_type == 'section' and inv.doc_type in ('si', 'sr'):
             new_doc_type = inv.doc_type == 'si' and _("an Intersection Supplier Invoice") or _("an Intersection Supplier Refund")

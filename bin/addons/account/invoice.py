@@ -765,11 +765,16 @@ class account_invoice(osv.osv):
             'counterpart_inv_status': False,
             'refunded_invoice_id': False,
         })
+        inv = self.browse(cr, uid, [id], fields_to_fetch=['analytic_distribution_id', 'doc_type'], context=context)[0]
         if not context.get('from_split'):  # some values are kept in case of inv. generated via the "Split" feature
             default.update({
                 'from_supply': False,
-                'synced': False,
             })
+            # Reset the sync tag, except in case of manual duplication of IVO/STV.
+            if not context.get('from_copy_web') or inv.doc_type not in ('ivo', 'stv'):
+                default.update({
+                    'synced': False,
+                })
         if 'date_invoice' not in default:
             default.update({
                 'date_invoice':False
@@ -778,7 +783,6 @@ class account_invoice(osv.osv):
             default.update({
                 'date_due':False
             })
-        inv = self.browse(cr, uid, [id], fields_to_fetch=['analytic_distribution_id'], context=context)[0]
         if inv.analytic_distribution_id:
             default.update({'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, inv.analytic_distribution_id.id, {}, context=context)})
 
