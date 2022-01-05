@@ -359,6 +359,9 @@ class account_invoice(osv.osv):
         return True
 
     def _check_empty_account(self, cr, uid, ids, context=None):
+        """
+        Raises an error if one of the invoice lines has no account.
+        """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
