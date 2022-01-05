@@ -2068,7 +2068,7 @@ class orm_template(object):
         or approximate.
         :return: (count, boolean) boolean is True in case of approximation
         """
-        if not args or (self._table in ['account_move_line', 'account_move'] and args == [('period_id.number', '!=', 0)]):
+        if not args or (self._table in ['account_move_line', 'account_move'] and args in ([('period_id.number', '!=', 0)], [('period_id.number', '!=', 0), ('move_id.state', '=', 'posted')])):
             cr.execute("""
                 SELECT reltuples::BIGINT AS approximate_row_count
                 FROM pg_class WHERE relname = '%s'
@@ -2077,7 +2077,12 @@ class orm_template(object):
             approximative_result = approximative_result and approximative_result[0][0] or 0
             # check if approximative is big
             if approximative_result > 100000:
-                return int(approximative_result), True
+                exclude = 0
+                if self._table in ['account_move_line', 'account_move']:
+                    exclude = self.search_count(cr, user, [('period_id.number', '=', 0)], context={'show_period_0': 1})
+                if args == [('period_id.number', '!=', 0), ('move_id.state', '=', 'posted')]:
+                    exclude += self.search_count(cr, user, [('move_id.state', '=', 'draft')], context=context)
+                return int(approximative_result) - exclude, True
         return self.search_count(cr, user, args, context=context), False
 
 
