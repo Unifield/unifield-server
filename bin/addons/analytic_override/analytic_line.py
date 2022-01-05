@@ -121,6 +121,7 @@ class account_analytic_line(osv.osv):
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'is_reversal': fields.boolean('Reversal?'),
         'is_reallocated': fields.boolean('Reallocated?'),
+        'ad_updated': fields.boolean('Analytic Distribution Updated'),
         'date': fields.date('Posting Date', required=True, select=True, readonly=True),
         'document_date': fields.date('Document Date', readonly=True, required=True),
         'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency", readonly=True, write_relate=False),
