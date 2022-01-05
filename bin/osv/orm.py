@@ -2068,7 +2068,9 @@ class orm_template(object):
         or approximate.
         :return: (count, boolean) boolean is True in case of approximation
         """
-        if not args or (self._table in ['account_move_line', 'account_move'] and args in ([('period_id.number', '!=', 0)], [('period_id.number', '!=', 0), ('move_id.state', '=', 'posted')])):
+        if not args or \
+                (self._table in ['account_move_line', 'account_move'] and args in ([('period_id.number', '!=', 0)], [('period_id.number', '!=', 0), ('move_id.state', '=', 'posted')])) or \
+                (self._table == 'account_analytic_line' and args == [('account_id.category', '=', 'FUNDING')]):
             cr.execute("""
                 SELECT reltuples::BIGINT AS approximate_row_count
                 FROM pg_class WHERE relname = '%s'
@@ -2080,8 +2082,11 @@ class orm_template(object):
                 exclude = 0
                 if self._table in ['account_move_line', 'account_move']:
                     exclude = self.search_count(cr, user, [('period_id.number', '=', 0)], context={'show_period_0': 1})
-                if args == [('period_id.number', '!=', 0), ('move_id.state', '=', 'posted')]:
+                if self._table == 'account_move_line' and args == [('period_id.number', '!=', 0), ('move_id.state', '=', 'posted')]:
                     exclude += self.search_count(cr, user, [('move_id.state', '=', 'draft')], context=context)
+                if self._table == 'account_analytic_line':
+                    exclude = self.search_count(cr, user, [('account_id.category', '!=', 'FUNDING')], context=context)
+                    print exclude
                 return int(approximative_result) - exclude, True
         return self.search_count(cr, user, args, context=context), False
 
