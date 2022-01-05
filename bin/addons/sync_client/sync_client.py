@@ -1309,9 +1309,6 @@ class Entity(osv.osv):
             config_obj = self.pool.get('backup.config')
             version = config_obj.get_server_version(cr, uid, context=context)
 
-            config_data = config_obj.read(cr, uid, backup_config_id, ['backup_type', 'wal_directory', 'ssh_config_dir', 'basebackup_date', 'rsync_date'], context=context)
-            del config_data['id']
-            version_data.update(config_data)
             postgres_disk_space = version_instance_module._get_default_postgresql_disk_space(cr, uid)
             unifield_disk_space = version_instance_module._get_default_unifield_disk_space(cr, uid)
             version_data = {
@@ -1319,6 +1316,10 @@ class Entity(osv.osv):
                 'postgresql_disk_space': postgres_disk_space,
                 'unifield_disk_space': unifield_disk_space,
             }
+
+            config_data = config_obj.read(cr, uid, backup_config_id, ['backup_type', 'wal_directory', 'ssh_config_dir', 'basebackup_date', 'rsync_date'], context=context)
+            del config_data['id']
+            version_data.update(config_data)
 
 
         except Exception:
