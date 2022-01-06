@@ -58,7 +58,7 @@ class allocation_invoice_report(report_sxw.rml_parse):
             INNER JOIN account_account ac ON ac.id = i.account_id
             LEFT JOIN product_product p ON p.id = i.product_id
             LEFT JOIN res_currency y ON y.id = s.currency_id
-            WHERE i.invoice_id=%s AND i.account_id IS NOT NULL
+            WHERE i.invoice_id=%s AND i.account_id IS NOT NULL AND ac.is_analytic_addicted = True
             UNION ALL
             SELECT line_number,NULLIF('[' || default_code || '] ' || name_template, '[] ') as product,i.name as description, ac.code || ' ' || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, ROUND(percentage, 2) as percentage, ROUND(price_subtotal*percentage/100, 2) as sub_total, y.name as currency, n1.code as destination, n2.code as cost_center, n3.code as funding_pool
             FROM funding_pool_distribution_line a
