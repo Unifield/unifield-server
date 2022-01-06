@@ -67,8 +67,6 @@
                     <field name="cloud_backup" />
                     <field name="cloud_size" widget="human_size" />
                     <field name="backup_type" />
-                    <field name="wal_directory" />
-                    <field name="ssh_config_dir" />
                     <field name="basebackup_date" />
                     <field name="rsync_date" />
                     <field name="postgresql_disk_space" />
