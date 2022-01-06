@@ -88,7 +88,7 @@ class account_invoice(osv.osv):
 
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
-        Fake method for 'ready_for_import_in_debit_note' field
+        Returns False for all ids
         """
         res = {}
         for i in ids:
@@ -349,6 +349,52 @@ class account_invoice(osv.osv):
                 dom.extend(self._get_dom_by_doc_type(doc_type))
         return dom
 
+    def _search_open_fy(self, cr, uid, obj, name, args, context):
+        """
+        Returns a domain with:
+        - Draft Invoices: all
+        - Cancelled Invoices: those without date or those with a date within an Open Fiscal Year
+        - Other Invoices: those with a date within an Open Fiscal Year.
+
+        Example of domain generated:
+        dom = [
+         '|', '|',
+         ('state', '=', 'draft'),
+         '&', ('state', '=', 'cancel'), ('date_invoice', '=', False),
+         '&',
+         '&', ('state', '!=', 'draft'), ('date_invoice', '!=', False),
+         '|', '|',
+         '&', ('date_invoice', '>=', '2020-01-01'), ('date_invoice', '<=', '2020-12-31'),
+         '&', ('date_invoice', '>=', '2021-01-01'), ('date_invoice', '<=', '2021-12-31'),
+         '&', ('date_invoice', '>=', '2022-01-01'), ('date_invoice', '<=', '2022-12-31'),
+        ]
+        """
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2] or not args[0][2] is True:
+            raise osv.except_osv(_('Error'), _('Filter not implemented yet.'))
+        if context is None:
+            context = {}
+        fy_obj = self.pool.get('account.fiscalyear')
+        open_fy_ids = fy_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)  # "draft" = "Open" in the interface
+        if open_fy_ids:
+            dom = [
+                '|', '|',
+                ('state', '=', 'draft'),
+                '&', ('state', '=', 'cancel'), ('date_invoice', '=', False),
+                '&',
+                '&', ('state', '!=', 'draft'), ('date_invoice', '!=', False),
+            ]
+            for i in range(len(open_fy_ids) - 1):
+                dom.append('|')
+            for open_fy in fy_obj.browse(cr, uid, open_fy_ids, fields_to_fetch=['date_start', 'date_stop'], context=context):
+                dom.append('&')
+                dom.append(('date_invoice', '>=', open_fy.date_start))
+                dom.append(('date_invoice', '<=', open_fy.date_stop))
+        else:
+            dom = ['|', ('state', '=', 'draft'), '&', ('state', '=', 'cancel'), ('date_invoice', '=', False)]
+        return dom
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -388,6 +434,8 @@ class account_invoice(osv.osv):
         'real_doc_type': fields.selection(_get_invoice_type_list, 'Real Document Type', readonly=True),
         'doc_type': fields.function(_get_doc_type, method=True, type='selection', selection=_get_invoice_type_list,
                                     string='Document Type', store=False, fnct_search=_search_doc_type),
+        'open_fy': fields.function(_get_fake, method=True, type='boolean', string='Open Fiscal Year', store=False,
+                                   fnct_search=_search_open_fy),
     }
 
     _defaults = {

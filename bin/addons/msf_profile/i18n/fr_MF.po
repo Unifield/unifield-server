@@ -105307,7 +105307,7 @@ msgid "Filter not implemented on Funding Pools."
 msgstr "Filtre non mis en oeuvre sur les Funding Pools."
 
 #. module: account_override
-#: code:addons/account_override/invoice.py:359
+#: code:addons/account_override/invoice.py:0
 #, python-format
 msgid "Filter not implemented yet."
 msgstr "Filtre pas encore mis en oeuvre."
@@ -113221,3 +113221,26 @@ msgstr "Il manque le compte sur la ligne N°%s."
 #, python-format
 msgid "Duplication not allowed. Please set an account on all lines first."
 msgstr "Duplication non autorisée. Veuillez d'abord définir un compte sur toutes les lignes."
+
+#. module: analytic_override
+#: field:account.analytic.line,ad_updated:0
+msgid "Analytic Distribution Updated"
+msgstr "Distribution Analytique Mise à Jour"
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:276
+#, python-format
+msgid "The Analytic Distribution linked to the entry %s has been updated since the invoice validation.\n"
+"Refunds of type \"Modify\" and \"Cancel\" are not allowed."
+msgstr "La Distribution Analytique liée à l'écriture %s a été mise à jour depuis la validation de la facture.\n"
+"Les avoirs de type \"Modifier\" et \"Annuler\" ne sont pas autorisés."
+
+#. module: account
+#: view:account.invoice:0
+msgid "Open FY"
+msgstr "Exerc. Compt. Ouvert"
+
+#. module: account_override
+#: field:account.invoice,open_fy:0
+msgid "Open Fiscal Year"
+msgstr "Exercice Comptable Ouvert"

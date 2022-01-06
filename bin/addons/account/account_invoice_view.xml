@@ -635,12 +635,12 @@
                         <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
                         <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
                         <separator orientation="vertical"/>
+                        <filter name="open_fy" icon="terp-go-year" string="Open FY" domain="[('open_fy', '=', True)]"/>
 
                         <separator orientation="vertical"/>
                         <field name="number"/>
                         <field name="partner_id"/>
                         <field name="origin"/>
-                        <field name="amount_total"/>
                     </group>
                     <newline/>
                     <group col="10" colspan="4">
@@ -648,6 +648,7 @@
                         <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="supplier_reference"/>
                         <field name="name"/>
+                        <field name="amount_total"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
@@ -706,7 +707,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'stv')]</field>
-            <field name="context">{'doc_type': 'stv', 'type': 'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
+            <field name="context">{'doc_type': 'stv', 'type': 'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1, 'search_default_open_fy': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>
@@ -854,7 +855,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'isi')]</field>
-            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice', 'from_inv_form': True}</field>
+            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice', 'from_inv_form': True, 'search_default_open_fy': 1}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Invoices -->
         </record>
         <record id="action_isi_tree" model="ir.actions.act_window.view">
