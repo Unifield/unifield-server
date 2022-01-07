@@ -284,5 +284,5 @@ class inventory_parser(XlsxReportParser):
     def get_month(self, start, nb_month):
         return _(misc.month_abbr[(datetime.strptime(start, '%Y-%m-%d %H:%M:%S') + relativedelta(hour=0, minute=0, second=0, months=nb_month)).month])
 
-XlsxReport('report.report_replenishment_inventory_review_xls2', parser=inventory_parser, template='addons/procurement_cycle/report/replenishment_inventory_review.xlsx')
+XlsxReport('report.report_replenishment_inventory_review_xls2', parser=inventory_parser, template='addons/procurement_cycle/report_doc/replenishment_inventory_review.xlsx')
 
