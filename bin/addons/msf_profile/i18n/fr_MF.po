@@ -998,7 +998,6 @@ msgstr "Pacifique/Auckland"
 
 #. modules: account, product_asset, order_types, account_override, register_accounting, msf_instance, finance
 #: selection:account.analytic.journal,type:0
-#: view:account.journal:0
 #: selection:account.journal,type:0
 #: view:account.model:0
 #: selection:account.tax,type_tax_use:0
@@ -11391,6 +11390,7 @@ msgstr "Creation Month"
 #: view:res.request:0
 #: view:replenishment.location.config:0
 #: view:account.tax:0
+#: view:account.journal:0
 msgid "Inactive"
 msgstr "Inactif"
 
@@ -32295,7 +32295,6 @@ msgstr "No data to process"
 
 #. modules: account, account_mcdb, stock
 #: view:account.analytic.line:0
-#: view:account.journal:0
 #: view:account.mcdb:0
 #: selection:report.stock.move,type:0
 msgid "Others"
@@ -54125,7 +54124,6 @@ msgstr "Valider les lignes"
 #. module: account
 #: selection:account.account,type:0
 #: selection:account.account.template,type:0
-#: view:account.journal:0
 msgid "Liquidity"
 msgstr "Liquidités"
 
@@ -71508,6 +71506,7 @@ msgstr "Navajo"
 #: code:addons/mission_stock/mission_stock.py:515
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:51
 #: field:account.journal,is_active:0
+#: view:account.journal:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -76472,7 +76471,6 @@ msgid "Australia"
 msgstr "Australie"
 
 #. modules: account_override, register_accounting, msf_instance, finance, sale, order_types
-#: view:account.journal:0
 #: view:account.model:0
 #: selection:account.tax,type_tax_use:0
 #: view:account.tax.template:0
