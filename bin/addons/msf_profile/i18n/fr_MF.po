@@ -71507,6 +71507,7 @@ msgstr "Navajo"
 #: view:account.tax:0
 #: code:addons/mission_stock/mission_stock.py:515
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:51
+#: field:account.journal,is_active:0
 #, python-format
 msgid "Active"
 msgstr "Actif"

@@ -650,11 +650,13 @@ class account_journal(osv.osv):
         'bank_address': fields.text('Address', required=False),
         'inv_doc_type': fields.function(_get_false, method=True, type='boolean', string='Document Type', store=False,
                                         fnct_search=_search_inv_doc_type),
+        'is_active': fields.boolean('Active'),
     }
 
     _defaults = {
         'user_id': lambda self, cr, uid, context: uid,
         'company_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
+        'is_active': True,
     }
 
     _order = 'code'
