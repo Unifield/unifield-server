@@ -300,7 +300,6 @@ class instance_auto_creation(osv.osv):
                 data = {
                     'name': instance_name,
                     'identifier': instance_identifier,
-                    'oc': oc,
                     'parent': config_dict['instance'].get('parent_instance'),
                 }
 
