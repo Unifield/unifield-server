@@ -595,6 +595,7 @@
             <field name="res_model">account.journal</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_filter_is_active': 1, 'search_default_filter_is_not_active': 0}</field>
             <field name="help">Create and manage your company's journals from this menu. A journal is used to record transactions of all accounting data related to the day-to-day business of your company using double-entry bookkeeping system. Depending on the nature of its activities and the number of daily transactions, a company may keep several types of specialized journals such as a cash journal, purchase journal, sales journal...</field>
         </record>
         <menuitem action="action_account_journal_form" id="menu_action_account_journal_form" parent="menu_journals"/>
