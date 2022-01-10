@@ -93,7 +93,7 @@ class account_journal(osv.osv):
         if not context:
             context = {}
         regline_obj = self.pool.get('account.bank.statement.line')
-        dom = [('type', 'in', ['cash', 'bank', 'cheque'])]
+        dom = [('type', 'in', ['cash', 'bank', 'cheque']), ('is_active', '=', True)]
         if context.get('from', '') == 'regline_view' and context.get('active_id'):
             # get the currency and journal values for the View "Register Lines" accessible from the reg. Actions Menu
             reg_line = regline_obj.browse(cr, uid, context['active_id'], fields_to_fetch=['statement_id'], context=context)
