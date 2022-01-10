@@ -498,7 +498,8 @@
             <field name="model">account.journal</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account Journal">
+                <tree string="Account Journal" colors="red:is_active==False;black:is_active==True">
+                    <field name="is_active" invisible="1"/>
                     <field name="code"/>
                     <field name="name"/>
                     <field name="type"/>
