@@ -975,6 +975,7 @@ class account_move(osv.osv):
                                       domain="[('type', 'not in', "
                                              " ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra', 'correction', 'correction_hq']),"
                                              "('code', '!=', 'ISI'), "
+                                             "('is_active', '=', True), "
                                              "('instance_filter', '=', True)]",
                                       hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
