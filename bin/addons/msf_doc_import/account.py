@@ -372,9 +372,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     else:
                         # check for a valid journal code
-                        aj_ids = aj_obj.search(cr, uid, [('code', '=', line[cols['Journal Code']]), ('instance_id', '=', current_instance.id)])
+                        aj_ids = aj_obj.search(cr, uid,
+                                               [('code', '=', line[cols['Journal Code']]),
+                                                ('instance_id', '=', current_instance.id),
+                                                ('is_active', '=', True)],
+                                               limit=1)
                         if not aj_ids:
-                            errors.append(_('Line %s. Journal Code not found: %s.') % (current_line_num, line[cols['Journal Code']]))
+                            errors.append(_('Line %s. Journal Code not found or inactive: %s.') %
+                                          (current_line_num, line[cols['Journal Code']]))
                             continue
                         else:
                             aj_data = aj_obj.read(cr, uid, aj_ids, ['type'])[0]

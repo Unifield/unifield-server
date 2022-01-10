@@ -39756,10 +39756,10 @@ msgid "ABC Class"
 msgstr "Classe ABC"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:330
+#: code:addons/msf_doc_import/account.py:381
 #, python-format
-msgid "Line %s. Journal Code not found: %s."
-msgstr "Ligne %s. Code du Journal non trouvé: %s."
+msgid "Line %s. Journal Code not found or inactive: %s."
+msgstr "Ligne %s. Code Journal non trouvé ou inactif : %s."
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
