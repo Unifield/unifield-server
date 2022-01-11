@@ -2118,7 +2118,6 @@ class replenishment_segment_line(osv.osv):
                 <newline />
             ''' % context.get('rule')
 
-            print context.get('rule'), context.get('specific_period')
             if context.get('rule') in ('cycle', 'auto'):
                 added += '''<field name="rr_fmc_1" />'''
             elif context.get('rule') == 'minmax':
@@ -2600,6 +2599,14 @@ class replenishment_segment_line(osv.osv):
                 vals['replaced_product_id'] = False
             if vals['status'] not in  ('replaced', 'phasingout'):
                 vals['replacing_product_id'] = False
+        if context and context.get('sync_update_execution'):
+            # manage migration: in-pipe updates between UF23.0 and UF24.0
+            if vals.get('auto_qty') and not vals.get('rr_fmc_1'):
+                vals['rr_fmc_1'] = vals['auto_qty']
+            elif (vals.get('min_qty') or vals.get('max_qty')) and not vals.get('rr_fmc_1') and not vals.get('rr_max_1'):
+                vals['rr_fmc_1'] = vals['min_qty']
+                vals['rr_max_1'] = vals['max_qty']
+
         for x in range(1, 18):
             if vals.get('rr_fmc_to_%d'%x):
                 try:

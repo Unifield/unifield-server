@@ -719,5 +719,9 @@
         <record id="us_9044_add_location_colors" model="patch.scripts">
             <field name="method">us_9044_add_location_colors</field>
         </record>
+
+        <record id="us_8449_migrate_rr_min_max_auto_to_periods" model="patch.scripts">
+            <field name="method">us_8449_migrate_rr_min_max_auto_to_periods</field>
+        </record>
     </data>
 </openerp>
