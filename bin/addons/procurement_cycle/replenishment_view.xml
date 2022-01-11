@@ -1311,33 +1311,6 @@
             name="Stock outs"
             parent="stock.menu_stock_inventory_control" />
 
-        <record id="replenishment_segment_line_min_max_auto_supply_history_tree" model="ir.ui.view">
-            <field name="name">replenishment.segment.line.min_max_auto_supply.history.tree</field>
-            <field name="model">replenishment.segment.line.min_max_auto_supply.history</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="Segment History" hide_delete_button="1" hide_new_button="1">
-                    <field name="date" />
-                    <field name="product_id" string="Product"/>
-                    <field name="field" />
-                    <field name="old_value" />
-                    <field name="new_value" />
-                </tree>
-            </field>
-        </record>
-
-        <record id="replenishment_segment_line_min_max_auto_supply_history_search" model="ir.ui.view">
-            <field name="name">replenishment.segment.line.min_max_auto_supply.history.search</field>
-            <field name="model">replenishment.segment.line.min_max_auto_supply.history</field>
-            <field name="type">search</field>
-            <field name="arch" type="xml">
-                <search string="Segment History">
-                    <field name="date" />
-                    <field name="product_id" string="Product"/>
-                    <field name="field" />
-                </search>
-            </field>
-        </record>
 
         <record id="replenishment_segment_line_amc_past_fmc_tree" model="ir.ui.view">
             <field name="name">replenishment.segment.line.amc.past_fmc.tree</field>
@@ -1348,6 +1321,20 @@
                     <field name="month" />
                     <field name="product_id" string="Product"/>
                     <field name="fmc" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_segment_line_amc_past_minmax_tree" model="ir.ui.view">
+            <field name="name">replenishment.segment.line.amc.past_fmc.minmax.tree</field>
+            <field name="model">replenishment.segment.line.amc.past_fmc</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <tree string="HMC" hide_delete_button="1" hide_new_button="1">
+                    <field name="month" />
+                    <field name="product_id" string="Product"/>
+                    <field name="minmax" />
                 </tree>
             </field>
         </record>

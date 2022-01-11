@@ -1714,7 +1714,6 @@ msgstr "Europe/Sarajevo"
 #: selection:replenishment.segment,rule:0
 #: field:replenishment.order_calc.line,min_max:0
 #: selection:replenishment.order_calc.line,rule:0
-#: selection:replenishment.segment.line.min_max_auto_supply.history,field:0
 msgid "Min/Max"
 msgstr "Min/Max"
 
@@ -37145,7 +37144,6 @@ msgstr "Sur Plusieurs Documents"
 #: field:replenishment.inventory.review.line.pas,date:0
 #: report:addons/msf_outgoing/report/freight_manifest_xls.mako:407
 #: report:kitting.order.report:0
-#: field:replenishment.segment.line.min_max_auto_supply.history,date:0
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -41966,7 +41964,6 @@ msgstr "Nom de la transaction"
 #. module: msf_audittrail, procurement_cycle
 #: field:audittrail.log.line,old_value:0
 #: field:audittrail.log.line,old_value_text:0
-#: field:replenishment.segment.line.min_max_auto_supply.history,old_value:0
 msgid "Old Value"
 msgstr "Ancienne Valeur"
 
@@ -57263,7 +57260,6 @@ msgstr "Référence Complémentaire"
 #. module: msf_audittrail, procurement_cycle
 #: field:audittrail.log.line,new_value:0
 #: field:audittrail.log.line,new_value_text:0
-#: field:replenishment.segment.line.min_max_auto_supply.history,new_value:0
 msgid "New Value"
 msgstr "Nouvelle Valeur"
 
@@ -59465,7 +59461,6 @@ msgstr "\n"
 #: field:hr.payroll.import.period,field:0
 #: field:hr.payroll.msf,field:0
 #: field:object.query.result.fields,field_id:0
-#: field:replenishment.segment.line.min_max_auto_supply.history,field:0
 msgid "Field"
 msgstr "Champ"
 
@@ -82485,7 +82480,6 @@ msgstr "SFTP connection succeeded"
 #: field:stock.pipe.per.product.instance,product_id:0
 #: field:stock.pipe.per.product.instance.prod.lines,product_id:0
 #: view:replenishment.segment.line.amc.past_fmc:0
-#: view:replenishment.segment.line.min_max_auto_supply.history:0
 #: field:view.expired.expiring.stock.lines,product_id:0
 #: field:account.commitment.line,line_product_id:0
 #, python-format
@@ -111371,11 +111365,6 @@ msgid "Agreed Qty Rounded"
 msgstr "Qté Convenue arrondie"
 
 #. module: procurement_cycle
-#: selection:replenishment.segment.line.min_max_auto_supply.history,field:0
-msgid "AutoSupply"
-msgstr "AutoSupply"
-
-#. module: procurement_cycle
 #: field:replenishment.inventory.review.line,buffer_ss_qty:0
 #: field:replenishment.order_calc.line,buffer_ss_qty:0
 msgid "Buffer / SS Qty"
@@ -111613,11 +111602,6 @@ msgid "Replenishment Parent Segments"
 msgstr "Segments de Réappro Parent"
 
 #. module: procurement_cycle
-#: field:replenishment.segment.line.min_max_auto_supply.history,line_id:0
-msgid "Replenishment Segment Line"
-msgstr "Lignes de Segment"
-
-#. module: procurement_cycle
 #: view:replenishment.order_calc:0
 msgid "Round Agreed Qty to SoQ"
 msgstr "Arrondir Qté Convenue à la QcS"
@@ -111636,11 +111620,6 @@ msgstr "Stock de Sécurité (Qté)"
 #: sql_constraint:replenishment.segment:0
 msgid "Safety Stock must be positive or 0"
 msgstr "Stock de Sécurité doit être positif ou 0"
-
-#. module: procurement_cycle
-#: view:replenishment.segment.line.min_max_auto_supply.history:0
-msgid "Segment History"
-msgstr "Historique du Segment"
 
 #. module: procurement_cycle
 #: field:replenishment.segment.line,line_state_parent:0
