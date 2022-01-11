@@ -23,6 +23,7 @@ import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from operator import itemgetter
+from . import DEFAULT_JOURNALS
 
 import netsvc
 import pooler
@@ -619,6 +620,20 @@ class account_journal(osv.osv):
             journal_dom.append(('code', '!=', 'ISI'))
         return journal_dom
 
+    def _get_is_default(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the journal,
+        and value = True if the journal belongs to the list of journals imported by default in new instances, False otherwise
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for j in self.browse(cr, uid, ids, fields_to_fetch=['code', 'type'], context=context):
+            res[j.id] = (j.code, j.type) in DEFAULT_JOURNALS
+        return res
+
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True),
         'code': fields.char('Code', size=5, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
@@ -651,6 +666,8 @@ class account_journal(osv.osv):
         'inv_doc_type': fields.function(_get_false, method=True, type='boolean', string='Document Type', store=False,
                                         fnct_search=_search_inv_doc_type),
         'is_active': fields.boolean('Active'),
+        'is_default': fields.function(_get_is_default, method=True, type='boolean', string='Default Journal',
+                                      store=False, help="Journals created by default in new instances"),
     }
 
     _defaults = {

@@ -19,6 +19,11 @@
 #
 ##############################################################################
 
+DEFAULT_JOURNALS = [
+    ('ACC', 'accrual'),
+    ('FXA', 'cur_adj'),
+]
+
 import account
 import installer
 import project
