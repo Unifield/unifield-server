@@ -411,6 +411,11 @@ class account_journal(osv.osv):
         if any(is_system):
             raise osv.except_osv(_('Warning'),
                                  _('System journal not deletable'))
+
+        if any([j['is_default'] for j in self.read(cr, uid, ids, ['is_default'], context=context)]):
+            raise osv.except_osv(_('Warning'),
+                                _("The journals imported by default at instance creation can't be deleted."))
+
         return super(account_journal, self).unlink(cr, uid, ids,
                                                    context=context)
 

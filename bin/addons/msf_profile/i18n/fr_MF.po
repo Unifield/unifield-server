@@ -113266,3 +113266,9 @@ msgstr "Journaux créés par défaut dans les nouvelles instances"
 #: constraint:account.journal:0
 msgid "The journals imported by default at instance creation can't be inactivated."
 msgstr "Les journaux importés par défaut lors de la création d'instance ne peuvent pas être désactivés."
+
+#. module: account_journal
+#: code:addons/account_journal/account_journal.py:417
+#, python-format
+msgid "The journals imported by default at instance creation can't be deleted."
+msgstr "Les journaux importés par défaut lors de la création d'instance ne peuvent pas être supprimés."
