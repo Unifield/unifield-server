@@ -319,9 +319,9 @@ class wizard_register_import(osv.osv_memory):
                 if isinstance(instance_ids, (int, long)):
                     instance_ids = [instance_ids]
                 # Check second info: journal's code
-                journal_ids = journal_obj.search(cr, uid, [('code', '=', journal_code)])
+                journal_ids = journal_obj.search(cr, uid, [('code', '=', journal_code), ('is_active', '=', True)])
                 if not journal_ids or len(journal_ids) > 1:
-                    raise osv.except_osv(_('Warning'), _('Journal %s not found.') % (journal_code or '',))
+                    raise osv.except_osv(_('Warning'), _('Journal %s not found or inactive.') % (journal_code or '',))
                 if isinstance(journal_ids, (int, long)):
                     journal_ids = [journal_ids]
                 # Check third info: currency's code

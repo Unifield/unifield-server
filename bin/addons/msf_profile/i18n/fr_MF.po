@@ -93605,10 +93605,10 @@ msgid "America/Jamaica"
 msgstr "America/Jamaica"
 
 #. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:319
+#: code:addons/register_accounting/wizard/wizard_register_import.py:324
 #, python-format
-msgid "Journal %s not found."
-msgstr "Journal %s non trouvé."
+msgid "Journal %s not found or inactive."
+msgstr "Journal %s non trouvé ou inactif."
 
 #. module: sales_followup
 #: report:ir.follow.up.location.report_pdf:0
