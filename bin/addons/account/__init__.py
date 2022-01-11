@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-# list of the journals imported by default at new instance creation
+# list of tuples ('code', 'type') of the journals imported by default at new instance creation
 DEFAULT_JOURNALS = [
     ('ACC', 'accrual'),
     ('HQ', 'hq'),
