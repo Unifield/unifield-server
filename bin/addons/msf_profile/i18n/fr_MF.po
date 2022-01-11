@@ -113251,3 +113251,18 @@ msgstr "Exerc. Compt. Ouvert"
 #: field:account.invoice,open_fy:0
 msgid "Open Fiscal Year"
 msgstr "Exercice Comptable Ouvert"
+
+#. module: account
+#: field:account.journal,is_default:0
+msgid "Default Journal"
+msgstr "Journal par Défaut"
+
+#. module: account
+#: help:account.journal,is_default:0
+msgid "Journals created by default in new instances"
+msgstr "Journaux créés par défaut dans les nouvelles instances"
+
+#. module: account
+#: constraint:account.journal:0
+msgid "The journals imported by default at instance creation can't be inactivated."
+msgstr "Les journaux importés par défaut lors de la création d'instance ne peuvent pas être désactivés."

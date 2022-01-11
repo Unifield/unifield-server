@@ -678,6 +678,19 @@ class account_journal(osv.osv):
 
     _order = 'code'
 
+    def _check_default_journal(self, cr, uid, ids, context=None):
+        """
+        Prevents the inactivation of the journals imported by default in new instances.
+        """
+        for j in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'is_default']):
+            if not j.is_active and j.is_default:
+                return False
+        return True
+
+    _constraints = [
+        (_check_default_journal, "The journals imported by default at instance creation can't be inactivated.", ['is_active']),
+    ]
+
     def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
         journal = self.browse(cr, uid, id, context=context)
         if not default:
