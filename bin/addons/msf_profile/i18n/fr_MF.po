@@ -110330,6 +110330,12 @@ msgstr "Délai de Manutention (jours) :"
 msgid "Line %s. The journal third party used for the internal transfer must be different from the journal of the register."
 msgstr "Ligne %s. Le tiers de type journal utilisé pour le transfert interne doit être différent du journal du registre."
 
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:488
+#, python-format
+msgid "Line %s. The Journal Third Party \"%s\" is inactive."
+msgstr "Ligne %s. Le Tiers de type Journal \"%s\" est inactif."
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:470
 #, python-format

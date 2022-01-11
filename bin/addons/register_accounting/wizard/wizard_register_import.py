@@ -482,7 +482,12 @@ class wizard_register_import(osv.osv_memory):
                                 tp_ids = journal_obj.search(cr, uid, [('code', '=', line[cols['third_party']])], context=context)
                                 partner_type = 'journal'
                                 if tp_ids:
-                                    tp_journal = journal_obj.browse(cr, uid, tp_ids, fields_to_fetch=['currency'], context=context)[0]
+                                    tp_journal = journal_obj.browse(cr, uid, tp_ids, fields_to_fetch=['currency', 'is_active'],
+                                                                    context=context)[0]
+                                    if not tp_journal.is_active:
+                                        errors.append(_('Line %s. The Journal Third Party "%s" is inactive.') %
+                                                      (current_line_num, line[cols['third_party']]))
+                                        continue
                                     if type_for_register == 'transfer':
                                         if tp_journal.currency.id == register_currency:
                                             errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
