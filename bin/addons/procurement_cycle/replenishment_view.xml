@@ -568,43 +568,7 @@
                             <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="5" />
                             <button name="remove_outdated_fmcs" type="object" icon="gtk-media-rewind" string="Remove outdated FMCs" attrs="{'invisible':[('rule', '!=', 'cycle')]}" colspan="3"/>
                         </group>
-                            <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule,specific_period=specific_period,label=rr_label" scroll="1" attrs="{'readonly': [('state', 'not in', ['draft', 'complete'])]}" o2m_selectable="2">
-                                <tree editable="top" editable_style="new" colors="red: not status or (display_paired_icon and not status_tooltip and status!='phasingout')">
-                                    <field name="line_state_parent" invisible="1" />
-                                    <field name="line_rule_parent" invisible="1" />
-                                    <field name="product_id" filter_selector="1" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
-                                    <field name="product_description" displayon="noteditable" filter_selector="1" />
-                                    <field name="uom_id" invisible="1" />
-                                    <field name="in_main_list" filter_selector="1" />
-                                    <field name="status" filter_selector="1" tooltip="status_tooltip" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}" />
-                                    <field name="status_tooltip" invisible="1" />
-                                    <field name="display_paired_icon" invisible="1" />
-                                    <button name="set_paired_product" string="Set Paired Product" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('display_paired_icon', '=', False)]}" type="object" icon="gtk-convert" />
-                                    <field name="real_stock" />
-                                    <field name="rr_amc" />
-
-                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
-
-                                    <field name="rr_fmc_1"  nolabel="1" v_string="%%(label)s 1"  invisible="context.get('rule')=='minmax'"/>
-                                    <field name="rr_min_max_1"  nolabel="1" invisible="context.get('rule')!='minmax'" />
-
-                                    <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'required': [('rr_fmc_1', '!=', False), ('line_rule_parent', '=', 'cycle')]}" on_change="change_fmc('from', '1', rr_fmc_from_1, False)"  nolabel="1"/>
-                                    <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'required': ['&amp;', ('rr_fmc_1', '!=', False), '|', ('line_rule_parent', '=', 'cycle'), ('rr_fmc_from_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1, False)" nolabel="1" depends="rr_fmc_from_1"/>
-
-                                    <field name="rr_fmc_2" nolabel="1" v_string="%%(label)s 2" invisible="context.get('rule')!='cycle' and (context.get('rule')!='auto' or not context.get('specific_period'))"/>
-                                    <field name="rr_min_max_2"  nolabel="1" invisible="context.get('rule')!='minmax' or not context.get('specific_period')" />
-                                    <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('to', '2', rr_fmc_to_2, False)" nolabel="1" depends="rr_fmc_to_1"/>
-
-                                    <field name="rr_fmc_3" nolabel="1" v_string="%%(label)s 3" invisible="context.get('rule')!='cycle' and (context.get('rule')!='auto' or not context.get('specific_period'))"/>
-                                    <field name="rr_min_max_3"  nolabel="1" invisible="context.get('rule')!='minmax' or not context.get('specific_period')" />
-                                    <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3, False)" nolabel="1" depends="rr_fmc_to_2"/>
-
-                                    <field name= "list_fmc" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" displayon="noteditable"/>
-                                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"  icon="terp-go-week" />
-                                    <field name="warning_html" widget="html_text" displayon="noteditable"/>
-
-                                </tree>
-                            </field>
+                            <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule,specific_period=specific_period,label=rr_label" scroll="1" attrs="{'readonly': [('state', 'not in', ['draft', 'complete'])]}" o2m_selectable="2" />
 
 
                         </page>
@@ -736,6 +700,36 @@
             </field>
         </record>
 
+        <record id="replenishment_segment_line_tree" model="ir.ui.view">
+            <field name="name">replenishment.segment.line.tree</field>
+            <field name="model">replenishment.segment.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="top" editable_style="new" colors="red: not status or (display_paired_icon and not status_tooltip and status!='phasingout')">
+                    <field name="line_state_parent" invisible="1" />
+                    <field name="line_rule_parent" invisible="1" />
+                    <field name="product_id" filter_selector="1" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
+                    <field name="product_description" displayon="noteditable" filter_selector="1" />
+                    <field name="uom_id" invisible="1" />
+                    <field name="in_main_list" filter_selector="1" />
+                    <field name="status" filter_selector="1" tooltip="status_tooltip" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}" />
+                    <field name="status_tooltip" invisible="1" />
+                    <field name="display_paired_icon" invisible="1" />
+                    <button name="set_paired_product" string="Set Paired Product" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('display_paired_icon', '=', False)]}" type="object" icon="gtk-convert" />
+                    <field name="real_stock" />
+                    <field name="rr_amc" />
+
+                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
+
+                    <group  name="list_values" />
+
+                    <field name= "list_fmc" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" displayon="noteditable"/>
+                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"  icon="terp-go-week" />
+                    <field name="warning_html" widget="html_text" displayon="noteditable"/>
+
+                </tree>
+            </field>
+        </record>
         <record id="replenishment_segment_action" model="ir.actions.act_window">
             <field name="res_model">replenishment.segment</field>
             <field name="view_type">form</field>
