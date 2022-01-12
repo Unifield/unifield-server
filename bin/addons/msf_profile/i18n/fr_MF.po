@@ -11391,6 +11391,7 @@ msgstr "Creation Month"
 #: view:replenishment.location.config:0
 #: view:account.tax:0
 #: view:account.journal:0
+#: code:addons/account/report/account_liquidity_balance.py:58
 msgid "Inactive"
 msgstr "Inactif"
 
@@ -71507,6 +71508,7 @@ msgstr "Navajo"
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:51
 #: field:account.journal,is_active:0
 #: view:account.journal:0
+#: code:addons/account/report/account_liquidity_balance.py:58
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -113272,3 +113274,8 @@ msgstr "Les journaux importés par défaut lors de la création d'instance ne pe
 #, python-format
 msgid "The journals imported by default at instance creation can't be deleted."
 msgstr "Les journaux importés par défaut lors de la création d'instance ne peuvent pas être supprimés."
+
+#. module: account
+#: report:addons/account/report/account_liquidity_balance.mako:176
+msgid "Journal status"
+msgstr "Statut du Journal"

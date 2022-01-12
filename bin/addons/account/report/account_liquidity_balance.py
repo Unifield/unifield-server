@@ -44,6 +44,21 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             'get_register_data': self._get_register_data,
         })
 
+    def _filter_journal_status(self, reg_data):
+        """
+        Applies the following changes to the reg_data:
+        - adds the journal status
+        - removes the lines for which the journal is inactive only if the Starting Balance, the Movements, and the Closing Balance are all 0.00
+        """
+        journal_obj = self.pool.get('account.journal')
+        new_reg_data = []
+        for reg in reg_data:
+            journal_active = journal_obj.read(self.cr, self.uid, reg['id'], ['is_active'])['is_active']
+            if journal_active or reg['opening'] or reg['calculated'] or reg['closing']:
+                reg['journal_status'] = journal_active and _('Active') or _('Inactive')
+                new_reg_data.append(reg)
+        return new_reg_data
+
     def _get_register_data(self):
         """
         Returns a list of dicts, each containing the data of the liquidity registers for the selected period and instances
@@ -75,6 +90,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         params = (period_title, reg_types, date_from, reg_types, date_from, date_to, reg_types, date_to, tuple(self.instance_ids))
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
+        cash_bank_res = self._filter_journal_status(cash_bank_res)
         cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res,
                                                                               encode=False, context=self.context)
         res.extend(cash_bank_res)
