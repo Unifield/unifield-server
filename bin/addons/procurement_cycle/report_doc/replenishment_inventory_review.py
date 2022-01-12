@@ -45,9 +45,9 @@ class inventory_parser(XlsxReportParser):
         self.duplicate_row_dimensions(range(1, 16))
         self.duplicate_column_dimensions(default_width=10.75)
 
-        sheet.column_dimensions.group('AR', get_column_letter(column_index_from_string('AR')+2*inventory.projected_view - 1), hidden=False)
+        sheet.column_dimensions.group('AO', get_column_letter(column_index_from_string('AO')+2*inventory.projected_view - 1), hidden=False)
         sheet.column_dimensions.group('D', 'E', hidden=False)
-        sheet.column_dimensions.group('V', 'Y', hidden=False)
+        sheet.column_dimensions.group('S', 'V', hidden=False)
         sheet.row_dimensions.group(2, 14, hidden=False)
 
 
@@ -104,9 +104,6 @@ class inventory_parser(XlsxReportParser):
             (_('Segment Ref/name'), orange_header_style),
             (_('RR (threshold) applied'), orange_header_style),
             (_('RR (qty) applied'), orange_header_style),
-            (_('Min'), orange_header_style),
-            (_('Max'), orange_header_style),
-            (_('Automatic Supply order  qty'), orange_header_style),
             ('%s %s' % (_('Internal LT'), time_unit_str), orange_header_style),
             ('%s %s' % (_('External LT'), time_unit_str), orange_header_style),
             (_('Total lead time'), orange_header_style),
@@ -142,7 +139,7 @@ class inventory_parser(XlsxReportParser):
 
 
         for nb_month in range(0, inventory.projected_view):
-            row_headers.append(('%s M%s\n %s' % (_('RR-FMC'), nb_month, self.get_month(inventory.generation_date, nb_month)), pink1_header_style))
+            row_headers.append(('%s M%s\n %s' % (_('RR value'), nb_month, self.get_month(inventory.generation_date, nb_month)), pink1_header_style))
 
         for nb_month in range(0, inventory.projected_view):
             row_headers.append(('%s\nM%s %s' % (_('Projected'), nb_month, self.get_month(inventory.generation_date, nb_month)), pink2_header_style))
@@ -173,17 +170,6 @@ class inventory_parser(XlsxReportParser):
                 self.add_cell(line.segment_ref_name or None)
                 self.add_cell(line.rule == 'cycle' and 'PAS' or None)
                 self.add_cell(line.segment_ref_name and self.getSel(line, 'rule') or None)
-                if line.rule == 'minmax':
-                    self.add_cell(line.min_qty)
-                    self.add_cell(line.max_qty)
-                else:
-                    self.add_cell('', grey_style)
-                    self.add_cell('', grey_style)
-
-                if line.segment_ref_name and line.rule == 'auto':
-                    self.add_cell(line.auto_qty)
-                else:
-                    self.add_cell('', grey_style)
 
                 if inventory.time_unit == 'd':
                     lt_style = default_style
@@ -261,9 +247,14 @@ class inventory_parser(XlsxReportParser):
 
                 for detail_pas in line.pas_ids:
                     if detail_pas.rr_fmc is not None and detail_pas.rr_fmc is not False:
-                        self.add_cell(detail_pas.rr_fmc)
+                        if line.rule != 'minmax':
+                            self.add_cell(detail_pas.rr_fmc)
+                        elif detail_pas.rr_max is not False:
+                            self.add_cell('%g / %g'% (detail_pas.rr_fmc, detail_pas.rr_max))
+                        else:
+                            self.add_cell(_('Invalid'))
                     else:
-                        self.add_cell(_('Invalid FMC'))
+                        self.add_cell(_('Invalid'))
 
                 for detail_pas in line.pas_ids:
                     if detail_pas.projected is not None and detail_pas.projected is not False:

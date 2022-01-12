@@ -1384,8 +1384,46 @@ class replenishment_segment(osv.osv):
                                 'rr_fmc': rr_fmc_month,
                                 'projected': rr_fmc_month and max(0, fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('pas',0)) + total_expired_qty,
                             }))
+                    # end if seg.rule == 'cycle'
 
+                elif review_id and loc_ids:
+                    for fmc_d in range(1, 19):
+                        from_fmc = line['rr_fmc_from_%d'%fmc_d]
+                        to_fmc = line['rr_fmc_to_%d'%fmc_d]
+                        num_fmc = line['rr_fmc_%d'%fmc_d]
+                        if seg.rule == 'minmax':
+                            max_fmc = line['rr_max_%d'%fmc_d]
 
+                        to_break = False
+
+                        begin_date = today + relativedelta(day=1)
+                        max_date = today + relativedelta(months=line.segment_id.projected_view, day=1, days=-1)
+                        if fmc_d == 1 and not from_fmc and not to_fmc and num_fmc is not False:
+                            to_break = True
+                            upper = max_date.strftime('%Y-%m-%d')
+                            key = begin_date + relativedelta(months=1, day=1, days=-1)
+                        elif not from_fmc or not to_fmc or num_fmc is False:
+                            break
+                        else:
+                            upper = min(to_fmc, max_date.strftime('%Y-%m-%d'))
+                            key = datetime.strptime(from_fmc, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)
+
+                        while key.strftime('%Y-%m-%d') <= upper:
+                            fmc_data = {}
+                            if seg.rule == 'minmax':
+                                if num_fmc is False or max_fmc is False:
+                                    to_break = True
+                                    break
+                                fmc_data['rr_max'] = max_fmc
+
+                            fmc_data.update({
+                                'date': key.strftime('%Y-%m-%d'),
+                                'rr_fmc': num_fmc,
+                            })
+                            detailed_pas.append((0, 0, fmc_data))
+                            key += relativedelta(months=2, day=1, days=-1)
+                        if to_break:
+                            break
 
                 #pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - total_fmc)
                 pas = pas_full
@@ -2261,6 +2299,13 @@ class replenishment_segment_line(osv.osv):
             pass
         if value:
             value = value.strip()
+
+        # rr_min_max_%d is invisble in line edition, so value is written for auto and cycle seg
+        cr.execute('select seg.rule from replenishment_segment_line line, replenishment_segment seg where seg.id = line.segment_id and line.id=%s', (id, ))
+        rule = cr.fetchone()
+        if rule and rule[0] != 'minmax':
+            return True
+
         if not value or value == '/':
             cr.execute('update replenishment_segment_line set rr_fmc_' + str_n + '=NULL, rr_max_' + str_n +'=NULL where id=%s', (id, )) # not_a_user_entry
         elif '/' not in value:
@@ -3584,7 +3629,8 @@ class replenishment_inventory_review_line_pas(osv.osv):
     _columns = {
         'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
         'date': fields.date('Date'),
-        'rr_fmc': fields.float_null('RR-FMC', digits=(16, 2)),
+        'rr_fmc': fields.float_null('RR Value', digits=(16, 2)),
+        'rr_max': fields.float_null('RR Max', digits=(16, 2)),
         'projected': fields.float_null('Projected', digits=(16, 2)),
     }
 
