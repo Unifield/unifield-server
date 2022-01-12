@@ -104,7 +104,9 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
-        args = [('period_id', '=', self.period_id)]
+        journal_obj = pool.get('account.journal')
+        journal_ids = journal_obj.search(self.cr, self.uid, [('is_active', '=', True)], order='NO_ORDER')
+        args = [('period_id', '=', self.period_id), ('journal_id', 'in', journal_ids)]
         reg_ids = reg_obj.search(self.cr, self.uid, args, order='journal_id')
         regs = reg_obj.browse(self.cr, self.uid, reg_ids, context={'lang': self.localcontext.get('lang')})
 
