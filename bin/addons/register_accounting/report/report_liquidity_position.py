@@ -304,7 +304,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
         # get the cheque registers for the selected period and previous ones IF the one of the selected period exists
         journal_ids = []
-        for j_id in journal_obj.search(self.cr, self.uid, [('type', '=', 'cheque')], order='NO_ORDER'):
+        for j_id in journal_obj.search(self.cr, self.uid, [('type', '=', 'cheque'), ('is_active', '=', True)], order='NO_ORDER'):
             if reg_obj.search_exist(self.cr, self.uid, [('journal_id', '=', j_id), ('period_id', '=', self.period_id)]):
                 journal_ids.append(j_id)
         period_ids = period_obj.search(self.cr, self.uid,
