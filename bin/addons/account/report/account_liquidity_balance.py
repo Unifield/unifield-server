@@ -161,6 +161,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         cheque_params = (period_title, tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
+        cheque_res = self._filter_journal_status(cheque_res)
         cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, encode=False, context=self.context)
         res.extend(cheque_res)
         return res
