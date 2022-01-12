@@ -776,6 +776,18 @@ class account_journal(osv.osv):
                              'bank_address': '',
                              })
 
+    def _check_journal_inactivation(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        reg_obj = self.pool.get('account.bank.statement')
+        if 'is_active' in vals and not vals.get('is_active'):
+            for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code'], context=context):
+                if journal.type in ['bank', 'cheque', 'cash']:  # liquidity
+                    if reg_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'confirm')], context=context):
+                        raise osv.except_osv(_('Warning !'),
+                                             _('Please close the registers linked to the journal %s before inactivating it.') % journal.code)
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -789,6 +801,7 @@ class account_journal(osv.osv):
             if not journal.is_current_instance and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
+        self._check_journal_inactivation(cr, uid, ids, vals, context=context)
         ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)
         self._check_journal_constraints(cr, uid, ids, context=context)
         return ret
