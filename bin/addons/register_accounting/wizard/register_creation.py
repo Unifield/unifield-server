@@ -127,6 +127,7 @@ class register_creation(osv.osv_memory):
 
         # Prepare some values
         abs_obj = self.pool.get('account.bank.statement')
+        journal_obj = self.pool.get('account.journal')
         reg_to_create_obj = self.pool.get('wizard.register.creation.lines')
         period_id = wizard.period_id.id
         instance_id = wizard.instance_id.id
@@ -135,7 +136,10 @@ class register_creation(osv.osv_memory):
 
         for rtype in reg_type:
             # Search all register from previous period
-            abs_ids = abs_obj.search(cr, uid, [('journal_id.type', '=', rtype), ('period_id', '=', prev_period_id),('instance_id','=', instance_id)], context=context)
+            journal_ids = journal_obj.search(cr, uid, [('type', '=', rtype), ('is_active', '=', True)], order='NO_ORDER', context=context)
+            abs_ids = abs_obj.search(cr, uid,
+                                     [('journal_id', 'in', journal_ids), ('period_id', '=', prev_period_id), ('instance_id', '=', instance_id)],
+                                     context=context)
             if isinstance(abs_ids, (int, long)):
                 abs_ids = [abs_ids]
             # Browse all registers in order to filter those which doesn't have an active currency
