@@ -696,7 +696,7 @@ class ir_translation(osv.osv):
                     target_ids = [target_ids]
                 target = self.pool.get(model_name)
                 if target:
-                    if hasattr(target, "get_sd_ref"):
+                    if hasattr(target, "get_sd_ref") and self.pool.get('sync.client.entity'):
                         res = target.get_sd_ref(cr, uid, target_ids).values()[0]
         return res
 
