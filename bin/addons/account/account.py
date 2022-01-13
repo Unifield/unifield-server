@@ -779,18 +779,24 @@ class account_journal(osv.osv):
     def _check_journal_inactivation(self, cr, uid, ids, vals, context=None):
         """
         Raises an error in case the journal inactivation is not allowed:
-        - for all liquidity journals: not all registers have been closed
+        - for all liquidity journals: not all registers have been closed, or not all manual journal entries have been posted
         - for bank and cash journals only: the balance of the last register is not zero
         """
         if context is None:
             context = {}
         reg_obj = self.pool.get('account.bank.statement')
+        am_obj = self.pool.get('account.move')
         if 'is_active' in vals and not vals.get('is_active'):
             for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code'], context=context):
                 if journal.type in ['bank', 'cheque', 'cash']:
                     if reg_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'confirm')], context=context):
                         raise osv.except_osv(_('Warning !'),
                                              _('Please close the registers linked to the journal %s before inactivating it.') % journal.code)
+                    if am_obj.search_exist(cr, uid,
+                                           [('journal_id', '=', journal.id), ('status', '=', 'manu'), ('state', '!=', 'posted')], context=context):
+                        raise osv.except_osv(_('Warning !'),
+                                             _('Please post all the manual Journal Entries on the journal %s before inactivating it.') %
+                                             journal.code)
                     if journal.type in ['bank', 'cash']:
                         last_reg_id = reg_obj.search(cr, uid, [('journal_id', '=', journal.id)],
                                                      order='period_start_date DESC', limit=1, context=context)
