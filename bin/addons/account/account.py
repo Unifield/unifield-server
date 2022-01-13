@@ -777,15 +777,29 @@ class account_journal(osv.osv):
                              })
 
     def _check_journal_inactivation(self, cr, uid, ids, vals, context=None):
+        """
+        Raises an error in case the journal inactivation is not allowed:
+        - for all liquidity journals: not all registers have been closed
+        - for bank and cash journals only: the balance of the last register is not zero
+        """
         if context is None:
             context = {}
         reg_obj = self.pool.get('account.bank.statement')
         if 'is_active' in vals and not vals.get('is_active'):
             for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code'], context=context):
-                if journal.type in ['bank', 'cheque', 'cash']:  # liquidity
+                if journal.type in ['bank', 'cheque', 'cash']:
                     if reg_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'confirm')], context=context):
                         raise osv.except_osv(_('Warning !'),
                                              _('Please close the registers linked to the journal %s before inactivating it.') % journal.code)
+                    if journal.type in ['bank', 'cash']:
+                        last_reg_id = reg_obj.search(cr, uid, [('journal_id', '=', journal.id)],
+                                                     order='period_start_date DESC', limit=1, context=context)
+                        if last_reg_id:
+                            balance_end = reg_obj.browse(cr, uid, last_reg_id[0], fields_to_fetch=['balance_end']).balance_end or 0.0
+                            if abs(balance_end) > 10**-3:
+                                raise osv.except_osv(_('Warning !'),
+                                                     _("The journal %s can't be inactivated because the balance of the "
+                                                       "last register is not zero.") % journal.code)
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
