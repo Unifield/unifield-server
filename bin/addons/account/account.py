@@ -781,7 +781,7 @@ class account_journal(osv.osv):
         Raises an error in case the journal inactivation is not allowed:
         - for all liquidity journals: not all registers have been closed, or not all manual journal entries have been posted
         - for bank and cash journals only: the balance of the last register is not zero
-        - for non-liquidity journals: all entries have been posted
+        - for non-liquidity journals: not all entries have been posted, or some invoices are still Draft
 
         Note: there is a Python constraint preventing the inactivation of the journals imported by default at instance creation.
         """
@@ -789,6 +789,7 @@ class account_journal(osv.osv):
             context = {}
         reg_obj = self.pool.get('account.bank.statement')
         am_obj = self.pool.get('account.move')
+        inv_obj = self.pool.get('account.invoice')
         if 'is_active' in vals and not vals.get('is_active'):
             for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code'], context=context):
                 if journal.type in ['bank', 'cheque', 'cash']:  # liquidity journals
@@ -796,7 +797,8 @@ class account_journal(osv.osv):
                         raise osv.except_osv(_('Error'),
                                              _("Please close the registers linked to the journal %s before inactivating it.") % journal.code)
                     if am_obj.search_exist(cr, uid,
-                                           [('journal_id', '=', journal.id), ('status', '=', 'manu'), ('state', '!=', 'posted')], context=context):
+                                           [('journal_id', '=', journal.id), ('status', '=', 'manu'), ('state', '!=', 'posted')],
+                                           context=context):
                         raise osv.except_osv(_('Error'),
                                              _("Please post all the manual Journal Entries on the journal %s before inactivating it.") %
                                              journal.code)
@@ -810,10 +812,13 @@ class account_journal(osv.osv):
                                                      _("The journal %s can't be inactivated because the balance of the "
                                                        "last register is not zero.") % journal.code)
                 else:  # non-liquidity journals
-                    if am_obj.search_exist(cr, uid,
-                                           [('journal_id', '=', journal.id), ('state', '!=', 'posted')], context=context):
+                    if am_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'posted')], context=context):
                         raise osv.except_osv(_('Error'),
                                              _("All entries booked on %s must be posted before inactivating the journal.") % journal.code)
+                    if inv_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '=', 'draft')], context=context):
+                        raise osv.except_osv(_('Error'),
+                                             _("The journal %s can't be inactivated because there are still some invoices "
+                                               "in Draft state on this journal.") % journal.code)
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
