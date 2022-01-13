@@ -778,10 +778,10 @@ class account_journal(osv.osv):
 
     def _check_journal_inactivation(self, cr, uid, ids, vals, context=None):
         """
-        Raises an error in case the journal inactivation is not allowed:
-        - for all liquidity journals: not all registers have been closed, or not all manual journal entries have been posted
-        - for bank and cash journals only: the balance of the last register is not zero
-        - for non-liquidity journals: not all entries have been posted, or some invoices are still Draft
+        Raises an error in case the journal is being inactivated while it is not allowed:
+        - for all liquidity journals: not all registers have been closed, or not all manual journal entries have been posted.
+        - for bank and cash journals only: the balance of the last register is not zero.
+        - for non-liquidity journals: not all entries have been posted, or some invoices are still Draft.
 
         Note: there is a Python constraint preventing the inactivation of the journals imported by default at instance creation.
         """
@@ -792,6 +792,8 @@ class account_journal(osv.osv):
         inv_obj = self.pool.get('account.invoice')
         if 'is_active' in vals and not vals.get('is_active'):
             for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code'], context=context):
+                if not journal.is_active:  # skip the checks if the journal is already inactive
+                    continue
                 if journal.type in ['bank', 'cheque', 'cash']:  # liquidity journals
                     if reg_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'confirm')], context=context):
                         raise osv.except_osv(_('Error'),
