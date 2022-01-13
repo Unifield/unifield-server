@@ -113278,4 +113278,4 @@ msgstr "Les journaux importés par défaut lors de la création d'instance ne pe
 #. module: account
 #: report:addons/account/report/account_liquidity_balance.mako:176
 msgid "Journal status"
-msgstr "Statut du Journal"
+msgstr "Statut du journal"
