@@ -113314,3 +113314,9 @@ msgstr "Le journal %s ne peut pas être désactivé car il y a encore des factur
 #, python-format
 msgid "All entries booked on %s must be posted before inactivating the journal."
 msgstr "Toutes les écritures enregistrées sur %s doivent être comptabilisées avant de désactiver le journal."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/register_reopen.py:77
+#, python-format
+msgid "The journal %s is inactive."
+msgstr "Le journal %s est inactif."
