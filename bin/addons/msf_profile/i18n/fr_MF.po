@@ -113284,3 +113284,33 @@ msgstr "Statut du journal"
 #: field:account.bank.statement,period_start_date:0
 msgid "Period Start Date"
 msgstr "Date de Début de la Période"
+
+#. module: account
+#: code:addons/account/account.py:798
+#, python-format
+msgid "Please close the registers linked to the journal %s before inactivating it."
+msgstr "Veuillez clôturer les registres liés au journal %s avant de le désactiver."
+
+#. module: account
+#: code:addons/account/account.py:803
+#, python-format
+msgid "Please post all the manual Journal Entries on the journal %s before inactivating it."
+msgstr "Veuillez comptabiliser toutes les Ecritures Comptables manuelles sur le journal %s avant de le désactiver."
+
+#. module: account
+#: code:addons/account/account.py:812
+#, python-format
+msgid "The journal %s can't be inactivated because the balance of the last register is not zero."
+msgstr "Le journal %s ne peut pas être désactivé car le solde du dernier registre n'est pas nul."
+
+#. module: account
+#: code:addons/account/account.py:820
+#, python-format
+msgid "The journal %s can't be inactivated because there are still some invoices in Draft state on this journal."
+msgstr "Le journal %s ne peut pas être désactivé car il y a encore des factures à l'état Brouillon sur ce journal."
+
+#. module: account
+#: code:addons/account/account.py:817
+#, python-format
+msgid "All entries booked on %s must be posted before inactivating the journal."
+msgstr "Toutes les écritures enregistrées sur %s doivent être comptabilisées avant de désactiver le journal."
