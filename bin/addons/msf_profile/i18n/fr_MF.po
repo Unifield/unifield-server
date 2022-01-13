@@ -113324,3 +113324,8 @@ msgstr "sequence"
 #, python-format
 msgid "You can not convert a Delivery Order from scratch into a Picking Ticket"
 msgstr "Vous ne pouvez pas convertir un Bon de Livraison créé à partir de rien en un Bon de Picking"
+
+#. module: purchase
+#: field:purchase.order,dest_partner_type:0
+msgid "DPO Dest Partner Type"
+msgstr "Type du partenaire destination du BCD"
