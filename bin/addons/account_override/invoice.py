@@ -83,7 +83,7 @@ class account_invoice(osv.osv):
         if context is None:
             context = {}
         journal_obj = self.pool.get('account.journal')
-        res = journal_obj.search(cr, uid, [('inv_doc_type', '=', True)], order='id', limit=1, context=context)
+        res = journal_obj.search(cr, uid, [('inv_doc_type', '=', True), ('is_active', '=', True)], order='id', limit=1, context=context)
         return res and res[0] or False
 
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):

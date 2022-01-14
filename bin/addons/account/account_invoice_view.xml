@@ -175,7 +175,7 @@
                 <form string="Supplier Invoice">
                     <group col="8" colspan="4">
                         <field name="journal_id"
-                               domain="[('inv_doc_type', '=', True)]"
+                               domain="[('inv_doc_type', '=', True), ('is_active', '=', True)]"
                                attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         <field name="vat_ok" invisible="1" />
                         <field name="number" readonly="1"/>
@@ -408,7 +408,7 @@
             <field name="arch" type="xml">
                 <form string="Stock Transfer Voucher" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True), ('is_active', '=', True)]"/>
                         <field name="journal_type" invisible="1"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
