@@ -54,6 +54,25 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF24.0
+    def us_9391_fix_non_picks(self, cr, uid, *a, **b):
+        '''
+        Fix the subtypes and names of INs/INTs with PICK names
+        '''
+        # INs from scratch with PICK name
+        cr.execute("""
+            UPDATE stock_picking SET name = 'IN/' || name, subtype = 'standard' 
+            WHERE id IN (SELECT id FROM stock_picking WHERE name LIKE 'PICK%' AND name NOT LIKE '%return' AND type = 'in' AND subtype = 'picking')
+        """)
+
+        # INTs from scratch with PICK name
+        cr.execute("""
+            UPDATE stock_picking SET name = 'INT/' || name, subtype = 'standard' 
+            WHERE id IN (SELECT id FROM stock_picking WHERE name LIKE 'PICK%' AND name NOT LIKE '%return' AND type = 'internal' AND subtype = 'picking')
+        """)
+
+        return True
+
     # UF23.0
     def us_8839_cv_from_fo(self, cr, uid, *a, **b):
         if cr.column_exists('account_commitment_line', 'po_line_product_id'):

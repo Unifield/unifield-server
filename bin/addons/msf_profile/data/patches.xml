@@ -719,5 +719,10 @@
         <record id="us_9044_add_location_colors" model="patch.scripts">
             <field name="method">us_9044_add_location_colors</field>
         </record>
+
+        <!-- UF24.0 -->
+        <record id="us_9391_fix_non_picks" model="patch.scripts">
+            <field name="method">us_9391_fix_non_picks</field>
+        </record>
     </data>
 </openerp>
