@@ -381,9 +381,17 @@
     <Cell ss:StyleID="s76"><Data ss:Type="String">${_('Specific Period Only')|x}</Data></Cell>
     <Cell ss:StyleID="mperiods"><Data ss:Type="String">${objects[0].specific_period and _('Yes') or _('No')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    % else:
+    <Cell />
+    <Cell />
+    % endif
     <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    % endif
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Rule')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${getSel(objects[0], 'rule')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="9">
     <Cell ss:StyleID="s78"><NamedCell ss:Name="Print_Titles"/><NamedCell
