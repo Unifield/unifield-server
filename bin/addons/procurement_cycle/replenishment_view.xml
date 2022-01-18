@@ -688,9 +688,6 @@
                     <field name="uom_id" invisible="1" />
                     <field name="in_main_list" />
                     <field name="status"  attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}" />
-                    <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
-                    <field name="max_qty" invisible="context.get('rule')!='minmax'"/>
-                    <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
                     <field name="buffer_qty" invisible="context.get('rule')!='cycle'" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
                     <field name="real_stock" />
                     <field name="rr_amc" />
@@ -724,7 +721,7 @@
                     <group  name="list_values" />
 
                     <field name= "list_fmc" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" displayon="noteditable"/>
-                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"  icon="terp-go-week" />
+                    <button name="openform" special="openform" string="Edit 18 periods" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"  icon="terp-go-week" />
                     <field name="warning_html" widget="html_text" displayon="noteditable"/>
 
                 </tree>

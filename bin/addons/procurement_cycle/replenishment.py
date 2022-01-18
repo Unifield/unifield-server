@@ -1979,7 +1979,7 @@ class replenishment_segment(osv.osv):
                                 line_error.append(_('Line %d: you can not define a RR-Value %d if the previous period is blank.') % (idx+1, fmc))
                                 break
 
-                            if not specific_period and (from_data or row.cells[col_first_fmc+1]):
+                            if not specific_period and (from_data or row.cells[col_first_fmc+1].data):
                                 line_error.append(_('Line %d: you can not use periods if "Specific Period Only" is defined to No.') % (idx+1, ))
                                 break
 
@@ -2271,10 +2271,20 @@ class replenishment_segment_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view = super(replenishment_segment_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if context is None:
+            context = {}
         if view_type in ('form', 'tree'):
             arch = etree.fromstring(view['arch'])
 
             if view_type == 'form':
+                # editable only view, click on button to open 18 periods does set rule and specific_period in context
+                readonly = ''
+                if 'rule' not in context and context.get('active_id'):
+                    seg = self.pool.get('replenishment.segment').browse(cr, uid, context['active_id'], fields_to_fetch=['rule', 'specific_period'], context=context)
+                    context['rule'] = seg.rule
+                    context['specific_period'] = seg.specific_period
+                    readonly = ' readonly="1" '
+
                 added = '''<group colspan="4" col="4">
                     <separator string="%s" colspan="2" />
                     <separator string="From" colspan="1" />
@@ -2282,27 +2292,38 @@ class replenishment_segment_line(osv.osv):
                     <newline />
                 ''' % context.get('rule')
 
+
                 if context.get('rule') in ('cycle', 'auto'):
-                    added += '''<field name="rr_fmc_1" />'''
+                    added += '''<field name="rr_fmc_1" %s string="%s 1"/>''' % (readonly, context.get('rule') == 'cycle' and _('RR FMC') or _('Auto Supply'))
                 elif context.get('rule') == 'minmax':
-                    added += '''<field name="rr_min_max_1" readonly="0" />'''
+                    added += '''<field name="rr_min_max_1" %s />''' % (readonly or 'readonly="0"')
 
                 if context.get('rule') == 'cycle' or context.get('specific_period'):
-                    added += '''
-                        <field name="rr_fmc_from_1" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1, False)"  nolabel="1"/>
-                        <field name="rr_fmc_to_1" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1, True)" nolabel="1" depends="rr_fmc_from_1"/>
-                    '''
+                    if context.get('rule') == 'minmax':
+                        added += '''
+                            <field name="rr_fmc_from_1" attrs="{'required': [('rr_min_max_1', '!=', False), ('rr_min_max_1', '!=', ' / ')]}" on_change="change_fmc('from', '1', rr_fmc_from_1, False)"  nolabel="1" %(readonly)s/>
+                            <field name="rr_fmc_to_1" attrs="{'required': [('rr_min_max_1', '!=', False), ('rr_min_max_1', '!=', ' / ')]}" on_change="change_fmc('to', '1', rr_fmc_to_1, True)" nolabel="1" depends="rr_fmc_from_1" %(readonly)s/>
+                        ''' % {'readonly': readonly}
+
+                    else:
+                        added += '''
+                            <field name="rr_fmc_from_1" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1, False)"  nolabel="1" %(readonly)s/>
+                            <field name="rr_fmc_to_1" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1, True)" nolabel="1" depends="rr_fmc_from_1" %(readonly)s/>
+                        ''' % {'readonly': readonly}
 
                     for n in range(2, 19):
                         if context.get('rule') == 'minmax':
-                            added += ''' <field name="rr_min_max_%(n)s" readonly="0" /> ''' % {'n': n}
-                        else:
-                            added += ''' <field name="rr_fmc_%(n)s"  /> ''' % {'n': n}
-
-                        added += '''
+                            added += ''' <field name="rr_min_max_%(n)s" %(readonly)s /> ''' % {'n': n, 'readonly': readonly or 'readonly="0"'}
+                            added += '''
                                 <field name="rr_fmc_from_%(n)s" readonly="1" nolabel="1"/>
-                                <field name="rr_fmc_to_%(n)s" attrs="{'required': [('rr_fmc_%(n)s', '!=', False)]}" on_change="change_fmc('to', '%(n)s', rr_fmc_to_%(n)s, True)" nolabel="1" depends="rr_fmc_to_%(n-1)s"/>
-                            ''' % {'n': n, 'n-1': n-1}
+                                <field name="rr_fmc_to_%(n)s" attrs="{'required': [('rr_min_max_%(n)s', '!=', False), ('rr_min_max_%(n)s', '!=', ' / ')]}" on_change="change_fmc('to', '%(n)s', rr_fmc_to_%(n)s, True)" nolabel="1" depends="rr_fmc_to_%(n-1)s" %(readonly)s/>
+                            ''' % {'n': n, 'n-1': n-1, 'readonly': readonly}
+                        else:
+                            added += ''' <field name="rr_fmc_%(n)s"  %(readonly)s string="%(label)s %(n)s" /> ''' % {'n': n, 'readonly': readonly, 'label': context.get('rule') == 'cycle' and _('RR FMC') or _('Auto Supply')}
+                            added += '''
+                                <field name="rr_fmc_from_%(n)s" readonly="1" nolabel="1"/>
+                                <field name="rr_fmc_to_%(n)s" attrs="{'required': [('rr_fmc_%(n)s', '!=', False)]}" on_change="change_fmc('to', '%(n)s', rr_fmc_to_%(n)s, True)" nolabel="1" depends="rr_fmc_to_%(n-1)s" %(readonly)s/>
+                            ''' % {'n': n, 'n-1': n-1, 'readonly': readonly}
 
                     added += "</group>"
                     added_etree = etree.fromstring(added)
@@ -2799,13 +2820,21 @@ class replenishment_segment_line(osv.osv):
                     min_value = None
                     max_value = None
                     try:
-                        min_value = float(value_split[0])
+                        if value_split[0]:
+                            min_v = value_split[0].strip()
+                            if min_v:
+                                min_value = float(min_v)
                     except:
-                        pass
+                        raise osv.except_osv(_('Error !'), _('Invalid Min %d value %s') % (x, value_split[0]))
+
                     try:
-                        max_value = float(value_split[1])
+                        if value_split[1]:
+                            max_v = value_split[1].strip()
+                            if max_v:
+                                max_value = float(max_v)
                     except:
-                        pass
+                        raise osv.except_osv(_('Error !'), _('Invalid Max %d value %s') % (x, value_split[1]))
+
                     if min_value is not None and max_value is not None and min_value > max_value:
                         raise osv.except_osv(_('Error !'), _('Invalid Min / Max %d value') % x)
                     vals['rr_fmc_%d'% x] = min_value
