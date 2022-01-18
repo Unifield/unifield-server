@@ -1328,10 +1328,15 @@ class shipment(osv.osv):
         for shipment in self.browse(cr, uid, ids, context=context):
             make_invoice = False
             move = False
+            cur_id = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
-                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
+                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking') and not move.picking_id.claim:
                         make_invoice = True
+                        cur_id = pack.currency_id.id
+                        break
+                if make_invoice:
+                    break
 
             if not make_invoice:
                 continue
@@ -1367,7 +1372,6 @@ class shipment(osv.osv):
                 'from_supply': True,
             }
 
-            cur_id = shipment.pack_family_memory_ids[0].currency_id.id
             if cur_id:
                 invoice_vals['currency_id'] = cur_id
             # Journal type
@@ -1410,6 +1414,9 @@ class shipment(osv.osv):
                         continue
 
                     if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
+                        continue
+
+                    if move.picking_id.claim:
                         continue
 
                     # create 1 FO = 1 Invoice
