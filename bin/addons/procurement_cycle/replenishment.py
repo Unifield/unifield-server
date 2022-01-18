@@ -925,7 +925,7 @@ class replenishment_segment(osv.osv):
         'have_product': fields.function(_get_have_product, type='boolean', method=1, internal=1, string='Products are set'),
         'missing_order_calc': fields.function(_missing_instances, type='char', method=1, string='Missing OC data', multi='_missing_instances'),
         'missing_inv_review': fields.function(_missing_instances, type='char', method=1, string='Missing Inv.R data', multi='_missing_instances'),
-        'specific_period': fields.boolean('Specific Period Only'),
+        'specific_period': fields.boolean('Specific Periods Only'),
         'rr_label': fields.function(_get_rule_alert, method=1, string="Field Label", internal=1, type="char", multi='alert_label'),
     }
 
@@ -974,7 +974,7 @@ class replenishment_segment(osv.osv):
                 if error:
                     raise osv.except_osv(
                         _('Warning'),
-                        _('You can not remove "Specific Period Only" on segment with periods on lines:\n%s') % ', '.join(error)
+                        _('You can not remove "Specific Periods Only" on a segment with periods on lines:\n%s') % ', '.join(error)
                     )
 
         return super(replenishment_segment, self).write(cr, uid, ids, vals, context)
@@ -1958,7 +1958,7 @@ class replenishment_segment(osv.osv):
                                     fisrt_period = True
                                 col_first_fmc += 1
                             elif not specific_period and fmc_data and fmc_data != '/':
-                                line_error.append(_('Line %d: you can not use periods if "Specific Period Only" is defined to No.') % (idx+1, ))
+                                line_error.append(_('Line %d: you can not use periods if "Specific Periods Only" is defined to No.') % (idx+1, ))
                                 col_first_fmc += 2
                                 continue
 
@@ -1980,7 +1980,7 @@ class replenishment_segment(osv.osv):
                                 break
 
                             if not specific_period and (from_data or row.cells[col_first_fmc+1].data):
-                                line_error.append(_('Line %d: you can not use periods if "Specific Period Only" is defined to No.') % (idx+1, ))
+                                line_error.append(_('Line %d: you can not use periods if "Specific Periods Only" is defined to No.') % (idx+1, ))
                                 break
 
                             data_towrite.update({
@@ -2022,7 +2022,7 @@ class replenishment_segment(osv.osv):
                         seg_line_obj.write(cr, uid, line_id, data_towrite, context=context)
                         updated += 1
                 except osv.except_osv as e:
-                    error.append(_('Line %d: %s' % (idx+1, misc.ustr(e.value))))
+                    error.append(_('Line %d: %s') % (idx+1, misc.ustr(e.value)))
                     ignored += 1
                     cr.execute("ROLLBACK TO SAVEPOINT seg_line")
                     continue

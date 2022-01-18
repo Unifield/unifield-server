@@ -1255,6 +1255,7 @@ msgstr "msf.budget.line"
 #: code:addons/procurement_cycle/replenishment.py:226
 #: code:addons/procurement_cycle/replenishment.py:229
 #: code:addons/procurement_cycle/replenishment.py:230
+#: code:addons/procurement_cycle/replenishment.py:233
 #, python-format
 msgid "Info"
 msgstr "Info"
@@ -1714,6 +1715,7 @@ msgstr "Europe/Sarajevo"
 #: selection:replenishment.segment,rule:0
 #: field:replenishment.order_calc.line,min_max:0
 #: selection:replenishment.order_calc.line,rule:0
+#: field:replenishment.segment.line.amc.past_fmc,minmax:0
 msgid "Min/Max"
 msgstr "Min/Max"
 
@@ -5898,6 +5900,8 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:487
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:533
 #: field:account.model.line,name:0
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:370
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:427
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -16506,7 +16510,7 @@ msgstr "Réf Colisage:"
 msgid "%s update%s"
 msgstr "%s update%s"
 
-#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance, msf_order_date, stock, product, stock_override
+#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance, msf_order_date, stock, product, stock_override, procurement_cycle
 #: view:account.state.open:0
 #: selection:mission.stock.wizard,with_valuation:0
 #: view:wizard.accrual.reversal:0
@@ -16575,6 +16579,8 @@ msgstr "%s update%s"
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:461
 #: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:385
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:571
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -24707,7 +24713,7 @@ msgstr "# push data"
 msgid "Europe/Bucharest"
 msgstr "Europe/Bucharest"
 
-#. modules: msf_budget, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance, msf_supply_doc_export, product, stock_override, msf_order_date
+#. modules: msf_budget, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance, msf_supply_doc_export, product, stock_override, msf_order_date, procurement_cycle
 #: view:account.state.open:0
 #: selection:mission.stock.wizard,with_valuation:0
 #: view:wizard.accrual.reversal:0
@@ -24770,6 +24776,8 @@ msgstr "Europe/Bucharest"
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:461
 #: report:addons/msf_outgoing/report/freight_manifest_xls.mako:266
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:385
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:571
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -29545,8 +29553,11 @@ msgstr "Display your company chart of accounts per fiscal year and filter by per
 msgid "Percent"
 msgstr "Pourcentage"
 
-#. module: procurement_report
+#. module: procurement_report, procurement_cycle
 #: field:procurement.rules.report,auto_supply_ok:0
+#: code:addons/procurement_cycle/replenishment.py:2297
+#: code:addons/procurement_cycle/replenishment.py:2322
+#: code:addons/procurement_cycle/replenishment.py:2361
 msgid "Auto Supply"
 msgstr "Approvisionnement Automatique"
 
@@ -51242,8 +51253,9 @@ msgstr "La ligne %s du fichier a été exportée dans le fichier des lignes non 
 msgid "Open and Paid Invoices"
 msgstr "Open and Paid Invoices"
 
-#. module: base
+#. module: base, procurement_cycle
 #: field:ir.model.fields,field_description:0
+#: field:replenishment.segment,rr_label:0
 msgid "Field Label"
 msgstr "Libellé du Champ"
 
@@ -80225,6 +80237,7 @@ msgstr "You cannot validate this document in the given period: %s because it's n
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:131
+#: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:166
 #, python-format
 msgid "N/A"
 msgstr "N/A"
@@ -82124,6 +82137,7 @@ msgstr "\n"
 #: field:wizard.import.threshold.value.line,rule_id:0
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:376
 #: field:replenishment.order_calc.line,rule:0
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:393
 msgid "Rule"
 msgstr "Règle"
 
@@ -83179,7 +83193,7 @@ msgstr "Erreur de Devise"
 msgid "Modification"
 msgstr "Modification"
 
-#. modules: purchase, account, analytic_distribution_supply, account_mcdb, msf_homere_interface, purchase_override, account_hq_entries, account_corrections, register_accounting, account_subscription, analytic_distribution, msf_accrual
+#. modules: purchase, account, analytic_distribution_supply, account_mcdb, msf_homere_interface, purchase_override, account_hq_entries, account_corrections, register_accounting, account_subscription, analytic_distribution, msf_accrual, procurement_cycle
 #: selection:account.move.line,state:0
 #: selection:wizard.journal.items.corrections.lines,analytic_distribution_state:0
 #: selection:hq.entries,analytic_state:0
@@ -83200,6 +83214,8 @@ msgstr "Modification"
 #: selection:wizard.account.invoice.line,analytic_distribution_state:0
 #: selection:wizard.advance.line,analytic_distribution_state:0
 #: selection:msf.accrual.line,analytic_distribution_state:0
+#: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:255
+#: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:257
 msgid "Invalid"
 msgstr "Non valide"
 
@@ -107068,48 +107084,6 @@ msgid "%s created from %s"
 msgstr "%s créé depuis %s"
 
 #. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1309
-#, python-format
-msgid "%s, FMC FROM %d is not set, you can't have gap in FMC (%s is set)"
-msgstr "%s, PCM DE %s n'est pas renseigné, les périodes doivent être continues (%s renseigné)"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1328
-#, python-format
-msgid "%s, FMC FROM %d must be a day after FMC TO %d"
-msgstr "%s, PCM DE %d doit être le jour d'après PCM TO %d"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1330
-#, python-format
-msgid "%s, FMC FROM %d must be later than FMC TO %d"
-msgstr "%s, PCM DE %s doit être après PCM À %s"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1313
-#, python-format
-msgid "%s, FMC FROM %d must start the 1st day of the month"
-msgstr "%s, PCM DE %s doit être le 1er jour du mois"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1318
-#, python-format
-msgid "%s, FMC TO %d can't be empty if FMC from is set"
-msgstr "%s, PCM À %d ne peut pas être vide si PCM DE est renseigné"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1324
-#, python-format
-msgid "%s, FMC TO %d must be later than FMC FROM"
-msgstr "%s, PCM À %d doit être plus tard que PCM DE"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1322
-#, python-format
-msgid "%s, FMC TO %d must be the last day of the month"
-msgstr "%s, PCM DE %d doit être le dernier jour du mois"
-
-#. module: procurement_cycle
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:76
 msgid "(RR-AMC) Projected stock"
 msgstr "(RR-CMM) Stock Projeté"
@@ -107175,9 +107149,9 @@ msgstr "Qté Réappro Auto"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,auto_qty:0
-#: field:replenishment.segment.line,auto_qty:0
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:502
 #: field:replenishment.order_calc.line,auto_qty:0
+#: code:addons/procurement_cycle/replenishment.py:821
 msgid "Auto. Supply Qty"
 msgstr "Qté réappro. auto"
 
@@ -107397,18 +107371,6 @@ msgstr "Délai Externe"
 #: field:replenishment.segment,external_lt:0
 msgid "External Lead Time (days)"
 msgstr "Délai Externe (jours)"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1383
-#, python-format
-msgid "FMC FROM %s must be the first day of the month"
-msgstr "PCM DE %s doit être le 1er jour du mois"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1386
-#, python-format
-msgid "FMC TO %s must be the last day of the month"
-msgstr "PCM A %s doit être le dernier jour du mois"
 
 #. module: procurement_cycle
 #: constraint:replenishment.segment.line:0
@@ -107688,36 +107650,6 @@ msgid "Line %d: Buffer Qty must be a number, found %s"
 msgstr "Ligne %d: Qté Tampon doit ête un nombre, trouvé %s"
 
 #. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:978
-#, python-format
-msgid "Line %d: FMC %d, number expected, found %s"
-msgstr "Ligne %d: PCM %d, nombre attendu, trouvé %s"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:966
-#, python-format
-msgid "Line %d: FMC FROM %d, date expected"
-msgstr "Ligne %d: PCM DE %s, format date attendu"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:969
-#, python-format
-msgid "Line %d: FMC FROM %d, date expected, found %s"
-msgstr "Ligne %s: PCM DE %s, date attendue, trouvé %s"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:972
-#, python-format
-msgid "Line %d: FMC TO %d, date expected"
-msgstr "Ligne %d: PCM À %d, date attendue"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:975
-#, python-format
-msgid "Line %d: FMC TO %d, date expected, found %s"
-msgstr "Ligne %s: PCM À %s, date attendue, trouvé %s"
-
-#. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:991
 #, python-format
 msgid "Line %d: Max Qty (%s) must be larger than Min Qty (%s)"
@@ -107828,6 +107760,8 @@ msgstr "Qté Max"
 #: code:addons/procurement_cycle/replenishment.py:445
 #: code:addons/procurement_cycle/replenishment.py:812
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:56
+#: code:addons/procurement_cycle/replenishment.py:815
+#: code:addons/procurement_cycle/replenishment.py:820
 #, python-format
 msgid "Min"
 msgstr "Min"
@@ -107835,7 +107769,6 @@ msgstr "Min"
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:375
 #: field:replenishment.inventory.review.line,min_qty:0
-#: field:replenishment.segment.line,min_qty:0
 msgid "Min Qty"
 msgstr "Min Qté"
 
@@ -107849,6 +107782,7 @@ msgstr "Min Qté"
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:106
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:107
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:429
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:454
 msgid "N"
 msgstr "N"
 
@@ -108791,21 +108725,9 @@ msgid "Please complete Lifeycle status for products missing this, see red lines"
 msgstr "Veuillez compléter les lignes rouges qui n'ont pas de valeur pour le Statut du Cycle de Vie"
 
 #. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:991
-#, python-format
-msgid "Line %d: FMC TO %d, date is not valid, found %s"
-msgstr "Ligne %d: PCM À %d, la date n'est pas valide trouvé %s"
-
-#. module: procurement_cycle
 #: view:replenishment.segment:0
 msgid "Delete selected lines"
 msgstr "Supprimer les lignes sélectionnées"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:985
-#, python-format
-msgid "Line %d: FMC FROM %d, date is not valid, found %s"
-msgstr "Ligne %d: PCM DE %d, la date n'est pas valide trouvé %s"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
@@ -108916,11 +108838,6 @@ msgstr "Zones Instance actuelle"
 #: field:replenishment.segment.date.generation,review_date:0
 msgid "Date Inv. Review"
 msgstr "Date Revue Inv."
-
-#. module: procurement_cycle
-#: view:replenishment.segment:0
-msgid "Edit 12 FMC"
-msgstr "Éditer 12 PCM"
 
 #. module: procurement_cycle
 #: view:replenishment.location.config:0
@@ -112515,12 +112432,6 @@ msgstr "Date de Réception Physique :"
 msgid "Inv. Review"
 msgstr "Revue Inv."
 
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:1792
-#, python-format
-msgid "Line %d: FMC %s cannot be empty"
-msgstr "Ligne %d: PCM %s ne peut être vide"
-
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:56
 #, python-format
@@ -113230,3 +113141,393 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2728
+#, python-format
+msgid "%s, FROM %d must be a day after TO %d"
+msgstr "%s, DE %d doit être le jour d'après À %d"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2730
+#, python-format
+msgid "%s, FROM %d must be later than TO %d"
+msgstr "%s, DE %s doit être après À %s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2711
+#, python-format
+msgid "%s, FROM %d must start the 1st day of the month"
+msgstr "%s, DE %s doit être le 1er jour du mois"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2704
+#, python-format
+msgid "%s, FROM / TO %d: please fill or empty both values"
+msgstr "%s, DE / À %d: veuillez renseigner ou vider les deux valeurs"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2718
+#, python-format
+msgid "%s, TO %d can't be empty if FROM is set"
+msgstr "%s, À %d ne peut être vide si DE est renseigné"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2724
+#, python-format
+msgid "%s, TO %d must be later than FROM"
+msgstr "%s, À %d doit être plus tard que DE"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2722
+#, python-format
+msgid "%s, TO %d must be the last day of the month"
+msgstr "%s, À %d doit être le dernier jour du mois"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,auto_qty:0
+msgid "Auto. Supply Qty (deprecated)"
+msgstr "Qté réappro. auto (obsolète)"
+
+#. module: procurement_cycle
+#: view:replenishment.segment.line:0
+msgid "Edit 18 periods"
+msgstr "Éditer 18 périodes"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line.amc.past_fmc,fmc:0
+msgid "FMC/Auto"
+msgstr "PCM/Auto"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2914
+#, python-format
+msgid "FROM %s must be the first day of the month"
+msgstr "DE %s doit être le 1er jour du mois"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2836
+#, python-format
+msgid "Invalid Max %d value %s"
+msgstr "Max %d: valeur %s invalide"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2828
+#, python-format
+msgid "Invalid Min %d value %s"
+msgstr "Min %d: valeur %s invalide"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2812
+#: code:addons/procurement_cycle/replenishment.py:2839
+#, python-format
+msgid "Invalid Min / Max %d value"
+msgstr "Min / Max %d: valeur invalide"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1975
+#, python-format
+msgid "Line %d: %d, number expected, found %s"
+msgstr "Ligne %d: %d, nombre attendu, trouvé %s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1950
+#, python-format
+msgid "Line %d: FROM %d, date expected"
+msgstr "Ligne %d: DE %d, format date attendu"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1954
+#, python-format
+msgid "Line %d: FROM %d, date is not valid, found %s"
+msgstr "Ligne %d: DE %d, la date n'est pas valide, trouvé %s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1939
+#, python-format
+msgid "Line %d: RR-Value %s cannot be empty"
+msgstr "Ligne %d: Valeur RR %s ne peut pas être vide"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1967
+#, python-format
+msgid "Line %d: TO %d, date expected"
+msgstr "Ligne %d: À %d, date attendue"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1971
+#, python-format
+msgid "Line %d: TO %d, date is not valid, found %s"
+msgstr "Ligne %d: À %d, la date n'est pas valide, trouvé %s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1979
+#, python-format
+msgid "Line %d: you can not define a RR-Value %d if the previous period is blank."
+msgstr "Ligne %d: vous ne pouvez pas définir la Valeur RR %d si la précédente période est vide."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1961
+#: code:addons/procurement_cycle/replenishment.py:1983
+#, python-format
+msgid "Line %d: you can not use periods if \"Specific Periods Only\" is defined to No."
+msgstr "Ligne %d: vous ne pouvez par utiliser des périodes si \"Périodes Spécifiques\" a la valeur Non"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_1:0
+msgid "Max 1"
+msgstr "Max 1"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_10:0
+msgid "Max 10"
+msgstr "Max 10"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_11:0
+msgid "Max 11"
+msgstr "Max 11"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_12:0
+msgid "Max 12"
+msgstr "Max 12"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_13:0
+msgid "Max 13"
+msgstr "Max 13"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_14:0
+msgid "Max 14"
+msgstr "Max 14"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_15:0
+msgid "Max 15"
+msgstr "Max 15"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_16:0
+msgid "Max 16"
+msgstr "Max 16"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_17:0
+msgid "Max 17"
+msgstr "Max 17"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_18:0
+msgid "Max 18"
+msgstr "Max 18"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_2:0
+msgid "Max 2"
+msgstr "Max 2"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_3:0
+msgid "Max 3"
+msgstr "Max 3"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_4:0
+msgid "Max 4"
+msgstr "Max 4"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_5:0
+msgid "Max 5"
+msgstr "Max 5"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_6:0
+msgid "Max 6"
+msgstr "Max 6"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_7:0
+msgid "Max 7"
+msgstr "Max 7"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_8:0
+msgid "Max 8"
+msgstr "Max 8"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_max_9:0
+msgid "Max 9"
+msgstr "Max 9"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,max_qty:0
+msgid "Max Qty (deprecated)"
+msgstr "Qté Max (obsolète)"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_1:0
+msgid "Min / Max 1"
+msgstr "Min / Max 1"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_10:0
+msgid "Min / Max 10"
+msgstr "Min / Max 10"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_11:0
+msgid "Min / Max 11"
+msgstr "Min / Max 11"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_12:0
+msgid "Min / Max 12"
+msgstr "Min / Max 12"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_13:0
+msgid "Min / Max 13"
+msgstr "Min / Max 13"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_14:0
+msgid "Min / Max 14"
+msgstr "Min / Max 14"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_15:0
+msgid "Min / Max 15"
+msgstr "Min / Max 15"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_16:0
+msgid "Min / Max 16"
+msgstr "Min / Max 16"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_17:0
+msgid "Min / Max 17"
+msgstr "Min / Max 17"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_18:0
+msgid "Min / Max 18"
+msgstr "Min / Max 18"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_2:0
+msgid "Min / Max 2"
+msgstr "Min / Max 2"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_3:0
+msgid "Min / Max 3"
+msgstr "Min / Max 3"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_4:0
+msgid "Min / Max 4"
+msgstr "Min / Max 4"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_5:0
+msgid "Min / Max 5"
+msgstr "Min / Max 5"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_6:0
+msgid "Min / Max 6"
+msgstr "Min / Max 6"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_7:0
+msgid "Min / Max 7"
+msgstr "Min / Max 7"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_8:0
+msgid "Min / Max 8"
+msgstr "Min / Max 8"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,rr_min_max_9:0
+msgid "Min / Max 9"
+msgstr "Min / Max 9"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,min_qty:0
+msgid "Min Qty (deprecated)"
+msgstr "Min Qté (obsolète)"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2733
+#, python-format
+msgid "Please correct the following  values:\n"
+"%s"
+msgstr "Veuillez corriger ces valeurs:\n"
+"%s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:819
+#: code:addons/procurement_cycle/replenishment.py:2297
+#: code:addons/procurement_cycle/replenishment.py:2322
+#: code:addons/procurement_cycle/replenishment.py:2361
+#, python-format
+msgid "RR FMC"
+msgstr "RR PCM"
+
+#. module: procurement_cycle
+#: field:replenishment.inventory.review.line.pas,rr_max:0
+msgid "RR Max"
+msgstr "RR Max"
+
+#. module: procurement_cycle
+#: field:replenishment.inventory.review.line.pas,rr_fmc:0
+msgid "RR Value"
+msgstr "Valeur RR"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:441
+msgid "RR Value %d"
+msgstr "Valeur RR %d"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:142
+#, python-format
+msgid "RR value"
+msgstr "Valeur RR"
+
+#. module: procurement_cycle
+#: sql_constraint:replenishment.segment.line.amc.past_fmc:0
+msgid "Seg/month must be unique!"
+msgstr "Seg/mois doit être unique!"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,line_rule_parent:0
+msgid "Segment Rule"
+msgstr "Règle de Segment"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:384
+#: field:replenishment.segment,specific_period:0
+msgid "Specific Periods Only"
+msgstr "Périodes Spécifiques"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2917
+#, python-format
+msgid "TO %s must be the last day of the month"
+msgstr "A %s doit être le dernier jour du mois"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:977
+#, python-format
+msgid "You can not remove \"Specific Periods Only\" on a segment with periods on lines:\n"
+"%s"
+msgstr "Vous ne pouvez pas supprimer \"Périodes Spécifiques\" sur un Segment ayant des lignes avec une période"
+"%s"
+

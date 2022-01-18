@@ -381,7 +381,7 @@
    <Row ss:AutoFitHeight="0" ss:Height="8.25" />
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
     % if objects[0].rule != 'cycle':
-    <Cell ss:StyleID="s76"><Data ss:Type="String">${_('Specific Period Only')|x}</Data></Cell>
+    <Cell ss:StyleID="s76"><Data ss:Type="String">${_('Specific Periods Only')|x}</Data></Cell>
     <Cell ss:StyleID="mperiods"><Data ss:Type="String">${objects[0].specific_period and _('Yes') or _('No')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     % else:

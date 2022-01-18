@@ -721,7 +721,7 @@
                     <group  name="list_values" />
 
                     <field name= "list_fmc" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" displayon="noteditable"/>
-                    <button name="openform" special="openform" string="Edit 18 periods" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"  icon="terp-go-week" />
+                    <button name="openform" special="openform" string="Edit 18 periods" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"  icon="terp-go-week" context="{'active_id': active_id}"/>
                     <field name="warning_html" widget="html_text" displayon="noteditable"/>
 
                 </tree>
