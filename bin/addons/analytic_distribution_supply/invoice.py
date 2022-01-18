@@ -208,7 +208,7 @@ class account_invoice(osv.osv):
                 # CV IN VERSION 1
                 if old_cv_version:
                     # Fetch purchase order line account
-                    if inv.is_merged_by_account:
+                    if inv.is_merged_by_account:  # deprecated since US-9241
                         if not invl.account_id:
                             continue
                         # US-357: lines without product (get directly account)

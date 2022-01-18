@@ -618,6 +618,7 @@
 
             <tr>
             [[ repeatIn(pack[1], 'line') ]]
+            [[ line.state != 'cancel' or removeParentNode('tr') ]]
                 <td>
                     <blockTable colWidths="30,370,50,40,50,40,75,53,20,18,18,18,18" style="OrderInformations3">
                         <tr>

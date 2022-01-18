@@ -41,6 +41,7 @@
                     <field name="last_dateactivity" allow_sort="1"/>
                     <field name="country_id" />
                     <field name="mission" />
+                    <field name="oc" />
                     <field name="state"/>
                 </tree>
             </field>
@@ -62,15 +63,16 @@
                         <group colspan="2" col="2">
                             <separator string="Configuration" colspan="2"/>
                             <field name="name"/>
+                            <field name="oc" required="1" attrs="{'readonly': [('state', '=', 'validated')]}" />
                             <field name="identifier"/>
                             <field name="hardware_id" />
                             <field name="email"/>
-                            <field name="parent_id"/>
+                            <field name="parent_id" />
                             <field name="user_id"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="State" colspan="2"/>
-                            <field name="state"/>
+                            <field name="state" readonly="1"/>
                             <field name="activity"/>
                             <field name="last_dateactivity"/>
                             <field name="last_sequence"/>
@@ -100,11 +102,18 @@
                     <field name="name" />
                     <field name="identifier" />
                     <field name="hardware_id" />
-                    <field name="parent_left" />
-                    <field name="parent_right" />
                     <field name="country_id" />
                     <field name="mission" />
                     <field name="state"/>
+                    <newline />
+                    <field name="parent_left" />
+                    <field name="parent_right" />
+                    <newline />
+
+                    <group string="Group by..." expand="1" colspan="1">
+                        <filter string='OC' icon="terp-mrp" domain="[]" context="{'group_by' : 'oc'}" />
+                        <filter string='State' icon="terp-folder-violet" domain="[]" context="{'group_by' : 'state'}" />
+                    </group>
                 </search>
             </field>
         </record>

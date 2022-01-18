@@ -300,7 +300,6 @@ class instance_auto_creation(osv.osv):
                 data = {
                     'name': instance_name,
                     'identifier': instance_identifier,
-                    'oc': oc,
                     'parent': config_dict['instance'].get('parent_instance'),
                 }
 
@@ -722,6 +721,9 @@ class instance_auto_creation(osv.osv):
                         unifield_prop = [unifield_prop]
                     for uf_prop in unifield_prop:
                         vals[uf_prop] = account_id
+
+            if config.has_option('company', 'additional_allocation'):
+                vals['additional_allocation'] = config.getboolean('company', 'additional_allocation')
 
             if vals.get('ye_pl_cp_for_bs_debit_bal_account') and vals.get('ye_pl_cp_for_bs_credit_bal_account'):
                 vals['has_move_regular_bs_to_0'] = True

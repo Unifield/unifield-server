@@ -309,7 +309,7 @@ class account_move_line(osv.osv):
                                      help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
                                            help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
-        'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True),
+        'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True, join=True),
         'name': fields.char('Description', size=64, required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
@@ -374,7 +374,8 @@ class account_move_line(osv.osv):
         'is_si_refund': lambda *a: False,
     }
 
-    _order = 'move_id DESC'
+    _order = 'move_id DESC, id'
+    # see account_move_line_move_id_id_index on account_move_line
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
