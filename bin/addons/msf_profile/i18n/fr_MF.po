@@ -25582,9 +25582,14 @@ msgstr "Détermine les restrictions pour le pays."
 #: field:purchase.order,delivery_requested_date:0
 #: field:purchase.order.merged.line,date_planned:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:232
-#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:897
 #, python-format
 msgid "Delivery Requested Date"
+msgstr "Date de Livraison Souhaitée"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1065
+#, python-format
+msgid "Requested Delivery Date"
 msgstr "Date de Livraison Souhaitée"
 
 #. modules: purchase, msf_order_date
@@ -66294,9 +66299,14 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #: field:purchase.order.merged.line,confirmed_delivery_date:0
 #: field:tender.line,delivery_confirmed_date:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:233
-#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:898
 #, python-format
 msgid "Delivery Confirmed Date"
+msgstr "Date de Livraison Confirmée"
+
+#. modules: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1067
+#, python-format
+msgid "Confirmed Delivery Date"
 msgstr "Date de Livraison Confirmée"
 
 #. modules: purchase, msf_order_date
