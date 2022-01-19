@@ -164,7 +164,8 @@
                         <group>
                             <field name="partner_id" select='1' string="3RD Party Partner"/>
                             <field name="employee_id" select='1' string="3RD Party Employee"/>
-                            <field name="transfer_journal_id" select='1' string="3RD Party Journal" context="{'exclude_journals': ['IB']}"/>
+                            <field name="transfer_journal_id" select='1' string="3RD Party Journal"
+                                   context="{'exclude_journals': ['IB'], 'search_default_filter_is_active': 1}"/>
                         </group>
                         <newline/>
                         <group>
@@ -176,7 +177,8 @@
                         <newline/>
                         <group>
                             <field name="instance_id" domain="[('instance_to_display_ids','=',True)]" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
-                            <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False, 'exclude_journals': ['IB']}"/>
+                            <field name="journal_id_fake"
+                                   context="{'journal_id': self, 'visible_id': self, 'normal_view': False, 'exclude_journals': ['IB'], 'search_default_filter_is_active': 1}"/>
                             <field name="journal_type"/>
                         </group>
                         <newline/>
