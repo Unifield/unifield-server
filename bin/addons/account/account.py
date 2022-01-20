@@ -2578,6 +2578,9 @@ class account_subscription(osv.osv):
         if context is None:
             context = {}
         sub_copied = self.browse(cr, uid, acc_sub_id, fields_to_fetch=['name', 'model_id'], context=context)
+        if not sub_copied.model_id.journal_id.is_active:
+            raise osv.except_osv(_('Warning'), _("You cannot duplicate a Recurring Plan with a model on an inactive journal (%s).") %
+                                 sub_copied.model_id.journal_id.code)
         if sub_copied.model_id.state == 'done':
             raise osv.except_osv(_('Warning'), _('You cannot duplicate a Recurring Plan with a Done model.'))
         suffix = ' (copy)'

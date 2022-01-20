@@ -110587,6 +110587,12 @@ msgstr "Qté Indicative en Stock"
 msgid "You cannot duplicate a Recurring Plan with a Done model."
 msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Terminé."
 
+#. module: account
+#: code:addons/account/account.py:2582
+#, python-format
+msgid "You cannot duplicate a Recurring Plan with a model on an inactive journal (%s)."
+msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle sur un journal inactif (%s)."
+
 #. module: analytic_override
 #: field:account.analytic.account,top_cc_instance_ids:0
 msgid "Instances having the CC as Top CC"
