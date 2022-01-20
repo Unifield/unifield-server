@@ -1351,6 +1351,9 @@ class account_move(osv.osv):
         if je.status == 'sys' or (je.journal_id and je.journal_id.type == 'migration'):
             raise osv.except_osv(_('Error'), _("You can only duplicate manual journal entries."))
 
+        if not je.journal_id.is_active:
+            raise osv.except_osv(_('Error'), _("The journal %s is inactive.") % je.journal_id.code)
+
         if context.get('from_button') and je.period_id and je.period_id.state != 'draft':
             # copy from web
             period_obj = self.pool.get('account.period')
