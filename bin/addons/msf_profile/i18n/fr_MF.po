@@ -113306,13 +113306,13 @@ msgstr "Veuillez comptabiliser toutes les Ecritures Comptables manuelles sur le 
 #. module: account
 #: code:addons/account/account.py:812
 #, python-format
-msgid "The journal %s can't be inactivated because the balance of the last register is not zero."
+msgid "The journal %s cannot be inactivated because the balance of the last register is not zero."
 msgstr "Le journal %s ne peut pas être désactivé car le solde du dernier registre n'est pas nul."
 
 #. module: account
 #: code:addons/account/account.py:820
 #, python-format
-msgid "The journal %s can't be inactivated because there are still some invoices in Draft state on this journal."
+msgid "The journal %s cannot be inactivated because there are still some invoices in Draft state on this journal."
 msgstr "Le journal %s ne peut pas être désactivé car il y a encore des factures à l'état Brouillon sur ce journal."
 
 #. module: account

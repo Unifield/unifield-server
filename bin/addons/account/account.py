@@ -813,7 +813,7 @@ class account_journal(osv.osv):
                             balance_end = reg_obj.browse(cr, uid, last_reg_id[0], fields_to_fetch=['balance_end']).balance_end or 0.0
                             if abs(balance_end) > 10**-3:
                                 raise osv.except_osv(_('Error'),
-                                                     _("The journal %s can't be inactivated because the balance of the "
+                                                     _("The journal %s cannot be inactivated because the balance of the "
                                                        "last register is not zero.") % journal.code)
                 else:  # non-liquidity journals
                     if am_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'posted')], context=context):
@@ -821,7 +821,7 @@ class account_journal(osv.osv):
                                              _("All entries booked on %s must be posted before inactivating the journal.") % journal.code)
                     if inv_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '=', 'draft')], context=context):
                         raise osv.except_osv(_('Error'),
-                                             _("The journal %s can't be inactivated because there are still some invoices "
+                                             _("The journal %s cannot be inactivated because there are still some invoices "
                                                "in Draft state on this journal.") % journal.code)
                     rec_model_ids = rec_model_obj.search(cr, uid, [('journal_id', '=', journal.id)], order='NO_ORDER', context=context)
                     if rec_model_ids and rec_plan_obj.search_exist(cr, uid,
