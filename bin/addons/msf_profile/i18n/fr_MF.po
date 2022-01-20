@@ -113325,7 +113325,7 @@ msgstr "Toutes les écritures enregistrées sur %s doivent être comptabilisées
 #: code:addons/register_accounting/wizard/register_reopen.py:77
 #: code:addons/account_override/account.py:1355
 #: code:addons/account_override/invoice.py:762
-#: code:addons/account_subscription/account_model.py:550
+#: code:addons/account_subscription/account_model.py:551
 #, python-format
 msgid "The journal %s is inactive."
 msgstr "Le journal %s est inactif."

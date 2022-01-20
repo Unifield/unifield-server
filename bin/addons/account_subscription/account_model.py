@@ -540,7 +540,8 @@ class account_model(osv.osv):
 
     def copy(self, cr, uid, model_id, default=None, context=None):
         """
-        Recurring Model duplication: don't copy the link with the rec. plans, and add " (copy)" after the name
+        Recurring Model duplication: doesn't copy the link with the rec. plans, and adds " (copy)" after the name.
+        Blocks the duplication in case the journal is inactive.
         """
         if context is None:
             context = {}
