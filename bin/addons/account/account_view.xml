@@ -2109,7 +2109,9 @@
                     <group col="6" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}">
                         <field name="name" select="1"/>
                         <field name="frozen_model" invisible="1"/>
-                        <field name="model_id" domain="[('state', '!=', 'done')]" attrs="{'readonly': [('frozen_model', '=', True)]}"/>
+                        <field name="model_id"
+                               domain="[('state', '!=', 'done'), ('journal_id.is_active', '=', True)]"
+                               attrs="{'readonly': [('frozen_model', '=', True)]}"/>
                         <field name="ref" select="1"/>
                     </group>
                     <group col="2" colspan="2" attrs="{'readonly': [('state', '=', 'done')]}">
