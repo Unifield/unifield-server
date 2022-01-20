@@ -2571,6 +2571,7 @@ class account_subscription(osv.osv):
     def copy(self, cr, uid, acc_sub_id, default=None, context=None):
         """
         Account Subscription duplication:
+        - block the process if the model uses an inactive journal
         - block the process if the model has been set to Done as it shouldn't be used in any plans created afterwards
         - don't copy the link with subscription lines
         - add " (copy)" after the name

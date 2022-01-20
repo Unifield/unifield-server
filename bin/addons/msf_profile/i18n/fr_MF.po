@@ -110588,7 +110588,7 @@ msgid "You cannot duplicate a Recurring Plan with a Done model."
 msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Terminé."
 
 #. module: account
-#: code:addons/account/account.py:2582
+#: code:addons/account/account.py:2583
 #, python-format
 msgid "You cannot duplicate a Recurring Plan with a model on an inactive journal (%s)."
 msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle sur un journal inactif (%s)."
