@@ -40983,6 +40983,7 @@ msgstr "Prix Unitaire doit être spécifié pour chaque ligne."
 #: model:ir.actions.act_window,name:msf_supply_doc_export.po_follow_up_menu
 #: model:ir.ui.menu,name:msf_supply_doc_export.po_follow_up_menu2
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:58
+#: view:po.follow.up:0
 msgid "PO Follow Up per Supplier"
 msgstr "Suivi BdC par Fournisseur"
 
@@ -51018,11 +51019,6 @@ msgstr "Affectation totale"
 #: model:process.node,note:purchase.process_node_approvepurchaseorder0
 msgid "Confirmed state of purchase order."
 msgstr "Statut Confirmé du Bon de Commande."
-
-#. module: msf_supply_doc_export
-#: view:po.follow.up:0
-msgid "Purchase Order Follow Up Report"
-msgstr "Rapport de Suivi de Bon de Commande"
 
 #. modules: msf_budget, purchase_followup
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:214
