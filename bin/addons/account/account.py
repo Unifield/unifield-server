@@ -791,7 +791,7 @@ class account_journal(osv.osv):
         am_obj = self.pool.get('account.move')
         inv_obj = self.pool.get('account.invoice')
         if 'is_active' in vals and not vals.get('is_active'):
-            for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code'], context=context):
+            for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code', 'is_active'], context=context):
                 if not journal.is_active:  # skip the checks if the journal is already inactive
                     continue
                 if journal.type in ['bank', 'cheque', 'cash']:  # liquidity journals
