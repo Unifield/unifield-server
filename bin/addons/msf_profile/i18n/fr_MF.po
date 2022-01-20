@@ -23956,6 +23956,8 @@ msgstr "Zone Interne"
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:177
 #: field:view.expired.expiring.stock.lines,prodlot_id:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:122
+#: report:addons/stock/report/stock_reception_report_xls.mako:256
+#: report:addons/stock/report/stock_delivery_report_xls.mako:234
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -57360,6 +57362,8 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:kitting.order.report:0
 #: field:view.expired.expiring.stock.lines,expired_date:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:123
+#: report:addons/stock/report/stock_reception_report_xls.mako:257
+#: report:addons/stock/report/stock_delivery_report_xls.mako:235
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
