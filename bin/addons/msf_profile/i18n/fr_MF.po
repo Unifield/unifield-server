@@ -113329,3 +113329,10 @@ msgstr "Vous ne pouvez pas convertir un Bon de Livraison créé à partir de rie
 #: field:purchase.order,dest_partner_type:0
 msgid "DPO Dest Partner Type"
 msgstr "Type du partenaire destination du BCD"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:335
+#: field:res.partner,instance_creator:0
+#, python-format
+msgid "Instance Creator"
+msgstr "Instance de Création"
