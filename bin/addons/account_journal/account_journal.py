@@ -100,7 +100,8 @@ class account_journal(osv.osv):
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
-        'bank_journal_id': fields.many2one('account.journal', _("Corresponding bank journal"), domain="[('type', '=', 'bank'), ('currency', '=', currency)]"),
+        'bank_journal_id': fields.many2one('account.journal', _("Corresponding bank journal"),
+                                           domain="[('type', '=', 'bank'), ('currency', '=', currency), ('is_active', '=', True)]"),
         'cheque_journal_id': fields.one2many('account.journal', 'bank_journal_id', 'Linked cheque'),
         'has_entries': fields.function(_get_has_entries, type='boolean', method=True, string='Has journal entries'),
     }
