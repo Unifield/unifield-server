@@ -3,28 +3,28 @@
 
     <template pageSize="(842.0,595.0)" title="Internal Move" author="Unifield" allowSplitting="20">
         <pageTemplate>
-            <frame id="first" x1="28.0" y1="28.0" width="786" height="525"/>
+            <frame id="first" x1="28.0" y1="28.0" width="786" height="520"/>
             <pageGraphics>
-                <image x="28.0" y="510" height="35.0" >[[ company.logo or removeParentNode('image') ]]</image>
+                <drawString x="28.0" y="560.0">INTERNAL REQUEST [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
+                <image x="28.0" y="505" height="35.0" >[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="8"/>
+                <drawString x="765" y="550.0">Page : <pageNumber /></drawString>
+                <drawString x="800" y="550.0">/</drawString>
+                <drawString x="805" y="550.0"><pageCount /> </drawString>
                 <fill color="black"/>
                 <stroke color="black"/>
                 <setFont name="DejaVu Sans" size="8"/>
-                <drawString x="25" y="555"> [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]  [[ time.strftime("%H:%M") ]]</drawString>
+                <drawString x="25" y="550"> [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]  [[ time.strftime("%H:%M") ]]</drawString>
                 <setFont name="DejaVu Sans Bold" size="10"/>
-                <drawString x="382" y="555">[[ company.partner_id.name ]]</drawString>
+                <drawString x="382" y="550">[[ company.partner_id.name ]]</drawString>
                 <stroke color="#000000"/>
-                <lines>25 550 818 550</lines>
+                <lines>25 545 818 545</lines>
             </pageGraphics>
         </pageTemplate>
     </template>
 
     <stylesheet>
         <!-- Table styles -->
-        <blockTableStyle id="MainTitle">
-            <blockAlignment value="CENTER" />
-            <blockValign value="MIDDLE" />
-        </blockTableStyle>
-
         <blockTableStyle id="HeaderInfo">
             <blockValign value="MIDDLE" />
             <lineStyle kind="GRID" colorName="#f2f2f2" />
@@ -83,14 +83,6 @@
         [[ repeatIn(objects, 'req') ]]
 
         <!-- Big title -->
-        <blockTable colWidths="842.0" style="MainTitle">
-            <tr>
-                <td>
-                    <para style="Title">INTERNAL REQUEST</para>
-                </td>
-            </tr>
-        </blockTable>
-
         <para style="Header">
             <font color="white"> </font>
         </para>

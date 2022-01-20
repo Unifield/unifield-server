@@ -113336,3 +113336,8 @@ msgstr "Type du partenaire destination du BCD"
 #, python-format
 msgid "Instance Creator"
 msgstr "Instance de Création"
+
+#. module: stock_override
+#: report:delivery.order:0
+msgid "DELIVERY ORDER"
+msgstr "BON DE LIVRAISON"
