@@ -113316,6 +113316,12 @@ msgid "The journal %s can't be inactivated because there are still some invoices
 msgstr "Le journal %s ne peut pas être désactivé car il y a encore des factures à l'état Brouillon sur ce journal."
 
 #. module: account
+#: code:addons/account/account.py:831
+#, python-format
+msgid "The journal %s cannot be inactivated because a Recurring Plan which is not Done uses a Recurring Model with this journal."
+msgstr "Le journal %s ne peut pas être désactivé, car un Plan d'Ecritures Périodiques qui n'est pas Terminé utilise un Modèle Périodique avec ce journal."
+
+#. module: account
 #: code:addons/account/account.py:817
 #, python-format
 msgid "All entries booked on %s must be posted before inactivating the journal."

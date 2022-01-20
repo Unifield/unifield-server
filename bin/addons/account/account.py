@@ -781,7 +781,7 @@ class account_journal(osv.osv):
         Raises an error in case the journal is being inactivated while it is not allowed:
         - for all liquidity journals: not all registers have been closed, or not all manual journal entries have been posted.
         - for bank and cash journals only: the balance of the last register is not zero.
-        - for non-liquidity journals: not all entries have been posted, or some invoices are still Draft.
+        - for non-liquidity journals: not all entries have been posted, some invoices are still Draft, or some Recurring Plans are not Done.
 
         Note: there is a Python constraint preventing the inactivation of the journals imported by default at instance creation.
         """
@@ -790,6 +790,8 @@ class account_journal(osv.osv):
         reg_obj = self.pool.get('account.bank.statement')
         am_obj = self.pool.get('account.move')
         inv_obj = self.pool.get('account.invoice')
+        rec_model_obj = self.pool.get('account.model')
+        rec_plan_obj = self.pool.get('account.subscription')
         if 'is_active' in vals and not vals.get('is_active'):
             for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code', 'is_active'], context=context):
                 if not journal.is_active:  # skip the checks if the journal is already inactive
@@ -821,6 +823,13 @@ class account_journal(osv.osv):
                         raise osv.except_osv(_('Error'),
                                              _("The journal %s can't be inactivated because there are still some invoices "
                                                "in Draft state on this journal.") % journal.code)
+                    rec_model_ids = rec_model_obj.search(cr, uid, [('journal_id', '=', journal.id)], order='NO_ORDER', context=context)
+                    if rec_model_ids and rec_plan_obj.search_exist(cr, uid,
+                                                                   [('model_id', 'in', rec_model_ids), ('state', '!=', 'done')],
+                                                                   context=context):
+                        raise osv.except_osv(_('Error'),
+                                             _("The journal %s cannot be inactivated because a Recurring Plan which is not Done "
+                                               "uses a Recurring Model with this journal.") % journal.code)
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
