@@ -307,6 +307,7 @@ class res_partner(osv.osv):
             string='Is a coordination ?',
         ),
         'locally_created': fields.boolean('Locally Created', help='Partner Created on this instance', readonly=1),
+        'instance_creator': fields.char('Instance Creator', size=64, readonly=1),
     }
 
     _defaults = {
@@ -316,7 +317,23 @@ class res_partner(osv.osv):
         'partner_type': lambda *a: 'external',
         'split_po': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'instance_creator': lambda obj, cr, uid, c: obj._get_instance_creator(cr, uid, c),
     }
+
+    def _get_instance_creator(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            entity_obj = self.pool.get('sync.client.entity')
+            if entity_obj:
+                return entity_obj.get_entity(cr, uid).name
+        return False
+
+    def update_exported_fields(self, cr, uid, fields):
+        res = super(res_partner, self).update_exported_fields(cr, uid, fields)
+        if res:
+            res.append(['instance_creator', _('Instance Creator')])
+        return res
 
     def check_pricelists_vals(self, cr, uid, vals, context=None):
         """
@@ -832,11 +849,12 @@ class res_partner(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['ref_companies'] # reset this value, otherwise the content of the field triggers the creation of a new company
+        fields_to_reset = ['ref_companies', 'instance_creator'] # reset this value, otherwise the content of the field triggers the creation of a new company
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:
                 to_del.append(ftr)
+
         if 'locally_created' not in default:
             default['locally_created'] = True
 

@@ -32,7 +32,11 @@ class stock_picking(osv.osv):
         '''
         Possibility to change the message: we want to have only Picking report in the right panel
         '''
-        context.update({'picking_screen': True, 'from_so':True})
+        if context is None:
+            context = {}
+
+        if pick and pick.type == 'out' and pick.subtype == 'picking':
+            context.update({'picking_screen': True, 'from_so': True})
         return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
 
     def _vals_get_bool(self, cr, uid, ids, fields, arg, context=None):
