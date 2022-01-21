@@ -229,7 +229,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 ('instance_id', '=', cp.instance_id.id),
                 ('type', '=', 'revaluation'),
             ]
-            journal_ids = journal_obj.search(cr, uid, domain, context=context)
+            journal_ids = journal_obj.search(cr, uid, domain, order='id', limit=1, context=context)
         else:
             journal_ids = False
         if not journal_ids:
