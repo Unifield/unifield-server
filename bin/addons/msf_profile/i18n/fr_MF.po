@@ -113251,6 +113251,12 @@ msgstr "La Distribution Analytique liée à l'écriture %s a été mise à jour 
 "Les avoirs de type \"Modifier\" et \"Annuler\" ne sont pas autorisés."
 
 #. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:163
+#, python-format
+msgid "The journal %s is inactive. Refunds of type \"Modify\" are not allowed."
+msgstr "Le journal %s est inactif. Les avoirs de type \"Modifier\" ne sont pas autorisés."
+
+#. module: account
 #: view:account.invoice:0
 msgid "Open FY"
 msgstr "Exerc. Compt. Ouvert"
