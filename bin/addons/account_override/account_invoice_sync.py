@@ -239,7 +239,8 @@ class account_invoice_sync(osv.osv):
             )
         # IVO in sending instance: generates an IVI in the receiving instance
         elif journal_type == 'intermission':
-            int_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'intermission'), ('is_current_instance', '=', True)], limit=1, context=context)
+            int_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'intermission'), ('is_current_instance', '=', True)],
+                                                 order='id', limit=1, context=context)
             if not int_journal_ids:
                 raise osv.except_osv(_('Error'), _("No Intermission journal found for the current instance."))
             # for the IVI use the Intermission counterpart account from the Company form
