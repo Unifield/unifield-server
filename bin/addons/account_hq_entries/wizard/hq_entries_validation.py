@@ -157,7 +157,8 @@ class hq_entries_validation(osv.osv_memory):
         if ids:
             # prepare some values
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
-                                                                            ('is_current_instance', '=', True)],
+                                                                            ('is_current_instance', '=', True),
+                                                                            ('is_active', '=', True)],
                                                                   order='id', limit=1)
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No HQ journal found!'))

@@ -216,7 +216,8 @@ class account_invoice_sync(osv.osv):
         # STV in sending instance: generates an ISI in the receiving instance
         if journal_type == 'sale':
             isi_journal_ids = journal_obj.search(cr, uid,
-                                                 [('type', '=', 'purchase'), ('code', '=', 'ISI'), ('is_current_instance', '=', True)],
+                                                 [('type', '=', 'purchase'), ('code', '=', 'ISI'),
+                                                  ('is_current_instance', '=', True), ('is_active', '=', True)],
                                                  limit=1, context=context)
             if not isi_journal_ids:
                 raise osv.except_osv(_('Error'), _("No Intersection Supplier Invoice journal found for the current instance."))
@@ -239,7 +240,9 @@ class account_invoice_sync(osv.osv):
             )
         # IVO in sending instance: generates an IVI in the receiving instance
         elif journal_type == 'intermission':
-            int_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'intermission'), ('is_current_instance', '=', True)],
+            int_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'intermission'),
+                                                           ('is_current_instance', '=', True),
+                                                           ('is_active', '=', True)],
                                                  order='id', limit=1, context=context)
             if not int_journal_ids:
                 raise osv.except_osv(_('Error'), _("No Intermission journal found for the current instance."))
