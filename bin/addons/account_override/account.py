@@ -1064,6 +1064,25 @@ class account_move(osv.osv):
         }
         return seq_pool.create(cr, uid, seq)
 
+    def _check_inactive_journal(self, cr, uid, new_journal_id, am_ids=None, context=None):
+        """
+        The goal of this method is to ensure that no inactive journal is used, neither in a new JE, nor as new journal in existing JE.
+        """
+        if context is None:
+            context = {}
+        new_journal = new_journal_id and self.pool.get('account.journal').read(cr, uid, new_journal_id, ['is_active', 'code'], context=context)
+        if new_journal and not new_journal['is_active']:
+            if not am_ids:  # new JE to be created
+                raise osv.except_osv(_('Warning'), _('The journal %s is inactive.') % new_journal['code'])
+            else:  # existing JE
+                if isinstance(am_ids, (int, long)):
+                    am_ids = [am_ids]
+                for am in self.read(cr, uid, am_ids, ['journal_id', 'name'], context=context):
+                    if new_journal['id'] != am['journal_id'][0]:  # display an error only if the journal has changed
+                        raise osv.except_osv(_('Warning'), _('Journal Entry %s: the journal %s is inactive.') %
+                                             (am['name'], new_journal['code']))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Change move line's sequence (name) by using instance move prefix.
@@ -1124,6 +1143,7 @@ class account_move(osv.osv):
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['manual_name', 'ref'], replace=['manual_name'])
+        self._check_inactive_journal(cr, uid, vals.get('journal_id'), context=context)
         # Default behaviour (create)
         res = super(account_move, self).create(cr, uid, vals, context=context)
         self._check_document_date(cr, uid, res, context)
@@ -1236,6 +1256,7 @@ class account_move(osv.osv):
                                                              ml_id_list, ml_vals, context, False, False)
 
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['manual_name', 'ref'], replace=['manual_name'])
+        self._check_inactive_journal(cr, uid, vals.get('journal_id'), am_ids=ids, context=context)
         res = super(account_move, self).write(cr, uid, ids, vals,
                                               context=context)
         if new_sequence_vals_by_move_id:

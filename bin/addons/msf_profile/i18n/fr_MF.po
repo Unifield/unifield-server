@@ -113346,12 +113346,19 @@ msgstr "Toutes les écritures enregistrées sur %s doivent être comptabilisées
 
 #. modules: register_accounting, account_override, account_subscription
 #: code:addons/register_accounting/wizard/register_reopen.py:77
-#: code:addons/account_override/account.py:1355
+#: code:addons/account_override/account.py:1076
+#: code:addons/account_override/account.py:1376
 #: code:addons/account_override/invoice.py:762
 #: code:addons/account_subscription/account_model.py:551
 #, python-format
 msgid "The journal %s is inactive."
 msgstr "Le journal %s est inactif."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1082
+#, python-format
+msgid "Journal Entry %s: the journal %s is inactive."
+msgstr "Ecriture Comptable %s: le journal %s est inactif."
 
 #. module: sync_client
 #: field:sync_client.survey.user.detailed,answer_later:0
