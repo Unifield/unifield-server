@@ -16606,8 +16606,6 @@ msgstr ","
 #: field:stock.location.chained.options,dest_location_id:0
 #: view:manage.expired.stock:0
 #: field:manage.expired.stock,dest_loc_id:0
-#: report:addons/stock/report/stock_reception_report_xls.mako:216
-#: report:addons/stock/report/stock_reception_report_xls.mako:245
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:228
 #: field:stock.picking,destinations_list:0
 #: field:product.history.consumption,location_dest_id:0
@@ -81139,6 +81137,8 @@ msgstr "Zone Dest."
 
 #. module: stock
 #: field:stock.reception.wizard,location_dest_id:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:216
+#: report:addons/stock/report/stock_reception_report_xls.mako:245
 msgid "Reception Destination"
 msgstr "Destination Réception"
 
