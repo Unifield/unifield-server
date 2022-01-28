@@ -40541,10 +40541,10 @@ msgid "Retry from time"
 msgstr "Retry from time"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:622
+#: code:addons/msf_doc_import/account.py:646
 #, python-format
-msgid "Amount unbalanced for the Currency %s and the Document Date %s (Period: %s): %s"
-msgstr "Montant non équilibré pour la Devise %s et la Date de Document %s (Période : %s) : %s"
+msgid "An error occurred. Error: Amount unbalanced for the Currency %s and the Document Date %s (Period: %s): %s"
+msgstr "Une erreur est survenue. Erreur : Montant non équilibré pour la Devise %s et la Date de Document %s (Période : %s) : %s"
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:754
@@ -110344,7 +110344,7 @@ msgstr "Ligne %s. Le tiers de type journal utilisé pour le transfert interne do
 
 #. modules: register_accounting, msf_doc_import
 #: code:addons/register_accounting/wizard/wizard_register_import.py:488
-#: code:addons/msf_doc_import/account.py:605
+#: code:addons/msf_doc_import/account.py:607
 #, python-format
 msgid "Line %s. The Journal Third Party \"%s\" is inactive."
 msgstr "Ligne %s. Le Tiers de type Journal \"%s\" est inactif."

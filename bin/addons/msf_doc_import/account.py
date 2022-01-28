@@ -617,9 +617,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
 
                     if is_liquidity and file_journal_id == partner_journal.id:
-                        raise osv.except_osv(_('Warning'),
-                                             _('Line %s. The journal used for the internal transfer must be different from the '
-                                               'Journal Entry Journal for the given account: %s.') % (current_line_num, account.code))
+                        errors.append(_('Line %s. The journal used for the internal transfer must be different from the '
+                                        'Journal Entry Journal for the given account: %s.') % (current_line_num, account.code))
+                        continue
 
                     if account.type == 'liquidity':
                         # do not permit to import line with liquidity account
@@ -627,9 +627,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                         if file_journal_id and aj_obj.read(cr, uid,
                                                            file_journal_id, ['type'],
                                                            context=context)['type'] != 'migration':
-                            raise osv.except_osv(_('Error'),
-                                                 _('Line %s. It is not possible to import account of type \'Liquidity\', '
-                                                   'please check the account %s.') % (current_line_num, account.code))
+                            errors.append(_('Line %s. It is not possible to import account of type \'Liquidity\', '
+                                            'please check the account %s.') % (current_line_num, account.code))
+                            continue
 
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
@@ -643,8 +643,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                     for curr, per, doc_date in money:
                         amount = money[(curr, per, doc_date)]['debit'] - money[(curr, per, doc_date)]['credit']
                         if abs(amount) > 10**-3:
-                            raise osv.except_osv(_('Error'), _('Amount unbalanced for the Currency %s and the Document Date %s (Period: %s): %s') %
-                                                 (curr, doc_date, per, amount,))
+                            errors.append(_('An error occurred. Error: Amount unbalanced for the Currency %s and the '
+                                            'Document Date %s (Period: %s): %s') % (curr, doc_date, per, amount,))
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
 
