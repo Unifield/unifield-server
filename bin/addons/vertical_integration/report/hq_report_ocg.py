@@ -159,8 +159,8 @@ class hq_report_ocg(report_sxw.report_sxw):
         if len(data['form']['instance_ids']) > 0:
             parent_instance = pool.get('msf.instance').browse(cr, uid, data['form']['instance_ids'][0], context=context)
             if parent_instance:
-                department_info = parent_instance.code[:3]
-
+                department = parent_instance.code[:3]
+                department_info = department == 'CD1' and 'CD5' or department  # set "CD5" for "CD1" mission
 
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),

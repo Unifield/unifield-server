@@ -58,6 +58,8 @@ class stock_delivery_report(report_sxw.rml_parse):
                 'prod_desc': prod and prod.name or '',
                 'prod_uom': move.product_uom and move.product_uom.name or '',
                 'qty': move.product_qty,
+                'prodlot': move.prodlot_id and move.prodlot_id.name or '',
+                'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
                 'price': price,
                 'currency': currency and currency.name or '',
                 'total_currency': price and curr_price * move.product_qty,

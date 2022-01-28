@@ -54,6 +54,27 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_8870_partner_instance_creator(self, cr, uid, *a, **b):
+        entity = self.pool.get('sync.client.entity')
+        if entity:
+            b = time.time()
+            cr.execute("""
+                update res_partner p
+                    set instance_creator=instance.code
+                    from
+                        ir_model_data d,
+                        msf_instance instance
+                    where
+                        d.module = 'sd' and
+                        d.model = 'res.partner' and
+                        d.res_id = p.id and
+                        instance.instance_identifier = split_part(d.name, '/', 1)
+            """)
+
+            self.log_info(cr, uid, 'Instance creator set on %d partners in %d sec' % (cr.rowcount, time.time() - b))
+
+        return True
+
     # UF23.0
     def us_8839_cv_from_fo(self, cr, uid, *a, **b):
         if cr.column_exists('account_commitment_line', 'po_line_product_id'):

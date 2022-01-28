@@ -632,7 +632,6 @@ class account_move_line(osv.osv):
         'debit_currency': 0.0,
         'credit_currency': 0.0,
     }
-    _order = "date desc, id desc"
     _sql_constraints = [
         ('credit_debit1', 'CHECK (credit*debit=0)',  'Wrong credit or debit value in accounting entry !'),
         ('credit_debit2', 'CHECK (credit+debit>=0)', 'Wrong credit or debit value in accounting entry !'),
@@ -645,6 +644,9 @@ class account_move_line(osv.osv):
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'account_move_line_journal_id_period_id_index\'')
         if not cr.fetchone():
             cr.execute('CREATE INDEX account_move_line_journal_id_period_id_index ON account_move_line (journal_id, period_id)')
+        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'account_move_line_move_id_id_index\'')
+        if not cr.fetchone():
+            cr.execute('CREATE INDEX account_move_line_move_id_id_index ON account_move_line (move_id DESC, id)')
         return ret
 
     def _check_no_view(self, cr, uid, ids, context=None):

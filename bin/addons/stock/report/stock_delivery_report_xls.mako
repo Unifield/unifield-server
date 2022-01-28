@@ -139,6 +139,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="40.0" />
         ## Qty
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## Batch Number
+        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
+        ## Expiry Date
+        <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Currency
@@ -227,6 +231,8 @@
             _('Product Description'),
             _('UoM'),
             _('Qty'),
+            _('Batch Number'),
+            _('Expiry Date'),
             _('Unit Price'),
             _('Currency'),
             _('Total Currency'),
@@ -257,6 +263,12 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['prod_desc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['prod_uom']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${move['qty']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['prodlot']|x}</Data></Cell>
+                % if move['expiry_date'] and isDate(move['expiry_date']):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['expiry_date'])|n}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['price']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['currency']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_currency']|x}</Data></Cell>
