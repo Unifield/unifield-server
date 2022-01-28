@@ -1066,7 +1066,7 @@ class account_move(osv.osv):
 
     def _check_inactive_journal(self, cr, uid, new_journal_id, am_ids=None, context=None):
         """
-        The goal of this method is to never end up with an inactive journal, either in a new JE or as new journal in existing JE.
+        The goal of this method is to never end up with an inactive journal, either in a new JE or as new journal in existing JEs (am_ids).
         """
         if context is None:
             context = {}

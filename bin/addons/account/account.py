@@ -793,7 +793,7 @@ class account_journal(osv.osv):
         inv_obj = self.pool.get('account.invoice')
         rec_model_obj = self.pool.get('account.model')
         rec_plan_obj = self.pool.get('account.subscription')
-        if 'is_active' in vals and not vals.get('is_active'):
+        if 'is_active' in vals and not vals['is_active']:
             for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code', 'is_active'], context=context):
                 if not journal.is_active:  # skip the checks if the journal is already inactive
                     continue
