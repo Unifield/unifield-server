@@ -360,8 +360,9 @@
                                                      ('state', '!=', 'draft'),
                                                      '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}" />
                         <newline/>
+                        <field name="doc_type" invisible="1"/>
                         <field string="Partner" name="partner_id"
-                               on_change="onchange_partner_id(type,partner_id, date_invoice,payment_term, partner_bank_id, company_id, False, is_intermission, False, False, account_id)"
+                               on_change="onchange_partner_id(type, partner_id, date_invoice, payment_term, partner_bank_id, company_id, False, is_intermission, False, False, account_id, doc_type, from_supply)"
                                domain="[('by_invoice_type', '=', True), ('partner_type', '=', 'intermission')]"
                                context="{'type': context.get('type')}"
                                attrs="{'readonly': ['|', '|',
@@ -628,13 +629,13 @@
                         <field name="number"/>
                         <field name="partner_id"/>
                         <field name="origin"/>
-                        <field name="amount_total"/>
                     </group>
                     <newline/>
-                    <group col="10" colspan="4">
+                    <group col="8" colspan="4">
                         <field name="journal_id" widget="selection" select='1'/>
                         <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="name"/>
+                        <field name="amount_total"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
@@ -687,7 +688,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'ivo')]</field>
-            <field name="context">{'doc_type': 'ivo', 'type': 'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
+            <field name="context">{'doc_type': 'ivo', 'type': 'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1, 'search_default_open_fy': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -715,7 +716,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field name="view_id" ref="view_intermission_form"/>
             <field name="domain">[('doc_type', '=', 'ivi')]</field>
-            <field name="context">{'doc_type': 'ivi', 'type': 'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True}</field>
+            <field name="context">{'doc_type': 'ivi', 'type': 'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True, 'search_default_open_fy': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 

@@ -105,6 +105,8 @@ class stock_reception_report(report_sxw.rml_parse):
                 'uom': move.product_uom and move.product_uom.name or '',
                 'qty_ordered': pol and pol.product_qty or 0.00,
                 'qty_received': move.product_qty,
+                'prodlot': move.prodlot_id and move.prodlot_id.name or '',
+                'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
                 'unit_price': move.price_unit,
                 'currency': move.price_currency_id and move.price_currency_id.name or '',
                 'ave_price_func': func_ave_price,

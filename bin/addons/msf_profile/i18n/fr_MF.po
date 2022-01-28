@@ -145,12 +145,6 @@ msgstr "Accounts filter"
 msgid "Advance Return"
 msgstr "Retour d'avance"
 
-#. module: account_override
-#: code:addons/account_override/invoice.py:1187
-#, python-format
-msgid "Invoice has no line to merge by account"
-msgstr "Invoice has no line to merge by account"
-
 #. module: account
 #: view:account.addtmpl.wizard:0
 #: model:ir.actions.act_window,name:account.action_account_addtmpl_wizard_form
@@ -11397,6 +11391,7 @@ msgstr "Creation Month"
 #: view:res.request:0
 #: view:replenishment.location.config:0
 #: view:account.tax:0
+#: view:sync.version.instance.monitor:0
 msgid "Inactive"
 msgstr "Inactif"
 
@@ -18699,11 +18694,6 @@ msgstr "Faux signifie pour tous les utilisateurs"
 msgid "datetime"
 msgstr "datetime"
 
-#. module: account_override
-#: view:account.invoice:0
-msgid "Merge Lines by Account"
-msgstr "Fusionner les Lignes par Compte"
-
 #. module: tender_flow
 #: view:tender:0
 msgid "Update Product's Suppliers"
@@ -23966,6 +23956,8 @@ msgstr "Zone Interne"
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:177
 #: field:view.expired.expiring.stock.lines,prodlot_id:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:122
+#: report:addons/stock/report/stock_reception_report_xls.mako:256
+#: report:addons/stock/report/stock_delivery_report_xls.mako:234
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -45035,6 +45027,7 @@ msgstr "La devise que vous désirez %s est utilisée dans au moins un Bon d'Enga
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:92
 #: report:addons/msf_audittrail/report/log_line_xls.mako:78
 #: field:sync_client.survey.user,user_id:0
+#: field:sync_client.survey.user.detailed,user_id:0
 msgid "User"
 msgstr "Utilisateur"
 
@@ -46843,8 +46836,9 @@ msgstr "Id XML"
 msgid "(n/a)"
 msgstr "(n/a)"
 
-#. module: update_client
+#. module: update_client, sync_client
 #: view:sync.client.logs:0
+#: view:backup.download:0
 msgid "Select a file to download"
 msgstr "Select a file to download"
 
@@ -47464,8 +47458,8 @@ msgstr "Tout est OK."
 #. modules: account_override, register_accounting
 #: field:account.invoice,is_merged_by_account:0
 #: field:wizard.account.invoice,is_merged_by_account:0
-msgid "Is merged by account"
-msgstr "Is merged by account"
+msgid "Is merged by account (deprecated)"
+msgstr "Est fusionné par compte (obsolète)"
 
 #. module: resource
 #: field:resource.calendar.leaves,calendar_id:0
@@ -57368,6 +57362,8 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:kitting.order.report:0
 #: field:view.expired.expiring.stock.lines,expired_date:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:123
+#: report:addons/stock/report/stock_reception_report_xls.mako:257
+#: report:addons/stock/report/stock_delivery_report_xls.mako:235
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -64026,6 +64022,7 @@ msgstr "Les comptes suivants ne sont pas compatibles avec le partenaire:"
 #: selection:sync.monitor,msg_push_create:0
 #: selection:sync.monitor,msg_push_send:0
 #: selection:sync.monitor,user_rights:0
+#: field:backup.download,failed:0
 msgid "Failed"
 msgstr "Echoué"
 
@@ -64607,12 +64604,6 @@ msgstr "PP futur"
 msgid "Add all Analytic Journals"
 msgstr "Ajouter tous les Journaux Analytiques"
 
-#. modules: account_override, register_accounting
-#: field:account.invoice,can_merge_lines:0
-#: field:wizard.account.invoice,can_merge_lines:0
-msgid "Can merge lines ?"
-msgstr "Can merge lines ?"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:344
 #, python-format
@@ -65050,11 +65041,6 @@ msgstr "True if the price has been manually changed during reception"
 #: selection:account.analytic.line,distrib_line_id:0
 msgid "free1"
 msgstr "option 1"
-
-#. module: account
-#: view:account.invoice:0
-msgid "You are about to merge invoice lines; are you sure you want to proceed? THIS OPERATION CAN NOT BE UNDONE."
-msgstr "Vous êtes sur le point de fusionner les lignes de facture ; voulez-vous continuer ? CETTE OPÉRATION NE PEUT PAS ÊTRE ANNULÉE."
 
 #. module: account
 #: help:account.payment.term.line,days:0
@@ -71529,6 +71515,7 @@ msgstr "Navajo"
 #: view:account.tax:0
 #: code:addons/mission_stock/mission_stock.py:515
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:51
+#: view:sync.version.instance.monitor:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -78586,7 +78573,7 @@ msgstr "Catégorie Instrument Medical "
 #: code:addons/msf_outgoing/msf_outgoing.py:3339
 #, python-format
 msgid "You cannot convert %s delivery orders"
-msgstr "You cannot convert %s delivery orders"
+msgstr "Vous ne pouvez pas convertir un bon de livraison %s"
 
 #. module: account
 #: model:ir.model,name:account.model_account_bs_report
@@ -99070,12 +99057,6 @@ msgstr "Générer BC"
 msgid "Allocated Expenses"
 msgstr "Dépenses allouées"
 
-#. module: account_override
-#: code:addons/account_override/invoice.py:1171
-#, python-format
-msgid "Invoice not eligible for lines merging"
-msgstr "Invoice not eligible for lines merging"
-
 #. module: finance
 #: report:cash.request.export:0
 msgid "Total Cash requested:"
@@ -105335,7 +105316,7 @@ msgid "Filter not implemented on Funding Pools."
 msgstr "Filtre non mis en oeuvre sur les Funding Pools."
 
 #. module: account_override
-#: code:addons/account_override/invoice.py:359
+#: code:addons/account_override/invoice.py:0
 #, python-format
 msgid "Filter not implemented yet."
 msgstr "Filtre pas encore mis en oeuvre."
@@ -107009,6 +106990,7 @@ msgstr "Code Produit du Kit"
 
 #. module: sync_client
 #: field:backup.config,backup_type:0
+#: field:sync.version.instance.monitor,backup_type:0
 msgid "Backup Type"
 msgstr "Type de Sauvegarde"
 
@@ -108880,8 +108862,8 @@ msgstr "Les factures importées, même partiellement, soient directement dans ce
 
 #. module: account_override
 #: field:account.invoice.line,merged_line:0
-msgid "Merged Line"
-msgstr "Ligne Fusionnée"
+msgid "Merged Line (deprecated)"
+msgstr "Ligne Fusionnée (obsolète)"
 
 #. module: account_override
 #: help:account.invoice.line,merged_line:0
@@ -110739,6 +110721,7 @@ msgstr "Stats"
 #: model:ir.ui.menu,name:sync_client.sync_client_survey_menu
 #: view:sync_client.survey:0
 #: field:sync_client.survey.user,survey_id:0
+#: field:sync_client.survey.user.detailed,survey_id:0
 msgid "Survey"
 msgstr "Sondage"
 
@@ -113251,3 +113234,114 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: analytic_override
+#: field:account.analytic.line,ad_updated:0
+msgid "Analytic Distribution Updated"
+msgstr "Distribution Analytique Mise à Jour"
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:276
+#, python-format
+msgid "The Analytic Distribution linked to the entry %s has been updated since the invoice validation.\n"
+"Refunds of type \"Modify\" and \"Cancel\" are not allowed."
+msgstr "La Distribution Analytique liée à l'écriture %s a été mise à jour depuis la validation de la facture.\n"
+"Les avoirs de type \"Modifier\" et \"Annuler\" ne sont pas autorisés."
+
+#. module: account
+#: view:account.invoice:0
+msgid "Open FY"
+msgstr "Exerc. Compt. Ouvert"
+
+#. module: account_override
+#: field:account.invoice,open_fy:0
+msgid "Open Fiscal Year"
+msgstr "Exercice Comptable Ouvert"
+
+#. module: sync_client
+#: field:sync_client.survey.user.detailed,answer_later:0
+msgid "Answer later"
+msgstr "Répondre plus tard"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,basebackup_date:0
+msgid "BB Date"
+msgstr "Date BB"
+
+#. module: sync_client
+#: selection:sync.version.instance.monitor,backup_type:0
+msgid "Cont. Bkp"
+msgstr "Bkp Cont."
+
+#. module: sync_client
+#: selection:sync.version.instance.monitor,backup_type:0
+msgid "Direct OD"
+msgstr "Direct OD"
+
+#. module: sync_client
+#: field:sync_client.survey.user.detailed,do_not_ask:0
+msgid "Do not ask me again "
+msgstr "Ne plus me demander"
+
+#. module: sync_client
+#: view:sync.client.message_received:0
+msgid "Do you want to set this message as totally run ?"
+msgstr "Voulez-vous passer ce message en Totalement Exécuté"
+
+#. module: sync_client
+#: field:sync.client.message_received,partial_run:0
+msgid "Partial Run"
+msgstr "Exécuté partiellement"
+
+#. module: sync_client
+#: view:sync.client.message_received:0
+msgid "Partially Not Run"
+msgstr "Partiellement Exécuté"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,rsync_date:0
+msgid "Rsync Date"
+msgstr "Date Rsync"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,ssh_config_dir:0
+msgid "SSH dir."
+msgstr "Rép. SSH"
+
+#. module: sync_client
+#: view:sync.client.message_received:0
+msgid "Set as Totally Run"
+msgstr "Passer en Exécuté Totalement"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,wal_directory:0
+msgid "WAL dir."
+msgstr "Rép. WAL"
+
+#. module: sync_client
+#: view:sync.client.view_entity_id:0
+msgid "sequence"
+msgstr "sequence"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:2979
+#, python-format
+msgid "You can not convert a Delivery Order from scratch into a Picking Ticket"
+msgstr "Vous ne pouvez pas convertir un Bon de Livraison créé à partir de rien en un Bon de Picking"
+
+#. module: purchase
+#: field:purchase.order,dest_partner_type:0
+msgid "DPO Dest Partner Type"
+msgstr "Type du partenaire destination du BCD"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:335
+#: field:res.partner,instance_creator:0
+#, python-format
+msgid "Instance Creator"
+msgstr "Instance de Création"
+
+#. module: stock_override
+#: report:delivery.order:0
+msgid "DELIVERY ORDER"
+msgstr "BON DE LIVRAISON"
