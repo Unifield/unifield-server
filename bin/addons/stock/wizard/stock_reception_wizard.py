@@ -52,8 +52,12 @@ class stock_reception_wizard(osv.osv_memory):
         'order_category': fields.selection(ORDER_CATEGORY, string='Order Category'),
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Product Main Type'),
-        'location_dest_id': fields.many2one('stock.location', 'Dest. Location', select=True,
+        'location_dest_id': fields.many2one('stock.location', 'Reception Destination', select=True,
                                             help="Location where the system will stock the finished products."),
+        'final_dest_id': fields.many2one('stock.location', 'Final Dest. Location', select=True,
+                                          help="Location where the stock will be at the end of the flow."),
+        'final_partner_id': fields.many2one('res.partner', 'Final Dest. Partner', select=True,
+                                             help="Partner where the stock will be at at the end of the flow."),
     }
 
     _defaults = {
@@ -73,6 +77,8 @@ class stock_reception_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        cross_docking_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        no_match = False
         for wizard in self.browse(cr, uid, ids, context=context):
             move_domain = [
                 ('type', '=', 'in'),
@@ -103,7 +109,70 @@ class stock_reception_wizard(osv.osv_memory):
             if wizard.location_dest_id:
                 move_domain.append(('location_dest_id', '=', wizard.location_dest_id.id))
 
-            move_ids = move_obj.search(cr, uid, move_domain, order='picking_id, line_number', context=context)
+            final_dest_moves = []
+            if wizard.final_dest_id:
+                f_dest_id = wizard.final_dest_id.id
+                cr.execute('''
+                SELECT CASE
+                    WHEN sol.procurement_request = 't' AND dm.location_dest_id = %s AND dp.type = 'internal' AND sloc.usage = 'internal' THEN m.id
+                    WHEN sol.procurement_request = 't' AND m.location_dest_id = %s AND sloc.usage != 'customer' THEN m.id
+                    WHEN sol.procurement_request = 't' AND (dm.location_dest_id = %s OR (m.move_dest_id IS NULL AND sloc.id = %s)) 
+                        AND m.location_dest_id = %s THEN m.id
+                    WHEN dm.location_dest_id = %s AND dp.type = 'internal' AND dm.state = 'done' THEN m.id
+                    ELSE NULL
+                    END
+                FROM stock_move m 
+                LEFT JOIN stock_picking p ON m.picking_id = p.id
+                LEFT JOIN stock_move dm ON m.move_dest_id = dm.id
+                LEFT JOIN stock_picking dp ON dm.picking_id = dp.id
+                LEFT JOIN purchase_order_line pol ON m.purchase_line_id = pol.id
+                LEFT JOIN sale_order_line sol ON pol.linked_sol_id = sol.id
+                LEFT JOIN sale_order s ON sol.order_id = s.id
+                LEFT JOIN stock_location sloc ON s.location_requestor_id = sloc.id
+                WHERE p.state = 'done' AND p.type = 'in' AND p.subtype = 'standard'
+                ''', (f_dest_id, cross_docking_id, f_dest_id, f_dest_id, cross_docking_id, f_dest_id))
+                for x in cr.fetchall():
+                    if x[0]:
+                        final_dest_moves.append(x[0])
+                if not final_dest_moves:
+                    no_match = True
+
+            final_partner_moves = []
+            if wizard.final_partner_id:
+                f_part_id = wizard.final_partner_id.id
+                cr.execute('''
+                    SELECT CASE
+                        WHEN sol.procurement_request = 'f' AND s.partner_id = %s THEN m.id
+                        WHEN sol.procurement_request = 't' AND sloc.usage = 'customer' AND dp.type = 'out' AND dp.partner_id = %s THEN m.id
+                        WHEN sol.procurement_request = 't' AND m.move_dest_id IS NULL AND s.partner_id = %s THEN m.id 
+                        WHEN m.location_dest_id = %s AND dp.type = 'out' AND dp.partner_id = %s THEN m.id
+                        ELSE NULL
+                    END
+                FROM stock_move m 
+                LEFT JOIN stock_picking p ON m.picking_id = p.id
+                LEFT JOIN stock_move dm ON m.move_dest_id = dm.id
+                LEFT JOIN stock_picking dp ON dm.picking_id = dp.id
+                LEFT JOIN purchase_order_line pol ON m.purchase_line_id = pol.id
+                LEFT JOIN sale_order_line sol ON pol.linked_sol_id = sol.id
+                LEFT JOIN sale_order s ON sol.order_id = s.id
+                LEFT JOIN stock_location sloc ON s.location_requestor_id = sloc.id
+                WHERE p.state = 'done' AND p.type = 'in' AND p.subtype = 'standard'
+                ''', (f_part_id, f_part_id, f_part_id, cross_docking_id, f_part_id))
+                for x in cr.fetchall():
+                    if x[0]:
+                        final_partner_moves.append(x[0])
+                if not final_partner_moves:
+                    no_match = True
+
+            if final_dest_moves and final_partner_moves:
+                move_domain.append(('id', 'in', list(set(final_dest_moves).intersection(final_partner_moves))))
+            elif final_dest_moves or final_partner_moves:
+                move_domain.append(('id', 'in', final_dest_moves or final_partner_moves))
+
+            if no_match:
+                move_ids = []
+            else:
+                move_ids = move_obj.search(cr, uid, move_domain, order='picking_id, line_number', context=context)
 
             if not move_ids:
                 raise osv.except_osv(

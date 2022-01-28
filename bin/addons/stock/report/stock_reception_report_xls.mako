@@ -155,6 +155,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Final Destination Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
+        ## Final Dest. Partner
+        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Expected Receipt Date
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Actual Receipt Date
@@ -226,6 +228,14 @@
             <Cell ss:StyleID="line"><Data ss:Type="String">${_('Destination Location')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.location_dest_id and r.location_dest_id.name or ''|x}</Data></Cell>
         </Row>
+        <Row>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Final Destination Location')|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.final_dest_id and r.final_dest_id.name or ''|x}</Data></Cell>
+        </Row>
+        <Row>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Final Dest. Partner')|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.final_partner_id and r.final_partner_id.name or ''|x}</Data></Cell>
+        </Row>
 
         <Row></Row>
 
@@ -258,6 +268,7 @@
             _('Line Comment'),
             _('Destination Location'),
             _('Final Destination Location'),
+            _('Final Dest. Partner'),
             _('Expected Receipt Date'),
             _('Actual Receipt Date'),
             _('Physical Reception Date'),
@@ -270,7 +281,7 @@
         % endfor
         </Row>
 
-        % for move in getMoves(r.moves_ids):
+        % for move in getMoves(r.moves_ids, r.company_id.partner_id):
             <Row ss:Height="12.0">
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['ref']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>
@@ -314,6 +325,7 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['comment']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['dest_loc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_loc']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_partner']|x}</Data></Cell>
                 % if move['exp_receipt_date'] and isDateTime(move['exp_receipt_date']):
                 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['exp_receipt_date'])|n}</Data></Cell>
                 % else:
