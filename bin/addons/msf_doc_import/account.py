@@ -598,7 +598,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s. A Third Party is mandatory for the given account: %s.') % (current_line_num, account.code))
                     # Check that the currency and type of the (journal) third party is correct
                     # in case of an "Internal Transfer" account
-                    partner_journal = r_journal and aj_obj.browse(cr, uid, r_journal, fields_to_fetch=['currency', 'type'], context=context)
+                    partner_journal = r_journal and aj_obj.browse(cr, uid, r_journal,
+                                                                  fields_to_fetch=['currency', 'type', 'is_active', 'code'],
+                                                                  context=context)
+                    if partner_journal and not partner_journal.is_active:  # no need to check further in case the journal is inactive
+                        errors.append(_('Line %s. The Journal Third Party "%s" is inactive.') % (current_line_num, partner_journal.code))
+                        continue
                     is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
                     if type_for_reg == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != r_currency):
                         errors.append(_('Line %s. The Third Party must be a liquidity journal with the same currency '
