@@ -594,8 +594,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     if r_journal and ('account.journal', 'Journal') not in partner_options:
                         errors.append(_('Line %s. You cannot use a journal for the given account: %s.') % (current_line_num, account.code))
+                        continue
                     if partner_type_mandatory and not r_partner and not r_employee and not r_journal:
                         errors.append(_('Line %s. A Third Party is mandatory for the given account: %s.') % (current_line_num, account.code))
+                        continue
                     # Check that the currency and type of the (journal) third party is correct
                     # in case of an "Internal Transfer" account
                     partner_journal = r_journal and aj_obj.browse(cr, uid, r_journal,
@@ -608,9 +610,11 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if type_for_reg == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != r_currency):
                         errors.append(_('Line %s. The Third Party must be a liquidity journal with the same currency '
                                         'as the booking one for the given account: %s.') % (current_line_num, account.code))
+                        continue
                     if type_for_reg == 'transfer' and (not is_liquidity or partner_journal.currency.id == r_currency):
                         errors.append(_('Line %s. The Third Party must be a liquidity journal with a currency '
                                         'different from the booking one for the given account: %s.') % (current_line_num, account.code))
+                        continue
 
                     if is_liquidity and file_journal_id == partner_journal.id:
                         raise osv.except_osv(_('Warning'),
