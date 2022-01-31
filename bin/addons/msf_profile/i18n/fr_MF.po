@@ -32860,10 +32860,10 @@ msgid "This wizard will import National staff employees file in XML Spreadsheet 
 msgstr "Cet assistant importera le fichier du personnel national au format Tableur XML 2003. Pour générer ce fichier, créer un Tableur avec quelques colonnes : 'Nom', 'Code'."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:489
+#: code:addons/msf_doc_import/account.py:547
 #, python-format
-msgid "%s is not open!"
-msgstr "%s is not open!"
+msgid "Line %s. %s is not open!"
+msgstr "Ligne %s. %s n'est pas ouvert !"
 
 #. modules: msf_cross_docking, purchase
 #: field:stock.move,allocation_setup:0
@@ -76543,10 +76543,10 @@ msgid "Slovenia"
 msgstr "Slovénie"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:477
+#: code:addons/msf_doc_import/account.py:533
 #, python-format
-msgid "You can't import entries in Period 16."
-msgstr "You can't import entries in Period 16."
+msgid "Line %s. You can't import entries in Period 16."
+msgstr "Ligne %s. Vous ne pouvez pas importer des écritures en \"Period 16\"."
 
 #. module: stock
 #: view:stock.inventory.line.split:0
@@ -94947,10 +94947,10 @@ msgid "sourced_sy - (purchase.order.line)"
 msgstr "sourced_sy - (purchase.order.line)"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:485
+#: code:addons/msf_doc_import/account.py:541
 #, python-format
-msgid "The date chosen in the wizard is not in the same period as the imported entries."
-msgstr "The date chosen in the wizard is not in the same period as the imported entries."
+msgid "Line %s. The date chosen in the wizard is not in the same period as the imported entries."
+msgstr "Ligne %s. La date choisie dans l'assistant n'est pas dans la même période que les écritures importées."
 
 #. module: hr
 #: model:ir.actions.act_window,help:hr.open_view_employee_list_my

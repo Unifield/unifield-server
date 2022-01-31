@@ -530,19 +530,22 @@ class msf_doc_import_accounting(osv.osv_memory):
 
                     # US-937: use period of import file
                     if period_name.startswith('Period 16'):
-                        raise osv.except_osv(_('Warning'), _("You can't import entries in Period 16."))
+                        errors.append(_("Line %s. You can't import entries in Period 16.") % current_line_num)
+                        continue
                     period_ids = period_obj.search(
                         cr, uid, [
                             ('id', 'in', wiz_period_ids),
                             ('name', '=', period_name),
                         ], limit=1, context=context)
                     if not period_ids:
-                        raise osv.except_osv(_('Warning'),
-                                             _('The date chosen in the wizard is not in the same period as the imported entries.'))
+                        errors.append(_('Line %s. The date chosen in the wizard is not in the same period as the imported entries.') %
+                                      current_line_num)
+                        continue
                     period = period_obj.browse(
                         cr, uid, period_ids[0], context=context)
                     if period.state != 'draft':
-                        raise osv.except_osv(_('Warning'), _('%s is not open!') % (period.name, ))
+                        errors.append(_('Line %s. %s is not open!') % (current_line_num, period.name, ))
+                        continue
 
                     # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 
