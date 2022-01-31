@@ -29548,8 +29548,9 @@ msgstr "Pourcentage"
 #: code:addons/procurement_cycle/replenishment.py:2297
 #: code:addons/procurement_cycle/replenishment.py:2322
 #: code:addons/procurement_cycle/replenishment.py:2361
+#: selection:replenishment.inventory.review.line,rule:0
 msgid "Auto Supply"
-msgstr "Approvisionnement Automatique"
+msgstr "Appro. Auto"
 
 #. module: purchase
 #: model:process.transition,note:purchase.process_transition_productrecept0
@@ -49598,7 +49599,6 @@ msgstr "Code/Date"
 #: view:stock.warehouse.automatic.supply:0
 #: model:ir.model,name:specific_rules.model_stock_warehouse_automatic_supply
 #: model:ir.model,name:sync_so.model_stock_warehouse_automatic_supply
-#: selection:replenishment.inventory.review.line,rule:0
 #: selection:replenishment.order_calc,rule:0
 #: selection:replenishment.segment,rule:0
 #: selection:replenishment.order_calc.line,rule:0
@@ -82121,6 +82121,7 @@ msgstr "\n"
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:376
 #: field:replenishment.order_calc.line,rule:0
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:393
+#: field:replenishment.inventory.review.line,rule:0
 msgid "Rule"
 msgstr "Règle"
 
@@ -108283,7 +108284,6 @@ msgid "Replenishment Rule (Alert Theshold)"
 msgstr "Règle de réappro. (seuil d'alerte)"
 
 #. module: procurement_cycle
-#: field:replenishment.inventory.review.line,rule:0
 #: field:replenishment.order_calc,rule:0
 #: field:replenishment.segment,rule:0
 msgid "Replenishment Rule (Order quantity)"

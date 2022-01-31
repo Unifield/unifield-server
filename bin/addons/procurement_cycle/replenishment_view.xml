@@ -964,8 +964,7 @@
                             <field name="status" invisible="1" />
                             <field name="primay_product_list" filter_selector="1" />
                             <field name="segment_ref_name" />
-                            <field name="min_max" />
-                            <field name="auto_qty" />
+                            <field name="rule" />
                             <field name="projected_stock_qty_amc" />
                             <field name="rr_fmc_avg" />
                             <field name="rr_amc" />
