@@ -113007,8 +113007,8 @@ msgstr "Aucune PMC dépassée"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
-msgid "Remove outdated FMCs"
-msgstr "Supprimer les PMCs dépassées"
+msgid "Remove outdated periods"
+msgstr "Supprimer les périodes dépassées"
 
 #. module: sync_client
 #: code:addons/sync_client/wizard/view_entity_id.py:44
