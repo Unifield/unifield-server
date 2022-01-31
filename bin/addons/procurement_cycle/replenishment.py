@@ -128,16 +128,18 @@ class replenishment_location_config(osv.osv):
     }
 
     def write(self, cr, uid, ids, vals, context=None):
-        if 'synched' in vals and not vals['synched']:
+        if 'synched' in vals and not vals['synched'] or context.get('sync_update_execution'):
             vals['remote_location_ids'] = [(6, 0, [])]
 
         return super(replenishment_location_config, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         if 'name' not in vals:
             vals['name'] = self.pool.get('ir.sequence').get(cr, uid, 'replenishment.location.config')
 
-        if 'synched' in vals and not vals['synched']:
+        if 'synched' in vals and not vals['synched'] or context.get('sync_update_execution'):
             vals['remote_location_ids'] = [(6, 0, [])]
         new_id = super(replenishment_location_config, self).create(cr, uid, vals, context)
 
