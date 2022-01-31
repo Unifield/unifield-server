@@ -1532,11 +1532,11 @@ class replenishment_segment(osv.osv):
                             max_qty = max_x
                             break
 
-                    valid_line = bool(min_qty) and bool(max_qty)
+                    valid_line = isinstance(min_qty, (int, float, long)) and isinstance(max_qty, (int, float, long)) and max_qty >= min_qty
+                    qty_lacking = False
                     if line.status in ('phasingout', 'replaced'):
                         proposed_order_qty = 0
-                        qty_lacking = False
-                    else:
+                    elif valid_line:
                         proposed_order_qty = max(0, max_qty - sum_line.get(line.id, {}).get('real_stock') + sum_line.get(line.id, {}).get('reserved_stock_qty') + sum_line.get(line.id, {}).get('expired_qty_before_eta', 0) - line.pipeline_before_rdd)
 
                         qty_lacking = min(sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_qty_before_eta') - min_qty, 0)
@@ -1625,7 +1625,7 @@ class replenishment_segment(osv.osv):
                 if seg.rule == 'minmax':
                     min_max_list = []
                     for v in [min_qty, max_qty]:
-                        if v is False:
+                        if v is False or v is None:
                             min_max_list.append('')
                         else:
                             min_max_list.append('%d'%v)
@@ -2241,7 +2241,7 @@ class replenishment_segment(osv.osv):
             'res_model': 'replenishment.segment.line.amc.past_fmc',
             'view_mode': 'tree,form',
             'view_type': 'form',
-            'domain': [('segment_id', '=', seg.id)],
+            'domain': [('segment_id', '=', seg.id), ('month', '<=', time.strftime('%Y-%m-%d'))],
             'view_id': view_id,
         }
 
