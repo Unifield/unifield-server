@@ -77,23 +77,49 @@ class purchase_order(osv.osv):
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         cur_obj = self.pool.get('res.currency')
+        pol_obj = self.pool.get('purchase.order.line')
         for order in self.browse(cr, uid, ids, context=context):
             res[order.id] = {
                 'amount_untaxed': 0.0,
                 'amount_tax': 0.0,
                 'amount_total': 0.0,
                 'amount_total_tender_currency': 0.0,
+                'has_tax_at_line_level': False,
             }
-            val = val1 = 0.0
+            amount_tax = amount_untaxed = 0.0
             cur = order.pricelist_id.currency_id
-            for line in order.order_line:
-                if line.state not in ('cancel', 'cancel_r'):
-                    val1 += line.price_subtotal
-                    for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
-                        val += c.get('amount', 0.0)
-            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
-            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
+
+            cr.execute("""select exists(
+                select pol.id from purchase_order_line pol, purchase_order_taxe t
+                where
+                    t.ord_id = pol.id and pol.state not in ('cancel', 'cancel_r') and pol.order_id = %s)""", (order.id, ))
+            res[order.id]['has_tax_at_line_level'] = cr.fetchone()[0]
+
+            cr.execute("select sum(price_unit * product_qty) from purchase_order_line where order_id = %s and state not in ('cancel', 'cancel_r')", (order.id, ))
+            amount_untaxed = cr.fetchone()[0] or 0
+
+            if not res[order.id]['has_tax_at_line_level']:
+                cr.execute("select sum(amount) from account_invoice_tax where purchase_id = %s", (order.id, ))
+                amount_tax = cr.fetchone()[0] or 0
+
+            else:
+                cr.execute("""
+                    select pol.id
+                    from purchase_order_line pol, purchase_order_taxe t
+                    where t.ord_id = pol.id and pol.state not in ('cancel', 'cancel_r') and pol.order_id = %s""", (order.id, ))
+                pol_ids = [x[0] for x in cr.fetchall()]
+                max_size = 400
+                offset = 0
+                while offset < len(pol_ids):
+                    for line in pol_obj.browse(cr, uid, pol_ids[offset:max_size+offset], fields_to_fetch=['taxes_id', 'price_unit', 'product_qty', 'product_id'], context=context):
+                        for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
+                            amount_tax += c.get('amount', 0.0)
+                        offset += max_size
+            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, amount_tax)
+            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, amount_untaxed)
             res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
+
+
             if order.tender_id and order.tender_id.currency_id \
                     and order.tender_id.currency_id.id != order.pricelist_id.currency_id.id:
                 res[order.id]['amount_total_tender_currency'] = round(cur_obj.compute(cr, uid, cur.id, order.tender_id.currency_id.id,
@@ -206,6 +232,12 @@ class purchase_order(osv.osv):
                 res[order.id] = (amount_received / amount_total) * 100
 
         return res
+
+    def _get_order_from_corner_tax(self, cr, uid, ids, context=None):
+        if ids:
+            cr.execute('select purchase_id from account_invoice_tax where id in %s', (tuple(ids),))
+            return [x[0] for x in cr.fetchall()]
+        return []
 
     def _get_order(self, cr, uid, ids, context=None):
         result = {}
@@ -852,6 +884,12 @@ class purchase_order(osv.osv):
                                                     'purchase.order.line': (_get_order, ['date_planned'], 10),
                                                 }
                                                 ),
+        'has_tax_at_line_level': fields.function(_amount_all, method=True, type='boolean', string='Tax at line', store= {
+            'purchase.order.line': [
+                (_get_order, ['taxes_id'], 10),
+                (_get_order_state_changed, ['state'], 10),
+            ]
+        }, multi="sums"),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Purchase Price'), string='Untaxed Amount',
                                           store={
                                               'purchase.order.line': [
@@ -864,14 +902,21 @@ class purchase_order(osv.osv):
                                           'purchase.order.line': [
                                               (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
                                               (_get_order_state_changed, ['state'], 10),
-                                          ]
+                                              (_get_order_from_corner_tax, ['purchase_id', 'amount'], 10),
+                                          ],
+            'account.invoice.tax': [
+                                              (_get_order_from_corner_tax, ['purchase_id', 'amount'], 10),
+                                          ],
         }, multi="sums", help="The tax amount"),
         'amount_total': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Purchase Price'), string='Total',
                                         store={
                                             'purchase.order.line': [
                                                 (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
                                                 (_get_order_state_changed, ['state'], 10),
-                                            ]
+                                            ],
+                                            'account.invoice.tax': [
+                                                (_get_order_from_corner_tax, ['purchase_id', 'amount'], 10),
+                                            ],
         }, multi="sums", help="The total amount"),
         'amount_total_tender_currency': fields.function(_amount_all, method=True, string='Total (Comparison Currency)',
                                                         digits_compute= dp.get_precision('Purchase Price'), store=False,
@@ -927,6 +972,7 @@ class purchase_order(osv.osv):
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
     }
     _defaults = {
         'po_version': 2,
@@ -2748,6 +2794,13 @@ class purchase_order(osv.osv):
             cr.commit()
             cr.close(True)
 
+        return True
+
+    def remove_line_tax(self, cr, uid, ids, context=None):
+        pol_obj = self.pool.get('purchase.order.line')
+        pol_ids = pol_obj.search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['confirmed', 'cancel', 'cancel_r', 'done']), ('taxes_id', '!=', False)], context=context)
+        if pol_ids:
+            pol_obj.write(cr, uid, pol_ids, {'taxes_id': [(6, 0, [])]}, context=context)
         return True
 
     # CTRL

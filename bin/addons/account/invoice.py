@@ -457,6 +457,8 @@ class account_invoice(osv.osv):
         if context is None:
             context = {}
         try:
+            import traceback
+            traceback.print_stack()
             res = super(account_invoice, self).create(cr, uid, vals, context)
             for inv_id, name in self.name_get(cr, uid, [res], context=context):
                 ctx = context.copy()
@@ -1974,6 +1976,7 @@ class account_invoice_tax(osv.osv):
 
     _columns = {
         'invoice_id': fields.many2one('account.invoice', 'Invoice Line', ondelete='cascade', select=True),
+        'purchase_id': fields.many2one('purchase.order', 'PO', ondelete='cascade', select=True),
         'name': fields.char('Tax Description', size=64, required=True),
         'account_id': fields.many2one('account.account', 'Tax Account', required=True, domain=[('type','<>','view'),('type','<>','income'), ('type', '<>', 'closed')]),
         'base': fields.float('Base', digits_compute=dp.get_precision('Account')),
