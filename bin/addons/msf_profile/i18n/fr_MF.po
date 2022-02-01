@@ -113362,6 +113362,12 @@ msgstr "Le journal %s est inactif."
 msgid "Journal Entry %s: the journal %s is inactive."
 msgstr "Ecriture Comptable %s: le journal %s est inactif."
 
+#. module: msf_instance
+#: code:addons/msf_instance/add_instance.py:433
+#, python-format
+msgid "Impossible to create a register on an inactive journal."
+msgstr "Impossible de créer un registre sur un journal inactif."
+
 #. module: sync_client
 #: field:sync_client.survey.user.detailed,answer_later:0
 msgid "Answer later"

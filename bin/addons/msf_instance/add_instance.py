@@ -427,8 +427,10 @@ class account_bank_statement(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
-            journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
+            journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id', 'is_active'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
+            if not journal.get('is_active'):
+                raise osv.except_osv(_('Warning'), _('Impossible to create a register on an inactive journal.'))
         return super(account_bank_statement, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
