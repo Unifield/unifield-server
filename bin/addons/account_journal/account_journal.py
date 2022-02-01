@@ -475,7 +475,7 @@ class account_journal(osv.osv):
             journal_type = 'correction_manual'
         else:
             journal_type = 'correction'
-        journal_ids = self.search(cr, uid, [('type', '=', journal_type), ('is_current_instance', '=', True)],
+        journal_ids = self.search(cr, uid, [('type', '=', journal_type), ('is_current_instance', '=', True), ('is_active', '=', True)],
                                   order='id', limit=1, context=context)
         return journal_ids and journal_ids[0] or False
 
