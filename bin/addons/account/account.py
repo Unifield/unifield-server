@@ -634,6 +634,18 @@ class account_journal(osv.osv):
             res[j.id] = (j.code, j.type) in DEFAULT_JOURNALS
         return res
 
+    def _get_current_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns a dict with key = value = current DB id.
+
+        current_id is an internal field used to make the "Active" checkbox read-only at first creation (= without DB id),
+        so that new journals are always created as Active, and for new Liquidity journals registers are always created.
+        """
+        res = {}
+        for i in ids:
+            res[i] = i
+        return res
+
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True),
         'code': fields.char('Code', size=5, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
@@ -668,6 +680,8 @@ class account_journal(osv.osv):
         'is_active': fields.boolean('Active'),
         'is_default': fields.function(_get_is_default, method=True, type='boolean', string='Default Journal',
                                       store=False, help="Journals created by default in new instances"),
+        'current_id': fields.function(_get_current_id, method=True, type='integer', string="DB Id (used by the UI)",
+                                      store=False, internal=True),
     }
 
     _defaults = {

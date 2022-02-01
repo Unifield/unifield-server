@@ -19,7 +19,8 @@
                                    attrs="{'readonly': [('has_entries', '=', True)]}"/>
                             <field name="type" on_change="onchange_type(type, currency, context)"
                                    attrs="{'readonly': [('has_entries', '=', True)]}"/>
-                            <field name="is_active"/>
+                            <field name="current_id" invisible="1"/>
+                            <field name="is_active" attrs="{'readonly': [('current_id', '=', False)]}"/>
                         </group>
                         <group col="2" colspan="2">
                                <separator string="Accounts" colspan="4"/>
