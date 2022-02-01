@@ -27,6 +27,13 @@ class replenishment_location_config(osv.osv):
     _description = 'Location Configuration'
     _order = 'id desc'
 
+    def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
+        """
+            trigger sync if remote_location_ids is touched
+        """
+        if touched_fields:
+            touched_fields.append('remote_location_ids')
+        return super(replenishment_location_config, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
 
     def _get_frequence_name(self, cr, uid, ids, field_name, arg, context=None):
         '''
