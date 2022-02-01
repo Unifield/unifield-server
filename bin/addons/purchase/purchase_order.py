@@ -1153,7 +1153,8 @@ class purchase_order(osv.osv):
             if vals.get('pricelist_id') and partner.partner_type == 'external':
                 to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
 
-            for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id'], context=context):
+            for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line'], context=context):
+                line_changed= False
                 if order.state in ('draft', 'draft_p', 'validated') and vals['partner_id'] != order.partner_id.id:
                     for line in order.order_line:
                         if line.state in ('draft', 'validated_n', 'validated'):
@@ -1179,8 +1180,15 @@ class purchase_order(osv.osv):
                                 from_curr_id = order.pricelist_id.currency_id.id
                                 price_to_convert = line.price_unit
 
+                            line_changed = True
                             new_price = cur_obj.compute(cr, uid, from_curr_id, to_curr_id, price_to_convert, round=False)
                             pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
+                    if line_changed:
+                        tax_line_obj = self.pool.get('account.invoice.tax')
+                        for tax_line in order.tax_line:
+                            new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id, tax_line.amount, round=False)
+                            tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
+
 
         return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context)
 
@@ -1210,7 +1218,14 @@ class purchase_order(osv.osv):
         if vals.get('partner_id', False):
             partner = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id'), context=context)
             # partner type - always set
-            vals.update({'partner_type': partner.partner_type, })
+            vals.update({'partner_type': partner.partner_type})
+            if partner.partner_type != 'external':
+                vals['tax_line'] = False
+                tax_obj = self.pool.get('account.invoice.tax')
+                tax_lines_ids = tax_obj.search(cr, uid, [('purchase_id', 'in', ids)], context=context)
+                if tax_lines_ids:
+                    tax_obj.unlink(cr, uid, tax_lines_ids, context=context)
+
             # internal type (zone) - always set
             vals.update({'internal_type': partner.zone, })
             # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default

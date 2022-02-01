@@ -1923,7 +1923,7 @@ class account_invoice_tax(osv.osv):
 
 
     def _check_untaxed_amount(self, cr, uid, vals, context=None):
-        if 'account_tax_id' in vals and vals['account_tax_id'] and vals['base_amount'] == 0:
+        if 'account_tax_id' in vals and vals['account_tax_id'] and 'base_amount' in vals and vals['base_amount'] == 0:
             raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Save & Edit button before saving the %s tax.') % (vals['name']))
         return True
 

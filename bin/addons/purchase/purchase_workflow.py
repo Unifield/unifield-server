@@ -880,12 +880,14 @@ class purchase_order_line(osv.osv):
         return True
 
     def update_tax_corner(self, cr, uid, ids, context=None):
+        # TODO: round amount ?
         for pol in self.browse(cr, uid, ids, fields_to_fetch=['product_qty', 'price_unit', 'order_id'], context=context):
             if pol.order_id.tax_line and pol.order_id.amount_untaxed:
                 percent = (pol.product_qty * pol.price_unit) / pol.order_id.amount_untaxed
             for tax_line in pol.order_id.tax_line:
                 self.pool.get('account.invoice.tax').write(cr, uid, tax_line.id, {'amount': tax_line.amount * (1 - percent)}, context=context)
         return True
+
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         Wkf method called when getting the cancel state

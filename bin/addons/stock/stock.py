@@ -1718,6 +1718,23 @@ class stock_picking(osv.osv):
 
         invoice_line_id = invoice_line_obj.create(cr, uid, inv_vals, context=context)
         self._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
+        if move_line.purchase_line_id and move_line.purchase_line_id.order_id.amount_untaxed:
+            for tax_line in move_line.purchase_line_id.order_id.tax_line:
+                percent = (inv_vals['discount'] * inv_vals['price_unit']) / move_line.purchase_line_id.order_id.amount_untaxed
+                tax_id = self.pool.get('account.invoice.tax').search(cr, uid, [('invoice_id', '=', invoice_id), ('account_tax_id', '=', tax_line.account_tax_id.id), ('account_id', '=', tax_line.account_id.id), ('partner_id', '=', tax_line.partner_id.id)], context=context)
+                if not tax_id:
+                    self.pool.get('account.invoice.tax').create(cr, uid, {
+                        'invoice_id': invoice_id,
+                        'account_tax_id': tax_line.account_tax_id.id,
+                        'account_id': tax_line.account_id.id,
+                        'partner_id': tax_line.partner_id.id,
+                        'name': tax_line.name,
+                        'amount': tax_line.amount * percent}, context=context)
+                else:
+                    cr.execute('update account_invoice_tax set amount=amount+%s where id = %s', (tax_line.amount * percent, tax_id[0]))
+
+                self.pool.get('account.invoice.tax').write(cr, uid, tax_line.id, {'amount': tax_line.amount * (1 - percent)}, context=context)
+
 
         if picking.sale_id:
             for sale_line in picking.sale_id.order_line:

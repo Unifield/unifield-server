@@ -2123,7 +2123,6 @@ class purchase_order_line(osv.osv):
             if pol.order_id.id not in inv_ids:
                 inv_ids[pol.order_id.id] = pol.order_id.action_invoice_get_or_create(context=context)
 
-
             all_taxes = {}
             if pol.order_id.tax_line:
                 percent = (pol.product_qty * pol.price_unit) / pol.order_id.amount_untaxed
@@ -2180,7 +2179,7 @@ class purchase_order_line(osv.osv):
                         'account_id': key[1],
                         'partner_id': key[2],
                         'name': all_taxes[inv_id][key]['tax_line'].name,
-                        'amount': all_taxes[inv_id][key]['amount']}, contex=context)
+                        'amount': all_taxes[inv_id][key]['amount']}, context=context)
                 else:
                     cr.execute('update account_invoice_tax set amount=amount+%s where id = %s', (all_taxes[inv_id][key]['amount'], tax_id[0]))
 
