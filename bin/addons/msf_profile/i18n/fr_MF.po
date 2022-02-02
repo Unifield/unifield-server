@@ -113345,3 +113345,8 @@ msgstr "Instance de Création"
 #: report:delivery.order:0
 msgid "DELIVERY ORDER"
 msgstr "BON DE LIVRAISON"
+
+#. module: base
+#: field:res.partner,legal_name:0
+msgid "Legal Name"
+msgstr "Nom Légal"
