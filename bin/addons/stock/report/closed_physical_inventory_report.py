@@ -166,7 +166,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
             disc_lines[disc_line.product_id.id]['lines'].append({
                 'line_number': disc_line.line_no,
                 'qty_counted': disc_line.counted_qty,
-                'qty_ignored': (disc_qty < 0 and abs(disc_qty) or 0),
+                'qty_ignored': disc_qty < 0 and disc_line.counted_qty_is_empty and abs(disc_qty) or '',
                 'prodlot': disc_line.batch_number or '',
                 'expiry_date': disc_line.expiry_date and datetime.strptime(disc_line.expiry_date[0:10], '%Y-%m-%d') or '',
                 'reason_type': disc_line.reason_type_id.complete_name,
