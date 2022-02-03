@@ -1048,13 +1048,23 @@ class stock_picking(osv.osv):
         partner_adress_obj = self.pool.get('res.partner.address')
         pricelist_obj = self.pool.get('product.pricelist')
         sp_com_obj = self.pool.get('so.po.common')
+        distrib_obj = self.pool.get('analytic.distribution')
 
         po_info = stock_picking.purchase_id
         lines = stock_picking.move_lines
         partner_id = partner_obj.search(cr, uid, [('name', '=', source)], limit=1, context=context)[0]
         partner_type = partner_obj.read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type']
         partner_address_id = partner_adress_obj.search(cr, uid, [('partner_id', '=', partner_id)], limit=1, context=context)[0]
-        po_analytic_distrib = sp_com_obj.get_analytic_distribution_id(cr, uid, po_info.to_dict(), context)
+        po_analytic_distrib = False
+        if partner_type == 'internal':
+            po_analytic_distrib = sp_com_obj.get_analytic_distribution_id(cr, uid, po_info.to_dict(), context)
+        else:
+            # set FO AD from orginal FO
+            orig_fo_id = sale_obj.search(cr, uid, [('client_order_ref', '=', source + '.' + po_info.name)], limit=1, context=context)
+            if orig_fo_id:
+                orignal_so = sale_obj.browse(cr, uid, orig_fo_id[0], fields_to_fetch=['analytic_distribution_id'], context=context)
+                if orignal_so.analytic_distribution_id:
+                    po_analytic_distrib = distrib_obj.copy(cr, uid, orignal_so.analytic_distribution_id.id, {}, context=context)
 
         fo_data = {
             'client_order_ref': source + '.' + po_info.name,
@@ -1089,10 +1099,17 @@ class stock_picking(osv.osv):
             original_sol_analytic_distrib_id = False
             original_sol_id = sol_obj.search(cr, uid, [('sync_linked_pol', '=', line.purchase_line_id.sync_local_id)],
                                              limit=1, context=context)
-            if len(original_sol_id) > 0:
-                original_sol_analytic_distrib_id = sol_obj.browse(cr, uid, original_sol_id[0],
-                                                                  fields_to_fetch=['analytic_distribution_id'],
-                                                                  context=context).analytic_distribution_id.id
+            if not original_sol_id and hasattr(line.purchase_line_id, 'original_line_id') and line.purchase_line_id.original_line_id and hasattr(line.purchase_line_id.original_line_id, 'sync_local_id') and line.purchase_line_id.original_line_id.sync_local_id:
+                # try to retrieve the AD on the original line
+                original_sol_id = sol_obj.search(cr, uid, [('sync_linked_pol', '=', line.purchase_line_id.original_line_id.sync_local_id)],
+                                                 limit=1, context=context)
+            if original_sol_id:
+                current_analytic_distrib_id = sol_obj.browse(cr, uid, original_sol_id[0],
+                                                             fields_to_fetch=['analytic_distribution_id'],
+                                                             context=context).analytic_distribution_id.id
+                original_sol_analytic_distrib_id = distrib_obj.copy(cr, uid, current_analytic_distrib_id, {}, context=context)
+
+
             else:
                 original_sol_analytic_distrib_id = sp_com_obj.get_analytic_distribution_id(cr, uid, line.purchase_line_id.to_dict(), context)
 
@@ -1110,7 +1127,7 @@ class stock_picking(osv.osv):
                 'in_name_goods_return': source + '.' + stock_picking.name,
                 'date_planned': po_info.delivery_requested_date,
                 'stock_take_date': po_info.stock_take_date,
-                'analytic_distribution_id': original_sol_analytic_distrib_id or po_analytic_distrib or False,
+                'analytic_distribution_id': original_sol_analytic_distrib_id,
                 'sync_linked_pol': line.purchase_line_id.sync_local_id,
             }
             sol_obj.create(cr, uid, fo_line_data, context=context)

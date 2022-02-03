@@ -736,7 +736,7 @@ class return_claim(osv.osv):
             if len(missing_events_ids) > 0:
                 result[obj.id].update({'has_missing_events': True})
 
-            if obj.origin_claim and obj.partner_id_return_claim.partner_type == 'internal' \
+            if obj.origin_claim and obj.partner_id_return_claim.partner_type in ('internal', 'intermission', 'section') \
                     and obj.picking_id_return_claim.type == 'out':
                 # Searching for the Original IN
                 in_domain = [
