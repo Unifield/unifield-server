@@ -318,12 +318,19 @@ class stock_picking(osv.osv):
         if shipment_ref:
             shipment_ref = source + "." + shipment_ref
 
+        has_excess_in_qty = False
+        # locations
+        warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
+        location_input_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
+        msf_supplier_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')[1]
         if po_id:
             po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
             in_name_goods_return = False
             for move_line in pick_dict['move_lines']:
                 if move_line.get('sale_line_id', {}) and move_line['sale_line_id'].get('in_name_goods_return'):
                     in_name_goods_return = move_line['sale_line_id']['in_name_goods_return'].split(".")[-1]
+                if move_line.get('from_excess_in_qty'):
+                    has_excess_in_qty = True
             if in_name_goods_return:
                 # search for the right IN in case of synchro of multiple missing/replacement IN
                 in_id = self.pool.get('stock.picking')\
@@ -334,11 +341,6 @@ class stock_picking(osv.osv):
                 if not in_id:
                     in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['shipped'], context)
         else:
-            # locations
-            warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
-            location_input_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
-            msf_supplier_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')[1]
-
             partner_id = self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0]
 
             in_claim_dict = {
@@ -625,6 +627,7 @@ class stock_picking(osv.osv):
                 raise Exception(message)
 
             #UFTP-332: Check if shipment/out is given
+            excess_in = False
             if shipment_ref:
                 same_in = self.search(cr, uid, [('id', '=', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
                 processed_in = None
@@ -632,16 +635,44 @@ class stock_picking(osv.osv):
                     # Check if the IN has not been manually processed (forced)
                     processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
                     if processed_in:
-                        in_name = self.browse(cr, uid, in_id, context=context)['name']
-                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
-                            in_name, po_name,
-                        )
+                        if has_excess_in_qty:
+                            new_excess_in_info = {
+                                'move_lines': [(0, 0, {
+                                    'change_reason': x.get('change_reason', False),
+                                    'comment': x.get('comment', False),
+                                    'date': x.get('date', False),
+                                    'date_expected': x.get('date_expected', False),
+                                    'expired_date': x.get('expired_date', False),
+                                    'line_number': x.get('line_number', False),
+                                    'name': x.get('name', False),
+                                    'note': x.get('note', False),
+                                    'original_qty_partial': x.get('product_qty', False),
+                                    'product_id': product_obj.search(cr, uid, [('name', '=', x.get('product_id', False)['name'])],
+                                                                     limit=1, context=context)[0],
+                                    'product_qty': x.get('product_qty', False),
+                                    'product_uom': uom_obj.search(cr, uid, [('name', '=', x.get('product_uom', False)['name'])],
+                                                                  limit=1, context=context)[0],
+                                    'reason_type_id': context['common']['rt_internal_supply'],
+                                    'location_id': msf_supplier_id,
+                                    'location_dest_id': location_input_id,
+                                    'from_excess_in_qty': x.get('from_excess_in_qty', False),
+                                }) for x in pick_dict.get('move_lines', False)]
+                            }
+                            in_id = self.copy(cr, uid, processed_in[0], new_excess_in_info, context=context)
+                            self.write(cr, uid, in_id, {'backorder_id': processed_in[0]}, context=context)
+                            netsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', in_id, 'button_shipped', cr)
+                            excess_in = True
+                        else:
+                            in_name = self.browse(cr, uid, in_id, context=context)['name']
+                            message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
+                                in_name, po_name,
+                            )
                 if not same_in and not processed_in:
                     message = "Sorry, this seems to be an extra ship. This feature is not available now!"
             else:
                 same_in = self.search(cr, uid, [('id', '=', in_id)], context=context)
                 message = "Sorry, this seems to be an extra ship. This feature is not available now!"
-            if not same_in:
+            if not same_in and not excess_in:
                 self._logger.info(message)
                 raise Exception(message)
 
