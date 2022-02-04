@@ -1331,7 +1331,7 @@ class shipment(osv.osv):
             cur_id = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
-                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking') and not move.picking_id.claim:
+                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking' and not move.sale_line_id.in_name_goods_return) and not move.picking_id.claim:
                         make_invoice = True
                         cur_id = pack.currency_id.id
                         break
@@ -1413,7 +1413,7 @@ class shipment(osv.osv):
                     if move.state == 'cancel':
                         continue
 
-                    if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
+                    if move.sale_line_id and (move.sale_line_id.order_id.order_policy != 'picking' or move.sale_line_id.in_name_goods_return):
                         continue
 
                     if move.picking_id.claim:

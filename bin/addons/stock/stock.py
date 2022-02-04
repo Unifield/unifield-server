@@ -1465,6 +1465,16 @@ class stock_picking(osv.osv):
             # don't invoice claim
             return False, False
 
+        all_claim = True
+        for move_line in picking.move_lines:
+            if not move_line.sale_line_id or not move_line.sale_line_id.in_name_goods_return:
+                all_claim = False
+                break
+        if all_claim:
+            # don't invoice return goods
+            return False, False
+
+
         if not partner:
             raise osv.except_osv(_('Error, no partner !'),
                                  _('Please put a partner on the picking list if you want to generate invoice.'))
@@ -1647,6 +1657,10 @@ class stock_picking(osv.osv):
         # US-2041 - Do not invoice Picking Ticket / Delivery Order lines that are not linked to a DPO when
         # invoice creation was requested at DPO confirmation
         if picking.type == 'out' and context.get('invoice_dpo_confirmation') and move_line.dpo_id.id != context.get('invoice_dpo_confirmation'):
+            return False
+
+        if move_line.sale_line_id and move_line.sale_line_id.in_name_goods_return:
+            # do not invoice goods return
             return False
 
         if not inv_type:
