@@ -1339,10 +1339,15 @@ class shipment(osv.osv):
         for shipment in self.browse(cr, uid, ids, context=context):
             make_invoice = False
             move = False
+            cur_id = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
-                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
+                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking' and not move.sale_line_id.in_name_goods_return) and not move.picking_id.claim:
                         make_invoice = True
+                        cur_id = pack.currency_id.id
+                        break
+                if make_invoice:
+                    break
 
             if not make_invoice:
                 continue
@@ -1378,7 +1383,6 @@ class shipment(osv.osv):
                 'from_supply': True,
             }
 
-            cur_id = shipment.pack_family_memory_ids[0].currency_id.id
             if cur_id:
                 invoice_vals['currency_id'] = cur_id
             # Journal type
@@ -1420,7 +1424,10 @@ class shipment(osv.osv):
                     if move.state == 'cancel':
                         continue
 
-                    if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
+                    if move.sale_line_id and (move.sale_line_id.order_id.order_policy != 'picking' or move.sale_line_id.in_name_goods_return):
+                        continue
+
+                    if move.picking_id.claim:
                         continue
 
                     # create 1 FO = 1 Invoice
@@ -2592,7 +2599,6 @@ class stock_picking(osv.osv):
         '''
         # Objects
         sale_order_obj = self.pool.get('sale.order')
-
         # For picking ticket from scratch, invoice it !
         if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
             vals['invoice_state'] = '2binvoiced'
@@ -2992,7 +2998,7 @@ class stock_picking(osv.osv):
                     _('Bad document'),
                     _('The document you want to convert is already a Picking Ticket')
                 )
-            if not out.sale_id:
+            if not out.sale_id and not out.claim:
                 raise osv.except_osv(_('Error'), _('You can not convert a Delivery Order from scratch into a Picking Ticket'))
             if out.state in ('cancel', 'done'):
                 raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
@@ -3203,6 +3209,8 @@ class stock_picking(osv.osv):
                     'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
                     'move_lines': [],
                     'state': 'draft',
+                    'claim': picking.claim,
+                    'claim_name': picking.claim_name
                 }
                 context['allow_copy'] = True
 
