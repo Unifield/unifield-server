@@ -1824,36 +1824,36 @@ class product_product(osv.osv):
 
         src_locations = context.get('histo_src_location_ids') or context.get('amc_location_ids')
         dest_locations = context.get('histo_dest_location_ids')
-        if src_locations and not dest_locations:
-            # SRC INTERNAL // SAME AS RR
-            out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
-            domain += [
-                '|',
-                '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
-                '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_dest_id', 'in', src_locations)
-            ]
+        #if src_locations and not dest_locations:
+        #    # SRC INTERNAL // SAME AS RR
+        #    out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
+        #    domain += [
+        #        '|',
+        #        '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
+        #        '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_dest_id', 'in', src_locations)
+        #    ]
 
 
-            #INT chained to a IN reason_type_return_from_unit  with location_dest_id in histo_src_location_ids
-            int_return_qery = '''
-                select
-                    move_int.id
-                from
-                    stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
-                where
-                    move_int.picking_id = pick_int.id and
-                    move_in.picking_id = pick_in.id and
-                    move_in.reason_type_id in %(return_reason)s and
-                    move_int.type = 'internal' and
-                    pick_int.previous_chained_pick_id = pick_in.id and
-                    move_int.product_id in %(product_ids)s and
-                    move_int.location_dest_id in %(src_locations)s and
-                    move_int.state = 'done' and
-                    move_int.date >= %(from_date)s and
-                    move_int.date <= %(to_date)s
-            '''
+        #   #INT chained to a IN reason_type_return_from_unit  with location_dest_id in histo_src_location_ids
+        #   int_return_qery = '''
+        #       select
+        #           move_int.id
+        #       from
+        #           stock_move move_int, stock_picking pick_int, stock_picking pick_in, stock_move move_in
+        #       where
+        #           move_int.picking_id = pick_int.id and
+        #           move_in.picking_id = pick_in.id and
+        #           move_in.reason_type_id in %(return_reason)s and
+        #           move_int.type = 'internal' and
+        #           pick_int.previous_chained_pick_id = pick_in.id and
+        #           move_int.product_id in %(product_ids)s and
+        #           move_int.location_dest_id in %(src_locations)s and
+        #           move_int.state = 'done' and
+        #           move_int.date >= %(from_date)s and
+        #           move_int.date <= %(to_date)s
+        #   '''
 
-        elif not context.get('histo_src_location_ids') and context.get('histo_dest_location_ids'):
+        if not context.get('histo_src_location_ids') and context.get('histo_dest_location_ids'):
             # DEST EXTERNAL
             input_loc = get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
             domain += [ '|',
@@ -1879,9 +1879,11 @@ class product_product(osv.osv):
                     move_int.date <= %(to_date)s
             '''
 
-        elif context.get('histo_src_location_ids') and context.get('histo_dest_location_ids'):
+        elif src_locations:
             # SRC INTERNAL
-            # DEST: INTERNAL OR EXTERNAL
+            # DEST: INTERNAL + EXTERNAL  OR EMPTY (same as segment RR-AMC)
+            if not dest_locations:
+                dest_locations = self.pool.get('stock.location').search(cr, uid, [('id', 'not in', src_locations), ('usage', 'in', ['internal', 'customer']), ('location_category', '!=', 'transition')], context=context)
             domain += ['|', '|', '|',
                        # DEST & SRC: internal
                        '&', '&', '&', '&', '&',
@@ -1918,7 +1920,7 @@ class product_product(osv.osv):
             customer_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
             domain += ['|', '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations), '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id])]
 
-        return domain, int_return_qery
+        return domain, int_return_qery, dest_locations
 
     def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False, remove_negative_amc=False, rounding=True):
         '''
@@ -1962,7 +1964,7 @@ class product_product(osv.osv):
         internal_return = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_return')[1] # code 18
         replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1] # code 17
 
-        domain, extra_sql = self._get_domain_compute_amc(cr, uid, context)
+        domain, extra_sql, dest_locations = self._get_domain_compute_amc(cr, uid, context)
         domain.insert(0, ('product_id', 'in', ids))
 
         if to_date:
@@ -1987,7 +1989,7 @@ class product_product(osv.osv):
             if context.get('histo_src_location_ids'):
                 rcr_domain = ['&', ('rac_id.cons_location_id', 'in', context.get('histo_src_location_ids'))] + rcr_domain
             if context.get('histo_dest_location_ids'):
-                rcr_domain = ['&', ('rac_id.activity_id', 'in', context.get('histo_src_location_ids'))] + rcr_domain
+                rcr_domain = ['&', ('rac_id.activity_id', 'in', context.get('histo_dest_location_ids'))] + rcr_domain
 
 
             racl_obj = self.pool.get('real.average.consumption.line')
@@ -2032,7 +2034,7 @@ class product_product(osv.osv):
                 'to_date': to_date or '2300-01-01 00:00:00',
                 'product_ids': tuple(ids),
                 'src_locations': tuple(src_locations),
-                'dest_locations': tuple(context.get('histo_dest_location_ids', [])),
+                'dest_locations': tuple(dest_locations),
                 'return_reason': tuple([return_id, return_good_id]),
             })
             int_return = [x[0] for x in cr.fetchall()]
