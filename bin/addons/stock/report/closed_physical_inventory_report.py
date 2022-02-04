@@ -164,7 +164,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 })
             rep_lines[disc_line.product_id.id]['lines'].append({
                 'line_number': disc_line.line_no,
-                'qty_counted': disc_line.counted_qty,
+                'qty_counted': not (disc_line.counted_qty_is_empty or disc_line.ignored) and disc_line.counted_qty or '',
                 'qty_ignored': disc_qty < 0 and (disc_line.counted_qty_is_empty or disc_line.ignored) and abs(disc_qty) or '',
                 'prodlot': disc_line.batch_number or '',
                 'expiry_date': disc_line.expiry_date and datetime.strptime(disc_line.expiry_date[0:10], '%Y-%m-%d') or '',
@@ -206,7 +206,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                     })
                 rep_lines[count_line.product_id.id]['lines'].append({
                     'line_number': count_line.line_no,
-                    'qty_counted': count_line.quantity,
+                    'qty_counted': not count_line_qty and count_line_qty != 0 and '' or count_line.quantity,
                     'qty_ignored': not count_line_qty and count_line_qty != 0 and (prod_stock or count_line.product_id.qty_available) or '',
                     'prodlot': count_line.batch_number or '',
                     'expiry_date': count_line.expiry_date and datetime.strptime(count_line.expiry_date[0:10], '%Y-%m-%d') or '',
@@ -232,7 +232,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
             self.add_cell('', top_float_style)
             self.add_cell('', top_line_style)
             self.add_cell('', top_date_style)
-            self.add_cell(rep_lines[product_id]['total_qty'], top_float_style)
+            self.add_cell(rep_lines[product_id]['total_qty'] or 0, top_float_style)
             self.add_cell('', top_line_style)
             self.add_cell('', top_line_style)
             self.add_cell('', top_line_style)
