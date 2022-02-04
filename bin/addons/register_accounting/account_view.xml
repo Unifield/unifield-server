@@ -515,14 +515,16 @@
                         <field name="sequence_for_reference" select='1'/>
                         <field name="name" select='1' string="Description"/>
                         <field name="ref" select='1'/>
-                        <field name="journal_id" select='1'/>
+                        <field name="journal_id" select='1'
+                               domain="[('type', 'in', ['cash', 'bank', 'cheque'])]"
+                               context="{'search_default_filter_is_active': 1}"/>
                         <newline/>
                         <field name="account_id" select='1'/>
                         <field name="amount_in" select='1'/>
                         <field name="amount_out" select='1'/>
                         <newline/>
                         <field name="partner_id" select='1' string="3RD Party Partner"/>
-                        <field name="transfer_journal_id" select='1' string='3RD Party Journal'/>
+                        <field name="transfer_journal_id" select='1' string='3RD Party Journal' context="{'search_default_filter_is_active': 1}"/>
                         <field name="employee_id" select='1' string="3RD Party Employee"/>
                     </group>
                     <newline/>
@@ -631,7 +633,7 @@
                         <field name="name"/>
                         <newline/>
                         <field name="period_id" domain="[('state', '!=', 'created')]"/>
-                        <field name="journal_id" domain="[('type', '=', 'bank')]" />
+                        <field name="journal_id" domain="[('type', '=', 'bank')]" context="{'search_default_filter_is_active': 1}"/>
                     </group>
                     <newline/>
                     <group expand="1" string="Group By...">
@@ -904,7 +906,7 @@
                         <field name="name"/>
                         <newline/>
                         <field name="period_id" domain="[('state', '!=', 'created')]"/>
-                        <field name="journal_id" domain="[('type', '=', 'cheque')]" />
+                        <field name="journal_id" domain="[('type', '=', 'cheque')]" context="{'search_default_filter_is_active': 1}"/>
                     </group>
                     <newline/>
                     <group expand="1" string="Group By...">

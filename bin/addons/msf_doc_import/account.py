@@ -372,9 +372,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     else:
                         # check for a valid journal code
-                        aj_ids = aj_obj.search(cr, uid, [('code', '=', line[cols['Journal Code']]), ('instance_id', '=', current_instance.id)])
+                        aj_ids = aj_obj.search(cr, uid,
+                                               [('code', '=', line[cols['Journal Code']]),
+                                                ('instance_id', '=', current_instance.id),
+                                                ('is_active', '=', True)],
+                                               limit=1)
                         if not aj_ids:
-                            errors.append(_('Line %s. Journal Code not found: %s.') % (current_line_num, line[cols['Journal Code']]))
+                            errors.append(_('Line %s. Journal Code not found or inactive: %s.') %
+                                          (current_line_num, line[cols['Journal Code']]))
                             continue
                         else:
                             aj_data = aj_obj.read(cr, uid, aj_ids, ['type'])[0]
@@ -525,19 +530,22 @@ class msf_doc_import_accounting(osv.osv_memory):
 
                     # US-937: use period of import file
                     if period_name.startswith('Period 16'):
-                        raise osv.except_osv(_('Warning'), _("You can't import entries in Period 16."))
+                        errors.append(_("Line %s. You can't import entries in Period 16.") % current_line_num)
+                        continue
                     period_ids = period_obj.search(
                         cr, uid, [
                             ('id', 'in', wiz_period_ids),
                             ('name', '=', period_name),
                         ], limit=1, context=context)
                     if not period_ids:
-                        raise osv.except_osv(_('Warning'),
-                                             _('The date chosen in the wizard is not in the same period as the imported entries.'))
+                        errors.append(_('Line %s. The date chosen in the wizard is not in the same period as the imported entries.') %
+                                      current_line_num)
+                        continue
                     period = period_obj.browse(
                         cr, uid, period_ids[0], context=context)
                     if period.state != 'draft':
-                        raise osv.except_osv(_('Warning'), _('%s is not open!') % (period.name, ))
+                        errors.append(_('Line %s. %s is not open!') % (current_line_num, period.name, ))
+                        continue
 
                     # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 
@@ -589,23 +597,32 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     if r_journal and ('account.journal', 'Journal') not in partner_options:
                         errors.append(_('Line %s. You cannot use a journal for the given account: %s.') % (current_line_num, account.code))
+                        continue
                     if partner_type_mandatory and not r_partner and not r_employee and not r_journal:
                         errors.append(_('Line %s. A Third Party is mandatory for the given account: %s.') % (current_line_num, account.code))
+                        continue
                     # Check that the currency and type of the (journal) third party is correct
                     # in case of an "Internal Transfer" account
-                    partner_journal = r_journal and aj_obj.browse(cr, uid, r_journal, fields_to_fetch=['currency', 'type'], context=context)
+                    partner_journal = r_journal and aj_obj.browse(cr, uid, r_journal,
+                                                                  fields_to_fetch=['currency', 'type', 'is_active', 'code'],
+                                                                  context=context)
+                    if partner_journal and not partner_journal.is_active:  # no need to check further in case the journal is inactive
+                        errors.append(_('Line %s. The Journal Third Party "%s" is inactive.') % (current_line_num, partner_journal.code))
+                        continue
                     is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
                     if type_for_reg == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != r_currency):
                         errors.append(_('Line %s. The Third Party must be a liquidity journal with the same currency '
                                         'as the booking one for the given account: %s.') % (current_line_num, account.code))
+                        continue
                     if type_for_reg == 'transfer' and (not is_liquidity or partner_journal.currency.id == r_currency):
                         errors.append(_('Line %s. The Third Party must be a liquidity journal with a currency '
                                         'different from the booking one for the given account: %s.') % (current_line_num, account.code))
+                        continue
 
                     if is_liquidity and file_journal_id == partner_journal.id:
-                        raise osv.except_osv(_('Warning'),
-                                             _('Line %s. The journal used for the internal transfer must be different from the '
-                                               'Journal Entry Journal for the given account: %s.') % (current_line_num, account.code))
+                        errors.append(_('Line %s. The journal used for the internal transfer must be different from the '
+                                        'Journal Entry Journal for the given account: %s.') % (current_line_num, account.code))
+                        continue
 
                     if account.type == 'liquidity':
                         # do not permit to import line with liquidity account
@@ -613,9 +630,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                         if file_journal_id and aj_obj.read(cr, uid,
                                                            file_journal_id, ['type'],
                                                            context=context)['type'] != 'migration':
-                            raise osv.except_osv(_('Error'),
-                                                 _('Line %s. It is not possible to import account of type \'Liquidity\', '
-                                                   'please check the account %s.') % (current_line_num, account.code))
+                            errors.append(_('Line %s. It is not possible to import account of type \'Liquidity\', '
+                                            'please check the account %s.') % (current_line_num, account.code))
+                            continue
 
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
@@ -629,8 +646,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                     for curr, per, doc_date in money:
                         amount = money[(curr, per, doc_date)]['debit'] - money[(curr, per, doc_date)]['credit']
                         if abs(amount) > 10**-3:
-                            raise osv.except_osv(_('Error'), _('Amount unbalanced for the Currency %s and the Document Date %s (Period: %s): %s') %
-                                                 (curr, doc_date, per, amount,))
+                            errors.append(_('An error occurred. Error: Amount unbalanced for the Currency %s and the '
+                                            'Document Date %s (Period: %s): %s') % (curr, doc_date, per, amount,))
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
 

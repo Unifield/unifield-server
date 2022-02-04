@@ -45,6 +45,9 @@ class account_move_line(osv.osv):
          - The line isn't partially or totally reconciled
          - The line doesn't come from a write-off
          - The line is "corrected_upstream" that implies the line have been already corrected from a coordo or a hq to a level that is superior or equal to these instance.
+         - The line isn't linked to a SI refund cancel
+
+         Note: JIs on inactive journals are still correctable (US-7563).
         """
         # Some checks
         if context is None:

@@ -998,7 +998,6 @@ msgstr "Pacifique/Auckland"
 
 #. modules: account, product_asset, order_types, account_override, register_accounting, msf_instance, finance
 #: selection:account.analytic.journal,type:0
-#: view:account.journal:0
 #: selection:account.journal,type:0
 #: view:account.model:0
 #: selection:account.tax,type_tax_use:0
@@ -11397,6 +11396,8 @@ msgstr "Creation Month"
 #: view:res.request:0
 #: view:replenishment.location.config:0
 #: view:account.tax:0
+#: view:account.journal:0
+#: code:addons/account/report/account_liquidity_balance.py:58
 #: view:sync.version.instance.monitor:0
 msgid "Inactive"
 msgstr "Inactif"
@@ -32306,7 +32307,6 @@ msgstr "No data to process"
 
 #. modules: account, account_mcdb, stock
 #: view:account.analytic.line:0
-#: view:account.journal:0
 #: view:account.mcdb:0
 #: selection:report.stock.move,type:0
 msgid "Others"
@@ -32869,10 +32869,10 @@ msgid "This wizard will import National staff employees file in XML Spreadsheet 
 msgstr "Cet assistant importera le fichier du personnel national au format Tableur XML 2003. Pour générer ce fichier, créer un Tableur avec quelques colonnes : 'Nom', 'Code'."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:489
+#: code:addons/msf_doc_import/account.py:547
 #, python-format
-msgid "%s is not open!"
-msgstr "%s is not open!"
+msgid "Line %s. %s is not open!"
+msgstr "Ligne %s. %s n'est pas ouvert !"
 
 #. modules: msf_cross_docking, purchase
 #: field:stock.move,allocation_setup:0
@@ -39774,10 +39774,10 @@ msgid "ABC Class"
 msgstr "Classe ABC"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:330
+#: code:addons/msf_doc_import/account.py:381
 #, python-format
-msgid "Line %s. Journal Code not found: %s."
-msgstr "Ligne %s. Code du Journal non trouvé: %s."
+msgid "Line %s. Journal Code not found or inactive: %s."
+msgstr "Ligne %s. Code Journal non trouvé ou inactif : %s."
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -40555,10 +40555,10 @@ msgid "Retry from time"
 msgstr "Retry from time"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:622
+#: code:addons/msf_doc_import/account.py:646
 #, python-format
-msgid "Amount unbalanced for the Currency %s and the Document Date %s (Period: %s): %s"
-msgstr "Montant non équilibré pour la Devise %s et la Date de Document %s (Période : %s) : %s"
+msgid "An error occurred. Error: Amount unbalanced for the Currency %s and the Document Date %s (Period: %s): %s"
+msgstr "Une erreur est survenue. Erreur : Montant non équilibré pour la Devise %s et la Date de Document %s (Période : %s) : %s"
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:754
@@ -54141,7 +54141,6 @@ msgstr "Valider les lignes"
 #. module: account
 #: selection:account.account,type:0
 #: selection:account.account.template,type:0
-#: view:account.journal:0
 msgid "Liquidity"
 msgstr "Liquidités"
 
@@ -71528,6 +71527,9 @@ msgstr "Navajo"
 #: view:account.tax:0
 #: code:addons/mission_stock/mission_stock.py:515
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:51
+#: field:account.journal,is_active:0
+#: view:account.journal:0
+#: code:addons/account/report/account_liquidity_balance.py:58
 #: view:sync.version.instance.monitor:0
 #, python-format
 msgid "Active"
@@ -76490,7 +76492,6 @@ msgid "Australia"
 msgstr "Australie"
 
 #. modules: account_override, register_accounting, msf_instance, finance, sale, order_types
-#: view:account.journal:0
 #: view:account.model:0
 #: selection:account.tax,type_tax_use:0
 #: view:account.tax.template:0
@@ -76552,10 +76553,10 @@ msgid "Slovenia"
 msgstr "Slovénie"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:477
+#: code:addons/msf_doc_import/account.py:533
 #, python-format
-msgid "You can't import entries in Period 16."
-msgstr "You can't import entries in Period 16."
+msgid "Line %s. You can't import entries in Period 16."
+msgstr "Ligne %s. Vous ne pouvez pas importer des écritures en \"Period 16\"."
 
 #. module: stock
 #: view:stock.inventory.line.split:0
@@ -93614,10 +93615,10 @@ msgid "America/Jamaica"
 msgstr "America/Jamaica"
 
 #. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:319
+#: code:addons/register_accounting/wizard/wizard_register_import.py:324
 #, python-format
-msgid "Journal %s not found."
-msgstr "Journal %s non trouvé."
+msgid "Journal %s not found or inactive."
+msgstr "Journal %s non trouvé ou inactif."
 
 #. module: sales_followup
 #: report:ir.follow.up.location.report_pdf:0
@@ -94945,10 +94946,10 @@ msgid "sourced_sy - (purchase.order.line)"
 msgstr "sourced_sy - (purchase.order.line)"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:485
+#: code:addons/msf_doc_import/account.py:541
 #, python-format
-msgid "The date chosen in the wizard is not in the same period as the imported entries."
-msgstr "The date chosen in the wizard is not in the same period as the imported entries."
+msgid "Line %s. The date chosen in the wizard is not in the same period as the imported entries."
+msgstr "Ligne %s. La date choisie dans l'assistant n'est pas dans la même période que les écritures importées."
 
 #. module: hr
 #: model:ir.actions.act_window,help:hr.open_view_employee_list_my
@@ -110343,6 +110344,13 @@ msgstr "Délai de Manutention (jours) :"
 msgid "Line %s. The journal third party used for the internal transfer must be different from the journal of the register."
 msgstr "Ligne %s. Le tiers de type journal utilisé pour le transfert interne doit être différent du journal du registre."
 
+#. modules: register_accounting, msf_doc_import
+#: code:addons/register_accounting/wizard/wizard_register_import.py:488
+#: code:addons/msf_doc_import/account.py:607
+#, python-format
+msgid "Line %s. The Journal Third Party \"%s\" is inactive."
+msgstr "Ligne %s. Le Tiers de type Journal \"%s\" est inactif."
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:470
 #, python-format
@@ -110591,6 +110599,12 @@ msgstr "Qté Indicative en Stock"
 #, python-format
 msgid "You cannot duplicate a Recurring Plan with a Done model."
 msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Terminé."
+
+#. module: account
+#: code:addons/account/account.py:2583
+#, python-format
+msgid "You cannot duplicate a Recurring Plan with a model on an inactive journal (%s)."
+msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle sur un journal inactif (%s)."
 
 #. module: analytic_override
 #: field:account.analytic.account,top_cc_instance_ids:0
@@ -112453,8 +112467,9 @@ msgstr "Les dates dans la colonne \"%s\" doivent utiliser le format AAAA-MM-JJ."
 msgid "This wizard enables you to select several Cost Centers at once to be added to the Destination. The activation and inactivation dates of the related Dest / CC combinations will remain empty."
 msgstr "Cet assistant vous permet de sélectionner en une fois plusieurs Centres de Coût à ajouter à la Destination. Les dates d'activation et d'inactivation des Combinaisons Dest / CC associées resteront vides."
 
-#. module: analytic_override
+#. modules: analytic_override, account
 #: field:dest.cc.link,current_id:0
+#: field:account.journal,current_id:0
 msgid "DB Id (used by the UI)"
 msgstr "Id BD (utilisé par l'UI)"
 
@@ -113252,6 +113267,12 @@ msgstr "La Distribution Analytique liée à l'écriture %s a été mise à jour 
 "Les avoirs de type \"Modifier\" et \"Annuler\" ne sont pas autorisés."
 
 #. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:163
+#, python-format
+msgid "The journal %s is inactive. Refunds of type \"Modify\" are not allowed."
+msgstr "Le journal %s est inactif. Les avoirs de type \"Modifier\" ne sont pas autorisés."
+
+#. module: account
 #: view:account.invoice:0
 msgid "Open FY"
 msgstr "Exerc. Compt. Ouvert"
@@ -113260,6 +113281,95 @@ msgstr "Exerc. Compt. Ouvert"
 #: field:account.invoice,open_fy:0
 msgid "Open Fiscal Year"
 msgstr "Exercice Comptable Ouvert"
+
+#. module: account
+#: field:account.journal,is_default:0
+msgid "Default Journal"
+msgstr "Journal par Défaut"
+
+#. module: account
+#: help:account.journal,is_default:0
+msgid "Journals created by default in new instances"
+msgstr "Journaux créés par défaut dans les nouvelles instances"
+
+#. module: account
+#: constraint:account.journal:0
+msgid "The journals imported by default at instance creation can't be inactivated."
+msgstr "Les journaux importés par défaut lors de la création d'instance ne peuvent pas être désactivés."
+
+#. module: account_journal
+#: code:addons/account_journal/account_journal.py:417
+#, python-format
+msgid "The journals imported by default at instance creation can't be deleted."
+msgstr "Les journaux importés par défaut lors de la création d'instance ne peuvent pas être supprimés."
+
+#. module: account
+#: report:addons/account/report/account_liquidity_balance.mako:176
+msgid "Journal status"
+msgstr "Statut du journal"
+
+#. module: account
+#: field:account.bank.statement,period_start_date:0
+msgid "Period Start Date"
+msgstr "Date de Début de la Période"
+
+#. module: account
+#: code:addons/account/account.py:798
+#, python-format
+msgid "Please close the registers linked to the journal %s before inactivating it."
+msgstr "Veuillez clôturer les registres liés au journal %s avant de le désactiver."
+
+#. module: account
+#: code:addons/account/account.py:803
+#, python-format
+msgid "Please post all the manual Journal Entries on the journal %s before inactivating it."
+msgstr "Veuillez comptabiliser toutes les Ecritures Comptables manuelles sur le journal %s avant de le désactiver."
+
+#. module: account
+#: code:addons/account/account.py:812
+#, python-format
+msgid "The journal %s cannot be inactivated because the balance of the last register is not zero."
+msgstr "Le journal %s ne peut pas être désactivé car le solde du dernier registre n'est pas nul."
+
+#. module: account
+#: code:addons/account/account.py:820
+#, python-format
+msgid "The journal %s cannot be inactivated because there are still some invoices in Draft state on this journal."
+msgstr "Le journal %s ne peut pas être désactivé car il y a encore des factures à l'état Brouillon sur ce journal."
+
+#. module: account
+#: code:addons/account/account.py:831
+#, python-format
+msgid "The journal %s cannot be inactivated because a Recurring Plan which is not Done uses a Recurring Model with this journal."
+msgstr "Le journal %s ne peut pas être désactivé, car un Plan d'Ecritures Périodiques qui n'est pas Terminé utilise un Modèle Périodique avec ce journal."
+
+#. module: account
+#: code:addons/account/account.py:817
+#, python-format
+msgid "All entries booked on %s must be posted before inactivating the journal."
+msgstr "Toutes les écritures enregistrées sur %s doivent être comptabilisées avant de désactiver le journal."
+
+#. modules: register_accounting, account_override, account_subscription
+#: code:addons/register_accounting/wizard/register_reopen.py:77
+#: code:addons/account_override/account.py:1076
+#: code:addons/account_override/account.py:1376
+#: code:addons/account_override/invoice.py:762
+#: code:addons/account_subscription/account_model.py:551
+#, python-format
+msgid "The journal %s is inactive."
+msgstr "Le journal %s est inactif."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1082
+#, python-format
+msgid "Journal Entry %s: the journal %s is inactive."
+msgstr "Ecriture Comptable %s: le journal %s est inactif."
+
+#. module: msf_instance
+#: code:addons/msf_instance/add_instance.py:433
+#, python-format
+msgid "Impossible to create a register on an inactive journal."
+msgstr "Impossible de créer un registre sur un journal inactif."
 
 #. module: sync_client
 #: field:sync_client.survey.user.detailed,answer_later:0

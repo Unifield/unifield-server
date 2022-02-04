@@ -159,6 +159,9 @@ class account_invoice_refund(osv.osv_memory):
                                                              'it should be unreconciled first. You can only Refund this invoice.') % _(mode))
                 if mode == 'refund' and inv.state == 'inv_close':
                     raise osv.except_osv(_('Error !'), _('It is not possible to refund a Closed invoice'))
+                if mode == 'modify' and not inv.journal_id.is_active:
+                    raise osv.except_osv(_('Error !'), _('The journal %s is inactive. Refunds of type "Modify" are not allowed.') %
+                                         inv.journal_id.code)
 
                 if form['period']:
                     period = form['period']

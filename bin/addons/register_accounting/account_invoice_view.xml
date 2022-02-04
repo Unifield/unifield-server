@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group colspan="4" col="6">
-                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]" />
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True), ('is_active', '=', True)]" />
                         <field name="number" readonly="1" />
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />

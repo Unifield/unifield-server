@@ -83,7 +83,7 @@ class account_invoice(osv.osv):
         if context is None:
             context = {}
         journal_obj = self.pool.get('account.journal')
-        res = journal_obj.search(cr, uid, [('inv_doc_type', '=', True)], order='id', limit=1, context=context)
+        res = journal_obj.search(cr, uid, [('inv_doc_type', '=', True), ('is_active', '=', True)], order='id', limit=1, context=context)
         return res and res[0] or False
 
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -757,6 +757,9 @@ class account_invoice(osv.osv):
             'partner_move_line': False,
             'imported_invoices': False
         })
+        inv = self.browse(cr, uid, inv_id, fields_to_fetch=['state', 'from_supply', 'journal_id'], context=context)
+        if not inv.journal_id.is_active:
+            raise osv.except_osv(_('Warning'), _("The journal %s is inactive.") % inv.journal_id.code)
         # Manual duplication should generate a "manual document not created through the supply workflow", so we don't keep
         # the link to FOs and Picking List, and we reset the Source Doc if the invoice copied relates to a Supply workflow
         if context.get('from_button', False):
@@ -764,7 +767,6 @@ class account_invoice(osv.osv):
                 'order_ids': False,
                 'picking_id': False,
             })
-            inv = self.browse(cr, uid, inv_id, fields_to_fetch=['state', 'from_supply'], context=context)
             if inv.state == 'cancel':
                 raise osv.except_osv(_('Warning'), _("You can't duplicate a Cancelled invoice."))
             if not context.get('from_split') and inv.from_supply:
