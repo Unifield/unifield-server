@@ -152,7 +152,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                     'product_code': disc_line.product_id.default_code,
                     'description': disc_line.product_id.name,
                     'uom': disc_line.product_uom_id.name,
-                    'total_qty': disc_line.counted_qty + disc_line.counted_qty_is_empty and abs(disc_qty) or 0,
+                    'total_qty': disc_line.counted_qty + (disc_line.counted_qty_is_empty and abs(disc_qty) or 0),
                     'specification': ','.join([name for attribute, name in specifications.items() if getattr(disc_line.product_id, attribute, False)]),
                     'need_bn': disc_line.product_id.batch_management and _('Y') or _('N'),
                     'need_ed': disc_line.product_id.perishable and _('Y') or _('N'),
@@ -160,7 +160,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 }})
             else:
                 rep_lines[disc_line.product_id.id].update({
-                    'total_qty': rep_lines[disc_line.product_id.id]['total_qty'] + disc_line.counted_qty + disc_line.counted_qty_is_empty and abs(disc_qty) or 0,
+                    'total_qty': rep_lines[disc_line.product_id.id]['total_qty'] + disc_line.counted_qty + (disc_line.counted_qty_is_empty and abs(disc_qty) or 0),
                 })
             rep_lines[disc_line.product_id.id]['lines'].append({
                 'line_number': disc_line.line_no,
