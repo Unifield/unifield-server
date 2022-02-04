@@ -738,6 +738,8 @@ class return_claim(osv.osv):
 
             if obj.origin_claim and obj.partner_id_return_claim.partner_type in ('internal', 'intermission', 'section') \
                     and obj.picking_id_return_claim.type == 'out':
+                if not self.pool.get('sale.order').search_exists(cr, uid, [('claim_name_goods_return', '=', obj.origin_claim)], context=context):
+                    continue
                 # Searching for the Original IN
                 in_domain = [
                     ('type', '=', 'in'),
