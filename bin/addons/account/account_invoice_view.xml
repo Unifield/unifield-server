@@ -83,7 +83,10 @@
                             <field name="discount" groups="base.group_extended"
                                    attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field colspan="4" name="name"/>
-                            <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
+                            <field name="account_id"
+                                   domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                   required="1"
+                            />
                             <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                             <newline/>
                             <field name="company_id" groups="base.group_multi_company" readonly="1"/>
@@ -236,7 +239,7 @@
                            </group>
 
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
-                                <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:analytic_distribution_state in ('none','valid') and inactive_product == False">
+                                <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:analytic_distribution_state in ('none', 'valid') and inactive_product == False and account_id">
                                     <field name="from_supply" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
                                     <field name="invoice_type" invisible="1"/>
@@ -252,6 +255,7 @@
                                     />
                                     <field name="account_id"
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                           required="1"
                                     />
                                     <field name="invoice_line_tax_id" view_mode="2" context="{'type':parent.type}" domain="[('parent_id','=',False)]"/>
                                     <field name="inactive_product" invisible="1" />
@@ -489,6 +493,7 @@
                                     />
                                     <field name="account_id"
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                           required="1"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type}"
                                     />
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object"

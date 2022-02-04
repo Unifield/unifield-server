@@ -213,7 +213,7 @@ class account_invoice_line(osv.osv):
         res = {}
         for invl in self.browse(cr, uid, ids):
             res[invl.id] = ''
-            if not invl.is_allocatable:
+            if not invl.is_allocatable or (invl.allow_no_account and not invl.account_id):
                 continue
             from_header = ''
             if invl.have_analytic_distribution_from_header:

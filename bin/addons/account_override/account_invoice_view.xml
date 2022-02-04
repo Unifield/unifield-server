@@ -28,21 +28,6 @@
         </record>
 
 
-    <!-- Change account_id domain -->
-        <record id="invoice_line_form3" model="ir.ui.view">
-            <field name="name">account.invoice.line.form</field>
-            <field name="model">account.invoice.line</field>
-            <field name="type">form</field>
-            <field name="priority" eval="20"/>
-            <field name="inherit_id" ref="account.view_invoice_line_form"/>
-            <field name="arch" type="xml">
-              <xpath expr="//field[@name='account_id']" position="attributes">
-                  <attribute name="domain">[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]</attribute>
-              </xpath>
-            </field>
-        </record>
-
-
         <!--
             Debit Note views
         -->
@@ -104,7 +89,7 @@
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
                                 <tree editable="top" string="Invoice Line" noteditable="1" hide_new_button="1">
                                     <field name="name"/>
-                                    <field name="account_id" domain="[('restricted_area', '=', 'invoice_lines')]"/>
+                                    <field name="account_id" domain="[('restricted_area', '=', 'invoice_lines')]" required="1"/>
                                     <field name="quantity"/>
                                     <field name="uos_id" string="UoM"/>
                                     <field name="price_unit"/>
@@ -236,7 +221,7 @@
                                            attrs="{'readonly': [('from_supply', '=', True)]}"
                                            on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
                                     />
-                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
+                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]" required="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
                                         context="{'d_journal_id': parent.journal_id , 'd_partner_id': parent.partner_id, 'd_address_invoice_id':parent.address_invoice_id,'d_date_invoice': parent.date_invoice, 'd_register_posting_date': parent.register_posting_date, 'd_account_id': parent.account_id, 'd_partner_bank_id': parent.partner_bank_id, 'd_payment_term': parent.payment_term, 'd_name': parent.name, 'd_origine': parent.origin, 'd_address_contact_id': parent.address_contact_id, 'd_user_id': parent.user_id, 'd_comment': parent.comment}"
                                         />
@@ -260,7 +245,7 @@
                                            on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
                                            default_focus="1"
                                     />
-                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
+                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]" required="1"/>
                                     <field name="name" colspan="4" />
                                     <field name="quantity"
                                            attrs="{'readonly': [('from_supply', '=', True)]}"
@@ -405,7 +390,7 @@
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True, 'from_inv_form': True}">
                                 <tree string="Intermission Voucher Lines"
                                       editable="both"
-                                      colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none', 'valid')">
+                                      colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:inactive_product == False and analytic_distribution_state in ('none', 'valid') and account_id">
                                     <field name="from_supply" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
                                     <field name="invoice_type" invisible="1"/>
@@ -418,6 +403,7 @@
                                                                         ('from_supply', '=', True),
                                                                         '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}" />
                                     <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"
+                                           required="1"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type, 'intermission_type': parent.type == 'out_invoice' and 'out' or 'in'}"
                                     />
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
@@ -468,7 +454,7 @@
                                             <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="discount" groups="base.group_extended" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="name" colspan="4"/>
-                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"/>
+                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]" required="1"/>
                                             <group colspan="6">
                                                 <field name="analytic_distribution_state" invisible="1"/>
                                                 <field name="newline" invisible="1" />

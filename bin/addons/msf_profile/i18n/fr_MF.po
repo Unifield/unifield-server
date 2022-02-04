@@ -106179,22 +106179,10 @@ msgid "Internal field indicating whether the document is related to a Supply wor
 msgstr "Champ interne indiquant si le document est lié à un flux \"Supply\""
 
 #. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:120
-#, python-format
-msgid "Account code %s not found."
-msgstr "Code comptable %s non trouvé."
-
-#. module: account_override
 #: code:addons/account_override/account_invoice_sync.py:189
 #, python-format
 msgid "Impossible to retrieve the currency."
 msgstr "Impossible de récupérer la devise."
-
-#. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:117
-#, python-format
-msgid "Impossible to retrieve the account code at line level."
-msgstr "Impossible de récupérer le code comptable au niveau d'une ligne."
 
 #. modules: account_override, account
 #: code:addons/account_override/account_invoice_sync.py:193
@@ -106202,12 +106190,6 @@ msgstr "Impossible de récupérer le code comptable au niveau d'une ligne."
 #, python-format
 msgid "Currency %s not found or inactive."
 msgstr "Devise %s non trouvée ou inactive."
-
-#. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:123
-#, python-format
-msgid "Error when retrieving the account at line level."
-msgstr "Erreur lors de la récupération du compte au niveau d'une ligne."
 
 #. module: account_override
 #: code:addons/account_override/account_invoice_sync.py:235
@@ -106226,12 +106208,6 @@ msgstr "Impossible de récupérer le type de journal, ou le type de journal est 
 #, python-format
 msgid "Impossible to retrieve the line description."
 msgstr "Impossible de récupérer la description de la ligne."
-
-#. module: account_override
-#: code:addons/account_override/account_invoice_sync.py:128
-#, python-format
-msgid "The account \"%s - %s\" is inactive."
-msgstr "Le compte \"%s - %s\" est inactif."
 
 #. module: account_override
 #: code:addons/account_override/account_invoice_sync.py:135
@@ -113252,6 +113228,28 @@ msgstr "Importer les produits depuis une autre version"
 #, python-format
 msgid "You must select an old version of the Kit to be able to import from it"
 msgstr "Vous devez sélectionner une ancienne version de ce Kit pour pouvoir importer depuis ce Kit"
+
+#. module: account_override
+#: field:account.invoice.line,allow_no_account:0
+msgid "Allow an empty account on the line"
+msgstr "Autoriser un compte vide sur la ligne"
+
+#. module: account_override
+#: sql_constraint:account.invoice.line:0
+msgid "The invoice lines must have an account."
+msgstr "Les lignes de facture doivent avoir un compte."
+
+#. module: register_accounting
+#: code:addons/register_accounting/invoice.py:369
+#, python-format
+msgid "The account is missing on the line No. %s."
+msgstr "Il manque le compte sur la ligne N°%s."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:1759
+#, python-format
+msgid "Duplication not allowed. Please set an account on all lines first."
+msgstr "Duplication non autorisée. Veuillez d'abord définir un compte sur toutes les lignes."
 
 #. module: analytic_override
 #: field:account.analytic.line,ad_updated:0

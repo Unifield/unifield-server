@@ -1642,6 +1642,7 @@ class account_invoice_line(osv.osv):
         # - an invoice line can be linked to several CV lines => e.g. merge invoice lines by account
         'cv_line_ids': fields.many2many('account.commitment.line', 'inv_line_cv_line_rel', 'inv_line_id', 'cv_line_id',
                                         string='Commitment Voucher Lines'),
+        'allow_no_account': fields.boolean(string='Allow an empty account on the line', readonly=True),
     }
 
     _defaults = {
@@ -1649,9 +1650,15 @@ class account_invoice_line(osv.osv):
         'is_corrected': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'merged_line': lambda *a: False,
+        'allow_no_account': lambda *a: False,
     }
 
     _order = 'line_number'
+
+    _sql_constraints = [
+        ('ck_invl_account', "CHECK(account_id IS NOT NULL OR COALESCE(allow_no_account, 'f') = 't')",
+         'The invoice lines must have an account.')
+    ]
 
     def _check_on_invoice_line_big_amounts(self, cr, uid, ids, context=None):
         """
@@ -1784,20 +1791,26 @@ class account_invoice_line(osv.osv):
 
         return new_id
 
-    def copy_data(self, cr, uid, inv_id, default=None, context=None):
+    def copy_data(self, cr, uid, invl_id, default=None, context=None):
         """
         Copy an invoice line without its move lines,
         without the link to a reversed invoice line,
         and without link to PO/FO/CV lines when the duplication is manual
-        Reset the merged_line tag.
+        Reset the merged_line and allow_no_account tags.
+        Prevent the manual duplication of invoices lines with no account.
         """
         if context is None:
             context = {}
         if default is None:
             default = {}
+        # The only way to get invoice lines without account should be via synchro and not via duplication
+        # (display a specific error message instead of the SQL error)
+        if context.get('from_copy_web') and not self.read(cr, uid, invl_id, ['account_id'], context=context)['account_id']:
+            raise osv.except_osv(_('Warning'), _("Duplication not allowed. Please set an account on all lines first."))
         default.update({'move_lines': False,
                         'reversed_invoice_line_id': False,
                         'merged_line': False,
+                        'allow_no_account': False,
                         })
         # Manual duplication should generate a "manual document not created through the supply workflow"
         # so we don't keep the link to PO/FO/CV at line level
@@ -1809,7 +1822,7 @@ class account_invoice_line(osv.osv):
                 'purchase_order_line_ids': [],
                 'cv_line_ids': [(6, 0, [])],
             })
-        return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
+        return super(account_invoice_line, self).copy_data(cr, uid, invl_id, default, context)
 
     def unlink(self, cr, uid, ids, context=None):
         """

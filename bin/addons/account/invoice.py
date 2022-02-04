@@ -1338,6 +1338,9 @@ class account_invoice(osv.osv):
             if 'analytic_line_ids' in line:
                 line['analytic_line_ids'] = False
 
+            if 'allow_no_account' in line:
+                line['allow_no_account'] = False
+
             for field in (
                     'company_id', 'partner_id', 'account_id', 'product_id',
                     'uos_id', 'account_analytic_id', 'tax_code_id', 'base_code_id','account_tax_id',
@@ -1660,7 +1663,8 @@ class account_invoice_line(osv.osv):
                                        selection=PARTNER_TYPE, readonly=True, store=False),
         'uos_id': fields.many2one('product.uom', 'Unit of Measure', ondelete='set null'),
         'product_id': fields.many2one('product.product', 'Product', ondelete='set null'),
-        'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type','<>','view'), ('type', '<>', 'closed')], help="The income or expense account related to the selected product."),
+        'account_id': fields.many2one('account.account', 'Account', domain=[('type', '<>', 'view'), ('type', '<>', 'closed')],
+                                      help="The income or expense account related to the selected product."),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account')),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', type="float",
                                           digits_compute= dp.get_precision('Account'), store=True),
