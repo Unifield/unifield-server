@@ -39,7 +39,6 @@
         "report/report_destruction_location_view.xml",
         "destruction_report.xml",
         "report/report_stock_move_view.xml",
-        "wizard/stock_analyze_view_view.xml",
         "security/ir.model.access.csv",
         "wizard/change_dest_location_view.xml",
         "wizard/stock_card_view.xml",

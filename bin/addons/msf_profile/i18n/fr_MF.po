@@ -5893,6 +5893,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:487
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:533
 #: field:account.model.line,name:0
+#: field:view.expired.expiring.stock.lines,name:0
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8703,7 +8704,6 @@ msgstr "Obligatoire"
 
 #. modules: stock_override, stock
 #: view:stock.location.product:0
-#: view:stock.analyze.view:0
 msgid "Stock Location Analysis"
 msgstr "Analyse Zone Stock"
 
@@ -9798,6 +9798,12 @@ msgstr "Prix Net"
 #, python-format
 msgid "Location 'MSF Customer' not found in the instance or is not activated !"
 msgstr "Localisation 'Client MSF' ne peut être trouvée dans ce cas ou n'est pas activée!"
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:514
+#, python-format
+msgid "The location name must contain the word \"EPREP\""
+msgstr "Le nom de la Zone doit contenir le mot \"EPREP\""
 
 #. modules: account, finance, account_mcdb
 #: selection:account.journal.column,field:0
@@ -15982,6 +15988,7 @@ msgstr "C'est un duplicat"
 #: selection:report.stock.inventory,location_type:0
 #: selection:stock.location,usage:0
 #: selection:report.batch.recall,location_type:0
+#: selection:stock.location.instance,usage:0
 msgid "Production"
 msgstr "Production"
 
@@ -21124,6 +21131,8 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: field:replenishment.inventory.review.line.exp,name:0
 #: field:replenishment.segment.line.amc.month_exp,name:0
 #: view:account.analytic.account:0
+#: field:stock.location.instance,full_name:0
+#: field:stock.location.instance,name:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -21572,11 +21581,6 @@ msgstr "Un bon de commande génère une facture fournisseur dès qu'il est confi
 #: field:sync_client.version,patch:0
 msgid "Patch"
 msgstr "Patch"
-
-#. module: reason_types_moves
-#: field:stock.location,is_replenishment:0
-msgid "Is replenishment ?"
-msgstr "Est-ce un réapprovisionnement ?"
 
 #. module: base
 #: selection:ir.module.module,state:0
@@ -22229,10 +22233,11 @@ msgstr "Statut du solde de fin de mois :"
 msgid "loan"
 msgstr "prêt"
 
-#. modules: process, base, specific_locations
+#. modules: process, base, specific_locations, stock
 #: view:workflow.transition:0
 #: field:process.transition.action,transition_id:0
 #: selection:stock.location,location_category:0
+#: selection:stock.location.instance,location_category:0
 msgid "Transition"
 msgstr "Transition"
 
@@ -23927,6 +23932,7 @@ msgstr "Source Approvisionnement"
 #: selection:report.stock.inventory,location_type:0
 #: selection:stock.location,usage:0
 #: selection:report.batch.recall,location_type:0
+#: selection:stock.location.instance,usage:0
 msgid "Internal Location"
 msgstr "Zone Interne"
 
@@ -26353,6 +26359,7 @@ msgstr "Affectation de la Production ou du Bon de Commande."
 #: model:stock.location,name:stock.stock_location_stock
 #: report:addons/consumption_calculation/report/expiry_report.mako:157
 #: report:addons/consumption_calculation/report/expiry_report.mako:210
+#: selection:stock.location.instance,location_category:0
 msgid "Stock"
 msgstr "Stock"
 
@@ -27114,10 +27121,11 @@ msgstr "Wizard to process the third step of the P/P/S"
 msgid "A wizard is already                                                in progress"
 msgstr "Un assistant est déjà en cours"
 
-#. modules: msf_config_locations, specific_locations
+#. modules: msf_config_locations, specific_locations, stock
 #: selection:stock.location.configuration.wizard,location_usage:0
 #: selection:stock.remove.location.wizard,location_category:0
 #: selection:stock.location,location_category:0
+#: selection:stock.location.instance,location_category:0
 msgid "Consumption Unit"
 msgstr "Unité de Consommation"
 
@@ -32440,6 +32448,7 @@ msgstr "MSF Financing Module"
 #: field:ir.followup.location.wizard,company_id:0
 #: field:stock.reception.wizard,company_id:0
 #: field:fo.follow.up.finance.wizard,company_id:0
+#: field:stock.delivery.wizard,company_id:0
 msgid "Company"
 msgstr "Société"
 
@@ -36952,6 +36961,7 @@ msgstr "Différence"
 #: selection:stock.location,usage:0
 #: selection:report.batch.recall,location_type:0
 #: model:ir.model,name:sync_so.model_stock_inventory
+#: selection:stock.location.instance,usage:0
 #, python-format
 msgid "Inventory"
 msgstr "Inventaire"
@@ -37258,7 +37268,6 @@ msgstr "Do reconfigure..."
 #: report:purchase.order.merged:0
 #: field:stock.location.product,from_date:0
 #: field:export.report.stock.move,date_from:0
-#: field:stock.analyze.view,from_date:0
 #: report:stock.card.report:0
 #: field:supplier.catalogue,period_from:0
 #: field:supplier.historical.catalogue,from_date:0
@@ -38932,7 +38941,12 @@ msgstr "Raison du Changement"
 #: model:ir.actions.act_window,help:stock_override.action_destruction_location_report
 #: view:stock.move:0
 msgid "Destruction Location"
-msgstr "Zone Destruction "
+msgstr "Zone Destruction"
+
+#. module: specific_locations
+#: field:stock.location,eprep_location:0
+msgid "Eprep Location"
+msgstr "Zone Eprep"
 
 #. module: account_mcdb
 #: view:account.mcdb:0
@@ -44822,6 +44836,7 @@ msgstr "Malayalam / മലയാളം"
 #: selection:product.price.type,field:0
 #: report:addons/product/report/product_mass_update_export_xls.mako:116
 #: report:addons/stock/report/products_situation_report_xls.mako:224
+#: field:stock.location,stock_virtual_uom_rounding:0
 msgid "Virtual Stock"
 msgstr "Stock Virtuel"
 
@@ -47504,7 +47519,7 @@ msgstr "La zone où les produits seront livrés"
 msgid "Child IDs"
 msgstr "ID Enfants"
 
-#. modules: purchase, account, finance, account_mcdb, sale, specific_rules, account_override, delete_button, tender_flow, analytic_distribution, msf_budget, register_accounting, msf_accrual, kit
+#. modules: purchase, account, finance, account_mcdb, sale, specific_rules, account_override, delete_button, tender_flow, analytic_distribution, msf_budget, register_accounting, msf_accrual, kit, stock
 #: view:account.common.report:0
 #: view:account.mcdb:0
 #: view:account.chart:0
@@ -47527,6 +47542,7 @@ msgstr "ID Enfants"
 #: view:sale.order.line:0
 #: view:free.allocation.wizard:0
 #: view:account.commitment.line:0
+#: view:view.expired.expiring.stock:0
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -52211,11 +52227,6 @@ msgstr " ---------------------------------\n"
 " Rapport d'erreur : \n"
 ""
 
-#. module: reason_types_moves
-#: help:stock.location,is_replenishment:0
-msgid "Is True, the location could be used in replenishment rules"
-msgstr "Si Vrai, la Zone pourrait être utilisée pour les règles de réapprovisionnement"
-
 #. module: threshold_value
 #: view:threshold.value:0
 msgid "Threshold values"
@@ -54422,7 +54433,6 @@ msgstr "Espagnol / Español"
 
 #. modules: stock_override, stock
 #: view:stock.location.product:0
-#: view:stock.analyze.view:0
 msgid "Open Product"
 msgstr "Ouvrir le Produit"
 
@@ -67030,8 +67040,9 @@ msgstr "Enreg.Débit"
 msgid "Asia/Ashgabat"
 msgstr "Asie/Ashgabat"
 
-#. module: specific_locations
+#. module: specific_locations, stock
 #: field:stock.location,location_category:0
+#: field:stock.location.instance,location_category:0
 msgid "Location Category"
 msgstr "Catégorie Zone"
 
@@ -67194,6 +67205,7 @@ msgstr "Devise %s non trouvée."
 #: field:replenishment.inventory.review.line,real_stock:0
 #: field:replenishment.order_calc.line,real_stock:0
 #: field:replenishment.segment.line,real_stock:0
+#: field:stock.location,stock_real_uom_rounding:0
 msgid "Real Stock"
 msgstr "Stock Réel"
 
@@ -70289,6 +70301,7 @@ msgstr "Gestion d'Entrepôt"
 #: view:stock.move.tracking:0
 #: selection:report.account.receivable,type:0
 #: field:msf_button_access_rights.button_access_rule,view_id:0
+#: selection:stock.location.instance,usage:0
 msgid "View"
 msgstr "Vue"
 
@@ -74097,11 +74110,6 @@ msgstr "Analytic Lines (Free 2)"
 msgid "Is Syncing"
 msgstr "Is Syncing"
 
-#. module: stock_override
-#: view:stock.analyze.view:0
-msgid "(Keep empty to open the current situation. Adjust HH:MM to 00:00 to filter all resources of the day for the 'From' date and 23:59 for the 'To' date)"
-msgstr "(Veuillez garder vide pour ouvrir la situation actuelle. Ajustez HH:MM à 00:00 pour filtrer toute les ressources du jour pour la date \"A partir de\" et 23:59 pour la date \"Jusqu'à\")"
-
 #. modules: register_accounting, analytic_distribution
 #: help:account.invoice.line,analytic_lines:0
 #: help:wizard.account.invoice.line,analytic_lines:0
@@ -75807,6 +75815,7 @@ msgstr "Tous les Comptes"
 #: field:res.partner,property_stock_supplier:0
 #: selection:stock.location,usage:0
 #: selection:report.batch.recall,location_type:0
+#: selection:stock.location.instance,usage:0
 msgid "Supplier Location"
 msgstr "Zone Fournisseur"
 
@@ -76394,6 +76403,7 @@ msgstr "Fichier de sauvegarde %s déjà envoyé dans le cloud."
 #: selection:report.stock.inventory,location_type:0
 #: selection:stock.location,usage:0
 #: selection:report.batch.recall,location_type:0
+#: selection:stock.location.instance,usage:0
 msgid "Transit Location for Inter-Companies Transfers"
 msgstr "Zone de Transit pour les transferts inter-sociétés"
 
@@ -76702,12 +76712,6 @@ msgstr "Consommation Interne - Valeur Unitaire"
 #: help:operations.event,remote_id:0
 msgid "Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during event centralization."
 msgstr "Conserve l'ID de ligne des lignes importées d'une instance à distance. Non utilisé à l'exception de la déduplication lors de la centralisation des événements."
-
-#. module: stock_override
-#: model:ir.actions.act_window,name:stock_override.action_view_stock_analyze_view
-#: view:stock.analyze.view:0
-msgid "Stock Analyze View"
-msgstr "Vue Analyse Stock"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -83939,11 +83943,6 @@ msgstr "Tous(tes)"
 msgid "The UoM \"%s\" was not consistent with the UoM's category (\"%s\") of the product \"%s\"."
 msgstr "The UoM \"%s\" was not consistent with the UoM's category (\"%s\") of the product \"%s\"."
 
-#. module: stock_override
-#: model:ir.model,name:stock_override.model_stock_analyze_view
-msgid "Stock analyze view"
-msgstr "Affichage de l'analyse du stock"
-
 #. module: msf_budget
 #: selection:monthly.budget.wizard,extension:0
 msgid "XLS"
@@ -85865,7 +85864,6 @@ msgstr "Associer les Événements aux Actions"
 #: view:stock.move:0
 #: view:stock.picking:0
 #: view:stock.split.into:0
-#: view:stock.analyze.view:0
 #: view:change.product.move.processor:0
 #: view:split.move.processor:0
 #, python-format
@@ -86994,7 +86992,6 @@ msgstr "À déf."
 #: field:product.likely.expire.report,consumption_to:0
 #: field:product.likely.expire.report,date_to:0
 #: field:stock.location.product,to_date:0
-#: field:stock.analyze.view,to_date:0
 #: field:supplier.catalogue,period_to:0
 #: field:supplier.historical.catalogue,to_date:0
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:102
@@ -88455,6 +88452,7 @@ msgstr "Arguments à passer à la méthode. ex. : (uid,)"
 #: field:res.partner,property_stock_customer:0
 #: selection:stock.location,usage:0
 #: selection:report.batch.recall,location_type:0
+#: selection:stock.location.instance,usage:0
 msgid "Customer Location"
 msgstr "Zone Client"
 
@@ -90442,6 +90440,7 @@ msgstr "Exporter le résultat de la recherche"
 #: selection:internal.request.import,imp_categ:0
 #: selection:stock.reception.wizard,order_category:0
 #: code:addons/stock_override/report/report_stock_move.py:533
+#: selection:stock.location.instance,location_category:0
 msgid "Other"
 msgstr "Autre"
 
@@ -96302,6 +96301,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:replenishment.parent.segment:0
 #: view:view.expired.expiring.stock:0
 #: view:multiple.cc.selection.wizard:0
+#: view:stock.location.convert_eprep:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -101283,6 +101283,7 @@ msgstr "Export Excel des Produits Réservés"
 #: view:stock.reserved.products:0
 #: view:replenishment.inventory.review:0
 #: view:replenishment.order_calc:0
+#: field:product.product,qty_reserved:0
 msgid "Reserved Qty"
 msgstr "Qté Réservée"
 
@@ -108965,8 +108966,9 @@ msgstr "Calculs de Commande"
 msgid "Other Instance Locations"
 msgstr "Zones des autres instances"
 
-#. module: procurement_cycle
+#. module: procurement_cycle, stock
 #: view:replenishment.location.config:0
+#: view:stock.location.instance:0
 msgid "Other instance locations"
 msgstr "Zones des autres instances"
 
@@ -112108,6 +112110,7 @@ msgstr "Expirant dans les prochaines"
 
 #. module: stock
 #: selection:manage.expired.stock,in_next_x_weeks:0
+#: code:addons/stock/wizard/manage_expired_stock.py:29
 msgid "1 week"
 msgstr "1 semaine"
 
@@ -113345,3 +113348,133 @@ msgstr "Instance de Création"
 #: report:delivery.order:0
 msgid "DELIVERY ORDER"
 msgstr "BON DE LIVRAISON"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:29
+#, python-format
+msgid "%s weeks"
+msgstr "%s semaines"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "0 months"
+msgstr "0 mois"
+
+#. module: stock
+#: field:physical.inventory.select.products,kc:0
+msgid "Cold chain items"
+msgstr "Articles Chaîne du Froid"
+
+#. modules: msf_config_locations, stock
+#: model:ir.actions.act_window,name:msf_config_locations.action_stock_location_convert_eprep
+#: model:ir.ui.menu,name:msf_config_locations.menu_stock_location_convert_eprep
+#: view:stock.location.product:0
+msgid "Convert Intermediate Stock to Eprep"
+msgstr "Convertir un Stock Intermédiaire vers Eprep"
+
+#. module: msf_config_locations
+#: view:stock.location.convert_eprep:0
+msgid "Convert Location from Intermediate Stock to Eprep"
+msgstr "Conversion de Stock Intermédiaire vers Eprep"
+
+#. modules: msf_config_locations, stock
+#: view:stock.location.convert_eprep:0
+#: view:stock.location.product:0
+msgid "Convert to Eprep"
+msgstr "Convertir vers Eprep"
+
+#. module: msf_config_locations
+#: view:stock.location.convert_eprep:0
+msgid "Do you want to convert this location to an Eprep Location ?"
+msgstr "Voulez-vous convertir cette zone en zone Eprep ?"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:59
+#: code:addons/mission_stock/mission_stock.py:79
+#: code:addons/mission_stock/mission_stock.py:531
+#: field:stock.mission.report.line,eprep_qty:0
+#, python-format
+msgid "Eprep Qty."
+msgstr "Qté Eprep"
+
+#. module: stock
+#: field:stock.location,moved_location:0
+msgid "Eprep location moved from Intermediate Stock"
+msgstr "Zone Eprep déplacée depuis Stock Intermédiaire"
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:998
+#, python-format
+msgid "Eprep stock not found !"
+msgstr "Stock Eprep non trouvé !"
+
+#. module: stock
+#: code:addons/stock/stock.py:65
+#: code:addons/stock/stock.py:239
+#: code:addons/stock/stock.py:295
+#: code:addons/stock/stock.py:322
+#, python-format
+msgid "Filter on %s not implemented"
+msgstr "Filtre %s non implémenté"
+
+#. module: msf_config_locations
+#: field:stock.location.convert_eprep,location_id:0
+msgid "Intermediate Stock to convert"
+msgstr "Stock intermédiaire à convertir"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:414
+#, python-format
+msgid "Line %s, batch %s product is not BN anymore, please correct the line"
+msgstr "Ligne %s, lot %s le produit n'est pas NL, veuillez corriger la ligne"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:416
+#, python-format
+msgid "Line %s, expiry %s product is not ED anymore, please correct the line"
+msgstr "Ligne %s, expiration %s le produit n'est pas DE, veuillez corriger la ligne"
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:515
+#, python-format
+msgid "Location 'EPREP stocks' not found in the instance or is not activated !"
+msgstr "Zone 'EPREP stocks' non trouvé ou inactive !"
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:993
+#, python-format
+msgid "Location can not be moved !"
+msgstr "La Zone ne peut être déplacée !"
+
+#. module: stock
+#: field:stock.move,from_manage_expired_move:0
+msgid "Manage Expired"
+msgstr "Gérer les Expirés"
+
+#. module: stock
+#: field:physical.inventory,multiple_filter_months:0
+msgid "Multiple Selection"
+msgstr "Sélection multiple"
+
+#. module: stock
+#: field:physical.inventory.generate.counting.sheet,recent_moves_months:0
+msgid "Recent Moves"
+msgstr "Mouvements récents"
+
+#. module: msf_config_locations
+#: view:stock.location.convert_eprep:0
+msgid "The conversion of an Intermediate Stock to an Eprep Stock is irreversible. The reverse operation does not exist."
+msgstr "La conversion d'un Stock Intermédiaire vers Eprep est irréversible. L'opération inverse n'existe pas."
+
+#. module: mission_stock
+#: field:stock.mission.report.line,used_in_transaction:0
+msgid "Used in a transaction"
+msgstr "Utilisé dans une transaction"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:392
+#, python-format
+msgid "You have duplicates ! Please set Quantity only on one of these lines:\n"
+" %s"
+msgstr "Vous aveé des doublons ! Veuillez mettre une Quantité sur une seule de ces lignes:\n"
+" %s"
