@@ -635,6 +635,10 @@ class shipment(osv.osv):
             initial_from_pack = family.from_pack
             initial_to_pack = family.to_pack - family.selected_number
 
+        dest_location = picking.warehouse_id.lot_output_id.id
+        if family.draft_packing_id.sale_id and family.draft_packing_id.sale_id.procurement_request and \
+                family.draft_packing_id.sale_id.location_requestor_id:
+            dest_location = family.draft_packing_id.sale_id.location_requestor_id.id
         # find the corresponding moves
         moves_ids = move_obj.search(cr, uid, [
             ('picking_id', '=', family.draft_packing_id.id),
@@ -647,6 +651,13 @@ class shipment(osv.osv):
             # We compute the selected quantity
             selected_qty = move.qty_per_pack * family.selected_number
 
+            if move.old_out_location_dest_id:
+                # IR > OUT destination changed on OUT, converted to PICK
+                final_dest = move.old_out_location_dest_id.id
+            else:
+                # dest from IR or MSF Customer
+                final_dest = dest_location
+
             move_vals = {
                 'picking_id': new_packing_id,
                 'line_number': move.line_number,
@@ -655,7 +666,7 @@ class shipment(osv.osv):
                 'to_pack': family.to_pack,
                 'backmove_packing_id': move.id,
                 'location_id': picking.warehouse_id.lot_distribution_id.id,
-                'location_dest_id': picking.warehouse_id.lot_output_id.id,
+                'location_dest_id': final_dest,
                 'selected_number': family.selected_number,
             }
 
