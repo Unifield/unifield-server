@@ -142,28 +142,27 @@ class closed_physical_inventory_parser(XlsxReportParser):
             row_header.append(cell_t)
         sheet.append(row_header)
 
-        disc_lines = {}
+        # Get lines through discrepancy lines
+        rep_lines = {}
         specifications = {'is_kc': _('CC'), 'is_dg': _('DG'), 'is_cs': _('CS')}
-        line_order = []
         for disc_line in pi.discrepancy_line_ids:
             disc_qty = disc_line.discrepancy_qty
-            if disc_line.product_id.id not in disc_lines:
-                disc_lines.update({disc_line.product_id.id: {
+            if disc_line.product_id.id not in rep_lines:
+                rep_lines.update({disc_line.product_id.id: {
                     'product_code': disc_line.product_id.default_code,
                     'description': disc_line.product_id.name,
                     'uom': disc_line.product_uom_id.name,
-                    'total_qty': disc_line.counted_qty + (disc_qty < 0 and abs(disc_qty) or 0),
+                    'total_qty': disc_line.counted_qty + disc_line.counted_qty_is_empty and abs(disc_qty) or 0,
                     'specification': ','.join([name for attribute, name in specifications.items() if getattr(disc_line.product_id, attribute, False)]),
                     'need_bn': disc_line.product_id.batch_management and _('Y') or _('N'),
                     'need_ed': disc_line.product_id.perishable and _('Y') or _('N'),
                     'lines': [],
                 }})
-                line_order.append(disc_line.product_id.id)
             else:
-                disc_lines[disc_line.product_id.id].update({
-                    'total_qty': disc_lines[disc_line.product_id.id]['total_qty'] + disc_line.counted_qty + (disc_qty < 0 and abs(disc_qty) or 0),
+                rep_lines[disc_line.product_id.id].update({
+                    'total_qty': rep_lines[disc_line.product_id.id]['total_qty'] + disc_line.counted_qty + disc_line.counted_qty_is_empty and abs(disc_qty) or 0,
                 })
-            disc_lines[disc_line.product_id.id]['lines'].append({
+            rep_lines[disc_line.product_id.id]['lines'].append({
                 'line_number': disc_line.line_no,
                 'qty_counted': disc_line.counted_qty,
                 'qty_ignored': disc_qty < 0 and disc_line.counted_qty_is_empty and abs(disc_qty) or '',
@@ -172,16 +171,55 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 'reason_type': disc_line.reason_type_id.complete_name,
                 'comment': disc_line.comment or '',
             })
+        
+        # Get remaining lines through counting lines
+        ctx = context.copy()
+        ctx.update({'location': pi.location_id.id, 'location_id': pi.location_id.id})
+        line_order = []
+        for count_line in pi.counting_line_ids:
+            if count_line.product_id.id not in line_order:  # Get the order of lines to display
+                line_order.append(count_line.product_id.id)
+            if not count_line.discrepancy:
+                bn_domain = [('product_id', '=', count_line.product_id.id), ('name', '=ilike', count_line.batch_number), ('life_date', '=', count_line.expiry_date)]
+                bn_ids = self.pool.get('stock.production.lot').search(self.cr, self.uid, bn_domain, context=context)
+                ctx.update({'prodlot_id': (count_line.is_bn or count_line.is_ed) and bn_ids and bn_ids[0] or False})
+                prod_stock = self.pool.get('product.product').browse(self.cr, self.uid, count_line.product_id.id, fields_to_fetch=['qty_available'], context=ctx)['qty_available']
+
+                count_line_qty = count_line.quantity
+                if count_line.product_id.id not in rep_lines:
+                    rep_lines.update({count_line.product_id.id: {
+                        'product_code': count_line.product_id.default_code,
+                        'description': count_line.product_id.name,
+                        'uom': count_line.product_uom_id.name,
+                        'total_qty': count_line_qty,
+                        'specification': ','.join([name for attribute, name in specifications.items() if getattr(count_line.product_id, attribute, False)]),
+                        'need_bn': count_line.is_bn and _('Y') or _('N'),
+                        'need_ed': count_line.is_ed and _('Y') or _('N'),
+                        'lines': [],
+                    }})
+                else:
+                    rep_lines[count_line.product_id.id].update({
+                        'total_qty': rep_lines[count_line.product_id.id]['total_qty'] + count_line_qty,
+                    })
+                rep_lines[count_line.product_id.id]['lines'].append({
+                    'line_number': count_line.line_no,
+                    'qty_counted': count_line.quantity,
+                    'qty_ignored': not count_line_qty and count_line_qty != 0 and (prod_stock or count_line.product_id.qty_available) or '',
+                    'prodlot': count_line.batch_number or '',
+                    'expiry_date': count_line.expiry_date and datetime.strptime(count_line.expiry_date[0:10], '%Y-%m-%d') or '',
+                    'reason_type': '',
+                    'comment': '',
+                })
 
         for product_id in line_order:
             self.rows = []
 
-            p_code = disc_lines[product_id]['product_code']
-            p_desc = disc_lines[product_id]['description']
-            uom = disc_lines[product_id]['uom']
-            spec = disc_lines[product_id]['specification']
-            need_bn = disc_lines[product_id]['need_bn']
-            need_ed = disc_lines[product_id]['need_ed']
+            p_code = rep_lines[product_id]['product_code']
+            p_desc = rep_lines[product_id]['description']
+            uom = rep_lines[product_id]['uom']
+            spec = rep_lines[product_id]['specification']
+            need_bn = rep_lines[product_id]['need_bn']
+            need_ed = rep_lines[product_id]['need_ed']
 
             self.add_cell('', top_line_style)
             self.add_cell(p_code, top_left_line_style)
@@ -191,7 +229,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
             self.add_cell('', top_float_style)
             self.add_cell('', top_line_style)
             self.add_cell('', top_date_style)
-            self.add_cell(disc_lines[product_id]['total_qty'], top_float_style)
+            self.add_cell(rep_lines[product_id]['total_qty'], top_float_style)
             self.add_cell('', top_line_style)
             self.add_cell('', top_line_style)
             self.add_cell('', top_line_style)
@@ -199,7 +237,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
             self.add_cell('', top_line_style)
 
             sheet.append(self.rows)
-            for line in disc_lines[product_id].get('lines', []):
+            for line in rep_lines[product_id].get('lines', []):
                 self.rows = []
 
                 self.add_cell(line['line_number'], line_style)
