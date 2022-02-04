@@ -204,10 +204,16 @@ class closed_physical_inventory_parser(XlsxReportParser):
                     rep_lines[count_line.product_id.id].update({
                         'total_qty': rep_lines[count_line.product_id.id]['total_qty'] + count_line_qty,
                     })
+                if not count_line_qty and count_line_qty != 0:
+                    qty_ignored = prod_stock or count_line.product_id.qty_available
+                elif count_line_qty == 0:
+                    qty_ignored = 0
+                else:
+                    qty_ignored = ''
                 rep_lines[count_line.product_id.id]['lines'].append({
                     'line_number': count_line.line_no,
-                    'qty_counted': not count_line_qty and count_line_qty != 0 and '' or count_line.quantity,
-                    'qty_ignored': not count_line_qty and count_line_qty != 0 and (prod_stock or count_line.product_id.qty_available) or '',
+                    'qty_counted': ((count_line_qty or count_line_qty == 0) and count_line.quantity) or '',
+                    'qty_ignored': qty_ignored,
                     'prodlot': count_line.batch_number or '',
                     'expiry_date': count_line.expiry_date and datetime.strptime(count_line.expiry_date[0:10], '%Y-%m-%d') or '',
                     'reason_type': '',
