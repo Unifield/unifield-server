@@ -1093,7 +1093,10 @@ class stock_picking(osv.osv):
 
         # Create FO Lines
         for line in lines:
-            line_product = product_obj.search(cr, uid, [('name', '=', line.product_id.name)], limit=1, context=context)
+            if hasattr(line.product_id, 'id') and hasattr(line.product_id, 'default_code'):
+                line_product = self.pool.get('so.po.common').get_product_id(cr, uid, line.product_id, line.product_id.default_code, context=context)
+            else:
+                line_product = product_obj.search(cr, uid, [('name', '=', line.product_id.name)], limit=1, context=context)[0]
             line_uom = uom_obj.search(cr, uid, [('name', '=', line.product_uom.name)], limit=1, context=context)
             # Search the analytic distribution of the original SO line
             original_sol_analytic_distrib_id = False
@@ -1118,7 +1121,7 @@ class stock_picking(osv.osv):
                 'order_id': fo_id,
                 'name': line.name,
                 'line_number': line.line_number,
-                'product_id': line_product[0] or False,
+                'product_id': line_product or False,
                 'product_uom_qty': line.product_qty,
                 'product_uom': line_uom[0] or False,
                 'price_unit': line.price_unit,
