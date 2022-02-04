@@ -695,8 +695,44 @@ class product_product(osv.osv):
                 res['arch'] = line_view
         elif context.get('history_cons', False) and view_type == 'search':
             histo = self.pool.get('product.history.consumption').browse(cr, uid, context['obj_id'], context=context)
+
+            # display filters on tree view
+            filter_info = []
+            if histo.adjusted_rr_amc:
+                filter_info.append(_('Adjusted'))
+            filter_info.append({'amc': _('AMC'), 'rr-amc': _('RR-AMC'), 'rac': _('RAC')}.get(histo.consumption_type, ''))
+            if histo.remove_negative_amc:
+                filter_info.append(_('(Negative figures set to zero)'))
+
+            list_infos = ['%s: <label>%s</label>' % (to_xml(_('Type')), to_xml(' '.join(filter_info)))]
+            if histo.txt_source:
+                list_infos.append('%s: <label>%s</label>' % (to_xml(_('Source')), to_xml(histo.txt_source)))
+            if histo.txt_destination:
+                list_infos.append('%s: <label>%s</label>' % (to_xml(_('Destination')), to_xml(histo.txt_destination)))
+            if histo.sublist_id:
+                list_infos.append('%s: <label>%s</label>' % (to_xml(_('List')), to_xml(histo.sublist_id.name)))
+            nomen_list = []
+            for title, nomen in [(_('Main'), histo.nomen_manda_0), (_('Group'), histo.nomen_manda_1), (_('Family'), histo.nomen_manda_2), (_('Root'), histo.nomen_manda_3)]:
+                if nomen:
+                    nomen_list.append('%s: <label>%s</label>' % (to_xml(title), to_xml(nomen.name)))
+            if nomen_list:
+                list_infos.append(', '.join(nomen_list))
+            html_node = "<group> <html><br />"
+            for list_info in list_infos:
+                html_node += '<h6>%s</h6>' % list_info
+
+            html_node += "<br /></html></group>"
+
+
             # Remove the Group by group from the product view
             xml_view = etree.fromstring(res['arch'])
+
+            if html_node:
+                batch_attr = xml_view.xpath('//group[@name="batch_attr"]')
+                if batch_attr:
+                    pos = xml_view.index(batch_attr[0]) + 2
+                    xml_view.insert(pos, etree.fromstring(html_node))
+
             for element in xml_view.iter("group"):
                 if element.get('name', '') == 'group_by':
                     xml_view.remove(element)
@@ -711,34 +747,6 @@ class product_product(osv.osv):
             filter_node = etree.fromstring(new_filter)
             xml_view.insert(0, filter_node)
 
-            # display filters on tree view
-            filter_info = []
-            if histo.adjusted_rr_amc:
-                filter_info.append(_('Adjusted'))
-            filter_info.append({'amc': _('AMC'), 'rr-amc': _('RR-AMC'), 'rac': _('RAC')}.get(histo.consumption_type, ''))
-            if histo.remove_negative_amc:
-                filter_info.append(_('(Negative figures set to zero)'))
-
-            list_infos = ['%s: %s' % (_('Type'), ' '.join(filter_info))]
-            if histo.txt_source:
-                list_infos.append('%s: %s' % (_('Source'), histo.txt_source))
-            if histo.txt_destination:
-                list_infos.append('%s: %s' % (_('Destination'), histo.txt_destination))
-            if histo.sublist_id:
-                list_infos.append('%s: %s' % (_('List'), histo.sublist_id.name))
-            nomen_list = []
-            for title, nomen in [(_('Main'), histo.nomen_manda_0), (_('Group'), histo.nomen_manda_1), (_('Family'), histo.nomen_manda_2), (_('Root'), histo.nomen_manda_3)]:
-                if nomen:
-                    nomen_list.append('%s: %s' % (title, nomen.name))
-            if nomen_list:
-                list_infos.append(', '.join(nomen_list))
-            html_node = "<group> <html>"
-            for list_info in list_infos:
-                html_node += '<h3>%s</h3>' % to_xml(list_info)
-
-            html_node += "</html></group>"
-            if html_node:
-                xml_view.append(etree.fromstring(html_node))
 
 
             res['arch'] = etree.tostring(xml_view)
