@@ -2588,7 +2588,6 @@ class stock_picking(osv.osv):
         '''
         # Objects
         sale_order_obj = self.pool.get('sale.order')
-
         # For picking ticket from scratch, invoice it !
         if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
             vals['invoice_state'] = '2binvoiced'
@@ -2988,7 +2987,7 @@ class stock_picking(osv.osv):
                     _('Bad document'),
                     _('The document you want to convert is already a Picking Ticket')
                 )
-            if not out.sale_id:
+            if not out.sale_id and not out.claim:
                 raise osv.except_osv(_('Error'), _('You can not convert a Delivery Order from scratch into a Picking Ticket'))
             if out.state in ('cancel', 'done'):
                 raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
@@ -3199,6 +3198,8 @@ class stock_picking(osv.osv):
                     'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
                     'move_lines': [],
                     'state': 'draft',
+                    'claim': picking.claim,
+                    'claim_name': picking.claim_name
                 }
                 context['allow_copy'] = True
 
