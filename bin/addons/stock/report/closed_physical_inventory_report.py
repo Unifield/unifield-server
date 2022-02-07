@@ -75,7 +75,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
 
         cell_ic = WriteOnlyCell(sheet, value=_('Inventory Counter Name'))
         cell_ic.style = bold_right_style
-        cell_icd = WriteOnlyCell(sheet, value=pi.responsible)
+        cell_icd = WriteOnlyCell(sheet, value=pi.responsible or '')
         cell_icd.style = bold_frame
         cell_id = WriteOnlyCell(sheet, value=_('Inventory Date'))
         cell_id.style = bold_right_style
@@ -175,11 +175,8 @@ class closed_physical_inventory_parser(XlsxReportParser):
         # Get remaining lines through counting lines
         ctx = context.copy()
         ctx.update({'location': pi.location_id.id, 'location_id': pi.location_id.id})
-        cls_obj = self.pool.get('physical.inventory.counting')
-        cls_ids = cls_obj.search(self.cr, self.uid, [('id', 'in', [cl.id for cl in pi.counting_line_ids])], order='line_no', context=context)  # To order the lines
-        cls = cls_obj.browse(self.cr, self.uid, cls_ids, context=context)
         line_order = []
-        for count_line in cls:
+        for count_line in pi.counting_line_ids:
             if count_line.product_id.id not in line_order:  # Get the order of lines to display
                 line_order.append(count_line.product_id.id)
             if not count_line.discrepancy:
@@ -188,7 +185,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 ctx.update({'prodlot_id': (count_line.is_bn or count_line.is_ed) and bn_ids and bn_ids[0] or False})
                 prod_stock = self.pool.get('product.product').browse(self.cr, self.uid, count_line.product_id.id, fields_to_fetch=['qty_available'], context=ctx)['qty_available']
 
-                count_line_qty = count_line.quantity
+                count_line_qty = int(count_line.quantity)
                 if count_line.product_id.id not in rep_lines:
                     rep_lines.update({count_line.product_id.id: {
                         'product_code': count_line.product_id.default_code,
@@ -246,7 +243,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
             self.add_cell('', top_line_style)
 
             sheet.append(self.rows)
-            for line in rep_lines[product_id].get('lines', []):
+            for line in sorted(rep_lines[product_id].get('lines', []), key=lambda x: x['line_number']):
                 self.rows = []
 
                 self.add_cell(line['line_number'], line_style)
@@ -263,6 +260,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 self.add_cell(need_ed, line_style)
                 self.add_cell(line['reason_type'], line_style)
                 self.add_cell(line['comment'], line_style)
+
 
                 sheet.append(self.rows)
 
