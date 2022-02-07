@@ -4012,12 +4012,15 @@ msgstr "Montrer les Inactifs"
 msgid "UoM Stock"
 msgstr "Stock UdM"
 
-#. modules: stock, sync_client, base, stock_move_tracking
+#. modules: stock, sync_client, base, stock_move_tracking, consumption_calculation
 #: view:stock.move:0
 #: field:ir.translation,src:0
 #: view:sync.client.message_received:0
 #: view:sync.client.update_received:0
 #: report:tracking.move.report:0
+#: view:product.history.consumption:0
+#: field:product.history.consumption,src_location_ids:0
+#: field:product.history.consumption,txt_source:0
 msgid "Source"
 msgstr "Origine"
 
@@ -5943,6 +5946,7 @@ msgstr "Description"
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_2:0
 #: field:products.situation.report,nomen_manda_2:0
+#: code:addons/consumption_calculation/history_consumption.py:727
 msgid "Family"
 msgstr "Famille"
 
@@ -15357,7 +15361,7 @@ msgstr "Arbre"
 msgid "Automated export functions"
 msgstr "Fonctions d'export automatisé"
 
-#. modules: tender_flow, process, update_client, account_override, purchase_allocation_report, mission_stock, return_claim, account_mcdb, procurement_request, analytic, report_webkit, product_list, analytic_distribution, msf_order_date, product, msf_homere_interface, msf_instance, register_accounting, specific_rules, product_asset, base, procurement_report, purchase, account, resource, stock_move_tracking, msf_partner, sale, msf_button_access_rights, stock, msf_profile, stock_override
+#. modules: tender_flow, process, update_client, account_override, purchase_allocation_report, mission_stock, return_claim, account_mcdb, procurement_request, analytic, report_webkit, product_list, analytic_distribution, msf_order_date, product, msf_homere_interface, msf_instance, register_accounting, specific_rules, product_asset, base, procurement_report, purchase, account, resource, stock_move_tracking, msf_partner, sale, msf_button_access_rights, stock, msf_profile, stock_override, consumption_calculation
 #: view:account.analytic.journal:0
 #: field:account.analytic.journal,type:0
 #: field:account.bank.statement.line,type:0
@@ -15426,6 +15430,7 @@ msgstr "Fonctions d'export automatisé"
 #: field:sync.client.logs,type:0
 #: field:finance.sync.query,model:0
 #: field:change.dest.location,type:0
+#: code:addons/consumption_calculation/history_consumption.py:719
 msgid "Type"
 msgstr "Type"
 
@@ -21308,8 +21313,9 @@ msgstr "Nom Analytique"
 msgid "Latest documents"
 msgstr "Derniers documents"
 
-#. module: supplier_catalogue
+#. module: supplier_catalogue, consumption_calculation
 #: view:supplier.catalogue:0
+#: view:product.history.consumption:0
 msgid "Reset to draft"
 msgstr "Remettre à brouillon"
 
@@ -37942,7 +37948,7 @@ msgstr "Taxe"
 msgid "Manual Journal Entry"
 msgstr "Écriture Comptable Manuelle"
 
-#. modules: stock_forecast, product_list, msf_doc_import
+#. modules: stock_forecast, product_list, msf_doc_import, consumption_calculation
 #: field:old.product.list.line,list_id:0
 #: view:product.list:0
 #: selection:product.list,type:0
@@ -37951,6 +37957,7 @@ msgstr "Écriture Comptable Manuelle"
 #: selection:product.to.list,new_list_type:0
 #: field:stock.forecast.export,list_id:0
 #: field:wizard.import.product.list,list_id:0
+#: code:addons/consumption_calculation/history_consumption.py:725
 msgid "List"
 msgstr "Liste"
 
@@ -56686,6 +56693,7 @@ msgstr "Solde final basé sur la Caisse"
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_3:0
 #: field:products.situation.report,nomen_manda_3:0
+#: code:addons/consumption_calculation/history_consumption.py:727
 msgid "Root"
 msgstr "Origine"
 
@@ -73351,6 +73359,10 @@ msgstr "Date Prévue de Colisage"
 #: field:replenishment.consolidated_oc.import,error:0
 #: selection:replenishment.consolidated_oc.import,state:0
 #: selection:wizard.return.from.unit.import,state:0
+#: view:product.history.consumption:0
+#: field:product.history.consumption,error_msg:0
+#: selection:product.history.consumption,fake_status:0
+#: selection:product.history.consumption,status:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -76476,7 +76488,7 @@ msgstr "Statut de la commande"
 #. module: consumption_calculation
 #: view:product.history.consumption:0
 msgid "View historical data"
-msgstr "Vues de l historique des données "
+msgstr "Vue de l historique des données"
 
 #. module: base
 #: field:ir.module.module,demo:0
@@ -85387,6 +85399,11 @@ msgstr "Mouvement Interne"
 msgid "Goods Return"
 msgstr "Retour de marchandises"
 
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_internal_return
+msgid "Internal Return"
+msgstr "Retour Interne"
+
 #. module: msf_profile
 #: code:addons/msf_profile/user_access_configurator.py:318
 #, python-format
@@ -93490,6 +93507,7 @@ msgstr "Posting date wrong format for date: %s: %s"
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_1:0
 #: field:products.situation.report,nomen_manda_1:0
+#: code:addons/consumption_calculation/history_consumption.py:727
 msgid "Group"
 msgstr "Groupe"
 
@@ -94634,7 +94652,7 @@ msgstr "Major upgrade is available.<br/>The synchronization process is disabled<
 msgid "Invoice we come from"
 msgstr "Facture venant de"
 
-#. modules: msf_budget, purchase, account, sync_client, account_mcdb, msf_homere_interface, financing_contract, register_accounting, account_hq_entries, sale, account_override, purchase_allocation_report, base, msf_supply_doc_export, msf_doc_import, stock, analytic_override, analytic_distribution, stock_override, stock_move_tracking
+#. modules: msf_budget, purchase, account, sync_client, account_mcdb, msf_homere_interface, financing_contract, register_accounting, account_hq_entries, sale, account_override, purchase_allocation_report, base, msf_supply_doc_export, msf_doc_import, stock, analytic_override, analytic_distribution, stock_override, stock_move_tracking, consumption_calculation
 #: report:combined.journals.report.pdf:0
 #: field:hq.analytic.reallocation,destination_id:0
 #: field:hq.entries,destination_id:0
@@ -94701,6 +94719,9 @@ msgstr "Facture venant de"
 #: field:financing.contract.account.quadruplet,account_destination_id:0
 #: field:dest.cc.link,dest_id:0
 #: field:multiple.cc.selection.wizard,dest_id:0
+#: view:product.history.consumption:0
+#: field:product.history.consumption,dest_location_ids:0
+#: field:product.history.consumption,txt_destination:0
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -98802,6 +98823,7 @@ msgstr "Langues"
 #: view:supplier.catalogue.line:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:74
 #: report:kitting.order.report:0
+#: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:80
 #, python-format
 msgid "Asset"
 msgstr "Actif"
@@ -108266,10 +108288,14 @@ msgstr "RR PCM 9"
 msgid "RR Product List"
 msgstr "RR Liste de Produits"
 
-#. module: procurement_cycle
+#. module: procurement_cycle, consumption_calculation
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:381
 #: field:replenishment.inventory.review.line,rr_amc:0
 #: field:replenishment.segment.line,rr_amc:0
+#: code:addons/consumption_calculation/history_consumption.py:715
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:89
+#: selection:product.history.consumption,consumption_type:0
+#: selection:product.history.consumption.product,cons_type:0
 msgid "RR-AMC"
 msgstr "RR-CMM"
 
@@ -108403,7 +108429,7 @@ msgstr "Stock de Sécurité et Couverture de Commande doivent être positives ou
 msgid "Scheduled reviews periodicity"
 msgstr "Périodicité programmée des revues"
 
-#. module: procurement_cycle
+#. module: procurement_cycle, consumption_calculation
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:347
 #: model:ir.actions.act_window,name:procurement_cycle.replenishment_segment_action
 #: model:ir.actions.report.xml,name:procurement_cycle.report_replenishment_segment_xls
@@ -108416,6 +108442,7 @@ msgstr "Périodicité programmée des revues"
 #: field:replenishment.segment.line,segment_id:0
 #: field:replenishment.order_calc.line,segment_id:0
 #: view:replenishment.parent.segment:0
+#: field:product.likely.expire.report,segment_id:0
 msgid "Segment"
 msgstr "Segment"
 
@@ -113586,3 +113613,73 @@ msgid "You have duplicates ! Please set Quantity only on one of these lines:\n"
 " %s"
 msgstr "Vous aveé des doublons ! Veuillez mettre une Quantité sur une seule de ces lignes:\n"
 " %s"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/history_consumption.py:717
+#, python-format
+msgid "(Negative figures set to zero)"
+msgstr "(Valeurs négatives mises à zéro)"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/history_consumption.py:762
+#, python-format
+msgid "Adj Av."
+msgstr "Moy Aj"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:86
+#, python-format
+msgid "Adj. RR-AMC"
+msgstr "RR-CMM Aj."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:87
+#, python-format
+msgid "Adj. RR-MC"
+msgstr "RR-CM Aj."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/history_consumption.py:714
+#, python-format
+msgid "Adjusted"
+msgstr "Ajustées"
+
+#. module: consumption_calculation
+#: field:product.history.consumption,adjusted_rr_amc:0
+msgid "Adjusted RR-AMC"
+msgstr "RR-CMM ajustées"
+
+#. module: consumption_calculation
+#: field:product.history.consumption,disable_adjusted_rr_amc:0
+msgid "Disable adjusted_rr_amc"
+msgstr "Désactive adjusted_rr_amc"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:163
+#, python-format
+msgid "Line %s of the imported file: no batch found with the Expiry Date [%s].\n"
+""
+msgstr "Ligne %s du fichier importé: aucun lot trouvé pour la date d'exp. [%s].\n"
+""
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/history_consumption.py:727
+#, python-format
+msgid "Main"
+msgstr "Principal"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/report/historical_consumption_xlsx.py:90
+#, python-format
+msgid "RR-MC"
+msgstr "RR-CM"
+
+#. module: consumption_calculation
+#: field:stock.location,from_histo:0
+msgid "Set in Historical Consumption"
+msgstr "Possitionné dans Historique des Consommations"
+
+#. module: consumption_calculation
+#: field:product.history.consumption,hidden_date_from:0
+msgid "Used to set a default month on date from"
+msgstr "Utilisé pour mettre un mois par défaut dans date début"

@@ -301,6 +301,24 @@ class stock_location(osv.osv):
 
             return [('id', 'in', retrict)]
 
+    def _search_from_histo(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            if arg[2] and isinstance(arg[2], list) and isinstance(arg[2][0], tuple) and len(arg[2][0]) == 3:
+                if context is None:
+                    context = {}
+                dom = []
+                if arg[2][0][2]:
+                    dom = [('id', 'not in', arg[2][0][2])]
+                elif context.get('dest_location'):
+                    dom += [('usage', '=', 'customer')]
+
+                return dom
+
+            return []
+
     def _is_intermediate_parent(self, cr, uid, ids, name, args, context=None):
         """
         Check if the Parent Location is Intermediate Stocks
@@ -391,6 +409,7 @@ class stock_location(osv.osv):
         'db_id': fields.function(_get_coordo_db_id, type='integer', method=True, string='DB id for sync', internal=True, multi='coordo_db_id'),
         'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
         'from_config': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_config, string='Set in Loc. Config', internal=1),
+        'from_histo': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_histo, string='Set in Historical Consumption', internal=1),
         'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=False, fnct_search=_search_initial_stock_inv_display, string='Display in Initial stock inventory', readonly=True),
         'search_color': fields.selection([('dimgray', 'Dim Gray'), ('darkorchid', 'Dark Orchid'), ('lightpink', 'Light Pink'), ('royalblue', 'Royal Blue'), ('yellowgreen', 'Yellow Green'), ('darkorange', 'Dark Orange'), ('sandybrown', 'Sandy Brown'), ], string="Color for Search views"),
         'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?", fnct_search=_search_intermediate_parent),
