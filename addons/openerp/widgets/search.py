@@ -30,7 +30,7 @@ import cherrypy
 import copy
 
 from openerp.utils import rpc, cache, icons, node_attributes, expr_eval
-from openerp.widgets import TinyInputWidget, InputWidgetLabel, form
+from openerp.widgets import TinyInputWidget, InputWidgetLabel, form, TinyWidget
 
 from openobject.widgets import JSLink, locations
 
@@ -347,6 +347,9 @@ class Search(TinyInputWidget):
 
             elif node.localName=='label':
                 views.append(Label(**attrs))
+            elif node.localName=='html':
+                node.localName='div'
+                views.append(Html(content=node.toxml(), **attrs))
             elif node.localName=='newline':
                 views.append(NewLine(**attrs))
 
@@ -552,6 +555,13 @@ class NewLine(form.NewLine): pass
 class Selection(form.Selection): pass
 class Separator(form.Separator): pass
 
+class Html(TinyWidget):
+    template = "openerp/widgets/templates/search/html.mako"
+    params = ['content']
+    def __init__(self, content, **attrs):
+        super(Html, self).__init__(**attrs)
+        self.content = content
+
 RANGE_WIDGETS = {
     'date': DateTime,
     'time': DateTime,
@@ -578,4 +588,5 @@ WIDGETS = {
     'url' : Char,
     'separator': Separator,
     'label': Label,
+    'html': Html,
 }
