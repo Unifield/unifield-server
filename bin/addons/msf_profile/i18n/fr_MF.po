@@ -113691,3 +113691,8 @@ msgstr "Responsable Technique :"
 #: report:procurement.request.report:0
 msgid "Supply Responsible :"
 msgstr "Responsable Approvisionnement :"
+
+#. module: base
+#: field:res.partner,legal_name:0
+msgid "Legal Name"
+msgstr "Nom Légal"
