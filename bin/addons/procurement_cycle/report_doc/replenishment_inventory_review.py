@@ -243,7 +243,9 @@ class inventory_parser(XlsxReportParser):
                 self.add_cell(self.to_datetime(line.date_next_order_validated), date_style)
                 self.add_cell(self.to_datetime(line.date_next_order_rdd), date_style)
 
+                nb_pas = 0
                 for detail_pas in line.pas_ids:
+                    nb_pas += 1
                     if detail_pas.rr_fmc is not None and detail_pas.rr_fmc is not False:
                         if line.rule != 'minmax':
                             self.add_cell(detail_pas.rr_fmc)
@@ -262,10 +264,10 @@ class inventory_parser(XlsxReportParser):
                             self.add_cell(detail_pas.projected, red_cell_style)
                     else:
                         self.add_cell()
-                if not line.pas_ids:
-                    for nb_month in range(0, inventory.projected_view):
-                        self.add_cell()
-                        self.add_cell()
+
+                for nb_month in range(nb_pas, inventory.projected_view):
+                    self.add_cell()
+                    self.add_cell()
 
                 sheet.append(self.rows)
                 new_row += 1
