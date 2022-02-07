@@ -82119,11 +82119,17 @@ msgstr "\n"
 #: field:wizard.import.stock.warehouse.orderpoint.line,rule_id:0
 #: field:wizard.import.threshold.value.line,rule_id:0
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:376
-#: field:replenishment.order_calc.line,rule:0
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:393
-#: field:replenishment.inventory.review.line,rule:0
 msgid "Rule"
 msgstr "Règle"
+
+#. module: procurement_cycle
+#: field:replenishment.inventory.review.line,rule:0
+#: field:replenishment.order_calc.line,rule:0
+#: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:55
+msgid "RR Type"
+msgstr "Type RR"
+
 
 #. module: base
 #: code:addons/base/ir/ir_attachment.py:519
@@ -108092,11 +108098,6 @@ msgstr "Qté projetée d'expirés avant conso"
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:89
 msgid "RDD for next order"
 msgstr "DLS prochaine commande"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:55
-msgid "RR (qty) applied"
-msgstr "RR (qté) appliqué"
 
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:54

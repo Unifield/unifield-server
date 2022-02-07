@@ -1447,7 +1447,7 @@ class replenishment_segment(osv.osv):
                             break
                         else:
                             upper = min(to_fmc, max_date.strftime('%Y-%m-%d'))
-                            key = datetime.strptime(from_fmc, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)
+                            key = max(datetime.strptime(from_fmc, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1), begin_date)
 
                         while key.strftime('%Y-%m-%d') <= upper:
                             fmc_data = {}
@@ -3626,7 +3626,7 @@ class replenishment_order_calc_line(osv.osv):
     _columns = {
         'order_calc_id': fields.many2one('replenishment.order_calc', 'Order Calc', required=1, select=1),
         'segment_id': fields.many2one('replenishment.segment', 'Segment', required=1, select=1, readonly=1),
-        'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Rule', readonly=1),
+        'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='RR Type', readonly=1),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1, readonly=1),
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'status': fields.selection(life_cycle_status, string='Life cycle status', readony=1),
@@ -3708,7 +3708,7 @@ class replenishment_inventory_review_line(osv.osv):
         'status': fields.selection(life_cycle_status, string='Life cycle status'), # OC
         'paired_product_id': fields.many2one('product.product', 'Replacing/Replaced product'),
         'primay_product_list': fields.char('Primary Product List', size=512), # OC
-        'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Auto Supply')], string='Rule', required=1), #Seg
+        'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Auto Supply')], string='RR Type', required=1), #Seg
         'min_qty': fields.float_null('Min Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
         'max_qty': fields.float_null('Max Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
         'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
