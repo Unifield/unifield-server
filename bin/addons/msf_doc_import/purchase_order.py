@@ -661,6 +661,25 @@ class purchase_order(osv.osv):
                 'context': context,
                 }
 
+    def wizard_import_ad(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning !'), _('The PO must be in Draft state.'))
+        if not self.pool.get('purchase.order.line').search_exists(cr, uid, [('order_id', 'in', ids), ('state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning !'), _('The PO has no draft line.'))
+
+        export_id = self.pool.get('wizard.import.ad.line').create(cr, uid, {'purchase_id': ids[0], 'state': 'draft'}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.ad.line',
+            'res_id': export_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'same',
+            'context': context,
+        }
+
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         """
         Check both the lines that need to be corrected and also that the supplier or the address is not 'To be defined'
