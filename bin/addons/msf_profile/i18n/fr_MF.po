@@ -14840,10 +14840,9 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 msgid "Not implemented"
 msgstr "Non mis en œuvre"
 
-#. modules: stock_override, procurement_request, msf_outgoing, kit
+#. modules: stock_override, msf_outgoing, kit
 #: report:delivery.order:0
 #: report:internal.move:0
-#: report:procurement.request.report:0
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
 #: report:kitting.order.report:0
@@ -33030,9 +33029,8 @@ msgstr "Facture Ouverte"
 msgid "The certificate ID of the module must be unique !"
 msgstr "L'Identité du certificat du module doit être unique !"
 
-#. modules: stock_override, procurement_request, kit
+#. modules: stock_override, kit
 #: report:delivery.order:0
-#: report:procurement.request.report:0
 #: report:internal.move:0
 #: report:kitting.order.report:0
 msgid "Logistics / Supply :"
@@ -113683,3 +113681,13 @@ msgstr "Possitionné dans Historique des Consommations"
 #: field:product.history.consumption,hidden_date_from:0
 msgid "Used to set a default month on date from"
 msgstr "Utilisé pour mettre un mois par défaut dans date début"
+
+#. module: procurement_request
+#: report:procurement.request.report:0
+msgid "Technical Responsible :"
+msgstr "Responsable Technique :"
+
+#. module: procurement_request
+#: report:procurement.request.report:0
+msgid "Supply Responsible :"
+msgstr "Responsable Approvisionnement :"
