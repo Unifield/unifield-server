@@ -60,7 +60,7 @@ INTEGRITY_STATUS_SELECTION = [
     ('price_must_be_greater_than_0', _('Unit Price must be greater than 0.0')),
     # claims
     ('missing_src_location', _('Src Location is missing')),
-    ('not_exist_in_picking', _('Does not exist in selected IN/OUT')),
+    ('not_exist_in_picking', _('Prod/BN/ED not available in the IN/OUT')),
 ] + PACK_INTEGRITY_STATUS_SELECTION
 
 import msf_outgoing
