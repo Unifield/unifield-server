@@ -4312,6 +4312,7 @@ msgstr "Patch Synchronization"
 #. modules: specific_rules, stock
 #: field:initial.stock.inventory,name:0
 #: field:stock.inventory,name:0
+#: code:addons/stock/report/closed_physical_inventory_report.py:94
 msgid "Inventory Reference"
 msgstr "Référence Inventaire"
 
@@ -5899,6 +5900,8 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:view.expired.expiring.stock.lines,name:0
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:370
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:427
+#: report:addons/stock/report/products_situation_report_xls.mako:217
+#: code:addons/stock/report/closed_physical_inventory_report.py:123
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -6864,7 +6867,7 @@ msgstr "Aucun journal de type %s n'existe pour cette société.\n"
 msgid "Sending Goods"
 msgstr "Envoi de Marchandises"
 
-#. module: sale, msf_outgoing, specific_rules,stock_override, msf_doc_import,stock, msf_supply_doc_export, specific_rules
+#. module: sale, msf_outgoing, specific_rules,stock_override, msf_doc_import,stock, msf_supply_doc_export, specific_rules, stock
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:161
 #: report:msf.report_reception_in:0
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:261
@@ -6899,6 +6902,7 @@ msgstr "Envoi de Marchandises"
 #: view:physical.inventory.select.products:0
 #: code:addons/specific_rules/specific_rules.py:53
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:223
+#: code:addons/stock/report/closed_physical_inventory_report.py:147
 #, python-format
 msgid "DG"
 msgstr "MD"
@@ -15477,6 +15481,11 @@ msgstr "Générer la feuille de comptage depuis les produits sélectionnés"
 msgid "Item code"
 msgstr "Code Produit"
 
+#. module: stock
+#: code:addons/stock/report/closed_physical_inventory_report.py:122
+msgid "Item Code"
+msgstr "Code Produit"
+
 #. module: msf_config_locations
 #: field:stock.location,outgoing_dest:0
 msgid "Outgoing delivery Dest. Loc."
@@ -20629,6 +20638,7 @@ msgstr "The Purchase Order %s does not correspond to the current one (%s)."
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:162
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:437
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:223
+#: code:addons/stock/report/closed_physical_inventory_report.py:147
 msgid "CS"
 msgstr "CS"
 
@@ -23975,6 +23985,7 @@ msgstr "Zone Interne"
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:122
 #: report:addons/stock/report/stock_reception_report_xls.mako:256
 #: report:addons/stock/report/stock_delivery_report_xls.mako:234
+#: code:addons/stock/report/closed_physical_inventory_report.py:127
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -24596,6 +24607,7 @@ msgstr "Produits Supprimés"
 #: field:substitute.item,comment:0
 #: field:substitute.item.mirror,comment:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:124
+#: code:addons/stock/report/closed_physical_inventory_report.py:134
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -33680,6 +33692,7 @@ msgstr "Ligne %s du fichier Excel, erreur non détectée: %s\n"
 
 #. module: stock
 #: report:addons/stock/report/physical_inventory_counting_sheet_xls.mako:467
+#: code:addons/stock/report/closed_physical_inventory_report.py:132
 msgid "ED Management"
 msgstr "Gestion EXP"
 
@@ -34026,6 +34039,7 @@ msgstr "OCBA"
 
 #. module: stock
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:584
+#: code:addons/stock/report/closed_physical_inventory_report.py:111
 msgid "Inventory Name"
 msgstr "Nom de l'Inventaire"
 
@@ -40268,6 +40282,7 @@ msgstr "De confirmé à attribué."
 #: report:kitting.order.report:0
 #: field:view.expired.expiring.stock.lines,product_uom:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:121
+#: code:addons/stock/report/closed_physical_inventory_report.py:124
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -47837,6 +47852,7 @@ msgstr "Réinitialiser Facture"
 #: report:addons/stock/report/physical_inventory_counting_sheet_xls.mako:456
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:794
 #: report:physical_inventory_counting_sheet_pdf:0
+#: code:addons/stock/report/closed_physical_inventory_report.py:125
 msgid "Quantity counted"
 msgstr "Quantité comptée"
 
@@ -57393,6 +57409,7 @@ msgstr "%s was not a number, it is set to %d by default."
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:123
 #: report:addons/stock/report/stock_reception_report_xls.mako:257
 #: report:addons/stock/report/stock_delivery_report_xls.mako:235
+#: code:addons/stock/report/closed_physical_inventory_report.py:128
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -64295,6 +64312,7 @@ msgstr "Zone - Stock"
 #: view:products.situation.report:0
 #: report:addons/procurement_cycle/report_doc/product_stock_out.mako:432
 #: field:product.stock_out,location_id:0
+#: code:addons/stock/report/closed_physical_inventory_report.py:98
 msgid "Location"
 msgstr "Zone"
 
@@ -66934,6 +66952,7 @@ msgstr "Sous-Liste"
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:223
 #: code:addons/specific_rules/specific_rules.py:53
 #: code:addons/stock/report/physical_inventory_counting_sheet.py:27
+#: code:addons/stock/report/closed_physical_inventory_report.py:147
 #, python-format
 msgid "CC"
 msgstr "CF"
@@ -74228,6 +74247,7 @@ msgstr "Date de commande"
 
 #. module: stock
 #: report:addons/stock/report/physical_inventory_counting_sheet_xls.mako:465
+#: code:addons/stock/report/closed_physical_inventory_report.py:131
 msgid "BN Management"
 msgstr "Gestion NL"
 
@@ -74480,6 +74500,7 @@ msgstr "activate.currencies"
 #: field:physical.inventory.counting,line_no:0
 #: field:physical.inventory.discrepancy,line_no:0
 #: report:physical_inventory_counting_sheet_pdf:0
+#: code:addons/stock/report/closed_physical_inventory_report.py:121
 #, python-format
 msgid "Line #"
 msgstr "Num. ligne"
@@ -81132,6 +81153,7 @@ msgstr "Update(s) not run left: %d"
 #: report:addons/stock_override/report/report_stock_move_xls.mako:144
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/stock/report/stock_delivery_report_xls.mako:208
+#: code:addons/stock/report/closed_physical_inventory_report.py:133
 msgid "Reason Type"
 msgstr "Raison - Type"
 
@@ -91622,6 +91644,7 @@ msgstr "Commandes de Terrain par Catégorie de Produit durant les 90 dern"
 #. module: stock
 #: report:addons/stock/report/physical_inventory_counting_sheet_xls.mako:463
 #: report:physical_inventory_counting_sheet_pdf:0
+#: code:addons/stock/report/closed_physical_inventory_report.py:130
 msgid "Specification"
 msgstr "Spécification"
 
@@ -105897,11 +105920,6 @@ msgstr "Un BC avec un Type de Commande Prêt, Donation avant expiration, Donatio
 msgid "You can't change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document"
 msgstr "Vous ne pouvez pas changer le Type de Commande en Prêt, Donation avant expiration, Donation normale ou Donation en Nature si une des lignes a un Document d'Origine"
 
-#. module: stock
-#: report:addons/stock/report/products_situation_report_xls.mako:217
-msgid "Description"
-msgstr "Description"
-
 #. module: stock_override
 #: help:export.report.stock.move,location_ids:0
 msgid "If a location is choosen, only stock moves that comes from/to this location will be shown."
@@ -107781,7 +107799,7 @@ msgstr "Min"
 msgid "Min Qty"
 msgstr "Min Qté"
 
-#. module: procurement_cycle, msf_supply_doc_export
+#. module: procurement_cycle, msf_supply_doc_export, stock
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:461
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:399
@@ -107792,6 +107810,8 @@ msgstr "Min Qté"
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:107
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:429
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:454
+#: code:addons/stock/report/closed_physical_inventory_report.py:157
+#: code:addons/stock/report/closed_physical_inventory_report.py:158
 msgid "N"
 msgstr "N"
 
@@ -108700,7 +108720,7 @@ msgstr "Attention: la configuration de la zone est inactive"
 msgid "Warnings Recap"
 msgstr "Avertissements"
 
-#. module: procurement_cycle, msf_supply_doc_export
+#. module: procurement_cycle, msf_supply_doc_export, stock
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:439
 #: report:addons/procurement_cycle/report_doc/replenishment_order_calc.mako:461
 #: report:addons/procurement_cycle/report_doc/replenishment_segment.mako:399
@@ -108708,6 +108728,8 @@ msgstr "Avertissements"
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:84
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:106
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:107
+#: code:addons/stock/report/closed_physical_inventory_report.py:157
+#: code:addons/stock/report/closed_physical_inventory_report.py:158
 msgid "Y"
 msgstr "O"
 
@@ -114012,3 +114034,51 @@ msgstr "DLE"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:261
 msgid "Estimated Delivery Date (EDD)"
 msgstr "Date de Livriason Estimée (DLE)"
+
+#. module: stock
+#: code:addons/stock/report/closed_physical_inventory_report.py:62
+#: code:addons/stock/report/closed_physical_inventory_report.py:69
+#, python-format
+msgid "Closed Inventory"
+msgstr "Inventaire Clôturé"
+
+#. module: stock
+#: model:ir.actions.report.xml,name:stock.report_closed_physical_inventory
+msgid "Closed Inventory Export"
+msgstr "Export Inventaire Clôturé"
+
+#. module: stock
+#: code:ir.actions.report.xml:name:stock.report_closed_physical_inventory
+#, python-format
+msgid "Closed Inventory Report"
+msgstr "Rapport Inventaire Clôturé"
+
+#. module: stock
+#: code:addons/stock/report/closed_physical_inventory_report.py:77
+#, python-format
+msgid "Inventory Counter Name"
+msgstr "Responsable Inventaire"
+
+#. module: stock
+#: code:addons/stock/report/closed_physical_inventory_report.py:81
+#, python-format
+msgid "Inventory Date"
+msgstr "Date de l'Inventaire"
+
+#. module: stock
+#: code:addons/stock/report/closed_physical_inventory_report.py:126
+#, python-format
+msgid "Qty ignored in stock (only if > 0)"
+msgstr "Qté ignorée en stock (seulement si > 0)"
+
+#. module: stock
+#: code:addons/stock/report/closed_physical_inventory_report.py:129
+#, python-format
+msgid "Total Qty counted + ignored in stock"
+msgstr "Qté comptée totale + ignorée en stock"
+
+#. module: stock
+#: code:addons/stock/report/closed_physical_inventory_report.py:22
+#, python-format
+msgid "This export is only available for closed Physical Inventories"
+msgstr "Cet export est uniquement disponible pour les Inventaires Physiques clôturés"
