@@ -10,5 +10,5 @@ class product_stock_out_parser(report_sxw.rml_parse):
         self.localcontext.update({
         })
 
-SpreadsheetReport('report.report_product_stock_out_xls', 'product.stock_out', 'addons/procurement_cycle/report/product_stock_out.mako', parser=product_stock_out_parser)
+SpreadsheetReport('report.report_product_stock_out_xls', 'product.stock_out', 'addons/procurement_cycle/report_doc/product_stock_out.mako', parser=product_stock_out_parser)
 

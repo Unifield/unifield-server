@@ -54,6 +54,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF24.0
     def us_8870_partner_instance_creator(self, cr, uid, *a, **b):
         entity = self.pool.get('sync.client.entity')
         if entity:
@@ -91,6 +92,25 @@ class patch_scripts(osv.osv):
                     m.location_dest_id = %s
         ''', (distrib, msf_customer))
         self.log_info(cr, uid, 'US-9436: %d destinations changed on shipment linked to IR' % cr.rowcount)
+        return True
+
+    def us_8449_migrate_rr_min_max_auto_to_periods(self, cr, uid, *a, **b):
+        if cr.column_exists('replenishment_segment_line', 'min_qty'):
+            cr.execute("""update replenishment_segment_line line set rr_fmc_1=min_qty, rr_max_1=max_qty, min_qty=NULL, max_qty=NULL
+                from replenishment_segment seg
+                where
+                    seg.id = line.segment_id and
+                    seg.rule='minmax'
+            """)
+
+        if cr.column_exists('replenishment_segment_line', 'auto_qty'):
+            cr.execute("""update replenishment_segment_line line set rr_fmc_1=auto_qty, auto_qty=NULL
+                from replenishment_segment seg
+                where
+                    seg.id = line.segment_id and
+                    seg.rule='auto'
+            """)
+
         return True
 
     # UF23.0

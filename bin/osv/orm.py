@@ -233,7 +233,7 @@ class browse_record(object):
                         if field_column._type in self._fields_process:
                             for result_line in field_values:
                                 result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
-                                if result_line[field_name]:
+                                if result_line[field_name] is not None and result_line[field_name] is not False:
                                     result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj, result_line['id'])
 
             if not field_values:

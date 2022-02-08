@@ -721,13 +721,17 @@
         </record>
 
 
-
+        <!-- UF24.0 -->
         <record id="us_8870_partner_instance_creator" model="patch.scripts">
             <field name="method">us_8870_partner_instance_creator</field>
         </record>
 
         <record id="us_9436_set_dest_on_ir_out_converted" model="patch.scripts">
             <field name="method">us_9436_set_dest_on_ir_out_converted</field>
+        </record>
+
+        <record id="us_8449_migrate_rr_min_max_auto_to_periods" model="patch.scripts">
+            <field name="method">us_8449_migrate_rr_min_max_auto_to_periods</field>
         </record>
     </data>
 </openerp>

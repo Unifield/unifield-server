@@ -32,10 +32,9 @@ def normalize_td(time_unit, value):
         else:
             value = int(value)
     return {unit: value}
-
 import replenishment
 import wizard
-import report
+import report_doc
 import replenishment_wizard
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
