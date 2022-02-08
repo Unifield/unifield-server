@@ -737,5 +737,9 @@
         <record id="us_9577_display_manual_cv" model="patch.scripts">
             <field name="method">us_9577_display_manual_cv</field>
         </record>
+
+        <record id="us_9160_hq_prod_touch_donation_account" model="patch.scripts">
+            <field name="method">us_9160_hq_prod_touch_donation_account</field>
+        </record>
     </data>
 </openerp>
