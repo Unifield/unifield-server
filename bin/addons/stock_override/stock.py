@@ -412,15 +412,23 @@ class stock_picking(osv.osv):
         return res
 
     def write_web(self, cr, uid, ids, vals, context=None):
-        if ids and vals and 'reason_type_id' in vals:
-            data_obj = self.pool.get('ir.model.data')
-            other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-            if other_type_id != vals['reason_type_id']:
-                if isinstance(ids, (int, long)):
-                    ids = [ids]
-                # INT only: any RT != other set on picking must be written to all moves
-                # use sql query to prevent loops: write picking -> write move -> write picking ...
-                cr.execute("update stock_move set reason_type_id=%s where picking_id in %s and type='internal' and state not in ('cancel', 'done')", (vals['reason_type_id'], tuple(ids)))
+        if ids:
+            doc_type = self.browse(cr, uid, ids[0], fields_to_fetch=['type'], context=context).type
+            if vals and 'reason_type_id' in vals:
+                data_obj = self.pool.get('ir.model.data')
+                other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                if other_type_id != vals['reason_type_id']:
+                    if isinstance(ids, (int, long)):
+                        ids = [ids]
+                    # INT only: any RT != other set on picking must be written to all moves
+                    # use sql query to prevent loops: write picking -> write move -> write picking ...
+                    cr.execute("update stock_move set reason_type_id=%s where picking_id in %s and type='internal' and state not in ('cancel', 'done')", (vals['reason_type_id'], tuple(ids)))
+            if doc_type == 'in':
+                if vals.get('partner_id2'):
+                    vals['ext_cu'] = False
+                if vals.get('ext_cu'):
+                    vals.update({'partner_id': False, 'partner_id2': False})
+
         return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context)
 
     def go_to_simulation_screen(self, cr, uid, ids, context=None):

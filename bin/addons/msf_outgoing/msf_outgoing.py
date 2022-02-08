@@ -1955,7 +1955,7 @@ class stock_picking(osv.osv):
             context = {}
 
         context['web_copy'] = True
-        default.update({'sale_id': False})
+        default.update({'partner_id': False, 'partner_id2': False, 'ext_cu': False, 'sale_id': False})
 
         return self.copy(cr, uid, id, default, context=context)
 
