@@ -358,9 +358,22 @@ class stock_picking(osv.osv):
         'is_loan': fields.function(_get_is_loan, string='Is Loan ?', method=True, type='boolean', fnct_search=_search_is_loan),
     }
 
+    def on_change_reason_type_id(self, cr, uid, ids, reason_type_id, context=None):
+        if context is None:
+            context = {}
+
+        return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves',
+                                                                                    'reason_type_return_from_unit')[1]
+
+        if reason_type_id == return_reason_type_id:
+            return {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False}}
+        else:
+            return {'value': {'ret_from_unit_rt': False}}
+
     _constraints = [
         (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id', ]),
     ]
+
 
 stock_picking()
 

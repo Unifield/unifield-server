@@ -434,17 +434,18 @@
                     </group>
                     <field name="sale_id" invisible="1" />
                     <field name="purchase_id" invisible="1" />
+                    <field name="ret_from_unit_rt" invisible="1" />
                     <group colspan="4" col="6">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="0" attrs="{'readonly': ['|', '|', '|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('ext_cu', '!=', False), ('purchase_id', '!=', False), ('backorder_id', '!=', False)]}"/>
-                            <field name="ext_cu" on_change="on_change_ext_cu(ext_cu)" attrs="{'readonly': ['|', '|', '|', ('partner_id2', '!=', False), ('sale_id', '!=', False), ('purchase_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" domain="[('location_category', '=', 'consumption_unit'), ('usage', 'in', ('customer', 'supplier'))]" />
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="0" attrs="{'readonly': ['|', '|', '|', '|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('ext_cu', '!=', False), ('purchase_id', '!=', False), ('backorder_id', '!=', False), ('ret_from_unit_rt', '=', True)], 'required': [('ext_cu', '=', False)]}"/>
+                            <field name="ext_cu" on_change="on_change_ext_cu(ext_cu)" attrs="{'readonly': ['|', '|', '|', ('partner_id2', '!=', False), ('sale_id', '!=', False), ('purchase_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])], 'required': ['|', ('purchase_id', '=', False), '&amp;', ('partner_id2', '=', False), ('ret_from_unit_rt', '=', True)]}" domain="[('location_category', '=', 'consumption_unit'), ('usage', 'in', ('customer', 'supplier'))]" />
                             <field name="address_id" invisible="1" />
                             <field name="backorder_id" readonly="1"/>
                             <field name="customer_ref" readonly="1" />
                             <field name="reason_type_id" widget="selection"
-                                   domain="[('incoming_ok', '=', True)]"
+                                   domain="[('incoming_ok', '=', True)]" on_change="on_change_reason_type_id(reason_type_id)"
                                    attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="customers" readonly="1" />
                             <field name="change_reason"/>

@@ -2057,6 +2057,7 @@ class product_product(osv.osv):
                     sign = -1
                 else:
                     sign = 1
+
             if sign is not False:
                 qty = sign * uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
                 res[move['product_id'][0]] += qty
