@@ -3352,7 +3352,7 @@ msgstr "Field Changes Information"
 #: selection:stock.incoming.processor,claim_type:0
 #: selection:claim.event,type_claim_event:0
 msgid "Request missing products/quantities"
-msgstr "Request missing products/quantities"
+msgstr "Demander des produits ou des quantités qui manquent"
 
 #. module: purchase_override
 #: report:msf.purchase.order:0
@@ -6533,7 +6533,7 @@ msgstr "Daté avant :"
 #. module: msf_config_locations
 #: model:stock.location,name:msf_config_locations.stock_location_quarantine_view
 msgid "Quarantine / For Scrap"
-msgstr "Quarantaine / Pour Rebus"
+msgstr "Quarantaine / Pour Rebuts"
 
 #. module: account
 #: model:process.transition,name:account.process_transition_analyticinvoice0
@@ -41749,7 +41749,7 @@ msgstr "Line of the wizard to return products from a PPL"
 #. module: stock_override
 #: model:stock.location,name:stock_override.stock_location_quarantine_scrap
 msgid "Expired / Damaged / For Scrap"
-msgstr "Expiré / Endommagé / Pour Rebus"
+msgstr "Expiré / Endommagé / Pour Rebuts"
 
 #. module: export_import_lang
 #: code:addons/export_import_lang/data_import.py:161
@@ -111004,7 +111004,7 @@ msgstr "Date d'Export"
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:64
 #: field:stock.mission.report.line,quarantine_qty:0
 msgid "Quarantine / For Scrap Qty."
-msgstr "Qté. Quarantaine / Pour Rebus"
+msgstr "Qté. Quarantaine / Pour Rebuts"
 
 #. module: mission_stock
 #: code:addons/mission_stock/mission_stock.py:59
@@ -111012,7 +111012,7 @@ msgstr "Qté. Quarantaine / Pour Rebus"
 #: code:addons/mission_stock/mission_stock.py:516
 #, python-format
 msgid "Quarantine / For Scrap Qty"
-msgstr "Qté Quarantaine / Pour Rebus"
+msgstr "Qté Quarantaine / Pour Rebuts"
 
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:65
