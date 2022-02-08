@@ -1910,7 +1910,7 @@ class purchase_order_line(osv.osv):
                 commitment_voucher_id = commitment_voucher_id[0]
             else: # create commitment voucher
                 if not pol.confirmed_delivery_date:
-                    raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+                    raise osv.except_osv(_('Error'), _('Confirmed Delivery Date is a mandatory field.'))
                 commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], cv_date=pol.confirmed_delivery_date, context=context)
 
             expense_account = pol.account_4_distribution and pol.account_4_distribution.id or False
