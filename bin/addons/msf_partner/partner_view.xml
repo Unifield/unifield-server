@@ -16,6 +16,7 @@
                         <field name="active" invisible="1"/>
                         <field name="partner_type" />
                         <field name="locally_created" invisible="1" />
+                        <field name="instance_creator" invisible="1" />
                         <field name="in_product" invisible="1" />
                         <field name="min_qty" invisible="not context.get('choose_supplier')" />
                         <field name="delay" invisible="not context.get('choose_supplier')" />
@@ -189,6 +190,10 @@
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='General']" position="replace">
                         <page string="General">
+                            <group colspan="4" col="8">
+                                <field name="instance_creator" colspan="2"/>
+                                <group colspan="6" />
+                            </group>
                             <field colspan="4" mode="form,tree" name="address" nolabel="1" select="1" height="260">
                                 <form string="Partner Contacts">
                                     <newline/>

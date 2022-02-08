@@ -301,6 +301,24 @@ class stock_location(osv.osv):
 
             return [('id', 'in', retrict)]
 
+    def _search_from_histo(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            if arg[2] and isinstance(arg[2], list) and isinstance(arg[2][0], tuple) and len(arg[2][0]) == 3:
+                if context is None:
+                    context = {}
+                dom = []
+                if arg[2][0][2]:
+                    dom = [('id', 'not in', arg[2][0][2])]
+                elif context.get('dest_location'):
+                    dom += [('usage', '=', 'customer')]
+
+                return dom
+
+            return []
+
     def _is_intermediate_parent(self, cr, uid, ids, name, args, context=None):
         """
         Check if the Parent Location is Intermediate Stocks
@@ -315,6 +333,16 @@ class stock_location(osv.osv):
         for loc in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
             res[loc.id] = loc.location_id and loc.location_id.id == interm or False
         return res
+
+    def _search_intermediate_parent(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            itermediate_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                                      'stock_location_intermediate_client_view')[1]
+            return [('location_id', 'child_of', itermediate_view_id)]
+        return []
 
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
@@ -381,9 +409,12 @@ class stock_location(osv.osv):
         'db_id': fields.function(_get_coordo_db_id, type='integer', method=True, string='DB id for sync', internal=True, multi='coordo_db_id'),
         'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
         'from_config': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_config, string='Set in Loc. Config', internal=1),
+        'from_histo': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_histo, string='Set in Historical Consumption', internal=1),
         'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=False, fnct_search=_search_initial_stock_inv_display, string='Display in Initial stock inventory', readonly=True),
         'search_color': fields.selection([('dimgray', 'Dim Gray'), ('darkorchid', 'Dark Orchid'), ('lightpink', 'Light Pink'), ('royalblue', 'Royal Blue'), ('yellowgreen', 'Yellow Green'), ('darkorange', 'Dark Orange'), ('sandybrown', 'Sandy Brown'), ], string="Color for Search views"),
-        'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?"),
+        'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?", fnct_search=_search_intermediate_parent),
+        'moved_location': fields.boolean('Eprep location moved from Intermediate Stock', internal=1, readonly=1),
+
     }
     _defaults = {
         'active': True,
@@ -396,7 +427,15 @@ class stock_location(osv.osv):
         'posz': 0,
         'icon': False,
         'scrap_location': False,
+        'moved_location': False,
     }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if 'moved_location' not in default:
+            default['moved_location'] = False
+        return super(stock_location, self).copy(cr, uid, id, default, context)
 
     def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
         return kwargs.get('result', None)
@@ -1465,6 +1504,16 @@ class stock_picking(osv.osv):
             # don't invoice claim
             return False, False
 
+        all_claim = True
+        for move_line in picking.move_lines:
+            if not move_line.sale_line_id or not move_line.sale_line_id.in_name_goods_return:
+                all_claim = False
+                break
+        if all_claim:
+            # don't invoice return goods
+            return False, False
+
+
         if not partner:
             raise osv.except_osv(_('Error, no partner !'),
                                  _('Please put a partner on the picking list if you want to generate invoice.'))
@@ -1647,6 +1696,10 @@ class stock_picking(osv.osv):
         # US-2041 - Do not invoice Picking Ticket / Delivery Order lines that are not linked to a DPO when
         # invoice creation was requested at DPO confirmation
         if picking.type == 'out' and context.get('invoice_dpo_confirmation') and move_line.dpo_id.id != context.get('invoice_dpo_confirmation'):
+            return False
+
+        if move_line.sale_line_id and move_line.sale_line_id.in_name_goods_return:
+            # do not invoice goods return
             return False
 
         if not inv_type:

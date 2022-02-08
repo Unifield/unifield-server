@@ -25,7 +25,7 @@
             'object_id': object_ids[0],
             'log_write': True,
             'log_unlink': True,
-            'log_create': True,
+            'log_create': False,
             'field_ids': [(6, 0, fields_ids)],
             'parent_field_id': parent_id,
             'name_get_field_id': name_id,

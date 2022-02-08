@@ -170,7 +170,7 @@ class analytic_distribution(osv.osv):
         account = self.pool.get('account.account').read(cr, uid, account_id, ['destination_ids'])
         # Check Cost Center lines regarding destination/account and destination/CC links
         for cc_line in distrib.cost_center_lines:
-            if cc_line.destination_id.id not in account.get('destination_ids', []):
+            if account and cc_line.destination_id.id not in account.get('destination_ids', []):
                 return 'invalid'
             if not self.check_dest_cc_compatibility(cr, uid, cc_line.destination_id.id,
                                                     cc_line.analytic_id and cc_line.analytic_id.id or False, context=context):
@@ -193,7 +193,7 @@ class analytic_distribution(osv.osv):
                         return 'invalid'
                 if doc_date and fp_line.analytic_id and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
                     return 'invalid'
-            if fp_line.destination_id.id not in account.get('destination_ids', []):
+            if account and fp_line.destination_id.id not in account.get('destination_ids', []):
                 return 'invalid'
             if not self.check_dest_cc_compatibility(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id, context=context):
                 return 'invalid'

@@ -736,8 +736,10 @@ class return_claim(osv.osv):
             if len(missing_events_ids) > 0:
                 result[obj.id].update({'has_missing_events': True})
 
-            if obj.origin_claim and obj.partner_id_return_claim.partner_type == 'internal' \
+            if obj.origin_claim and obj.partner_id_return_claim.partner_type in ('internal', 'intermission', 'section') \
                     and obj.picking_id_return_claim.type == 'out':
+                if not self.pool.get('sale.order').search_exists(cr, uid, [('claim_name_goods_return', '=', obj.origin_claim)], context=context):
+                    continue
                 # Searching for the Original IN
                 in_domain = [
                     ('type', '=', 'in'),
@@ -1100,7 +1102,10 @@ class return_claim(osv.osv):
 
         # Create lines
         for x in product_line_data:
-            prod_id = product_obj.search(cr, uid, [('name', '=', x.product_id_claim_product_line.name)], context=context)[0]
+            if hasattr(x.product_id_claim_product_line, 'id') and hasattr(x.product_id_claim_product_line, 'default_code'):
+                prod_id = self.pool.get('so.po.common').get_product_id(cr, uid, x.product_id_claim_product_line, x.product_id_claim_product_line.default_code, context=context)
+            else:
+                prod_id = product_obj.search(cr, uid, [('name', '=', x.product_id_claim_product_line.name)], context=context)[0]
             prod_data = product_obj.browse(cr, uid, prod_id, fields_to_fetch=['perishable', 'batch_management'], context=context)
             batch_id = False
             if prod_data.perishable and not prod_data.batch_management and x.expiry_date_claim_product_line:

@@ -863,9 +863,18 @@ class ir_model_data(osv.osv):
                 if xml_id and res_id:
                     if context.get('sync_update_execution') and model == 'res.partner' and module == 'sd':
                         # update partner data if created if xmlid does not match the instance id
-                        identifier = self.pool.get('sync.client.entity').get_entity(cr, uid).identifier
-                        if identifier != xml_id.split('/')[0]:
-                            model_obj.write(cr, uid, [res_id], {'locally_created': False}, context=context)
+                        local_entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
+                        xmlid_instance_id = xml_id.split('/')[0]
+                        if local_entity.identifier != xmlid_instance_id:
+                            partner_data = {'locally_created': False}
+                            if xmlid_instance_id:
+                                cr.execute('select code from msf_instance where instance_identifier=%s', (xmlid_instance_id,))
+                                r = cr.fetchone()
+                                if r and r[0]:
+                                    partner_data['instance_creator'] = r[0]
+                            model_obj.write(cr, uid, [res_id], partner_data, context=context)
+                        else:
+                            model_obj.write(cr, uid, [res_id], {'instance_creator': local_entity.name}, context=context)
                     xmlid_data = {
                         'name': xml_id,
                         'model': model,

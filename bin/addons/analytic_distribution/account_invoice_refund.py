@@ -57,6 +57,7 @@ class account_invoice_refund(osv.osv_memory):
                 args = [('type', '=', 'purchase_refund')]
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
+        args.append(('is_active', '=', True))
         # get the first journal created matching with the defined criteria
         journal = obj_journal.search(cr, uid, args, order='id', limit=1, context=context)
         return journal and journal[0] or False
@@ -78,7 +79,7 @@ class account_invoice_refund(osv.osv_memory):
         journal_obj = self.pool.get('account.journal')
         res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if context.get('doc_type', '') in ('ivo', 'ivi'):
-            # only the fist Intermission journal created (INT)
+            # only the first Intermission journal created (INT, always active because it is one of the default journals created)
             int_journal_id = self.pool.get('account.invoice')._get_int_journal_for_current_instance(cr, uid, context=context)
             journal_domain = [('id', '=', int_journal_id)]
         else:
@@ -94,7 +95,7 @@ class account_invoice_refund(osv.osv_memory):
                     jtype = 'sale_refund'
                 else:
                     jtype = 'purchase_refund'
-            journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True)]
+            journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True), ('is_active', '=', True)]
         if context.get('doc_type', '') == 'isi':
             journal_domain.append(('code', '=', 'ISI'))
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)

@@ -100,7 +100,8 @@ class account_journal(osv.osv):
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
-        'bank_journal_id': fields.many2one('account.journal', _("Corresponding bank journal"), domain="[('type', '=', 'bank'), ('currency', '=', currency)]"),
+        'bank_journal_id': fields.many2one('account.journal', _("Corresponding bank journal"),
+                                           domain="[('type', '=', 'bank'), ('currency', '=', currency), ('is_active', '=', True)]"),
         'cheque_journal_id': fields.one2many('account.journal', 'bank_journal_id', 'Linked cheque'),
         'has_entries': fields.function(_get_has_entries, type='boolean', method=True, string='Has journal entries'),
     }
@@ -411,6 +412,11 @@ class account_journal(osv.osv):
         if any(is_system):
             raise osv.except_osv(_('Warning'),
                                  _('System journal not deletable'))
+
+        if any([j['is_default'] for j in self.read(cr, uid, ids, ['is_default'], context=context)]):
+            raise osv.except_osv(_('Warning'),
+                                 _("The journals imported by default at instance creation can't be deleted."))
+
         return super(account_journal, self).unlink(cr, uid, ids,
                                                    context=context)
 
@@ -469,7 +475,7 @@ class account_journal(osv.osv):
             journal_type = 'correction_manual'
         else:
             journal_type = 'correction'
-        journal_ids = self.search(cr, uid, [('type', '=', journal_type), ('is_current_instance', '=', True)],
+        journal_ids = self.search(cr, uid, [('type', '=', journal_type), ('is_current_instance', '=', True), ('is_active', '=', True)],
                                   order='id', limit=1, context=context)
         return journal_ids and journal_ids[0] or False
 

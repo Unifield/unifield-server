@@ -394,6 +394,18 @@ class stock_picking(osv.osv):
 
         return res
 
+    def write_web(self, cr, uid, ids, vals, context=None):
+        if ids and vals and 'reason_type_id' in vals:
+            data_obj = self.pool.get('ir.model.data')
+            other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+            if other_type_id != vals['reason_type_id']:
+                if isinstance(ids, (int, long)):
+                    ids = [ids]
+                # INT only: any RT != other set on picking must be written to all moves
+                # use sql query to prevent loops: write picking -> write move -> write picking ...
+                cr.execute("update stock_move set reason_type_id=%s where picking_id in %s and type='internal' and state not in ('cancel', 'done')", (vals['reason_type_id'], tuple(ids)))
+        return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context)
+
     def go_to_simulation_screen(self, cr, uid, ids, context=None):
         '''
         Return the simulation screen
@@ -810,7 +822,9 @@ class stock_picking(osv.osv):
             # Find appropriate journal
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
                                                                             ('code', '!=', 'ISI'),
-                                                                            ('is_current_instance', '=', True)])
+                                                                            ('is_current_instance', '=', True),
+                                                                            ('is_active', '=', True)],
+                                                                  order='id', limit=1)
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No journal of type %s found when trying to create invoice for picking %s!') % (journal_type, stock_picking.name))
 

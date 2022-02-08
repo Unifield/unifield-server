@@ -3894,13 +3894,14 @@ class product_stock_out(osv.osv):
                 left join product_stock_out_line line on so.id = line.stock_out_id
                 left join replenishment_segment_line seg_line on seg_line.product_id = line.product_id
                 left join replenishment_segment seg on seg.id = seg_line.segment_id
-                left join replenishment_location_config config on config.id = seg.location_config_id
+                left join replenishment_parent_segment parent on parent.id = seg.parent_id
+                left join replenishment_location_config config on config.id = parent.location_config_id
                 left join local_location_configuration_rel local_rel on local_rel.config_id = config.id
             where
                  so.id in %s and
                  config.main_instance = %s and
                  config.synched = 't' and
-                 local_rel.location_id = so.location_id and 
+                 local_rel.location_id = so.location_id and
                  seg.state = 'complete'
         ''', (tuple(ids), instance_id))
         nb = cr.fetchone()

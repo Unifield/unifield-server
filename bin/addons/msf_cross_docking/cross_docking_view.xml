@@ -66,6 +66,7 @@
                 <data>
                     <field name="scrap_location" position="after">
                         <field name="cross_docking_location_ok" />
+                        <field name="eprep_location" />
                     </field>
                 </data>
             </field>

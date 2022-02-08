@@ -296,21 +296,22 @@ class instance_auto_creation(osv.osv):
                 instance_name = config_dict['instance'].get('instance_name') or cr.dbname
                 # find the parent_id:
                 oc = config_dict['instance'].get('oc').lower()
-                instance_identifier = str(uuid.uuid1())
                 data = {
                     'name': instance_name,
-                    'identifier': instance_identifier,
-                    'oc': oc,
                     'parent': config_dict['instance'].get('parent_instance'),
                 }
 
                 # search the current entity
                 entity_obj = pool.get('sync.client.entity')
                 entity_id = entity_obj.search(cr, uid, [])
+                instance_identifier = False
                 if entity_id:
                     entity_data = entity_obj.read(cr, uid, entity_id[0])
                     entity_obj.write(cr, uid, entity_id[0], data)
+                    instance_identifier = entity_data['identifier']
                 else:
+                    instance_identifier = str(uuid.uuid1())
+                    data['identifier'] = instance_identifier
                     entity_obj.create(cr, uid, data)
                 wiz_data = {'email': 'www', 'oc': oc}
                 wizard = pool.get('sync.client.register_entity')
@@ -329,7 +330,7 @@ class instance_auto_creation(osv.osv):
                 self.write(cr, 1, creation_id,
                            {'state': 'instance_registered'}, context=context)
 
-                if config_dict['instance'].get('auto_valid') and config_dict['instance'].get('sync_host') in ('localhost', '127.0.0.1'):
+                if config_dict['instance'].get('auto_valid') and config_dict['instance'].get('sync_host') in ('localhost', '127.0.0.1') and instance_identifier:
                     proxy = pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                     ent_ids = proxy.search([('name', '=', instance_name), ('identifier', '=', instance_identifier)])
                     proxy.validate_action(ent_ids)
@@ -722,6 +723,9 @@ class instance_auto_creation(osv.osv):
                         unifield_prop = [unifield_prop]
                     for uf_prop in unifield_prop:
                         vals[uf_prop] = account_id
+
+            if config.has_option('company', 'additional_allocation'):
+                vals['additional_allocation'] = config.getboolean('company', 'additional_allocation')
 
             if vals.get('ye_pl_cp_for_bs_debit_bal_account') and vals.get('ye_pl_cp_for_bs_credit_bal_account'):
                 vals['has_move_regular_bs_to_0'] = True

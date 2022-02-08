@@ -73,7 +73,8 @@ class register_reopen(osv.osv_memory):
                 period = cashbox.period_id
                 if not period or 'closed' in period.state:
                     raise osv.except_osv(_('Warning'), _('The period \'%s\' of this register is already \'%s\', the register cannot be reopen!') % (period.name, period.state))
-
+                if not cashbox.journal_id.is_active:
+                    raise osv.except_osv(_('Warning'), _('The journal %s is inactive.') % cashbox.journal_id.code)
                 # re-open case
                 cashbox.write({'state': 'open'})
                 return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}

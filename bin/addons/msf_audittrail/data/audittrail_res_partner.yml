@@ -6,7 +6,11 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'res.partner')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['active', 'comment', 'credit_limit', 'customer', 'customer_lt', 'lang', 'manufacturer', 'name', 'partner_type', 'po_by_project', 'procurement_lt', 'property_account_payable', 'property_account_position', 'property_account_receivable', 'property_payment_term', 'property_product_pricelist', 'property_product_pricelist_purchase', 'property_stock_customer', 'property_stock_supplier', 'ref', 'split_po', 'supplier', 'supplier_lt', 'title', 'transport_0', 'transport_0_lt', 'transport_1', 'transport_1_lt', 'transport_2', 'transport_2_lt', 'transporter', 'zone']
+        fields = ['active', 'comment', 'credit_limit', 'customer', 'customer_lt', 'lang', 'manufacturer', 'name', 'partner_type',
+                  'po_by_project', 'procurement_lt', 'property_account_payable', 'property_account_position', 'property_account_receivable',
+                  'property_payment_term', 'property_product_pricelist', 'property_product_pricelist_purchase', 'property_stock_customer',
+                  'property_stock_supplier', 'ref', 'split_po', 'supplier', 'supplier_lt', 'title', 'transport_0', 'transport_0_lt',
+                  'transport_1', 'transport_1_lt', 'transport_2', 'transport_2_lt', 'transporter', 'zone', 'legal_name']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'res.partner'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
