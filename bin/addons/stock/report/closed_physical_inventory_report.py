@@ -146,13 +146,19 @@ class closed_physical_inventory_parser(XlsxReportParser):
         rep_lines = {}
         specifications = {'is_kc': _('CC'), 'is_dg': _('DG'), 'is_cs': _('CS')}
         for disc_line in pi.discrepancy_line_ids:
-            disc_qty = disc_line.discrepancy_qty
+            counted_qty = ''
+            if not disc_line.counted_qty_is_empty or (disc_line.counted_qty_is_empty and not disc_line.ignored):
+                counted_qty = disc_line.counted_qty
+            ignored_qty = ''
+            if disc_line.ignored:
+                ignored_qty = abs(disc_line.discrepancy_qty)
+
             if disc_line.product_id.id not in rep_lines:
                 rep_lines.update({disc_line.product_id.id: {
                     'product_code': disc_line.product_id.default_code,
                     'description': disc_line.product_id.name,
                     'uom': disc_line.product_uom_id.name,
-                    'total_qty': disc_line.counted_qty + ((disc_line.counted_qty_is_empty or disc_line.ignored) and abs(disc_qty) or 0),
+                    'total_qty': (counted_qty or 0) + (ignored_qty or 0),
                     'specification': ','.join([name for attribute, name in specifications.items() if getattr(disc_line.product_id, attribute, False)]),
                     'need_bn': disc_line.product_id.batch_management and _('Y') or _('N'),
                     'need_ed': disc_line.product_id.perishable and _('Y') or _('N'),
@@ -160,12 +166,12 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 }})
             else:
                 rep_lines[disc_line.product_id.id].update({
-                    'total_qty': rep_lines[disc_line.product_id.id]['total_qty'] + disc_line.counted_qty + ((disc_line.counted_qty_is_empty or disc_line.ignored) and abs(disc_qty) or 0),
+                    'total_qty': rep_lines[disc_line.product_id.id]['total_qty'] + (counted_qty or 0) + (ignored_qty or 0),
                 })
             rep_lines[disc_line.product_id.id]['lines'].append({
                 'line_number': disc_line.line_no,
-                'qty_counted': not (disc_line.counted_qty_is_empty or disc_line.ignored) and disc_line.counted_qty or '',
-                'qty_ignored': disc_qty < 0 and (disc_line.counted_qty_is_empty or disc_line.ignored) and abs(disc_qty) or '',
+                'qty_counted': counted_qty,
+                'qty_ignored': ignored_qty,
                 'prodlot': disc_line.batch_number or '',
                 'expiry_date': disc_line.expiry_date and datetime.strptime(disc_line.expiry_date[0:10], '%Y-%m-%d') or '',
                 'reason_type': disc_line.reason_type_id.complete_name,
@@ -260,7 +266,6 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 self.add_cell(need_ed, line_style)
                 self.add_cell(line['reason_type'], line_style)
                 self.add_cell(line['comment'], line_style)
-
 
                 sheet.append(self.rows)
 
