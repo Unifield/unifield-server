@@ -37,11 +37,11 @@
             <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="8,0" stop="8,-1" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="0,-2" stop="0,-2" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="2,-2" stop="2,-2" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="4,-2" stop="4,-2" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="6,-2" stop="6,-2" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="8,-2" stop="8,-2" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="0,-4" stop="0,-4" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="2,-4" stop="2,-4" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="4,-4" stop="4,-4" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="6,-4" stop="6,-4" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="8,-4" stop="8,-4" thickness="0.5" />
         </blockTableStyle>
         <blockTableStyle id="LinesTitle">
             <blockAlignment value="LEFT" />
@@ -505,7 +505,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Confirmed delivery date : </para>
+                    <para style="TextInformation">Estimated delivery date : </para>
                 </td>
                 <td>
                     <para style="TextInformation1"> </para>
@@ -534,7 +534,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">[[ to_time(objects[0].delivery_confirmed_date) ]]</para>
+                    <para style="TextInformation">[[ to_time(objects[0].delivery_requested_date_modified) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation1"> </para>
@@ -553,6 +553,64 @@
                 </td>
                 <td>
                     <para style="TextInformation">[[ to_time(objects[0].delivery_requested_date) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">Confirmed delivery date : </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">[[ to_time(objects[0].delivery_confirmed_date) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation1"> </para>
                 </td>
                 <td>
                     <para style="TextInformation1"> </para>

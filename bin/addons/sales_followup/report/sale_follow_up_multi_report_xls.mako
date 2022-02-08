@@ -229,13 +229,15 @@
         ## Transport
         <Column ss:AutoFitWidth="1" ss:Width="55.00" />
         ## Transport file
-        <Column ss:AutoFitWidth="1" ss:Width="55.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="65.75" />
+        ## EDD
+        <Column ss:AutoFitWidth="1" ss:Width="50.0" />
         ## CDD
-        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="50.0" />
         ## ETA
-        <Column ss:AutoFitWidth="1" ss:Width="50" />
+        <Column ss:AutoFitWidth="1" ss:Width="50.0" />
         ## RTS Date
-        <Column ss:AutoFitWidth="1" ss:Width="50" />
+        <Column ss:AutoFitWidth="1" ss:Width="50.0" />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('FIELD ORDER FOLLOW-UP per CLIENT')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
@@ -334,6 +336,7 @@
                 _('Qty to deliver'),
                 _('Transport'),
                 _('Transport file'),
+                _('EDD'),
                 _('CDD'),
                 _('ETA'),
                 _('RTS Date'),
@@ -399,6 +402,19 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
+                    % if line.get('edd'):
+                        % if isDate(line['edd']):
+                            % if getLang() == 'fr_MF':
+                            <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${line['edd']|n}T00:00:00.000</Data></Cell>
+                            % else:
+                            <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['edd']|n}T00:00:00.000</Data></Cell>
+                            % endif
+                        % else:
+                            <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line['edd']|x}</Data></Cell>
+                        % endif
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
+                    % endif
                     % if line.get('cdd'):
                         % if isDate(line['cdd']):
                             % if getLang() == 'fr_MF':
@@ -487,6 +503,19 @@
                     <Cell ss:StyleID="line_left_green"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
+                    % endif
+                    % if line.get('edd'):
+                        % if isDate(line['edd']):
+                            % if getLang() == 'fr_MF':
+                            <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['edd']|n}T00:00:00.000</Data></Cell>
+                            % else:
+                            <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['edd']|n}T00:00:00.000</Data></Cell>
+                            % endif
+                        % else:
+                            <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['edd']|x}</Data></Cell>
+                        % endif
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     % endif
                     % if line.get('cdd'):
                         % if isDate(line['cdd']):

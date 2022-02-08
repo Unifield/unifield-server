@@ -158,9 +158,11 @@
     <Column ss:AutoFitWidth="1" ss:Width="95" />
     # Created (order)
     <Column ss:AutoFitWidth="1" ss:Width="80" />
-    # Delivery Requested Date
+    # Requested Delivery Date
     <Column ss:AutoFitWidth="1" ss:Width="80" />
-    # Delivery Confirmed Date
+    # Estimated Delivery Date
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # Confirmed Delivery Date
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Status (line)
     <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -271,6 +273,23 @@
           <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
           % else:
           <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % endif
+      % else:
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
+      % endif
+      % if line['estimated_delivery_date'] and isDate(line['estimated_delivery_date']):
+        % if line['raw_state'] in ['cancel', 'cancel_r']:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_grey_fr"><Data ss:Type="DateTime">${line['estimated_delivery_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date_grey"><Data ss:Type="DateTime">${line['estimated_delivery_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % else:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['estimated_delivery_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['estimated_delivery_date']|n}T00:00:00.000</Data></Cell>
           % endif
         % endif
       % else:
