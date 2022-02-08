@@ -733,5 +733,9 @@
         <record id="us_8449_migrate_rr_min_max_auto_to_periods" model="patch.scripts">
             <field name="method">us_8449_migrate_rr_min_max_auto_to_periods</field>
         </record>
+
+        <record id="us_9577_display_manual_cv" model="patch.scripts">
+            <field name="method">us_9577_display_manual_cv</field>
+        </record>
     </data>
 </openerp>

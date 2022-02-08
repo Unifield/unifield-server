@@ -55,6 +55,11 @@ class patch_scripts(osv.osv):
     }
 
     # UF24.0
+    def us_9577_display_manual_cv(self, cr, uid, *a, **b):
+        cr.execute("UPDATE account_commitment SET cv_flow_type='supplier' WHERE cv_flow_type IS NULL")
+        self.log_info(cr, uid, '%d manual CV visible' % (cr.rowcount,))
+        return True
+
     def us_8870_partner_instance_creator(self, cr, uid, *a, **b):
         entity = self.pool.get('sync.client.entity')
         if entity:
