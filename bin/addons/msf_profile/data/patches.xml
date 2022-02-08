@@ -729,5 +729,9 @@
         <record id="us_9436_set_dest_on_ir_out_converted" model="patch.scripts">
             <field name="method">us_9436_set_dest_on_ir_out_converted</field>
         </record>
+
+        <record id="us_9577_display_manual_cv" model="patch.scripts">
+            <field name="method">us_9577_display_manual_cv</field>
+        </record>
     </data>
 </openerp>
