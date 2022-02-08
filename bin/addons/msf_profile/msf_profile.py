@@ -54,6 +54,25 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9160_hq_prod_touch_donation_account(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data
+                SET touched ='[''donation_expense_account'']', last_modification = NOW()
+                WHERE module='sd'
+                AND model='product.product'
+                AND res_id IN (
+                    SELECT id
+                    FROM product_product
+                    WHERE donation_expense_account is not null and active='t'
+                );
+            """)
+            self.log_info(cr, uid, 'Trigger donation_expense_account on %d products' % (cr.rowcount,))
+        return True
+
     def us_8870_partner_instance_creator(self, cr, uid, *a, **b):
         entity = self.pool.get('sync.client.entity')
         if entity:
