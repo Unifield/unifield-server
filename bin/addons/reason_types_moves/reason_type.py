@@ -365,7 +365,10 @@ class stock_picking(osv.osv):
         return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves',
                                                                                     'reason_type_return_from_unit')[1]
 
-        return {'value': {'ret_from_unit_rt': reason_type_id == return_reason_type_id}}
+        if reason_type_id == return_reason_type_id:
+            return {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False}}
+        else:
+            return {'value': {'ret_from_unit_rt': False}}
 
     _constraints = [
         (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id', ]),
