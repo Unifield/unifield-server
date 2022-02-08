@@ -121,7 +121,26 @@ class expression(object):
             working_table = table
             main_table = table
             fargs = left.split('.', 1)
-            if fargs[0] in table._inherit_fields:
+            inherited_fields = fargs[0] in table._inherit_fields
+
+            if not inherited_fields and len(fargs) > 1:
+                # check if m2o fields can be sql joined
+                field = working_table._columns.get(fargs[0], False)
+                if field and field._type == 'many2one' and field._obj and field._join:
+                    new_working_table = working_table.pool.get(field._obj)
+                    if new_working_table not in self.__all_tables:
+                        self.__joins.append('%s.%s=%s.%s' % (new_working_table._table, 'id', main_table._table, fargs[0]))
+                        self.__all_tables.append(new_working_table)
+                    working_table = new_working_table
+                    self.__field_tables[i] = working_table
+                    left = fargs[1]
+                    fargs = left.split('.', 1)
+                    self.__exp[i] = (left, operator, right)
+                    inherited_fields = fargs[0] in working_table._inherit_fields
+                    if inherited_fields:
+                        main_table = working_table
+
+            if inherited_fields:
                 while True:
                     field = main_table._columns.get(fargs[0], False)
                     if field:
@@ -142,6 +161,7 @@ class expression(object):
                 continue
 
             field_obj = table.pool.get(field._obj)
+
             if len(fargs) > 1:
                 if field._type == 'many2one':
                     right = field_obj.search(cr, uid, [(fargs[1], operator,
@@ -171,7 +191,7 @@ class expression(object):
                     # values in the database, so we must ignore it : we generate a dummy leaf
                     self.__exp[i] = self.__DUMMY_LEAF
                 else:
-                    subexp = field.search(cr, uid, table, left, [self.__exp[i]], context=context)
+                    subexp = field.search(cr, uid, working_table, left, [self.__exp[i]], context=context)
                     if not subexp:
                         self.__exp[i] = self.__DUMMY_LEAF
                     else:
@@ -181,6 +201,10 @@ class expression(object):
                         self.__exp.insert(i + 1, self.__DUMMY_LEAF)
                         for j, se in enumerate(subexp):
                             self.__exp.insert(i + 2 + j, se)
+                            if self.__field_tables.get(i+j):
+                                # replace joined table
+                                self.__field_tables[i+2+j] = self.__field_tables[i+j]
+                                del self.__field_tables[i+j]
             # else, the value of the field is store in the database, so we search on it
 
             elif field._type == 'one2many':

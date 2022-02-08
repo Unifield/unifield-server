@@ -635,6 +635,10 @@ class shipment(osv.osv):
             initial_from_pack = family.from_pack
             initial_to_pack = family.to_pack - family.selected_number
 
+        dest_location = picking.warehouse_id.lot_output_id.id
+        if family.draft_packing_id.sale_id and family.draft_packing_id.sale_id.procurement_request and \
+                family.draft_packing_id.sale_id.location_requestor_id:
+            dest_location = family.draft_packing_id.sale_id.location_requestor_id.id
         # find the corresponding moves
         moves_ids = move_obj.search(cr, uid, [
             ('picking_id', '=', family.draft_packing_id.id),
@@ -647,6 +651,13 @@ class shipment(osv.osv):
             # We compute the selected quantity
             selected_qty = move.qty_per_pack * family.selected_number
 
+            if move.old_out_location_dest_id:
+                # IR > OUT destination changed on OUT, converted to PICK
+                final_dest = move.old_out_location_dest_id.id
+            else:
+                # dest from IR or MSF Customer
+                final_dest = dest_location
+
             move_vals = {
                 'picking_id': new_packing_id,
                 'line_number': move.line_number,
@@ -655,7 +666,7 @@ class shipment(osv.osv):
                 'to_pack': family.to_pack,
                 'backmove_packing_id': move.id,
                 'location_id': picking.warehouse_id.lot_distribution_id.id,
-                'location_dest_id': picking.warehouse_id.lot_output_id.id,
+                'location_dest_id': final_dest,
                 'selected_number': family.selected_number,
             }
 
@@ -1328,10 +1339,15 @@ class shipment(osv.osv):
         for shipment in self.browse(cr, uid, ids, context=context):
             make_invoice = False
             move = False
+            cur_id = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
-                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
+                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking' and not move.sale_line_id.in_name_goods_return) and not move.picking_id.claim:
                         make_invoice = True
+                        cur_id = pack.currency_id.id
+                        break
+                if make_invoice:
+                    break
 
             if not make_invoice:
                 continue
@@ -1367,7 +1383,6 @@ class shipment(osv.osv):
                 'from_supply': True,
             }
 
-            cur_id = shipment.pack_family_memory_ids[0].currency_id.id
             if cur_id:
                 invoice_vals['currency_id'] = cur_id
             # Journal type
@@ -1409,7 +1424,10 @@ class shipment(osv.osv):
                     if move.state == 'cancel':
                         continue
 
-                    if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
+                    if move.sale_line_id and (move.sale_line_id.order_id.order_policy != 'picking' or move.sale_line_id.in_name_goods_return):
+                        continue
+
+                    if move.picking_id.claim:
                         continue
 
                     # create 1 FO = 1 Invoice
@@ -2581,7 +2599,6 @@ class stock_picking(osv.osv):
         '''
         # Objects
         sale_order_obj = self.pool.get('sale.order')
-
         # For picking ticket from scratch, invoice it !
         if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
             vals['invoice_state'] = '2binvoiced'
@@ -2981,6 +2998,8 @@ class stock_picking(osv.osv):
                     _('Bad document'),
                     _('The document you want to convert is already a Picking Ticket')
                 )
+            if not out.sale_id and not out.claim:
+                raise osv.except_osv(_('Error'), _('You can not convert a Delivery Order from scratch into a Picking Ticket'))
             if out.state in ('cancel', 'done'):
                 raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
 
@@ -3190,6 +3209,8 @@ class stock_picking(osv.osv):
                     'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
                     'move_lines': [],
                     'state': 'draft',
+                    'claim': picking.claim,
+                    'claim_name': picking.claim_name
                 }
                 context['allow_copy'] = True
 

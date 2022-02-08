@@ -83,7 +83,10 @@
                             <field name="discount" groups="base.group_extended"
                                    attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field colspan="4" name="name"/>
-                            <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
+                            <field name="account_id"
+                                   domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                   required="1"
+                            />
                             <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                             <newline/>
                             <field name="company_id" groups="base.group_multi_company" readonly="1"/>
@@ -175,7 +178,7 @@
                 <form string="Supplier Invoice">
                     <group col="8" colspan="4">
                         <field name="journal_id"
-                               domain="[('inv_doc_type', '=', True)]"
+                               domain="[('inv_doc_type', '=', True), ('is_active', '=', True)]"
                                attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         <field name="vat_ok" invisible="1" />
                         <field name="number" readonly="1"/>
@@ -236,7 +239,7 @@
                            </group>
 
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
-                                <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:analytic_distribution_state in ('none','valid') and inactive_product == False">
+                                <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:analytic_distribution_state in ('none', 'valid') and inactive_product == False and account_id">
                                     <field name="from_supply" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
                                     <field name="invoice_type" invisible="1"/>
@@ -252,6 +255,7 @@
                                     />
                                     <field name="account_id"
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                           required="1"
                                     />
                                     <field name="invoice_line_tax_id" view_mode="2" context="{'type':parent.type}" domain="[('parent_id','=',False)]"/>
                                     <field name="inactive_product" invisible="1" />
@@ -326,28 +330,15 @@
                                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                                         <field name="is_direct_invoice" invisible="1"/>
                                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
-                                        <newline/>
-                                        <field name="can_merge_lines" invisible="1"/>
-                                        <button name="button_merge_lines" type="object"
-                                                colspan="3"
-                                                string="Merge Lines by Account" icon="gtk-convert"
-                                                confirm="You are about to merge invoice lines; are you sure you want to proceed? THIS OPERATION CAN NOT BE UNDONE."
-                                                attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
                                     </group>
 
                                 </group>
                             </group>
                             <!-- for ISI/STR the display of the buttons takes the whole width -->
                             <group col="8" colspan="6" attrs="{'invisible': [('doc_type', 'not in', ('isi', 'isr'))]}">
-                                <button name="button_merge_lines2" type="object"
-                                        string="Merge Lines by Account"
-                                        icon="gtk-convert" colspan="2"
-                                        confirm="You are about to merge invoice lines; are you sure you want to proceed? THIS OPERATION CAN NOT BE UNDONE."
-                                        attrs="{'invisible': [('can_merge_lines', '!=', True)]}"
-                                />
                                 <button name="button_split_invoice2" type="object"
                                         string="Split Invoice"
-                                        icon="gtk-cut" colspan="2"
+                                        icon="gtk-cut" colspan="4"
                                         states="draft"
                                 />
                                 <button name="invoice_open2" type="object"
@@ -421,7 +412,7 @@
             <field name="arch" type="xml">
                 <form string="Stock Transfer Voucher" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('inv_doc_type', '=', True)]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True), ('is_active', '=', True)]"/>
                         <field name="journal_type" invisible="1"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
@@ -431,7 +422,7 @@
                         <newline/>
                         <field string="Customer" name="partner_id"
                                domain="[('customer', '=', True)]"
-                               on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)"
+                               on_change="onchange_partner_id(type, partner_id, date_invoice, payment_term, partner_bank_id, company_id, False, False, False, False, False, doc_type, from_supply)"
                                groups="base.group_user" context="{'search_default_customer': 1}"
                                attrs="{'readonly': ['|',
                                                     ('state', '!=', 'draft'),
@@ -502,6 +493,7 @@
                                     />
                                     <field name="account_id"
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                           required="1"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type}"
                                     />
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
@@ -643,12 +635,12 @@
                         <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
                         <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
                         <separator orientation="vertical"/>
+                        <filter name="open_fy" icon="terp-go-year" string="Open FY" domain="[('open_fy', '=', True)]"/>
 
                         <separator orientation="vertical"/>
                         <field name="number"/>
                         <field name="partner_id"/>
                         <field name="origin"/>
-                        <field name="amount_total"/>
                     </group>
                     <newline/>
                     <group col="10" colspan="4">
@@ -656,6 +648,7 @@
                         <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="supplier_reference"/>
                         <field name="name"/>
+                        <field name="amount_total"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
@@ -714,7 +707,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'stv')]</field>
-            <field name="context">{'doc_type': 'stv', 'type': 'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
+            <field name="context">{'doc_type': 'stv', 'type': 'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1, 'search_default_open_fy': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>
@@ -862,7 +855,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'isi')]</field>
-            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice', 'from_inv_form': True}</field>
+            <field name="context">{'doc_type': 'isi', 'type': 'in_invoice', 'from_inv_form': True, 'search_default_open_fy': 1}</field>
             <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Invoices -->
         </record>
         <record id="action_isi_tree" model="ir.actions.act_window.view">

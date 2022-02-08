@@ -438,6 +438,13 @@ class account_invoice(osv.osv):
                 if filter_node:
                     filter_node[0].getparent().remove(filter_node[0])
                 res['arch'] = etree.tostring(doc)
+            # remove the Open FY filter in all invoices but IVO, STV, IVI and ISI
+            if not context.get('doc_type', '') in ('ivo', 'stv', 'ivi', 'isi'):
+                doc = etree.XML(res['arch'])
+                filter_node = doc.xpath("/search/group[1]/filter[@name='open_fy']")
+                if filter_node:
+                    filter_node[0].getparent().remove(filter_node[0])
+                res['arch'] = etree.tostring(doc)
         if view_type in ('tree', 'search') and (context.get('type') in ['out_invoice', 'out_refund'] or context.get('doc_type') == 'str'):
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='supplier_reference']")
@@ -758,11 +765,16 @@ class account_invoice(osv.osv):
             'counterpart_inv_status': False,
             'refunded_invoice_id': False,
         })
+        inv = self.browse(cr, uid, [id], fields_to_fetch=['analytic_distribution_id', 'doc_type'], context=context)[0]
         if not context.get('from_split'):  # some values are kept in case of inv. generated via the "Split" feature
             default.update({
                 'from_supply': False,
-                'synced': False,
             })
+            # Reset the sync tag, except in case of manual duplication of IVO/STV.
+            if not context.get('from_copy_web') or inv.doc_type not in ('ivo', 'stv'):
+                default.update({
+                    'synced': False,
+                })
         if 'date_invoice' not in default:
             default.update({
                 'date_invoice':False
@@ -771,7 +783,6 @@ class account_invoice(osv.osv):
             default.update({
                 'date_due':False
             })
-        inv = self.browse(cr, uid, [id], fields_to_fetch=['analytic_distribution_id'], context=context)[0]
         if inv.analytic_distribution_id:
             default.update({'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, inv.analytic_distribution_id.id, {}, context=context)})
 
@@ -1327,6 +1338,9 @@ class account_invoice(osv.osv):
             if 'analytic_line_ids' in line:
                 line['analytic_line_ids'] = False
 
+            if 'allow_no_account' in line:
+                line['allow_no_account'] = False
+
             for field in (
                     'company_id', 'partner_id', 'account_id', 'product_id',
                     'uos_id', 'account_analytic_id', 'tax_code_id', 'base_code_id','account_tax_id',
@@ -1649,7 +1663,8 @@ class account_invoice_line(osv.osv):
                                        selection=PARTNER_TYPE, readonly=True, store=False),
         'uos_id': fields.many2one('product.uom', 'Unit of Measure', ondelete='set null'),
         'product_id': fields.many2one('product.product', 'Product', ondelete='set null'),
-        'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type','<>','view'), ('type', '<>', 'closed')], help="The income or expense account related to the selected product."),
+        'account_id': fields.many2one('account.account', 'Account', domain=[('type', '<>', 'view'), ('type', '<>', 'closed')],
+                                      help="The income or expense account related to the selected product."),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account')),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', type="float",
                                           digits_compute= dp.get_precision('Account'), store=True),

@@ -620,6 +620,18 @@ class analytic_distribution_wizard(osv.osv_memory):
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
 
+        # In case of no REV/COR, set the analytic lines as ad_updated. This shows that the Corr. Wizard has been used,
+        # whatever the changes made (even if no change has been made, or e.g. only a Free1/2 line has been deleted)
+        if not has_generated_cor:
+            # get all the analytic lines related to the JI, INCLUDING the free1/2 lines
+            all_analytic_lines_ids = ana_line_obj.search(cr, uid, [
+                ('move_id', '=', ml.id),
+                ('is_reversal', '=', False),  # no need to include the REV lines...
+                ('is_reallocated', '=', False),  # ...or the lines set as reallocated from a previous corr.
+            ], order='NO_ORDER', context=context)
+            if all_analytic_lines_ids:
+                ana_line_obj.write(cr, uid, all_analytic_lines_ids, {'ad_updated': True}, context=context)
+
         if context and 'ji_correction_account_or_tp_changed' in context:
             if (any_reverse or to_reverse) and \
                     not context['ji_correction_account_or_tp_changed']:

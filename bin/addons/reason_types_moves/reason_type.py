@@ -379,30 +379,10 @@ class stock_location(osv.osv):
     _name = 'stock.location'
     _inherit = 'stock.location'
 
-    def _get_replenishment(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for loc in ids:
-            res[loc] = True
-        return res
-
     def _get_st_out(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for id in ids:
             res[id] = False
-        return res
-
-    def _src_replenishment(self, cr, uid, obj, name, args, context=None):
-        res = []
-        for arg in args:
-            if arg[0] == 'is_replenishment':
-                if arg[1] != '=':
-                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
-                elif arg[2] and isinstance(arg[2], (int, long)):
-                    warehouse_id = arg[2]
-                    stock_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
-                    res.append(('location_id', 'child_of', stock_id))
-                    res.append(('location_category', '=', 'stock'))
-                    res.append(('quarantine_location', '=', False))
         return res
 
     def _src_st_out(self, cr, uid, obj, name, args, context=None):
@@ -447,9 +427,6 @@ class stock_location(osv.osv):
         return res
 
     _columns = {
-        'is_replenishment': fields.function(_get_replenishment, fnct_search=_src_replenishment, type='boolean',
-                                            method=True, string='Is replenishment ?', store=False,
-                                            help='Is True, the location could be used in replenishment rules'),
         'standard_out_ok': fields.function(_get_st_out, fnct_search=_src_st_out, method=True, type='boolean', string='St. Out', store=False),
     }
 

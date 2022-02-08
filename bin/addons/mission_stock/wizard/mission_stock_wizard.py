@@ -190,11 +190,12 @@ class mission_stock_wizard(osv.osv_memory):
         if display_only_in_stock:
             domain = ['&',
                       ('mission_report_id', '=', wiz_id.report_id.id),
-                      '|', '|', '|', '|', '|', '|', '|', '|', '|',
+                      '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
                       ('internal_qty', '!=', 0),
                       ('wh_qty', '!=', 0),
                       ('cross_qty', '!=', 0),
                       ('secondary_qty', '!=', 0),
+                      ('eprep_qty', '!=', 0),
                       ('cu_qty', '!=', 0),
                       ('in_pipe_qty', '!=', 0),
                       ('stock_qty', '!=', 0),
