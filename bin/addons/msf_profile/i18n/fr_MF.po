@@ -110966,6 +110966,7 @@ msgstr "Rapport_Mission_de_Stock_%s_%s"
 #. module: mission_stock
 #: code:addons/mission_stock/mission_stock.py:312
 #: code:addons/mission_stock/mission_stock.py:350
+#: code:addons/mission_stock/mission_stock.py:511
 #, python-format
 msgid "Last update"
 msgstr "Dernière mise à jour"
