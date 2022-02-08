@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
-from datetime import datetime
 from tools.translate import _
-from openpyxl.utils.cell import get_column_letter
 
 
 class po_ad_line(XlsxReportParser):
@@ -26,10 +24,13 @@ class po_ad_line(XlsxReportParser):
         self.create_style_from_template('integer_line_style', 'C2')
         self.create_style_from_template('price_style', 'E2')
         self.duplicate_column_dimensions(default_width=10.75)
-        sheet.freeze_panes = 'A2'
+        sheet.freeze_panes = 'A4'
 
         # Styles
         sheet.title = po.name.replace('/', '_')
+
+        sheet.append([self.cell_ro(_('Reference'), 'header_style'), self.cell_ro(po.name, 'header_style')])
+        sheet.append([self.cell_ro(_('Supplier'), 'header_style'), self.cell_ro(po.partner_id.name, 'header_style')])
 
         header = [
             _('Line'),
