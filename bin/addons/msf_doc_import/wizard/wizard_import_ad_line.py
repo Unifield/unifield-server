@@ -6,7 +6,7 @@ import time
 import base64
 from io import BytesIO
 from openpyxl import load_workbook
-
+from tools import misc
 
 class wizard_import_ad_line(osv.osv_memory):
     _name = 'wizard.import.ad.line'
@@ -33,11 +33,13 @@ class wizard_import_ad_line(osv.osv_memory):
         ana_obj = self.pool.get('analytic.distribution')
 
         wiz = self.browse(cr, uid, ids[0], context)
-        if not wiz.file:
+        wiz_file = wiz.file
+        self.write(cr, uid, ids[0], {'file': False}, context=context)
+        if not wiz_file:
             raise osv.except_osv(_('Error'), _('Please add a file to import.'))
 
         try:
-            wb = load_workbook(filename=BytesIO(base64.decodestring(wiz.file)), read_only=True)
+            wb = load_workbook(filename=BytesIO(base64.decodestring(wiz_file)), read_only=True)
             ws = wb.active
         except:
             raise osv.except_osv(_('Error'), _('Unable to read file. Please check the file format.'))
@@ -53,119 +55,145 @@ class wizard_import_ad_line(osv.osv_memory):
         if wiz.purchase_id.name.lower() != ref[1].value.strip().lower():
             raise osv.except_osv(_('Error'), _('PO Reference does not match.'))
 
-        current_line_add = {}
-        cr.execute('''
-            select pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id, array_agg(cc.code), array_agg(dest.code)
-            from
-                purchase_order_line pol
-                left join product_product prod on prod.id = pol.product_id
-                left join cost_center_distribution_line cc_line on cc_line.distribution_id = pol.analytic_distribution_id
-                left join account_analytic_account cc on cc.id = cc_line.analytic_id
-                left join account_analytic_account dest on dest.id = cc_line.destination_id
-            where
-                pol.order_id = %s and
-                pol.state = 'draft'
-            group by pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id
-        ''', (wiz.purchase_id.id, ))
-
-        for x in cr.fetchall():
-            key = (x[1], x[2])
-            current_line_add.setdefault(key, []).append(x)
-
-
-        partner_type = wiz.purchase_id.partner_type
-        currency_id = wiz.purchase_id.pricelist_id.currency_id.id
-        cc_cache = {}
-        dest_cache = {}
-        error = []
-
-        no_change = 0
-        updated = 0
-        delete_ad = 0
-        percentage_col = 7
-        cc = 8
-        dest = 9
-
         try:
-            next(ws.rows) # skip header
-            next(ws.rows) # skip header
-        except StopIteration:
-            raise osv.except_osv(_('Error'), _('Incomplete file.'))
+            current_line_add = {}
+            cr.execute('''
+                select pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id, array_agg(cc.code), array_agg(dest.code)
+                from
+                    purchase_order_line pol
+                    left join product_product prod on prod.id = pol.product_id
+                    left join cost_center_distribution_line cc_line on cc_line.distribution_id = pol.analytic_distribution_id
+                    left join account_analytic_account cc on cc.id = cc_line.analytic_id
+                    left join account_analytic_account dest on dest.id = cc_line.destination_id
+                where
+                    pol.order_id = %s and
+                    pol.state = 'draft'
+                group by pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id
+            ''', (wiz.purchase_id.id, ))
 
-        for row in ws.rows:
-            if len(row) > 1:
-                key = (row[0].value, row[1].value)
-                if not row[0].value or not row[1].value:
-                    # empty line
-                    continue
+            for x in cr.fetchall():
+                key = (x[1], x[2])
+                current_line_add.setdefault(key, []).append(x)
 
-                if key not in current_line_add:
-                    error.append(_('Line not found in PO: #%s %s') % (row[0].value, row[1].value))
-                    continue
 
-                if row[percentage_col].value == '100' or row[percentage_col].value == 100:
-                    if not row[cc].value or not row[dest].value:
-                        to_del = [x[0] for x in current_line_add[key] if x[3]]
-                        if to_del:
-                            delete_ad += len(to_del)
-                            pol_obj.write(cr, uid, to_del, {'analytic_distribution_id': False}, context=context)
-                        no_change += len([x[0] for x in current_line_add[key] if not x[3]])
-                        del current_line_add[key]
-                    else:
-                        cc_value = row[cc].value.strip()
-                        dest_value = row[dest].value.strip()
+            partner_type = wiz.purchase_id.partner_type
+            currency_id = wiz.purchase_id.pricelist_id.currency_id.id
+            cc_cache = {}
+            dest_cache = {}
+            error = []
 
-                        for line in current_line_add[key]:
-                            if line[4] != [cc_value] or line[5] != [dest_value]:
-                                if cc_value not in cc_cache:
-                                    cc_ids = aa_obj.search(cr, uid, [('category', '=', 'OC'), ('type','!=', 'view'), ('code', '=ilike', cc_value)], context=context)
-                                    cc_cache[cc_value] = cc_ids and cc_ids[0] or False
-                                if dest_value not in dest_cache:
-                                    dest_ids = aa_obj.search(cr, uid, [('category', '=', 'DEST'), ('type','!=', 'view'), ('code', '=ilike', dest_value)], context=context)
-                                    dest_cache[dest_value] = dest_ids and dest_ids[0] or False
-                                if not cc_cache[cc_value]:
-                                    error.append(_('PO line %d: Cost Center %s not found') % (row[0].value, cc_value))
-                                    break
-                                if not dest_cache[dest_value]:
-                                    error.append(_('PO line %d: Destination %s not found') % (row[0].value, dest_value))
-                                    break
-                                if not error:
-                                    updated += 1
-                                    cc_lines = [(0, 0, {
-                                        'partner_type': partner_type,
-                                        'destination_id': dest_cache[dest_value],
-                                        'analytic_id': cc_cache[cc_value],
-                                        'percentage': 100,
-                                        'currency_id': currency_id,
-                                    })]
-                                    distrib_id = ana_obj.create(cr, uid, {'partner_type': partner_type, 'cost_center_lines': cc_lines}, context=context)
-                                    ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
-                                    pol_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
-                            else:
-                                no_change += 1
-                        del current_line_add[key]
+            no_change = 0
+            updated = 0
+            delete_ad = 0
+            percentage_col = 7
+            cc = 8
+            dest = 9
 
-                else: #MIX
-                    no_change += 1
+            seen = {}
+            try:
+                next(ws.rows) # skip header
+                next(ws.rows) # skip header
+            except StopIteration:
+                raise osv.except_osv(_('Error'), _('Incomplete file.'))
+
+            for row in ws.rows:
+                if len(row) > percentage_col:
+                    key = (row[0].value, row[1].value)
+                    if not row[0].value or not row[1].value:
+                        # empty line
+                        continue
+
+                    if key not in current_line_add:
+                        if key not in seen:
+                            error.append(_('Line not found in PO: #%s %s') % (row[0].value, row[1].value))
+                        continue
+
+                    seen[key] = True
+                    if row[percentage_col].value == '100' or row[percentage_col].value == 100:
+                        cc_value = False
+                        dest_value = False
+                        try:
+                            cc_value = row[cc].value
+                            dest_value = row[dest].value
+                        except IndexError:
+                            pass
+
+                        if not cc_value and not dest_value:
+                            to_del = [x[0] for x in current_line_add[key] if x[3]]
+                            if to_del:
+                                delete_ad += len(to_del)
+                                pol_obj.write(cr, uid, to_del, {'analytic_distribution_id': False}, context=context)
+                            no_change += len([x[0] for x in current_line_add[key] if not x[3]])
+                        elif not cc_value or not cc_value:
+                            error.append(_('PO line %s %s, please empty or set both Cost Center and Distribution') % (key[0], key[1]))
+                        else:
+                            cc_value = cc_value.strip()
+                            dest_value = dest_value.strip()
+
+                            for line in current_line_add[key]:
+                                if line[4] != [cc_value] or line[5] != [dest_value]:
+                                    if cc_value not in cc_cache:
+                                        cc_ids = aa_obj.search(cr, uid, [('category', '=', 'OC'), ('type','!=', 'view'), ('code', '=ilike', cc_value)], context=context)
+                                        cc_cache[cc_value] = cc_ids and cc_ids[0] or False
+                                    if dest_value not in dest_cache:
+                                        dest_ids = aa_obj.search(cr, uid, [('category', '=', 'DEST'), ('type','!=', 'view'), ('code', '=ilike', dest_value)], context=context)
+                                        dest_cache[dest_value] = dest_ids and dest_ids[0] or False
+                                    if not cc_cache[cc_value]:
+                                        error.append(_('PO line %d: Cost Center %s not found') % (row[0].value, cc_value))
+                                        break
+                                    if not dest_cache[dest_value]:
+                                        error.append(_('PO line %d: Destination %s not found') % (row[0].value, dest_value))
+                                        break
+                                    if not error:
+                                        updated += 1
+                                        cc_lines = [(0, 0, {
+                                            'partner_type': partner_type,
+                                            'destination_id': dest_cache[dest_value],
+                                            'analytic_id': cc_cache[cc_value],
+                                            'percentage': 100,
+                                            'currency_id': currency_id,
+                                        })]
+                                        distrib_id = ana_obj.create(cr, uid, {'partner_type': partner_type, 'cost_center_lines': cc_lines}, context=context)
+                                        ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
+                                        pol_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
+                                else:
+                                    no_change += 1
+
+                    else: #MIX
+                        no_change += 1
+
                     del current_line_add[key]
 
-        for key in current_line_add:
-            no_change += len(current_line_add[key])
+            for key in current_line_add:
+                no_change += len(current_line_add[key])
 
-        if error:
+            if error:
+                cr.rollback()
+                self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped, please fix the error(s):\n%s') % ("\n".join(error),)}, context=context)
+            else:
+                self.write(cr, uid, wiz.id, {
+                    'state': 'done',
+                    'message': _('''Import done.
+
+                    # PO lines updated: %(updated)s
+                    # AD deleted on PO lines: %(delete_ad)s
+                    # PO lines not modified: %(no_change)s
+
+                    ''') % {'delete_ad': delete_ad, 'updated': updated, 'no_change': no_change}}, context=context)
+        except Exception as e:
             cr.rollback()
-            self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped, please fix the error(s):\n%s') % ("\n".join(error),)}, context=context)
-        else:
-            self.write(cr, uid, wiz.id, {
-                'state': 'done',
-                'message': _('''Import done.
+            self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped.\n%s') % (misc.get_traceback(e),)}, context=context)
 
-                # PO lines updated: %(updated)s
-                # AD deleted on PO lines: %(delete_ad)s
-                # PO lines not modified: %(no_change)s
-
-                ''') % {'delete_ad': delete_ad, 'updated': updated, 'no_change': no_change}}, context=context)
-        return True
+        # cannot use return True, otherwise and 2nd import do not display the except_osv message on screen
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.ad.line',
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
 
     def export_ad_line(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids, fields_to_fetch=['purchase_id'], context=context)[0]
@@ -175,25 +203,12 @@ class wizard_import_ad_line(osv.osv_memory):
             'context': context,
             'datas': {
                 'ids': [wiz.purchase_id.id],
-                'target_filename': 'AD-%s-%s' % (wiz.purchase_id.name, time.strftime('%Y-%m-%d'))
+                'target_filename': 'AD-%s-%s' % (wiz.purchase_id.name, time.strftime('%Y-%m-%d')),
+                'keep_open': True,
             }
         }
 
     def close_import(self, cr, uid, ids, context=None):
-        '''
-        Return to the initial view
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for wiz_obj in self.read(cr, uid, ids, ['purchase_id']):
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'purchase.order',
-                'view_type': 'form',
-                'view_mode': 'form,tree',
-                'target': 'crush',
-                'res_id': wiz_obj['purchase_id'],
-                'context': context,
-            }
+        return {'type': 'ir.actions.act_window_close', 'o2m_refresh': 'order_line'}
 
 wizard_import_ad_line()

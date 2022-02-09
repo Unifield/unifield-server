@@ -676,7 +676,7 @@ class purchase_order(osv.osv):
             'res_id': export_id,
             'view_type': 'form',
             'view_mode': 'form',
-            'target': 'same',
+            'target': 'new',
             'context': context,
         }
 

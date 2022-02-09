@@ -13,7 +13,7 @@
                      <newline />
 
                     <group colspan="4"><html><br/><br/></html></group>
-                    <group colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                    <group colspan="4" attrs="{'invisible':[('state', '=', 'error')]}">
                         <separator colspan="2" string="Export"/>
                         <newline />
                         <button name="export_ad_line" string="Export Template" icon="xlsx.png" type="object" colspan="2"/>
