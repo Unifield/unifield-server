@@ -68,7 +68,7 @@ class wizard_import_ad_line(osv.osv_memory):
         try:
             current_line_add = {}
             cr.execute('''
-                select pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id, array_agg(cc.code), array_agg(dest.code), array_agg(cc_line.id),
+                select pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id, array_agg(LOWER(cc.code)), array_agg(LOWER(dest.code)), array_agg(cc_line.id),
                     (select array_agg(fp_line.id) from funding_pool_distribution_line fp_line where fp_line.distribution_id = pol.analytic_distribution_id) as fp_line_ids
                 from
                     purchase_order_line pol
@@ -127,8 +127,10 @@ class wizard_import_ad_line(osv.osv_memory):
                         cc_value = False
                         dest_value = False
                         try:
-                            cc_value = row[cc].value
-                            dest_value = row[dest].value
+                            if row[cc].value:
+                                cc_value = row[cc].value.strip().lower()
+                            if row[dest].value:
+                                dest_value = row[dest].value.strip().lower()
                         except IndexError:
                             pass
 
@@ -141,8 +143,6 @@ class wizard_import_ad_line(osv.osv_memory):
                         elif not cc_value or not dest_value:
                             error.append(_('PO line %s %s: please empty or set both Cost Center and Destination') % (key[0], key[1]))
                         else:
-                            cc_value = cc_value.strip()
-                            dest_value = dest_value.strip()
 
                             for line in current_line_add[key]:
                                 if line[4] != [cc_value] or line[5] != [dest_value]:
