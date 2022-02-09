@@ -138,7 +138,7 @@ class wizard_import_ad_line(osv.osv_memory):
                                 delete_ad += len(to_del)
                                 ana_obj.unlink(cr, uid, to_del, context=context)
                             no_change += len([x[0] for x in current_line_add[key] if not x[3]])
-                        elif not cc_value or not cc_value:
+                        elif not cc_value or not dest_value:
                             error.append(_('PO line %s %s: please empty or set both Cost Center and Destination') % (key[0], key[1]))
                         else:
                             cc_value = cc_value.strip()
