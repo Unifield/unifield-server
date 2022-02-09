@@ -123,7 +123,7 @@ class wizard_import_ad_line(osv.osv_memory):
                         continue
 
                     seen[key] = True
-                    if row[percentage_col].value == '100' or row[percentage_col].value == 100:
+                    if row[percentage_col].value in ('100', 100, '100%'):
                         cc_value = False
                         dest_value = False
                         try:

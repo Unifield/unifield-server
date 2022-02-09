@@ -8,10 +8,10 @@ class po_ad_line(XlsxReportParser):
 
     def _get_ad(self, obj):
         if not obj.analytic_distribution_id or not obj.analytic_distribution_id.cost_center_lines:
-            return ['100', '', '']
+            return ['100%', '', '']
         if len(obj.analytic_distribution_id.cost_center_lines) > 1:
             return ['MIX', '', '']
-        return ['100', obj.analytic_distribution_id.cost_center_lines[0].analytic_id.code, obj.analytic_distribution_id.cost_center_lines[0].destination_id.code]
+        return ['100%', obj.analytic_distribution_id.cost_center_lines[0].analytic_id.code, obj.analytic_distribution_id.cost_center_lines[0].destination_id.code]
 
     def generate(self, context=None):
         po = self.pool.get('purchase.order').browse(self.cr, self.uid, self.ids[0], context=context)
@@ -63,7 +63,7 @@ class po_ad_line(XlsxReportParser):
                     self.cell_ro(line.product_uom.name, 'text_line_style'),
                     self.cell_ro(line.price_unit, 'price_style'),
                     self.cell_ro(currency, 'text_line_style'),
-                    self.cell_ro(ad[0], 'text_line_style', unlock=ad[0]!='100'),
+                    self.cell_ro(ad[0], 'text_line_style', unlock=ad[0]!='100%'),
                     self.cell_ro(ad[1], 'text_line_style', unlock=True),
                     self.cell_ro(ad[2], 'text_line_style', unlock=True),
                 ])
