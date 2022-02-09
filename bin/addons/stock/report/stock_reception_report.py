@@ -77,10 +77,8 @@ class stock_reception_report(report_sxw.rml_parse):
                 else:
                     final_dest_loc = sol.order_id.location_requestor_id.name
             elif move.location_dest_id.id == cross_docking_id:
-                if sol:
-                    final_dest_loc = sol.order_id.partner_id.name
-                elif so:  # In case the linked FO has no line/deleted lines
-                    final_dest_loc = so.partner_id.name
+                if sol or so:
+                    final_dest_loc = ''
                 else:  # In case the IN has no linked FO/IR but sent to Cross Docking
                     final_dest_loc = move.location_dest_id.name
             elif move_dest and move_dest.picking_id.type == 'internal' and move_dest.picking_id.subtype == 'standard':
