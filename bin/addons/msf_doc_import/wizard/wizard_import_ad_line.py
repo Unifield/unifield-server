@@ -8,6 +8,9 @@ from io import BytesIO
 from openpyxl import load_workbook
 from tools import misc
 
+class MyWizException(Exception):
+    pass
+
 class wizard_import_ad_line(osv.osv_memory):
     _name = 'wizard.import.ad.line'
     _description = 'Import AD Lines from Excel file'
@@ -39,33 +42,33 @@ class wizard_import_ad_line(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0], context)
 
-        if wiz.purchase_id.state != 'draft':
-            raise osv.except_osv(_('Error'), _('PO is not in Draft state.'))
-
-
-        wiz_file = wiz.file
-        self.write(cr, uid, ids[0], {'file': False}, context=context)
-        if not wiz_file:
-            raise osv.except_osv(_('Error'), _('Please add a file to import.'))
-
         try:
-            wb = load_workbook(filename=BytesIO(base64.decodestring(wiz_file)), read_only=True)
-            ws = wb.active
-        except:
-            raise osv.except_osv(_('Error'), _('Unable to read file. Please check the file format.'))
+            if wiz.purchase_id.state != 'draft':
+                raise MyWizException(_('PO is not in Draft state.'))
 
-        try:
-            ref = next(ws.rows)
-        except StopIteration:
-            raise osv.except_osv(_('Error'), _('Empty file'))
 
-        if len(ref) < 2 or not ref[1].value:
-            raise osv.except_osv(_('Error'), _('PO Reference not found in file.'))
+            wiz_file = wiz.file
+            self.write(cr, uid, ids[0], {'file': False}, context=context)
+            if not wiz_file:
+                raise MyWizException(_('Please add a file to import.'))
 
-        if wiz.purchase_id.name.lower() != ref[1].value.strip().lower():
-            raise osv.except_osv(_('Error'), _('PO Reference does not match.'))
+            try:
+                wb = load_workbook(filename=BytesIO(base64.decodestring(wiz_file)), read_only=True)
+                ws = wb.active
+            except:
+                raise MyWizException(_('Unable to read file. Please check the file format.'))
 
-        try:
+            try:
+                ref = next(ws.rows)
+            except StopIteration:
+                raise MyWizException(_('Empty file'))
+
+            if len(ref) < 2 or not ref[1].value:
+                raise MyWizException(_('PO Reference not found in file.'))
+
+            if wiz.purchase_id.name.lower() != ref[1].value.strip().lower():
+                raise MyWizException(_('PO Reference does not match.'))
+
             current_line_add = {}
             cr.execute('''
                 select pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id, array_agg(LOWER(cc.code)), array_agg(LOWER(dest.code)), array_agg(cc_line.id),
@@ -106,7 +109,7 @@ class wizard_import_ad_line(osv.osv_memory):
                 next(ws.rows) # skip header
                 next(ws.rows) # skip header
             except StopIteration:
-                raise osv.except_osv(_('Error'), _('Incomplete file.'))
+                raise MyWizException(_('Incomplete file.'))
 
             for row in ws.rows:
                 if len(row) > percentage_col:
@@ -228,6 +231,10 @@ class wizard_import_ad_line(osv.osv_memory):
                     # Split lines ignored in file: %(split_line_ignored)s
 
                     ''') % {'delete_ad': delete_ad, 'updated': updated, 'no_change': no_change, 'split_line_ignored': split_line_ignored}}, context=context)
+        except MyWizException as e:
+            cr.rollback()
+            self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped.\n%s') % (e.message,)}, context=context)
+
         except Exception as e:
             cr.rollback()
             self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped.\n%s') % (misc.get_traceback(e),)}, context=context)
