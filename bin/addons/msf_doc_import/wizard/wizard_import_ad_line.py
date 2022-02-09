@@ -152,12 +152,17 @@ class wizard_import_ad_line(osv.osv_memory):
                                     if dest_value not in dest_cache:
                                         dest_ids = aa_obj.search(cr, uid, [('category', '=', 'DEST'), ('type','!=', 'view'), ('code', '=ilike', dest_value)], context=context)
                                         dest_cache[dest_value] = dest_ids and dest_ids[0] or False
+                                    found = True
                                     if not cc_cache[cc_value]:
                                         error.append(_('PO line %d: Cost Center %s not found') % (row[0].value, cc_value))
-                                        break
+                                        found = False
                                     if not dest_cache[dest_value]:
                                         error.append(_('PO line %d: Destination %s not found') % (row[0].value, dest_value))
+                                        found = False
+
+                                    if not found:
                                         break
+
                                     if not error:
                                         updated += 1
                                         cc_data = {
