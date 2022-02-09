@@ -7,7 +7,7 @@ from tools.translate import _
 class po_ad_line(XlsxReportParser):
 
     def _get_ad(self, obj):
-        if not obj.analytic_distribution_id:
+        if not obj.analytic_distribution_id or not obj.analytic_distribution_id.cost_center_lines:
             return ['100', '', '']
         if len(obj.analytic_distribution_id.cost_center_lines) > 1:
             return ['MIX', '', '']

@@ -37,6 +37,16 @@
                     <field name="state"/>
                     <newline />
                     <button name="close_import" string="Close window" icon="gtk-cancel" type="object" colspan="2"/>
+
+                    <html>
+                        <script language="javascript">
+                            var state_val = $('#state').val()
+                            if (state_val == 'error') {
+                                $('#message').css('color', 'rgb(242, 34, 12)').css('font-weight', 'bold').css('font-size', '1.2em');
+                            }
+                        </script>
+
+                    </html>
             </form>
             </field>
         </record>

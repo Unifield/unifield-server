@@ -31,8 +31,18 @@ class wizard_import_ad_line(osv.osv_memory):
         pol_obj = self.pool.get('purchase.order.line')
         aa_obj = self.pool.get('account.analytic.account')
         ana_obj = self.pool.get('analytic.distribution')
+        cc_line_obj = self.pool.get('cost.center.distribution.line')
+        fp_line_obj = self.pool.get('funding.pool.distribution.line')
+
+        pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                                    'analytic_account_msf_private_funds')[1]
 
         wiz = self.browse(cr, uid, ids[0], context)
+
+        if wiz.purchase_id.state != 'draft':
+            raise osv.except_osv(_('Error'), _('PO is not in Draft state.'))
+
+
         wiz_file = wiz.file
         self.write(cr, uid, ids[0], {'file': False}, context=context)
         if not wiz_file:
@@ -58,7 +68,8 @@ class wizard_import_ad_line(osv.osv_memory):
         try:
             current_line_add = {}
             cr.execute('''
-                select pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id, array_agg(cc.code), array_agg(dest.code)
+                select pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id, array_agg(cc.code), array_agg(dest.code), array_agg(cc_line.id),
+                    (select array_agg(fp_line.id) from funding_pool_distribution_line fp_line where fp_line.distribution_id = pol.analytic_distribution_id) as fp_line_ids
                 from
                     purchase_order_line pol
                     left join product_product prod on prod.id = pol.product_id
@@ -85,6 +96,7 @@ class wizard_import_ad_line(osv.osv_memory):
             no_change = 0
             updated = 0
             delete_ad = 0
+            split_line_ignored = 0
             percentage_col = 7
             cc = 8
             dest = 9
@@ -106,6 +118,8 @@ class wizard_import_ad_line(osv.osv_memory):
                     if key not in current_line_add:
                         if key not in seen:
                             error.append(_('Line not found in PO: #%s %s') % (row[0].value, row[1].value))
+                        else:
+                            split_line_ignored += 1
                         continue
 
                     seen[key] = True
@@ -119,13 +133,13 @@ class wizard_import_ad_line(osv.osv_memory):
                             pass
 
                         if not cc_value and not dest_value:
-                            to_del = [x[0] for x in current_line_add[key] if x[3]]
+                            to_del = [x[3] for x in current_line_add[key] if x[3]]
                             if to_del:
                                 delete_ad += len(to_del)
-                                pol_obj.write(cr, uid, to_del, {'analytic_distribution_id': False}, context=context)
+                                ana_obj.unlink(cr, uid, to_del, context=context)
                             no_change += len([x[0] for x in current_line_add[key] if not x[3]])
                         elif not cc_value or not cc_value:
-                            error.append(_('PO line %s %s, please empty or set both Cost Center and Distribution') % (key[0], key[1]))
+                            error.append(_('PO line %s %s: please empty or set both Cost Center and Distribution') % (key[0], key[1]))
                         else:
                             cc_value = cc_value.strip()
                             dest_value = dest_value.strip()
@@ -146,16 +160,44 @@ class wizard_import_ad_line(osv.osv_memory):
                                         break
                                     if not error:
                                         updated += 1
-                                        cc_lines = [(0, 0, {
+                                        cc_data = {
                                             'partner_type': partner_type,
                                             'destination_id': dest_cache[dest_value],
                                             'analytic_id': cc_cache[cc_value],
                                             'percentage': 100,
                                             'currency_id': currency_id,
-                                        })]
-                                        distrib_id = ana_obj.create(cr, uid, {'partner_type': partner_type, 'cost_center_lines': cc_lines}, context=context)
-                                        ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
-                                        pol_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
+                                            'partner_type': partner_type,
+                                        }
+                                        if line[3] and line[6]:
+                                            # have cc_id(s) and distrib_id: update instead of delete/create
+                                            cc_line_obj.write(cr, uid, line[6][0], cc_data, context=context)
+                                            if len(line[6]) > 1:
+                                                cc_line_obj.unlink(cr, uid, line[6][1:], context=context)
+
+                                            fp_data = {
+                                                'partner_type': partner_type,
+                                                'destination_id': dest_cache[dest_value],
+                                                'cost_center_id': cc_cache[cc_value],
+                                                'analytic_id': pf_id,
+                                                'percentage': 100,
+                                                'currency_id': currency_id,
+                                                'partner_type': partner_type,
+                                            }
+                                            if line[7]:
+                                                fp_line_obj.write(cr, uid, line[7][0], fp_data, context=context)
+                                                if len(line[7]) > 1:
+                                                    fp_line_obj.unlink(cr, uid, line[7][1:], context=context)
+                                            else:
+                                                fp_data['distribution_id'] = line[3]
+                                                fp_line_obj.create(cr, uid, fp_data, context=context)
+                                        else:
+                                            if line[3]:
+                                                # delete previous empty AD
+                                                ana_obj.unlink(cr, uid, line[3], context=context)
+                                            distrib_id = ana_obj.create(cr, uid, {'partner_type': partner_type, 'cost_center_lines': [(0, 0, cc_data)]}, context=context)
+                                            ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
+                                            pol_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
+
                                 else:
                                     no_change += 1
 
@@ -169,7 +211,7 @@ class wizard_import_ad_line(osv.osv_memory):
 
             if error:
                 cr.rollback()
-                self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped, please fix the error(s):\n%s') % ("\n".join(error),)}, context=context)
+                self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped, please fix the error(s):\n  - %s') % ("\n  - ".join(error),)}, context=context)
             else:
                 self.write(cr, uid, wiz.id, {
                     'state': 'done',
@@ -178,8 +220,9 @@ class wizard_import_ad_line(osv.osv_memory):
                     # PO lines updated: %(updated)s
                     # AD deleted on PO lines: %(delete_ad)s
                     # PO lines not modified: %(no_change)s
+                    # Split lines ignored in file: %(split_line_ignored)s
 
-                    ''') % {'delete_ad': delete_ad, 'updated': updated, 'no_change': no_change}}, context=context)
+                    ''') % {'delete_ad': delete_ad, 'updated': updated, 'no_change': no_change, 'split_line_ignored': split_line_ignored}}, context=context)
         except Exception as e:
             cr.rollback()
             self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped.\n%s') % (misc.get_traceback(e),)}, context=context)
