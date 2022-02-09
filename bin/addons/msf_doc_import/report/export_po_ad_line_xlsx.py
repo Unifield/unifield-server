@@ -25,7 +25,7 @@ class po_ad_line(XlsxReportParser):
         self.create_style_from_template('price_style', 'E2')
         self.duplicate_column_dimensions(default_width=10.75)
         sheet.freeze_panes = 'A4'
-
+        sheet.protection.sheet = True
         # Styles
         sheet.title = po.name.replace('/', '_')
 
@@ -63,9 +63,9 @@ class po_ad_line(XlsxReportParser):
                     self.cell_ro(line.product_uom.name, 'text_line_style'),
                     self.cell_ro(line.price_unit, 'price_style'),
                     self.cell_ro(currency, 'text_line_style'),
-                    self.cell_ro(ad[0], 'text_line_style'),
-                    self.cell_ro(ad[1], 'text_line_style'),
-                    self.cell_ro(ad[2], 'text_line_style'),
+                    self.cell_ro(ad[0], 'text_line_style', unlock=ad[0]!='100'),
+                    self.cell_ro(ad[1], 'text_line_style', unlock=True),
+                    self.cell_ro(ad[2], 'text_line_style', unlock=True),
                 ])
 
 XlsxReport('report.export_po_ad_line_xlsx', parser=po_ad_line, template='addons/msf_doc_import/report/export_po_ad_line.xlsx')
