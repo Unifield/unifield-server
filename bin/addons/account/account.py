@@ -1069,6 +1069,33 @@ account_fiscalyear()
 class account_period(osv.osv):
     _name = "account.period"
     _description = "Account period"
+
+    def _get_false(self, cr, uid, ids, *a, **b):
+        """
+        Returns False for all ids (cf. only the search method is used for the field)
+        """
+        return {}.fromkeys(ids, False)
+
+    def _search_period_visible(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with the periods to display, based on args looking like:
+        [('period_visible', '=', [fiscalyear_id, instance_id, all_missions])]
+        """
+        if context is None:
+            context = {}
+        period_dom = []
+        if args:
+            if len(args[0]) < 3 or args[0][1] != '=' or not isinstance(args[0][2], list) or len(args[0][2]) < 3:
+                raise osv.except_osv(_('Error'), _('Filter not implemented.'))
+            fy_id = args[0][2][0]
+            inst_id = args[0][2][1]
+            all_missions = args[0][2][2]
+            if all_missions:
+                period_dom = [('number', '!=', 16), ('fiscalyear_id', '=', fy_id), ('state', '!=', 'created')]
+            else:
+                period_dom = [('number', '!=', 16), ('child_mission_closed', '=', [inst_id, fy_id])]
+        return period_dom
+
     _columns = {
         'name': fields.char('Period Name', size=64, required=True),
         'code': fields.char('Code', size=24),
@@ -1079,8 +1106,12 @@ class account_period(osv.osv):
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal Year', required=True, states={'done':[('readonly',True)]}, select=True),
         'state': fields.selection([('draft','Open'), ('done','Closed')], 'State', readonly=True,
                                   help='When monthly periods are created. The state is \'Draft\'. At the end of monthly period it is in \'Done\' state.'),
-        'company_id': fields.related('fiscalyear_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True)
+        'company_id': fields.related('fiscalyear_id', 'company_id', type='many2one', relation='res.company',
+                                     string='Company', store=True, readonly=True),
+        'period_visible': fields.function(_get_false, method=True, type='boolean', string='Display the period', store=False,
+                                          fnct_search=_search_period_visible),
     }
+
     _defaults = {
         'state': 'draft',
     }

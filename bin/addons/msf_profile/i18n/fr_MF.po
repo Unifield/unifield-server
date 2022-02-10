@@ -65335,7 +65335,8 @@ msgstr "Mise à jour du module"
 msgid "wizard.import.mapping"
 msgstr "wizard.import.mapping"
 
-#. modules: register_accounting, analytic_override
+#. modules: account, register_accounting, analytic_override
+#: code:addons/account/account.py:1089
 #: code:addons/analytic_override/analytic_line.py:80
 #: code:addons/register_accounting/account_move_line.py:52
 #, python-format
@@ -113719,6 +113720,36 @@ msgstr "Ecriture Comptable %s: le journal %s est inactif."
 #, python-format
 msgid "Impossible to create a register on an inactive journal."
 msgstr "Impossible de créer un registre sur un journal inactif."
+
+#. module: account
+#: field:account.period,period_visible:0
+msgid "Display the period"
+msgstr "Afficher la période"
+
+#. module: vertical_integration
+#: view:ocp.export.wizard:0
+msgid "The database name is not OCP_HQ. This will impact the DB ID column."
+msgstr "Le nom de la base de données n'est pas OCP_HQ. Cela impactera la colonne DB ID."
+
+#. module: vertical_integration
+#: field:ocp.export.wizard,all_missions:0
+msgid "All Missions"
+msgstr "Toutes les Missions"
+
+#. module: vertical_integration
+#: view:ocp.export.wizard:0
+msgid "or All Missions"
+msgstr "ou Toutes les Missions"
+
+#. module: vertical_integration
+#: help:ocp.export.wizard,all_missions:0
+msgid "Generate the Monthly Export (only) for all missions at once"
+msgstr "Génère le \"Monthly Export\" (uniquement) pour toutes les missions à la fois"
+
+#. module: vertical_integration
+#: field:ocp.export.wizard,warning_db_name:0
+msgid "Display a warning on database name"
+msgstr "Affiche un avertissement sur le nom de la base de données"
 
 #. module: sync_client
 #: field:sync_client.survey.user.detailed,answer_later:0

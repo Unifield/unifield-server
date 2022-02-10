@@ -32,23 +32,41 @@ class ocp_export_wizard(osv.osv_memory):
     _name = "ocp.export.wizard"
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
+        'instance_id': fields.many2one('msf.instance', 'Top proprietary instance'),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True),
+        'all_missions': fields.boolean('All Missions', help="Generate the Monthly Export (only) for all missions at once"),
+        # a warning is displayed in case the DB name is not "OCP_HQ" (export done from a coordo or from a test environment),
+        # as this impacts the DB ID column
+        'warning_db_name': fields.boolean('Display a warning on database name', invisible=True, readonly=True),
     }
 
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
+        'all_missions': False,
+        'warning_db_name': lambda self, cr, uid, c: cr.dbname != 'OCP_HQ',
     }
 
-    def onchange_instance_id(self, cr, uid, ids, context=None):
-        '''
-        Reset the period field when another prop. instance is selected.
-        Cover the case when in HQ the user selects a period mission-closed in a coordo,
-        and then select another coordo in which the period previously selected is not mission-closed
-        '''
+    def onchange_instance_id(self, cr, uid, ids, instance_id, context=None):
+        """
+        - Resets the period field when another prop. instance is selected.
+          Covers the case when in HQ the user selects a period mission-closed in a coordo,
+          and then select another coordo in which the period previously selected is not mission-closed.
+        - Also resets the tick box "All Missions" as soon as a Prop. Instance is selected.
+        """
         res = {}
         res['value'] = {'period_id': False}
+        if instance_id:
+            res['value'].update({'all_missions': False})
+        return res
+
+    def onchange_all_missions(self, cr, uid, ids, all_missions, context=None):
+        """
+        Resets the Prop. Instance field when "All Missions" is ticked
+        """
+        res = {}
+        if all_missions:
+            res['value'] = {'instance_id': False}
         return res
 
     def button_ocp_export_to_hq(self, cr, uid, ids, context=None):
@@ -67,27 +85,40 @@ class ocp_export_wizard(osv.osv_memory):
         # add parameters
         data['form'] = {}
         inst = None
+        all_missions = False
+        instance_ids = []
         period = None
-        if wizard.instance_id:
+        if wizard.all_missions:
+            all_missions = True
+            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '!=', 'section')], order='NO_ORDER', context=context)
+        elif wizard.instance_id:
             # Get projects below instance
             inst = wizard.instance_id
-            data['form'].update({'instance_id': inst.id, })
-            data['form'].update(
-                {'instance_ids': [inst.id] + [x.id for x in inst.child_ids]})
+            instance_ids = [inst.id] + [x.id for x in inst.child_ids]
+        data['form'].update({
+            'instance_id': inst and inst.id or None,
+            'instance_ids': instance_ids,
+            'all_missions': all_missions,
+        })
         if wizard.period_id:
             period = wizard.period_id
             data['form'].update({'period_id': period.id})
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         # The file name is composed of:
-        # - the first 3 digits of the Prop. Instance code
+        # - the first 3 digits of the Prop. Instance code or "Allinstances"
         # - the year and month of the selected period
         # - the current datetime
         # Ex: KE1_201609_171116110306_Formatted_data_UF_to_OCP_HQ_System
-        instance_code = inst and inst.code[:3] or ''
+        if all_missions:
+            prefix = 'Allinstances'
+        elif inst:
+            prefix = inst.code[:3]
+        else:
+            prefix = ''
         selected_period = period and strftime('%Y%m', strptime(period.date_start, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
-        data['target_filename'] = '%s_%s_%s_Formatted_data_UF_to_OCP_HQ_System' % (instance_code, selected_period, current_time)
+        data['target_filename'] = '%s_%s_%s_Formatted_data_UF_to_OCP_HQ_System' % (prefix, selected_period, current_time)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': data['target_filename'],
