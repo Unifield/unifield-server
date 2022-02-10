@@ -741,5 +741,9 @@
         <record id="us_9160_hq_prod_touch_donation_account" model="patch.scripts">
             <field name="method">us_9160_hq_prod_touch_donation_account</field>
         </record>
+
+        <record id="us_9391_fix_non_picks" model="patch.scripts">
+            <field name="method">us_9391_fix_non_picks</field>
+        </record>
     </data>
 </openerp>
