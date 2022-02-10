@@ -104,7 +104,7 @@ GET_EXPORT_REQUEST = '''SELECT
         l.cu_qty as l_cu_qty,
         pt.standard_price as pt_standard_price,
         rc.name as rc_name,
-        l.internal_qty * pt.standard_price as l_internal_qty_pt_price,
+        round(l.internal_qty * pt.standard_price, 2) as l_internal_qty_pt_price,
         l.quarantine_qty as l_quarantine_qty,
         l.input_qty as l_input_qty,
         l.opdd_qty as l_opdd_qty,
