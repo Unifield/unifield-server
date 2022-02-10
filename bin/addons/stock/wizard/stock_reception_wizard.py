@@ -77,7 +77,9 @@ class stock_reception_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        cross_docking_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        model_obj = self.pool.get('ir.model.data')
+        cross_docking_id = model_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        loan_rt_id = model_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
         no_match = False
         for wizard in self.browse(cr, uid, ids, context=context):
             move_domain = [
@@ -142,10 +144,11 @@ class stock_reception_wizard(osv.osv_memory):
                 f_part_id = wizard.final_partner_id.id
                 cr.execute('''
                     SELECT CASE
-                        WHEN sol.procurement_request = 'f' AND s.partner_id = %s THEN m.id
-                        WHEN sol.procurement_request = 't' AND sloc.usage = 'customer' AND dp.type = 'out' AND dp.partner_id = %s THEN m.id
-                        WHEN sol.procurement_request = 't' AND m.move_dest_id IS NULL AND s.partner_id = %s THEN m.id 
-                        WHEN m.location_dest_id = %s AND dp.type = 'out' AND dp.partner_id = %s THEN m.id
+                        WHEN m.reason_type_id != %s AND sol.procurement_request = 'f' AND s.partner_id = %s THEN m.id
+                        WHEN m.reason_type_id != %s AND sol.procurement_request = 't' AND sloc.usage = 'customer' AND dp.type = 'out' AND dp.partner_id = %s THEN m.id
+                        WHEN m.reason_type_id != %s AND sol.procurement_request = 't'AND m.move_dest_id IS NULL AND s.partner_id = %s THEN m.id 
+                        WHEN m.reason_type_id != %s AND m.location_dest_id = %s AND dp.type = 'out' AND dp.partner_id = %s THEN m.id
+                        WHEN m.reason_type_id = %s AND comp.partner_id = %s AND dp.type = 'internal' THEN m.id
                         ELSE NULL
                     END
                 FROM stock_move m 
@@ -156,8 +159,10 @@ class stock_reception_wizard(osv.osv_memory):
                 LEFT JOIN sale_order_line sol ON pol.linked_sol_id = sol.id
                 LEFT JOIN sale_order s ON sol.order_id = s.id
                 LEFT JOIN stock_location sloc ON s.location_requestor_id = sloc.id
+                LEFT JOIN res_company comp ON p.company_id = comp.id
                 WHERE p.state = 'done' AND p.type = 'in' AND p.subtype = 'standard'
-                ''', (f_part_id, f_part_id, f_part_id, cross_docking_id, f_part_id))
+                ''', (loan_rt_id, f_part_id, loan_rt_id, f_part_id, loan_rt_id, f_part_id, loan_rt_id, cross_docking_id,
+                      f_part_id, loan_rt_id, f_part_id))
                 for x in cr.fetchall():
                     if x[0]:
                         final_partner_moves.append(x[0])

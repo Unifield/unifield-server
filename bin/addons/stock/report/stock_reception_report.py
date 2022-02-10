@@ -38,6 +38,7 @@ class stock_reception_report(report_sxw.rml_parse):
             ave_price_list[move_d[0]] = move_d[1]
 
         cross_docking_id = model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        loan_rt_id = model_obj.get_object_reference(self.cr, self.uid, 'reason_types_moves', 'reason_type_loan')[1]
         for move in move_obj.browse(self.cr, self.uid, moves_ids, context=self.localcontext):
             pick = move.picking_id
             move_dest = move.move_dest_id or False
@@ -92,13 +93,16 @@ class stock_reception_report(report_sxw.rml_parse):
                 final_dest_loc = ''
 
             # Get the final destination partner
-            if sol and not sol.procurement_request:
-                final_dest_partner = sol.order_id.partner_id.name
-            elif so and not so.procurement_request:
-                final_dest_partner = so.partner_id.name
-            elif ((sol and sol.procurement_request and sol.order_id.location_requestor_id.usage == 'customer') or
-                    move.location_dest_id.id == cross_docking_id) and move_dest and move_dest.picking_id.type == 'out':
-                final_dest_partner = move_dest.picking_id.partner_id.name
+            if move.reason_type_id.id != loan_rt_id:
+                if sol and not sol.procurement_request:
+                    final_dest_partner = sol.order_id.partner_id.name
+                elif so and not so.procurement_request:
+                    final_dest_partner = so.partner_id.name
+                elif ((sol and sol.procurement_request and sol.order_id.location_requestor_id.usage == 'customer') or
+                        move.location_dest_id.id == cross_docking_id) and move_dest and move_dest.picking_id.type == 'out':
+                    final_dest_partner = move_dest.picking_id.partner_id.name
+                else:
+                    final_dest_partner = company_partner.name
             else:
                 final_dest_partner = company_partner.name
 
