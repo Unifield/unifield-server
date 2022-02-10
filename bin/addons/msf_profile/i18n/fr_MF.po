@@ -113478,6 +113478,12 @@ msgid "PO line %d: Destination %s not found"
 msgstr "Ligne BdC %d: Destination %s non trouvée"
 
 #. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:215
+#, python-format
+msgid "PO line %s %s: Percentage cannot have number other than 100"
+msgstr "Ligne BdC %s %s: le pourcentage ne peut pas être différent de 100"
+
+#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:142
 #, python-format
 msgid "PO line %s %s: please empty or set both Cost Center and Destination"

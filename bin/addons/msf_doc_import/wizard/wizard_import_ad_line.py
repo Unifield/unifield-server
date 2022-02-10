@@ -209,8 +209,10 @@ class wizard_import_ad_line(osv.osv_memory):
                                 else:
                                     no_change += 1
 
-                    else: #MIX
+                    elif row[percentage_col].value and row[percentage_col].value.strip().lower() == 'mix':
                         no_change += 1
+                    else:
+                        error.append(_('PO line %s %s: Percentage cannot have number other than 100') % (key[0], key[1]))
 
                     del current_line_add[key]
 
