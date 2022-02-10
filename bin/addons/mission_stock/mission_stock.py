@@ -92,22 +92,22 @@ GET_EXPORT_REQUEST = '''SELECT
         l.default_code as default_code,
         COALESCE(trans.value, pt.name) as pt_name,
         pu.name as pu_name,
-        trim(to_char(l.internal_qty, '999999999999.999')) as l_internal_qty,
-        trim(to_char(l.wh_qty, '999999999999.999')) as l_wh_qty,
-        trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
-        trim(to_char(l.secondary_qty, '999999999999.999')) as l_secondary_qty,
-        trim(to_char(l.eprep_qty, '999999999999.999')) as l_eprep_qty,
-        trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
-        trim(to_char(l.in_pipe_qty, '999999999999.999')) as l_in_pipe_qty,
-        trim(to_char(l.stock_qty, '999999999999.999')) as l_stock_qty,
-        trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
-        trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
-        trim(to_char(pt.standard_price, '999999999999.999')) as pt_standard_price,
+        l.internal_qty as l_internal_qty,
+        l.wh_qty as l_wh_qty,
+        l.cross_qty as l_cross_qty,
+        l.secondary_qty as l_secondary_qty,
+        l.eprep_qty as l_eprep_qty,
+        l.cu_qty as l_cu_qty,
+        l.in_pipe_qty as l_in_pipe_qty,
+        l.stock_qty as l_stock_qty,
+        l.cross_qty as l_cross_qty,
+        l.cu_qty as l_cu_qty,
+        pt.standard_price as pt_standard_price,
         rc.name as rc_name,
-        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')) as l_internal_qty_pt_price,
-        trim(to_char(l.quarantine_qty, '999999999999.999')) as l_quarantine_qty,
-        trim(to_char(l.input_qty, '999999999999.999')) as l_input_qty,
-        trim(to_char(l.opdd_qty, '999999999999.999')) as l_opdd_qty,
+        l.internal_qty * pt.standard_price as l_internal_qty_pt_price,
+        l.quarantine_qty as l_quarantine_qty,
+        l.input_qty as l_input_qty,
+        l.opdd_qty as l_opdd_qty,
         l.product_amc as product_amc,
         l.product_consumption as product_consumption,
         mission_report_id,
@@ -264,9 +264,12 @@ class stock_mission_report(osv.osv):
             sheet.write(3, column_count, _(column), style)
             column_count += 1
 
-    def xls_write_row(self, sheet, cell_list, row_count, style):
+    def xls_write_row(self, sheet, cell_list, row_count, style, style_price):
         for column_count, column in enumerate(cell_list):
-            sheet.write(row_count, column_count, _(column), style)
+            if column_count == 4:  # style for price
+                sheet.write(row_count, column_count, column, style_price)
+            else:
+                sheet.write(row_count, column_count, _(column), style)
         sheet.row(row_count).height = 60*20
 
 
@@ -342,6 +345,12 @@ class stock_mission_report(osv.osv):
                     align: wrap on, vert center, horiz center;
                 """)
             row_style.borders = borders
+            row_style_price = easyxf("""
+                    font: height 220;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='0.000')
+            row_style_price.borders = borders
 
             data_row_style = easyxf("""
                     font: height 220;
@@ -377,12 +386,8 @@ class stock_mission_report(osv.osv):
         for row in request_result:
             try:
                 data_list = []
-                data_list_append = data_list.append
                 for columns_name, property_name in header:
-                    if 'qty' in property_name:
-                        data_list_append(eval(row.get(property_name, False)))
-                    else:
-                        data_list_append(row.get(property_name, False))
+                    data_list.append(row.get(property_name))
 
                 # remove the 5 firsts column are they are not stock qty
                 # and check if there is any other value than 0 on this last columns
@@ -396,7 +401,7 @@ class stock_mission_report(osv.osv):
                         continue
 
                 if file_type == 'xls':
-                    self.xls_write_row(sheet, data_list, row_count, row_style)
+                    self.xls_write_row(sheet, data_list, row_count, row_style, row_style_price)
                 else:
                     writer.writerow(data_list)
                 row_count += 1
@@ -477,6 +482,11 @@ class stock_mission_report(osv.osv):
                 font: name Calibri;
                 align: wrap on, vert center, horiz center;
             """, num_format_str='DD/MMM/YYYY HH:MM')
+        row_style_price = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                align: wrap on, vert center, horiz center;
+            """, num_format_str='0.000')
 
         book = Workbook()
         add_palette_colour("custom_colour_1", 0x21)
@@ -501,6 +511,7 @@ class stock_mission_report(osv.osv):
         header_styles = [header_style1, header_style2]
         row_style.borders = borders
         date_row_style.borders = borders
+        row_style_price.borders = borders
 
         sheet = book.add_sheet('Sheet 1')
         sheet.row_default_height = 60*20
@@ -630,7 +641,7 @@ class stock_mission_report(osv.osv):
                     for x in instance_loc.get(inst_id, []):
                         to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
-                self.xls_write_row(sheet, to_write, row_count, row_style)
+                self.xls_write_row(sheet, to_write, row_count, row_style, row_style_price)
                 row_count += 1
 
 
