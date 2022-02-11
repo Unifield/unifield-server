@@ -56,7 +56,7 @@ class stock_reception_wizard(osv.osv_memory):
         'location_dest_id': fields.many2one('stock.location', 'Reception Destination', select=True,
                                             help="Location where the system will stock the finished products.", domain=['|', '|', '|', '|', ('usage', '=', 'internal'), ('service_location', '=', True), ('non_stockable_ok', '=', True), ('cross_docking_location_ok', '=', True), ('virtual_ok', '=', True)]),
         'final_dest_id': fields.many2one('stock.location', 'Final Dest. Location', select=True,
-                                         help="Location where the stock will be at the end of the flow.", domain="['&', ('usage', 'in', ['internal', 'customer']), '|', ('location_category', '!=', 'other'), ('usage', '!=', 'customer')]"),
+                                         help="Location where the stock will be at the end of the flow.", domain="['&', ('input_ok', '=', False), '&', ('usage', 'in', ['internal', 'customer']), '|', ('location_category', '!=', 'other'), ('usage', '!=', 'customer')]"),
         # remove Other Customer and MSF Customer
         'final_partner_id': fields.many2one('res.partner', 'Final Dest. Partner', select=True,
                                             help="Partner where the stock will be at at the end of the flow.", domain="['|', ('customer', '=', True), ('id', '=', company_id)]"),
