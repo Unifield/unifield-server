@@ -126,7 +126,7 @@ class stock_reception_wizard(osv.osv_memory):
             inner_join_product = ''
             if wizard.nomen_manda_0:
                 move_domain.append(('product_id.nomen_manda_0', '=', wizard.nomen_manda_0.id))
-                sql_append.append('tmpl.nomen_manda_0 = %(lnomen_manda_0)s')
+                sql_append.append('tmpl.nomen_manda_0 = %(nomen_manda_0)s')
                 sql_cond['nomen_manda_0'] = wizard.nomen_manda_0.id
                 inner_join_product = '''
                     inner join product_product prod on m.product_id = prod.id
@@ -156,7 +156,7 @@ class stock_reception_wizard(osv.osv_memory):
                         m.location_dest_id = %(cross_doc)s and
                         so.location_requestor_id = %(final_dest)s and
                         m.state = 'done' and
-                        p.type = 'in' and
+                        p.type = 'in'
                         '''
                     if sql_append:
                         sql = '%s and %s' % (sql, ' and '.join(sql_append))
