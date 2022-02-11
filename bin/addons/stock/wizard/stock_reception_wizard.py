@@ -47,6 +47,7 @@ class stock_reception_wizard(osv.osv_memory):
         'moves_ids': fields.text(string='Moves', readonly=True),
         'start_date': fields.date(string='Actual Receipt Date from'),
         'end_date': fields.date(string='Actual Receipt Date to'),
+        'nb': fields.integer('number of moves'),
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type'),
         'partner_id': fields.many2one('res.partner', string='Partner', help="The partner you want have the IN data"),
         'order_category': fields.selection(ORDER_CATEGORY, string='Order Category'),
@@ -65,7 +66,7 @@ class stock_reception_wizard(osv.osv_memory):
         'company_id': lambda self, cr, uid, ids, c={}: self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
     }
 
-    def get_values(self, cr, uid, _id, min_id=0, max_size=None, context=None):
+    def get_values(self, cr, uid, _id, min_id=0, max_size=None, count=None, context=None):
         '''
         Retrieve the data according to values in wizard
         '''
@@ -254,13 +255,17 @@ class stock_reception_wizard(osv.osv_memory):
             if max_size:
                 sql ='%s and m.id>%s order by m.id limit %d' % (sql, min_id, max_size)
             cr.execute(sql, sql_cond)
+            if count:
+                return cr.rowcount
             return [x[0] for x in cr.fetchall()]
         else:
             if max_size:
                 move_domain.append(('id', '>', min_id))
-            move_ids = move_obj.search(cr, uid, move_domain, order='id', limit=max_size, context=context)
+            if count:
+                return move_obj.search(cr, uid, move_domain, count=True, context=context)
+            return move_obj.search(cr, uid, move_domain, order='id', limit=max_size, context=context)
 
-        return move_ids
+        return []
 
     def print_excel(self, cr, uid, ids, context=None):
         '''
@@ -273,13 +278,14 @@ class stock_reception_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        temp_ids = self.get_values(cr, uid, ids[0], min_id=0, max_size=1, context=context)
+        temp_ids = self.get_values(cr, uid, ids[0], min_id=0, max_size=None, count=True, context=context)
         if not temp_ids:
             raise osv.except_osv(
                 _('Error'),
                 _('No data found with these parameters'),
             )
 
+        self.write(cr, uid, ids[0], {'nb': temp_ids}, context=context)
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': _('Receptions Report'),
             'report_name': 'stock.reception.report_xls',

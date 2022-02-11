@@ -21,13 +21,16 @@ class stock_reception_report(report_sxw.rml_parse):
             dt_str += 'T00:00:00.000'
         return dt_str
 
-    def get_moves(self, wizard_id, company_partner):
+    def get_moves(self, wizard_id, company_partner, nb_total):
         move_obj = self.pool.get('stock.move')
         curr_obj = self.pool.get('res.currency')
         model_obj = self.pool.get('ir.model.data')
 
+        bg_obj = self.pool.get('memory.background.report')
+        bg_id = self.localcontext.get('background_id')
         max_size = 500
         min_id = 0
+        processed = 0
         while True:
             moves_ids = self.pool.get('stock.reception.wizard').get_values(self.cr, self.uid, wizard_id, min_id=min_id, max_size=max_size)
             if not moves_ids:
@@ -149,6 +152,9 @@ class stock_reception_report(report_sxw.rml_parse):
 
             if len(moves_ids) < 500:
                 raise StopIteration
+            processed += max_size
+            if bg_id and nb_total:
+                bg_obj.update_percent(self.cr, self.uid, bg_id, processed/float(nb_total))
 
         raise StopIteration
 
