@@ -243,7 +243,7 @@ class stock_reception_wizard(osv.osv_memory):
                     so.partner_id = %(customer_id)s and
                     m.state = 'done' and
                     p.type = 'in' and
-                    m.reason_type_id !=  %(load_rt_id)s
+                    m.reason_type_id !=  %(loan_rt_id)s
                 '''
                 if sql_append:
                     sql = '%s and %s' % (sql, ' and '.join(sql_append))
