@@ -287,7 +287,7 @@
         % endfor
         </Row>
 
-        % for move in getMoves(r.moves_ids, r.company_id.partner_id):
+        % for move in getMoves(r['id'], r.company_id.partner_id):
             <Row ss:Height="12.0">
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['ref']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>
