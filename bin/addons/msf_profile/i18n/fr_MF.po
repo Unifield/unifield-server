@@ -16632,8 +16632,6 @@ msgstr ","
 #: field:stock.location.chained.options,dest_location_id:0
 #: view:manage.expired.stock:0
 #: field:manage.expired.stock,dest_loc_id:0
-#: report:addons/stock/report/stock_reception_report_xls.mako:216
-#: report:addons/stock/report/stock_reception_report_xls.mako:245
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:228
 #: field:stock.picking,destinations_list:0
 #: field:product.history.consumption,location_dest_id:0
@@ -81192,12 +81190,18 @@ msgstr "\n"
 #. module: stock
 #: field:report.stock.move,location_dest_id:0
 #: field:stock.picking,location_dest_id:0
-#: field:stock.reception.wizard,location_dest_id:0
 #: field:stock.delivery.wizard,location_dest_id:0
 #: view:report.stock.move:0
 #: field:report.stock.move,location_dest_name:0
 msgid "Dest. Location"
 msgstr "Zone Dest."
+
+#. module: stock
+#: field:stock.reception.wizard,location_dest_id:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:216
+#: report:addons/stock/report/stock_reception_report_xls.mako:245
+msgid "Reception Destination"
+msgstr "Destination Réception"
 
 #. module: account_reconciliation
 #: model:ir.module.module,description:account_reconciliation.module_meta_information
@@ -113719,6 +113723,18 @@ msgstr "Ecriture Comptable %s: le journal %s est inactif."
 #, python-format
 msgid "Impossible to create a register on an inactive journal."
 msgstr "Impossible de créer un registre sur un journal inactif."
+
+#. module: stock
+#: field:stock.reception.wizard,final_dest_id:0
+msgid "Final Dest. Location"
+msgstr "Zone de Dest. Finale"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:236
+#: report:addons/stock/report/stock_reception_report_xls.mako:271
+#: field:stock.reception.wizard,final_partner_id:0
+msgid "Final Dest. Partner"
+msgstr "Partenaire de Dest. Finale"
 
 #. module: sync_client
 #: field:sync_client.survey.user.detailed,answer_later:0

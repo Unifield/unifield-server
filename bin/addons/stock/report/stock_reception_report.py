@@ -21,7 +21,7 @@ class stock_reception_report(report_sxw.rml_parse):
             dt_str += 'T00:00:00.000'
         return dt_str
 
-    def get_moves(self, moves_ids):
+    def get_moves(self, moves_ids, company_partner):
         move_obj = self.pool.get('stock.move')
         curr_obj = self.pool.get('res.currency')
         model_obj = self.pool.get('ir.model.data')
@@ -37,13 +37,18 @@ class stock_reception_report(report_sxw.rml_parse):
         for move_d in self.cr.fetchall():
             ave_price_list[move_d[0]] = move_d[1]
 
+        cross_docking_id = model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        loan_rt_id = model_obj.get_object_reference(self.cr, self.uid, 'reason_types_moves', 'reason_type_loan')[1]
         for move in move_obj.browse(self.cr, self.uid, moves_ids, context=self.localcontext):
             pick = move.picking_id
+            move_dest = move.move_dest_id or False
             pol = move.purchase_line_id or False
             po = pol and pol.order_id or False
             sol = pol and pol.linked_sol_id or False
-            int_name = move.move_dest_id and move.move_dest_id.picking_id.type == 'internal' and \
-                move.move_dest_id.picking_id.subtype == 'standard' and move.move_dest_id.picking_id.name or ''
+            so = move.location_dest_id == cross_docking_id and move_dest and move_dest.picking_id.type == 'out' \
+                    and move_dest.picking_id.sale_id or False
+            int_name = move_dest and move_dest.picking_id.type == 'internal' and \
+                move_dest.picking_id.subtype == 'standard' and move_dest.picking_id.name or ''
             func_price_unit = move.price_unit
             if pol and move.company_id.currency_id.id != po.pricelist_id.currency_id.id:
                 self.localcontext['currency_date'] = move.date
@@ -57,37 +62,49 @@ class stock_reception_report(report_sxw.rml_parse):
                                                         round=False, context=self.localcontext), 2)
 
             # Get the linked INT's move using move.move_dest_id
-            cross_docking_id = model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
             if sol and sol.procurement_request:
-                if move.move_dest_id and move.move_dest_id.picking_id.type == 'internal' \
-                        and move.move_dest_id.picking_id.subtype == 'standard' and sol.order_id.location_requestor_id.usage == 'internal':
-                    final_dest_loc = move.move_dest_id.location_dest_id.name
+                if move_dest and move_dest.picking_id.type == 'internal' \
+                        and move_dest.picking_id.subtype == 'standard' and sol.order_id.location_requestor_id.usage == 'internal':
+                    final_dest_loc = move_dest.location_dest_id.name
                 elif sol.order_id.location_requestor_id.usage != 'customer' and move.location_dest_id.id == cross_docking_id:
                     # For the UC with IR (Stock location) to IN sent to Cross Docking
                     final_dest_loc = move.location_dest_id.name
                 elif sol.order_id.location_requestor_id.usage == 'customer' and move.location_dest_id.id != cross_docking_id:
                     # For the UC with IR (Consumption Unit) to IN not sent to Cross Docking
-                    if move.move_dest_id.state == 'done':
-                        final_dest_loc = move.move_dest_id.location_dest_id.name
+                    if move_dest and move_dest.state == 'done':
+                        final_dest_loc = move_dest.location_dest_id.name
                     else:
                         final_dest_loc = ''
                 else:
                     final_dest_loc = sol.order_id.location_requestor_id.name
             elif move.location_dest_id.id == cross_docking_id:
-                if sol:
-                    final_dest_loc = sol.order_id.partner_id.name
+                if sol or so:
+                    final_dest_loc = ''
                 else:  # In case the IN has no linked FO/IR but sent to Cross Docking
                     final_dest_loc = move.location_dest_id.name
-            elif move.move_dest_id and move.move_dest_id.picking_id.type == 'internal' \
-                    and move.move_dest_id.picking_id.subtype == 'standard':
-                if move.move_dest_id.state == 'done':
-                    final_dest_loc = move.move_dest_id.location_dest_id.name
+            elif move_dest and move_dest.picking_id.type == 'internal' and move_dest.picking_id.subtype == 'standard':
+                if move_dest.state == 'done':
+                    final_dest_loc = move_dest.location_dest_id.name
                 else:  # Do not show the destination if the linked INT move is not done
                     final_dest_loc = ''
             elif move.location_dest_id:
                 final_dest_loc = move.location_dest_id.name
             else:
                 final_dest_loc = ''
+
+            # Get the final destination partner
+            if move.reason_type_id.id != loan_rt_id:
+                if sol and not sol.procurement_request:
+                    final_dest_partner = sol.order_id.partner_id.name
+                elif so and not so.procurement_request:
+                    final_dest_partner = so.partner_id.name
+                elif ((sol and sol.procurement_request and sol.order_id.location_requestor_id.usage == 'customer') or
+                        move.location_dest_id.id == cross_docking_id) and move_dest and move_dest.picking_id.type == 'out':
+                    final_dest_partner = move_dest.picking_id.partner_id.name
+                else:
+                    final_dest_partner = company_partner.name
+            else:
+                final_dest_partner = company_partner.name
 
             res.append({
                 'ref': pick.name,
@@ -116,6 +133,7 @@ class stock_reception_report(report_sxw.rml_parse):
                 'comment': move.comment or '',
                 'dest_loc': move.location_dest_id and move.location_dest_id.name or '',
                 'final_dest_loc': final_dest_loc,
+                'final_dest_partner': final_dest_partner,
                 'exp_receipt_date': move.date_expected,
                 'actual_receipt_date': move.date,
                 'phys_recep_date': pick.physical_reception_date,
