@@ -225,7 +225,7 @@
                             <translate>The database name is not OCP_HQ. This will impact the DB ID column.</translate>
                         </p>
                         <script language="javascript">
-                            var warning_db_name = $('#warning_db_name').val() || $('warning_db_name').text();
+                            var warning_db_name = $('#warning_db_name').val() || $('#warning_db_name').text();
                             if (warning_db_name) {
                                 $('#label_warning_db_name').show();
                             }
