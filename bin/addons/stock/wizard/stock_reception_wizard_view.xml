@@ -18,9 +18,9 @@
                     <field name="order_category" />
                     <field name="order_type" />
                     <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"/>
-                    <field name="location_dest_id" domain="[('usage', '!=', 'view')]" />
-                    <field name="final_dest_id" domain="[('usage', 'in', ['internal', 'customer'])]" />
-                    <field name="final_partner_id" domain="['|', ('customer', '=', True), ('id', '=', company_id)]" />
+                    <field name="location_dest_id"  />
+                    <field name="final_dest_id"  />
+                    <field name="final_partner_id" />
                     <separator colspan="4" string="Actions" />
                     <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
                 </form>
