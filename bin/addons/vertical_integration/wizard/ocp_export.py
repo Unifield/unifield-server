@@ -106,7 +106,7 @@ class ocp_export_wizard(osv.osv_memory):
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         # The file name is composed of:
-        # - the first 3 digits of the Prop. Instance code or "Allinstances"
+        # - the first 3 characters of the Prop. Instance code or "Allinstances"
         # - the year and month of the selected period
         # - the current datetime
         # Ex: KE1_201609_171116110306_Formatted_data_UF_to_OCP_HQ_System

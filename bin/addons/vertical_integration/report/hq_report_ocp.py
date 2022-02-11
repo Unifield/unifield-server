@@ -467,7 +467,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
 
         # Define the file name according to the following format:
-        # AllinstancesORFirst3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Monthly_Export.csv
+        # AllinstancesORFirst3CharactersOfInstanceCode_chosenPeriod_currentDatetime_Monthly_Export.csv
         # (e.g. KE1_201609_171116110306_Monthly_Export.csv)
         if all_missions:
             prefix = 'Allinstances'
@@ -527,9 +527,8 @@ class hq_report_ocp(report_sxw.report_sxw):
                                 'Closing balance', 'Currency'],
                     'filename': liquidity_balance_filename,
                     'key': 'liquidity',
-                    'query_params': (
-                    tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
-                    last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
+                    'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
+                                     last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
                     'function': 'postprocess_liquidity_balances',
                     'fnct_params': context,
                 }
