@@ -67,6 +67,26 @@ class stock_reception_wizard(osv.osv_memory):
         'company_id': lambda self, cr, uid, ids, c={}: self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
     }
 
+    def onchange_final_dest_id(self, cr, uid, ids, final_dest_id, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        if final_dest_id:
+            res.update({'value': {'final_partner_id': False}})
+
+        return res
+
+    def onchange_final_partner_id(self, cr, uid, ids, final_partner_id, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        if final_partner_id:
+            res.update({'value': {'final_dest_id': False}})
+
+        return res
+
     def get_values(self, cr, uid, _id, min_id=0, max_size=None, count=None, context=None):
         '''
         Retrieve the data according to values in wizard
