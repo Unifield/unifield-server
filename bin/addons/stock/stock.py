@@ -830,7 +830,7 @@ class stock_picking(osv.osv):
                     raise osv.except_osv(_('Error'), _('You can not create an Incoming Shipment from scratch with %s reason type')
                                          % (reason_type.name,))
                 if reason_type.id == return_reason_type_id and vals.get('partner_id2', False):
-                    vals['partner_id'] = False
+                    vals['partner_id2'] = False
 
         if 'type' in vals and (('name' not in vals) or (vals.get('name')=='/')):
             seq_obj_name =  'stock.picking.' + vals['type']
