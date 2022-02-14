@@ -738,9 +738,21 @@ class purchase_order_line(osv.osv):
         '''
         Check if the Purchase order line has an inactive product
         '''
-        inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('id', 'in', ids),
-                                               ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context=context)
+        #inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('id', 'in', ids),
+        #                                       ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context=context)
 
+        if not ids:
+            return True
+        cr.execute('''select count(pol.id) from
+            purchase_order_line pol, product_product p
+            where
+                pol.product_id = p.id and
+                pol.state not in ('draft', 'cancel', 'cancel_r', 'done') and
+                p.active = 'f' and
+                pol.id in %s
+        ''', (tuple(ids),))
+        inactive_lines = cr.fetchone()[0]
+        
         if inactive_lines:
             if len(inactive_lines) == 1:
                 line = self.browse(cr, uid, inactive_lines[0], fields_to_fetch=['product_id'], context=context)

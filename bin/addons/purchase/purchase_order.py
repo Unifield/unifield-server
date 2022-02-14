@@ -273,20 +273,28 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if not ids:
+            return {}
         res = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            po_from_ir = False
-            po_from_fo = False
-            for pol in po.order_line:
-                # strange algorithm here (adaptation of what was existing before partial confirmation...)
-                if pol.linked_sol_id:
-                    po_from_ir = True
-                    if not pol.linked_sol_id.order_id.procurement_request:
-                        po_from_fo = True
 
-            res[po.id] = {
-                'po_from_ir': po_from_ir,
-                'po_from_fo': po_from_fo,
+        for _id in ids:
+            res[_id] = {
+                'po_from_ir': False,
+                'po_from_fo': False,
+            }
+        cr.execute('''
+            select  pol.order_id, bool_or(not so.procurement_request) 
+            from purchase_order_line pol
+            inner join sale_order_line sol on sol.id = pol.linked_sol_id
+            inner join sale_order so on so.id = sol.order_id
+            where
+            pol.order_id in %s
+            group by pol.order_id
+        ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            res[x[0]] = {
+                'po_from_ir': True,
+                'po_from_fo': x[1], 
             }
 
         return res
@@ -489,8 +497,11 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if not ids:
+            return {}
+
         res = {}
-        for po in self.browse(cr, uid, ids, context=context):
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['state', 'push_fo', 'empty_po_cancelled'], context=context):
             po_state_seq = {
                 'draft': 10,
                 'draft_p': 15,
@@ -504,8 +515,11 @@ class purchase_order(osv.osv):
             if po.empty_po_cancelled:
                 res[po.id] = 'cancel'
             else:
-                if po.order_line:
-                    pol_states = set([line.state for line in po.order_line])
+                pol_states = set()
+                cr.execute('select distinct(state) from purchase_order_line where order_id = %s', (po.id, ))
+                for x in cr.fetchall():
+                    pol_states.add(x[0])
+                if pol_states:
                     if all([s.startswith('cancel') for s in pol_states]):  # if all lines are cancelled then the PO is cancelled
                         res[po.id] = 'cancel'
                     else:  # else compute the less advanced state:

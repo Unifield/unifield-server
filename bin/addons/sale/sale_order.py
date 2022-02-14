@@ -466,10 +466,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         sos_obj = self.pool.get('sale.order.state')
 
         res = {}
-        for so in self.browse(cr, uid, ids, context=context):
+        for so in self.browse(cr, uid, ids, fields_to_fetch=['draft_cancelled', 'state'], context=context):
             sol_states = set()
-            for sol in so.order_line:
-                sol_states = set([sol.state for sol in so.order_line])
+            cr.execute("select distinct(state) from sale_order_line where order_id=%s", (so.id, ))
+            for x in cr.fetchall():
+                sol_states.add(x[0])
 
             if so.draft_cancelled:
                 res[so.id] = 'cancel'
@@ -2151,7 +2152,7 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
-        'order_id': fields.many2one('sale.order', 'Order Reference', required=True, ondelete='cascade', select=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'order_id': fields.many2one('sale.order', 'Order Reference', required=True, ondelete='cascade', select=True, readonly=True, states={'draft':[('readonly',False)]}, join=True),
         'name': fields.char('Description', size=256, required=True, select=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of sales order lines."),
         'delay': fields.float('Delivery Lead Time', required=True, help="Number of days between the order confirmation the shipping of the products to the customer", readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
@@ -2173,7 +2174,7 @@ class sale_order_line(osv.osv):
         'number_packages': fields.function(_number_packages, method=True, type='integer', string='Number Packages'),
         'notes': fields.text('Notes'),
         'th_weight': fields.float('Weight', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'state': fields.selection(SALE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
+        'state': fields.selection(SALE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True, select=1,
                                   help='* The \'Draft\' state is set when the related sales order in draft state. \
             \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
             \n* The \'Exception\' state is set when the related sales order is set as exception. \
