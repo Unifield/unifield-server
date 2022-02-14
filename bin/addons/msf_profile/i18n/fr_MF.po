@@ -25608,17 +25608,12 @@ msgstr "Détermine les restrictions pour le pays."
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Demandée"
 
-#. modules: purchase
+#. modules: purchase, msf_supply_doc_export
 #: field:purchase.order,delivery_requested_date:0
-#, python-format
-msgid "Requested Delivery Date"
-msgstr "Date de Livraison Demandée"
-
-#. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1065
 #, python-format
 msgid "Requested Delivery Date"
-msgstr "Date de Livraison Souhaitée"
+msgstr "Date de Livraison Demandée"
 
 #. modules: purchase, msf_order_date
 #: field:purchase.order.line,date_planned:0
@@ -85953,6 +85948,11 @@ msgstr "Vous ne pouvez pas selectionner 'Instance prop. parente' car 'Instances'
 #: report:addons/procurement_cycle/report_doc/chronogram.mako:2149
 msgid "RDD"
 msgstr "DLD"
+
+#. module: sourcing
+#: field:sale.order.line,rdd:0
+msgid "RDD"
+msgstr "DL Demandée"
 
 #. module: account
 #: field:account.tax,child_ids:0
