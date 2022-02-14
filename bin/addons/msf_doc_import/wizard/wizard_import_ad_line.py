@@ -22,6 +22,8 @@ class wizard_import_ad_line(osv.osv_memory):
         'message': fields.text(string='Message', readonly=True),
         'purchase_id': fields.many2one(
             'purchase.order', required=True, string=u"Purchase Order"),
+        'sale_id': fields.many2one(
+            'sale.order', required=True, string=u"Field Order"),
         'state': fields.selection([
             ('draft', 'Draft'),
             ('in_progress', 'In Progress'),
@@ -31,7 +33,6 @@ class wizard_import_ad_line(osv.osv_memory):
     }
 
     def import_file(self, cr, uid, ids, context=None):
-        pol_obj = self.pool.get('purchase.order.line')
         aa_obj = self.pool.get('account.analytic.account')
         ana_obj = self.pool.get('analytic.distribution')
         cc_line_obj = self.pool.get('cost.center.distribution.line')
@@ -42,9 +43,17 @@ class wizard_import_ad_line(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0], context)
 
+        if wiz.purchase_id:
+            import_obj = self.pool.get('purchase.order.line')
+            doc = wiz.purchase_id
+            doc_name = _('PO')
+        else:
+            import_obj = self.pool.get('sale.order.line')
+            doc = wiz.sale_id
+            doc_name = _('FO')
         try:
-            if wiz.purchase_id.state != 'draft':
-                raise MyWizException(_('PO is not in Draft state.'))
+            if doc.state != 'draft':
+                raise MyWizException(_('Document is not in Draft state.'))
 
 
             wiz_file = wiz.file
@@ -64,34 +73,34 @@ class wizard_import_ad_line(osv.osv_memory):
                 raise MyWizException(_('Empty file'))
 
             if len(ref) < 2 or not ref[1].value:
-                raise MyWizException(_('PO Reference not found in file.'))
+                raise MyWizException( _('%s Reference not found in file.') % doc_name)
 
-            if wiz.purchase_id.name.lower() != ref[1].value.strip().lower():
-                raise MyWizException(_('PO Reference does not match.'))
+            if doc.name.lower() != ref[1].value.strip().lower():
+                raise MyWizException(_('%s Reference does not match.') % doc_name)
 
             current_line_add = {}
             cr.execute('''
-                select pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id, array_agg(LOWER(cc.code)), array_agg(LOWER(dest.code)), array_agg(cc_line.id),
-                    (select array_agg(fp_line.id) from funding_pool_distribution_line fp_line where fp_line.distribution_id = pol.analytic_distribution_id) as fp_line_ids
+                select ol.id, ol.line_number, coalesce(prod.default_code, ol.comment), ol.analytic_distribution_id, array_agg(LOWER(cc.code)), array_agg(LOWER(dest.code)), array_agg(cc_line.id),
+                    (select array_agg(fp_line.id) from funding_pool_distribution_line fp_line where fp_line.distribution_id = ol.analytic_distribution_id) as fp_line_ids
                 from
-                    purchase_order_line pol
-                    left join product_product prod on prod.id = pol.product_id
-                    left join cost_center_distribution_line cc_line on cc_line.distribution_id = pol.analytic_distribution_id
+                    ''' + import_obj._table + ''' ol
+                    left join product_product prod on prod.id = ol.product_id
+                    left join cost_center_distribution_line cc_line on cc_line.distribution_id = ol.analytic_distribution_id
                     left join account_analytic_account cc on cc.id = cc_line.analytic_id
                     left join account_analytic_account dest on dest.id = cc_line.destination_id
                 where
-                    pol.order_id = %s and
-                    pol.state = 'draft'
-                group by pol.id, pol.line_number, coalesce(prod.default_code, pol.comment), pol.analytic_distribution_id
-            ''', (wiz.purchase_id.id, ))
+                    ol.order_id = %s and
+                    ol.state = 'draft'
+                group by ol.id, ol.line_number, coalesce(prod.default_code, ol.comment), ol.analytic_distribution_id
+            ''', (doc.id, ))  # not_a_user_entry
 
             for x in cr.fetchall():
                 key = (x[1], x[2])
                 current_line_add.setdefault(key, []).append(x)
 
 
-            partner_type = wiz.purchase_id.partner_type
-            currency_id = wiz.purchase_id.pricelist_id.currency_id.id
+            partner_type = doc.partner_type
+            currency_id = doc.pricelist_id.currency_id.id
             cc_cache = {}
             dest_cache = {}
             error = []
@@ -120,7 +129,7 @@ class wizard_import_ad_line(osv.osv_memory):
 
                     if key not in current_line_add:
                         if key not in seen:
-                            error.append(_('Line not found in PO: #%s %s') % (row[0].value, row[1].value))
+                            error.append(_('Line not found in %s: #%s %s') % (doc_name, row[0].value, row[1].value))
                         else:
                             split_line_ignored += 1
                         continue
@@ -144,7 +153,7 @@ class wizard_import_ad_line(osv.osv_memory):
                                 ana_obj.unlink(cr, uid, to_del, context=context)
                             no_change += len([x[0] for x in current_line_add[key] if not x[3]])
                         elif not cc_value or not dest_value:
-                            error.append(_('PO line %s %s: please empty or set both Cost Center and Destination') % (key[0], key[1]))
+                            error.append(_('%s line %s %s: please empty or set both Cost Center and Destination') % (doc_name, key[0], key[1]))
                         else:
 
                             for line in current_line_add[key]:
@@ -157,10 +166,10 @@ class wizard_import_ad_line(osv.osv_memory):
                                         dest_cache[dest_value] = dest_ids and dest_ids[0] or False
                                     found = True
                                     if not cc_cache[cc_value]:
-                                        error.append(_('PO line %d: Cost Center %s not found') % (row[0].value, cc_value))
+                                        error.append(_('%s line %d: Cost Center %s not found') % (doc_name, row[0].value, cc_value))
                                         found = False
                                     if not dest_cache[dest_value]:
-                                        error.append(_('PO line %d: Destination %s not found') % (row[0].value, dest_value))
+                                        error.append(_('%s line %d: Destination %s not found') % (doc_name, row[0].value, dest_value))
                                         found = False
 
                                     if not found:
@@ -204,7 +213,7 @@ class wizard_import_ad_line(osv.osv_memory):
                                                 ana_obj.unlink(cr, uid, line[3], context=context)
                                             distrib_id = ana_obj.create(cr, uid, {'partner_type': partner_type, 'cost_center_lines': [(0, 0, cc_data)]}, context=context)
                                             ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
-                                            pol_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
+                                            import_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
 
                                 else:
                                     no_change += 1
@@ -212,7 +221,7 @@ class wizard_import_ad_line(osv.osv_memory):
                     elif row[percentage_col].value and isinstance(row[percentage_col].value, basestring) and row[percentage_col].value.strip().lower() == 'mix':
                         no_change += 1
                     else:
-                        error.append(_('PO line %s %s: Percentage cannot have number other than 100') % (key[0], key[1]))
+                        error.append(_('%s line %s %s: Percentage cannot have number other than 100') % (doc_name, key[0], key[1]))
 
                     del current_line_add[key]
 
@@ -227,12 +236,12 @@ class wizard_import_ad_line(osv.osv_memory):
                     'state': 'done',
                     'message': _('''Import done.
 
-                    # PO lines updated: %(updated)s
-                    # AD deleted on PO lines: %(delete_ad)s
-                    # PO lines not modified: %(no_change)s
+                    # %(doc_name)s lines updated: %(updated)s
+                    # AD deleted on %(doc_name)s lines: %(delete_ad)s
+                    # %(doc_name)s lines not modified: %(no_change)s
                     # Split lines ignored in file: %(split_line_ignored)s
 
-                    ''') % {'delete_ad': delete_ad, 'updated': updated, 'no_change': no_change, 'split_line_ignored': split_line_ignored}}, context=context)
+                    ''') % {'delete_ad': delete_ad, 'updated': updated, 'no_change': no_change, 'split_line_ignored': split_line_ignored, 'doc_name': doc_name}}, context=context)
         except MyWizException as e:
             cr.rollback()
             self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped.\n%s') % (e.message,)}, context=context)
@@ -253,14 +262,18 @@ class wizard_import_ad_line(osv.osv_memory):
         }
 
     def export_ad_line(self, cr, uid, ids, context=None):
-        wiz = self.browse(cr, uid, ids, fields_to_fetch=['purchase_id'], context=context)[0]
+        wiz = self.browse(cr, uid, ids, fields_to_fetch=['purchase_id', 'sale_id'], context=context)[0]
+        if wiz.purchase_id:
+            obj = wiz.purchase_id
+        else:
+            obj = wiz.sale_id
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'export_po_ad_line_xlsx',
+            'report_name': 'export_po_fo_ad_line_xlsx',
             'context': context,
             'datas': {
-                'ids': [wiz.purchase_id.id],
-                'target_filename': 'AD-%s-%s' % (wiz.purchase_id.name, time.strftime('%Y-%m-%d')),
+                'ids': [wiz.id],
+                'target_filename': 'AD-%s-%s' % (obj.name, time.strftime('%Y-%m-%d')),
                 'keep_open': True,
             }
         }

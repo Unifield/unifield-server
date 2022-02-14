@@ -79,10 +79,10 @@
             />
 
         <report
-            id="export_po_ad_line"
-            string="PO AD"
-            model="purchase.order"
-            name="export_po_ad_line_xlsx"
+            id="export_po_fo_ad_line"
+            string="PO/FO AD"
+            model="wizard.import.ad.line"
+            name="export_po_fo_ad_line_xlsx"
             report_type="openpyxl"
             auto="False"
             menu="False"
