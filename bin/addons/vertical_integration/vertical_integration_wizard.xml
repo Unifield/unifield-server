@@ -217,11 +217,34 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
-                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"
-                       on_change="onchange_instance_id()"/>
+                <field name="warning_db_name"/>
+                <group colspan="6" col="2">
+                    <html>
+                        <p id="label_warning_db_name"
+                           style="text-align: center; color: red; font-weight: bold; font-size: 1.1em; display: none">
+                            <translate>The database name is not OCP_HQ. This will impact the DB ID column.</translate>
+                        </p>
+                        <script language="javascript">
+                            var warning_db_name = $('#warning_db_name').val() || $('#warning_db_name').text();
+                            if (warning_db_name) {
+                                $('#label_warning_db_name').show();
+                            }
+                        </script>
+                    </html>
+                </group>
+                <field name="instance_id"
+                       domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids', '=', True)]"
+                       on_change="onchange_instance_id(instance_id)"
+                       attrs="{'required': [('all_missions', '=', False)]}"
+                />
                 <field name="fiscalyear_id"/>
-                <field name="period_id" domain="[('child_mission_closed', '=', [instance_id, fiscalyear_id]), ('number', '&lt;', 16)]"/>
-                <newline/>
+                <field name="all_missions"
+                       string="or All Missions"
+                       on_change="onchange_all_missions(all_missions)"
+                />
+                <field name="period_id"
+                       domain="[('period_visible', '=', [fiscalyear_id, instance_id, all_missions])]"
+                 />
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>
                     <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
