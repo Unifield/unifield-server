@@ -166,3 +166,4 @@ import wizard_return_from_unit_import
 
 import abstract_wizard_import
 import wizard_import_batch
+import wizard_import_ad_line
