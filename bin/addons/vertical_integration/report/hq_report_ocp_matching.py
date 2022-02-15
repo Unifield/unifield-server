@@ -175,14 +175,17 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 AND aml.instance_id in %s
                 AND aml.date <= %s
                 AND reconcile_partial_id IS NULL
-                AND (aml.reconcile_date >= %s OR aml.unreconcile_date >= %s)
+                AND (
+                    (aml.reconcile_id IS NOT NULL AND aml.reconcile_date >= %s) OR
+                    (COALESCE(aml.unreconcile_txt, '') != '' AND aml.unreconcile_date >= %s)
+                )
                 ORDER BY aml.reconcile_id, aml.unreconcile_txt;
                 """,
         }
 
         # Define the file name according to the following format:
-        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Check_on_reconcilable_entries.csv
-        # (ex: KE1_201610_171116110306_Check_on_reconcilable_entries.csv)
+        # First3CharactersOfInstanceCode_chosenPeriod_currentDatetime_Check_on_reconcilable_entries.csv
+        # (e.g. KE1_201610_171116110306_Check_on_reconcilable_entries.csv)
         instance = instance_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
         instance_code = instance and instance.code[:3] or ''
         period = period_obj.browse(cr, uid, period_id, context=context, fields_to_fetch=['date_start', 'date_stop'])
