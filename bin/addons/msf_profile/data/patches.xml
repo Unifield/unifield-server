@@ -741,5 +741,9 @@
         <record id="us_9160_hq_prod_touch_donation_account" model="patch.scripts">
             <field name="method">us_9160_hq_prod_touch_donation_account</field>
         </record>
+
+        <record id="fol_order_id_join_change_rules" model="patch.scripts">
+            <field name="method">fol_order_id_join_change_rules</field>
+        </record>
     </data>
 </openerp>
