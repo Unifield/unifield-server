@@ -824,9 +824,14 @@ class stock_picking(osv.osv):
         if vals.get('type', False) and vals['type'] == 'in' \
                 and not vals.get('from_wkf', False) and not vals.get('from_wkf_sourcing', False):
             reason_type = self.pool.get('stock.reason.type').browse(cr, user, vals.get('reason_type_id', False), context=context)
-            if reason_type and reason_type.name == 'Damage':
-                raise osv.except_osv(_('Error'), _('You can not create an Incoming Shipment from scratch with %s reason type')
-                                     % (reason_type.name,))
+            return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, user, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            if reason_type:
+                if reason_type.name == 'Damage':
+                    raise osv.except_osv(_('Error'), _('You can not create an Incoming Shipment from scratch with %s reason type')
+                                         % (reason_type.name,))
+                if reason_type.id == return_reason_type_id and vals.get('partner_id2', False):
+                    vals['partner_id2'] = False
+
         if 'type' in vals and (('name' not in vals) or (vals.get('name')=='/')):
             seq_obj_name =  'stock.picking.' + vals['type']
             vals['name'] = self.pool.get('ir.sequence').get(cr, user, seq_obj_name)

@@ -134,7 +134,85 @@ class patch_scripts(osv.osv):
                     seg.id = line.segment_id and
                     seg.rule='auto'
             """)
+        return True
 
+    def us_9391_fix_non_picks(self, cr, uid, *a, **b):
+        '''
+        Fix the subtypes and names of INs/INTs with PICK names
+        '''
+        # INs from scratch with PICK name
+        cr.execute("""
+            UPDATE stock_picking SET name = 'IN/' || name, subtype = 'standard' 
+            WHERE id IN (SELECT id FROM stock_picking WHERE name LIKE 'PICK%' AND name NOT LIKE '%return' AND type = 'in' AND subtype = 'picking')
+        """)
+
+        # INTs from scratch with PICK name
+        cr.execute("""
+            UPDATE stock_picking SET name = 'INT/' || name, subtype = 'standard' 
+            WHERE id IN (SELECT id FROM stock_picking WHERE name LIKE 'PICK%' AND name NOT LIKE '%return' AND type = 'internal' AND subtype = 'picking')
+        """)
+        return True
+
+    def us_9143_oca_change_dest_on_esc_po(self, cr, uid, *a, **b):
+        oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+        cr.execute(oc_sql)
+        oc = cr.fetchone()[0]
+        if oc == 'oca':
+            dest_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'OPS'), ('category', '=', 'DEST')])
+            if dest_id:
+                # header AD
+                cr.execute('''
+                    update funding_pool_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po
+                        where
+                            po.partner_type='esc' and
+                            po.state in ('validated_p', 'validated') and
+                            po.analytic_distribution_id = dist_line.distribution_id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+
+                header_fp = cr.rowcount
+                cr.execute('''
+                    update cost_center_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po
+                        where
+                            po.partner_type='esc' and
+                            po.state in ('validated_p', 'validated') and
+                            po.analytic_distribution_id = dist_line.distribution_id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+                header_cc = cr.rowcount
+
+                # AD line
+                cr.execute('''
+                    update funding_pool_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po, purchase_order_line pol
+                        where
+                            po.partner_type='esc' and
+                            pol.order_id = po.id and
+                            pol.state in ('validated_n', 'validated') and
+                            pol.analytic_distribution_id = dist_line.distribution_id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+
+                line_fp = cr.rowcount
+                cr.execute('''
+                    update cost_center_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po, purchase_order_line pol
+                        where
+                            po.partner_type='esc' and
+                            pol.order_id = po.id and
+                            pol.state in ('validated_n', 'validated') and
+                            pol.analytic_distribution_id = dist_line.distribution_id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+                line_cc = cr.rowcount
+
+                self.log_info(cr, uid, 'US-9143: Dest changed on headers: fp: %d, cc: %d, on lines fp: %d, cc: %d' % (header_fp, header_cc, line_fp, line_cc))
         return True
 
     # UF23.0

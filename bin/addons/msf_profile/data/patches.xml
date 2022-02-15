@@ -741,5 +741,13 @@
         <record id="us_9160_hq_prod_touch_donation_account" model="patch.scripts">
             <field name="method">us_9160_hq_prod_touch_donation_account</field>
         </record>
+
+        <record id="us_9391_fix_non_picks" model="patch.scripts">
+            <field name="method">us_9391_fix_non_picks</field>
+        </record>
+
+        <record id="us_9143_oca_change_dest_on_esc_po" model="patch.scripts">
+            <field name="method">us_9143_oca_change_dest_on_esc_po</field>
+        </record>
     </data>
 </openerp>

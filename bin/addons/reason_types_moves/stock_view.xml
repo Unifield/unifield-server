@@ -156,6 +156,7 @@
                         <newline />
                         <field name="date" string="Creation date" />
                         <field name="min_date" string="Expected date" />
+                        <field name="shipment_ref" />
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8">
@@ -188,6 +189,7 @@
                     <field name="customer_ref" />
                     <field name="customers" />
                     <field name="order_category" />
+                    <field name="shipment_ref" />
                     <field name="reason_type_id" domain="[('incoming_ok', '=', True)]" />
                     <field name="date" string="Creation Date" />
                     <field name="date_done" string="Actual Receipt Date" />

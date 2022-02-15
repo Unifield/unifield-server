@@ -8595,6 +8595,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:replenishment.parent.segment,state_parent:0
 #: view:composition.item:0
 #: selection:wizard.return.from.unit.import,state:0
+#: selection:wizard.import.ad.line,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -20732,10 +20733,11 @@ msgstr "Is child of CoA"
 msgid "Etc/GMT-11"
 msgstr "Etc/GMT-11"
 
-#. modules: sales_followup, msf_tools, procurement_cycle
+#. modules: sales_followup, msf_tools, procurement_cycle, msf_doc_import
 #: selection:ir.followup.location.wizard,state:0
 #: selection:job.in_progress,state:0
 #: selection:replenishment.consolidated_oc.import,state:0
+#: selection:wizard.import.ad.line,state:0
 msgid "Done"
 msgstr "Clôturé"
 
@@ -22402,6 +22404,7 @@ msgstr "Le message d'enregistrement"
 #: view:wizard.import.ppl.to.create.ship:0
 #: view:wizard.import.product.line:0
 #: view:wizard.return.from.unit.import:0
+#: view:wizard.import.ad.line:0
 msgid "Import file"
 msgstr "Importer le fichier"
 
@@ -25602,17 +25605,12 @@ msgstr "Détermine les restrictions pour le pays."
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Demandée"
 
-#. modules: purchase
+#. modules: purchase, msf_supply_doc_export
 #: field:purchase.order,delivery_requested_date:0
-#, python-format
-msgid "Requested Delivery Date"
-msgstr "Date de Livraison Demandée"
-
-#. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1065
 #, python-format
 msgid "Requested Delivery Date"
-msgstr "Date de Livraison Souhaitée"
+msgstr "Date de Livraison Demandée"
 
 #. modules: purchase, msf_order_date
 #: field:purchase.order.line,date_planned:0
@@ -30094,6 +30092,8 @@ msgstr "Operator '%s' not suported"
 #: field:wizard.import.ppl.to.create.ship,message:0
 #: field:wizard.import.product.line,message:0
 #: field:purchase.order.line.nsl.validation.wizard,message:0
+#: field:wizard.import.ad.line,message:0
+#: field:wizard.return.from.unit.import,message:0
 msgid "Message"
 msgstr "Message"
 
@@ -48682,7 +48682,7 @@ msgstr "Septembre"
 msgid "wizard.incoming.xml.export"
 msgstr "wizard.incoming.xml.export"
 
-#. modules: msf_budget, account, msf_profile, analytic_override, analytic_distribution
+#. modules: msf_budget, account, msf_profile, analytic_override, analytic_distribution, msf_doc_import
 #: selection:account.tax,type:0
 #: selection:analytic.distribution.wizard,entry_mode:0
 #: field:analytic.distribution.wizard.f1.lines,percentage:0
@@ -48698,6 +48698,7 @@ msgstr "wizard.incoming.xml.export"
 #: report:msf.pdf.budget.summary:0
 #: report:addons/account/report/invoice_excel_export.mako:70
 #: model:product.uom.categ,name:msf_profile.uom_category_percentage
+#: code:addons/msf_doc_import/report/export_po_ad_line_xlsx.py:43
 msgid "Percentage"
 msgstr "Pourcentage"
 
@@ -50301,6 +50302,11 @@ msgstr "Indien/Mayotte"
 #: view:product.mass.update:0
 msgid " Import Lines "
 msgstr "Importer les Lignes"
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "Import AD"
+msgstr "Importer DA"
 
 #. module: msf_audittrail
 #: field:audittrail.log.sequence,sequence:0
@@ -57538,8 +57544,9 @@ msgstr "Prix"
 #. module: msf_doc_import
 #: view:wizard.import.po:0
 #: view:wizard.import.po.line:0
+#: view:wizard.import.ad.line:0
 msgid "Purchase information"
-msgstr "Information Achat"
+msgstr "Information BdC"
 
 #. module: reason_types_moves
 #: model:stock.reason.type,name:reason_types_moves.reason_type_external_supply
@@ -65321,7 +65328,8 @@ msgstr "Mise à jour du module"
 msgid "wizard.import.mapping"
 msgstr "wizard.import.mapping"
 
-#. modules: register_accounting, analytic_override
+#. modules: account, register_accounting, analytic_override
+#: code:addons/account/account.py:1089
 #: code:addons/analytic_override/analytic_line.py:80
 #: code:addons/register_accounting/account_move_line.py:52
 #, python-format
@@ -73368,6 +73376,7 @@ msgstr "Date Prévue de Colisage"
 #: field:product.history.consumption,error_msg:0
 #: selection:product.history.consumption,fake_status:0
 #: selection:product.history.consumption,status:0
+#: selection:wizard.import.ad.line,state:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -73547,6 +73556,7 @@ msgstr "Pacific/Kwajalein"
 #: view:purchase.order.cancel.wizard:0
 #: view:wizard.import.ppl.to.create.ship:0
 #: view:wizard.import.product.line:0
+#: view:wizard.import.ad.line:0
 msgid "Close window"
 msgstr "Fermer la fenêtre"
 
@@ -80463,7 +80473,7 @@ msgstr "Zone - Type"
 msgid "Donation Payable Account"
 msgstr "Compte Fournisseur Donation "
 
-#. modules: account_override, vertical_integration, register_accounting, msf_tools, analytic_distribution,  object_query, stock_forecast, base, procurement_cycle
+#. modules: account_override, vertical_integration, register_accounting, msf_tools, analytic_distribution,  object_query, stock_forecast, base, procurement_cycle, msf_doc_import
 #: field:ir.exports.line,export_id:0
 #: field:object.query,export_id:0
 #: view:stock.forecast:0
@@ -80479,6 +80489,7 @@ msgstr "Compte Fournisseur Donation "
 #: view:wizard.hq.report.oca:0
 #: view:wizard.hq.report.ocg:0
 #: view:wizard.export.replenishment.product.list:0
+#: view:wizard.import.ad.line:0
 msgid "Export"
 msgstr "Exporter"
 
@@ -80875,6 +80886,7 @@ msgstr "Wizard lines for internal picking processor"
 #: view:account.invoice.import:0
 #: view:product.stock_out:0
 #: view:replenishment.consolidated_oc.import:0
+#: view:wizard.import.ad.line:0
 msgid "Import"
 msgstr "Importer"
 
@@ -81567,6 +81579,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:wizard.return.from.unit.import,state:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:0
 #: report:liquidity.position.pdf:0
+#: field:wizard.import.ad.line,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -82868,6 +82881,7 @@ msgstr "L2"
 #: selection:procurement.request.sourcing.document,linked_model:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:227
 #: field:purchase.order.manual.export,purchase_id:0
+#: field:wizard.import.ad.line,purchase_id:0
 msgid "Purchase Order"
 msgstr "Bon de Commande"
 
@@ -83491,6 +83505,7 @@ msgstr "Ligne sourcée-n"
 #: selection:stock.expired.damaged.report,state:0
 #: selection:account.invoice.import,state:0
 #: selection:stock.pipe.per.product.instance,state:0
+#: selection:wizard.import.ad.line,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"
@@ -85923,6 +85938,11 @@ msgstr "Vous ne pouvez pas selectionner 'Instance prop. parente' car 'Instances'
 msgid "RDD"
 msgstr "DLD"
 
+#. module: sourcing
+#: field:sale.order.line,rdd:0
+msgid "RDD"
+msgstr "DL Demandée"
+
 #. module: account
 #: field:account.tax,child_ids:0
 msgid "Child Tax Accounts"
@@ -86952,6 +86972,7 @@ msgstr "Date - Début de Contrat"
 #: field:product.stock_out,file_to_import:0
 #: field:replenishment.consolidated_oc.import,file_to_import:0
 #: field:wizard.return.from.unit.import,file_to_import:0
+#: field:wizard.import.ad.line,file:0
 msgid "File to import"
 msgstr "Fichier à importer"
 
@@ -113688,6 +113709,36 @@ msgstr "Ecriture Comptable %s: le journal %s est inactif."
 msgid "Impossible to create a register on an inactive journal."
 msgstr "Impossible de créer un registre sur un journal inactif."
 
+#. module: account
+#: field:account.period,period_visible:0
+msgid "Display the period"
+msgstr "Afficher la période"
+
+#. module: vertical_integration
+#: view:ocp.export.wizard:0
+msgid "The database name is not OCP_HQ. This will impact the DB ID column."
+msgstr "Le nom de la base de données n'est pas OCP_HQ. Cela impactera la colonne DB ID."
+
+#. module: vertical_integration
+#: field:ocp.export.wizard,all_missions:0
+msgid "All Missions"
+msgstr "Toutes les Missions"
+
+#. module: vertical_integration
+#: view:ocp.export.wizard:0
+msgid "or All Missions"
+msgstr "ou Toutes les Missions"
+
+#. module: vertical_integration
+#: help:ocp.export.wizard,all_missions:0
+msgid "Generate the Monthly Export (only) for all missions at once"
+msgstr "Génère le \"Monthly Export\" (uniquement) pour toutes les missions à la fois"
+
+#. module: vertical_integration
+#: field:ocp.export.wizard,warning_db_name:0
+msgid "Display a warning on database name"
+msgstr "Affiche un avertissement sur le nom de la base de données"
+
 #. module: sync_client
 #: field:sync_client.survey.user.detailed,answer_later:0
 msgid "Answer later"
@@ -114050,3 +114101,150 @@ msgstr "Qté comptée totale + ignorée en stock"
 #, python-format
 msgid "This export is only available for closed Physical Inventories"
 msgstr "Cet export est uniquement disponible pour les Inventaires Physiques clôturés"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1330
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1344
+#, python-format
+msgid "AD"
+msgstr "DA"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:60
+#, python-format
+msgid "Empty file"
+msgstr "Fichier vide"
+
+#. module: msf_doc_import
+#: view:wizard.import.ad.line:0
+msgid "Export Template"
+msgstr "Exporter le modèle"
+
+#. module: msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_wizard_import_ad_line
+msgid "Import AD Lines from Excel file"
+msgstr "Import des lignes de DA depuis un fichier Excel"
+
+#. module: msf_doc_import
+#: view:wizard.import.ad.line:0
+msgid "Import AD on lines"
+msgstr "Import DA sur les lignes"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:218
+#, python-format
+msgid "Import done.\n"
+"\n"
+"                    # PO lines updated: %(updated)s\n"
+"                    # AD deleted on PO lines: %(delete_ad)s\n"
+"                    # PO lines not modified: %(no_change)s\n"
+"                    # Split lines ignored in file: %(split_line_ignored)s\n"
+"\n"
+"                    "
+msgstr "Import effectué.\n"
+"\n"
+"                    # Lignes de BdC mises à jour: %(updated)s\n"
+"                    # DA supprimée sur les lignes du BdC: %(delete_ad)s\n"
+"                    # Lignes du BdC non modifiées: %(no_change)s\n"
+"                    # Lignes fractionnées ignorées dans le fichier: %(split_line_ignored)s\n"
+"\n"
+"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:214
+#, python-format
+msgid "Import stopped, please fix the error(s):\n"
+"  - %s"
+msgstr "Import Arrêté. Veuillez corriger les erreurs:\n"
+"  - %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:228
+#, python-format
+msgid "Import stopped.\n"
+"%s"
+msgstr "Import Arrêté.\n"
+"%s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:109
+#, python-format
+msgid "Incomplete file."
+msgstr "Fichier incomplet."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:120
+#, python-format
+msgid "Line not found in PO: #%s %s"
+msgstr "Ligne non trouvée dans le BdC: #%s %s"
+
+#. module: msf_doc_import
+#: model:ir.actions.report.xml,name:msf_doc_import.export_po_ad_line
+msgid "PO AD"
+msgstr "DA BdC"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:66
+#, python-format
+msgid "PO Reference does not match."
+msgstr "La référence du BdC ne correspond pas."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:63
+#, python-format
+msgid "PO Reference not found in file."
+msgstr "Référence du BdC non trouvée dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:43
+#, python-format
+msgid "PO is not in Draft state."
+msgstr "Le BdC n'est pas dans le statut Brouilllon"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:156
+#, python-format
+msgid "PO line %d: Cost Center %s not found"
+msgstr "Ligne BdC %d: Centre de Coût non trouvé"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:159
+#, python-format
+msgid "PO line %d: Destination %s not found"
+msgstr "Ligne BdC %d: Destination %s non trouvée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:215
+#, python-format
+msgid "PO line %s %s: Percentage cannot have number other than 100"
+msgstr "Ligne BdC %s %s: le pourcentage ne peut pas être différent de 100"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:142
+#, python-format
+msgid "PO line %s %s: please empty or set both Cost Center and Destination"
+msgstr "Ligne BdC %s %s: veuillez remplir ou vider les deux valeurs Centre de Coût et Destination"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:49
+#, python-format
+msgid "Please add a file to import."
+msgstr "Veuillez ajouter un fichier à importer."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:670
+#, python-format
+msgid "The PO has no draft line."
+msgstr "Le BdC n'a aucune ligne dans le statut Brouillon"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:668
+#, python-format
+msgid "The PO must be in Draft state."
+msgstr "Le BdC doit être dans le statut Brouillon"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:55
+#, python-format
+msgid "Unable to read file. Please check the file format."
+msgstr "Impossible de lire le fichier. Veuillez vérifier le format du fichier."

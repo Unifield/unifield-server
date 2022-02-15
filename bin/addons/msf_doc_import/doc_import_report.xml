@@ -78,5 +78,16 @@
             menu="False"
             />
 
+        <report
+            id="export_po_ad_line"
+            string="PO AD"
+            model="purchase.order"
+            name="export_po_ad_line_xlsx"
+            report_type="openpyxl"
+            auto="False"
+            menu="False"
+            />
+
+
     </data>
 </openerp>
