@@ -206,8 +206,8 @@ class sale_order_line(osv.osv):
         ''', (tuple(ids),))
         inactive_lines = cr.fetchone()[0]
         if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            plural = inactive_lines == 1 and _('A product has') or _('Some products have')
+            l_plural = inactive_lines == 1 and _('line') or _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this line you have to remove/correct the line containing the inactive product (see red %s of the document)') % (plural, l_plural))
         return True
 
