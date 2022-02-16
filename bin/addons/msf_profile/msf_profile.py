@@ -154,6 +154,9 @@ class patch_scripts(osv.osv):
         return True
 
     def us_9143_oca_change_dest_on_esc_po(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
+            return True
+
         oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
         cr.execute(oc_sql)
         oc = cr.fetchone()[0]
