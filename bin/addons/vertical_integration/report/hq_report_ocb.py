@@ -399,7 +399,6 @@ class hq_report_ocb(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         mi_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
-        journal_obj = pool.get('account.journal')
         # note: this list of excluded journals is used for both G/L and analytic journal types
         excluded_journal_types = ['hq', 'migration', 'cur_adj', 'inkind', 'extra', 'system']
         # Fetch data from wizard
@@ -430,38 +429,6 @@ class hq_report_ocb(report_sxw.report_sxw):
             to_export = ['f']
         else:
             raise osv.except_osv(_('Error'), _('Wrong value for selection: %s.') % (selection,))
-
-        # US-822: if December is picked should:
-        # - include Period 16 action 2 Year end PL RESULT entries
-        #   of target Coordo
-        plresult_ji_in_ids = []
-        if period.number == 12:
-            ayec_obj = pool.get("account.year.end.closing")
-            m_obj = pool.get('account.move')
-            ml_obj = pool.get('account.move.line')
-
-            period16_id = ayec_obj._get_period_id(cr, uid, fy_id, 16)
-            if period16_id:
-                # get potential PL RESULT entries of us-822 book_pl_results
-                func_ccy_name = pool.get('res.users').browse(cr, uid, [uid],
-                                                             context=context)[0].company_id.currency_id.name
-                seqnums = [
-                    ayec_obj._book_pl_results_seqnum_pattern % (year_num,
-                                                                instance_rec.code, func_ccy_name, ) \
-                    for instance_rec in mi_obj.browse(cr, uid, instance_ids,
-                                                      context=context) \
-                    if instance_rec.level == 'coordo'
-                ]
-
-                if seqnums:
-                    excluded_journal_ids = journal_obj.search(cr, uid, [('type', 'in', excluded_journal_types)],
-                                                              order='NO_ORDER', context=context)
-                    je_ids = m_obj.search(cr, uid, [('name', 'in', seqnums), ('journal_id', 'not in', excluded_journal_ids)],
-                                          order='NO_ORDER', context=context)
-                    if je_ids:
-                        plresult_ji_in_ids = ml_obj.search(cr, uid, [
-                            ('move_id', 'in', je_ids)
-                        ], context=context)
 
         # Prepare SQL requests and PROCESS requests for finance_archive object
 
@@ -658,30 +625,6 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
             'balance_previous_month': balance_previous_month_sql,
         }
-        if plresult_ji_in_ids:
-            # NOTE: for these entries: booking and fonctional ccy are same
-            ''' columns
-                'DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description',
-                'Reference', 'Document date', 'Posting date', 'G/L Account',
-                'Third party', 'Destination', 'Cost centre', 'Funding pool',
-                'Booking debit', 'Booking credit', 'Booking currency',
-                'Functional debit', 'Functional credit', 'Functional CCY',
-                'Emplid', 'Partner DB ID' '''
-            sqlrequests['plresult'] = """
-                SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name,
-                    aml.ref, aml.document_date, aml.date, a.code,
-                    aml.partner_txt, '', '', '',
-                    ROUND(aml.debit_currency, 2), ROUND(aml.credit_currency, 2), c.name,
-                    ROUND(aml.debit, 2), ROUND(aml.credit, 2), c.name,
-                    '', ''
-                FROM account_move_line aml
-                INNER JOIN msf_instance i on i.id = aml.instance_id
-                INNER JOIN account_journal j on j.id = aml.journal_id
-                INNER JOIN account_move m on m.id = aml.move_id
-                INNER JOIN account_account a on a.id = aml.account_id
-                INNER JOIN res_currency c on c.id = aml.currency_id
-                WHERE aml.id in %s AND aml.exported in %s
-            """
 
         # PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
         # Dict:
@@ -759,20 +702,6 @@ class hq_report_ocb(report_sxw.report_sxw):
                                  tuple(instance_ids)),
             },
         ]
-        if plresult_ji_in_ids:
-            # Feb. 2020: log if this is used at least once. Cf. the whole code related to plresult_ji_in_ids might
-            # be obsolete in new OCB VI (in any case it's only used for Dec. export)
-            pool.get('ir.config_parameter').set_param(cr, 1, 'ocb_vi.has_pl_result', True)
-            processrequests.append({
-                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
-                'key': 'plresult',
-                'function': 'postprocess_add_db_id', # to take move line ids and make a DB ID with
-                'fnct_params': 'account.move.line',
-                'query_params': (tuple(plresult_ji_in_ids), tuple(to_export), ),
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'account.move.line',
-            })
 
         # Launch finance archive object
         fe = finance_archive(sqlrequests, processrequests, context=context)
