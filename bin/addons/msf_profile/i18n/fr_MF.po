@@ -87295,12 +87295,6 @@ msgstr "Accès de l'utilisateur à l'importation depuis le fichier"
 msgid "Atlantic/Reykjavik"
 msgstr "Atlantique/Reykjavik"
 
-#. module: vertical_integration
-#: code:addons/vertical_integration/wizard/ocb_export.py:74
-#, python-format
-msgid "You can not select '%s' as already included in'                     '  December export"
-msgstr "Vous ne pouvez pas sélectionner '%s' puisqu il est dans'                     '  l' export de Décembre"
-
 #. modules: account_override, account
 #: field:account.balance.report,account_type:0
 #: field:account.report.general.ledger,account_type:0
