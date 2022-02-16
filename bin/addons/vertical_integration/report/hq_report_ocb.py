@@ -74,7 +74,6 @@ class finance_archive(finance_export.finance_archive):
         partner_search_dict = {}
         employee_search_dict = {}
         employee_code_dict = {}
-        partner_name_dict = {}
         partner_hash_dict = {}
 
         partner_id_list = list(set([x[partner_id_cl] for x in data if x[partner_id_cl]]))
