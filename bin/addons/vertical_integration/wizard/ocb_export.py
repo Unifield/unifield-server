@@ -92,10 +92,7 @@ class ocb_export_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 2
 
-        if context.get('old_vi'):
-            report_name = _('Export to HQ system (OCB) Access Interface')
-        else:
-            report_name = _('Export to HQ system (OCB)')
+        report_name = _('Export to HQ system (OCB)')
         finance_export.log_vi_exported(self, cr, uid, report_name, wizard.id, data['target_filename'])
 
         data['context'] = context

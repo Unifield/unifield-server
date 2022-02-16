@@ -106968,13 +106968,6 @@ msgstr "Voulez-vous re-sourcer les besoins de cette ligne d'Appel d'Offre ?"
 msgid "INT Ref."
 msgstr "Réf. du INT"
 
-#. module: vertical_integration
-#: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb_old
-#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb_old
-#: code:addons/vertical_integration/wizard/ocb_export.py:96
-msgid "Export to HQ system (OCB) Access Interface"
-msgstr "Interface d'accès de l'Export vers le système HQ (OCB)"
-
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_picking_ticket
 #: view:stock.picking:0
