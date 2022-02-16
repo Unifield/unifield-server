@@ -749,5 +749,9 @@
         <record id="us_9143_oca_change_dest_on_esc_po" model="patch.scripts">
             <field name="method">us_9143_oca_change_dest_on_esc_po</field>
         </record>
+
+        <record id="us_9570_ocb_auto_sync_time" model="patch.scripts">
+            <field name="method">us_9570_ocb_auto_sync_time</field>
+        </record>
     </data>
 </openerp>

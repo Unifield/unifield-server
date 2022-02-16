@@ -38,7 +38,9 @@ from msf_field_access_rights.osv_override import _get_instance_level
 import cStringIO
 import csv
 import zlib
-
+import random
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -55,6 +57,54 @@ class patch_scripts(osv.osv):
     }
 
     # UF24.0
+    def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            cr.execute("SAVEPOINT us_9570")
+            cron_obj = self.pool.get('ir.cron')
+            cron_dom = [('model', '=', 'sync.client.entity'), ('function', '=', 'sync_threaded')]
+            cron_id = cron_obj.search(cr, uid, cron_dom + [('active', 'in', ['t', 'f'])])
+            if not cron_id:
+                self.log_info(cr, uid, 'US-9570: patch not applied, cron job not found !')
+                return True
+            if len(cron_id) > 1:
+                cron_id = cron_obj.search(cr, uid, cron_dom + [('active', '=', True)])
+                if not cron_id or len(cron_id) > 1:
+                    self.log_info(cr, uid, 'US-9570: patch not applied, multiple cron found !')
+                    return True
+
+            cron = cron_obj.browse(cr, uid, cron_id[0])
+            if cron.interval_number == 12 and cron.interval_type == 'hours':
+                nextcall = datetime.strptime(cron.nextcall, '%Y-%m-%d %H:%M:%S')
+                if 7 * 60 <= nextcall.hour * 60 + nextcall.minute < 9 * 60 or \
+                        19 * 60 <= nextcall.hour * 60 + nextcall.minute < 21 * 60:
+                    self.log_info(cr, uid, 'US-9570: patch not applied, conditions already met')
+                    return True
+
+            now = datetime.now()
+            minute = random.randint(1, 59)
+            if now.hour < 5:
+                hour = random.randint(7 , 8)
+                days = 0 # same day
+            elif now.hour < 17:
+                hour = random.randint(19 ,20)
+                days = 0 # same day
+            else:
+                hour = random.randint(7 , 8)
+                days = 1 # next day
+
+            cr.execute('update sync_client_sync_server_connection set automatic_patching_hour_from=19, automatic_patching_hour_to=8')
+            nextcall_to_set = (now+relativedelta(hour=hour, minute=minute, days=days)).strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                cron_obj.write(cr, uid, cron.id, {'nextcall': nextcall_to_set, 'interval_number': 12, 'interval_type': 'hours'})
+                self.log_info(cr, uid, 'US-9570: patch applied %s' %  nextcall_to_set)
+            except:
+                cr.execute("ROLLBACK TO SAVEPOINT us_9570")
+                self.log_info(cr, uid, 'US-9570: patch not applied, error during save !')
+
+        return True
+
+
     def us_9577_display_manual_cv(self, cr, uid, *a, **b):
         cr.execute("UPDATE account_commitment SET cv_flow_type='supplier' WHERE cv_flow_type IS NULL")
         self.log_info(cr, uid, '%d manual CV visible' % (cr.rowcount,))
