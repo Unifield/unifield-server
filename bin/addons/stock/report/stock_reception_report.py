@@ -72,7 +72,7 @@ class stock_reception_report(report_sxw.rml_parse):
                                                             round=False, context=self.localcontext), 2)
 
                 # Get the linked INT's move using move.move_dest_id
-                if sol and sol.procurement_request:
+                if sol and sol.order_id and sol.order_id.procurement_request:
                     if move_dest and move_dest.picking_id.type == 'internal' \
                             and move_dest.picking_id.subtype == 'standard' and sol.order_id.location_requestor_id.usage == 'internal':
                         final_dest_loc = move_dest.location_dest_id.name
@@ -117,9 +117,11 @@ class stock_reception_report(report_sxw.rml_parse):
                     final_dest_partner = company_partner.name
 
                 yield {
+                    #'ref': '%s:%s' % (pick.name, move.id),
                     'ref': pick.name,
                     'reason_type': move.reason_type_id and move.reason_type_id.name or '',
                     'purchase_order': pick.purchase_id and pick.purchase_id.name or '',
+                    #'purchase_order': pick.purchase_id and '%s %s' % (pick.purchase_id.name,move.purchase_line_id.id) or '',
                     'supplier': pick.partner_id and pick.partner_id.name or '',
                     'purchase_id': po,  # For category, type and priority
                     'dr_date': pol and (pol.date_planned or po.delivery_requested_date) or False,

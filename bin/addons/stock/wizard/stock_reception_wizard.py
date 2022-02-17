@@ -182,6 +182,30 @@ class stock_reception_wizard(osv.osv_memory):
                 if sql_append:
                     sql = '%s and %s' % (sql, ' and '.join(sql_append))
                 sql_cond.update({'final_dest': f_dest_id.id, 'cross_doc': cross_docking_id})
+            elif f_dest_id.cross_docking_location_ok:
+                sql = '''select distinct(m.id) as id
+                    from
+                        stock_move m
+                        inner join stock_picking p on m.picking_id = p.id
+                    ''' + inner_join_product + '''
+                        left join purchase_order_line pol on m.purchase_line_id = pol.id
+                        left join purchase_order po on pol.order_id = po.id
+                        left join sale_order_line sol on pol.linked_sol_id = sol.id
+                        left join sale_order so on so.id = sol.order_id
+                        left join stock_location requestor on requestor.id = so.location_requestor_id
+                        left join stock_move dest_id on dest_id.id = m.move_dest_id 
+                where
+                    (
+                        m.location_dest_id = %(final_dest)s and (sol.id is null or requestor.usage != 'customer') or
+                        dest_id.location_dest_id = %(final_dest)s and dest_id.state = 'done' and (sol.id is null or requestor.usage != 'customer') or
+                        requestor.usage = 'customer' and m.location_dest_id != %(final_dest)s and dest_id.state='done' and dest_id.location_dest_id = %(final_dest)s
+                    ) and
+                    m.state = 'done' and
+                    p.type = 'in' 
+                '''
+                if sql_append:
+                    sql = '%s and %s' % (sql, ' and '.join(sql_append))
+                sql_cond.update({'final_dest': f_dest_id.id})
             else:
                 #elif f_dest_id.usage == 'internal' and f_dest_id.location_category == 'consumption_unit':
                 # Internal CU: In FS + IR
