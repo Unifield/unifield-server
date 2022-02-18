@@ -24812,12 +24812,6 @@ msgstr "Identifiant de la Session"
 msgid "Pacific/Tongatapu"
 msgstr "Pacific/Tongatapu"
 
-#. module: vertical_integration
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:84
-#, python-format
-msgid "Missing info: instance."
-msgstr "Missing info: instance."
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:62
 #, python-format
@@ -46067,11 +46061,6 @@ msgstr "Europe/Ulyanovsk"
 msgid "Updated"
 msgstr "Mise à jour"
 
-#. module: vertical_integration
-#: model:ir.model,name:vertical_integration.model_ocb_matching_export_wizard
-msgid "ocb.matching.export.wizard"
-msgstr "ocb.matching.export.wizard"
-
 #. module: account
 #: selection:account.subscription,period_type:0
 msgid "year"
@@ -57613,7 +57602,6 @@ msgstr "Info sur Fournisseur Connexe"
 #: code:addons/vertical_integration/report/hq_report_ocp.py:217
 #: code:addons/vertical_integration/report/hq_report_ocp_matching.py:136
 #: code:addons/vertical_integration/report/hq_report_ocb.py:327
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:77
 #, python-format
 msgid "No data retrieved. Check that the wizard is filled in."
 msgstr "Aucune donnée récupérée. Vérifiez que le wizard est rempli."
@@ -58150,8 +58138,6 @@ msgstr "Journal Ajustement"
 #: code:addons/unifield_setup/installer/sales_price.py:145
 #: code:addons/vertical_integration/report/hq_report_ocb.py:160
 #: code:addons/vertical_integration/report/hq_report_ocb.py:334
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:81
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:84
 #: code:addons/vertical_integration/report/hq_report_ocp.py:224
 #: code:addons/vertical_integration/report/hq_report_ocp_matching.py:143
 #: code:addons/vertical_integration/wizard/ocb_export.py:77
@@ -65849,7 +65835,6 @@ msgstr "Africa/Dakar"
 #. modules: vertical_integration, account
 #: field:liquidity.balance.wizard,instance_id:0
 #: field:ocb.export.wizard,instance_id:0
-#: field:ocb.matching.export.wizard,instance_id:0
 #: field:ocba.export.wizard,instance_id:0
 #: field:ocp.export.wizard,instance_id:0
 #: field:ocp.matching.export.wizard,instance_id:0
@@ -67548,17 +67533,9 @@ msgstr "File %s not found.\n"
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export
-#: view:ocb.matching.export.wizard:0
 #: code:addons/vertical_integration/wizard/ocp_matching_export.py:87
 msgid "OCB matching export"
 msgstr "OCB matching export"
-
-#. module: vertical_integration
-#: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export_old
-#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export_old
-#: code:addons/vertical_integration/wizard/ocb_matching_export.py:69
-msgid "OCB matching export Access Interface"
-msgstr "Interface d'accès de OCB matching export"
 
 #. module: stock
 #: model:ir.ui.menu,name:stock.menu_stock_configuration
@@ -70451,12 +70428,6 @@ msgstr "Créer et gérer les unités de mesure que vous souhaitez utiliser dans 
 msgid "Banking references"
 msgstr "Références de la Banque"
 
-#. module: vertical_integration
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:81
-#, python-format
-msgid "Some info are missing: instance."
-msgstr "Some info are missing: instance."
-
 #. module: msf_outgoing
 #: field:shipment,shipment_expected_date:0
 msgid "Expected Ship Date"
@@ -73328,7 +73299,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/vertical_integration/report/hq_report_ocb.py:327
 #: code:addons/vertical_integration/report/hq_report_ocb.py:348
 #: code:addons/vertical_integration/report/hq_report_ocb.py:355
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:77
 #: code:addons/vertical_integration/report/hq_report_ocba.py:242
 #: code:addons/vertical_integration/report/hq_report_ocba.py:249
 #: code:addons/vertical_integration/report/hq_report_ocp.py:217
@@ -80513,7 +80483,6 @@ msgstr "Compte Fournisseur Donation "
 #: field:automated.export.job.progress,export_id:0
 #: view:wizard.liquidity.position:0
 #: view:ocb.export.wizard:0
-#: view:ocb.matching.export.wizard:0
 #: view:ocba.export.wizard:0
 #: view:ocp.export.wizard:0
 #: view:ocp.matching.export.wizard:0
@@ -87325,12 +87294,6 @@ msgstr "Accès de l'utilisateur à l'importation depuis le fichier"
 #: selection:res.users,context_tz:0
 msgid "Atlantic/Reykjavik"
 msgstr "Atlantique/Reykjavik"
-
-#. module: vertical_integration
-#: code:addons/vertical_integration/wizard/ocb_export.py:74
-#, python-format
-msgid "You can not select '%s' as already included in'                     '  December export"
-msgstr "Vous ne pouvez pas sélectionner '%s' puisqu il est dans'                     '  l' export de Décembre"
 
 #. modules: account_override, account
 #: field:account.balance.report,account_type:0
@@ -96369,7 +96332,6 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:tender:0
 #: view:threshold.value.compute.all:0
 #: view:ocb.export.wizard:0
-#: view:ocb.matching.export.wizard:0
 #: view:ocba.export.wizard:0
 #: view:ocp.export.wizard:0
 #: view:ocp.matching.export.wizard:0
@@ -106999,13 +106961,6 @@ msgstr "Voulez-vous re-sourcer les besoins de cette ligne d'Appel d'Offre ?"
 #: report:addons/stock/report/stock_reception_report_xls.mako:255
 msgid "INT Ref."
 msgstr "Réf. du INT"
-
-#. module: vertical_integration
-#: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb_old
-#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb_old
-#: code:addons/vertical_integration/wizard/ocb_export.py:96
-msgid "Export to HQ system (OCB) Access Interface"
-msgstr "Interface d'accès de l'Export vers le système HQ (OCB)"
 
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_picking_ticket
