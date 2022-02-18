@@ -114212,8 +114212,8 @@ msgstr "Fichier incomplet."
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:120
 #, python-format
-msgid "Line not found in %s: #%s %s"
-msgstr "Ligne non trouvée dans %s: #%s %s"
+msgid "Line / product does not match %s: #%s %s"
+msgstr "Ligne / produit ne correspond pas %s: #%s %s"
 
 #. module: msf_doc_import
 #: model:ir.actions.report.xml,name:msf_doc_import.export_po_ad_line

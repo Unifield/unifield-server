@@ -129,7 +129,7 @@ class wizard_import_ad_line(osv.osv_memory):
 
                     if key not in current_line_add:
                         if key not in seen:
-                            error.append(_('Line not found in %s: #%s %s') % (doc_name, row[0].value, row[1].value))
+                            error.append(_('Line / product does not match %s: #%s %s') % (doc_name, row[0].value, row[1].value))
                         else:
                             split_line_ignored += 1
                         continue
