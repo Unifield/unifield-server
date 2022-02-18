@@ -192,7 +192,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 ctx.update({'prodlot_id': (count_line.is_bn or count_line.is_ed) and bn_ids and bn_ids[0] or False})
                 prod_stock = self.pool.get('product.product').browse(self.cr, self.uid, count_line.product_id.id, fields_to_fetch=['qty_available'], context=ctx)['qty_available']
 
-                count_line_qty = int(count_line.quantity)
+                count_line_qty = float(count_line.quantity)
                 if count_line.product_id.id not in rep_lines:
                     rep_lines.update({count_line.product_id.id: {
                         'product_code': count_line.product_id.default_code,

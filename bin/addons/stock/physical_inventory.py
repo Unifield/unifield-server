@@ -432,7 +432,7 @@ class PhysicalInventory(osv.osv):
 
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
-            if counted_qty == theoretical_qty or theoretical_qty == 0 and counted_qty == -1:
+            if (counted_qty == theoretical_qty or theoretical_qty == 0) and counted_qty == -1:
                 if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                     counting_line_id = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]["line_id"]
                     counting_lines_with_no_discrepancy.append(counting_line_id)
