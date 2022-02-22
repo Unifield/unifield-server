@@ -604,6 +604,7 @@ register_widget(Selection, ["selection"])
 class FullText(TinyInputWidget):
     template = "/openerp/widgets/form/templates/full_text.mako"
 
+    params = ['italic']
     def set_value(self, value):
         if value:
             super(FullText, self).set_value(value)
@@ -805,6 +806,10 @@ class HtmlView(TinyWidget):
     def __init__(self, **attrs):
         super(HtmlView, self).__init__(**attrs)
         self.tag_name = attrs.get('tag_name')
+
+        # RR special case: field include in html tag
+        if attrs.get('widget') in ('order_preparation_lt', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt'):
+            self.frame = Frame(**attrs)
 
         self.args = attrs.get('args', {})
 
@@ -1154,7 +1159,7 @@ class Form(TinyInputWidget):
     def get_defaults(self, fields, domain=[], context={}):
         if len(fields):
             proxy = rpc.RPCProxy(self.model)
-            default_values = proxy.default_get(list(fields.keys()), context)
+            default_values = proxy.default_get(list(fields.keys()), context, True)
             for d in domain:
                 if d[0] in fields and not fields.get(d[0], {}).get('readonly',False):
                     if d[1] == '=':

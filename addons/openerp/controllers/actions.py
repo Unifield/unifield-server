@@ -123,6 +123,7 @@ PRINT_FORMATS = {
     'odt' : 'application/vnd.oasis.opendocument.text',
     'ods' : 'application/vnd.oasis.opendocument.spreadsheet',
     'xls' : 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'xml' : 'application/force-download',
     'csv' : 'text/csv',
     'rtf' : 'application/rtf',
@@ -613,5 +614,7 @@ def report_link(report_name, **kw):
     cherrypy.response.headers['X-Target'] = 'download'
     cherrypy.response.headers['Location'] = tools.url(
         '/openerp/report', report_name=report_name, **kw)
+    if kw.get('is_new_doc') and kw.get('ids') and isinstance(kw['ids'], (list, tuple)):
+        cherrypy.response.headers['is_new_doc'] = kw['ids'][0]
     return dict(name=report_name, data=kw)
 

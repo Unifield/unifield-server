@@ -4,6 +4,7 @@ import time
 import subprocess
 import threading
 from optparse import OptionParser
+import logging
 
 import cherrypy
 from cherrypy.lib.reprconf import Parser
@@ -163,9 +164,27 @@ def revprox(redir_port):
     cmd = [ rbin, '-server', https_name, '-redir', str(redir_port) ]
     if cherrypy.config.get('server.https_port'):
         cmd += ['-listen-port', str(cherrypy.config.get('server.https_port'))]
+
+    to_reopen = []
+    # close log files, so Popen doens't keep an opened descriptor
+    # the log file rotation will not be locked
+    # close_fds=True can't be used on Win with stderr and stdout
+    for log in (cherrypy.log.error_log, cherrypy.log.access_log):
+        for h in log.handlers:
+            if isinstance(h, logging.FileHandler):
+                h.acquire()
+                h.stream.close()
+                to_reopen.append(h)
+
+
     proc = subprocess.Popen(cmd,
                             stderr=subprocess.STDOUT,  # Merge stdout and stderr
                             stdout=subprocess.PIPE)
+
+    for h in to_reopen:
+        h.stream = open(h.baseFilename, h.mode)
+        h.release()
+
     ok = False
     while not ok:
         line = proc.stdout.readline()

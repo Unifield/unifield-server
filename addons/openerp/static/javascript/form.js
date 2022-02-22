@@ -1353,7 +1353,12 @@ function set_to_default(field_id, model){
         jQuery('[id="' + field_id + '"]')
                 .val(obj.value);
         // jQuery().change doesn't trigger Mochikit's handler?
-        signal(field_id, "onchange");
+        f = $('#'+field_id)
+        if (f && f.attr('kind') == 'many2one') {
+            ManyToOne(field_id).on_change();
+        } else {
+            signal(field_id, "onchange");
+        }
     });
 }
 
@@ -1563,7 +1568,7 @@ function on_context_menu(evt, target){
     if (sidebar) {
         makeListContextMenu(grid.attr('record'), checked);
     } else {
-        makeContextMenu(src, kind, $src.attr('relation'), $src.val(), $src.attr('hide_default_menu'));
+        makeContextMenu(src, kind, $src.attr('relation'), $src.val(), $src.attr('hide_default_menu')||$src.is(':disabled'));
     }
     stopEventDammit(evt);
 }

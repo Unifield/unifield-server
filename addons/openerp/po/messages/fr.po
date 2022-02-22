@@ -1856,3 +1856,14 @@ msgstr "Plus tard"
 msgid "Do not ask me again"
 msgstr "Ne plus demander"
 
+#: controllers/templates/exp.mako:184
+msgid "This wizard will export all data that matches the current search criteria to a CSV file. You can export all data or only the fields that can be reimported after modification."
+msgstr "Cette option permet d'exporter toutes les données qui correspondent aux critères de sélection vers un fichier CSV. Il est possible d'exporter toutes les données ou seulement les champs qui peuvent ensuite être réimportés après modification."
+
+#: controllers/templates/exp.mako:209
+msgid "Export all query results:"
+msgstr "Exporter le résultat complet :"
+
+#: controllers/templates/exp.mako:209
+msgid "could impact machine performance"
+msgstr "peut impacter les performances de la machine"

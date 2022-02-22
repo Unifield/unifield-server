@@ -141,6 +141,16 @@ def get_validation_schema(self):
 
     params.nodefault = True
     params.validation_form = True
+
+    # validation from wizard popup: hide save/edit buttons and attachements sidebar if fields (date) validation fails
+    target = params._terp_view_target
+    if target in ('new', 'same'):
+        # tw.form_view.ViewForm uses params.target to display or not the sidebar
+        params.target = target
+
+        # create_from uses cherrypy.request._terp_view_target to hide save/save&edit button on wizard
+        cherrypy.request._terp_view_target = target
+
     form = self.create_form(params)
     cherrypy.request.terp_form = form
 
@@ -191,6 +201,13 @@ class Form(SecuredController):
         params.count = params.count or 0
         params.approximation = params.approximation or False
         params.view_type = params.view_type or params.view_mode[0]
+        target = getattr(cherrypy.request, '_terp_view_target', None)
+        if target in ('new', 'same'):
+            # for target='new' keep orignal value as '_terp_view_target' hidden field,
+            # that's necessary to keep wizard without toolbar button (new, save, pager, etc...)
+            hidden_fields = params.hidden_fields or []
+            hidden_fields.append(tw.form.Hidden(name='_terp_view_target', default=ustr(target)))
+            params.hidden_fields = hidden_fields
 
         return tw.form_view.ViewForm(params, name="view_form", action="/openerp/form/save")
 
@@ -216,15 +233,8 @@ class Form(SecuredController):
         if params.view_type == 'tree':
             params.editable = True
 
-        target = getattr(cherrypy.request, '_terp_view_target', None)
-        if target in ('new', 'same'):
-            # for target='new' keep orignal value as '_terp_view_target' hidden field,
-            # that's necessary to keep wizard without toolbar button (new, save, pager, etc...)
-            hidden_fields = params.hidden_fields or []
-            hidden_fields.append(tw.form.Hidden(name='_terp_view_target', default=ustr(target)))
-            params.hidden_fields = hidden_fields
-
         form = self.create_form(params, tg_errors)
+
 
         if not tg_errors:
             try:
@@ -254,6 +264,7 @@ class Form(SecuredController):
         for kind, view in get_registered_views():
             buttons.views.append(dict(kind=kind, name=view.name, desc=view.desc))
 
+        target = getattr(cherrypy.request, '_terp_view_target', None)
         buttons.toolbar = (target not in ('new', 'same') and not form.is_dashboard) or mode == 'diagram'
 
         pager = None
@@ -532,6 +543,7 @@ class Form(SecuredController):
 
         Model = rpc.RPCProxy(params.model)
         # bypass save, for button action in non-editable view
+        params.is_new_doc = False
         if params.editable:
             if not params.id:
                 if params.default_o2m:
@@ -542,6 +554,7 @@ class Form(SecuredController):
                 params.id = int(Model.create(data, ctx))
                 params.ids = (params.ids or []) + [params.id]
                 params.count += 1
+                params.is_new_doc = True
             else:
                 ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
                 ctx['from_web_interface'] = True
@@ -674,7 +687,7 @@ class Form(SecuredController):
             rpc.session.context_reload()
         if isinstance(res, dict):
             from . import actions
-            return actions.execute(res, ids=[id], context=ctx)
+            return actions.execute(res, ids=[id], context=ctx, is_new_doc=params.is_new_doc)
         params.button = None
 
     def button_action_action(self, name, params):
@@ -1400,7 +1413,7 @@ class Form(SecuredController):
 
         field = field.split('/')[-1]
 
-        res = rpc.RPCProxy(model).default_get([field])
+        res = rpc.RPCProxy(model).default_get([field], {}, True)
         value = res.get(field)
 
         return dict(value=value)

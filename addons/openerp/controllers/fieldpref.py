@@ -111,8 +111,7 @@ class FieldPref(SecuredController):
         field = field.split('/')[-1]
 
         proxy = rpc.RPCProxy('ir.values')
-
-        proxy.set('default', deps, field, [(model,False)], value, True, False, False, params.you or False, True)
+        proxy.set('default', deps, field, [(model,False)], value, True, False, 'web', params.you or False, True)
 
         return dict(model=params.model, click_ok=click_ok, field=params.field, deps=params.deps2, should_close=True)
 

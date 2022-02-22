@@ -628,6 +628,14 @@ h1,h2,h3,h4,h5,h6 {
     text-shadow: #fff 0 1px 0;
 }
 
+.search_filters h6 {
+    color: #4C4C4C;
+}
+
+.search_filters h6 label {
+    color: #000;
+}
+
 h1 {
     background:url("../images/sep-a.gif") repeat-x scroll 0 90% transparent;
     font-size:2em;

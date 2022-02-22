@@ -92,11 +92,13 @@ class ViewTree(Form):
             ids = proxy.search(domain, 0, 0, 0, ctx)
 
         self.headers = []
+        self.invisible_headers = []
         self.parse(root, fields)
 
         self.tree = treegrid.TreeGrid(name="tree_%d" % (id),
                                       model=self.model,
                                       headers=self.headers,
+                                      invisible_headers=self.invisible_headers,
                                       url=url("/openerp/tree/data"),
                                       ids=ids,
                                       domain=self.domain,
@@ -120,6 +122,7 @@ class ViewTree(Form):
 
     def parse(self, root, fields=None):
 
+        append_invisible = []
         for node in root.childNodes:
 
             if not node.nodeType==node.ELEMENT_NODE:
@@ -128,8 +131,13 @@ class ViewTree(Form):
             attrs = node_attributes(node)
 
             field = fields.get(attrs['name'])
-            if field and not attrs.get('invisible'):
+            if field:
                 field.update(attrs)
-                self.headers.append(field)
+                if not attrs.get('invisible'):
+                    self.headers.append(field)
+                else:
+                    append_invisible.append(field)
+                    self.invisible_headers.append(attrs['name'])
+        self.headers += append_invisible
 
 # vim: ts=4 sts=4 sw=4 si et
