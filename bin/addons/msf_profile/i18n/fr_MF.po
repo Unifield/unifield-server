@@ -71698,7 +71698,6 @@ msgid "Set if the tax computation is based on the computation of child taxes rat
 msgstr "Cochez si le calcul de la taxe est basé sur le calcul des taxes enfants plutôt que sur le montant total."
 
 #. modules: supplier_catalogue, purchase, product, sale, sync_so
-#: model:ir.actions.report.xml,name:product.report_product_pricelist
 #: model:ir.model,name:product.model_product_pricelist
 #: view:product.product:0
 #: field:product.product,price:0

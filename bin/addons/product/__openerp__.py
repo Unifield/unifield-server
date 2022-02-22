@@ -51,7 +51,6 @@
         'security/ir.model.access.csv',
         'wizard/product_price_view.xml',
         'product_data.xml',
-        'product_report.xml',
         'product_view.xml',
         'pricelist_view.xml',
         'process/product_process.xml',
