@@ -77,6 +77,8 @@ def start():
                 app_config.setdefault(section, {}).update(value)
         except Exception:
             pass
+    if 'engine.timeout_monitor.on' in app_config.get('global', {}):
+        del app_config['global']['engine.timeout_monitor.on']
     openobject.configure(app_config)
 
     if error_config:
