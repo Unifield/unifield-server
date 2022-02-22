@@ -162,7 +162,7 @@ class configmanager(object):
 
         parser.add_option("-i", "--init", dest="init", help="init a module (use \"all\" for all modules)")
         parser.add_option("--without-demo", dest="without_demo",
-                          help="load demo data for a module (use \"all\" for all modules)", default=False)
+                          help="load demo data for a module (use \"all\" for all modules)", default=True)
         parser.add_option("-u", "--update", dest="update",
                           help="update a module (use \"all\" for all modules)")
         parser.add_option("--cache-timeout", dest="cache_timeout",

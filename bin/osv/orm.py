@@ -4056,7 +4056,7 @@ class orm(orm_template):
             pool_model_data.unlink(cr, uid, referenced_ids, context=context)
 
 
-            if context.get('avoid_sdref_deletion') and hasattr(self, '_unlink_sdref') and self._unlink_sdref:
+            if context and context.get('avoid_sdref_deletion') and hasattr(self, '_unlink_sdref') and self._unlink_sdref:
                 cr.execute("DELETE FROM ir_model_data WHERE model=%s AND res_id in %s AND module='sd'", (self._name, sub_ids))
 
             # For the same reason, removing the record relevant to ir_values

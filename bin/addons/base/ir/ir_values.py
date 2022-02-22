@@ -21,7 +21,7 @@
 
 from osv import osv,fields
 from osv.orm import except_orm
-import pickle
+import json
 import tools
 
 EXCLUDED_FIELDS = set((
@@ -46,7 +46,7 @@ class ir_values(osv.osv):
             res[ir_value['id']] = False
             if ir_value['value']:
                 try:
-                    res[ir_value['id']] = pickle.loads(ir_value['value'].encode('utf-8'))
+                    res[ir_value['id']] = json.loads(ir_value['value'])
                 except:
                     pass
         return res
@@ -57,7 +57,7 @@ class ir_values(osv.osv):
             value = report[name[:-9]]
             if not report.object and value:
                 try:
-                    value = str(pickle.loads(value))
+                    value = json.loads(value)
                 except:
                     pass
             res[report.id] = value
@@ -70,7 +70,7 @@ class ir_values(osv.osv):
         if self.CONCURRENCY_CHECK_FIELD in ctx:
             del ctx[self.CONCURRENCY_CHECK_FIELD]
         if not self.browse(cursor, user, id, context=context).object:
-            value = pickle.dumps(value)
+            value = json.dumps(value)
         self.write(cursor, user, id, {name[:-9]: value}, context=ctx)
 
     def onchange_object_id(self, cr, uid, ids, object_id, context={}):
@@ -124,12 +124,10 @@ class ir_values(osv.osv):
             cr.execute('CREATE INDEX ir_values_key_model_key2_res_id_user_id_idx ON ir_values (key, model, key2, res_id, user_id)')
 
     def set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=False, preserve_user=False, company=False, view_ids=False):
-        if isinstance(value, str):
-            value = value.encode('utf8')
         if not isobject:
-            value = pickle.dumps(value)
+            value = json.dumps(value)
         if key != 'default' and meta:
-            meta = pickle.dumps(meta)
+            meta = json.dumps(meta)
         ids_res = []
 
         uid_access = uid
@@ -267,9 +265,9 @@ class ir_values(osv.osv):
                 if not datas:
                     return False
             else:
-                datas = pickle.loads(x[2].encode('utf-8'))
+                datas = json.loads(x[2])
             if meta and meta != 'web':
-                return (x[0], x[1], datas, pickle.loads(x[4]))
+                return (x[0], x[1], datas, json.loads(x[4]))
             return (x[0], x[1], datas)
         keys = []
         res = [_f for _f in [_result_get(x, keys) for x in result] if _f]

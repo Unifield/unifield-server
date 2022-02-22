@@ -56,6 +56,36 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def py3_migrate_pickle_ir_values(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            return True
+
+        import pickle
+        import json
+        cr.execute("select id, value from ir_values where object='f'")
+        ok=0
+        fail=0
+        for x in cr.fetchall():
+            try:
+                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
+                cr.execute('update ir_values set value=%s where id=%s', (val, x[0]))
+                ok += 1
+            except:
+                fail += 1
+
+        cr.execute("select id, meta from ir_values where coalesce(meta, '')!='' and meta!='web'")
+        for x in cr.fetchall():
+            try:
+                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
+                cr.execute('update ir_values set meta=%s where id=%s', (val, x[0]))
+                ok += 1
+            except:
+                fail += 1
+
+        self.log_info(cr, uid, 'Pickle ir_values conversion: ok: %d , fail: %d' % (ok, fail))
+        return True
+
+
     # UF24.0
     def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')

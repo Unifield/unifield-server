@@ -432,8 +432,8 @@ def init_module_objects(cr, module_name, obj_list):
         if hasattr(obj, 'init'):
             obj.init(cr)
         cr.commit()
-    todo.sort()
-    for t in todo:
+
+    for t in sorted(todo, key=lambda x: x[0]):
         t[1](cr, *t[2])
     cr.commit()
     return missing_fk, missing_m2m
