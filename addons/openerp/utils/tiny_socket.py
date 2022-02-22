@@ -82,7 +82,7 @@ class TinySocket(object):
             buf=b''
             while len(buf) < size:
                 chunk = self.sock.recv(size - len(buf))
-                if chunk == '':
+                if not chunk:
                     raise RuntimeError("socket connection broken")
                 buf += chunk
             return buf
