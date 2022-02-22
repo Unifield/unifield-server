@@ -162,6 +162,8 @@ from . import wizard_import_supplier_catalogue
 from . import wizard_po_simulation_screen
 from . import wizard_in_simulation_screen
 from . import wizard_import_ppl_to_create_ship
+from . import wizard_return_from_unit_import
 
 from . import abstract_wizard_import
 from . import wizard_import_batch
+from . import wizard_import_ad_line

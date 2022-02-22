@@ -25,7 +25,8 @@ class stock_split_move_line(osv.osv_memory):
     _name = 'stock.move.line.split'
     _description = "Split Moves"
 
-    def default_get(self, cr, uid, fields, context=None):
+
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """ To get default values for the object.
          @param self: The object pointer.
          @param cr: A database cursor
@@ -36,7 +37,7 @@ class stock_split_move_line(osv.osv_memory):
         """
         if context is None:
             context = {}
-        res = super(stock_split_move_line, self).default_get(cr, uid, fields, context=context)
+        res = super(stock_split_move_line, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         record_id = context and context.get('active_id', False) or False
         pick_obj = self.pool.get('stock.picking')
         pick = pick_obj.browse(cr, uid, record_id, context=context)

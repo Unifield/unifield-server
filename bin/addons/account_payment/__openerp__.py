@@ -33,7 +33,6 @@ This module provides :
     'author': 'OpenERP SA',
     'depends': ['account'],
     'update_xml': [
-        'account_invoice_view.xml',
     ],
     'demo_xml': [],
     'test': [

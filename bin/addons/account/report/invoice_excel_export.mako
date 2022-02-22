@@ -115,7 +115,7 @@
                 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${distrib_line['percentage']|x}</Data></Cell>
                 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${inv_line.price_unit|x}</Data></Cell>
                 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${distrib_line['subtotal']|x}</Data></Cell>
-                <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.account_id.code|x}</Data></Cell>
+                <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line"><Data ss:Type="String">${distrib_line['cost_center']|x}</Data></Cell>
                 <Cell ss:StyleID="line"><Data ss:Type="String">${distrib_line['destination']|x}</Data></Cell>
                 <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.number or ''|x}</Data></Cell>

@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 from osv import osv
@@ -27,23 +27,23 @@ from tools.translate import _
 class project_leadtime_setup(osv.osv_memory):
     _name = 'project.leadtime.setup'
     _inherit = 'res.config'
-    
+
     _columns = {
         'preparation_leadtime': fields.integer(string='Preparation lead time', help='In days'),
         'shipment_leadtime': fields.integer(string='Shipment lead time', help='In days.'),
     }
-    
-    def default_get(self, cr, uid, fields, context=None):
+
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Load data in company
         '''
-        res = super(project_leadtime_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(project_leadtime_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         res.update({'preparation_leadtime': company.preparation_lead_time,
                     'shipment_leadtime': company.shipment_lead_time})
-        
+
         return res
-    
+
     def onchange_leadtime(self, cr, uid, ids, leadtime, field='preparation_leadtime', context=None):
         '''
         Check the value of the leadtime and display warning message if
@@ -51,7 +51,7 @@ class project_leadtime_setup(osv.osv_memory):
         '''
         v = {}
         m = {}
-        
+
         if leadtime and leadtime < 0:
             v.update({field: 0})
             m.update({'title': _('Error'),
@@ -60,9 +60,9 @@ class project_leadtime_setup(osv.osv_memory):
             v.update({field: 9})
             m.update({'title': _('Error'),
                       'message': _('You cannot have a lead time greater than 9 !')})
-            
+
         return {'value': v, 'warning': m}
-    
+
     def execute(self, cr, uid, ids, context=None):
         '''
         Fill the lead times in the company
@@ -70,8 +70,8 @@ class project_leadtime_setup(osv.osv_memory):
         assert len(ids) == 1, "We should only get one object from the form"
         payload = self.browse(cr, uid, ids[0], context=context)
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-        
+
         self.pool.get('res.company').write(cr, 1, company.id, {'preparation_lead_time': payload.preparation_leadtime,
-                                                                 'shipment_lead_time': payload.shipment_leadtime}, context=context)
-    
+                                                               'shipment_lead_time': payload.shipment_leadtime}, context=context)
+
 project_leadtime_setup()

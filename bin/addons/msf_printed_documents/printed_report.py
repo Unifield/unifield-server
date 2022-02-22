@@ -22,7 +22,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-
+from tools.safe_eval import safe_eval
 import re
 
 HELP_TARGET = '''
@@ -36,6 +36,7 @@ HELP_TARGET = '''
           ${eval(function)} => Return the value of the function. The function is a 
                                method of the object like function(self, cr, uid, ids)
 
+          ${_('String')}    => translate String
           %(year)s          => Current year (e.g: 2013, 2014, ...)
           %(month)s         => Current month number (e.g: 01, 02, ..., 12)
           %(day)s           => Current day of month number (e.g: 25)
@@ -102,7 +103,7 @@ class ir_actions_report_xml(osv.osv):
         error = ''
         if report.target_filename:
             report_name = self.pool.get('ir.sequence')._process(cr, uid, report.target_filename)
-            values_to_compute = re.findall('\${((?:\w+.?)*)}', report_name)
+            values_to_compute = re.findall('\${((?:[\'"\w]+.?)*)}', report_name)
             vals_dict = {}
             # No possibility to compute the file name
             if values_to_compute and not active_model or not active_id:
@@ -115,6 +116,10 @@ class ir_actions_report_xml(osv.osv):
                 vals_dict[field_name] = ''
                 model_doc = model_obj.browse(cr, uid, active_id, context=context)
                 # Use a function to compute the name
+                if field_name.startswith('_('):
+                    to_trans = field_name[3:-2]
+                    vals_dict[field_name] = _(to_trans)
+                    continue
                 if field_name.startswith('eval'):
                     func_name = field_name[5:-1]
                     try:
@@ -205,9 +210,16 @@ class ir_actions_report_xml(osv.osv):
                 break
 
             # Check if the fields in ${} are valid
-            fields_name = re.findall('\${((?:\w+.?)*)}', report_name)
+            fields_name = re.findall('\${((?:[\'"\w+].?)*)}', report_name)
             for field_name in fields_name:
                 # Use a function to compute the name
+                if field_name.startswith('_('):
+                    try:
+                        safe_eval(field_name, locals_dict={'_': lambda *x: x})
+                    except:
+                        error += _('%s : invalid syntax') % field_name
+                        break
+                    continue
                 if field_name.startswith('eval'):
                     func_name = field_name[5:-1]
                     model_doc = self.pool.get(report.model)

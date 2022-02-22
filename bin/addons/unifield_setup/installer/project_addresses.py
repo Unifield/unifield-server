@@ -54,11 +54,11 @@ class project_addresses(osv.osv_memory):
         'bill_phone':fields.char('Phone', size=64),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Get the current address of the main partner and fill the form
         '''
-        res = super(project_addresses, self).default_get(cr, uid, fields, context=context)
+        res = super(project_addresses, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if not 'company_id' in res:
             return res

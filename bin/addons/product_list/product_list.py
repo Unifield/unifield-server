@@ -345,7 +345,7 @@ class product_list_line(osv.osv):
             )
         return super(product_list_line, self).create(cr, uid, vals, context)
 
-    def unlink(self, cr, uid, ids, context=None):
+    def unlink(self, cr, uid, ids, context=None, extra_comment=None):
         '''
         Create old product list line on product list line deletion
         '''
@@ -362,7 +362,7 @@ class product_list_line(osv.osv):
                 if line['list_id'] and line['name']:
                     opll.create(cr, uid, {
                         'removal_date': time.strftime('%Y-%m-%d'),
-                        'comment': 'comment' in line and line['comment'] or '',
+                        'comment': extra_comment or line.get('comment') or '',
                         'name': line['name'][0],
                         'list_id': line['list_id'][0],
                     }, context=context)

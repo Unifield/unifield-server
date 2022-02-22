@@ -143,6 +143,8 @@ class PhysicalInventory(osv.osv):
         'discrepancy_lines_percent_absvalue': fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
         'bad_stock_msg': fields.text('Bad Stock', readonly=1),
         'has_bad_stock': fields.boolean('Has bad Stock', readonly=1),
+        'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection', readonly=1),
+        'multiple_filter_months': fields.boolean('Multiple Selection', readonly=1),
     }
 
     _defaults = {
@@ -153,6 +155,8 @@ class PhysicalInventory(osv.osv):
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c),
         'has_bad_stock': False,
         'discrepancies_generated': False,
+        'max_filter_months': -1,
+        'multiple_filter_months': False,
     }
 
 
@@ -184,7 +188,9 @@ class PhysicalInventory(osv.osv):
                            "counting_line_ids",
                            "discrepancy_line_ids",
                            "discrepancies_generated",
-                           "move_ids"]
+                           "move_ids",
+                           "multiple_filter_months",
+                           "max_filter_months"]
 
         for field in fields_to_empty:
             default[field] = False
@@ -259,9 +265,26 @@ class PhysicalInventory(osv.osv):
         assert len(ids) == 1
         inventory_id = ids[0]
 
+
+
         # Create the wizard
         wiz_model = 'physical.inventory.generate.counting.sheet'
-        wiz_id = self.pool.get(wiz_model).create(cr, uid, {'inventory_id': inventory_id}, context=context)
+        filter_months_data = self.read(cr, uid, inventory_id, ['max_filter_months', 'multiple_filter_months'], context=context)
+        wiz_vals = {
+            'inventory_id': inventory_id,
+            'only_with_stock_level': filter_months_data['max_filter_months'] == -1,
+            'only_with_pos_move': filter_months_data['max_filter_months'] != -1,
+        }
+
+        # Check if the 4th bool needs to be checked: if the 2 first are checked (default) and the recent filter has been used
+        # If 'Moved in the last' has not been used ('first_filter_months' is 0), set 'only_with_stock_level' to True by default
+        if filter_months_data['max_filter_months'] != -1:
+            if filter_months_data['multiple_filter_months']:
+                wiz_vals['recent_moves_months'] = _('Multiple selections up to: %s months') % (filter_months_data['max_filter_months'], )
+            else:
+                wiz_vals['recent_moves_months'] = _('Products moved in the last: %s month%s') % (filter_months_data['max_filter_months'], filter_months_data['max_filter_months'] > 1 and 's' or '')
+
+        wiz_id = self.pool.get(wiz_model).create(cr, uid, wiz_vals, context=context)
         context['wizard_id'] = wiz_id
 
         # Get the view reference

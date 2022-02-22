@@ -22,6 +22,7 @@
 from osv import osv
 from sync_common import xmlid_to_sdref
 from lxml import etree
+from tools.translate import _
 import re
 
 class so_po_common(osv.osv_memory):
@@ -81,9 +82,9 @@ class so_po_common(osv.osv_memory):
         context.update({'active_test': False})
         partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
 
-        # Check if the default addresses are deactivated
         address_id = False
         if partner.address:
+            # Check if the default addresses are deactivated
             for address in partner.address:
                 if address.active:
                     address_id = address.id
@@ -263,7 +264,7 @@ class so_po_common(osv.osv_memory):
                 header_result['parent_order_name'] = po_ids[0] # and set the link into the newly created PO sourced
 
         partner_id = self.get_partner_id(cr, uid, source, context)
-        address_id = self.get_partner_address_id(cr, uid, partner_id, context)
+        address_id = self.get_partner_address_id(cr, uid, partner_id, context=context)
         location_id = self.get_location(cr, uid, partner_id, context)
         # just roll back what has been modified --- NO MODIF HERE!
         price_list = self.get_price_list_id(cr, uid, partner_id, context)
@@ -342,7 +343,8 @@ class so_po_common(osv.osv_memory):
             header_result['sourced_references'] = self.create_sync_order_label(cr, uid, header_info, context)
 
         partner_id = self.get_partner_id(cr, uid, source, context)
-        address_id = self.get_partner_address_id(cr, uid, partner_id, context)
+        address_id = self.get_partner_address_id(cr, uid, partner_id, context=context)
+        del_inv_addr_ids = self.pool.get('res.partner').address_get(cr, uid, [partner_id], ['delivery', 'invoice'])
 
         price_list = False
         # US-379: Fixed the price list retrieval
@@ -362,8 +364,8 @@ class so_po_common(osv.osv_memory):
         header_result['client_order_ref'] = source + "." + header_info.get('name')
         header_result['partner_id'] = partner_id
         header_result['partner_order_id'] = address_id
-        header_result['partner_shipping_id'] = address_id
-        header_result['partner_invoice_id'] = address_id
+        header_result['partner_shipping_id'] = del_inv_addr_ids['delivery']
+        header_result['partner_invoice_id'] = del_inv_addr_ids['invoice']
         header_result['pricelist_id'] = price_list
         header_result['currency_id'] = currency_id
         return header_result
@@ -494,6 +496,10 @@ class so_po_common(osv.osv_memory):
                 res['name'] = order_line.comment
         else:
             res['name'] = order_line.comment
+
+        if not res.get('product_id', False) and not res.get('name', False):
+            raise osv.except_osv(_('Error'), _('Cannot process Document/line due to Product Code %s which does not exist in this instance')
+                                 % (src_values.get('default_code'),))
 
         if src_values.get('nomen_manda_0'):
             rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_0.id), context=context)

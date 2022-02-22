@@ -65,7 +65,7 @@ class stock_warehouse(osv.osv):
         ),
     }
 
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         """
         Get the default locations
         """
@@ -75,7 +75,7 @@ class stock_warehouse(osv.osv):
         if context is None:
             context = {}
 
-        res = super(stock_warehouse, self).default_get(cr, uid, fields_list, context=context)
+        res = super(stock_warehouse, self).default_get(cr, uid, fields_list, context=context, from_web=from_web)
 
         res['lot_packing_id'] = data_get(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
         res['lot_dispatch_id'] = data_get(cr, uid, 'msf_outgoing', 'stock_location_dispatch')[1]
@@ -394,7 +394,7 @@ class shipment(osv.osv):
         ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
         return self.pool.get('ir.model.data').browse(cr, uid, ir_id).res_id
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         The 'Shipper' fields must be filled automatically with the
         default address of the current instance
@@ -403,7 +403,7 @@ class shipment(osv.osv):
         partner_obj = self.pool.get('res.partner')
         addr_obj = self.pool.get('res.partner.address')
 
-        res = super(shipment, self).default_get(cr, uid, fields, context=context)
+        res = super(shipment, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         instance_partner = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id
         instance_addr_id = partner_obj.address_get(cr, uid, instance_partner.id)['default']
@@ -635,6 +635,10 @@ class shipment(osv.osv):
             initial_from_pack = family.from_pack
             initial_to_pack = family.to_pack - family.selected_number
 
+        dest_location = picking.warehouse_id.lot_output_id.id
+        if family.draft_packing_id.sale_id and family.draft_packing_id.sale_id.procurement_request and \
+                family.draft_packing_id.sale_id.location_requestor_id:
+            dest_location = family.draft_packing_id.sale_id.location_requestor_id.id
         # find the corresponding moves
         moves_ids = move_obj.search(cr, uid, [
             ('picking_id', '=', family.draft_packing_id.id),
@@ -647,6 +651,13 @@ class shipment(osv.osv):
             # We compute the selected quantity
             selected_qty = move.qty_per_pack * family.selected_number
 
+            if move.old_out_location_dest_id:
+                # IR > OUT destination changed on OUT, converted to PICK
+                final_dest = move.old_out_location_dest_id.id
+            else:
+                # dest from IR or MSF Customer
+                final_dest = dest_location
+
             move_vals = {
                 'picking_id': new_packing_id,
                 'line_number': move.line_number,
@@ -655,7 +666,7 @@ class shipment(osv.osv):
                 'to_pack': family.to_pack,
                 'backmove_packing_id': move.id,
                 'location_id': picking.warehouse_id.lot_distribution_id.id,
-                'location_dest_id': picking.warehouse_id.lot_output_id.id,
+                'location_dest_id': final_dest,
                 'selected_number': family.selected_number,
             }
 
@@ -1328,10 +1339,15 @@ class shipment(osv.osv):
         for shipment in self.browse(cr, uid, ids, context=context):
             make_invoice = False
             move = False
+            cur_id = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
-                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
+                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking' and not move.sale_line_id.in_name_goods_return) and not move.picking_id.claim:
                         make_invoice = True
+                        cur_id = pack.currency_id.id
+                        break
+                if make_invoice:
+                    break
 
             if not make_invoice:
                 continue
@@ -1346,13 +1362,8 @@ class shipment(osv.osv):
             if partner.partner_type in ('external', 'esc'):
                 continue
 
-            inv_type = 'out_invoice'
-
-            if inv_type in ('out_invoice', 'out_refund'):
-                account_id = partner.property_account_receivable.id
-                payment_term_id = partner.property_payment_term and partner.property_payment_term.id or False
-            else:
-                account_id = partner.property_account_payable.id
+            account_id = partner.property_account_receivable.id
+            payment_term_id = partner.property_payment_term and partner.property_payment_term.id or False
 
             addresses = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
             today = time.strftime('%Y-%m-%d', time.localtime())
@@ -1360,7 +1371,7 @@ class shipment(osv.osv):
             invoice_vals = {
                 'name': shipment.name,
                 'origin': shipment.name or '',
-                'type': inv_type,
+                'type': 'out_invoice',
                 'account_id': account_id,
                 'partner_id': partner.id,
                 'address_invoice_id': addresses['invoice'],
@@ -1372,7 +1383,6 @@ class shipment(osv.osv):
                 'from_supply': True,
             }
 
-            cur_id = shipment.pack_family_memory_ids[0].currency_id.id
             if cur_id:
                 invoice_vals['currency_id'] = cur_id
             # Journal type
@@ -1393,7 +1403,7 @@ class shipment(osv.osv):
             # US-1669 Use cases "IVO from supply / Shipment" and "STV from supply / Shipment":
             # - add FO to the Source Doc. WARNING: only one FO ref is taken into account even if there are several FO
             # - add Customer References (partner + PO) to the Description
-            out_invoice = inv_type == 'out_invoice'
+            out_invoice = True
             debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
@@ -1405,6 +1415,7 @@ class shipment(osv.osv):
                 continue
 
             invoice_id_by_fo = {}
+            header_ad_on_inv = {}
             # For each stock moves, create an invoice line
             for pack in shipment.pack_family_memory_ids:
                 if pack.not_shipped:
@@ -1413,7 +1424,10 @@ class shipment(osv.osv):
                     if move.state == 'cancel':
                         continue
 
-                    if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
+                    if move.sale_line_id and (move.sale_line_id.order_id.order_policy != 'picking' or move.sale_line_id.in_name_goods_return):
+                        continue
+
+                    if move.picking_id.claim:
                         continue
 
                     # create 1 FO = 1 Invoice
@@ -1421,7 +1435,11 @@ class shipment(osv.osv):
                     if order_id not in invoice_id_by_fo:
                         new_invoice_vals = invoice_vals.copy()
                         if is_ivo or is_stv:
-                            new_invoice_vals.update({'synced': True, })  # add "synced" tag for STV and IVO created from Supply flow
+                            # add "synced" tag + real_doc_type for STV and IVO created from Supply flow
+                            real_doc_type = is_stv and 'stv' or 'ivo'
+                            new_invoice_vals.update({'synced': True,
+                                                     'real_doc_type': real_doc_type,
+                                                     })
                             origin_inv = 'origin' in new_invoice_vals and new_invoice_vals['origin'] or False
                             fo = move and move.sale_line_id and move.sale_line_id.order_id or False
                             new_origin = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
@@ -1455,18 +1473,16 @@ class shipment(osv.osv):
                     if move.picking_id.origin:
                         origin += ':' + move.picking_id.origin
 
-                    if inv_type in ('out_invoice', 'out_refund'):
+
+                    account_id = False
+                    if move.sale_line_id and move.sale_line_id.cv_line_ids:
+                        account_id = move.sale_line_id.cv_line_ids[0].account_id.id
+                    if not account_id:
                         account_id = move.product_id.product_tmpl_id.\
                             property_account_income.id
-                        if not account_id:
-                            account_id = move.product_id.categ_id.\
-                                property_account_income_categ.id
-                    else:
-                        account_id = move.product_id.product_tmpl_id.\
-                            property_account_expense.id
-                        if not account_id:
-                            account_id = move.product_id.categ_id.\
-                                property_account_expense_categ.id
+                    if not account_id:
+                        account_id = move.product_id.categ_id.\
+                            property_account_income_categ.id
 
                     # Compute unit price from FO line if the move is linked to
                     price_unit = move.product_id.list_price
@@ -1492,7 +1508,17 @@ class shipment(osv.osv):
 
                     distrib_id = False
                     if move.sale_line_id:
-                        sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
+                        sol_ana_dist_id = False
+                        if move.sale_line_id.cv_line_ids:
+                            sol_ana_dist_id = move.sale_line_id.cv_line_ids[0].analytic_distribution_id or False
+                            if not header_ad_on_inv.get(invoice_id) and move.sale_line_id.cv_line_ids[0].commit_id.analytic_distribution_id:
+                                # set AD invoice header from 1st CV AD header
+                                header_ad_on_inv[invoice_id] = True
+                                ad_header_id = distrib_obj.copy(cr, uid, move.sale_line_id.cv_line_ids[0].commit_id.analytic_distribution_id.id, context=context)
+                                self.pool.get('account.invoice').write(cr, uid, [invoice_id], {'analytic_distribution_id': ad_header_id})
+
+                        else:
+                            sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
                         if sol_ana_dist_id:
                             distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
                             # create default funding pool lines (if no one)
@@ -1500,7 +1526,7 @@ class shipment(osv.osv):
 
                     # set UoS if it's a sale and the picking doesn't have one
                     uos_id = move.product_uos and move.product_uos.id or False
-                    if not uos_id and inv_type in ('out_invoice', 'out_refund'):
+                    if not uos_id:
                         uos_id = move.product_uom.id
                     account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
 
@@ -1519,6 +1545,8 @@ class shipment(osv.osv):
                     }
                     if move.sale_line_id:
                         line_data['sale_order_line_id'] = move.sale_line_id.id
+                        if move.sale_line_id.cv_line_ids:
+                            line_data['cv_line_ids'] = [(6, 0, [move.sale_line_id.cv_line_ids[0].id])]
 
                     line_id = line_obj.create(cr, uid, line_data, context=context)
 
@@ -1920,6 +1948,16 @@ class stock_picking(osv.osv):
 
         return super(stock_picking, self).unlink(cr, uid, ids, context=context)
 
+    def copy_web(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+
+        context['web_copy'] = True
+        default.update({'partner_id': False, 'partner_id2': False, 'ext_cu': False, 'sale_id': False})
+
+        return self.copy(cr, uid, id, default, context=context)
 
     def copy(self, cr, uid, copy_id, default=None, context=None):
         '''
@@ -2561,7 +2599,6 @@ class stock_picking(osv.osv):
         '''
         # Objects
         sale_order_obj = self.pool.get('sale.order')
-
         # For picking ticket from scratch, invoice it !
         if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
             vals['invoice_state'] = '2binvoiced'
@@ -2961,6 +2998,8 @@ class stock_picking(osv.osv):
                     _('Bad document'),
                     _('The document you want to convert is already a Picking Ticket')
                 )
+            if not out.sale_id and not out.claim:
+                raise osv.except_osv(_('Error'), _('You can not convert a Delivery Order from scratch into a Picking Ticket'))
             if out.state in ('cancel', 'done'):
                 raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
 
@@ -3002,6 +3041,7 @@ class stock_picking(osv.osv):
                 move_obj.write(cr, uid, [move.id], {
                     'location_dest_id': pack_loc_id,
                     'old_out_location_dest_id': move.location_dest_id.id,
+                    'qty_to_process': move.product_qty,
                 }, context=context)
 
         # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
@@ -3133,6 +3173,7 @@ class stock_picking(osv.osv):
                     wr_vals = {
                         'product_qty': move_data[move.id]['total_qty'],
                         'product_uos_qty': move_data[move.id]['total_qty'],
+                        'qty_to_process': move_data[move.id]['total_qty'],
                     }
                     move_obj.write(cr, uid, [move.id], wr_vals, context=context)
                 else:
@@ -3168,6 +3209,8 @@ class stock_picking(osv.osv):
                     'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
                     'move_lines': [],
                     'state': 'draft',
+                    'claim': picking.claim,
+                    'claim_name': picking.claim_name
                 }
                 context['allow_copy'] = True
 
@@ -4435,9 +4478,9 @@ class pack_family_memory(osv.osv):
             select
                 min(m.id) as id,
                 p.shipment_id as shipment_id,
+                from_pack as from_pack,
                 to_pack as to_pack,
                 array_agg(m.id) as move_lines,
-                min(from_pack) as from_pack,
                 min(packing_list) as packing_list,
                 bool_and(m.volume_set) as volume_set,
                 bool_and(m.weight_set) as weight_set,
@@ -4468,7 +4511,7 @@ class pack_family_memory(osv.osv):
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
+            group by p.shipment_id, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
     )
     ''')
 

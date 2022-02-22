@@ -165,6 +165,27 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_customer_name(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if not ids:
+            return {}
+
+        cr.execute('''
+            select
+                pol.id, p.name
+            from
+                purchase_order_line pol
+            left join sale_order_line sol on pol.linked_sol_id = sol.id
+            left join sale_order so on sol.order_id = so.id
+            left join res_partner p on so.partner_id = p.id
+            where
+                pol.id in %s
+        ''', (tuple(ids),))
+
+        return dict(cr.fetchall())
+
     def _get_state_to_display(self, cr, uid, ids, field_name, args, context=None):
         '''
         return the purchase.order.line state to display
@@ -502,6 +523,7 @@ class purchase_order_line(osv.osv):
         'red_color': fields.boolean(string='Red color'),
         'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False,
                                         string="Customer ref.", multi='custo_ref_ir_name'),
+        'customer_name': fields.function(_get_customer_name, method=True, type='text', string='Customer Name'),
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16, 2), related_uom='product_uom'),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
@@ -543,9 +565,11 @@ class purchase_order_line(osv.osv):
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
-        'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
+        'date_planned': fields.date(string='Requested DD', required=True, select=True,
                                     help='Header level dates has to be populated by default with the possibility of manual updates'),
-        'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
+        'esti_dd': fields.date(string='Estimated DD', select=True,
+                               help='Header level dates has to be populated by default with the possibility of manual updates'),
+        'confirmed_delivery_date': fields.date(string='Confirmed DD',
                                                help='Header level dates has to be populated by default with the possibility of manual updates.'),
         # not replacing the po_state from sale_followup - should ?
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
@@ -566,8 +590,12 @@ class purchase_order_line(osv.osv):
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
+        # for CV in version 1
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
-                                                string="Commitment Voucher Lines", readonly=True),
+                                                string="Commitment Voucher Lines (deprecated)", readonly=True),
+        # for CV starting from version 2
+        # note: cv_line_ids is a o2m because of the related m2o on CV lines but it should only contain one CV line
+        'cv_line_ids': fields.one2many('account.commitment.line', 'po_line_id', string="Commitment Voucher Lines"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
@@ -587,6 +615,7 @@ class purchase_order_line(osv.osv):
         'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
+        'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
     }
 
     _defaults = {
@@ -686,22 +715,18 @@ class purchase_order_line(osv.osv):
         """
         Check analytic distribution validity for given PO line.
         Also check that partner have a donation account (is PO is in_kind)
+
+        create_missing: deprecated, used in pre-SLL intermission push flow (US-3017)
         """
         # Objects
         ad_obj = self.pool.get('analytic.distribution')
         ccdl_obj = self.pool.get('cost.center.distribution.line')
         pol_obj = self.pool.get('purchase.order.line')
-        imd_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
         if isinstance(ids, int):
             ids = [ids]
-
-        try:
-            intermission_cc = imd_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')[1]
-        except ValueError:
-            intermission_cc = 0
 
         po_info = {}
         for pol in self.browse(cr, uid, ids, context=context):
@@ -712,31 +737,18 @@ class purchase_order_line(osv.osv):
                     if not po.partner_id.donation_payable_account:
                         raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
 
-                if po.partner_id and po.partner_id.partner_type == 'intermission':
-                    if not intermission_cc:
-                        raise osv.except_osv(_('Error'), _('No Intermission Cost Center found!'))
-
             po_info[po.id] = True
 
 
             distrib = pol.analytic_distribution_id or po.analytic_distribution_id or False
-
 
             # Raise an error if no analytic distribution found
             if not distrib:
                 # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
                 if po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
                     return True
-                if create_missing and po.partner_id and po.partner_id.partner_type == 'intermission':
-                    # intermission push flow, new line added: AD needed
-                    destination_id = pol.account_4_distribution and pol.account_4_distribution.default_destination_id and pol.account_4_distribution.default_destination_id.id or False
-                    ad_obj.create(cr, uid, {
-                        'purchase_line_ids': [(4, pol.id)],
-                        'cost_center_lines': [(0, 0, {'destination_id': destination_id, 'analytic_id': intermission_cc , 'percentage':'100', 'currency_id': po.currency_id.id})]
-                    })
-                else:
-                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
-                                         % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                     % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
             elif pol.analytic_distribution_state != 'valid':
                 id_ad = ad_obj.create(cr, uid, {})
@@ -765,7 +777,13 @@ class purchase_order_line(osv.osv):
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
 
+
             # check that the analytic accounts are active. Done at the end to use the newest AD of the pol (to re-browse)
+            if po.partner_id.partner_type in ('section', 'intermission', 'internal') and \
+                    ( pol.state in ('validated', 'sourced_sy', 'sourced_v') or pol.state == 'draft' and pol.created_by_sync):
+                # do not check on po line confirmation from instance
+                continue
+
             pol_ad = self.browse(cr, uid, pol.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
             ad = pol_ad or po.analytic_distribution_id or False
             if ad:
@@ -1270,6 +1288,7 @@ class purchase_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
             'from_dpo_line_id': False,
+            'dates_modified': False,
         })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
@@ -1293,7 +1312,7 @@ class purchase_order_line(osv.osv):
             self.pool.get('product.product')._get_restriction_error(cr, uid, [pol.product_id.id],
                                                                     {'partner_id': pol.order_id.partner_id.id}, context=context)
 
-        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], })
+        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], 'cv_line_ids': [], 'dates_modified': False})
 
         for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref']:
             if field not in default:
@@ -1317,6 +1336,8 @@ class purchase_order_line(osv.osv):
                 default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
             if 'analytic_distribution_id' not in default:
                 default['analytic_distribution_id'] = False
+            if 'esti_dd' not in default:
+                default['esti_dd'] = False
 
         if default.get('analytic_distribution_id'):
             default['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, default['analytic_distribution_id'], {}, context=context)
@@ -1384,6 +1405,13 @@ class purchase_order_line(osv.osv):
                     new_vals.update({'link_so_id': linked_so})
                 elif vals.get('origin'):
                     new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), po_obj=line.order_id, context=context))
+
+            if line.state in ('validated', 'validated_n', 'sourced_v', 'sourced_n') and \
+                    line.linked_sol_id and \
+                    not line.linked_sol_id.order_id.procurement_request and \
+                    line.linked_sol_id.order_id.partner_type not in ('external', 'esc') and \
+                    ('esti_dd' in vals and vals['esti_dd'] != line.esti_dd or 'confirmed_delivery_date' in vals and vals['confirmed_delivery_date'] != line.confirmed_delivery_date):
+                new_vals['dates_modified'] = True
 
             if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
                 new_vals['from_fo'] = True
@@ -1864,14 +1892,17 @@ class purchase_order_line(osv.osv):
 
         import_commitments = self.pool.get('unifield.setup.configuration').get_config(cr, uid).import_commitments
         for pol in self.browse(cr, uid, ids, context=context):
-            # only create CV for external and ESC partners:
-            if pol.order_id.partner_id.partner_type not in ['external', 'esc']:
+            if pol.order_id.partner_id.partner_type == 'internal':
                 return False
 
             if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
-            if pol.order_id.order_type in ['loan', 'in_kind']:
+            if pol.order_id.order_type in ['loan', 'in_kind', 'donation_st', 'donation_exp']:
+                return False
+
+            # exclude push flow (FO or FO line created first)
+            if pol.order_id.push_fo or pol.set_as_sourced_n:
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)
@@ -1879,45 +1910,66 @@ class purchase_order_line(osv.osv):
                 commitment_voucher_id = commitment_voucher_id[0]
             else: # create commitment voucher
                 if not pol.confirmed_delivery_date:
-                    raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+                    raise osv.except_osv(_('Error'), _('Confirmed Delivery Date is a mandatory field.'))
                 commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], cv_date=pol.confirmed_delivery_date, context=context)
 
-            # group PO line by account_id:
             expense_account = pol.account_4_distribution and pol.account_4_distribution.id or False
             if not expense_account:
                 raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
 
+            # in CV in version 1, PO lines are grouped by account_id. Else 1 PO line generates 1 CV line.
+            cv_version = self.pool.get('account.commitment').read(cr, uid, commitment_voucher_id, ['version'], context=context)['version']
+            cc_lines = []
+            ad_header = []  # if filled in, the line itself has no AD but uses the one at header level
             if pol.analytic_distribution_id:
                 cc_lines = pol.analytic_distribution_id.cost_center_lines
-            else:
+            elif cv_version < 2:
+                # in CV in version 1, if there is no AD on the PO line, the AD at PO header level is used at CV line level
                 cc_lines = pol.order_id.analytic_distribution_id.cost_center_lines
+            else:
+                ad_header = pol.order_id.analytic_distribution_id.cost_center_lines
 
-            if not cc_lines:
+            if not cc_lines and not ad_header:
                 raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
                                      % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
-
-            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
-            if not commit_line_id: # create new commitment line
-                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
-                commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, {
+            new_cv_line = False
+            if cv_version > 1:
+                new_cv_line = True
+            else:
+                commit_line_id = self.pool.get('account.commitment.line').search(cr, uid,
+                                                                                 [('commit_id', '=', commitment_voucher_id),
+                                                                                  ('account_id', '=', expense_account)], context=context)
+                if not commit_line_id:
+                    new_cv_line = True
+            if new_cv_line:  # create new commitment line
+                if ad_header:  # the line has no AD itself, it uses the AD at header level
+                    distrib_id = False
+                else:
+                    distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
+                commit_line_vals = {
                     'commit_id': commitment_voucher_id,
                     'account_id': expense_account,
                     'amount': pol.price_subtotal,
                     'initial_amount': pol.price_subtotal,
-                    'purchase_order_line_ids': [(4, pol.id)],
                     'analytic_distribution_id': distrib_id,
-                }, context=context)
-                for aline in cc_lines:
-                    vals = {
-                        'distribution_id': distrib_id,
-                        'analytic_id': aline.analytic_id.id,
-                        'currency_id': pol.order_id.currency_id.id,
-                        'destination_id': aline.destination_id.id,
-                        'percentage': aline.percentage,
-                    }
-                    self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
-                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], expense_account, context=context)
+                }
+                if cv_version > 1:
+                    commit_line_vals.update({'po_line_id': pol.id, 'line_number': pol.line_number, 'line_product_id': pol.product_id.id})
+                else:
+                    commit_line_vals.update({'purchase_order_line_ids': [(4, pol.id)], })
+                commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, commit_line_vals, context=context)
+                if distrib_id:
+                    for aline in cc_lines:
+                        vals = {
+                            'distribution_id': distrib_id,
+                            'analytic_id': aline.analytic_id.id,
+                            'currency_id': pol.order_id.currency_id.id,
+                            'destination_id': aline.destination_id.id,
+                            'percentage': aline.percentage,
+                        }
+                        self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], expense_account, context=context)
 
             else: # update existing commitment line:
                 commit_line_id = commit_line_id[0]
@@ -2100,6 +2152,28 @@ class purchase_order_line(osv.osv):
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
         self.pool.get('account.invoice').button_compute(cr, uid, list(inv_ids.values()), {'type':'in_invoice'}, set_total=True)
 
+
+    def update_dates_from_pol(self, cr, uid, source, data, context=None):
+        line_info = data.to_dict()
+        if line_info.get('linked_sol_id', {}).get('sync_local_id') and (line_info.get('esti_dd') or line_info.get('confirmed_delivery_date')):
+            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', line_info['linked_sol_id']['sync_local_id'])], limit=1, context=context)
+            if pol_id:
+                pol_record = self.browse(cr, uid, pol_id[0], fields_to_fetch=['line_number', 'order_id', 'state'], context=context)
+                if pol_record['state'] in ('sourced_v', 'sourced_n'):
+                    to_write = {}
+                    for date in ['confirmed_delivery_date', 'esti_dd']:
+                        if line_info.get(date):
+                            to_write[date] = line_info[date]
+                    self.write(cr, uid, pol_id, to_write, context)
+                    return "Dates updated on %s line number %s (id:%s)" % (pol_record.order_id.name, pol_record.line_number, pol_record.id)
+                elif pol_record['state'] in ('confirmed', 'done', 'cancel', 'cancel_r'):
+                    return "Message ignored %s line number %s (id:%s), state: %s" % (pol_record.order_id.name, pol_record.line_number, pol_record.id, pol_record['state'])
+                else:
+                    raise Exception("%s line number %s (id:%s), dates not updated due to wrong state: %s" % (pol_record.order_id.name, pol_record.line_number, pol_record.id, pol_record['state']))
+
+            raise Exception("PO line not found.")
+
+        return True
 
     def update_date_expected(self, cr, uid, source, data, context=None):
         line_info = data.to_dict()

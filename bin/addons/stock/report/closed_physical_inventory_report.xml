@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_closed_physical_inventory"
+            string="Closed Inventory Export"
+            model="physical.inventory"
+            name="report_closed_physical_inventory"
+            report_type="openpyxl"
+            auto="False"
+            target_filename="${_('Closed Inventory Report')}"
+            menu="True"
+            />
+
+    </data>
+</openerp>

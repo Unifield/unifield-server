@@ -1,0 +1,15 @@
+<openerp>
+    <data>
+        <report
+            id="report_historical_consumption_xlsx"
+            string="Historical Consumption"
+            model="product.history.consumption"
+            name="report_historical_consumption_xlsx"
+            report_type="openpyxl"
+            auto="False"
+            target_filename="Historical-Consumption_%(year)s_%(month)s_%(day)s"
+            menu="False"
+            />
+    </data>
+</openerp>
+

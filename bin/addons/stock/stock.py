@@ -301,6 +301,49 @@ class stock_location(osv.osv):
 
             return [('id', 'in', retrict)]
 
+    def _search_from_histo(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            if arg[2] and isinstance(arg[2], list) and isinstance(arg[2][0], tuple) and len(arg[2][0]) == 3:
+                if context is None:
+                    context = {}
+                dom = []
+                if arg[2][0][2]:
+                    dom = [('id', 'not in', arg[2][0][2])]
+                elif context.get('dest_location'):
+                    dom += [('usage', '=', 'customer')]
+
+                return dom
+
+            return []
+
+    def _is_intermediate_parent(self, cr, uid, ids, name, args, context=None):
+        """
+        Check if the Parent Location is Intermediate Stocks
+        """
+        if context is None:
+            context = {}
+
+        interm = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                     'stock_location_intermediate_client_view')[1]
+
+        res = {}
+        for loc in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
+            res[loc.id] = loc.location_id and loc.location_id.id == interm or False
+        return res
+
+    def _search_intermediate_parent(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            itermediate_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                                      'stock_location_intermediate_client_view')[1]
+            return [('location_id', 'child_of', itermediate_view_id)]
+        return []
+
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active', help="By unchecking the active field, you may hide a location without deleting it."),
@@ -366,7 +409,12 @@ class stock_location(osv.osv):
         'db_id': fields.function(_get_coordo_db_id, type='integer', method=True, string='DB id for sync', internal=True, multi='coordo_db_id'),
         'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
         'from_config': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_config, string='Set in Loc. Config', internal=1),
+        'from_histo': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_histo, string='Set in Historical Consumption', internal=1),
         'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=False, fnct_search=_search_initial_stock_inv_display, string='Display in Initial stock inventory', readonly=True),
+        'search_color': fields.selection([('dimgray', 'Dim Gray'), ('darkorchid', 'Dark Orchid'), ('lightpink', 'Light Pink'), ('royalblue', 'Royal Blue'), ('yellowgreen', 'Yellow Green'), ('darkorange', 'Dark Orange'), ('sandybrown', 'Sandy Brown'), ], string="Color for Search views"),
+        'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?", fnct_search=_search_intermediate_parent),
+        'moved_location': fields.boolean('Eprep location moved from Intermediate Stock', internal=1, readonly=1),
+
     }
     _defaults = {
         'active': True,
@@ -379,7 +427,15 @@ class stock_location(osv.osv):
         'posz': 0,
         'icon': False,
         'scrap_location': False,
+        'moved_location': False,
     }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if 'moved_location' not in default:
+            default['moved_location'] = False
+        return super(stock_location, self).copy(cr, uid, id, default, context)
 
     def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
         return kwargs.get('result', None)
@@ -768,9 +824,14 @@ class stock_picking(osv.osv):
         if vals.get('type', False) and vals['type'] == 'in' \
                 and not vals.get('from_wkf', False) and not vals.get('from_wkf_sourcing', False):
             reason_type = self.pool.get('stock.reason.type').browse(cr, user, vals.get('reason_type_id', False), context=context)
-            if reason_type and reason_type.name == 'Damage':
-                raise osv.except_osv(_('Error'), _('You can not create an Incoming Shipment from scratch with %s reason type')
-                                     % (reason_type.name,))
+            return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, user, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            if reason_type:
+                if reason_type.name == 'Damage':
+                    raise osv.except_osv(_('Error'), _('You can not create an Incoming Shipment from scratch with %s reason type')
+                                         % (reason_type.name,))
+                if reason_type.id == return_reason_type_id and vals.get('partner_id2', False):
+                    vals['partner_id2'] = False
+
         if 'type' in vals and (('name' not in vals) or (vals.get('name')=='/')):
             seq_obj_name =  'stock.picking.' + vals['type']
             vals['name'] = self.pool.get('ir.sequence').get(cr, user, seq_obj_name)
@@ -879,7 +940,7 @@ class stock_picking(osv.osv):
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
         'claim': fields.boolean('Claim'),
         'claim_name': fields.char(string='Claim name', size=512),
-        'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
+        'physical_reception_date': fields.datetime('Physical Reception Date'),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
         'packing_list': fields.char('Supplier Packing List', size=30),
         'is_subpick': fields.boolean('Main or Sub PT'),
@@ -1193,12 +1254,20 @@ class stock_picking(osv.osv):
         return True
 
     def get_currency_id(self, cr, uid, picking):
-        return False
+        if picking.sale_id:
+            return picking.sale_id.pricelist_id.currency_id.id
+        else:
+            if picking.purchase_id:
+                return picking.purchase_id.pricelist_id.currency_id.id
+            else:
+                return False
 
     def _get_payment_term(self, cr, uid, picking):
         """ Gets payment term from partner.
         @return: Payment term
         """
+        if picking.sale_id and picking.sale_id.payment_term:
+            return picking.sale_id.payment_term.id
         partner = picking.address_id.partner_id
         return partner.property_payment_term and partner.property_payment_term.id or False
 
@@ -1206,37 +1275,85 @@ class stock_picking(osv.osv):
         """ Gets invoice address of a partner
         @return {'contact': address, 'invoice': address} for invoice
         """
+        res = {}
         partner_obj = self.pool.get('res.partner')
+        if picking.sale_id:
+            res['contact'] = picking.sale_id.partner_order_id.id
+            res['invoice'] = picking.sale_id.partner_invoice_id.id
+            return res
         partner = picking.address_id.partner_id
-        return partner_obj.address_get(cr, uid, [partner.id],
-                                       ['contact', 'invoice'])
+        res = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+        if picking.purchase_id:
+            partner = picking.purchase_id.partner_id or picking.address_id.partner_id
+            data = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+            res.update(data)
+        return res
 
     def _get_comment_invoice(self, cr, uid, picking):
         """
         @return: comment string for invoice
         """
+        if picking.note or (picking.sale_id and picking.sale_id.note):
+            return picking.note or picking.sale_id.note
+        if picking.purchase_id and picking.purchase_id.notes:
+            if picking.note:
+                return picking.note + '\n' + picking.purchase_id.notes
+            else:
+                return picking.purchase_id.notes
         return picking.note or ''
 
     def _get_price_unit_invoice(self, cr, uid, move_line, type, context=None):
         """ Gets price unit for invoice
+        Updates the Unit price according to the UoM received and the UoM ordered
         @param move_line: Stock move lines
         @param type: Type of invoice
         @return: The price unit for the move line
         """
         if context is None:
             context = {}
-
-        if type in ('in_invoice', 'in_refund'):
-            # Take the user company and pricetype
-            context['currency_id'] = move_line.company_id.currency_id.id
-            amount_unit = move_line.product_id.price_get('standard_price', context)[move_line.product_id.id]
-            return amount_unit
-        else:
-            return move_line.product_id.list_price
+        res = None
+        if move_line.sale_line_id and move_line.sale_line_id.product_id.id == move_line.product_id.id:
+            uom_id = move_line.product_id.uom_id.id
+            uos_id = move_line.product_id.uos_id and move_line.product_id.uos_id.id or False
+            price = move_line.sale_line_id.price_unit
+            coeff = move_line.product_id.uos_coeff
+            if uom_id != uos_id and coeff != 0:
+                price_unit = price / coeff
+                res = price_unit
+            else:
+                res = move_line.sale_line_id.price_unit
+        if res is None:
+            if move_line.purchase_line_id:
+                res = move_line.purchase_line_id.price_unit
+            else:
+                if type in ('in_invoice', 'in_refund'):
+                    # Take the user company and pricetype
+                    context['currency_id'] = move_line.company_id.currency_id.id
+                    amount_unit = move_line.product_id.price_get('standard_price', context)[move_line.product_id.id]
+                    res = amount_unit
+                else:
+                    res = move_line.product_id.list_price
+        if type == 'in_refund':
+            if move_line.picking_id and move_line.picking_id.purchase_id:
+                po_line_obj = self.pool.get('purchase.order.line')
+                po_line_id = po_line_obj.search(cr, uid, [('order_id', '=', move_line.picking_id.purchase_id.id),
+                                                          ('product_id', '=', move_line.product_id.id),
+                                                          ('state', '!=', 'cancel')
+                                                          ], limit=1)
+                if po_line_id:
+                    return po_line_obj.read(cr, uid, po_line_id[0], ['price_unit'])['price_unit']
+        if move_line.purchase_line_id:
+            po_uom_id = move_line.purchase_line_id.product_uom.id
+            move_uom_id = move_line.product_uom.id
+            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, move_uom_id, 1, po_uom_id)
+            return res / uom_ratio
+        return res
 
     def _get_discount_invoice(self, cr, uid, move_line):
         '''Return the discount for the move line'''
-        return 0.0
+        if move_line.sale_line_id:
+            return move_line.sale_line_id.discount
+        return 0.0  # including if move_line.purchase_line_id
 
     def _get_taxes_invoice(self, cr, uid, move_line, type):
         """ Gets taxes on invoice
@@ -1244,6 +1361,10 @@ class stock_picking(osv.osv):
         @param type: Type of invoice
         @return: Taxes Ids for the move line
         """
+        if move_line.sale_line_id and move_line.sale_line_id.product_id.id == move_line.product_id.id:
+            return [x.id for x in move_line.sale_line_id.tax_id]
+        if move_line.purchase_line_id:
+            return [x.id for x in move_line.purchase_line_id.taxes_id]
         if type in ('in_invoice', 'in_refund'):
             taxes = move_line.product_id.supplier_taxes_id
         else:
@@ -1259,7 +1380,11 @@ class stock_picking(osv.osv):
         else:
             return [x.id for x in taxes]
 
-    def _get_account_analytic_invoice(self, cr, uid, picking, move_line):
+    def _get_account_analytic_invoice(self, picking, move_line):
+        if picking.sale_id:
+            return picking.sale_id.project_id.id
+        if move_line.purchase_line_id:
+            return move_line.purchase_line_id.account_analytic_id.id
         return False
 
     def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id, account_id):
@@ -1278,7 +1403,10 @@ class stock_picking(osv.osv):
             if move_line.sale_line_id:
                 ana_obj = self.pool.get('analytic.distribution')
                 vals.update({'sale_order_line_id': move_line.sale_line_id.id})
-                distrib_id = move_line.sale_line_id.analytic_distribution_id and move_line.sale_line_id.analytic_distribution_id.id or False
+                distrib_id = False
+                if not move_line.sale_line_id.cv_line_ids:
+                    # AD on FO line from CV: already set in fetch_analytic_distribution
+                    distrib_id = move_line.sale_line_id.analytic_distribution_id and move_line.sale_line_id.analytic_distribution_id.id or False
                 if distrib_id:
                     new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
                     if not new_invl_distrib_id:
@@ -1294,8 +1422,32 @@ class stock_picking(osv.osv):
         return True
 
     def _invoice_hook(self, cr, uid, picking, invoice_id):
-        '''Call after the creation of the invoice'''
+        """
+        Create a link between invoice and purchase_order.
+        Copy analytic distribution from purchase order to invoice (or from commitment voucher if it exists)
+
+        To call after the creation of the invoice
+        """
+        sale_obj = self.pool.get('sale.order')
+        purchase_obj = self.pool.get('purchase.order')
+        if invoice_id and picking:
+            po_id = picking.purchase_id and picking.purchase_id.id or False
+            so_id = picking.sale_id and picking.sale_id.id or False
+            if po_id:
+                self.pool.get('purchase.order').write(cr, uid, [po_id], {'invoice_ids': [(4, invoice_id)]})
+            if so_id:
+                self.pool.get('sale.order').write(cr, uid, [so_id], {'invoice_ids': [(4, invoice_id)]})
+            # Copy analytic distribution from purchase order or commitment voucher (if it exists) or sale order
+            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [invoice_id])
+        if picking.sale_id:
+            sale_obj.write(cr, uid, [picking.sale_id.id], {
+                'invoice_ids': [(4, invoice_id)],
+            })
+        if picking.purchase_id:
+            purchase_obj.write(cr, uid, [picking.purchase_id.id], {'invoice_id': invoice_id, })
         return
+
+    # action_invoice_create method has been removed because of the impossibility to retrieve DESTINATION from SO.
 
     def _get_invoice_type(self, pick):
         src_usage = dest_usage = None
@@ -1356,6 +1508,16 @@ class stock_picking(osv.osv):
         if picking.claim:
             # don't invoice claim
             return False, False
+
+        all_claim = True
+        for move_line in picking.move_lines:
+            if not move_line.sale_line_id or not move_line.sale_line_id.in_name_goods_return:
+                all_claim = False
+                break
+        if all_claim:
+            # don't invoice return goods
+            return False, False
+
 
         if not partner:
             raise osv.except_osv(_('Error, no partner !'),
@@ -1473,6 +1635,7 @@ class stock_picking(osv.osv):
             di = 'is_direct_invoice' in invoice_vals and invoice_vals['is_direct_invoice']
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
+            # SI or ISI
             is_si = in_invoice and not di and not inkind_donation and not debit_note and not intermission
             is_ivi = in_invoice and not debit_note and not inkind_donation and intermission
             po = picking and picking.purchase_id
@@ -1501,12 +1664,15 @@ class stock_picking(osv.osv):
             if origin_ivi:
                 invoice_vals.update({'origin': origin_ivi})
 
-            # Add "synced" tag for STV and IVO created from Supply flow
+            # Add "synced" tag + real_doc_type for STV and IVO created from Supply flow
             out_invoice = inv_type == 'out_invoice'
             is_stv = out_invoice and not di and not inkind_donation and not intermission
             is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
             if is_stv or is_ivo:
-                invoice_vals.update({'synced': True, })
+                real_doc_type = is_stv and 'stv' or 'ivo'
+                invoice_vals.update({'synced': True,
+                                     'real_doc_type': real_doc_type,
+                                     })
 
             # Update Payment terms and due date for the Supplier Invoices and Refunds
             if is_si or inv_type == 'in_refund':
@@ -1537,6 +1703,10 @@ class stock_picking(osv.osv):
         if picking.type == 'out' and context.get('invoice_dpo_confirmation') and move_line.dpo_id.id != context.get('invoice_dpo_confirmation'):
             return False
 
+        if move_line.sale_line_id and move_line.sale_line_id.in_name_goods_return:
+            # do not invoice goods return
+            return False
+
         if not inv_type:
             inv_type = self.pool.get('account.invoice').read(cr, uid, invoice_id, ['type'], context=context)['type']
 
@@ -1550,31 +1720,45 @@ class stock_picking(osv.osv):
         else:
             name = move_line.name
 
-        if inv_type in ('out_invoice', 'out_refund'):
-            account_id = move_line.product_id.product_tmpl_id.\
-                property_account_income.id
+        cv_version = 0
+        if move_line.picking_id.type == 'in':
+            cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
+                move_line.purchase_line_id.cv_line_ids[0] or False
+            cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
+            if cv_version > 1:
+                account_id = cv_line.account_id.id
+            else:
+                account_id = move_line.product_id.product_tmpl_id.\
+                    property_account_expense.id
+                if not account_id:
+                    account_id = move_line.product_id.categ_id.\
+                        property_account_expense_categ.id
+        elif move_line.picking_id.type == 'out':
+            account_id = False
+            if move_line.sale_line_id and move_line.sale_line_id.cv_line_ids and move_line.sale_line_id.cv_line_ids[0].account_id:
+                cv_line = move_line.sale_line_id.cv_line_ids[0] or False
+                account_id = move_line.sale_line_id.cv_line_ids[0].account_id.id
+                cv_version = 2
             if not account_id:
-                account_id = move_line.product_id.categ_id.\
-                    property_account_income_categ.id
-        else:
-            account_id = move_line.product_id.product_tmpl_id.\
-                property_account_expense.id
-            if not account_id:
-                account_id = move_line.product_id.categ_id.\
-                    property_account_expense_categ.id
+                account_id = move_line.product_id.product_tmpl_id.\
+                    property_account_income.id
+                if not account_id:
+                    account_id = move_line.product_id.categ_id.\
+                        property_account_income_categ.id
 
         price_unit = self._get_price_unit_invoice(cr, uid,
                                                   move_line, inv_type)
         discount = self._get_discount_invoice(cr, uid, move_line)
         tax_ids = self._get_taxes_invoice(cr, uid, move_line, inv_type)
-        account_analytic_id = self._get_account_analytic_invoice(cr, uid, picking, move_line)
+        account_analytic_id = self._get_account_analytic_invoice(picking, move_line)
 
         #set UoS if it's a sale and the picking doesn't have one
         uos_id = move_line.product_uos and move_line.product_uos.id or False
         if not uos_id and inv_type in ('out_invoice', 'out_refund'):
             uos_id = move_line.product_uom.id
-        account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
-        invoice_line_id = invoice_line_obj.create(cr, uid, {
+        if cv_version < 2:
+            account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
+        inv_vals = {
             'name': name,
             'origin': origin,
             'invoice_id': invoice_id,
@@ -1586,12 +1770,17 @@ class stock_picking(osv.osv):
             'quantity': move_line.product_uos_qty or move_line.product_qty,
             'invoice_line_tax_id': [(6, 0, tax_ids)],
             'account_analytic_id': account_analytic_id,
-        }, context=context)
+        }
+        if cv_version > 1:
+            inv_vals.update({'cv_line_ids': [(4, cv_line.id)]})
+
+        invoice_line_id = invoice_line_obj.create(cr, uid, inv_vals, context=context)
         self._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
 
         if picking.sale_id:
             for sale_line in picking.sale_id.order_line:
                 if sale_line.product_id.type == 'service' and sale_line.invoiced == False:
+                    # TODO: DEPRECATED ?
                     if group:
                         name = picking.name + '-' + sale_line.name
                     else:
@@ -1613,7 +1802,7 @@ class stock_picking(osv.osv):
                     tax_ids = sale_line.tax_id
                     tax_ids = [x.id for x in tax_ids]
 
-                    account_analytic_id = self._get_account_analytic_invoice(cr, uid, picking, sale_line)
+                    account_analytic_id = self._get_account_analytic_invoice(picking, sale_line)
 
                     account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, picking.sale_id.partner_id.property_account_position, account_id)
                     invoice_line_id = invoice_line_obj.create(cr, uid, {

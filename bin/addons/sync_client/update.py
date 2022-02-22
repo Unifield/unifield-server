@@ -683,6 +683,8 @@ class update_received(osv.osv,fv_formatter):
                     # Re-start import_data on rows that succeeds before
                     if value_index > 0:
                         # Try to import the beginning of the values and permit the import of the rest
+                        # db rollback, previous updates will be replayed, clear the id cache
+                        self.pool.get('ir.model.data')._get_id.clear_cache(cr.dbname)
                         try:
                             res = secure_import_data(obj, import_fields, values[:value_index])
                             assert res[0] == value_index, res[2]
@@ -833,7 +835,7 @@ class update_received(osv.osv,fv_formatter):
                     }, context=context)
 
             updates = [update for update in updates if update.id not in deleted_update_ids or
-                             (not do_deletion and update.force_recreation)]
+                       (not do_deletion and update.force_recreation)]
 
             if not updates:
                 continue
@@ -851,10 +853,10 @@ class update_received(osv.osv,fv_formatter):
                 confilcting_ids = obj.need_to_push(cr, uid,
                                                    list(sdref_res_id.values()), import_fields, context=context)
                 confilcting_updates = [update for update in updates if update.handle_priority and \
-                    update.sdref in sdref_res_id and \
-                    sdref_res_id[update.sdref] in confilcting_ids]
+                                       update.sdref in sdref_res_id and \
+                                       sdref_res_id[update.sdref] in confilcting_ids]
                 updates_to_ignore = [update for update in confilcting_updates if priorities[update.source] \
-                    > priorities[local_entity.name]]
+                                     > priorities[local_entity.name]]
                 for update in confilcting_updates:
                     if update not in updates_to_ignore:
                         self._logger.warn(

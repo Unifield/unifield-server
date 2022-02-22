@@ -769,6 +769,9 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                 fname = obj.report_xsl
                 parse_func = trans_parse_xsl
                 report_type = "xsl"
+            if obj.target_filename:
+                for code in re.findall('\${_\([\'"]([ \w]+)[\'"]\)}',  obj.target_filename):
+                    push_translation(module, 'code', 'ir.actions.report.xml', 'name:%s'%obj.report_name, encode(code))
             if fname and obj.report_type in ('pdf', 'xsl'):
                 try:
                     report_file = tools.file_open(fname)

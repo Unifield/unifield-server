@@ -67,10 +67,10 @@ class ocp_matching_export_wizard(osv.osv_memory):
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         # The file name is composed of:
-        # - the first 3 digits of the Prop. Instance code
+        # - the first 3 characters of the Prop. Instance code
         # - the year and month of the selected period
         # - the current datetime
-        # Ex: KE1_201610_171116110306_Check_on_reconcilable_entries
+        # E.g. KE1_201610_171116110306_Check_on_reconcilable_entries
         instance_code = inst and inst.code[:3] or ''
         selected_period = period and strftime('%Y%m', strptime(period.date_start, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')

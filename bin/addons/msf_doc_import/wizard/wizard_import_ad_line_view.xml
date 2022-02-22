@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="wizard_import_ad_line" model="ir.ui.view">
+            <field name="name">wizard.import.ad.line</field>
+            <field name="model">wizard.import.ad.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Import AD on lines">
+                    <separator colspan="2" string="Document"/>
+                     <newline />
+                    <field name="purchase_id" readonly="1" colspan="2" attrs="{'invisible': [('purchase_id', '=', False)]}"/>
+                    <field name="sale_id" readonly="1" colspan="2" attrs="{'invisible': [('sale_id', '=', False)]}"/>
+                     <newline />
+
+                    <group colspan="4"><html><br/><br/></html></group>
+                    <group colspan="4" attrs="{'invisible':[('state', '=', 'error')]}">
+                        <separator colspan="2" string="Export"/>
+                        <newline />
+                        <button name="export_ad_line" string="Export Template" icon="xlsx.png" type="object" colspan="2"/>
+                        <group colspan="2" />
+                    </group>
+
+
+                    <group colspan="4" ><html><br/><br/></html></group>
+                    <separator colspan="2" string="Import"/>
+                    <newline/>
+                    <group colspan="4" col="8">
+                        <field name="file" colspan="2"/>
+                        <button name="import_file" string="Import file" icon="gtk-go-forward" type="object" colspan="2"/>
+                        <group colspan="4" />
+                    </group>
+                    <field name="message" nolabel="1" widget="full_text" readonly="1" attrs="{'invisible':[('state', '=', 'draft')]}" colspan="4"/>
+
+
+                    <group colspan="4" ><html><br/><br/></html></group>
+
+                    <field name="state"/>
+                    <newline />
+                    <button name="close_import" string="Close window" icon="gtk-cancel" type="object" colspan="2"/>
+
+                    <html>
+                        <script language="javascript">
+                            var state_val = $('#state').val()
+                            if (state_val == 'error') {
+                                $('#message').css('color', 'rgb(242, 34, 12)').css('font-weight', 'bold').css('font-size', '1.2em');
+                            }
+                        </script>
+
+                    </html>
+            </form>
+            </field>
+        </record>
+    </data>
+</openerp>

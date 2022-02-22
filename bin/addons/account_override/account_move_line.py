@@ -309,13 +309,13 @@ class account_move_line(osv.osv):
                                      help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
                                            help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
-        'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True),
+        'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True, join=True),
         'name': fields.char('Description', size=64, required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
-        'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry."),
-        'document_date': fields.date('Document Date', size=255, required=True, readonly=True),
+        'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry.", select=1),
+        'document_date': fields.date('Document Date', size=255, required=True, readonly=True, select=1),
         'date': fields.related('move_id','date', string='Posting date', type='date', required=True, select=True,
                                store = {
                                    'account.move': (_get_move_lines, ['date'], 20)
@@ -374,15 +374,16 @@ class account_move_line(osv.osv):
         'is_si_refund': lambda *a: False,
     }
 
-    _order = 'move_id DESC'
+    _order = 'move_id DESC, id'
+    # see account_move_line_move_id_id_index on account_move_line
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         UFTP-262: As we permit user to define its own reference for a journal item in a Manual Journal Entry, we display the reference from the Journal Entry as default value for Journal Item.
         """
         if context is None:
             context = {}
-        res = super(account_move_line, self).default_get(cr, uid, fields, context=context)
+        res = super(account_move_line, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if context.get('move_reference', False) and context.get('from_web_menu', False):
             if not 'reference' in res:
                 res.update({'reference': context.get('move_reference')})

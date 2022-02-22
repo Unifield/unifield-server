@@ -7,3 +7,5 @@ SPECIAL_CHAR = '78hHYBWZnwnPWOXGa6Du3Y28BmwSCVu4PlYDM'
 
 from . import spreadsheet_xml
 from . import spreadsheet_xml_write
+from . import xlsx_write
+

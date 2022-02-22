@@ -35,14 +35,14 @@ class split_memory_move(osv.osv_memory):
         'uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Get the UoM from the line
         '''
         if not context:
             context = {}
 
-        res = super(split_memory_move, self).default_get(cr, uid, fields, context=context)
+        res = super(split_memory_move, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         move_id = context.get('memory_move_ids', [])
         if move_id:

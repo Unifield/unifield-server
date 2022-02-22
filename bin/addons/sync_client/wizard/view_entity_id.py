@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from lxml import etree
+from tools.translate import _
 
 
 class view_entity_id(osv.osv_memory):
@@ -39,12 +40,17 @@ class view_entity_id(osv.osv_memory):
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         res = super(view_entity_id, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'form':
-            hw_id = self.pool.get("sync.client.entity")._hardware_id or ''
+            entity = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context)
+            hw_id = entity._hardware_id or ''
+            last_seq = entity.update_last or ''
 
             doc = etree.XML(res['arch'])
-            nodes = doc.xpath("//label[@string]")
+            nodes = doc.xpath("//label[@id='name']")
             if nodes:
-                nodes[0].set('string', hw_id)
+                nodes[0].set('string', 'Hardware ID: %s' % hw_id)
+            nodes = doc.xpath("//label[@id='sequence']")
+            if nodes:
+                nodes[0].set('string', _('Last update: %s')%last_seq)
             res['arch'] = etree.tostring(doc, encoding='unicode')
 
         return res

@@ -436,5 +436,32 @@ class stock_picking(osv.osv):
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s: %s') % (plural, message))
         return True
 
+    def wizard_import_return_from_unit(self, cr, uid, ids, context=None):
+        wiz_obj = self.pool.get('wizard.return.from.unit.import')
+        return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves',
+                                                                                    'reason_type_return_from_unit')[1]
+
+        ftf = ['reason_type_id', 'ext_cu', 'purchase_id', 'move_lines']
+        picking = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
+        if picking.reason_type_id.id != return_reason_type_id:
+            raise osv.except_osv(_('Error'), _('The reason type does not correspond to the expected “Return from Unit”, please check this'))
+        if not picking.ext_cu:
+            raise osv.except_osv(_('Error'), _('The header field “Ext. CU” must be filled for this import, please check this'))
+        if picking.purchase_id:
+            raise osv.except_osv(_('Error'), _('This type of import is only available for INs from scratch'))
+        if picking.move_lines:
+            raise osv.except_osv(_('Error'), _('Lines already exist for this IN, this import is not possible'))
+
+        wiz_id = wiz_obj.create(cr, uid, {'picking_id': ids[0], 'state': 'draft'}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.return.from.unit.import',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'crush',
+            'context': context,
+        }
+
 
 stock_picking()

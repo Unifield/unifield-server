@@ -153,8 +153,8 @@ class account_move_line(osv.osv):
         query += company_clause
         return query
 
-    def default_get(self, cr, uid, fields, context=None):
-        data = self._default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        data = self._default_get(cr, uid, fields, context=context, from_web=from_web)
         for f in list(data.keys()):
             if f not in fields:
                 del data[f]
@@ -206,7 +206,7 @@ class account_move_line(osv.osv):
                 })
         return context
 
-    def _default_get(self, cr, uid, fields, context=None):
+    def _default_get(self, cr, uid, fields, context=None, from_web=False):
         if context is None:
             context = {}
         if not context.get('journal_id', False) and context.get('search_default_journal_id', False):
@@ -220,7 +220,7 @@ class account_move_line(osv.osv):
         partner_obj = self.pool.get('res.partner')
         context = self.convert_to_period(cr, uid, context)
         # Compute simple values
-        data = super(account_move_line, self).default_get(cr, uid, fields, context=context)
+        data = super(account_move_line, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         # Starts: Manual entry from account.move form
         if context.get('lines',[]):
             total_new = 0.00
@@ -632,7 +632,6 @@ class account_move_line(osv.osv):
         'debit_currency': 0.0,
         'credit_currency': 0.0,
     }
-    _order = "date desc, id desc"
     _sql_constraints = [
         ('credit_debit1', 'CHECK (credit*debit=0)',  'Wrong credit or debit value in accounting entry !'),
         ('credit_debit2', 'CHECK (credit+debit>=0)', 'Wrong credit or debit value in accounting entry !'),
@@ -645,6 +644,9 @@ class account_move_line(osv.osv):
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'account_move_line_journal_id_period_id_index\'')
         if not cr.fetchone():
             cr.execute('CREATE INDEX account_move_line_journal_id_period_id_index ON account_move_line (journal_id, period_id)')
+        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'account_move_line_move_id_id_index\'')
+        if not cr.fetchone():
+            cr.execute('CREATE INDEX account_move_line_move_id_id_index ON account_move_line (move_id DESC, id)')
         return ret
 
     def _check_no_view(self, cr, uid, ids, context=None):

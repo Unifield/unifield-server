@@ -358,6 +358,20 @@ class account_invoice(osv.osv):
                 aal_obj.write(cr, uid, aal_ids, {'reference': reference}, context=context)
         return True
 
+    def _check_empty_account(self, cr, uid, ids, context=None):
+        """
+        Raises an error if one of the invoice lines has no account.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['invoice_line'], context=context):
+            for invl in inv.invoice_line:
+                if not invl.account_id:
+                    raise osv.except_osv(_('Error'), _('The account is missing on the line No. %s.') % invl.line_number)
+        return True
+
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Add down payment check after others verifications
@@ -368,6 +382,7 @@ class account_invoice(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
         # Browse invoice and all invoice lines to detect a non-valid line
+        self._check_empty_account(cr, uid, ids, context=context)
         self._check_analytic_distribution_state(cr, uid, ids)
         # Default behaviour
         res = super(account_invoice, self).action_open_invoice(cr, uid, ids, context)

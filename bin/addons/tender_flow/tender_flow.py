@@ -176,7 +176,7 @@ class tender(osv.osv):
 
         return res
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Set default data
         '''
@@ -184,7 +184,7 @@ class tender(osv.osv):
         partner_obj = self.pool.get('res.partner')
         user_obj = self.pool.get('res.users')
 
-        res = super(tender, self).default_get(cr, uid, fields, context=context)
+        res = super(tender, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         # Get the delivery address
         company = user_obj.browse(cr, uid, uid, context=context).company_id
@@ -1337,7 +1337,7 @@ class purchase_order(osv.osv):
             'You must specify a Valid Till date.',
             ['valid_till']), ]
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Set default data
         '''
@@ -1345,7 +1345,7 @@ class purchase_order(osv.osv):
         partner_obj = self.pool.get('res.partner')
         user_obj = self.pool.get('res.users')
 
-        res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+        res = super(purchase_order, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         # Get the delivery address
         company = user_obj.browse(cr, uid, uid, context=context).company_id

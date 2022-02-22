@@ -55,7 +55,7 @@ class hq_entries_validation(osv.osv_memory):
         'period_id': _get_default_period,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         # check transaction before showing wizard
         line_ids = context and context.get('active_ids', []) or []
         if isinstance(line_ids, int):
@@ -65,7 +65,7 @@ class hq_entries_validation(osv.osv_memory):
                                                                line_ids, self._name, context=context)
 
         return super(hq_entries_validation, self).default_get(cr, uid, fields,
-                                                              context=context)
+                                                              context=context, from_web=from_web)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if context is None:
@@ -157,7 +157,9 @@ class hq_entries_validation(osv.osv_memory):
         if ids:
             # prepare some values
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
-                                                                            ('is_current_instance', '=', True)])
+                                                                            ('is_current_instance', '=', True),
+                                                                            ('is_active', '=', True)],
+                                                                  order='id', limit=1)
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No HQ journal found!'))
             journal_id = journal_ids[0]

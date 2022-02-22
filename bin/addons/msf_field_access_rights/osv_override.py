@@ -69,7 +69,7 @@ def _record_matches_domain(self, cr, record_id, domain):
     domain.insert(0, '&')
 
     # perform search and return bool based on whether or not the record_id was in the
-    return record_id in self.search(cr, 1, domain)
+    return record_id in self.search(cr, 1, domain, context={'active_test': False})
 
 class _SetToDefaultFlag:
     pass

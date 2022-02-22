@@ -20,8 +20,8 @@
 ##############################################################################
 
 name = 'openerp-server'
-version = 'UF21.1rc1'
-major_version = '8.0'
+version = 'UF24.0rc2'
+major_version = '9.0'
 description = 'OpenERP Server'
 long_desc = '''OpenERP is a complete ERP and CRM. The main features are accounting (analytic
 and financial), stock management, sales and purchases management, tasks

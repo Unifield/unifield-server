@@ -661,6 +661,25 @@ class purchase_order(osv.osv):
                 'context': context,
                 }
 
+    def wizard_import_ad(self, cr, uid, ids, context=None):
+        if isinstance(ids, int):
+            ids = [ids]
+        if not self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning !'), _('The PO must be in Draft state.'))
+        if not self.pool.get('purchase.order.line').search_exists(cr, uid, [('order_id', 'in', ids), ('state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning !'), _('The PO has no draft line.'))
+
+        export_id = self.pool.get('wizard.import.ad.line').create(cr, uid, {'purchase_id': ids[0], 'state': 'draft'}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.ad.line',
+            'res_id': export_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         """
         Check both the lines that need to be corrected and also that the supplier or the address is not 'To be defined'
@@ -742,8 +761,12 @@ class purchase_order_line(osv.osv):
                                                ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context=context)
 
         if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            if len(inactive_lines) == 1:
+                line = self.browse(cr, uid, inactive_lines[0], fields_to_fetch=['product_id'], context=context)
+                raise osv.except_osv(_('Error'), _('%s has been inactivated. Please correct the line containing the inactive product.') % (line.product_id.default_code, ))
+
+            plural = _('Some products have')
+            l_plural = _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this line you have to remove/correct the line containing the inactive product (see red %s of the document)') % (plural, l_plural))
         return True
 

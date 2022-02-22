@@ -29,7 +29,7 @@ from time import strptime
 import decimal_precision as dp
 from account_override.period import get_period_from_date
 from tools.misc import flatten
-
+import netsvc
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
@@ -48,11 +48,23 @@ class account_commitment(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        for _id in ids:
+            res[_id] = 0
         # Browse commitments
-        for co in self.browse(cr, uid, ids, context=context):
-            res[co.id] = 0.0
-            for line in co.line_ids:
-                res[co.id] += line.amount
+        if ids:
+            cr.execute('''
+                select
+                    commit_id, sum(amount)
+                from
+                    account_commitment_line
+                where
+                    commit_id in %s
+                group by
+                    commit_id
+            ''', (tuple(ids),))
+            for x in cr.fetchall():
+                res[x[0]] = round(x[1], 2)
+
         return res
 
     def _get_cv(self, cr, uid, ids, context=None):
@@ -67,11 +79,44 @@ class account_commitment(osv.osv):
                 res.append(cvl.commit_id.id)
         return res
 
+    def get_cv_type(self, cr, uid, context=None):
+        """
+        Returns the list of possible types for the Commitment Vouchers
+        """
+        return [('manual', 'Manual'),
+                ('external', 'Automatic - External supplier'),
+                ('esc', 'Manual - ESC supplier'),
+                ('intermission', 'Automatic - Intermission'),
+                ('intersection', 'Automatic - Intersection'),
+                ]
+
+    def get_current_cv_version(self, cr, uid, context=None):
+        """
+        Version 2 since US-7449
+        """
+        return 2
+
+    def _display_super_done_button(self, cr, uid, ids, name, arg, context=None):
+        """
+        The "Super" Done button, which allows to always set a CV to Done whatever its state and origin, is displayed:
+        - when the standard Done button isn't usable.
+        - only for some "admin" users (the restriction is made by User Rights).
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        res = {}
+        for cv in self.read(cr, uid, ids, ['state', 'type'], context=context):
+            other_done_button_usable = cv['state'] == 'open' and cv['type'] not in ('external', 'intermission', 'intersection')
+            res[cv['id']] = not other_done_button_usable and cv['state'] != 'done'
+        return res
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
-        'partner_id': fields.many2one('res.partner', string="Supplier", required=True),
+        'partner_id': fields.many2one('res.partner', string="Partner", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
@@ -81,16 +126,24 @@ class account_commitment(osv.osv):
                                  'account.commitment.line': (_get_cv, ['amount'],10),
                                  }),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
-        'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
+        'type': fields.selection(get_cv_type, string="Type", readonly=True),
         'notes': fields.text(string="Comment"),
+        'cv_flow_type': fields.selection([('customer', 'Customer'), ('supplier', 'Supplier')], string="Type of CV"),
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
+        'sale_id': fields.many2one('sale.order', string="Source document", readonly=True),
         'description': fields.char(string="Description", size=256),
+        'version': fields.integer('Version', required=True,
+                                  help="Technical field to distinguish old CVs from new ones which have a different behavior."),
+        'display_super_done_button': fields.function(_display_super_done_button, method=True, type='boolean',
+                                                     store=False, invisible=True,
+                                                     string='Display the button allowing to always set a CV to Done'),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
+        'version': get_current_cv_version,
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
                                                                                                     ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0]
     }
@@ -117,6 +170,10 @@ class account_commitment(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
+        if vals.get('sale_id'):
+            vals['cv_flow_type'] = 'customer'
+        elif vals.get('purchase_id'):
+            vals['cv_flow_type'] = 'supplier'
         # Add sequence
         sequence_number = self.pool.get('ir.sequence').get(cr, uid, self._name)
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
@@ -181,29 +238,30 @@ class account_commitment(osv.osv):
                     fctal_currency = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.currency_id.id
                     for cl in c.line_ids:
                         # Verify that date is compatible with all analytic account from distribution
+                        distrib = False
                         if cl.analytic_distribution_id:
                             distrib = cl.analytic_distribution_id
                         elif cl.commit_id and cl.commit_id.analytic_distribution_id:
                             distrib = cl.commit_id.analytic_distribution_id
-                        else:
-                            raise osv.except_osv(_('Warning'), _('No analytic distribution found for %s %s') % (cl.account_id.code, cl.initial_amount))
-                        for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
-                            for distrib_line in distrib_lines:
-                                if distrib_line.analytic_id and \
-                                    (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start or
-                                     distrib_line.analytic_id.date and date >= distrib_line.analytic_id.date):
-                                    raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') %
-                                                         (distrib_line.analytic_id.name,))
-                        dest_cc_tuples = set()  # check each Dest/CC combination only once
-                        for distrib_cc_l in distrib.cost_center_lines:
-                            if distrib_cc_l.analytic_id:  # non mandatory field
-                                dest_cc_tuples.add((distrib_cc_l.destination_id, distrib_cc_l.analytic_id))
-                        for distrib_fp_l in distrib.funding_pool_lines:
-                            dest_cc_tuples.add((distrib_fp_l.destination_id, distrib_fp_l.cost_center_id))
-                        for dest, cc in dest_cc_tuples:
-                            if dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
-                                raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active at this date: %s") %
-                                                     (dest.code or '', cc.code or '', date))
+                        if distrib:
+                            for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines,
+                                                  distrib.free_1_lines, distrib.free_2_lines]:
+                                for distrib_line in distrib_lines:
+                                    if distrib_line.analytic_id and \
+                                        (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start or
+                                         distrib_line.analytic_id.date and date >= distrib_line.analytic_id.date):
+                                        raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') %
+                                                             (distrib_line.analytic_id.name,))
+                            dest_cc_tuples = set()  # check each Dest/CC combination only once
+                            for distrib_cc_l in distrib.cost_center_lines:
+                                if distrib_cc_l.analytic_id:  # non mandatory field
+                                    dest_cc_tuples.add((distrib_cc_l.destination_id, distrib_cc_l.analytic_id))
+                            for distrib_fp_l in distrib.funding_pool_lines:
+                                dest_cc_tuples.add((distrib_fp_l.destination_id, distrib_fp_l.cost_center_id))
+                            for dest, cc in dest_cc_tuples:
+                                if dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
+                                    raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active at this date: %s") %
+                                                         (dest.code or '', cc.code or '', date))
                         # update the dates and fctal amounts of the related analytic lines
                         context.update({'currency_date': date})  # same date used for doc, posting and source date of all lines
                         for aal in cl.analytic_lines:
@@ -233,6 +291,7 @@ class account_commitment(osv.osv):
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'account.commitment'),
             'state': 'draft',
+            'version': self.get_current_cv_version(cr, uid, context=context),
         })
         # Default method
         res = super(account_commitment, self).copy(cr, uid, c_id, default, context)
@@ -311,6 +370,12 @@ class account_commitment(osv.osv):
             'res_id': [wiz_id],
             'context': context,
         }
+
+    def button_analytic_distribution_2(self, cr, uid, ids, context=None):
+        """
+        This is just an alias for button_analytic_distribution (used to have different names and attrs on both buttons)
+        """
+        return self.button_analytic_distribution(cr, uid, ids, context=context)
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
         """
@@ -395,11 +460,15 @@ class account_commitment(osv.osv):
             ids = [ids]
         # Browse commitments
         for c in self.browse(cr, uid, ids, context=context):
+            sign = 1
+            if c.cv_flow_type == 'customer':
+                sign = -1
             for cl in c.line_ids:
                 # Verify that analytic distribution is present
                 if cl.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".') %
-                                         (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name))
+                    raise osv.except_osv(_('Error'), _('Commitment Voucher %s: the Analytic Distribution is not valid '
+                                                       'for the account "%s %s".') %
+                                         (c.name, cl.account_id.code, cl.account_id.name))
                 # Take analytic distribution either from line or from commitment voucher
                 distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or c.analytic_distribution_id and c.analytic_distribution_id.id or False
                 if not distrib_id:
@@ -409,10 +478,10 @@ class account_commitment(osv.osv):
                 if not al_ids:
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').\
-                        create_account_analytic_lines(cr, uid, [distrib_id], c.description or c.name, c.date, cl.amount,
+                        create_account_analytic_lines(cr, uid, [distrib_id], c.description or c.name, c.date, sign * cl.amount,
                                                       c.journal_id and c.journal_id.id,
                                                       c.currency_id and c.currency_id.id, c.date or False,
-                                                      (c.purchase_id and c.purchase_id.name) or c.name or False, c.date,
+                                                      (c.purchase_id and c.purchase_id.name or c.sale_id and c.sale_id.name) or c.name or False, c.date,
                                                       cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
         return True
 
@@ -444,20 +513,65 @@ class account_commitment(osv.osv):
             # Search analytic lines that have commitment line ids
             search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', 'in', [x.id for x in c.line_ids])], context=context)
             # Delete them
-            res = self.pool.get('account.analytic.line').unlink(cr, uid, search_ids, context=context)
+            if search_ids:
+                res = self.pool.get('account.analytic.line').unlink(cr, uid, search_ids, context=context)
+                if not res:
+                    raise osv.except_osv(_('Error'), _('An error occurred on engagement lines deletion.'))
             # And finally update commitment voucher state and lines amount
-            if not res:
-                raise osv.except_osv(_('Error'), _('An error occurred on engagement lines deletion.'))
             self.pool.get('account.commitment.line').write(cr, uid, [x.id for x in c.line_ids], {'amount': 0}, context=context)
             self.write(cr, uid, [c.id], {'state':'done'}, context=context)
         return True
+
+    def test_and_close_cv_so(self, cr, uid, ids, invoice_ids=None, context=None):
+        """
+            set amout=0 on CV lines linked to closed, cancelled(-r) FO line (no more invoices expected)
+            and with no draft invoice
+
+
+            invoice_ids: list of draft invoices to ignore (state will be changed later in the code)
+        """
+
+        if invoice_ids is None:
+            invoice_ids = []
+
+        iv_ids = invoice_ids[:]
+        if not iv_ids:
+            iv_ids.append(0)
+
+        cv_line_obj = self.pool.get('account.commitment.line')
+        cr.execute('''
+            select
+                line.id, line.amount
+            from
+                account_commitment_line line
+            left join
+                sale_order_line sol on sol.id = line.so_line_id
+            left join
+                account_invoice_line inv_line on inv_line.sale_order_line_id = sol.id and inv_line.invoice_id not in %s
+            left join
+                account_invoice inv on inv_line.invoice_id = inv.id and inv.type = 'out_invoice' and inv.from_supply = 't'
+            where
+                sol.state in ('done', 'cancel', 'cancel_r') and
+                line.amount != 0 and
+                line.commit_id in %s
+            group by
+                line.id, line.amount
+            having (count(inv.state='draft' or NULL) = 0)
+        ''', (tuple(iv_ids), tuple(ids)))
+        # from_supply + out_invoice : to ignore draft refund
+
+        for x in cr.fetchall():
+            cv_line_obj._update_so_commitment_line(cr, uid, x[0], x[1], from_cancel=True, context=context)
+
+        return True
+
 
 account_commitment()
 
 class account_commitment_line(osv.osv):
     _name = 'account.commitment.line'
     _description = "Account Commitment Voucher Line"
-    _order = "id desc"
+    _order = "line_number, id desc"
     _rec_name = 'account_id'
     _trace = True
 
@@ -497,6 +611,12 @@ class account_commitment_line(osv.osv):
                 res[co.id] = False
         return res
 
+    def get_cv_type(self, cr, uid, context=None):
+        """
+        Gets the possible CV types
+        """
+        return self.pool.get('account.commitment').get_cv_type(cr, uid, context)
+
     _columns = {
         'account_id': fields.many2one('account.account', string="Account", required=True),
         'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=False),
@@ -504,6 +624,8 @@ class account_commitment_line(osv.osv):
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", on_delete="cascade"),
         'commit_number': fields.related('commit_id', 'name', type='char', size=64,
                                         readonly=True, store=False, string="Commitment Voucher Number"),
+        'commit_type': fields.related('commit_id', 'type', string="Commitment Voucher Type", type='selection', readonly=True,
+                                      store=False, invisible=True, selection=get_cv_type, write_relate=False),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
@@ -513,8 +635,14 @@ class account_commitment_line(osv.osv):
         'analytic_lines': fields.one2many('account.analytic.line', 'commitment_line_id', string="Analytic Lines"),
         'first': fields.boolean(string="Is not created?", help="Useful for onchange method for views. Should be False after line creation.",
                                 readonly=True),
+        # for CV in version 1
         'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id',
-                                                    string="Purchase Order Lines", readonly=True),
+                                                    string="Purchase Order Lines (deprecated)", readonly=True),
+        # for CV starting from version 2
+        'po_line_id': fields.many2one('purchase.order.line', "PO Line"),
+        'so_line_id': fields.many2one('sale.order.line', "SO Line"),
+        'line_product_id': fields.many2one('product.product', string="Product", readonly=True),
+        'line_number': fields.integer_null('Line', readonly=True),
     }
 
     _defaults = {
@@ -545,20 +673,23 @@ class account_commitment_line(osv.osv):
         # Prepare some values
         for cl in self.browse(cr, uid, ids, context=context):
             # Browse distribution
+            sign = 1
+            if cl.commit_id.cv_flow_type == 'customer':
+                sign = -1
             distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or False
             if not distrib_id:
                 distrib_id = cl.commit_id and cl.commit_id.analytic_distribution_id and cl.commit_id.analytic_distribution_id.id or False
             if distrib_id:
                 analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
-                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or False
+                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or cl.commit_id.sale_id and cl.commit_id.sale_id.name or False
                 if cl.commit_id:
                     desc = cl.commit_id.description or cl.commit_id.name
                 else:
                     desc = 'Commitment voucher line'
                 self.pool.get('analytic.distribution').\
                     create_account_analytic_lines(cr, uid, [distrib_id], desc,
-                                                  cl.commit_id.date, amount, cl.commit_id.journal_id.id, cl.commit_id.currency_id.id,
+                                                  cl.commit_id.date, sign * amount, cl.commit_id.journal_id.id, cl.commit_id.currency_id.id,
                                                   cl.commit_id and cl.commit_id.date or False, ref, cl.commit_id.date,
                                                   account_id or cl.account_id.id, move_id=False, invoice_line_id=False,
                                                   commitment_line_id=cl.id, context=context)
@@ -615,15 +746,16 @@ class account_commitment_line(osv.osv):
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot write a commitment voucher line on a 'view' account type!"))
-        # Verify amount validity
-        if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-            raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
-        if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
-            raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
         # Update analytic distribution if needed and initial_amount
         for line in self.browse(cr, uid, ids, context=context):
-            # verify that initial amount is superior to amount left
+            # Verify amount validity
+            if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
+                raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
+            if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
+                raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
             message = _('Initial Amount should be superior to Amount Left')
+
+            # verify that initial amount is superior to amount left
             if 'amount' in vals and 'initial_amount' in vals:
                 if vals.get('initial_amount') < vals.get('amount'):
                     raise osv.except_osv(_('Warning'), message)
@@ -655,6 +787,19 @@ class account_commitment_line(osv.osv):
                     if distrib_id:
                         self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), account_id, context=context)
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
+
+    def copy_data(self, cr, uid, cv_line_id, default=None, context=None):
+        """
+        Duplicates a CV line: resets the link to PO line
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'po_line_id': False,
+        })
+        return super(account_commitment_line, self).copy_data(cr, uid, cv_line_id, default, context)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -706,6 +851,33 @@ class account_commitment_line(osv.osv):
             'res_id': [wiz_id],
             'context': context,
         }
+
+    def _update_so_commitment_line(self, cr, uid, id, amount, from_cancel=True, context=None):
+        """
+            reduce amount on CV line from SO
+            called when:
+              * FO line is canceled(-r)
+              * SI is opened or canceled
+        """
+        if context is None:
+            context = {}
+        wf_service = netsvc.LocalService("workflow")
+        cv_obj = self.pool.get('account.commitment')
+
+        cv_line = self.browse(cr, uid, id, context=context)
+        if not from_cancel and cv_line.commit_id.state == 'draft':
+            wf_service.trg_validate(uid, 'account.commitment', cv_line.commit_id.id, 'commitment_open', cr)
+
+        amount_left = max(round(cv_line.amount - amount, 2), 0)
+        # this will trigger AJIs update
+        self.write(cr, uid, [id], {'amount': amount_left}, context=context)
+
+        cv = cv_obj.read(cr, uid, cv_line.commit_id.id, ['total'], context=context)
+        if abs(cv['total']) < 0.001:
+            cv_obj.action_commitment_done(cr, uid, [cv_line.commit_id.id], context=context)
+
+        return True
+
 
 account_commitment_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

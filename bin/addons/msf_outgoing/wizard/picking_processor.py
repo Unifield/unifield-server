@@ -140,7 +140,7 @@ class stock_picking_processor(osv.osv):
         ),
     }
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
         """
         Get default value for the object
         """
@@ -150,7 +150,7 @@ class stock_picking_processor(osv.osv):
         if fields_list is None:
             fields_list = []
 
-        res = super(stock_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context)
+        res = super(stock_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context, from_web=from_web)
 
         res['date'] = time.strftime('%Y-%m-%d %H:%M:%S'),
 

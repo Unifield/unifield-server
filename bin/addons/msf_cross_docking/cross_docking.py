@@ -283,11 +283,11 @@ class stock_picking(osv.osv):
         'direct_incoming': False,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Fill the unallocated_ok field according to Unifield setup
         '''
-        res = super(stock_picking, self).default_get(cr, uid, fields, context=context)
+        res = super(stock_picking, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res.update({'allocation_setup': setup.allocation_setup})
         return res

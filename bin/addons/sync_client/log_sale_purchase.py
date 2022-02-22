@@ -40,6 +40,11 @@ def check(fn):
 
     return wrapper
 
+class SyncException(Exception):
+    def __init__(self, value, target_object, target_id):
+        super(Exception, self).__init__(value)
+        self.target_object = target_object
+        self.target_id = target_id
 
 class log_sale_purchase(osv.osv):
     _name = 'sync.client.log_sale_purchase'

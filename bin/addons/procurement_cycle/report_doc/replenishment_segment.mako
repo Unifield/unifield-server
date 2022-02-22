@@ -43,6 +43,17 @@
    </Borders>
    <NumberFormat ss:Format="Short Date"/>
   </Style>
+  <Style ss:ID="mperiods">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <Protection ss:Protected="0"/>
+  </Style>
   <Style ss:ID="m2348480924348">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders>
@@ -233,7 +244,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
     ss:Bold="1"/>
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
   </Style>
@@ -244,6 +255,7 @@
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
    <Protection ss:Protected="0"/>
   </Style>
@@ -254,6 +266,7 @@
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Short Date"/>
    <Protection ss:Protected="0"/>
@@ -266,7 +279,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
     ss:Bold="1"/>
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
   </Style>
@@ -278,6 +291,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <NumberFormat ss:Format="Short Date"/>
    <Protection ss:Protected="0"/>
   </Style>
@@ -364,6 +378,24 @@
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="8.25" />
+   <Row ss:AutoFitHeight="0" ss:Height="15.75">
+    % if objects[0].rule != 'cycle':
+    <Cell ss:StyleID="s76"><Data ss:Type="String">${_('Specific Periods Only')|x}</Data></Cell>
+    <Cell ss:StyleID="mperiods"><Data ss:Type="String">${objects[0].specific_period and _('Yes') or _('No')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    % else:
+    <Cell />
+    <Cell />
+    % endif
+    <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Rule')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${getSel(objects[0], 'rule')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
+   </Row>
    <Row ss:AutoFitHeight="0" ss:Height="9">
     <Cell ss:StyleID="s78"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -401,25 +433,18 @@
     <Cell ss:StyleID="s91"><Data ss:Type="String">${_('RR-AMC')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % if objects[0].rule == 'cycle':
         <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Buffer Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    % elif objects[0].rule == 'minmax':
-        <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Min Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Max Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    % else:
-        <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Auto Supply Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % endif
 
-    % if objects[0].rule == 'cycle':
-        <% i = 0 %>
-        <% styles = ['s143', 's149'] %>
-        % for fmc in range(1, 19):
-        <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR FMC %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        % if fmc == 1:
-            <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        % endif
-        <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('To %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <% i = 1 - i %>
-        % endfor
+    <% i = 0 %>
+    <% styles = ['s143', 's149'] %>
+    % for fmc in range(1, 19):
+    <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR Value %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    % if fmc == 1:
+        <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % endif
+    <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('To %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <% i = 1 - i %>
+    % endfor
    </Row>
 
    % for prod in objects[0].line_ids:
@@ -438,59 +463,45 @@
             <Data ss:Type="Number">${prod.buffer_qty}</Data>
         % endif
         </Cell>
-    % elif objects[0].rule == 'minmax':
-        <Cell ss:StyleID="s97u">
-        % if prod.min_qty is not False:
-            <Data ss:Type="Number">${prod.min_qty}</Data>
-        % endif
-        </Cell>
-        <Cell ss:StyleID="s97u">
-        % if prod.max_qty is not False:
-            <Data ss:Type="Number">${prod.max_qty}</Data>
-        % endif
-        </Cell>
-    % else:
-        <Cell ss:StyleID="s97u">
-        % if prod.auto_qty is not False:
-            <Data ss:Type="Number">${prod.auto_qty}</Data>
-        % endif
-        </Cell>
     % endif
 
-    % if objects[0].rule == 'cycle':
-        <!-- s144+s145 / s165/s151 -->
-        <% i = 0 %>
-        <% styles = [('s144', 's145'), ('s165', 's151')] %>
-         % for fmc in range(1, 19):
-            <Cell ss:StyleID="${styles[i][0]}">
+    <!-- s144+s145 / s165/s151 -->
+    <% i = 0 %>
+    <% styles = [('s144', 's145'), ('s165', 's151')] %>
+     % for fmc in range(1, 19):
+        <Cell ss:StyleID="${styles[i][0]}">
+        % if objects[0].rule == 'minmax':
+            <Data ss:Type="String">${getattr(prod, 'rr_min_max_%d'%fmc)}</Data>
+
+        % else:
             % if getattr(prod, 'rr_fmc_%d'%fmc) is False:
                 <Data ss:Type="String" />
             % else:
                 <Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data>
             % endif
-            </Cell>
-            % if fmc == 1:
-                <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
-                <Cell ss:StyleID="${styles[i][1]}">
-                 % if isDate(from_date):
-                    <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
-                % else:
-                    <Data ss:Type="String"></Data>
-                % endif
-                </Cell>
-            % endif
-
-            <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
+        % endif
+        </Cell>
+        % if fmc == 1:
+            <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
             <Cell ss:StyleID="${styles[i][1]}">
-             % if isDate(to_date):
-                <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
+             % if isDate(from_date):
+                <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
             % else:
                 <Data ss:Type="String"></Data>
             % endif
             </Cell>
-            <% i = 1 - i %>
-        % endfor
-    % endif
+        % endif
+
+        <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
+        <Cell ss:StyleID="${styles[i][1]}">
+         % if isDate(to_date):
+            <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
+        % else:
+            <Data ss:Type="String"></Data>
+        % endif
+        </Cell>
+        <% i = 1 - i %>
+    % endfor
    </Row>
    % endfor
   </Table>
@@ -515,8 +526,8 @@
    <DoNotDisplayGridlines/>
           <FreezePanes/>
         <FrozenNoSplit/>
-   <SplitHorizontal>8</SplitHorizontal>
-   <TopRowBottomPane>8</TopRowBottomPane>
+   <SplitHorizontal>10</SplitHorizontal>
+   <TopRowBottomPane>10</TopRowBottomPane>
    <SplitVertical>2</SplitVertical>
    <LeftColumnRightPane>2</LeftColumnRightPane>
    <ActivePane>0</ActivePane>
@@ -547,11 +558,19 @@
    <AllowUsePivotTables/>
   </WorksheetOptions>
     <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-    <Range>R9C4:R${len(objects[0].line_ids)+9}C4</Range>
+    <Range>R11C4:R${len(objects[0].line_ids)+11}C4</Range>
     <Type>List</Type>
     <CellRangeList/>
     <Value>&quot;${_('Active')|x},${_('New')|x},${_('Replaced')|x},${_('Replacing')|x},${_('Phasing Out')|x},${_('Active-Replacing')|x}&quot;</Value>
   </DataValidation>
+  % if objects[0].rule != 'cycle':
+    <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
+    <Range>R7C2:R7C2</Range>
+    <Type>List</Type>
+    <CellRangeList/>
+    <Value>&quot;${_('Yes')|x},${_('No')|x}&quot;</Value>
+  </DataValidation>
+  % endif
 
  </Worksheet>
 </Workbook>

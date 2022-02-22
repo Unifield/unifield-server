@@ -166,6 +166,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             bo_qty = line.product_uom_qty
             po_name = '-'
 
+            edd = False
             cdd = False
             if self.datas.get('is_rml') or self.localcontext.get('lang', False) == 'fr_MF':
                 date_format = '%d/%m/%Y'
@@ -178,6 +179,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             if linked_pol:
                 linked_pol = pol_obj.browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
+                edd = linked_pol.esti_dd or linked_pol.order_id.delivery_requested_date_modified
                 cdd = linked_pol.confirmed_delivery_date
                 if line.product_id:
                     in_data = self.in_line_data(linked_pol.order_id.id, line.product_id.id, linked_pol.id)
@@ -186,6 +188,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data[1]])
                     elif len(in_data[1]) == 1:
                         cdd = in_data[1][0][:10]
+            if not edd and line.esti_dd:
+                edd = line.esti_dd
             if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
                 cdd = line.confirmed_delivery_date or line.order_id.delivery_confirmed_date
 
@@ -223,6 +227,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             delivery_order = '-'
                         data.update({
                             'po_name': po_name,
+                            'edd': edd,
                             'cdd': cdd,
                             'line_number': line.line_number,
                             'line_comment': line.comment or '-',
@@ -329,16 +334,30 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 fl_index = m_index
                             m_index += 1
             else:  # No move found
-                # Look for received qty in the IN(s) linked to a non-stockable product
-                if line.product_id and line.product_id.type in ['consu', 'service_recep']:
+                # Look for received qty in the IN(s)
+                self.cr.execute("""
+                    SELECT m.product_qty FROM stock_move m 
+                    LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                    LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
+                    WHERE m.state = 'done' AND m.type = 'in' AND sl.id = %s
+                """, (line.id,))
+                for move in self.cr.fetchall():
+                    received_qty += move[0]
+
+                # Get the name of the linked INT
+                int_name = False
+                if not from_stock:
                     self.cr.execute("""
-                        SELECT m.product_qty FROM stock_move m 
+                        SELECT p.name FROM stock_move m 
+                        LEFT JOIN stock_picking p ON m.picking_id = p.id
                         LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
                         LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
-                        WHERE m.state = 'done' AND m.type = 'in' AND sl.id = %s
+                        WHERE m.state = 'done' AND p.type = 'internal' AND p.subtype = 'standard' AND sl.id = %s
+                        LIMIT 1
                     """, (line.id,))
-                    for move in self.cr.fetchall():
-                        received_qty += move[0]
+                    int_info = self.cr.fetchone()
+                    if int_info:
+                        int_name = int_info[0]
 
                 if first_line:
                     data = {
@@ -354,8 +373,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
                         'delivered_qty': received_qty,
                         'delivered_uom': received_qty and line.product_uom.name or '-',
-                        'delivery_order': '-',
+                        'delivery_order': int_name or '-',
                         'backordered_qty': line.order_id.state != 'cancel' and line.product_uom_qty - received_qty or 0.00,
+                        'edd': edd,
                         'cdd': cdd,
                     }
                     lines.append(data)
@@ -366,6 +386,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             if bo_qty and bo_qty > 0 and not first_line and line.state not in ('cancel', 'cancel_r', 'done'):
                 lines.append({
                     'po_name': po_name,
+                    'edd': edd,
                     'cdd': cdd,
                     'line_number': line.line_number,
                     'line_comment': line.comment or '-',

@@ -201,6 +201,9 @@ class purchase_order_line(osv.osv):
                 line_confirmed = self.pool.get('purchase.order').compute_confirmed_delivery_date(cr, uid, pol.order_id, pol.confirmed_delivery_date,
                                                                                                  prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
 
+            line_esti_dd = False
+            if pol.esti_dd:
+                line_esti_dd = pol.esti_dd
             line_stock_take = False
             if pol.stock_take_date:
                 line_stock_take = pol.stock_take_date
@@ -229,6 +232,7 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_3': pol.nomen_sub_3 and pol.nomen_sub_3.id or False,
                 'nomen_sub_4': pol.nomen_sub_4 and pol.nomen_sub_4.id or False,
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
+                'esti_dd': line_esti_dd,
                 'stock_take_date': line_stock_take,
                 'date_planned': pol.date_planned,
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
@@ -744,7 +748,7 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids):
             if not pol.confirmed_delivery_date:
-                raise osv.except_osv(_('Error'), _('Line #%s: Delivery Confirmed Date is a mandatory field.') % pol.line_number)
+                raise osv.except_osv(_('Error'), _('Line #%s: Confirmed Delivery Date is a mandatory field.') % pol.line_number)
 
             if not pol.product_id:
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
@@ -971,7 +975,7 @@ class purchase_order(osv.osv):
             missing_cdd = pol_obj.search(cr, uid, [('confirmed_delivery_date', '=', False), ('id', 'in', pol_ids_to_confirm)], limit=1, context=context)
             if missing_cdd:
                 pol_line = pol_obj.read(cr, uid, missing_cdd, ['line_number'], context=context)
-                raise osv.except_osv(_('Error'), _('Line #%s: Delivery Confirmed Date is a mandatory field.') % pol_line[0]['line_number'])
+                raise osv.except_osv(_('Error'), _('Line #%s: Confirmed Delivery Date is a mandatory field.') % pol_line[0]['line_number'])
 
             missing_prod = pol_obj.search(cr, uid, [('product_id', '=', False), ('id', 'in', pol_ids_to_confirm)], limit=1, context=context)
             if missing_prod:

@@ -19,6 +19,28 @@
 #
 ##############################################################################
 
+# list of tuples ('code', 'type') of the journals imported by default at new instance creation
+DEFAULT_JOURNALS = [
+    ('ACC', 'accrual'),
+    ('HQ', 'hq'),
+    ('HR', 'hr'),
+    ('FXA', 'cur_adj'),
+    ('OD', 'correction'),
+    ('PUR', 'purchase'),
+    ('PUF', 'purchase_refund'),
+    ('SAL', 'sale'),
+    ('SAR', 'sale_refund'),
+    ('STO', 'stock'),
+    ('IKD', 'inkind'),
+    ('INT', 'intermission'),
+    ('ODX', 'extra'),
+    ('REV', 'revaluation'),
+    ('MIG', 'migration'),
+    ('ODM', 'correction_manual'),
+    ('ODHQ', 'correction_hq'),
+    ('ISI', 'purchase'),
+]
+
 from . import account
 from . import installer
 from . import project
@@ -33,5 +55,4 @@ from . import report
 from . import product
 from . import sequence
 from . import company
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

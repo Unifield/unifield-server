@@ -96,6 +96,9 @@ class _float_format(float, _format):
         self.val = value
 
     def __str__(self):
+        if self.val is False:
+            return ''
+
         digits = 2
         computation = False
         related_uom_rounding = False

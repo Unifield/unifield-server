@@ -40,17 +40,17 @@ class account_partner_reconcile_process(osv.osv_memory):
                               WHERE debit > 0
                               AND credit > 0
                 """,(time.strftime('%Y-%m-%d'),)
-        )
+                   )
         return len([x[0] for x in cr.fetchall()]) - 1
 
     def _get_today_reconciled(self, cr, uid, context=None):
         cr.execute(
-                "SELECT l.partner_id " \
-                "FROM account_move_line AS l LEFT JOIN res_partner p ON (p.id = l.partner_id) " \
-                "WHERE l.reconcile_id IS NULL " \
-                "AND %s =  to_char(p.last_reconciliation_date, 'YYYY-MM-DD') " \
-                "AND l.state <> 'draft' " \
-                "GROUP BY l.partner_id ",(time.strftime('%Y-%m-%d'),)
+            "SELECT l.partner_id " \
+            "FROM account_move_line AS l LEFT JOIN res_partner p ON (p.id = l.partner_id) " \
+            "WHERE l.reconcile_id IS NULL " \
+            "AND %s =  to_char(p.last_reconciliation_date, 'YYYY-MM-DD') " \
+            "AND l.state <> 'draft' " \
+            "GROUP BY l.partner_id ",(time.strftime('%Y-%m-%d'),)
         )
         return len([x[0] for x in cr.fetchall()]) + 1
 
@@ -65,8 +65,8 @@ class account_partner_reconcile_process(osv.osv_memory):
     def data_get(self, cr, uid, to_reconcile, today_reconciled, context=None):
         return {'progress': (100 / (float(to_reconcile + today_reconciled) or 1.0)) * today_reconciled}
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(account_partner_reconcile_process, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(account_partner_reconcile_process, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if 'to_reconcile' in res and 'today_reconciled' in res:
             data = self.data_get(cr, uid, res['to_reconcile'], res['today_reconciled'], context)
             res.update(data)

@@ -533,7 +533,7 @@ class stock_forecast(osv.osv_memory):
 
             return True # popup policy
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """ For now no special initial values to load at wizard opening
 
          @return: A dictionary which of fields with values.
@@ -543,7 +543,7 @@ class stock_forecast(osv.osv_memory):
 
         product_obj = self.pool.get('product.product')
 
-        res = super(stock_forecast, self).default_get(cr, uid, fields, context=context)
+        res = super(stock_forecast, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if context.get('active_ids', []):
             active_id = context.get('active_ids')[0]

@@ -112,6 +112,7 @@ class res_partner(osv.osv):
     _order = "name, id"
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True),
+        'legal_name': fields.char('Legal Name', size=128, required=False),
         'date': fields.date('Date', select=1),
         'title': fields.many2one('res.partner.title','Partner Form'),
         'parent_id': fields.many2one('res.partner','Parent Partner'),

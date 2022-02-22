@@ -93,12 +93,17 @@
   			</td>
   			<td>
   				<para style="linesHead">
+  					Eprep Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
   					Consumption Unit Qty.
   				</para>
   			</td>
   			<td>
   				<para style="linesHead">
-  					Quarantine Qty.
+  					Quarantine / For Scrap Qty.
   				</para>
   			</td>
   			<td>
@@ -167,6 +172,11 @@
   			<td>
   				<para style="lines">
   					[[ o.secondary_qty != 0.00 and o.secondary_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.eprep_qty != 0.00 and o.eprep_qty or '0.00' ]]
   				</para>
   			</td>
   			<td>

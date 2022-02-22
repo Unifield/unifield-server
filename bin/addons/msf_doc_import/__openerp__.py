@@ -72,6 +72,8 @@
         'wizard/wizard_import_batch_view.xml',
         'wizard/wizard_import_invoice_line.xml',
         'wizard/wizard_import_ppl_to_create_ship.xml',
+        'wizard/wizard_return_from_unit_import_view.xml',
+        'wizard/wizard_import_ad_line_view.xml',
     ],
     "demo_xml": [],
     "test": [

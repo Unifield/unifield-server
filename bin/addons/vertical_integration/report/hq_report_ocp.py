@@ -53,7 +53,7 @@ class finance_archive(finance_export.finance_archive):
 
     def _get_journal_type_value(self, cr, uid, journal_type_key):
         """
-        Returns the value of the Journal Type corresponding to the key in parameter (ex: inkind => In-kind Donation...)
+        Returns the value of the Journal Type corresponding to the key in parameter (e.g. inkind => In-kind Donation...)
         If no corresponding value is found, returns the key.
         """
         journal_types = self._get_journal_types(cr, uid)
@@ -62,7 +62,7 @@ class finance_archive(finance_export.finance_archive):
     def _handle_od_ji_entries(self, cr, uid, data):
         """
         Takes data in parameter corresponding to ACCOUNT MOVE LINES (results from 'bs_entries' or 'plresult' requests)
-        1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+        1) Replaces the journal type "key" by its corresponding "value" (e.g. inkind => In-kind Donation)
         2) Modifies it for all entries that originate from HQ entry corrections:
         - instance: 'EAUD' or 'SIEG' if this matches the first 4 characters of the original HQ entry (if not: 'SIEG' by default)
         - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
@@ -106,7 +106,7 @@ class finance_archive(finance_export.finance_archive):
     def _handle_od_aji_entries(self, cr, uid, data):
         """
         Takes data in parameter corresponding to ACCOUNT ANALYTIC LINES (results from 'rawdata' request)
-        1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+        1) Replaces the journal type "key" by its corresponding "value" (e.g. inkind => In-kind Donation)
         2) Modifies it for all entries that originate from HQ entry corrections:
         - instance: 'EAUD' or 'SIEG' if this matches the first 4 characters of the original HQ entry (if not: 'SIEG' by default)
         - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
@@ -187,7 +187,7 @@ class finance_archive(finance_export.finance_archive):
             instance_code = line[instance_code_col][:3]
             line[instance_code_col] = instance_code
             line[cc_col] = instance_code
-            # Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+            # Replaces the journal type "key" by its corresponding "value" (e.g. inkind => In-kind Donation)
             line[journal_type_col] = self._get_journal_type_value(cr, uid, line[journal_type_col])
         return new_data
 
@@ -285,7 +285,6 @@ class hq_report_ocp(report_sxw.report_sxw):
         m_obj = pool.get('account.move')
         ml_obj = pool.get('account.move.line')
         excluded_journal_types = ['hq', 'migration', 'inkind', 'extra']  # journal types that should not be used to take lines
-        reg_types = ('cash', 'bank', 'cheque')
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -294,17 +293,14 @@ class hq_report_ocp(report_sxw.report_sxw):
         period_id = form.get('period_id', False)
         instance_ids = form.get('instance_ids', False)
         instance_id = form.get('instance_id', False)
-        if not fy_id or not period_id or not instance_ids or not instance_id:
+        all_missions = form.get('all_missions', False)
+        if not fy_id or not period_id or not instance_ids or (not instance_id and not all_missions):
             raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
         period = pool.get('account.period').browse(cr, uid, period_id, context=context,
                                                    fields_to_fetch=['date_start', 'date_stop', 'number'])
         first_day_of_period = period.date_start
-        last_day_of_period = period.date_stop
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
-        year = str(year_num)
-        month = '%02d' % (tm.tm_mon)
-        period_yyyymm = "{0}{1}".format(year, month)
 
         # US-822: if December is picked should:
         # - include Period 16 action 2 Year end PL RESULT entries
@@ -471,14 +467,22 @@ class hq_report_ocp(report_sxw.report_sxw):
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
 
         # Define the file name according to the following format:
-        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Monthly_Export.csv (ex: KE1_201609_171116110306_Monthly_Export.csv)
-        inst = mi_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
-        instance_code = inst and inst.code[:3] or ''
+        # AllinstancesORFirst3CharactersOfInstanceCode_chosenPeriod_currentDatetime_Monthly_Export.csv
+        # (e.g. KE1_201609_171116110306_Monthly_Export.csv)
+        if all_missions:
+            prefix = 'Allinstances'
+        elif instance_id:
+            inst = mi_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
+            prefix = inst and inst.code[:3] or ''
+        else:
+            prefix = ''
         selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
-        monthly_export_filename = '%s_%s_%s_Monthly_Export.csv' % (instance_code, selected_period, current_time)
-        liquidity_balance_filename = '%s_%s_%s_Liquidity_Balances.csv' % (instance_code, selected_period, current_time)
-        account_balance_filename = '%s_%s_%s_Account_Balances.csv' % (instance_code, selected_period, current_time)
+        monthly_export_filename = '%s_%s_%s_Monthly_Export.csv' % (prefix, selected_period, current_time)
+        liquidity_balance_filename = account_balance_filename = ''
+        if not all_missions:
+            liquidity_balance_filename = '%s_%s_%s_Liquidity_Balances.csv' % (prefix, selected_period, current_time)
+            account_balance_filename = '%s_%s_%s_Account_Balances.csv' % (prefix, selected_period, current_time)
 
         processrequests = [
             {
@@ -509,25 +513,37 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'id': 0,
                 'object': 'account.move.line',
             },
-            {
-                'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance',
-                            'Closing balance', 'Currency'],
-                'filename': liquidity_balance_filename,
-                'key': 'liquidity',
-                'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
-                                 last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
-                'function': 'postprocess_liquidity_balances',
-                'fnct_params': context,
-            },
-            {
-                'headers': ['Instance', 'Account', 'Account Name', 'Period', 'Starting balance', 'Calculated balance',
-                            'Closing balance', 'Booking Currency'],
-                'filename': account_balance_filename,
-                'key': 'account_balances_per_currency',
-                'query_params': (tuple([period_yyyymm]), first_day_of_period, tuple(instance_ids), period.id,
-                                 tuple(instance_ids), last_day_of_period, tuple(instance_ids)),
-            },
         ]
+        if not all_missions:
+            year = str(year_num)
+            month = '%02d' % (tm.tm_mon)
+            period_yyyymm = "{0}{1}".format(year, month)
+            last_day_of_period = period.date_stop
+            reg_types = ('cash', 'bank', 'cheque')
+            # Liquidity Balances
+            processrequests.append(
+                {
+                    'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance',
+                                'Closing balance', 'Currency'],
+                    'filename': liquidity_balance_filename,
+                    'key': 'liquidity',
+                    'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
+                                     last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
+                    'function': 'postprocess_liquidity_balances',
+                    'fnct_params': context,
+                }
+            )
+            # Account Balances
+            processrequests.append(
+                {
+                    'headers': ['Instance', 'Account', 'Account Name', 'Period', 'Starting balance',
+                                'Calculated balance', 'Closing balance', 'Booking Currency'],
+                    'filename': account_balance_filename,
+                    'key': 'account_balances_per_currency',
+                    'query_params': (tuple([period_yyyymm]), first_day_of_period, tuple(instance_ids), period.id,
+                                     tuple(instance_ids), last_day_of_period, tuple(instance_ids)),
+                },
+            )
         if plresult_ji_in_ids:
             processrequests.append({
                 'filename': monthly_export_filename,

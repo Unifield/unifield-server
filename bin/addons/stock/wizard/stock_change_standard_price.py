@@ -29,15 +29,15 @@ class change_standard_price(osv.osv_memory):
     _columns = {
         'new_price': fields.float('Price', required=True, digits_compute=dp.get_precision('Account'),
                                   help="If cost price is increased, stock variation account will be debited "
-                                        "and stock output account will be credited with the value = (difference of amount * quantity available).\n"
-                                        "If cost price is decreased, stock variation account will be creadited and stock input account will be debited."),
+                                  "and stock output account will be credited with the value = (difference of amount * quantity available).\n"
+                                  "If cost price is decreased, stock variation account will be creadited and stock input account will be debited."),
         'stock_account_input':fields.many2one('account.account', 'Stock Input Account'),
         'stock_account_output':fields.many2one('account.account', 'Stock Output Account'),
         'stock_journal':fields.many2one('account.journal', 'Stock journal', required=True),
         'enable_stock_in_out_acc':fields.boolean('Enable Related Account',),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """ To get default values for the object.
          @param self: The object pointer.
          @param cr: A database cursor
@@ -50,7 +50,7 @@ class change_standard_price(osv.osv_memory):
             context = {}
         product_pool = self.pool.get('product.product')
         product_obj = product_pool.browse(cr, uid, context.get('active_id', False))
-        res = super(change_standard_price, self).default_get(cr, uid, fields, context=context)
+        res = super(change_standard_price, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         accounts = product_pool.get_product_accounts(cr, uid, context.get('active_id', False), context={})
 

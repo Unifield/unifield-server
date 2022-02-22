@@ -6,7 +6,7 @@
             string="Chronogram"
             model="replenishment.parent.segment"
             name="report_replenishment_parent_segment_chronogram_xls"
-            file="procurement_cycle/report/chronogram.mako"
+            file="procurement_cycle/report_doc/chronogram.mako"
             target_filename="Chronogram_%(year)s_%(month)s_%(day)s"
             report_type="webkit"
             menu="True"
@@ -17,7 +17,8 @@
             string="Segment"
             model="replenishment.segment"
             name="report_replenishment_segment_xls"
-            file="procurement_cycle/report/replenishment_segment.mako"
+            file="procurement_cycle/report_doc/replenishment_segment.mako"
+            target_filename="${name_seg}_%(year)s_%(month)s_%(day)s"
             report_type="webkit"
             menu="True"
             />
@@ -27,7 +28,7 @@
             string="Order Calc"
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_xls"
-            file="procurement_cycle/report/replenishment_order_calc.mako"
+            file="procurement_cycle/report_doc/replenishment_order_calc.mako"
             report_type="webkit"
             menu="True"
             />
@@ -37,7 +38,7 @@
             string="Order Calc (only lines with warning)"
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_warning_xls"
-            file="procurement_cycle/report/replenishment_order_calc.mako"
+            file="procurement_cycle/report_doc/replenishment_order_calc.mako"
             report_type="webkit"
             menu="True"
             />
@@ -47,7 +48,7 @@
             string="Export Draft Consolidated OC lines"
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_draft_consolidated_xls"
-            file="procurement_cycle/report/replenishment_order_calc.mako"
+            file="procurement_cycle/report_doc/replenishment_order_calc.mako"
             target_filename="OC_Draft_Consolidated_%(year)s_%(month)s_%(day)s"
             report_type="webkit"
             menu="False"
@@ -71,19 +72,19 @@
             string="Export Consolidated OC all status"
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_consolidated_xls"
-            file="procurement_cycle/report/replenishment_order_calc.mako"
+            file="procurement_cycle/report_doc/replenishment_order_calc.mako"
             target_filename="OC_All_status_Consolidated_%(year)s_%(month)s_%(day)s"
             report_type="webkit"
             menu="True"
             />
 
       <report
-            id="report_replenishment_inventory_review_xls"
+            id="report_replenishment_inventory_review_xls2"
             string="Inventory Review xls"
             model="replenishment.inventory.review"
-            name="report_replenishment_inventory_review_xls"
-            file="procurement_cycle/report/replenishment_inventory_review.mako"
-            report_type="webkit"
+            name="report_replenishment_inventory_review_xls2"
+            report_type="openpyxl"
+            auto="False"
             target_filename="Inventory-Review-${location_config_id.name}_%(year)s_%(month)s_%(day)s"
             menu="True"
             />
@@ -93,7 +94,7 @@
             string="Replenishment Product List"
             model="replenishment.product.list"
             name="report_replenishment_product_list"
-            file="procurement_cycle/report/replenishment_product_list.mako"
+            file="procurement_cycle/report_doc/replenishment_product_list.mako"
             report_type="webkit"
             menu="False"
             />
@@ -103,7 +104,7 @@
             string="Stock Out"
             model="product.stock_out"
             name="report_product_stock_out_xls"
-            file="procurement_cycle/report/product_stock_out.mako"
+            file="procurement_cycle/report_doc/product_stock_out.mako"
             report_type="webkit"
             menu="True"
             />

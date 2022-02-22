@@ -61,7 +61,7 @@ class import_commitment_wizard(osv.osv_memory):
             'context': context or {},
         }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         ids = self.search(cr, 1, [('in_progress', '=', True)])
         if ids:
             d = self.read(cr, 1, ids, ['start_date', 'progress'], context=context)
@@ -71,7 +71,7 @@ class import_commitment_wizard(osv.osv_memory):
                 'in_progress': False,
             }
 
-        d = super(import_commitment_wizard, self).default_get(cr, uid, fields, context)
+        d = super(import_commitment_wizard, self).default_get(cr, uid, fields, context, from_web=from_web)
         ir_config = self.pool.get('ir.config_parameter')
         d['last_stop'] = ir_config.get_param(cr, 1, 'LAST_COMMIT_DATE')
         d['last_error'] = ir_config.get_param(cr, 1, 'LAST_COMMIT_ERROR')

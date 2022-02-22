@@ -35,3 +35,4 @@ from . import stock_reception_report
 from . import stock_expired_damaged_report
 from . import products_situation_report
 from . import stock_delivery_report
+from . import closed_physical_inventory_report

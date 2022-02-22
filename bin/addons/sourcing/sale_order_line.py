@@ -532,7 +532,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             _get_line_values,
             method=True,
             type='date',
-            string='Estimated DD',
+            string='Calculated DD',
             store=False,
             readonly=True,
             multi='line_info',
@@ -654,7 +654,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     """
     Model methods
     """
-    def default_get(self, cr, uid, fields_list, context=None):
+    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
         """
         Set default values (location_id) for sale_order_line
 
@@ -670,7 +670,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Objects
         warehouse_obj = self.pool.get('stock.warehouse')
 
-        res = super(sale_order_line, self).default_get(cr, uid, fields_list, context=context)
+        res = super(sale_order_line, self).default_get(cr, uid, fields_list, context=context, from_web=from_web)
 
         if res is None:
             res = {}
@@ -1090,8 +1090,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if ('supplier' in vals and not vals.get('supplier')) or ('po_cft' in vals and vals.get('po_cft') in ('cft', 'rfq')):
             vals['related_sourcing_id'] = False
 
+        # Remove supplier if the selected PO/CFT is Tender
+        if vals.get('po_cft') == 'cft':
+            vals['supplier'] = False
+
         # UFTP-139: if make_to_stock and no location, put Stock as location
-        if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
+        if ids and 'type' in vals and vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
             # Define Stock as location_id for each line without location_id
             for line in self.read(cr, uid, ids, ['location_id'], context=context):
                 line_vals = vals.copy()
@@ -1529,6 +1533,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         stock_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if not sourcing_line.order_id.procurement_request:
+                continue
             if sourcing_line.order_id.location_requestor_id.id in (med_loc_id, log_loc_id) and sourcing_line.location_id.id == stock_loc_id:
                 raise osv.except_osv(
                     _('Error'),

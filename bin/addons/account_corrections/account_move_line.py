@@ -45,6 +45,9 @@ class account_move_line(osv.osv):
          - The line isn't partially or totally reconciled
          - The line doesn't come from a write-off
          - The line is "corrected_upstream" that implies the line have been already corrected from a coordo or a hq to a level that is superior or equal to these instance.
+         - The line isn't linked to a SI refund cancel
+
+         Note: JIs on inactive journals are still correctable (US-7563).
         """
         # Some checks
         if context is None:
@@ -673,6 +676,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Abort process if this move line was corrected before
             if ml.corrected:
                 continue
+
+            self.pool.get('finance.tools').check_correction_date_fy(ml.date, date, context=context)
 
             # UTP-1187 check corrected line has an AD if need one
             # + BKLG-19/3: search only for fp ones as 'free' are not synced to

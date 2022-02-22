@@ -104,7 +104,10 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
-        args = [('period_id', '=', self.period_id)]
+        journal_obj = pool.get('account.journal')
+        # bank and cash journals (for cheques, see getPendingCheques)
+        journal_ids = journal_obj.search(self.cr, self.uid, [('type', 'in', ['bank', 'cash']), ('is_active', '=', True)], order='NO_ORDER')
+        args = [('period_id', '=', self.period_id), ('journal_id', 'in', journal_ids)]
         reg_ids = reg_obj.search(self.cr, self.uid, args, order='journal_id')
         regs = reg_obj.browse(self.cr, self.uid, reg_ids, context={'lang': self.localcontext.get('lang')})
 
@@ -114,10 +117,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
             journal = reg.journal_id
             currency = journal.currency
-
-            # For Now, check are ignored
-            if journal.type == 'cheque':
-                continue
 
             # ##############
             # INITIALISATION
@@ -160,8 +159,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 'instance': reg.instance_id.name,
                 'journal_code': journal.code,
                 'journal_name': journal.name,
-                # for the state, get the value from the selection field ("Closed" instead of "confirm", etc.):
-                'state': reg.state and dict(reg_obj._columns['state'].selection).get(reg.state) or '',
+                'state': reg.state and self.getSel(reg, 'state') or '',
                 'calculated_balance': calc_bal,
                 'register_balance': reg_bal,
                 'opening_balance': reg.balance_start,
@@ -212,9 +210,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                                                                         ('period_id', '=', report_period_id)])
         if reg_for_selected_period_id:
             reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
-            # get the value from the selection field ("Closed" instead of "confirm", etc.)
-            state = reg_for_selected_period.state and \
-                dict(reg_obj._columns['state'].selection).get(reg_for_selected_period.state) or ''
+            state = reg_for_selected_period.state and self.getSel(reg_for_selected_period, 'state') or ''
         else:
             state = _('Not Created')
         return state
@@ -305,7 +301,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
         # get the cheque registers for the selected period and previous ones IF the one of the selected period exists
         journal_ids = []
-        for j_id in journal_obj.search(self.cr, self.uid, [('type', '=', 'cheque')], order='NO_ORDER'):
+        for j_id in journal_obj.search(self.cr, self.uid, [('type', '=', 'cheque'), ('is_active', '=', True)], order='NO_ORDER'):
             if reg_obj.search_exist(self.cr, self.uid, [('journal_id', '=', j_id), ('period_id', '=', self.period_id)]):
                 journal_ids.append(j_id)
         period_ids = period_obj.search(self.cr, self.uid,

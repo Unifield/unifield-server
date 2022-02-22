@@ -38,6 +38,7 @@ class account_analytic_line(osv.osv):
         res = {}
         for aml in self.browse(cr, uid, ids, context=context):
             res[aml.id] = True
+            # note that AJIs linked to JIs on inactive journals are still correctable (US-7563).
             if aml.is_reallocated or aml.is_reversal or aml.journal_type == 'engagement' or \
                     (aml.real_period_id and aml.real_period_id.special) or \
                     not aml.move_id or not aml.move_id.is_corrigible:

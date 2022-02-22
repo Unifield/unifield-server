@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 from osv import osv
@@ -29,8 +29,8 @@ class unifield_version(osv.osv_memory):
     _name = 'unifield.version'
     _rec_name = 'version'
 
-    def default_get(self, cr, uid, field_list=[], context=None):
-        res = super(unifield_version, self).default_get(cr, uid, field_list, context=context)
+    def default_get(self, cr, uid, field_list=[], context=None, from_web=False):
+        res = super(unifield_version, self).default_get(cr, uid, field_list, context=context, from_web=from_web)
         cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='sync_client_version'")
 
         # US-872: by default, use the value in release.py, or Unknown,

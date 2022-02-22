@@ -222,6 +222,8 @@ class stock_incoming_processor(osv.osv):
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
         'fields_as_ro': fields.boolean('Hide split/change prod', internal=True),
         'sequence_issue': fields.boolean('Issue with To ship'),
+        'physical_reception_date': fields.datetime('Physical Reception Date'),
+        'imp_shipment_ref': fields.char(string='Ship Reference from the IN VI import', size=256, readonly=True),
     }
 
     _defaults = {
@@ -608,7 +610,7 @@ class stock_incoming_processor(osv.osv):
         for wizard in self.browse(cr, uid, ids, context=context):
             picking_id = wizard.picking_id.id
 
-            simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id, }, context=context)
+            simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id, 'physical_reception_date': wizard.physical_reception_date}, context=context)
             context.update({'simu_id': simu_id})
 
         return {'type': 'ir.actions.act_window',

@@ -7,7 +7,7 @@ from . import special_handling
 from . import orm
 from . import update
 from . import message
-from .log_sale_purchase import get_sale_purchase_logger
+from .log_sale_purchase import get_sale_purchase_logger, SyncException
 from . import hq_monitor
 from . import report
 from . import operations

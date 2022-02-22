@@ -677,5 +677,81 @@
             <field name="method">us_8753_admin_never_expire_password</field>
         </record>
 
+        <!-- UF22.0 -->
+        <record id="us_8597_set_custom_default_from_web" model="patch.scripts">
+            <field name="method">us_8597_set_custom_default_from_web</field>
+        </record>
+
+        <record id="us_8805_product_set_archived" model="patch.scripts">
+            <field name="method">us_8805_product_set_archived</field>
+        </record>
+
+        <record id="us_8869_remove_ir_import" model="patch.scripts">
+            <field name="method">us_8869_remove_ir_import</field>
+        </record>
+
+        <record id="us_7449_set_cv_version" model="patch.scripts">
+            <field name="method">us_7449_set_cv_version</field>
+        </record>
+
+        <record id="us_8944_cold_chain_migration" model="patch.scripts">
+            <field name="method">us_8944_cold_chain_migration</field>
+        </record>
+
+        <record id="us_9003_partner_im_is_currencies" model="patch.scripts">
+            <field name="method">us_9003_partner_im_is_currencies</field>
+        </record>
+
+        <!-- UF22.1 -->
+        <record id="us_8336_update_msr_used" model="patch.scripts">
+            <field name="method">us_8336_update_msr_used</field>
+        </record>
+
+        <!-- UF23.0 -->
+        <record id="us_8839_cv_from_fo" model="patch.scripts">
+            <field name="method">us_8839_cv_from_fo</field>
+        </record>
+
+        <record id="us_8585_new_isi_journals" model="patch.scripts">
+            <field name="method">us_8585_new_isi_journals</field>
+        </record>
+
+        <record id="us_9044_add_location_colors" model="patch.scripts">
+            <field name="method">us_9044_add_location_colors</field>
+        </record>
+
+
+        <!-- UF24.0 -->
+        <record id="us_8870_partner_instance_creator" model="patch.scripts">
+            <field name="method">us_8870_partner_instance_creator</field>
+        </record>
+
+        <record id="us_9436_set_dest_on_ir_out_converted" model="patch.scripts">
+            <field name="method">us_9436_set_dest_on_ir_out_converted</field>
+        </record>
+
+        <record id="us_8449_migrate_rr_min_max_auto_to_periods" model="patch.scripts">
+            <field name="method">us_8449_migrate_rr_min_max_auto_to_periods</field>
+        </record>
+
+        <record id="us_9577_display_manual_cv" model="patch.scripts">
+            <field name="method">us_9577_display_manual_cv</field>
+        </record>
+
+        <record id="us_9160_hq_prod_touch_donation_account" model="patch.scripts">
+            <field name="method">us_9160_hq_prod_touch_donation_account</field>
+        </record>
+
+        <record id="us_9391_fix_non_picks" model="patch.scripts">
+            <field name="method">us_9391_fix_non_picks</field>
+        </record>
+
+        <record id="us_9143_oca_change_dest_on_esc_po" model="patch.scripts">
+            <field name="method">us_9143_oca_change_dest_on_esc_po</field>
+        </record>
+
+        <record id="us_9570_ocb_auto_sync_time" model="patch.scripts">
+            <field name="method">us_9570_ocb_auto_sync_time</field>
+        </record>
     </data>
 </openerp>

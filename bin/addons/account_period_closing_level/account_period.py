@@ -211,8 +211,8 @@ class account_period(osv.osv):
                 if not period.special:
                     prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
                     if prev_period_id:
-                        all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id), ('journal_id.type', 'in', ['bank', 'cash']), ('journal_id', 'not in', journal_ok)], order='NO_ORDER', context=context)
                         # get the registers of the previous period which are NOT linked to a register of the period to close
+                        all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id), ('journal_id.type', 'in', ['bank', 'cash']), ('journal_id', 'not in', journal_ok)], order='NO_ORDER', context=context)
                         reg_ko = []
                         for reg in reg_obj.browse(cr, uid, all_prev_reg_ids,
                                                   fields_to_fetch=['balance_end', 'balance_end_real', 'balance_end_cash', 'name'],
@@ -220,6 +220,7 @@ class account_period(osv.osv):
                             if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:
                                 reg_ko.append(reg)
                         if len(reg_ko) > 0:
+                            # note: regs on inactive journals are always supposed to have a zero balance.
                             raise osv.except_osv(_('Warning'),
                                                  _("One or several registers have not been generated for the period "
                                                    "to close and have a balance which isn't equal to 0:\n"
@@ -501,7 +502,7 @@ class account_period(osv.osv):
             context = {}
         return self.register_view(cr, uid, ids, 'cash', context=context)
 
-    def invoice_view(self, cr, uid, ids, action_xmlid=None, context=None):
+    def invoice_view(self, cr, uid, ids, action_xmlid=None, doc_type=None, context=None):
         """
         Open an invoice tree view with the given domain for the period in ids
         """
@@ -510,17 +511,11 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, int):
             ids = [ids]
-
-        # to get action_xmlid:
-        # 1/ on the web interface get id of ir.ui.menu menu
-        # 2/ get id of ir.actions.act_window:
-        #        select value from ir_values where model='ir.ui.menu' and res_id=<menu_id>;
-        # 3/ get xmlid:
-        #    select module||'.'||name from ir_model_data where res_id=<act_id> and module!='sd' and model='ir.actions.act_window';
-        module, xmlid = action_xmlid.split('.', 1)
-        act_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
-        keys = ['display_menu_tip', 'help', 'type', 'domain', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'context', 'name', 'views', 'view_type']
-        act = self.pool.get('ir.actions.act_window').read(cr, uid, act_id, keys, context=context)
+        if not action_xmlid and doc_type:
+            action_xmlid = self.pool.get('account.invoice')._invoice_action_act_window.get(doc_type)
+        if not action_xmlid:
+            raise osv.except_osv(_('Warning'), _('Impossible to retrieve the view to display.'))
+        act = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xmlid, context=context)
         act_domain = act.get('domain', "[]") or "[]"
         act_context = act.get('context', "{}") or "{}"
         globals_dict = {'uid': uid}
@@ -535,7 +530,22 @@ class account_period(osv.osv):
             eval_domain += [('date_invoice', '<=', period['date_stop']), ('state', 'in', ['draft', 'open'])]
 
         eval_context = safe_eval(act_context, globals_dict)
-        eval_context['search_default_draft'] = 0
+
+        model_name = hasattr(model_obj, '_name') and getattr(model_obj, '_name')
+        model_inherit_name = hasattr(model_obj, '_inherit') and getattr(model_obj, '_inherit')
+        if model_name == 'account.invoice' or model_inherit_name == 'account.invoice':
+            # activate the Draft and Open filters
+            eval_context['search_default_draft'] = 1
+            if eval_context.get('doc_type') == 'donation':
+                eval_context['search_default_open'] = 1
+                eval_context['search_cancel_state_donation'] = 0
+            else:
+                eval_context['search_default_unpaid'] = 1  # Open
+                eval_context['search_default_paid'] = 0
+                eval_context['search_default_closed'] = 0
+            if eval_context.get('doc_type') in ('ivo', 'stv'):
+                eval_context['search_default_cancel_state'] = 0
+
         act['context'] = eval_context
         act['domain'] = eval_domain
         act['target'] = 'current'
@@ -546,68 +556,76 @@ class account_period(osv.osv):
         """
         Create a new tab with Open stock transfer vouchers from given period.
         """
-        return self.invoice_view(cr, uid, ids, action_xmlid='account.action_invoice_tree1', context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='stv', context=context)
 
     def button_customer_refunds(self, cr, uid, ids, context=None):
         """
         Create a new tab with Customer refunds from given period.
         """
-        return self.invoice_view(cr, uid, ids, action_xmlid='account.action_invoice_tree3', context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='cr', context=context)
 
     # Debit note
     def button_debit_note(self, cr, uid, ids, context=None):
-        return self.invoice_view(cr, uid, ids,
-                                 action_xmlid='account_override.action_debit_note',
-                                 context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='dn', context=context)
 
     # Intermission voucher OUT
     def button_intermission_out(self, cr, uid, ids, context=None):
-        return self.invoice_view(cr, uid, ids,
-                                 action_xmlid='account_override.action_intermission_out',
-                                 context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='ivo', context=context)
 
     def button_supplier_refunds(self, cr, uid, ids, context=None):
         """
-        Open a view that display Supplier invoices for given period
+        Open a view that displays Supplier Refunds for given period
         """
-        return self.invoice_view(cr, uid, ids,
-                                 action_xmlid='account.action_invoice_tree4', context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='sr', context=context)
 
     # Supplier direct invoices
     def button_supplier_direct_invoices(self, cr, uid, ids, context=None):
         """
         Open a view that display Direct invoices for this period
         """
-        return self.invoice_view(cr, uid, ids,
-                                 action_xmlid='register_accounting.action_direct_invoice',
-                                 context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='di', context=context)
 
     # In-kind donation
     def button_donation(self, cr, uid, ids, context=None):
         """
         Open a view that display Inkind donation for this period
         """
-        return self.invoice_view(cr, uid, ids,
-                                 action_xmlid='account_override.action_inkind_donation',
-                                 context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='donation', context=context)
 
     # Intermission voucher IN
     def button_intermission_in(self, cr, uid, ids, context=None):
         """
         Open a view that display intermission voucher in for this period
         """
-        return self.invoice_view(cr, uid, ids,
-                                 action_xmlid='account_override.action_intermission_in',
-                                 context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='ivi', context=context)
 
     # Supplier invoice
     def button_supplier_invoices(self, cr, uid, ids, context=None):
         """
         Open a view that display supplier invoices for this period
         """
-        return self.invoice_view(cr, uid, ids,
-                                 action_xmlid='account.action_invoice_tree2',
-                                 context=context)
+        return self.invoice_view(cr, uid, ids, doc_type='si', context=context)
+
+    # Intersection Supplier Invoice
+    def button_intersection_supplier_invoices(self, cr, uid, ids, context=None):
+        """
+        Opens a view with the ISI to check before closing the period
+        """
+        return self.invoice_view(cr, uid, ids, doc_type='isi', context=context)
+
+    # Intersection Supplier Refund
+    def button_intersection_supplier_refunds(self, cr, uid, ids, context=None):
+        """
+        Opens a view with the ISR to check before closing the period
+        """
+        return self.invoice_view(cr, uid, ids, doc_type='isr', context=context)
+
+    # Stock Transfer Refund
+    def button_stock_transfer_refunds(self, cr, uid, ids, context=None):
+        """
+        Opens a view with the STR to check before closing the period
+        """
+        return self.invoice_view(cr, uid, ids, doc_type='str', context=context)
 
     def button_close_field_period(self, cr, uid, ids, context=None):
         if not context:
@@ -626,7 +644,7 @@ class account_period(osv.osv):
         # Default buttons
         context.update({'search_default_active': 1})
         return {
-            'name': _('Curencies'),
+            'name': _('Currencies'),
             'type': 'ir.actions.act_window',
             'res_model': 'res.currency',
             'target': 'current',
@@ -732,8 +750,8 @@ class account_period(osv.osv):
         period_domain = [('date_stop', '<=', period['date_stop'])]
         period_ids = self.pool.get('account.period').search(cr, uid, period_domain,
                                                             context=context)
-        # Update context to set "Except Done" button by default
-        context.update({'search_default_exceptdone': 1, 'search_default_draft': 0, 'search_default_open': 0, 'search_default_done': 0})
+        # Update context to set "Draft" and "Validated" buttons by default
+        context.update({'search_default_draft': 1, 'search_default_validated': 1, 'search_default_done': 0})
         return {
             'name': _('Commitments'),
             'type': 'ir.actions.act_window',

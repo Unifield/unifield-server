@@ -401,6 +401,12 @@ class sync_version_instance_monitor(osv.osv):
         'cloud_size': fields.integer_big('Cloud Size Zipped', readonly=True),
         'nb_late_vi': fields.integer('# late VI jobs'),
         'vi_details': fields.text('Last exec VI job'),
+
+        'backup_type': fields.selection([('cont_back', 'Cont. Bkp'), ('sharepoint', 'Direct OD')], 'Backup Type'),
+        'wal_directory': fields.char('WAL dir.', size=256),
+        'ssh_config_dir': fields.char('SSH dir.', size=512),
+        'basebackup_date': fields.datetime('BB Date'),
+        'rsync_date': fields.datetime('Rsync Date'),
     }
 
     _defaults = {

@@ -52,11 +52,10 @@ class base_update_translations(osv.osv_memory):
         buf.close()
         return {'type': 'ir.actions.act_window_close'}
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         if context is None:
             context = {}
-        res = super(base_update_translations, self).default_get(cr, uid, fields, context=context)
-
+        res = super(base_update_translations, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if context.get('active_model') != "res.lang":
             return res
 

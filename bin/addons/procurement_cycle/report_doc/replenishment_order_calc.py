@@ -19,7 +19,7 @@ class order_calc_parser(report_sxw.rml_parse):
             'get_lines': lambda *a: get_lines(self, *a),
         })
 
-SpreadsheetReport('report.report_replenishment_order_calc_xls', 'replenishment.order_calc', 'addons/procurement_cycle/report/replenishment_order_calc.mako', parser=order_calc_parser)
+SpreadsheetReport('report.report_replenishment_order_calc_xls', 'replenishment.order_calc', 'addons/procurement_cycle/report_doc/replenishment_order_calc.mako', parser=order_calc_parser)
 
 class order_calc_warning_parser(report_sxw.rml_parse):
 
@@ -32,7 +32,7 @@ class order_calc_warning_parser(report_sxw.rml_parse):
             'get_lines': lambda *a: get_lines(self, *a),
         })
 
-SpreadsheetReport('report.report_replenishment_order_calc_warning_xls', 'replenishment.order_calc', 'addons/procurement_cycle/report/replenishment_order_calc.mako', parser=order_calc_warning_parser)
+SpreadsheetReport('report.report_replenishment_order_calc_warning_xls', 'replenishment.order_calc', 'addons/procurement_cycle/report_doc/replenishment_order_calc.mako', parser=order_calc_warning_parser)
 
 class order_calc_draft_consolidated_parser(report_sxw.rml_parse):
 
@@ -45,7 +45,7 @@ class order_calc_draft_consolidated_parser(report_sxw.rml_parse):
             'get_lines': lambda *a: get_lines(self, *a),
         })
 
-SpreadsheetReport('report.report_replenishment_order_calc_draft_consolidated_xls', 'replenishment.order_calc', 'addons/procurement_cycle/report/replenishment_order_calc.mako', parser=order_calc_draft_consolidated_parser)
+SpreadsheetReport('report.report_replenishment_order_calc_draft_consolidated_xls', 'replenishment.order_calc', 'addons/procurement_cycle/report_doc/replenishment_order_calc.mako', parser=order_calc_draft_consolidated_parser)
 
 class order_calc_all_consolidated_parser(report_sxw.rml_parse):
 
@@ -58,4 +58,4 @@ class order_calc_all_consolidated_parser(report_sxw.rml_parse):
             'get_lines': lambda *a: get_lines(self, *a),
         })
 
-SpreadsheetReport('report.report_replenishment_order_calc_consolidated_xls', 'replenishment.order_calc', 'addons/procurement_cycle/report/replenishment_order_calc.mako', parser=order_calc_all_consolidated_parser)
+SpreadsheetReport('report.report_replenishment_order_calc_consolidated_xls', 'replenishment.order_calc', 'addons/procurement_cycle/report_doc/replenishment_order_calc.mako', parser=order_calc_all_consolidated_parser)

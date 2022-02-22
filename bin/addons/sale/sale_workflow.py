@@ -242,6 +242,11 @@ class sale_order_line(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        cancel_ids = self.search(cr, uid, [('id', 'in', ids), ('from_cancel_out', '=', True)], context=context)
+        if cancel_ids:
+            for sol in self.browse(cr, uid, cancel_ids, context=context):
+                self._check_update_cv_line(cr, uid, sol, context=context)
+
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
 
         # generate sync message manually :
@@ -446,6 +451,67 @@ class sale_order_line(osv.osv):
 
         return True
 
+    def create_or_update_commitment_voucher(self, cr, uid, ids, context=None):
+        '''
+        Update commitment voucher with current FO lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        for sol in self.browse(cr, uid, ids, context=context):
+            commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('sale_id', '=', sol.order_id.id), ('state', '=', 'draft')], context=context)
+            if commitment_voucher_id:
+                commitment_voucher_id = commitment_voucher_id[0]
+            else: # create commitment voucher
+                if not sol.confirmed_delivery_date:
+                    raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+                commitment_voucher_id = self.pool.get('sale.order').create_commitment_voucher_from_so(cr, uid, [sol.order_id.id], cv_date=sol.confirmed_delivery_date, context=context)
+
+            income_account = sol.account_4_distribution and sol.account_4_distribution.id or False
+            if not income_account:
+                raise osv.except_osv(_('Error'), _('There is no income account defined for this line: %s (id:%d)') % (sol.name or '', sol.id))
+
+            cc_lines = []
+            ad_header = []  # if filled in, the line itself has no AD but uses the one at header level
+            if sol.analytic_distribution_id:
+                cc_lines = sol.analytic_distribution_id.cost_center_lines
+            else:
+                ad_header = sol.order_id.analytic_distribution_id.cost_center_lines
+
+            if not cc_lines and not ad_header:
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                     % (sol.order_id.name, sol.line_number, sol.product_id and sol.product_id.default_code or ''))
+
+            if ad_header:  # the line has no AD itself, it uses the AD at header level
+                distrib_id = False
+            else:
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
+            commit_line_vals = {
+                'commit_id': commitment_voucher_id,
+                'account_id': income_account,
+                'amount': sol.price_subtotal,
+                'initial_amount': sol.price_subtotal,
+                'analytic_distribution_id': distrib_id,
+                'so_line_id': sol.id,
+                'line_product_id': sol.product_id.id,
+                'line_number': sol.line_number,
+            }
+            self.pool.get('account.commitment.line').create(cr, uid, commit_line_vals, context=context)
+            if distrib_id:
+                for aline in cc_lines:
+                    vals = {
+                        'distribution_id': distrib_id,
+                        'analytic_id': aline.analytic_id.id,
+                        'currency_id': sol.order_id.currency_id.id,
+                        'destination_id': aline.destination_id.id,
+                        'percentage': aline.percentage,
+                    }
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
+                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], income_account, context=context)
+
+        return True
 
     def action_confirmed(self, cr, uid, ids, context=None):
         '''
@@ -457,11 +523,20 @@ class sale_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
+        pol_obj = self.pool.get('purchase.order.line')
         for sol in self.browse(cr, uid, ids, context=context):
-            linked_dpo_line = self.pool.get('purchase.order.line').search(cr, uid, [
+            linked_dpo_line = pol_obj.search(cr, uid, [
                 ('linked_sol_id', '=', sol.id),
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
+
+
+            if self.pool.get('unifield.setup.configuration').get_config(cr, uid,).customer_commitment and \
+                    not sol.order_id.procurement_request and \
+                    sol.order_id.partner_type in ('intermission', 'section') and \
+                    sol.order_id.order_type == 'regular':
+                self.create_or_update_commitment_voucher(cr, uid, [sol.id], context=context)
+
 
             if sol.order_id.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'):  # IR non stockable
                 continue
@@ -522,7 +597,7 @@ class sale_order_line(osv.osv):
                     # in case of IR not sourced from stock, don't create INT
                     continue
 
-                if self.pool.get('purchase.order.line').search_exist(cr, uid, [('linked_sol_id', '=', sol.id), ('from_synchro_return_goods', '=', True)], context=context):
+                if pol_obj.search_exist(cr, uid, [('linked_sol_id', '=', sol.id), ('from_synchro_return_goods', '=', True)], context=context):
                     # used by a claim, OUT already exists
                     continue
                 # create or update PICK/OUT/INT:
@@ -711,6 +786,8 @@ class sale_order_line(osv.osv):
 
         return_info = {}
         for sol in self.browse(cr, uid, ids, context=context):
+            self._check_update_cv_line(cr, uid, sol, context=context)
+
             if sol.counterpart_po_line_id and sol.counterpart_po_line_id.state in ('draft', 'validated'):
                 pol_to_cancel = False
                 if sol.product_uom_qty == sol.counterpart_po_line_id.product_qty:
@@ -735,6 +812,18 @@ class sale_order_line(osv.osv):
 
         return True
 
+    def _check_update_cv_line(self, cr, uid, so_line_obj, context=None):
+        cv_id = False
+        if so_line_obj.cv_line_ids:
+            amount = so_line_obj.price_subtotal
+            cv_id = so_line_obj.cv_line_ids[0].id
+        elif so_line_obj.original_line_id and so_line_obj.original_line_id.cv_line_ids:
+            amount = so_line_obj.price_subtotal
+            cv_id = so_line_obj.original_line_id.cv_line_ids[0].id
+
+        if cv_id:
+            self.pool.get('account.commitment.line')._update_so_commitment_line(cr, uid, cv_id, amount, from_cancel=True, context=context)
+
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
         Workflow method called when SO line is getting the cancel_r state
@@ -749,7 +838,10 @@ class sale_order_line(osv.osv):
 
         context.update({'no_check_line': True})
         vals = {'state': 'cancel_r'}
-        so_line = self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'], context=context)
+        so_line = self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'state', 'price_subtotal', 'cv_line_ids', 'original_line_id'], context=context)
+        for sol in so_line:
+            self._check_update_cv_line(cr, uid, sol, context=context)
+
         if so_line and (so_line[0].order_id.fo_created_by_po_sync or so_line[0].state != 'draft'):
             vals.update({'cancelled_by_sync': True})
         self.write(cr, uid, ids, vals, context=context)

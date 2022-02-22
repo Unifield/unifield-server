@@ -60,12 +60,12 @@ Please click on the below buttons to see the different blocking documents.''',
         'allocation_setup': lambda *a: 'mixed',
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for delivery process
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(allocation_stock_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(allocation_stock_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         res['allocation_setup'] = setup_id.allocation_setup
         res['unallocated_ok'] = setup_id.unallocated_ok and 'yes' or 'no'
 

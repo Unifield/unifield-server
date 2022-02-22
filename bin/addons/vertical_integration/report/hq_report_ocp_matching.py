@@ -28,7 +28,6 @@ from time import strftime
 from time import strptime
 
 from account_override import finance_export
-from . import hq_report_ocb_matching
 
 from report import report_sxw
 
@@ -44,10 +43,30 @@ class finance_archive(finance_export.finance_archive):
     Note: this report has NOT been translated: headers of all reports for OCP VI remain in English whatever the language selected
     """
 
-    def postprocess_reconciliable(self, cr, uid, data, model, column_deletion=False):
+    def postprocess_reconciliation_data(self, cr, uid, data, model, column_deletion=False):
         """
-        ##### WARNING #####
-        ### THIS CALLS THE METHOD FROM OCB ###
+        1st column: adds the DB id
+        15th column: replaces the reconcile id by the reconcile name.
+        """
+        if not data:
+            return []
+        pool = pooler.get_pool(cr.dbname)
+        new_data = []
+        reconcile_obj = pool.get('account.move.reconcile')
+        for line in data:
+            tmp_line = list(line)
+            reconcile_id = line[14]
+            if reconcile_id:
+                reconcile = reconcile_obj.read(cr, uid, reconcile_id, ['name'])
+                if reconcile and reconcile.get('name', False):
+                    tmp_line[14] = reconcile.get('name')
+            line_ids = str(line[0])
+            tmp_line[0] = self.get_hash(cr, uid, line_ids, model)
+            new_data.append(self.line_to_utf8(tmp_line))
+        return new_data
+
+    def postprocess_reconcilable(self, cr, uid, data, model, column_deletion=False):
+        """
         - For the reconciled entries:
             - check that all the legs have a posting date within or before the selected period
             - otherwise: don't keep any of the legs for the report
@@ -56,7 +75,7 @@ class finance_archive(finance_export.finance_archive):
             - all legs must have a posting date within or before the selected period
             - the old reconciliation must have been total
             - otherwise: don't keep any of the legs for the report
-        - (OCB method) Replace 15th column by its reconcile name.
+        - Call postprocess_reconciliation_data on the new data
         """
         new_data = []
         entries_kept = set()
@@ -114,9 +133,7 @@ class finance_archive(finance_export.finance_archive):
             else:
                 # all the entries from the same reconciliation must be excluded
                 entries_not_kept.update(aml_list)
-        # call the method from OCB (replace the 15th column by its reconcile name)
-        finance_archive_ocb = hq_report_ocb_matching.finance_archive(self.sqlrequests, self.processrequests)
-        return finance_archive_ocb.postprocess_reconciliable(cr, uid, new_data, model)
+        return self.postprocess_reconciliation_data(cr, uid, new_data, model)
 
 
 class hq_report_ocp_matching(report_sxw.report_sxw):
@@ -175,14 +192,17 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 AND aml.instance_id in %s
                 AND aml.date <= %s
                 AND reconcile_partial_id IS NULL
-                AND (aml.reconcile_date >= %s OR aml.unreconcile_date >= %s)
+                AND (
+                    (aml.reconcile_id IS NOT NULL AND aml.reconcile_date >= %s) OR
+                    (COALESCE(aml.unreconcile_txt, '') != '' AND aml.unreconcile_date >= %s)
+                )
                 ORDER BY aml.reconcile_id, aml.unreconcile_txt;
                 """,
         }
 
         # Define the file name according to the following format:
-        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Check_on_reconcilable_entries.csv
-        # (ex: KE1_201610_171116110306_Check_on_reconcilable_entries.csv)
+        # First3CharactersOfInstanceCode_chosenPeriod_currentDatetime_Check_on_reconcilable_entries.csv
+        # (e.g. KE1_201610_171116110306_Check_on_reconcilable_entries.csv)
         instance = instance_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
         instance_code = instance and instance.code[:3] or ''
         period = period_obj.browse(cr, uid, period_id, context=context, fields_to_fetch=['date_start', 'date_stop'])
@@ -200,7 +220,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 'filename': reconcilable_entries_filename,
                 'key': 'reconcilable',
                 'query_params': (date_stop, tuple(excluded_journal_types), tuple(instance_ids), date_stop, date_start, date_start),
-                'function': 'postprocess_reconciliable',
+                'function': 'postprocess_reconcilable',
                 'fnct_params': 'account.move.line',
                 'delete_columns': [15],
             },

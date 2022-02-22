@@ -31,12 +31,12 @@ class fixed_asset_setup(osv.osv_memory):
         'fixed_asset_ok': fields.boolean(string='Is the system manage Fixed assets ?'),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for fixed asset
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(fixed_asset_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(fixed_asset_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res['fixed_asset_ok'] = setup_id.fixed_asset_ok
 

@@ -375,21 +375,37 @@ class physical_inventory_select_products(osv.osv_memory):
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
 
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
         def write(model, id_, vals):
             return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
 
         assert isinstance(wizard_id, int)
 
-        inventory_id = read_single(self._name, wizard_id, "inventory_id")
-        product_ids = read_single(self._name, wizard_id, "products_preview")
+        wiz_data = read_many(self._name, wizard_id, ["inventory_id", "products_preview", "first_filter", "recent_moves_months", "recent_moves_months_fullinvo", "full_inventory"])
+        inventory_id = wiz_data["inventory_id"]
+        product_ids = wiz_data["products_preview"]
 
         # Redo a search to force order according to default order
-        previously_selected_product_ids = read_single("physical.inventory", inventory_id, "product_ids")
-        product_ids = previously_selected_product_ids + product_ids
+        inventory_data= self.pool.get('physical.inventory').read(cr, uid, inventory_id, ['product_ids', 'max_filter_months', 'multiple_filter_months'], context=context)
+        product_ids = inventory_data['product_ids'] + product_ids
         product_ids = self.pool.get("product.product").search(cr, uid, [("id", 'in', product_ids)], context=context)
 
         # '6' is the code for 'replace all'
         vals = {'product_ids': [(6, 0, product_ids)]}
+
+        # Check if 'recent_movements' has been used
+        if wiz_data['products_preview'] and (wiz_data['first_filter'] == 'recent_movements' or wiz_data['full_inventory'] and wiz_data['recent_moves_months_fullinvo']):
+            if wiz_data['full_inventory']:
+                nb_months = int(wiz_data['recent_moves_months_fullinvo'])
+            else:
+                nb_months = wiz_data['recent_moves_months']
+            if nb_months > inventory_data['max_filter_months']:
+                vals['max_filter_months'] = nb_months
+            if not inventory_data['multiple_filter_months'] and inventory_data['max_filter_months'] != -1  and nb_months != inventory_data['max_filter_months']:
+                vals['multiple_filter_months'] = True
+
         write('physical.inventory', inventory_id, vals)
 
 

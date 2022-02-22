@@ -189,7 +189,7 @@ class assign_to_kit(osv.osv_memory):
                     'target': 'crush',
                     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         fill the lines with default values
         '''
@@ -199,7 +199,7 @@ class assign_to_kit(osv.osv_memory):
         # objects
         move_obj = self.pool.get('stock.move')
 
-        res = super(assign_to_kit, self).default_get(cr, uid, fields, context=context)
+        res = super(assign_to_kit, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         stock_move_ids = context.get('active_ids', False)
         if not stock_move_ids:
             return res

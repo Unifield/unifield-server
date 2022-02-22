@@ -27,13 +27,13 @@ def is_readonly(self, inv):
     """
     Returns True if the fields Product and Quantity of the invoice must be readonly = not editable
     """
-    if inv.type == 'in_invoice' and not inv.is_direct_invoice and not inv.is_inkind_donation:  # IVI or SI
+    if inv.doc_type in ('ivi', 'si', 'isi'):
         is_readonly = inv.from_supply or inv.synced
-    elif inv.type == 'out_invoice' and inv.is_intermission:  # IVO
+    elif inv.doc_type == 'ivo':
         is_readonly = inv.from_supply
-    elif inv.type == 'out_invoice' and not inv.is_intermission and not inv.is_debit_note:  # STV
+    elif inv.doc_type == 'stv':
         is_readonly = inv.from_supply and inv.partner_type == 'section'
-    elif inv.type == 'in_invoice' and inv.is_inkind_donation:  # Donation
+    elif inv.doc_type == 'donation':
         is_readonly = inv.from_supply
     else:  # other inv. types are not supposed to be handled in this report
         is_readonly = True

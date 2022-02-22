@@ -51,14 +51,14 @@ class restrictive_country_setup(osv.osv_memory):
         'error': fields.boolean(string='Error'),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for country restrictions
         '''
         if not context:
             context = {}
 
-        res = super(restrictive_country_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(restrictive_country_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res['restrict_country_ids'] = []
 

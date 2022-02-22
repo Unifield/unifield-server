@@ -67,7 +67,8 @@ class cash_request(osv.osv):
         'transfer_currency_ids': fields.one2many('cash.request.transfer.currency', 'cash_request_id',
                                                  'Currency of Transfers', required=True,
                                                  states={'done': [('readonly', True)]}),
-        'bank_journal_id': fields.many2one('account.journal', 'Bank', required=True, domain=[('type', '=', 'bank')]),
+        'bank_journal_id': fields.many2one('account.journal', 'Bank', required=True,
+                                           domain=[('type', '=', 'bank'), ('is_active', '=', 'True')]),
         'state': fields.selection(
             [('draft', 'Draft'), ('open', 'Open'), ('done', 'Done')], 'State',
             required=True, readonly=True),

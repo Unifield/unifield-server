@@ -23,5 +23,6 @@ from . import expiry_report
 from . import consumption_report
 from . import expiry_calculation_report
 from . import weekly_forecast_report
+from . import historical_consumption_xlsx
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

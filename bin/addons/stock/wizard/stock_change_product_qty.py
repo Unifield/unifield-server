@@ -39,7 +39,7 @@ class stock_change_product_qty(osv.osv_memory):
 
         if (context.get('active_model') == 'product.product') and product_id:
             prod_obj = self.pool.get('product.product').read(cr, uid,
-                    product_id, ['track_production'], context=context)
+                                                             product_id, ['track_production'], context=context)
             fields = result.get('fields', {})
             if fields and (prod_obj['track_production'] == True) and (fields.get('prodlot_id')):
                 result['fields']['prodlot_id']['required'] = True
@@ -47,7 +47,7 @@ class stock_change_product_qty(osv.osv_memory):
                 result['fields']['prodlot_id']['required'] = False
         return result
 
-    def default_get(self, cr, uid, fields, context):
+    def default_get(self, cr, uid, fields, context, from_web=False):
         """ To get default values for the object.
          @param self: The object pointer.
          @param cr: A database cursor
@@ -57,7 +57,7 @@ class stock_change_product_qty(osv.osv_memory):
          @return: A dictionary which of fields with values.
         """
         product_id = context and context.get('active_id', False) or False
-        res = super(stock_change_product_qty, self).default_get(cr, uid, fields, context=context)
+        res = super(stock_change_product_qty, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if 'new_quantity' in fields:
             res.update({'new_quantity': 1})
@@ -85,9 +85,9 @@ class stock_change_product_qty(osv.osv_memory):
         prod_obj_pool = self.pool.get('product.product')
 
         res_original = prod_obj_pool.read(cr, uid, rec_id,
-                ['name', 'uom_id'], context=context)
+                                          ['name', 'uom_id'], context=context)
         for data in self.read(cr, uid, ids,
-                ['new_quantity', 'location_id', 'prodlot_id'], context=context):
+                              ['new_quantity', 'location_id', 'prodlot_id'], context=context):
             inventory_id = inventry_obj.create(cr , uid, {'name': _('INV: ') + tools.ustr(res_original['name'])}, context=context)
             line_data ={
                 'inventory_id' : inventory_id,

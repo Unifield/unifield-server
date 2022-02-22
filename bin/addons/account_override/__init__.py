@@ -51,6 +51,8 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Supplier Invoice
     #+ Direct Invoice
     #+ Supplier refund
+    #+ Intersection Supplier Invoice
+    #+ Intersection Supplier Refund
     'in_invoice': [
         ('type', '!=', 'view'),
         # Either Payable/Payables or Payable/Tax or Regular/Debt or Regular/Cash or Regular/Income accounts
@@ -61,6 +63,7 @@ ACCOUNT_RESTRICTED_AREA = {
     ],
     # HEADER OF:
     #+ Stock Transfer Voucher
+    #+ Stock Transfer Refund
     #+ Customer Refund
     #+ Debit Notes
     'out_invoice': [
@@ -81,7 +84,10 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Supplier invoice
     #+ Direct invoice
     #+ Supplier refund
+    #+ Intersection supplier invoice
+    #+ Intersection supplier refund
     #+ Stock transfer voucher
+    #+ Stock transfer refund
     #+ Customer refund
     #+ Debit notes
     'invoice_lines': [

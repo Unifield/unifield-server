@@ -382,11 +382,7 @@ SELECT res_id, touched
                             _previous_calls=_previous_calls,
                             context=context)
 
-        # store changes in the context
-        if context is not None and 'changes' in context:
-            changes = context['changes'].setdefault(self._name, {})
-        else:
-            changes = {}
+        changes = {}
 
         # do not track changes if the dict are the same
         if previous_values == current_values:
@@ -799,7 +795,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         if not dest_field:
             return result
 
-        field = self.fields_get(cr, uid, context=context).get(dest_field)
+        field = self.fields_get(cr, uid, fields=[dest_field], context=context).get(dest_field)
 
         if field['type'] == 'many2one' and not field['relation'] == 'msf.instance':
             for rec in self.read(cr, uid, ids, [dest_field], context):

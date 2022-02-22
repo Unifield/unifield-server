@@ -71,7 +71,7 @@ class purchase_order(osv.osv):
             else:
                 ret.where_clause.append(' "res_partner"."name" ilike %s ')
             ret.where_clause_params.append('%%%s%%'%dest_partner_names)
-            ret.having = ' GROUP BY "purchase_order"."id" '
+            ret.having_group_by = ' GROUP BY "purchase_order"."id" '
         return ret
 
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
@@ -705,6 +705,8 @@ class purchase_order(osv.osv):
         return [('id', operator, list(po_ids))]
 
     def _get_msg_big_qty(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
         res = {}
         max_qty = self.pool.get('purchase.order.line')._max_qty
         max_amount = self.pool.get('purchase.order.line')._max_amount
@@ -737,6 +739,27 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_nb_creation_message_nr(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = 0
+
+        cr.execute("""select target_id, count(*)
+            from sync_client_message_received
+            where
+                run='f' and
+                target_object='purchase.order' and
+                target_id in %s
+            group by target_id""", (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+
+        return ret
+
+
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -753,6 +776,7 @@ class purchase_order(osv.osv):
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True, domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),
+        'dest_partner_type': fields.related('dest_partner_id', 'partner_type', string='DPO Dest Partner Type', type='selection', selection=PARTNER_TYPE, readonly=True, write_relate=False),
         'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True,
                                               help="The address where the invoice will be sent."),
         'invoice_method': fields.selection([('manual', 'Manual'), ('order', 'From Order'), ('picking', 'From Picking')], 'Invoicing Control', required=True, readonly=True,
@@ -861,9 +885,9 @@ class purchase_order(osv.osv):
             'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
         },
         ),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
-        'delivery_requested_date_modified': fields.date(string='Delivery Requested Date (modified)'),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+        'delivery_requested_date': fields.date(string='Requested Delivery Date', required=True),
+        'delivery_requested_date_modified': fields.date(string='Estimated Delivery Date'),
+        'delivery_confirmed_date': fields.date(string='Confirmed Delivery Date'),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
@@ -902,6 +926,7 @@ class purchase_order(osv.osv):
         'show_default_msg': fields.boolean(string='Show PO Default Message'),
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
+        'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
     }
     _defaults = {
         'po_version': 2,
@@ -1005,11 +1030,11 @@ class purchase_order(osv.osv):
 
         return True
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Fill the unallocated_ok field according to Unifield setup
         '''
-        res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+        res = super(purchase_order, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})
@@ -1482,6 +1507,14 @@ class purchase_order(osv.osv):
             context = {}
         return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
 
+    def estimated_data(self, cr, uid, ids, context=None):
+        '''
+        data for requested
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Estimated Date of all/selected Order lines ?'), }
+
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
         data for confirmed
@@ -1507,8 +1540,11 @@ class purchase_order(osv.osv):
             context = {}
         # field name
         field_name = context.get('field_name', False)
-        if field_name == 'requested' and self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
-            raise osv.except_osv(_('Warning'), _('Please fill the "Delivery Requested Date (modified)" field.'))
+        if field_name == 'estimated':
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
+                raise osv.except_osv(_('Warning'), _('Please fill the "Estimated Delivery Date" field.'))
+            elif self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context):
+                field_name = 'requested'
         assert field_name, 'The button is not correctly set.'
         # data
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
@@ -2852,12 +2888,21 @@ class purchase_order(osv.osv):
                 ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id)
             ], limit=1, context=context)
 
+            po_partner_type = po.partner_id.partner_type
+            if po_partner_type == 'external':
+                cv_type = 'external'
+            elif po_partner_type == 'section':
+                cv_type = 'intersection'
+            elif po_partner_type == 'intermission':
+                cv_type = 'intermission'
+            else:
+                cv_type = 'manual'
             vals = {
                 'journal_id': engagement_ids and engagement_ids[0] or False,
                 'currency_id': po.currency_id and po.currency_id.id or False,
                 'partner_id': po.partner_id and po.partner_id.id or False,
                 'purchase_id': po.id or False,
-                'type': 'external' if po.partner_id.partner_type == 'external' else 'manual',
+                'type': cv_type,
             }
             # prepare some values
             period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)
@@ -2872,9 +2917,8 @@ class purchase_order(osv.osv):
 
             # Display a message to inform that a commitment was created
             commit_data = self.pool.get('account.commitment').read(cr, uid, commit_id, ['name'], context=context)
-            message = _("Commitment Voucher %s has been created.") % commit_data.get('name', '')
-            view_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'account_commitment_form')
-            self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_ids and view_ids[1] or False})
+            message = _("Supplier Commitment Voucher %s has been created.") % commit_data.get('name', '')
+            self.pool.get('account.commitment').log(cr, uid, commit_id, message, action_xmlid='analytic_distribution.action_account_commitment_tree')
             self.infolog(cr, uid, message)
 
             # Add analytic distribution from purchase

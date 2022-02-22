@@ -87,8 +87,8 @@ class register_entity(osv.osv_memory):
         'state':fields.selection([('register','Register'),('parents','Parents'),('groups','Groups'), ('message', 'Message')], 'State', required=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        values = super(register_entity, self).default_get(cr, uid, fields, context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        values = super(register_entity, self).default_get(cr, uid, fields, context, from_web=from_web)
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         values.update({
             'identifier': entity.identifier,
@@ -129,9 +129,13 @@ class register_entity(osv.osv_memory):
     def next(self, cr, uid, ids, context=None):
         if isinstance(ids, int):
             ids = [ids]
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
+        if entity.oc:
+            raise osv.except_osv(_("Error !"), _("Current instance already registered!"))
+
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         res = proxy.get_entity(
-            self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier,
+            entity.identifier,
             context)
         if res[0] and res[1]['entity_status'] == 'validated':
             raise osv.except_osv(_("Error !"), _("Current instance already validated!"))

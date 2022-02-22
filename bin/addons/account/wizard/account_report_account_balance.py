@@ -73,11 +73,11 @@ class account_balance_report(osv.osv_memory):
         'display_account': 'bal_movement',  # by default only result with JIs
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         if context is None:
             context = {}
         context['report_cross_fy'] = True
-        return super(account_balance_report, self).default_get(cr, uid, fields, context=context)
+        return super(account_balance_report, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
     def remove_journals(self, cr, uid, ids, context=None):
         if ids:

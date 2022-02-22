@@ -34,8 +34,7 @@ def normalize_td(time_unit, value):
     return {unit: value}
 
 from . import replenishment
-import wizard
-from . import report
+from . import report_doc
 from . import replenishment_wizard
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

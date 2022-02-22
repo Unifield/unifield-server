@@ -264,7 +264,7 @@ class abstract_wizard_import(osv.osv_memory):
         ),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Return default values for some fields
         :param cr: Cursor to the database
@@ -273,7 +273,7 @@ class abstract_wizard_import(osv.osv_memory):
         :param context: Context of the call
         :return: A dictionary with field names as keys
         """
-        res = super(abstract_wizard_import, self).default_get(cr, uid, fields, context=context)
+        res = super(abstract_wizard_import, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         res.update({
             'total_lines_to_import': 0,
             'total_lines_imported': 0,

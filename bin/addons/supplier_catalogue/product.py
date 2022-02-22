@@ -111,7 +111,7 @@ class pricelist_partnerinfo(osv.osv):
     _name = 'pricelist.partnerinfo'
     _inherit = 'pricelist.partnerinfo'
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Set automatically the currency of the line with the default
         purchase currency of the supplier, and the uom with the uom of the product.supplierinfo.
@@ -119,7 +119,7 @@ class pricelist_partnerinfo(osv.osv):
         if not context:
             context = {}
 
-        res = super(pricelist_partnerinfo, self).default_get(cr, uid, fields, context=context)
+        res = super(pricelist_partnerinfo, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         if context.get('partner_id', False) and isinstance(context['partner_id'], int):
             partner = self.pool.get('res.partner').browse(cr, uid, context.get('partner_id'), context=context)

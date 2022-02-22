@@ -27,6 +27,7 @@ import tools
 from datetime import datetime
 import logging
 
+
 class product_section_code(osv.osv):
     _name = "product.section.code"
     _rec_name = 'section'
@@ -181,6 +182,7 @@ class product_cold_chain(osv.osv):
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True, translate=1),
         'cold_chain': fields.boolean('Cold Chain'),
+        'mapped_to': fields.many2one('product.cold_chain', string='Mapped to', readonly=1),
     }
 
     _defaults = {
@@ -1074,8 +1076,8 @@ class product_attributes(osv.osv):
         """
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        res = super(product_attributes, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if 'heat_sensitive_item' in fields or not fields:
             res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
 
@@ -1249,6 +1251,7 @@ class product_attributes(osv.osv):
             msg = ''
             st_cond = True
 
+
             if product.state.code == 'forbidden':
                 if sale_obj and partner_type == 'internal':
                     continue
@@ -1291,6 +1294,13 @@ class product_attributes(osv.osv):
                 st_type = st_cond and _('status') or _('product creator')
                 st_name = st_cond and product.state.name or product.international_status.name
 
+            if not error and vals.get('obj_type') == 'in' and not product.active:
+                error = True
+                st_type = _('status')
+                st_name = _('Inactive')
+                msg = _('be moved')
+
+            if error:
                 error_msg = ''
                 if vals.get('move'):
                     error_msg = _('%s line %s: ') % (vals['move'].picking_id.name, vals['move'].line_number)
@@ -1704,39 +1714,36 @@ class product_attributes(osv.osv):
             del(vals['active'])
 
 
-        check_reactivate = False
-        prod_state = ''
-        if 'state_ud' in vals:
-            if not context.get('sync_update_execution'):
-                if self.mapping_ud.get(vals['state_ud']):
-                    prod_state =  self.mapping_ud[vals['state_ud']]
-                    vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', prod_state)], context=context)[0]
-
-                if vals['state_ud'] == 'archived':
-                    vals['active'] = False
-                elif 'oc_subscription' not in vals:
-                    check_reactivate = True
-
         if not intstat_code:
             unidata_product = self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context)
 
-
+        check_reactivate = False
         reactivated_by_oc_subscription = False
-        if unidata_product and not context.get('sync_update_execution') and 'oc_subscription' in vals:
-            if 'international_status' not in vals:
+        prod_state = ''
+        if unidata_product and not context.get('sync_update_execution'):
+            if 'international_status' not in vals and 'oc_subscription' in vals:
                 if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
                     raise osv.except_osv(_('Waning'), _("You can write the oc_subscription field on multiple products only if all products are UniData !"))
 
-            if not vals['oc_subscription']:
-                vals['active'] = False
-                # to fix in US-7883: oc_subscription=False must preval on vals['state_ud'], so vals['state'] must be set to 'archived' or 'phase_out' ?
+            if 'oc_subscription' in vals and not vals['oc_subscription']:
+                # oc_subscription=False must preval on vals['state_ud']
                 prod_state = 'archived'
-            elif prod_state != 'archived':
-                if not prod_state and 'state' not in vals:
-                    # uf state is archived or phase_out, we must map it with uf state
-                    reactivated_by_oc_subscription = True
+            elif 'state_ud' in vals and self.mapping_ud.get(vals['state_ud']):
+                prod_state = self.mapping_ud[vals['state_ud']]
 
+            if prod_state:
+                vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', prod_state)], context=context)[0]
+
+            if prod_state == 'archived':
+                vals['active'] = False
+            elif prod_state and 'oc_subscription' not in vals:
+                # this will compute active
+                check_reactivate = True
+            elif vals.get('oc_subscription'):
                 vals['active'] = True
+                if 'state' not in vals:
+                    # only oc_subscription = True sent but no info on state / state_ud, we must recompute the mapping
+                    reactivated_by_oc_subscription = True
 
         if not prod_state and 'state' in vals:
             if vals['state']:
@@ -1766,32 +1773,29 @@ class product_attributes(osv.osv):
             if vals.get('active', None) is False:
                 deactivate_result =  self.deactivate_product(cr, uid, ids, context=context, try_only=True)
                 if not deactivate_result['ok']:
-                    vals['active'] = True
-                    if unidata_product:
+                    prod_code = self.read(cr, uid, ids[0], ['default_code'], context=context)
+                    error_msg = []
+                    wiz_error = self.pool.get('product.deactivation.error').browse(cr, uid, deactivate_result['error'], context=context)
+                    if wiz_error.stock_exist:
+                        error_msg.append('Stock exists (internal locations)')
 
-                        prod_code = self.read(cr, uid, ids[0], ['default_code'], context=context)
-                        error_msg = []
-                        wiz_error = self.pool.get('product.deactivation.error').browse(cr, uid, deactivate_result['error'], context=context)
-                        if wiz_error.stock_exist:
-                            error_msg.append('Stock exists (internal locations)')
+                    doc_errors = []
+                    for error in wiz_error.error_lines:
+                        doc_errors.append("%s : %s" % (error.type or '', error.doc_ref or ''))
 
-                        doc_errors = []
-                        for error in wiz_error.error_lines:
-                            doc_errors.append("%s : %s" % (error.type or '', error.doc_ref or ''))
-
-                        if doc_errors:
-                            error_msg.append('Product is contained in opened documents :\n - %s'  % ' \n - '.join(doc_errors))
-                        raise osv.except_osv('Warning', 'Product %s cannot be deactivated: \n * %s ' % (prod_code['default_code'], "\n * ".join(error_msg)))
+                    if doc_errors:
+                        error_msg.append('Product is contained in opened documents :\n - %s'  % ' \n - '.join(doc_errors))
+                    raise osv.except_osv('Warning', 'Product %s cannot be deactivated: \n * %s ' % (prod_code['default_code'], "\n * ".join(error_msg)))
 
                 elif unidata_product:
                     # unidata product inactive must also be archived: 1st set as phase out by the update one
                     vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'archived')], context=context)[0]
 
             if prod_state == 'archived' and unidata_product:
-                # received archived: set as phase out, when the "active" update is processed it will set archived state if inactivation is allowed
-                #if vals.get('active') or self.search(cr, uid, [('id', 'in', ids), ('active', '=', True)]):
+                # received archived: set as phase out, when the "active" update will be processed, it will set archive if inactivation is allowed
                 # this must be done only if the product is not already inactive (US-7883)
-                vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
+                if vals.get('active') or self.search(cr, uid, [('id', 'in', ids), ('active', '=', True)]):
+                    vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
 
         ud_unable_to_inactive = []
         if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product:
@@ -1808,6 +1812,9 @@ class product_attributes(osv.osv):
             if context.get('sync_update_execution'):
                 fields_to_update += ['active_sync_change_date=%(now)s']
             cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
+        elif ids and vals.get('standard_ok') in ('standard', 'non_standard'):
+            # active update must be trigger if product is active and was NSL (because created as inactive on lower instance)
+            cr.execute("update product_product set active_change_date=%(now)s where id in %(ids)s and active = 't' and standard_ok='non_standard_local'", {'now': fields.datetime.now(), 'ids': tuple(ids)})
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
@@ -1873,16 +1880,19 @@ class product_attributes(osv.osv):
         for product in self.browse(cr, uid, ids, context=context):
             if product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
-            if instance_level in ['project', 'coordo'] and product.standard_ok == 'non_standard_local':
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'product.ask.activate.wizard',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_id': wiz_obj.create(cr, uid, {'product_id': product.id}, context=context),
-                    'target': 'new',
-                    'context': context
-                }
+            if product.standard_ok == 'non_standard_local':
+                if instance_level == 'coordo':
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'product.ask.activate.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': wiz_obj.create(cr, uid, {'product_id': product.id}, context=context),
+                        'target': 'new',
+                        'context': context
+                    }
+                elif instance_level == 'project':
+                    raise osv.except_osv(_('Error'), _('%s activation is not allowed at project') % (product.default_code,))
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         self.write(cr, real_uid, ids, {'active': True}, context=context)
@@ -1910,11 +1920,15 @@ class product_attributes(osv.osv):
         in_inv_obj = self.pool.get('initial.stock.inventory.line')
         invoice_obj = self.pool.get('account.invoice.line')
 
+        prod_list_line_obj = self.pool.get('product.list.line')
         error_obj = self.pool.get('product.deactivation.error')
         error_line_obj = self.pool.get('product.deactivation.error.line')
 
         internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
 
+        ud_prod = []
+        ud_nsl_prod = []
+        other_prod = []
         for product in self.browse(cr, uid, ids, context=context):
             # Raise an error if the product is already inactive
             if not product.active and not context.get('sync_update_execution'):
@@ -1923,15 +1937,9 @@ class product_attributes(osv.osv):
             cr.execute('select distinct(list.id) from product_list list, product_list_line line where line.list_id = list.id and line.name = %s', (product.id,))
             has_product_list = [x[0] for x in cr.fetchall()]
             if context.get('sync_update_execution') and has_product_list:
-                # update to deactivate product is executed before the update to remove prod from list
-                # so we have to check if an update is in the pipe
-                cr.execute('''select d.name from ir_model_data d
-                        left join sync_client_update_received up on up.run='f' and up.is_deleted='t' and up.sdref=d.name
-                         where d.model='product.list.line' and d.module='sd' and
-                            d.res_id in (select id from product_list_line where name=%s) and up.id is null''', (product.id,)
-                           )
-                if not cr.rowcount:
-                    has_product_list = []
+                prod_list_line_ids = prod_list_line_obj.search(cr, uid, [('name', '=', product.id)], context=context)
+                prod_list_line_obj.unlink(cr, uid, prod_list_line_ids, context=context, extra_comment='Product got deactivated')
+                has_product_list = []
 
 
             # Check if the product is in some purchase order lines or request for quotation lines
@@ -2010,7 +2018,15 @@ class product_attributes(osv.osv):
                     break
 
             opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line or has_product_list
-            if has_stock or opened_object:
+            if not has_stock and not opened_object:
+                if product.international_status.code == 'unidata':
+                    if product.standard_ok == 'non_standard_local':
+                        ud_nsl_prod.append(product.id)
+                    else:
+                        ud_prod.append(product.id)
+                else:
+                    other_prod.append(product.id)
+            else:
                 # Create the error wizard
                 wizard_id = error_obj.create(cr, uid, {'product_id': product.id,
                                                        'stock_exist': has_stock and True or False,
@@ -2131,32 +2147,41 @@ class product_attributes(osv.osv):
                         obj = invoice.invoice_id
                         type_name = 'Invoice'
                         # Customer Refund
-                        if obj.type == 'out_refund':
+                        if obj.doc_type == 'cr':
                             type_name = 'Customer Refund'
                         # Supplier Refund
-                        elif obj.type == 'in_refund':
+                        elif obj.doc_type == 'sr':
                             type_name = 'Supplier Refund'
                         # Debit Note
-                        elif obj.type == 'out_invoice' and obj.is_debit_note and not obj.is_inkind_donation:
+                        elif obj.doc_type == 'dn':
                             type_name = 'Debit Note'
                         # Donation (in-kind donation)
-                        elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
+                        elif obj.doc_type == 'donation':
                             type_name = 'Finance document In-kind Donation'
                         # Intermission voucher out
-                        elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                        elif obj.doc_type == 'ivo':
                             type_name = 'Intermission Voucher Out'
                         # Intermission voucher in
-                        elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                        elif obj.doc_type == 'ivi':
                             type_name = 'Intermission Voucher In'
                         # Stock Transfer Voucher
-                        elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
+                        elif obj.doc_type == 'stv':
                             type_name = 'Stock Transfer Voucher'
                         # Supplier Invoice
-                        elif obj.type == 'in_invoice' and not obj.register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
+                        elif obj.doc_type == 'si':
                             type_name = 'Supplier Invoice'
                         # Supplier Direct Invoice
-                        elif obj.type == 'in_invoice' and obj.register_line_ids:
+                        elif obj.doc_type == 'di':
                             type_name = 'Supplier Direct Invoice'
+                        # Stock Transfer Refund
+                        elif obj.doc_type == 'str':
+                            type_name = 'Stock Transfer Refund'
+                        # Intersection Supplier Invoice
+                        elif obj.doc_type == 'isi':
+                            type_name = 'Intersection Supplier Invoice'
+                        # Intersection Supplier Refund
+                        elif obj.doc_type == 'isr':
+                            type_name = 'Intersection Supplier Refund'
 
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': type_name,
@@ -2189,7 +2214,16 @@ class product_attributes(osv.osv):
             context['bypass_sync_update'] = True
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-        self.write(cr, real_uid, ids, {'active': False}, context=context)
+        if ud_nsl_prod:
+            # reactivation of UD NSL prod must bypass UR : active allowed
+            if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+                real_uid = uid
+            self.write(cr, real_uid, ud_nsl_prod, {'active': False}, context=context)
+        if ud_prod:
+            self.write(cr, real_uid, ud_prod, {'active': False}, context=context)
+        if other_prod:
+            phase_out_id = self.pool.get('product.status').search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
+            self.write(cr, real_uid, other_prod, {'active': False, 'state': phase_out_id}, context=context)
 
         return True
 
@@ -2732,6 +2766,7 @@ class product_attributes(osv.osv):
             ('composition.kit', 'composition_product_id', _('Composition Kit(s)'), []),
             ('composition.item', 'item_product_id', _('Composition Kit line(s)'), []),
         ]
+        # please update also doc_field_error_dom in bin/addons/mission_stock/mission_stock.py
 
         for obj, field, msg, dom in doc_field_error_dom:
             nb = self.pool.get(obj).search(cr, uid, [(field, '=', prod_id)]+dom, count=True, context=context)
@@ -2750,7 +2785,7 @@ class product_attributes(osv.osv):
 
         cr.execute('''
                     select
-                        l.product_id
+                        l.product_id, array_agg(i.code)
                     from
                         stock_mission_report r, msf_instance i, stock_mission_report_line l
                     where
@@ -2759,10 +2794,10 @@ class product_attributes(osv.osv):
                         l.mission_report_id = r.id and
                         l.product_id in %s and
                         r.full_view = 'f' and
-                        ( l.internal_qty > 0 or l.in_pipe_qty > 0)
+                        ( l.internal_qty > 0 or l.in_pipe_qty > 0 or l.used_in_transaction='t')
                     group by l.product_id
                 ''' , (tuple(ids), ))
-        return [x[0] for x in cr.fetchall()]
+        return [(x[0],', '.join(x[1])) for x in cr.fetchall()]
 
 
     def merge_product(self, cr, uid, nsl_prod_id, local_id, context=None):
@@ -2777,8 +2812,9 @@ class product_attributes(osv.osv):
         if error_used:
             raise osv.except_osv(_('Warning'), _('The selected UD product %s has already been used in the past. Merge cannot be done for this product') % (new_data['default_code'], ))
 
-        if self._has_pipe(cr, uid, nsl_prod_id):
-            raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore the product cannot be merged') % (new_data['default_code'], ))
+        has_pipe = self._has_pipe(cr, uid, nsl_prod_id)
+        if has_pipe:
+            raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore the product cannot be merged. Instance(s): %s') % (has_pipe[0][1], ))
 
         local_dom = [('id', '=', local_id), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False)]
         if not context.get('sync_update_execution'):
@@ -2852,6 +2888,7 @@ class product_attributes(osv.osv):
             'stock_qty', 'stock_val',
             'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
             'secondary_qty', 'secondary_val',
+            'eprep_qty',
             'cu_qty', 'cu_val',
             'cross_qty', 'cross_val',
             'wh_qty', 'internal_qty',
@@ -2985,7 +3022,20 @@ class product_deactivation_error_line(osv.osv_memory):
                 res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'],context=context)
                 res['res_id'] = line.doc_id
                 res['target'] = 'current'
-                res['nodestroy'] = True
+                res['keep_open'] = True
+                return res
+
+            # Invoices
+            if line.internal_type == 'account.invoice' and line.doc_id:
+                inv_obj = self.pool.get('account.invoice')
+                doc_type = inv_obj.read(cr, uid, line.doc_id, ['doc_type'], context=context)['doc_type']
+                action_xmlid = inv_obj._invoice_action_act_window.get(doc_type)
+                if not action_xmlid:
+                    raise osv.except_osv(_('Warning'), _('Impossible to retrieve the view to display.'))
+                res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xmlid, ['form', 'tree'], context=context)
+                res['res_id'] = line.doc_id
+                res['target'] = 'current'
+                res['keep_open'] = True
                 return res
 
             view_id, context = self._get_view(cr, uid, line, context=context)
@@ -2997,7 +3047,7 @@ class product_deactivation_error_line(osv.osv_memory):
                     'view_type': 'form',
                     'target': 'current',
                     'view_id': view_id,
-                    'nodestroy': True,
+                    'keep_open': True,
                     'context': context}
 
     def _get_view(self, cr, uid, line, context=None):
@@ -3008,7 +3058,6 @@ class product_deactivation_error_line(osv.osv_memory):
             context = {}
 
         view_id = False
-        data_obj = self.pool.get('ir.model.data')
         obj = self.pool.get(line.internal_type).browse(cr, uid, line.doc_id)
 
         if line.internal_type == 'composition.kit':
@@ -3021,38 +3070,6 @@ class product_deactivation_error_line(osv.osv_memory):
             context.update({'procurement_request': obj.procurement_request})
         elif line.internal_type == 'purchase.order':
             context.update({'rfq_ok': obj.rfq_ok})
-        elif line.internal_type == 'account.invoice':
-            view_id = data_obj.get_object_reference(cr, uid, 'account', 'invoice_form')
-            # Customer Refund
-            if obj.type == 'out_refund':
-                context.update({'type':'out_refund', 'journal_type': 'sale_refund'})
-            # Supplier Refund
-            elif obj.type == 'in_refund':
-                context.update({'type':'in_refund', 'journal_type': 'purchase_refund'})
-            # Debit Note
-            elif obj.type == 'out_invoice' and obj.is_debit_note and not obj.is_inkind_donation:
-                context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
-            # Donation (in-kind donation)
-            elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
-                context.update({'type':'in_invoice', 'journal_type': 'inkind'})
-            # Intermission voucher out
-            elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
-                view_id = data_obj.get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
-                context.update({'type':'out_invoice', 'journal_type': 'intermission'})
-            # Intermission voucher in
-            elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
-                view_id = data_obj.get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
-                context.update({'type':'in_invoice', 'journal_type': 'intermission'})
-            # Stock Transfer Voucher
-            elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
-                context.update({'type':'out_invoice', 'journal_type': 'sale'})
-            # Supplier Invoice
-            elif obj.type == 'in_invoice' and not obj.register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
-                context.update({'type':'in_invoice', 'journal_type': 'purchase'})
-            # Supplier Direct Invoice
-            elif obj.type == 'in_invoice' and obj.register_line_ids:
-                context.update({'type':'in_invoice', 'journal_type': 'purchase'})
-
         if view_id:
             view_id = [view_id[1]]
 

@@ -108,9 +108,9 @@ class account_analytic_line(osv.osv):
 
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code', ondelete='restrict'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code', ondelete='restrict', select=1),
         'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]", ondelete='restrict'),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]", ondelete='restrict', select=1),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'free_account': fields.function(_get_is_free, fnct_search=_search_is_free, method=True, type='boolean', string='Free account?', help="Does that line come from a Free 1 or Free 2 account?"),
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed.", select=1),
@@ -121,6 +121,7 @@ class account_analytic_line(osv.osv):
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'is_reversal': fields.boolean('Reversal?'),
         'is_reallocated': fields.boolean('Reallocated?'),
+        'ad_updated': fields.boolean('Analytic Distribution Updated'),
         'date': fields.date('Posting Date', required=True, select=True, readonly=True),
         'document_date': fields.date('Document Date', readonly=True, required=True),
         'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency", readonly=True, write_relate=False),
@@ -357,6 +358,7 @@ class account_analytic_line(osv.osv):
             period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
         res = []
         for al in self.browse(cr, uid, ids, context=context):
+            self.pool.get('finance.tools').check_correction_date_fy(al.date, posting_date, context=context)
             curr_date = currency_date.get_date(self, cr, al.document_date, al.date, source_date=al.source_date)
             vals = {
                 'name': self.join_without_redundancy(al.name, 'REV'),

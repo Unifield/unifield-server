@@ -32,12 +32,12 @@ class vat_setup(osv.osv_memory):
         'vat_ok': fields.boolean(string='Do you manage VAT locally ?'),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Display the default value for delivery process
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        res = super(vat_setup, self).default_get(cr, uid, fields, context=context)
+        res = super(vat_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         res['vat_ok'] = setup_id.vat_ok
 
         return res

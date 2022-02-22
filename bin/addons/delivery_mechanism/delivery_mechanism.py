@@ -670,7 +670,6 @@ class stock_picking(osv.osv):
 
         if not values:
             return prog_id
-
         prog_obj.write(cr, uid, [prog_id], values, context=context)
 
         return prog_id
@@ -742,6 +741,10 @@ class stock_picking(osv.osv):
         if context.get('rw_sync', False):
             sync_in = False
 
+        context['bypass_store_function'] = [
+            ('stock.picking', ['overall_qty', 'line_state'])
+        ]
+
         in_out_updated = True
         if sync_in or context.get('do_not_process_incoming'):
             in_out_updated = False
@@ -760,7 +763,17 @@ class stock_picking(osv.osv):
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
             if wizard.register_a_claim and wizard.claim_type in ['return', 'missing']:
                 in_out_updated = False
+            if not wizard.physical_reception_date:
+                wizard.physical_reception_date = time.strftime('%Y-%m-%d %H:%M:%S')
             picking_id = wizard.picking_id.id
+
+            in_forced = wizard.picking_id.state == 'assigned' and \
+                not wizard.register_a_claim and \
+                process_avg_sysint and \
+                wizard.picking_id.purchase_id and \
+                wizard.picking_id.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
+                wizard.picking_id.purchase_id.order_type != 'direct'
+
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
                                                                   'type',
                                                                   'purchase_id',
@@ -995,6 +1008,12 @@ class stock_picking(osv.osv):
                         # min(move.product_qty, count) used if more qty is received
                         move_obj.decrement_sys_init(cr, uid, min(move.product_qty, count), pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
 
+            # Set the Shipment Ref from the IN import
+            pick_partner = wizard.picking_id.partner_id
+            imp_shipment_ref = ''
+            if not sync_in and wizard.imp_shipment_ref and (not pick_partner or pick_partner.partner_type in ['external', 'esc']):
+                imp_shipment_ref = wizard.imp_shipment_ref
+
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
             }, context=context)
@@ -1010,6 +1029,7 @@ class stock_picking(osv.osv):
                     'state':'draft',
                     'in_dpo': context.get('for_dpo', False), # TODO used ?
                     'dpo_incoming': wizard.picking_id.dpo_incoming,
+                    'physical_reception_date': wizard.physical_reception_date or False,
                 }
 
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -1054,6 +1074,9 @@ class stock_picking(osv.osv):
                         #    picking.purchase_id was False
                         back_order_post_copy_vals['purchase_id'] = picking_dict['purchase_id'][0]
 
+                    if imp_shipment_ref:
+                        back_order_post_copy_vals['shipment_ref'] = imp_shipment_ref
+
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
@@ -1083,6 +1106,10 @@ class stock_picking(osv.osv):
                             'purchase_line_id': bo_move.purchase_line_id and bo_move.purchase_line_id.id or False,
                         }
                         bo_values.update(av_values)
+                        if in_forced:
+                            # set in_forced on remaining (assigned qty): used for future sync msg processing
+                            bo_values['in_forced'] = True
+
                         context['keepLineNumber'] = True
                         context['from_button'] = False
                         new_bo_move_id = move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
@@ -1093,6 +1120,8 @@ class stock_picking(osv.osv):
 
                 # Put the done moves in this new picking
                 done_values = {'picking_id': backorder_id}
+                if in_forced:
+                    done_values['in_forced'] = True
                 move_obj.write(cr, uid, done_moves, done_values, context=context)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'create_bo': _('Done'),
@@ -1150,10 +1179,19 @@ class stock_picking(osv.osv):
                     backorder_id, bo_name, picking_id, picking_dict['name'],
                 ))
             else:
+                # no BO to create
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'create_bo': _('N/A'),
                     'close_in': _('In progress'),
                 }, context=context)
+
+                to_write = {}
+                if wizard.physical_reception_date:
+                    to_write.update({'physical_reception_date': wizard.physical_reception_date})
+                if imp_shipment_ref:
+                    to_write.update({'shipment_ref': imp_shipment_ref})
+                if to_write:
+                    self.write(cr, uid, picking_id, to_write, context=context)
 
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking_id, context=context)
@@ -1178,6 +1216,10 @@ class stock_picking(osv.osv):
                         self.action_cancel(cr, uid, [picking_id], context=context)
                     else:
                         return_goods = wizard.register_a_claim and wizard.claim_type in ('return', 'surplus')
+                        if not return_goods and in_forced:
+                            move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id), ('state', '=', 'assigned')])
+                            if move_ids:
+                                move_obj.write(cr, uid, move_ids, {'in_forced': True}, context=context)
                         self.action_move(cr, uid, [picking_id], return_goods=return_goods, context=context)
                         if return_goods:
                             out_domain = [('backorder_id', '=', picking_id), ('type', '=', 'out')]
@@ -1214,6 +1256,7 @@ class stock_picking(osv.osv):
             }, context=context)
 
 
+        overall_to_compute = list(out_picks)
         # Create the first picking ticket if we are on a draft picking ticket
         if all_pack_info:
             for picking_id in list(out_picks):
@@ -1232,7 +1275,7 @@ class stock_picking(osv.osv):
                     if move_to_process_ids:
                         # sub pick creation
                         new_pick = self.do_create_picking(cr, uid, [picking_id], context=context, only_pack_ids=pack_ids).get('res_id')
-
+                        overall_to_compute.append(new_pick)
                         if  pack['packing_list']:
                             self.write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
 
@@ -1256,6 +1299,8 @@ class stock_picking(osv.osv):
                     'prepare_pick': _('Done'),
                 }, context=context)
 
+        if overall_to_compute:
+            self._store_set_values(cr, uid, overall_to_compute, ['overall_qty', 'line_state'], context)
         for picking_id in picking_ids:
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
@@ -1297,9 +1342,12 @@ class stock_picking(osv.osv):
         model = 'enter.reason'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
-        pick = self.read(cr, uid, ids[0], ['from_wkf_sourcing', 'dpo_incoming', 'type'])
+        pick = self.browse(cr, uid, ids[0], fields_to_fetch=['from_wkf_sourcing', 'dpo_incoming', 'type', 'state', 'partner_id'])
         if pick['type'] == 'in' and pick['dpo_incoming'] and not pick['from_wkf_sourcing']:
             context['in_from_dpo'] = True
+        if pick['type'] == 'in' and not pick['dpo_incoming'] and pick['state'] == 'assigned' and pick.partner_id.partner_type not in ('esc', 'external'):
+            if self.pool.get('stock.move').search_exists(cr, uid, [('picking_id', '=', pick.id), ('in_forced', '=', False), ('state', '!=', 'cancel')], context=context):
+                context['display_warning'] = True
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, picking_id=ids[0]))
 

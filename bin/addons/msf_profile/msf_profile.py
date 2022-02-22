@@ -37,6 +37,10 @@ import traceback
 from msf_field_access_rights.osv_override import _get_instance_level
 import io
 import csv
+import zlib
+import random
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -51,6 +55,463 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    # UF24.0
+    def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            cr.execute("SAVEPOINT us_9570")
+            cron_obj = self.pool.get('ir.cron')
+            cron_dom = [('model', '=', 'sync.client.entity'), ('function', '=', 'sync_threaded')]
+            cron_id = cron_obj.search(cr, uid, cron_dom + [('active', 'in', ['t', 'f'])])
+            if not cron_id:
+                self.log_info(cr, uid, 'US-9570: patch not applied, cron job not found !')
+                return True
+            if len(cron_id) > 1:
+                cron_id = cron_obj.search(cr, uid, cron_dom + [('active', '=', True)])
+                if not cron_id or len(cron_id) > 1:
+                    self.log_info(cr, uid, 'US-9570: patch not applied, multiple cron found !')
+                    return True
+
+            cron = cron_obj.browse(cr, uid, cron_id[0])
+            if cron.interval_number == 12 and cron.interval_type == 'hours':
+                nextcall = datetime.strptime(cron.nextcall, '%Y-%m-%d %H:%M:%S')
+                if 7 * 60 <= nextcall.hour * 60 + nextcall.minute < 9 * 60 or \
+                        19 * 60 <= nextcall.hour * 60 + nextcall.minute < 21 * 60:
+                    self.log_info(cr, uid, 'US-9570: patch not applied, conditions already met')
+                    return True
+
+            now = datetime.now()
+            minute = random.randint(1, 59)
+            if now.hour < 5:
+                hour = random.randint(7 , 8)
+                days = 0 # same day
+            elif now.hour < 17:
+                hour = random.randint(19 ,20)
+                days = 0 # same day
+            else:
+                hour = random.randint(7 , 8)
+                days = 1 # next day
+
+            cr.execute('update sync_client_sync_server_connection set automatic_patching_hour_from=19, automatic_patching_hour_to=8')
+            nextcall_to_set = (now+relativedelta(hour=hour, minute=minute, days=days)).strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                cron_obj.write(cr, uid, cron.id, {'nextcall': nextcall_to_set, 'interval_number': 12, 'interval_type': 'hours'})
+                self.log_info(cr, uid, 'US-9570: patch applied %s' %  nextcall_to_set)
+            except:
+                cr.execute("ROLLBACK TO SAVEPOINT us_9570")
+                self.log_info(cr, uid, 'US-9570: patch not applied, error during save !')
+
+        return True
+
+
+    def us_9577_display_manual_cv(self, cr, uid, *a, **b):
+        cr.execute("UPDATE account_commitment SET cv_flow_type='supplier' WHERE cv_flow_type IS NULL")
+        self.log_info(cr, uid, '%d manual CV visible' % (cr.rowcount,))
+        return True
+
+    def us_9160_hq_prod_touch_donation_account(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data
+                SET touched ='[''donation_expense_account'']', last_modification = NOW()
+                WHERE module='sd'
+                AND model='product.product'
+                AND res_id IN (
+                    SELECT id
+                    FROM product_product
+                    WHERE donation_expense_account is not null and active='t'
+                );
+            """)
+            self.log_info(cr, uid, 'Trigger donation_expense_account on %d products' % (cr.rowcount,))
+        return True
+
+    def us_8870_partner_instance_creator(self, cr, uid, *a, **b):
+        entity = self.pool.get('sync.client.entity')
+        if entity:
+            b = time.time()
+            cr.execute("""
+                update res_partner p
+                    set instance_creator=instance.code
+                    from
+                        ir_model_data d,
+                        msf_instance instance
+                    where
+                        d.module = 'sd' and
+                        d.model = 'res.partner' and
+                        d.res_id = p.id and
+                        instance.instance_identifier = split_part(d.name, '/', 1)
+            """)
+
+            self.log_info(cr, uid, 'Instance creator set on %d partners in %d sec' % (cr.rowcount, time.time() - b))
+        return True
+
+    def us_9436_set_dest_on_ir_out_converted(self, cr, uid, *a, **b):
+        data_obj = self.pool.get('ir.model.data')
+        distrib = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_distribution')[1]
+        msf_customer = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1]
+        cr.execute('''
+            update stock_move m set location_dest_id=ir.location_requestor_id
+                from
+                    stock_picking p, sale_order ir
+                where
+                    p.id = m.picking_id and
+                    p.shipment_id is not NULL and
+                    ir.id = p.sale_id and
+                    ir.procurement_request = 't' and
+                    m.location_id = %s and
+                    m.location_dest_id = %s
+        ''', (distrib, msf_customer))
+        self.log_info(cr, uid, 'US-9436: %d destinations changed on shipment linked to IR' % cr.rowcount)
+        return True
+
+    def us_8449_migrate_rr_min_max_auto_to_periods(self, cr, uid, *a, **b):
+        if cr.column_exists('replenishment_segment_line', 'min_qty'):
+            cr.execute("""update replenishment_segment_line line set rr_fmc_1=min_qty, rr_max_1=max_qty, min_qty=NULL, max_qty=NULL
+                from replenishment_segment seg
+                where
+                    seg.id = line.segment_id and
+                    seg.rule='minmax'
+            """)
+
+        if cr.column_exists('replenishment_segment_line', 'auto_qty'):
+            cr.execute("""update replenishment_segment_line line set rr_fmc_1=auto_qty, auto_qty=NULL
+                from replenishment_segment seg
+                where
+                    seg.id = line.segment_id and
+                    seg.rule='auto'
+            """)
+        return True
+
+    def us_9391_fix_non_picks(self, cr, uid, *a, **b):
+        '''
+        Fix the subtypes and names of INs/INTs with PICK names
+        '''
+        # INs from scratch with PICK name
+        cr.execute("""
+            UPDATE stock_picking SET name = 'IN/' || name, subtype = 'standard' 
+            WHERE id IN (SELECT id FROM stock_picking WHERE name LIKE 'PICK%' AND name NOT LIKE '%return' AND type = 'in' AND subtype = 'picking')
+        """)
+
+        # INTs from scratch with PICK name
+        cr.execute("""
+            UPDATE stock_picking SET name = 'INT/' || name, subtype = 'standard' 
+            WHERE id IN (SELECT id FROM stock_picking WHERE name LIKE 'PICK%' AND name NOT LIKE '%return' AND type = 'internal' AND subtype = 'picking')
+        """)
+        return True
+
+    def us_9143_oca_change_dest_on_esc_po(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
+            return True
+
+        oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+        cr.execute(oc_sql)
+        oc = cr.fetchone()[0]
+        if oc == 'oca':
+            dest_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'OPS'), ('category', '=', 'DEST')])
+            if dest_id:
+                # header AD
+                cr.execute('''
+                    update funding_pool_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po
+                        where
+                            po.partner_type='esc' and
+                            po.state in ('validated_p', 'validated') and
+                            po.analytic_distribution_id = dist_line.distribution_id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+
+                header_fp = cr.rowcount
+                cr.execute('''
+                    update cost_center_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po
+                        where
+                            po.partner_type='esc' and
+                            po.state in ('validated_p', 'validated') and
+                            po.analytic_distribution_id = dist_line.distribution_id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+                header_cc = cr.rowcount
+
+                # AD line
+                cr.execute('''
+                    update funding_pool_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po, purchase_order_line pol
+                        where
+                            po.partner_type='esc' and
+                            pol.order_id = po.id and
+                            pol.state in ('validated_n', 'validated') and
+                            pol.analytic_distribution_id = dist_line.distribution_id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+
+                line_fp = cr.rowcount
+                cr.execute('''
+                    update cost_center_distribution_line dist_line set destination_id=%(dest)s
+                        from
+                            purchase_order po, purchase_order_line pol
+                        where
+                            po.partner_type='esc' and
+                            pol.order_id = po.id and
+                            pol.state in ('validated_n', 'validated') and
+                            pol.analytic_distribution_id = dist_line.distribution_id and
+                            dist_line.destination_id != %(dest)s
+                    ''', {'dest': dest_id[0]})
+                line_cc = cr.rowcount
+
+                self.log_info(cr, uid, 'US-9143: Dest changed on headers: fp: %d, cc: %d, on lines fp: %d, cc: %d' % (header_fp, header_cc, line_fp, line_cc))
+        return True
+
+    # UF23.0
+    def us_8839_cv_from_fo(self, cr, uid, *a, **b):
+        if cr.column_exists('account_commitment_line', 'po_line_product_id'):
+            cr.execute('''update account_commitment_line set line_product_id=po_line_product_id, line_number=po_line_number''')
+            cr.execute('''update
+                account_commitment cv
+                set cv_flow_type='supplier'
+                from
+                    purchase_order po
+                where
+                    po.id = cv.purchase_id
+                ''')
+
+        # hide menu
+        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'menu_account_commitment_from_fo')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': False})
+        return True
+
+    def us_8585_new_isi_journals(self, cr, uid, *a, **b):
+        """
+        Creates the ISI G/L and analytic journals in all existing instances.
+        This is done in Python as the objects created must sync normally.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # ISI analytic journal
+            isi_analytic_journal_ids = analytic_journal_obj.search(cr, uid,
+                                                                   [('code', '=', 'ISI'),
+                                                                    ('type', '=', 'purchase'),
+                                                                    ('is_current_instance', '=', True)])
+            if isi_analytic_journal_ids:  # just in case the journal has been created before the release
+                isi_analytic_journal_id = isi_analytic_journal_ids[0]
+            else:
+                isi_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ISI',
+                    'name': 'Intersection Supplier Invoice',
+                    'type': 'purchase',
+                }
+                isi_analytic_journal_id = analytic_journal_obj.create(cr, uid, isi_analytic_vals)
+            # ISI G/L journal
+            if not journal_obj.search_exist(cr, uid, [('code', '=', 'ISI'),  # just in case the journal has been created before the release
+                                                      ('type', '=', 'purchase'),
+                                                      ('is_current_instance', '=', True),
+                                                      ('analytic_journal_id', '=', isi_analytic_journal_id)]):
+                isi_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ISI',
+                    'name': 'Intersection Supplier Invoice',
+                    'type': 'purchase',
+                    'analytic_journal_id': isi_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, isi_vals)
+        return True
+
+    def us_9044_add_location_colors(self, cr, uid, *a, **b):
+        '''
+        Add the search_color to each location which needs one
+        Changes the name 'Quarantine' into 'Quarantine / For Scrap' where it is necessary
+        Changes the name 'Quarantine (before scrap)' into 'Expired / Damaged / For Scrap' where it is necessary
+        '''
+        obj_data = self.pool.get('ir.model.data')
+        # Get the locations ids
+        stock = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        med = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+        log = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+        cd = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        inp = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        p_qua = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_view')[1]
+        qua = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+        exp = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+
+        # Main stocks (Stock, LOG, MED): dimgray
+        cr.execute("""UPDATE stock_location SET search_color = 'dimgray' WHERE id IN %s""", (tuple([stock, med, log]),))
+
+        # Cross docking & Input: darkorchid
+        cr.execute("""UPDATE stock_location SET search_color = 'darkorchid' WHERE id IN %s""", (tuple([cd, inp]),))
+
+        # Quarantine (analyze): darkorange
+        cr.execute("""UPDATE stock_location SET search_color = 'darkorange' WHERE id = %s""", (qua,))
+
+        # Expired / Damaged / For Scrap: sandybrown
+        cr.execute("""UPDATE stock_location SET name = 'Expired / Damaged / For Scrap', search_color = 'sandybrown' WHERE id = %s""", (exp,))
+
+        # Fix the name of Quarantine location
+        cr.execute("""UPDATE stock_location SET name = 'Quarantine / For Scrap' WHERE id = %s""", (p_qua,))
+
+        # Fix the remote_location_name in stock_mission_report_line_location
+        cr.execute("""UPDATE stock_mission_report_line_location SET remote_location_name = 'Expired / Damaged / For Scrap' 
+            WHERE id IN (SELECT id FROM stock_mission_report_line_location WHERE remote_location_name = 'Quarantine (before scrap)')""")
+        return True
+
+    # UF22.1
+    def us_8336_update_msr_used(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+
+        if _get_instance_level(self, cr, uid) == 'hq':
+            # exclude hq
+            return True
+
+        doc_field_error_dom = [
+            ('stock_move', 'product_id'),
+            ('stock_production_lot', 'product_id'),
+            ('purchase_order_line', 'product_id'),
+            ('sale_order_line', 'product_id'),
+            ('tender_line', 'product_id'),
+            ('physical_inventory_counting', 'product_id'),
+            ('initial_stock_inventory_line', 'product_id'),
+            ('real_average_consumption_line', 'product_id'),
+            ('replenishment_segment_line', 'product_id'),
+            ('product_list_line', 'name'),
+            ('composition_kit', 'composition_product_id'),
+            ('composition_item', 'item_product_id'),
+        ]
+        report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)])
+        if not report_ids:
+            return True
+        report_id = report_ids[0]
+        for table, foreign_field in doc_field_error_dom:
+            # set used_in_transaction='t'
+            cr.execute('''
+                update
+                    stock_mission_report_line l
+                set
+                    used_in_transaction='t'
+                from
+                    ''' + table + ''' ft
+                where
+                    coalesce(l.used_in_transaction,'f')='f' and
+                    l.mission_report_id = %s and
+                    ft.''' + foreign_field + ''' = l.product_id
+                ''', (report_id, )) # not_a_user_entry
+
+        cr.execute('''
+            select d.name
+            from ir_model_data d, stock_mission_report_line l
+            where
+                l.id = d.res_id and
+                used_in_transaction='t' and
+                d.model='stock.mission.report.line' and
+                l.mission_report_id = %s
+        ''', (report_id,))
+        if cr.rowcount:
+            zipstr = base64.b64encode(zlib.compress(','.join([x[0] for x in cr.fetchall()])))
+            self.pool.get('sync.trigger.something.up').create(cr, uid, {'name': 'msr_used', 'args': zipstr})
+        return True
+
+    # UF22.0
+    def us_9003_partner_im_is_currencies(self, cr, uid, *a, **b):
+        self.us_5559_set_pricelist(cr, uid, *a, **b)
+        return True
+
+    def us_8944_cold_chain_migration(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+
+        # trigger sync updates
+        cr.execute('''
+            update
+                ir_model_data set last_modification=NOW(), touched='[''cold_chain'']'
+            where
+                model='product.product' and
+                module='sd' and
+                res_id in (
+                    select p.id from
+                        product_product p , product_cold_chain cold, product_international_status int, product_heat_sensitive heat
+                    where
+                        heat.id = p.heat_sensitive_item and
+                        int.id=p.international_status and
+                        cold.id=p.cold_chain and
+                        int.name in ('Local', 'Temporary') and
+                        cold.mapped_to is not null
+                )
+        ''')
+        self.log_info(cr, uid, 'US-8944 thermo: %d products touched' % cr.rowcount)
+        cr.execute('''
+            update
+                product_product p
+            set
+                cold_chain = cold.mapped_to
+            from
+                product_cold_chain cold, product_international_status int, product_heat_sensitive heat
+            where
+                heat.id = p.heat_sensitive_item and
+                int.id=p.international_status and
+                cold.id=p.cold_chain and
+                int.name in ('Local', 'Temporary') and
+                cold.mapped_to is not null
+        ''')
+        self.log_info(cr, uid, 'US-8944 thermo: %d products updated' % cr.rowcount)
+        return True
+
+    def us_8597_set_custom_default_from_web(self, cr, uid, *a, **b):
+        cr.execute("update sale_order set location_requestor_id=NULL where location_requestor_id is not null and procurement_request='f'")
+        self._logger.warn('US-8597: Location removed on %d FO' % (cr.rowcount,))
+
+        cr.execute("""
+            update ir_values set meta='web' where
+                key='default' and
+                (name, model) not in (('shop_id', 'sale.order'), ('warehouse_id', 'purchase.order'), ('lang', 'res.partner'))
+            """)
+        self._logger.warn('US-8597: web default value set on %d records' % (cr.rowcount,))
+        return True
+
+    def us_8805_product_set_archived(self, cr, uid, *a, **b):
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            if instance and instance.level in ['project', 'coordo']:
+                st_obj = self.pool.get('product.status')
+                phase_out_ids = st_obj.search(cr, uid, [('code', '=', 'phase_out')])
+                archived_ids = st_obj.search(cr, uid, [('code', '=', 'archived')])
+                cr.execute('''
+                    update product_template t set
+                        state=%(archived_id)s
+                    from product_product p, product_international_status st
+                    where
+                        st.id = p.international_status and
+                        p.product_tmpl_id = t.id and
+                        p.oc_subscription = 'f' and
+                        p.active = 'f' and
+                        st.code = 'unidata' and
+                        t.state=%(phase_out_id)s
+                    ''', {'archived_id': archived_ids[0], 'phase_out_id': phase_out_ids[0]})
+                self.log_info(cr, uid, 'US-8805: %d products' % cr.rowcount)
+        return True
+
+    def us_8869_remove_ir_import(self, cr, uid, *a, **b):
+        cr.execute("update internal_request_import set file_to_import=NULL");
+        return True
+
+    def us_7449_set_cv_version(self, cr, uid, *a, **b):
+        """
+        Sets the existing Commitment Vouchers in version 1.
+        """
+        if self.pool.get('sync.client.entity'):  # existing instances
+            cr.execute("UPDATE account_commitment SET version = 1")
+            self._logger.warn('Commitment Vouchers: %s CV(s) set to version 1.', cr.rowcount)
+        return True
 
     # UF21.1
     def us_8810_fake_updates(self, cr, uid, *a, **b):
@@ -4201,6 +4662,12 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    def log_info(self, cr, uid, msg, context=None):
+        self._logger.warn(msg)
+        self.pool.get('res.log').create(cr, uid, {
+            'name': '[AUTO] %s ' % msg,
+            'read': True,
+        }, context=context)
 patch_scripts()
 
 
@@ -4384,8 +4851,8 @@ class base_setup_company(osv.osv_memory):
     _inherit = 'base.setup.company'
     _name = 'base.setup.company'
 
-    def default_get(self, cr, uid, fields_list=None, context=None):
-        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context)
+    def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
+        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context, from_web=from_web)
         if not ret.get('name'):
             ret.update({'name': 'MSF', 'street': 'Rue de Lausanne 78', 'street2': 'CP 116', 'city': 'Geneva', 'zip': '1211', 'phone': '+41 (22) 849.84.00'})
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
@@ -4860,7 +5327,17 @@ class sync_tigger_something_up(osv.osv):
                 if remote_id:
                     cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
                     _logger.warn('Reset %d mission stock CU Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
-
+            elif vals.get('name') == 'msr_used':
+                cr.execute('''
+                    update stock_mission_report_line l
+                        set used_in_transaction='t'
+                    from
+                        ir_model_data d
+                    where
+                        d.model='stock.mission.report.line' and
+                        d.res_id = l.id and
+                        d.name in %s
+                ''', (tuple((zlib.decompress(base64.b64decode(vals.get('args'))).split(','))),))
         return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
 
 sync_tigger_something_up()

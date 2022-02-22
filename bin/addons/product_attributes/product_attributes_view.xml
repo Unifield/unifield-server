@@ -489,7 +489,7 @@
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>
-                   <group  expand='0' string='Group by...'>
+                   <group  expand='0' string='Group by...' name="group_by">
                        <filter string='Category' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'categ_id'}" />
                        <separator orientation="vertical"/>
                        <filter string='Default UOM' icon="terp-mrp" domain="[]" context="{'group_by' : 'uom_id'}" />
@@ -748,11 +748,22 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Thermosensitivity" editable="top" >
-	            <field name="name" />
-	            <field name="cold_chain" />
+                <field name="name" />
+                <field name="cold_chain" />
                 </tree>
             </field>
         </record>
+    <record id="product_cold_chain_form" model="ir.ui.view">
+        <field name="name">product.cold_chain.form</field>
+        <field name="model">product.cold_chain</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Thermosensitivity">
+                    <field name="name" />
+                    <field name="cold_chain" />
+                </form>
+            </field>
+    </record>
 	<record id="product_cold_chain_action" model="ir.actions.act_window">
             <field name="name">Thermosensitivity</field>
             <field name="type">ir.actions.act_window</field>

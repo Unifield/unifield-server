@@ -66,11 +66,11 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'is_percentage_amount_touched': fields.boolean('Is percentage/amount updated ?', invisible=True),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         Verify that percentage or amount are correctly set
         """
-        res = super(analytic_distribution_wizard_lines, self).default_get(cr, uid, fields, context=context)
+        res = super(analytic_distribution_wizard_lines, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         if not context or not context.get('mode', False) or not context.get('parent_id', False):
             return res
         if not 'percentage' in fields or not 'amount' in fields:

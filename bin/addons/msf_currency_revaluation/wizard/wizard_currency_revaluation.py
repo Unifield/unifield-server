@@ -191,10 +191,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             is_revaluated = True
         return is_revaluated
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """'default_get' method overridden."""
         res = super(WizardCurrencyrevaluation, self).default_get(
-            cr, uid, fields, context=context)
+            cr, uid, fields, context=context, from_web=from_web)
 
         user_obj = self.pool.get('res.users')
         period_obj = self.pool.get('account.period')
@@ -228,8 +228,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             domain = [
                 ('instance_id', '=', cp.instance_id.id),
                 ('type', '=', 'revaluation'),
+                ('is_active', '=', True),
             ]
-            journal_ids = journal_obj.search(cr, uid, domain, context=context)
+            journal_ids = journal_obj.search(cr, uid, domain, order='id', limit=1, context=context)
         else:
             journal_ids = False
         if not journal_ids:

@@ -24,6 +24,7 @@ import tools
 
 import traceback
 import logging
+from .log_sale_purchase import SyncException
 
 from tools.safe_eval import safe_eval as eval
 
@@ -136,7 +137,7 @@ class local_message_rule(osv.osv):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-            partner = model_obj.browse(cr, uid, res_id)[rule.destination_name]
+            partner = model_obj.browse(cr, uid, res_id, fields_to_fetch=[rule.destination_name])[rule.destination_name]
             partner_name = partner.name
             arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=partner, context=context)
             if extra_arg:
@@ -260,16 +261,20 @@ class message_to_send(osv.osv):
         obj_ids = []
         identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids_temp, rule.server_id, context=context)
 
-        # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
-        obj_ids = [obj_id for obj_id in obj_ids_temp_order if obj_id in obj_ids_temp and not \
-                   self.search(cr, uid, [('identifier', '=',
-                                          identifiers[obj_id])], context=context)]
+        allow_duplicates = rule.remote_call == 'purchase.order.line.update_dates_from_pol'
+
+        if not allow_duplicates:
+            # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
+            obj_ids = [obj_id for obj_id in obj_ids_temp_order if obj_id in obj_ids_temp and not \
+                       self.search(cr, uid, [('identifier', '=',
+                                              identifiers[obj_id])], context=context)]
+        else:
+            obj_ids = obj_ids_temp
 
         ignored_ids = list(set(obj_ids_temp) - set(obj_ids))
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         generated_ids = []
-
 
         if obj_ids and rule.model == 'stock.picking' and rule.remote_call in ('stock.picking.partial_shipped_fo_updates_in_po', 'stock.picking.partial_shippped_dpo_updates_in_po'):
             cr.execute("select array_agg(id) from stock_picking where id in %s group by subtype, partner_id, origin, claim, coalesce(shipment_id, id)", (tuple(obj_ids),))
@@ -292,8 +297,11 @@ class message_to_send(osv.osv):
                     if destination is False:
                         destination = 'fake'
                     # UF-2483: By default the "sent" parameter is False
-                    self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context)
+                    self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context, allow_duplicates=allow_duplicates)
                 generated_ids.append(id)
+
+        if generated_ids and rule.remote_call == 'purchase.order.line.update_dates_from_pol':
+            cr.execute("update purchase_order_line set dates_modified='f' where id in %s", (tuple(generated_ids), ))
 
         return generated_ids, ignored_ids
 
@@ -301,7 +309,7 @@ class message_to_send(osv.osv):
         return dict( (id, "%s_%s" % (name, server_rule_id)) \
                      for id, name in list(self.pool.get(model).get_sd_ref(cr, uid, ids, context=context).items()) )
 
-    def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, sent=False, context=None):
+    def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, sent=False, context=None, allow_duplicates=False):
         data = {
             'identifier' : identifier,
             'remote_call': remote_call,
@@ -310,12 +318,13 @@ class message_to_send(osv.osv):
             'sent' : sent,
             'generate_message' : False,
         }
-        ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
+        if allow_duplicates:
+            ids = []
+        else:
+            ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
         if not ids:
             ids = [self.create(cr, uid, data, context=context)]
         return ids[0]
-        #else:
-        #sync_log(self, "Message %s already exist" % identifier)
 
     """
         Sending Part
@@ -373,6 +382,8 @@ class message_received(osv.osv):
         'arguments':fields.text('Arguments of the method', required = True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
         'run' : fields.boolean("Run", readonly=True),
+        'partial_run': fields.boolean("Partial Run", readonly=True),
+        'manually_set_total_run_date': fields.datetime('Manually to total-run Date', readonly=True),
         'log' : fields.text("Execution Messages",readonly=True),
         'execution_date' :fields.datetime('Execution Date', readonly=True),
         'create_date' :fields.datetime('Receive Date', readonly=True),
@@ -381,6 +392,8 @@ class message_received(osv.osv):
         'manually_ran': fields.boolean('Has been manually tried', readonly=True),
         'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
         'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
+        'target_object': fields.char('Target Object', size=254, readonly=1, select=1),
+        'target_id': fields.integer('Target Id', size=254, readonly=1, select=1),
     }
 
     _sql_constraints = [
@@ -446,10 +459,13 @@ class message_received(osv.osv):
         self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
         return True
 
+    def manual_set_total_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'partial_run': False, 'manually_set_total_run_date': fields.datetime.now()}, context=context)
+        return True
+
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
         context = dict((context or {}),
-                       changes={},
                        sync_message_execution=True,
                        sale_purchase_logger={})
         context['lang'] = 'en_US'
@@ -482,16 +498,23 @@ class message_received(osv.osv):
                         error_msg = e.value
                     else:
                         error_msg = e
-                    self.write(cr, uid, message.id, {
+                    msg_data = {
                         'execution_date' : execution_date,
                         'run' : False,
                         'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
-                    }, context=context)
+                    }
+                    if isinstance(e, SyncException):
+                        msg_data['target_object'] = e.target_object
+                        msg_data['target_id'] = e.target_id
+
+
+                    self.write(cr, uid, message.id, msg_data, context=context)
                 else:
                     self.write(cr, uid, message.id, {
                         'execution_date' : execution_date,
                         'run' : True,
                         'log' : tools.ustr(res),
+                        'partial_run': new_ctx.get('partial_sync_run', False),
                     }, context=context)
             except BaseException as e1:
                 ### This should never be reachable, but nobody knows!

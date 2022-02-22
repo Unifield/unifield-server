@@ -61,6 +61,7 @@ class _column(object):
     _symbol_f = _symbol_set
     _symbol_set = (_symbol_c, _symbol_f)
     _symbol_get = None
+    _join = False
 
     def __init__(self, string='unknown', required=False, readonly=False,
                  domain=None, context=None, states=None, priority=0,
@@ -389,6 +390,9 @@ class many2one(_column):
     def __init__(self, obj, string='unknown', **args):
         _column.__init__(self, string=string, **args)
         self._obj = obj
+        self._join = args.get('join', False)
+        if self._join and not self.required:
+            raise Exception('join fields must be required')
 
     def set_memory(self, cr, obj, id, field, values, user=None, context=None):
         obj.datas.setdefault(id, {})

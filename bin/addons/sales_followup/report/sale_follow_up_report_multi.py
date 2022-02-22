@@ -141,6 +141,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             po_name = '-'
             supplier_name = '-'
 
+            edd = False
             cdd = False
             if self.localcontext.get('lang', False) == 'fr_MF':
                 date_format = '%d/%m/%Y'
@@ -151,6 +152,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             if linked_pol:
                 linked_pol = pol_obj.browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
+                edd = linked_pol.esti_dd or linked_pol.order_id.delivery_requested_date_modified
                 cdd = linked_pol.confirmed_delivery_date
                 supplier_name = linked_pol.order_id.partner_id.name
                 if line.product_id:
@@ -159,6 +161,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data])
                     elif len(in_data) == 1:
                         cdd = in_data[0][:10]
+            if not edd and line.esti_dd:
+                edd = line.esti_dd
             if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
                 cdd = line.confirmed_delivery_date or line.order_id.delivery_confirmed_date
 
@@ -178,6 +182,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     data.update({
                         'po_name': po_name,
                         'supplier_name': supplier_name,
+                        'edd': edd,
                         'cdd': cdd,
                         'line_number': line.line_number,
                         'product_name': line.product_id.name,
@@ -276,6 +281,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'line_number': line.line_number,
                         'po_name': po_name,
                         'supplier_name': supplier_name,
+                        'edd': edd,
                         'cdd': cdd,
                         'rts': line.state not in ('draft', 'validated', 'validated_n', 'cancel', 'cancel_r')
                         and line.order_id.ready_to_ship_date or '',
@@ -304,6 +310,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'delivered_qty': 0.00,
                         'delivered_uom': '-',
                         'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
+                        'edd': edd,
                         'cdd': cdd,
                     })
                 lines.append(data)
@@ -314,6 +321,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 lines.append({
                     'po_name': po_name,
                     'supplier_name': supplier_name,
+                    'edd': edd,
                     'cdd': cdd,
                     'line_number': line.line_number,
                     'product_name': line.product_id.name,

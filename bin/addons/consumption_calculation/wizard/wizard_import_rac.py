@@ -47,7 +47,7 @@ class wizard_import_rac(osv.osv_memory):
     _defaults = {
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
         Set rac_id with the active_id value in context
         '''
@@ -55,7 +55,7 @@ class wizard_import_rac(osv.osv_memory):
             raise osv.except_osv(_('Error !'), _('No Real average consumption found !'))
         else:
             rac_id = context.get('active_id')
-            res = super(wizard_import_rac, self).default_get(cr, uid, fields, context=context)
+            res = super(wizard_import_rac, self).default_get(cr, uid, fields, context=context, from_web=from_web)
             res['rac_id'] = rac_id
         res['message'] = _(self._msg)
         return res

@@ -236,28 +236,46 @@ class product_product(osv.osv):
 
         results = []
         results2 = []
+        results3 = []
         from_date = context.get('from_date',False)
         from_strict_date = context.get('from_strict_date',False)
         to_date = context.get('to_date',False)
         date_str = False
         date_values = False
         where = [tuple(location_ids), tuple(location_ids), tuple(ids), tuple(states)]
+
+        pol_query_date = 'coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)'
+        date_pol_str = ''
+        date_pol_cond = {}
         if from_strict_date and to_date:
             date_str = "date>%s AND date<=%s"
             where.append(tuple([from_strict_date]))
             where.append(tuple([to_date]))
+
+            date_pol_str = 'AND %s>%%(from_date)s AND %s <=%%(to_date)s' % (pol_query_date, pol_query_date)
+            date_pol_cond = {'from_date': from_strict_date, 'to_date': to_date}
         elif from_date and to_date:
             date_str = "date>=%s AND date<=%s"
             where.append(tuple([from_date]))
             where.append(tuple([to_date]))
+
+            date_pol_str = 'AND %s>=%%(from_date)s AND %s<=%%(to_date)s' % (pol_query_date, pol_query_date)
+            date_pol_cond = {'from_date': from_date, 'to_date': to_date}
         elif from_date:
             date_str = "date>=%s"
             date_values = [from_date]
             where.append(tuple(date_values))
+
+            date_pol_str = 'AND %s>=%%(from_date)s' % (pol_query_date, )
+            date_pol_cond = {'from_date': from_date}
         elif to_date:
             date_str = "date<=%s"
             date_values = [to_date]
             where.append(tuple(date_values))
+
+            date_pol_str = 'AND %s<=%%(to_date)s' % (pol_query_date, )
+            date_pol_cond = {'to_date': to_date}
+
         prodlot_id = context.get('prodlot_id', False)
         prodlot_id_str = (prodlot_id and (' AND prodlot_id = %s ' % str(prodlot_id)) or '')
 
@@ -288,6 +306,27 @@ class product_product(osv.osv):
                 %s
                 group by m.product_id, m.product_uom, t.uom_id""" % (join_batch, prodlot_id_str, date_str, where_batch),tuple(where))  # not_a_user_entry
             results = cr.fetchall()
+
+            if not join_batch and 'assigned' in states:
+                # Validated PO lines
+                pol_cond = {'location_id': tuple(location_ids), 'product_id': tuple(ids)}
+                pol_cond.update(date_pol_cond)
+                cr.execute('''
+                    select sum(pol.product_qty) as qty, pol.product_id, pol.product_uom, t.uom_id
+                    from
+                      purchase_order_line pol, product_product p, product_template t
+                    where
+                      p.id = pol.product_id and
+                      t.id = p.product_tmpl_id and
+                      p.id in %%(product_id)s and
+                      pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
+                      location_dest_id in %%(location_id)s
+                      %s
+                    group by pol.product_id, pol.product_uom, t.uom_id
+                ''' % date_pol_str, pol_cond)  # not_a_user_entry
+                results3 = cr.fetchall()
+
+
         if 'out' in what:
             if not states and context.get('out_states'):
                 where[3] = tuple(context['out_states'])
@@ -305,11 +344,11 @@ class product_product(osv.osv):
                 %s
                 group by m.product_id, m.product_uom, t.uom_id""" % (join_batch, prodlot_id_str, date_str, where_batch),tuple(where))  # not_a_user_entry
             results2 = cr.fetchall()
-        if results or results2:
+        if results or results2 or results3:
             uoms_o = {}
             uom_obj = self.pool.get('product.uom')
             context.update({'raise-exception': False})
-            for sign, data in [(1, results), (-1, results2)]:
+            for sign, data in [(1, results), (-1, results2), (1, results3)]:
                 for amount, prod_id, prod_uom, pt_uom in data:
                     target_uom = context.get('uom', False) or pt_uom
                     if target_uom != prod_uom:
@@ -420,43 +459,6 @@ class product_product(osv.osv):
                         res['fields']['qty_available']['string'] = _('Produced Qty')
         return res
 
-    def get_pipeline_from_po(self, cr, uid, ids, from_date=False, to_date=False, location_ids=False, context=None):
-        '''
-            ids: product_ids
-
-            return the pipeline from validated(-p) purchase order line
-        '''
-
-        params = []
-        query = ''
-        if location_ids:
-            query += ' and location_dest_id in %s '
-            if isinstance(location_ids, int):
-                params.append((location_ids, ))
-            else:
-                params.append(tuple(location_ids))
-
-        if from_date:
-            query += ' and coalesce(confirmed_delivery_date, date_planned) > %s '
-            params.append(from_date)
-
-        if to_date:
-            query += ' and coalesce(confirmed_delivery_date, date_planned) <= %s '
-            params.append(to_date)
-
-
-        cr.execute('''
-            select
-                pol.product_id, sum(pol.product_qty)
-            from
-                purchase_order_line pol
-            where
-                pol.product_id in %s and
-                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
-                ''' + query + '''
-                group by pol.product_id''',
-                   [tuple(ids)]+params)  # not_a_user_entry
-        return dict(cr.fetchall())
 
 product_product()
 

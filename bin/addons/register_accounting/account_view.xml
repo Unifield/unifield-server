@@ -2,8 +2,6 @@
 <openerp>
     <data>
 
-    <!-- Change Bank & Cash menu to 'Registers' -->
-    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="1" />
 
     <!-- Bank Statement Form => Inheritance -->
         <record id="inherit_view_bank_statement_form" model="ir.ui.view">
@@ -517,14 +515,16 @@
                         <field name="sequence_for_reference" select='1'/>
                         <field name="name" select='1' string="Description"/>
                         <field name="ref" select='1'/>
-                        <field name="journal_id" select='1'/>
+                        <field name="journal_id" select='1'
+                               domain="[('type', 'in', ['cash', 'bank', 'cheque'])]"
+                               context="{'search_default_filter_is_active': 1}"/>
                         <newline/>
                         <field name="account_id" select='1'/>
                         <field name="amount_in" select='1'/>
                         <field name="amount_out" select='1'/>
                         <newline/>
                         <field name="partner_id" select='1' string="3RD Party Partner"/>
-                        <field name="transfer_journal_id" select='1' string='3RD Party Journal'/>
+                        <field name="transfer_journal_id" select='1' string='3RD Party Journal' context="{'search_default_filter_is_active': 1}"/>
                         <field name="employee_id" select='1' string="3RD Party Employee"/>
                     </group>
                     <newline/>
@@ -542,35 +542,6 @@
             </field>
         </record>
 
-    <!-- Bank Statement Filter -->
-        <record id="account.view_account_bank_statement_filter" model="ir.ui.view">
-            <field name="name">account.cash.statement.select</field>
-            <field name="model">account.bank.statement</field>
-            <field name="type">search</field>
-            <field name="arch" type="xml">
-                <search string="Search Bank Statements">
-                    <group col="8" colspan="4">
-                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new" name="draft"/>
-                        <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
-                        <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
-                        <separator orientation="vertical"/>
-                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
-                        <field name="name"/>
-                        <newline/>
-                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
-                        <field name="journal_id" domain="[('type', '=', 'cash')]" />
-                    </group>
-                    <newline/>
-                    <group expand="1" string="Group By...">
-                        <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
-                        <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
-                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
-                    </group>
-                </search>
-            </field>
-        </record>
 
         <!-- Track Changes Search View for Registers -->
         <record id="view_audittrail_log_line_register_search" model="ir.ui.view">
@@ -622,50 +593,6 @@
         </record>
 
 
-    <!-- Bank Statement Tree  US-807: force the priority to 10 to avoid showing the view in addons, for default tree view, check the view named account.view_bank_statement_tree_for_journal for more info -->
-        <record id="account.view_bank_statement_tree" model="ir.ui.view">
-            <field name="name">account.bank.statement.tree</field>
-            <field name="model">account.bank.statement</field>
-            <field name="type">tree</field>
-            <field name="priority" eval="10"/>
-            <field name="arch" type="xml">
-                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
-                    <field name="name"/>
-                    <field name="date"/>
-                    <field name="period_id"/>
-                    <field name="currency"/>
-                    <field name="journal_id"/>
-                    <field name="balance_start"/>
-                    <field name="balance_end" />
-                    <field name="balance_end_real"/>
-                    <field name="state"/>
-                    <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
-                    <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
-                </tree>
-            </field>
-        </record>
-
-    <!-- US-807: force the priority to 5 to show by default for all cases, BUT when the tree is called from Bank/Cash/Cheque main menu, then the explicit view name will be picked in the python code "register_accounting/account_bank_statement.py" method: get_statement() -->
-        <record id="account.view_bank_statement_tree_for_journal" model="ir.ui.view">
-            <field name="name">account.bank.statement.tree.journal</field>
-            <field name="model">account.bank.statement</field>
-            <field name="type">tree</field>
-            <field name="priority" eval="5"/>
-            <field name="arch" type="xml">
-                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1"  editable="bottom" noteditable="1">
-                    <field name="name"/>
-                    <field name="date"/>
-                    <field name="period_id"/>
-                    <field name="currency"/>
-                    <field name="journal_id"/>
-                    <field name="balance_start"/>
-                    <field name="balance_end" />
-                    <field name="balance_end_real"/>
-                    <field name="state"/>
-                </tree>
-            </field>
-        </record>
-
     <!-- Cash Statement Tree -->
         <record id="view_cash_statement_tree" model="ir.ui.view">
             <field name="name">account.bank.statement.tree</field>
@@ -706,7 +633,7 @@
                         <field name="name"/>
                         <newline/>
                         <field name="period_id" domain="[('state', '!=', 'created')]"/>
-                        <field name="journal_id" domain="[('type', '=', 'bank')]" />
+                        <field name="journal_id" domain="[('type', '=', 'bank')]" context="{'search_default_filter_is_active': 1}"/>
                     </group>
                     <newline/>
                     <group expand="1" string="Group By...">
@@ -979,7 +906,7 @@
                         <field name="name"/>
                         <newline/>
                         <field name="period_id" domain="[('state', '!=', 'created')]"/>
-                        <field name="journal_id" domain="[('type', '=', 'cheque')]" />
+                        <field name="journal_id" domain="[('type', '=', 'cheque')]" context="{'search_default_filter_is_active': 1}"/>
                     </group>
                     <newline/>
                     <group expand="1" string="Group By...">
@@ -1010,19 +937,6 @@
           <field name="action" ref="action_view_cheque_statement_search"/>
         </record>
 
-    <!-- Account View -->
-        <record id="inherit_view_account_form" model="ir.ui.view">
-            <field name='name'>inherit.view.account.form</field>
-            <field name='model'>account.account</field>
-            <field name="type">form</field>
-            <field name="priority">45</field>
-            <field name='inherit_id' ref='account.view_account_form' />
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="type_for_register"/>
-                </xpath>
-            </field>
-        </record>
     <!-- UF-426: remove Journal Items in Cash and Bank -->
     <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
 
@@ -1050,21 +964,6 @@
             </field>
         </record>
 
-    <!--
-      Add partner_txt to analytic journal entries
-    -->
-        <record id="inherit_view_account_analytic_tree" model="ir.ui.view">
-            <field name="name">inherit.view.account.analytic.tree</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
-            <field name="priority" eval="20"/>
-            <field name="arch" type="xml">
-                <xpath expr="/tree/field[@name='account_id']" position="after">
-                    <field name="partner_txt"/>
-                </xpath>
-            </field>
-        </record>
 
     </data>
 </openerp>

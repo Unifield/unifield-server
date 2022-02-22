@@ -23,30 +23,6 @@
 
 from osv import osv
 
-class stock_picking(osv.osv):
-    _name = 'stock.picking'
-    _inherit = 'stock.picking'
-
-
-    def _invoice_hook(self, cr, uid, picking, invoice_id):
-        """
-        Create a link between invoice and purchase_order.
-        Copy analytic distribution from purchase order to invoice (or from commitment voucher if exists)
-        """
-        if invoice_id and picking:
-            po_id = picking.purchase_id and picking.purchase_id.id or False
-            so_id = picking.sale_id and picking.sale_id.id or False
-            if po_id:
-                self.pool.get('purchase.order').write(cr, uid, [po_id], {'invoice_ids': [(4, invoice_id)]})
-            if so_id:
-                self.pool.get('sale.order').write(cr, uid, [so_id], {'invoice_ids': [(4, invoice_id)]})
-            # Copy analytic distribution from purchase order or commitment voucher (if exists) or sale order
-            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [invoice_id])
-        return super(stock_picking, self)._invoice_hook(cr, uid, picking, invoice_id)
-
-# action_invoice_create method have been removed because of impossibility to retrieve DESTINATION from SO.
-
-stock_picking()
 
 class stock_move(osv.osv):
     _name = 'stock.move'
@@ -64,6 +40,7 @@ class stock_move(osv.osv):
 
         inv_obj = self.pool.get('account.invoice')
         account_amount = {}
+        cvl_amount = {}
         po_ids = {}
         for move in self.browse(cr, uid, ids, context=context):
             # Fetch all necessary elements
@@ -80,14 +57,21 @@ class stock_move(osv.osv):
                 continue
 
             po_ids[move.purchase_line_id.order_id.id] = True
-            account_id = inv_obj._get_expense_account(cr, uid, move.purchase_line_id, context=context)
-            if account_id:
-                if account_id not in account_amount:
-                    account_amount[account_id] = 0
-                account_amount[account_id] += round(qty * price_unit, 2)
-
-        if account_amount and po_ids:
-            inv_obj._update_commitments_lines(cr, uid, list(po_ids.keys()), account_amount, from_cancel=ids, context=context)
+            cv_line = move.purchase_line_id.cv_line_ids and move.purchase_line_id.cv_line_ids[0] or False
+            cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
+            if cv_version > 1:
+                if cv_line.id not in cvl_amount:
+                    cvl_amount[cv_line.id] = 0
+                cvl_amount[cv_line.id] += round(qty * price_unit, 2)
+            else:
+                account_id = inv_obj._get_expense_account(cr, uid, move.purchase_line_id, context=context)
+                if account_id:
+                    if account_id not in account_amount:
+                        account_amount[account_id] = 0
+                    account_amount[account_id] += round(qty * price_unit, 2)
+        if (account_amount or cvl_amount) and po_ids:
+            inv_obj._update_commitments_lines(cr, uid, list(po_ids.keys()), account_amount_dic=account_amount, cvl_amount_dic=cvl_amount,
+                                              from_cancel=ids, context=context)
 
         return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 

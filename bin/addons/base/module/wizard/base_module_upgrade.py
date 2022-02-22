@@ -67,7 +67,7 @@ class base_module_upgrade(osv.osv_memory):
             ('state', 'in', ['to upgrade', 'to remove', 'to install'])])
         return ids
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
         """
         This function checks for precondition before wizard executes
         @param self: The object pointer
@@ -103,14 +103,14 @@ class base_module_upgrade(osv.osv_memory):
             id2 = data_obj.browse(cr, uid, id2, context=context).res_id
 
         return {
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_model': 'base.module.upgrade',
-                'views': [(id2, 'form')],
-                'view_id': False,
-                'type': 'ir.actions.act_window',
-                'target': 'new',
-            }
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'base.module.upgrade',
+            'views': [(id2, 'form')],
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+        }
 
     def config(self, cr, uid, ids, context=None):
         return self.pool.get('res.config').next(cr, uid, [], context=context)

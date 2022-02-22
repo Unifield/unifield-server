@@ -22,5 +22,5 @@ class parser(report_sxw.rml_parse):
         prod_ids = prod_list_obj.search(self.cr, self.uid, [('list_ids', '=', list_id)])
         return prod_list_obj.browse(self.cr, self.uid, prod_ids, context={'lang': self.localcontext.get('lang')})
 
-SpreadsheetReport('report.report_replenishment_product_list', 'replenishment.product.list', 'addons/procurement_cycle/report/replenishment_product_list.mako', parser=parser)
+SpreadsheetReport('report.report_replenishment_product_list', 'replenishment.product.list', 'addons/procurement_cycle/report_doc/replenishment_product_list.mako', parser=parser)
 

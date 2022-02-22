@@ -125,7 +125,7 @@ class account_year_end_closing(osv.osv):
         'IB': 'Initial Balances',
     }
 
-    # IMPORTANT NOTE: be aware that this pattern is used by OCB VI
+    # IMPORTANT NOTE: be aware that this pattern is used by OCP VI
     # to search PL RESULT entries to export with December
     _book_pl_results_seqnum_pattern = "EOY-%d-%s-%s-PL-RESULT"
 

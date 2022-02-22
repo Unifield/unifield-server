@@ -172,6 +172,23 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_ret_from_unit_rt(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if the IN is from scratch and has Return from Unit as Reason Type
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        res = {}
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=['reason_type_id'], context=context):
+            res[pick.id] = pick.reason_type_id.id == return_reason_type_id
+
+        return res
+
     _columns = {
         'state': fields.selection([
             ('draft', 'Draft'),
@@ -241,6 +258,7 @@ class stock_picking(osv.osv):
         'incoming_id': fields.many2one('stock.picking', string='Incoming ref', readonly=True),
         'from_pick_cancel_id': fields.many2one('stock.picking', string='Linked Picking/Out', readonly=True,
                                                help='Picking or Out that created this Internal Move after cancellation'),
+        'ret_from_unit_rt': fields.function(_get_ret_from_unit_rt, method=True, type='boolean', string='Check if the Reason Type is Return from Unit', store=False),
     }
 
     _defaults = {
@@ -254,7 +272,6 @@ class stock_picking(osv.osv):
         'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
         'from_pick_cancel_id': False,
     }
-
 
     def on_change_ext_cu(self, cr, uid, ids, ext_cu, context=None):
         if context is None:
@@ -334,7 +351,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if not context.get('active_id', False):
+        if vals.get('purchase_id'):
             vals['from_wkf'] = True
         # in case me make a copy of a stock.picking coming from a workflow
         if context.get('not_workflow', False):
@@ -393,6 +410,26 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
 
         return res
+
+    def write_web(self, cr, uid, ids, vals, context=None):
+        if ids:
+            doc_type = self.browse(cr, uid, ids[0], fields_to_fetch=['type'], context=context).type
+            if vals and 'reason_type_id' in vals:
+                data_obj = self.pool.get('ir.model.data')
+                other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                if other_type_id != vals['reason_type_id']:
+                    if isinstance(ids, int):
+                        ids = [ids]
+                    # INT only: any RT != other set on picking must be written to all moves
+                    # use sql query to prevent loops: write picking -> write move -> write picking ...
+                    cr.execute("update stock_move set reason_type_id=%s where picking_id in %s and type='internal' and state not in ('cancel', 'done')", (vals['reason_type_id'], tuple(ids)))
+            if doc_type == 'in':
+                if vals.get('partner_id2'):
+                    vals['ext_cu'] = False
+                if vals.get('ext_cu'):
+                    vals.update({'partner_id': False, 'partner_id2': False})
+
+        return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context)
 
     def go_to_simulation_screen(self, cr, uid, ids, context=None):
         '''
@@ -809,7 +846,10 @@ class stock_picking(osv.osv):
 
             # Find appropriate journal
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
-                                                                            ('is_current_instance', '=', True)])
+                                                                            ('code', '!=', 'ISI'),
+                                                                            ('is_current_instance', '=', True),
+                                                                            ('is_active', '=', True)],
+                                                                  order='id', limit=1)
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No journal of type %s found when trying to create invoice for picking %s!') % (journal_type, stock_picking.name))
 
@@ -867,29 +907,6 @@ class stock_picking(osv.osv):
                         netsvc.LocalService("workflow").trg_change_subflow(uid, 'purchase.order', [po_id], 'stock.picking', [sp.id], bo_id, cr)
 
                 self._create_invoice(cr, uid, sp)
-
-        return res
-
-    def _get_price_unit_invoice(self, cr, uid, move_line, type):
-        '''
-        Update the Unit price according to the UoM received and the UoM ordered
-        '''
-        res = super(stock_picking, self)._get_price_unit_invoice(cr, uid, move_line, type)
-        if type == 'in_refund':
-            if move_line.picking_id and move_line.picking_id.purchase_id:
-                po_line_obj = self.pool.get('purchase.order.line')
-                po_line_id = po_line_obj.search(cr, uid, [('order_id', '=', move_line.picking_id.purchase_id.id),
-                                                          ('product_id', '=', move_line.product_id.id),
-                                                          ('state', '!=', 'cancel')
-                                                          ], limit=1)
-                if po_line_id:
-                    return po_line_obj.read(cr, uid, po_line_id[0], ['price_unit'])['price_unit']
-
-        if move_line.purchase_line_id:
-            po_uom_id = move_line.purchase_line_id.product_uom.id
-            move_uom_id = move_line.product_uom.id
-            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, move_uom_id, 1, po_uom_id)
-            return res / uom_ratio
 
         return res
 
@@ -1211,8 +1228,16 @@ class stock_move(osv.osv):
                 )
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
+            vals = {'move_id': ids[0]}
+
+            if move.type == 'in' and move.purchase_line_id and \
+                    move.picking_id.state == 'assigned' and \
+                    move.picking_id.partner_id.partner_type not in ('esc', 'external') and \
+                    not move.picking_id.in_dpo and \
+                    not move.in_forced:
+                vals['display_warning'] = True
+
             if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and move.purchase_line_id.linked_sol_id):
-                vals = {'move_id': ids[0]}
                 if 'from_int' in context:
                     """UFTP-29: we are in a INT stock move - line by line cancel
                     do not allow Cancel and Resource if move linked to a PO line
@@ -1227,7 +1252,6 @@ class stock_move(osv.osv):
                     vals['cancel_only'] = True
 
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
-
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'stock.move.cancel.wizard',
                         'view_type': 'form',
@@ -1236,12 +1260,11 @@ class stock_move(osv.osv):
                         'res_id': wiz_id,
                         'context': context}
             if move.type == 'in' and move.purchase_line_id:
-                vals = {'move_id': ids[0]}
-
                 if not move.purchase_line_id.linked_sol_id:
                     vals['cancel_only'] = True
                     if move.dpo_line_id:
                         vals['from_dpo'] = True
+
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -1411,9 +1434,10 @@ class stock_move(osv.osv):
                 vals['state'] = 'done'
 
         # Change the reason type of the picking if it is not the same
+        other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
         if picking and not context.get('from_claim') and not context.get('from_chaining') \
+                and picking['reason_type_id'][0] != other_type_id \
                 and vals.get('reason_type_id', False) != picking['reason_type_id'][0]:
-            other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
             pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
@@ -1991,6 +2015,7 @@ class stock_move_cancel_wizard(osv.osv_memory):
                                                       string='Is the move from the Cross docking Location ?',
                                                       store=False, readonly=True),
         'from_dpo': fields.boolean(string='Sourced on remote to DPO ?'),
+        'display_warning': fields.boolean(string='Display forced warning?'),
     }
 
     _defaults = {
@@ -1998,6 +2023,7 @@ class stock_move_cancel_wizard(osv.osv_memory):
         'cancel_only': False,
         'is_move_from_cross_docking': False,
         'from_dpo': False,
+        'display_warning': False,
     }
 
     def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):
@@ -2014,6 +2040,13 @@ class stock_move_cancel_wizard(osv.osv_memory):
                 'target': 'new',
                 'res_id': wiz_id,
                 'context': context}
+
+    def is_in_forced(self, cr, uid, picking_browse, context=None):
+        return picking_browse.state == 'assigned' and \
+            picking_browse.purchase_id and \
+            picking_browse.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
+            picking_browse.purchase_id.order_type != 'direct'
+
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2033,6 +2066,10 @@ class stock_move_cancel_wizard(osv.osv_memory):
             move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
             move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
                                        limit=1, order='NO_ORDER', context=context)
+
+            if move_ids and self.is_in_forced(cr, uid, wiz.move_id.picking_id, context=context):
+                move_obj.write(cr, uid, move_ids, {'in_forced': True}, context=context)
+
             if move_ids and  wiz.move_id.has_to_be_resourced:
                 self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled and resourced" % (
                     move_id,
