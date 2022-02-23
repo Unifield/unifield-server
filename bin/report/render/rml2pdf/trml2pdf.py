@@ -358,7 +358,7 @@ class _rml_canvas(object):
             self.canvas.setTitle(self.title)
 
     def _textual(self, node, x=0, y=0):
-        text = node.text and node.text.encode('utf-8') or ''
+        text = node.text or ''
         rc = utils._process_text(self, text)
         for n in node:
             if n.tag == 'seq':

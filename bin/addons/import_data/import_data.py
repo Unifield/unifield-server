@@ -235,7 +235,9 @@ class import_data(osv.osv_memory):
                 break
 
         fileobj = TemporaryFile('w+')
-        fileobj.write(base64.b64decode(obj['file']))
+        print(type(obj['file']))
+        print(type(base64.b64decode(obj['file'])))
+        fileobj.write(base64.b64decode(obj['file']).decode('utf8'))
         fileobj.seek(0)
         impobj = self.pool.get(obj['object'])
         delimiter = ";"
@@ -362,7 +364,7 @@ class import_data(osv.osv_memory):
                 row.append(error)
                 # change data into right format
                 for row_i, row_data in enumerate(row):
-                    row[row_i] = tools.ustr(row_data).encode('utf-8')
+                    row[row_i] = row_data
                 writer.writerow(row)
             else:
                 rejected.append((index, row, error))
@@ -551,7 +553,7 @@ class import_data(osv.osv_memory):
                     'description': 'Rejected Lines',
                     'res_model': 'res.request',
                     'res_id': req_id,
-                    'datas': base64.b64encode(errorfile.read()),
+                    'datas': base64.b64encode(bytes(errorfile.read(), 'utf8')).decode('utf8'),
                 })
 
         if impobj == 'product.product':

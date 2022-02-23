@@ -63,7 +63,7 @@ def _check_db_name(name):
 
 def export_csv(fields, result, result_file_path):
     try:
-        with open(result_file_path, 'wb') as result_file:
+        with open(result_file_path, 'w') as result_file:
             writer = csv.writer(result_file, quoting=csv.QUOTE_ALL)
             writer.writerow(fields)
             for data in result:
@@ -71,10 +71,6 @@ def export_csv(fields, result, result_file_path):
                 for d in data:
                     if isinstance(d, str):
                         d = d.replace('\n',' ').replace('\t',' ')
-                        try:
-                            d = d.encode('utf-8')
-                        except:
-                            pass
                     if d is False:
                         d = None
                     row.append(d)
@@ -1145,6 +1141,8 @@ class report_spool(netsvc.ExportService):
             else:
                 res2 = result['result']
             if res2:
+                if isinstance(res2, str):
+                    res2 = bytes(res2, 'utf8')
                 res['result'] = base64.b64encode(res2).decode('utf8')
             res['format'] = result['format']
             if 'path' in result:

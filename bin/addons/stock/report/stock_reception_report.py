@@ -34,7 +34,7 @@ class stock_reception_report(report_sxw.rml_parse):
         while True:
             moves_ids = self.pool.get('stock.reception.wizard').get_values(self.cr, self.uid, wizard_id, min_id=min_id, max_size=max_size)
             if not moves_ids:
-                raise StopIteration
+                return
             min_id = moves_ids[-1]
 
             ave_price_list = {}
@@ -153,12 +153,12 @@ class stock_reception_report(report_sxw.rml_parse):
                 }
 
             if len(moves_ids) < 500:
-                raise StopIteration
+                return
             processed += max_size
             if bg_id and nb_total:
                 bg_obj.update_percent(self.cr, self.uid, bg_id, processed/float(nb_total))
 
-        raise StopIteration
+        return
 
 
 SpreadsheetReport(
