@@ -200,8 +200,7 @@ class ImpEx(SecuredController):
 
         fields.update({'id': {'string': 'ID'}, '.id': {'string': 'Database ID'}})
 
-        fields_order = list(fields.keys())
-        fields_order.sort(lambda x: fields[x].get('string', ''), reverse=True)
+        fields_order = sorted(fields.keys(), key=lambda x: fields[x].get('string', ''), reverse=True)
         records = []
 
 
@@ -249,8 +248,7 @@ class ImpEx(SecuredController):
 
                     elif (value['type'] == 'many2one') or (value['type'] == 'many2many' and is_importing):
                         m2ofields.append(field)
-                        cfields_order = list(cfields.keys())
-                        cfields_order.sort(lambda x: fields[x].get('string', ''), reverse=True)
+                        cfields_order = sorted(cfields.keys(), key=lambda x: cfields[x].get('string', ''), reverse=True)
                         children = []
                         for j, fld in enumerate(cfields_order):
                             cid = id + '/' + fld
@@ -261,8 +259,7 @@ class ImpEx(SecuredController):
                         cherrypy.session['fld'] = m2ofields
 
                     else:
-                        cfields_order = list(cfields.keys())
-                        cfields_order.sort(lambda x: cfields[x].get('string', ''), reverse=True)
+                        cfields_order = sorted(cfields.keys(), key=lambda x: cfields[x].get('string', ''), reverse=True)
                         children = []
                         for j, fld in enumerate(cfields_order):
                             cid = id + '/' + fld
@@ -275,8 +272,7 @@ class ImpEx(SecuredController):
                     ref = value.pop('relation')
                     proxy = rpc.RPCProxy(ref)
                     cfields = proxy.fields_get(False, rpc.session.context)
-                    cfields_order = list(cfields.keys())
-                    cfields_order.sort(lambda x: cfields[x].get('string', ''), reverse=True)
+                    cfields_order = sorted(cfields.keys(), key=lambda x: cfields[x].get('string', ''), reverse=True)
                     children = []
                     for j, fld in enumerate(cfields_order):
                         cid = id + '/' + fld
@@ -332,8 +328,7 @@ class ImpEx(SecuredController):
             _fields = {'id': 'ID' , '.id': 'Database ID' }
 
             def model_populate(fields, prefix_node='', prefix=None, prefix_value='', level=2):
-                fields_order = list(fields.keys())
-                fields_order.sort(lambda x: fields[x].get('string', ''), reverse=True)
+                fields_order = sorted(fields.keys(), key=lambda x: fields[x].get('string', ''), reverse=True)
 
                 for field in fields_order:
                     fields_data[prefix_node+field] = fields[field]
@@ -481,9 +476,7 @@ class ImpEx(SecuredController):
                 elif x>y: return -1
                 else: return 0
 
-            fields_order = list(fields.keys())
-            # TODO JFB
-            fields_order.sort(lambda x,y: str_comp(fields[x].get('string', ''), fields[y].get('string', '')))
+            fields_order = sorted(fields.keys(), key=lambda x: fields[x].get('string', ''))
             for field in fields_order:
                 if (not fields[field].get('readonly')\
                     or not dict(fields[field].get('states', {}).get(
@@ -505,7 +498,9 @@ class ImpEx(SecuredController):
 
 
         try:
-            data = csv.reader(csvfile.file, quotechar=str(csvdel), delimiter=str(csvsep))
+            content = str(csvfile.file.read(), 'utf8')
+            input=io.StringIO(content)
+            data = csv.reader(input, quotechar=str(csvdel), delimiter=str(csvsep))
         except:
             raise common.warning(_('Error opening .CSV file'), _('Input Error.'))
 
@@ -514,16 +509,16 @@ class ImpEx(SecuredController):
         fields = []
         word=''
         limit = 3
-
+        i = -1
         try:
-            for i, row in enumerate(data):
+            for row in data:
+                i += 1
                 records.append(row)
                 if i == limit:
                     break
 
             for line in records:
                 for word in line:
-                    word = ustr(word.decode(csvcode))
                     if word in _fields:
                         fields.append((word, _fields[word]))
                     elif word in list(_fields_invert.keys()):
@@ -546,7 +541,7 @@ class ImpEx(SecuredController):
         params, data = TinyDict.split(kw)
         res = None
 
-        content = csvfile.file.read()
+        content = str(csvfile.file.read(), 'utf8')
         input=io.StringIO(content)
         limit = 0
         data = []
@@ -571,26 +566,20 @@ class ImpEx(SecuredController):
                 },
                 **kw)
 
-        datas = []
         ctx = dict((params.context or {}), **rpc.session.context)
 
         if not isinstance(fields, list):
             fields = [fields]
 
-        for line in data:
-            try:
-                datas.append([x.decode(csvcode).encode('utf-8') for x in line])
-            except:
-                datas.append([x.decode('latin').encode('utf-8') for x in line])
 
         # If the file contains nothing,
-        if not datas:
+        if not data:
             error = {'message': _('The file is empty !'), 'title': _('Importation !')}
             return self.imp(error=error, **kw)
 
         #Inverting the header into column names
         try:
-            res = rpc.session.execute('object', 'execute', params.model, 'import_data_web', fields, datas, 'init', '',
+            res = rpc.session.execute('object', 'execute', params.model, 'import_data_web', fields, data, 'init', '',
                                       False, ctx, False, True, True)
         except Exception as e:
             error = {'message':ustr(e), 'title':_('XML-RPC error')}
