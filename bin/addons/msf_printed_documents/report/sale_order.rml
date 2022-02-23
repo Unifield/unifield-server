@@ -32,6 +32,12 @@
             <lineStyle kind="LINEABOVE" colorName="black" start="4,-2" stop="4,-2" thickness="0.5" />
             <lineStyle kind="LINEABOVE" colorName="black" start="6,-2" stop="6,-2" thickness="0.5" />
             <lineStyle kind="LINEABOVE" colorName="black" start="8,-2" stop="8,-2" thickness="0.5" />
+            <blockLeftPadding length="0" start="1,0" stop="1,-1"/>
+            <blockRightPadding length="0" start="1,0" stop="1,-1"/>
+            <blockLeftPadding length="0" start="3,0" stop="3,-1"/>
+            <blockRightPadding length="0" start="3,0" stop="3,-1"/>
+            <blockLeftPadding length="0" start="5,0" stop="5,-1"/>
+            <blockRightPadding length="0" start="5,0" stop="5,-1"/>
         </blockTableStyle>
         <blockTableStyle id="LinesTitle">
             <blockAlignment value="LEFT" />
@@ -67,7 +73,7 @@
             <paraStyle name="all" alignment="justify"/>
         </initialize>
 
-        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" spaceAfter="10"/>
         
 		<!-- Header font style -->
         <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
