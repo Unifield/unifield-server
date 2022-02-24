@@ -33,6 +33,7 @@
       <blockValign value="MIDDLE"/>
       <blockValign value="TOP" start="0,0" stop="-1,0"/>
       <blockBackground colorName="peachpuff" start="0,0" stop="-1,0"/>
+      <blockRightPadding length="2" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
 
     <blockTableStyle id="table">
@@ -40,6 +41,7 @@
       <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
       <blockValign value="MIDDLE"/>
       <blockValign value="TOP" start="0,0" stop="-1,0"/>
+      <blockRightPadding length="2" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
 
     <paraStyle name="right" fontName="Helvetica" fontSize="8" alignment="RIGHT"/>
