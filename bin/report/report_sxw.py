@@ -652,10 +652,10 @@ class report_sxw(report_rml, preprocess.report):
                     from .pyPdf import PdfFileWriter, PdfFileReader
                     output = PdfFileWriter()
                     for r in results:
-                        reader = PdfFileReader(io.StringIO(r[0]))
+                        reader = PdfFileReader(io.BytesIO(r[0]))
                         for page in range(reader.getNumPages()):
                             output.addPage(reader.getPage(page))
-                    s = io.StringIO()
+                    s = io.BytesIO()
                     output.write(s)
                     return s.getvalue(), results[0][1]
         return self.create_single_pdf(cr, uid, ids, data, report_xml, context)
