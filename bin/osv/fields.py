@@ -38,6 +38,7 @@ from psycopg2 import Binary
 
 import tools
 from tools.translate import _
+bultin_float = float
 
 def _symbol_set(symb):
     if symb is None or symb is False:
@@ -280,6 +281,7 @@ def _binary_symbol_f(data):
         return Binary(data)
     return Binary(str(data).encode('ascii'))
 
+
 class binary(_column):
     _type = 'binary'
     _symbol_c = '%s'
@@ -291,6 +293,8 @@ class binary(_column):
     _prefetch = False
 
     def get_symp(self, x):
+        if isinstance(x, bultin_float):
+            return x
         return x and bytes(x) or ''
 
     def __init__(self, string='unknown', filters=None, **args):
@@ -914,7 +918,7 @@ class function(_column):
                 # client requests only the size of binary fields
                 res = dict(list(map(get_nice_size, list(res.items()))))
             else:
-                res = dict(list(map(sanitize_binary_value, list(res.items()))))
+                res = dict(list(res.items()))
 
         return res
     get_memory = get
