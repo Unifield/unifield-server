@@ -61,7 +61,9 @@
             <blockAlignment value="CENTER" />
             <blockValign value="MIDDLE" />
             <lineStyle kind="GRID" colorName="#000000" />
-            <blockBackground colorName="#f2f2f2" start="0,0" stop="-1,0" />
+	    <blockBackground colorName="#f2f2f2" start="0,0" stop="-1,0" />
+            <blockLeftPadding length="0" start="0,0" stop="-1,-1"/>
+            <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
 
         <blockTableStyle id="LineInfo">
@@ -77,28 +79,32 @@
         </blockTableStyle>
 
         <blockTableStyle id="FooterInfo">
-            <blockAlignment value="CENTER" />
+            <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
             <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,1" />
             <lineStyle kind="LINEABOVE" colorName="#000000" start="1,0" />
             <lineStyle kind="LINEAFTER" colorName="#000000" />
             <lineStyle kind="LINEBELOW" colorName="#000000" />
+            <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>
+            <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
 
 
         <!-- Font styles -->
         <paraStyle name="Title" fontName="Helvetica" fontSize="20.0" leading="20" alignment="CENTER" />
         <paraStyle name="Header" fontName="Helvetica" fontSize="8.0" alignment="LEFT" />
+        <paraStyle name="HeaderW" fontName="Helvetica" fontSize="8.0" alignment="LEFT" spaceAfter="10"/>
         <paraStyle name="HeaderRight" fontName="Helvetica-Bold" fontSize="8.0" alignment="RIGHT" />
-        <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignement="CENTER" />
-        <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
+        <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignment="CENTER" />
+        <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignment="CENTER" />
+        <paraStyle name="LineLeft" fontName="Helvetica" fontSize="7.0" alignment="LEFT" />
         <paraStyle name="LFooter" fontName="Helvetica-Bold" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LFooterEnd" fontName="Helvetica" fontSize="7.0" alignement="LEFT" leading="30" />
     </stylesheet>
     <story>
 
         [[ repeatIn(objects, 'picking') ]]
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
@@ -174,7 +180,7 @@
             </tr>
         </blockTable>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
@@ -270,20 +276,20 @@
 
         </section>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
         <blockTable style="NoteTable">
             <tr>
                 <td>
-                    <para style="LHeader">Notes :</para>
+			<para style="Header"><b>Notes :</b></para>
                     <para style="Header">[[ picking.note or '-' ]]</para>
                 </td>
             </tr>
         </blockTable>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
@@ -307,7 +313,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="Line">Name</para>
+                    <para style="LineLeft">Name</para>
                 </td>
                 <td>
                     <para style="Line"> </para>
@@ -324,7 +330,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="Line">Date</para>
+                    <para style="LineLeft">Date</para>
                 </td>
                 <td>
                     <para style="Line"> </para>

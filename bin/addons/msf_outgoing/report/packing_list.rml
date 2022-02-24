@@ -53,7 +53,9 @@
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
             <lineStyle kind="LINEBELOW" colorName="black" start="0,0" stop="-1,0" />
-            <lineStyle kind="LINEBELOW" colorName="#c0c0c0" start="0,1" stop="-1,-1" />
+	    <lineStyle kind="LINEBELOW" colorName="#c0c0c0" start="0,1" stop="-1,-1" />
+            <blockLeftPadding length="3" start="0,0" stop="-1,-1"/>
+            <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
 
         <blockTableStyle id="Totals">
@@ -77,6 +79,7 @@
 
         <paraStyle name="TotalInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
         <paraStyle name="TotalInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" />
+        <paraStyle name="SW" fontName="Helvetica" fontSize="8.0" leading="8" spaceAfter="8" />
 
     </stylesheet>
 
@@ -96,8 +99,8 @@
                             <td></td>
                         </tr>
                     </blockTable>
-                    <para style="HeaderInfosTitle">
-                        <font color="white"> </font>
+                    <para style="SW">
+                        <font color="white"> </font>
                     </para>
                 </pto_header>
                 <!-- Empty lines -->
@@ -112,8 +115,8 @@
                         <td></td>
                     </tr>
                 </blockTable>
-                <para style="HeaderInfosTitle">
-                    <font color="white"> </font>
+                <para style="SW">
+                    <font color="white"> </font>
                 </para>
 
                 <!-- Shipment header values -->
@@ -224,8 +227,8 @@
                 <section>
                     [[ repeatIn(getParcel(p['pf']), 'pf') ]]
                     <!-- Empty line -->
-                    <para style="HeaderInfosTitle">
-                        <font color="white"> </font>
+                    <para style="SW">
+                        <font color="white"> </font>
                     </para>
 
                     <blockTable colWidths="100.0,150.0,150.0,170.0,170.0,70.0" style="ParcelHeaderGrey" keepWithNext="1">
@@ -329,7 +332,7 @@
             </pto>
 
             <!-- Empty line -->
-            <para style="HeaderInfosTitle">
+            <para style="SW">
                 <font color="white"> </font>
             </para>
 

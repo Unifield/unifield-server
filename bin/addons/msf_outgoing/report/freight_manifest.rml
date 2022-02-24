@@ -31,7 +31,17 @@
             <blockVAlign value="MIDDLE" />
             <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="1,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="3,0" stop="3,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="5,0" stop="5,-1" thickness="0.5" />
+	    <lineStyle kind="OUTLINE" colorName="black" start="5,0" stop="5,-1" thickness="0.5" />
+            <blockLeftPadding length="0" start="0,0" stop="0,-1"/>
+            <blockRightPadding length="0" start="0,0" stop="0,-1"/>
+            <blockLeftPadding length="0" start="2,0" stop="2,-1"/>
+            <blockRightPadding length="0" start="2,0" stop="2,-1"/>
+            <blockLeftPadding length="0" start="2,0" stop="2,-1"/>
+            <blockRightPadding length="0" start="2,0" stop="2,-1"/>
+            <blockLeftPadding length="0" start="4,0" stop="4,-1"/>
+            <blockRightPadding length="0" start="4,0" stop="4,-1"/>
+            <blockLeftPadding length="0" start="6,0" stop="7,-1"/>
+            <blockRightPadding length="0" start="6,0" stop="7,-1"/>
         </blockTableStyle>
 
         <blockTableStyle id="ItemsTitle">
@@ -127,7 +137,8 @@
             <blockBackground colorName="white"  start="0,1"/>
             <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,0" thickness="0.5" />
             <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,0" thickness="0.5" />
-
+            <blockLeftPadding length="0" start="0,0" stop="-1,0"/>
+            <blockRightPadding length="0" start="0,0" stop="-1,0"/>
         </blockTableStyle>
 
         <blockTableStyle id="LinesTable">
@@ -158,6 +169,7 @@
         </initialize>
 
         <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="StandardW" fontName="Helvetica" fontSize="8.0" spaceAfter="10"/>
 
         <!-- Header font style -->
         <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
@@ -473,7 +485,7 @@
 
 
 
-        <para style="Standard">
+        <para style="StandardW">
             <font color="white"> </font>
         </para>
 
@@ -595,7 +607,7 @@
             </tr>
         </blockTable>
 
-        <para style="Standard" >
+        <para style="StandardW" >
             <font color="white"> </font>
         </para>
 
@@ -692,7 +704,7 @@
             [[ objects[0].additional_items_ids or removeParentNode('section') ]]
         </section>
 
-        <para style="Standard">
+        <para style="StandardW">
             <font color="white"> </font>
         </para>
 
@@ -722,7 +734,7 @@
             </blockTable>
         </section>
 
-        <para style="Standard">
+        <para style="StandardW">
             <font color="white"> </font>
         </para>
 

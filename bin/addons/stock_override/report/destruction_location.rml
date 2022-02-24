@@ -128,6 +128,7 @@
     <paraStyle name="P7" fontName="Helvetica" fontSize="12.0" leading="15" alignment="LEFT"/>
     <paraStyle name="P8" fontName="Helvetica" fontSize="12.0" leading="15" alignment="CENTER"/>
     <paraStyle name="P9" fontName="Helvetica" alignment="LEFT"/>
+    <paraStyle name="P1W" fontName="Helvetica" alignment="LEFT" spaceAfter="10"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -145,16 +146,16 @@
   </stylesheet>
   <story>
     <para style="P1">Destruction Report</para>
-    <para style="P4">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
-    <para style="P3">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
-    <para style="P3">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
-    <para style="P3">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="409.0,376.0" style="Table5">
@@ -164,16 +165,16 @@
           <para style="P6">Project Name: [[ _get_project() ]] </para>
         </td>
         <td>
-          <para style="P7">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
         </td>
       </tr>
     </blockTable>
-    <para style="P3">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
-    <para style="P3">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
     <para style="P2"/>
@@ -237,31 +238,37 @@
         </td>
       </tr>
     </blockTable>
-    <para style="Standard">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="362.0,423.0" style="Table2">
       <tr>
         <td>
           <para style="Table Contents">Note:</para>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
-          <para style="Table Contents">
+          <para style="P1W">
+            <font color="white"> </font>
+          </para>
+          <para style="P1W">
+            <font color="white"> </font>
+          </para>
+          <para style="P1W">
             <font color="white"> </font>
           </para>
         </td>
         <td>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
         </td>
       </tr>
     </blockTable>
-    <para style="Standard">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="362.0,422.0" style="Table3">
@@ -270,69 +277,69 @@
           <para style="Table Contents">Official Destruction Refrence: </para>
         </td>
         <td>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
         </td>
       </tr>
     </blockTable>
-    <para style="Standard">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="214.0,67.0,217.0,70.0,217.0" style="Table4">
       <tr>
         <td>
           <para style="Table Contents">Name:</para>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
-          <para style="Table Contents">
-            <font color="white"> </font>
-          </para>
-          <para style="Table Contents">----------------------------------------------------</para>
-        </td>
-        <td>
-          <para style="Table Contents">
-            <font color="white"> </font>
-          </para>
-        </td>
-        <td>
-          <para style="Table Contents">Name:</para>
-          <para style="Table Contents">
-            <font color="white"> </font>
-          </para>
-          <para style="Table Contents">
-            <font color="white"> </font>
-          </para>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
           <para style="Table Contents">----------------------------------------------------</para>
         </td>
         <td>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
         </td>
         <td>
           <para style="Table Contents">Name:</para>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
-          <para style="Table Contents">
+          <para style="P1W">
             <font color="white"> </font>
           </para>
-          <para style="Table Contents">
+          <para style="P1W">
+            <font color="white"> </font>
+          </para>
+          <para style="Table Contents">----------------------------------------------------</para>
+        </td>
+        <td>
+          <para style="P1W">
+            <font color="white"> </font>
+          </para>
+        </td>
+        <td>
+          <para style="Table Contents">Name:</para>
+          <para style="P1W">
+            <font color="white"> </font>
+          </para>
+          <para style="P1W">
+            <font color="white"> </font>
+          </para>
+          <para style="P1W">
             <font color="white"> </font>
           </para>
           <para style="Table Contents">----------------------------------------------------</para>
         </td>
       </tr>
     </blockTable>
-    <para style="Standard">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
   </story>

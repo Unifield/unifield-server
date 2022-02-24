@@ -15,18 +15,26 @@
 
     <stylesheet>
         <blockTableStyle id="MainTitle">
-            <lineStyle kind="GRID" colorName="#000000" start="0,1" stop="0,1" />
+	    <lineStyle kind="GRID" colorName="#000000" start="0,1" stop="0,1" />
+	    <blockLeftPadding length="4" start="0,0" stop="-1,-1"/>
+	    <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
 
         <blockTableStyle id="Header">
+	    <blockLeftPadding length="4" start="0,0" stop="-1,-1"/>
+	    <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
         
         <blockTableStyle id="BalanceHeader">
             <lineStyle kind="GRID" colorName="#000000" start="5,1" stop="5,1" />
+	    <blockLeftPadding length="4" start="0,0" stop="-1,-1"/>
+	    <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
         
         <blockTableStyle id="LineHeader">
             <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
+	    <blockLeftPadding length="0" start="0,0" stop="-1,-1"/>
+	    <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
 
         <blockTableStyle id="Lines">
@@ -35,6 +43,7 @@
         </blockTableStyle>
 
         <paraStyle name="ParaMainTitle" fontName="Helvetica-Bold" fontSize="12" alignment="CENTER" />
+        <paraStyle name="PW" fontName="Helvetica-Bold" fontSize="12" spaceAfter="10" />
         <paraStyle name="HeaderBold" fontName="Helvetica-Bold" fontSize="8" alignment="LEFT" />
         <paraStyle name="Header" fontName="Helvetica" fontSize="8" alignment="LEFT" />
         <paraStyle name="ParaLineHeader" fontName="Helvetica-Bold" fontSize="9" alignment="CENTER" />
@@ -159,7 +168,7 @@
             </tr>
         </blockTable>
 
-        <para style="ParaMainTitle">
+        <para style="PW">
             <font color="white"> </font>
         </para>
 

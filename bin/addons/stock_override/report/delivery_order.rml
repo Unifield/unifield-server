@@ -42,7 +42,9 @@
             <blockAlignment value="CENTER" />
             <blockValign value="MIDDLE" />
             <lineStyle kind="GRID" colorName="#000000" />
-            <blockBackground colorName="#f2f2f2" start="0,0" stop="-1,0" />
+	    <blockBackground colorName="#f2f2f2" start="0,0" stop="-1,0" />
+            <blockLeftPadding length="2" start="0,0" stop="-1,0"/>
+            <blockRightPadding length="0" start="0,0" stop="-1,0"/>
         </blockTableStyle>
 
         <blockTableStyle id="NotesInfo">
@@ -74,12 +76,14 @@
             <lineStyle kind="LINEABOVE" colorName="#000000" start="1,0" />
             <lineStyle kind="LINEAFTER" colorName="#000000" />
             <lineStyle kind="LINEBELOW" colorName="#000000" />
+            <blockLeftPadding length="4" start="0,1" stop="0,-1"/>
         </blockTableStyle>
 
 
         <!-- Font styles -->
         <paraStyle name="Title" fontName="Helvetica" fontSize="20.0" leading="20" alignment="CENTER" />
         <paraStyle name="Header" fontName="Helvetica" fontSize="8.0" alignment="LEFT" />
+        <paraStyle name="HeaderW" fontName="Helvetica" fontSize="8.0" alignment="LEFT" spaceAfter="10"/>
         <paraStyle name="HeaderRight" fontName="Helvetica-Bold" fontSize="8.0" alignment="RIGHT" />
         <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignement="CENTER" />
         <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
@@ -92,7 +96,7 @@
         [[ repeatIn(objects, 'picking') ]]
 
         <!-- Big title -->
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
@@ -180,7 +184,7 @@
             </tr>
         </blockTable>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
@@ -269,7 +273,7 @@
 
         </section>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
@@ -289,7 +293,7 @@
             </tr>
         </blockTable>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
         

@@ -74,7 +74,9 @@
             <blockSpan start="9,1" stop="9,-1" />
             <blockSpan start="10,1" stop="10,-1" />
             <blockSpan start="11,1" stop="11,-1" />
-            <blockSpan start="12,1" stop="12,-1" />
+	    <blockSpan start="12,1" stop="12,-1" />
+            <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>
+            <blockRightPadding length="2" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
 
         <blockTableStyle id="FooterInfo">
@@ -110,6 +112,8 @@
             <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" />
         </blockTableStyle>
 
+	<paraStyle name="SpacerW" fontName="Helvetica" fontSize="8.0" spaceAfter="10" />
+	<paraStyle name="SpacerW2" fontName="Helvetica" fontSize="3.0" leading="5" spaceAfter="0" />
         <paraStyle name="HeaderInfosBigTitle" fontName="Helvetica-Bold" fontSize="12.0" />
         <paraStyle name="HeaderInfosBigTitleBlue" fontName="Helvetica-Bold" fontSize="12.0" textColor="blue" />
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
@@ -152,16 +156,16 @@
         </blockTable>
 
         <!-- Empty line -->
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
 
@@ -221,7 +225,7 @@
         </blockTable>
 
         <!-- Empty block -->
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
 
@@ -235,7 +239,7 @@
         </blockTable>
 
         <!-- Empty block -->
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
 
@@ -641,9 +645,7 @@
                 </tr>
             </blockTable>
 
-            <para style="LineValue">
-                <font color="white"> </font>
-            </para>
+        <para style="SpacerW2"><font color="white"> </font></para>
 
         <blockTable colWidths="810.0" style="NoteTable">
             <tr>
@@ -654,15 +656,7 @@
             </tr>
         </blockTable>
 
-        <para style="LineValue">
-            <font color="white"> </font>
-        </para>
-        <para style="LineValue">
-            <font color="white"> </font>
-        </para>
-        <para style="LineValue">
-            <font color="white"> </font>
-        </para>
+	<para style="SpacerW2"><font color="white"> </font></para>
 
         <blockTable colWidths="51.0,253.0,253.0,253.0" style="FooterInfo" keepWithNext="1">
             <tr>

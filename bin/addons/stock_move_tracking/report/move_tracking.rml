@@ -19,6 +19,7 @@
       <paraStyle name="all" alignment="justify"/>
     </initialize>
     <paraStyle name="P1" fontName="Helvetica" fontSize="24.0" leading="29" alignment="CENTER"/>
+    <paraStyle name="P1W" fontName="Helvetica" fontSize="24.0" leading="29" alignment="CENTER" spaceAfter="10"/>
     <paraStyle name="P2" fontName="Helvetica" fontSize="12.0" leading="15" alignment="LEFT"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="11.0" leading="14" alignment="LEFT"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="10.0" leading="13" alignment="LEFT"/>
@@ -35,21 +36,24 @@
   </stylesheet>
   <story>
     <para style="P1">Items stock transaction report</para>
-    <para style="P1">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
-    <para style="P1">
+    <para style="P1W">
+      <font color="white"> </font>
+    </para>
+    <para style="P1W">
       <font color="white"> </font>
     </para>
     <para style="P3">Product Description : [[ data['form']['product_id'] ]]</para>
     <para style="P3">Product Code: [[ data['form']['product_code'] ]]</para>
     <para style="P3">Batch number : [[ data['form']['prodlot_id'] ]]</para>
     <para style="P3">Expired date : [[ data['form']['expired_date'] ]]</para>
-    <para style="P3">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
     <para style="P3">All transactions :</para>
-    <para style="P2">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="86.0,86.0,86.0,75.0,116.0,135.0,135.0,67.0" style="Table1">
@@ -109,7 +113,7 @@
         </td>
       </tr>
     </blockTable>
-    <para style="P2">
+    <para style="P1W">
       <font color="white"> </font>
     </para>
   </story>

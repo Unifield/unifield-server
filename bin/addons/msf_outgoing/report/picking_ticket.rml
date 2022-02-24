@@ -46,13 +46,17 @@
             <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="1,0" />
             <lineStyle kind="OUTLINE" colorName="black" start="3,0" stop="4,0" />
             <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,0" />
+	    <blockLeftPadding length="0" start="2,0" stop="2,-1" />
+	    <blockRightPadding length="0" start="2,0" stop="2,-1" />
+	    <blockLeftPadding length="0" start="5,0" stop="5,-1" />
+	    <blockRightPadding length="0" start="5,0" stop="5,-1" />
         </blockTableStyle>
         <blockTableStyle id="HeaderInfos2">
             <blockAlignment value="LEFT" />
-			<blockValign value="MIDDLE" />
-			<blockLeading length="0" />
-			<blockBottomPadding length="0" />
-			<blockTopPadding length="0" />
+	    <blockValign value="MIDDLE" />
+	    <blockLeading length="0" />
+	    <blockBottomPadding length="0" />
+	    <blockTopPadding length="0" />
         </blockTableStyle>
 
         <blockTableStyle id="WarningTable">
@@ -77,6 +81,8 @@
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
+	    <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
+	    <blockRightPadding length="2" start="0,0" stop="-1,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="FooterInfo">
@@ -107,6 +113,8 @@
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
+	    <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
+	    <blockRightPadding length="2" start="0,0" stop="-1,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="NoteTable">
@@ -121,6 +129,7 @@
         <paraStyle name="WarningMessage" fontName="Helvetica-Bold" fontSize="10.0" alignment="CENTER" />
 
         <paraStyle name="LineHeaderItem" fontName="Helvetica" fontSize="7.0" leading="6.0" />
+        <paraStyle name="SpacerW" fontName="Helvetica" fontSize="7.0" leading="6.0" spaceAfter="10"/>
         <paraStyle name="LineHeader" fontName="Helvetica-Oblique" fontSize="6.0" alignment="CENTER" leading="5.0" />
         <paraStyle name="LineHeaderLeft" fontName="Helvetica-Oblique" fontSize="6.0" alignment="LEFT" leading="5.0" />
 
@@ -139,7 +148,7 @@
         [[ repeatIn(objects, 'pt') ]]
 
         <!-- Empty line -->
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
 
@@ -233,7 +242,7 @@
         </blockTable>
 
         <!-- Empty block -->
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
 
@@ -247,7 +256,7 @@
         </blockTable>
 
         <!-- Empty block -->
-        <para style="HeaderInfosTitle">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
 
@@ -514,7 +523,7 @@
                 </tr>
             </blockTable>
 
-            <para style="LineValue">
+            <para style="SpacerW">
                 <font color="white"> </font>
             </para>
 
@@ -529,13 +538,13 @@
             </tr>
         </blockTable>
 
-        <para style="LineValue">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
-        <para style="LineValue">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
-        <para style="LineValue">
+        <para style="SpacerW">
             <font color="white"> </font>
         </para>
 
