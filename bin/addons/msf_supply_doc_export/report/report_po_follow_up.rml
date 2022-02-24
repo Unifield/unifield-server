@@ -26,6 +26,16 @@
       <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="20,-1"/>
       <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
+      <blockRightPadding length="0" start="0,0" stop="-1,0"/>
+      <blockLeftPadding length="0" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+    <blockTableStyle id="Tableau3a">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="20,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
+      <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
     <blockTableStyle id="TableauNotes">
       <blockAlignment value="LEFT"/>
@@ -39,6 +49,7 @@
     </initialize>
     <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="16.0" leading="20" alignment="CENTER" />
     <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
+    <paraStyle name="P2W" fontName="Helvetica" fontSize="8.0" leading="10" spaceAfter="10"/>
     <paraStyle name="P2Bold" fontName="Helvetica-Bold" fontSize="8.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
@@ -66,7 +77,7 @@
         </td>
       </tr>
     </blockTable>
-    <blockTable colWidths="200.0,150.0,150.0,200.0,200.0" style="Tableau3">
+    <blockTable colWidths="200.0,150.0,150.0,200.0,200.0" style="Tableau3a">
       <tr>
         <td><para style="P2">Report Run Date: [[getRunParmsRML('run_date')]]</para></td>
         <td><para style="P2">PO Date From: [[getRunParmsRML('date_from')]]</para></td>
@@ -76,12 +87,12 @@
       </tr>    
     </blockTable>
 
-    <para style="P2">
+    <para style="P2W">
       <font color="white"> </font>
     </para>
     
     <para>[[repeatIn(objects,'o')]]</para>
-    <blockTable colWidths="175.0,125.0,150.0,200.0,100.0,150.0" style="Tableau3">
+    <blockTable colWidths="175.0,125.0,150.0,200.0,100.0,150.0" style="Tableau3a">
     <tr>
          <td><para style="P2">Order Ref: [[ o.name ]]</para></td>
          <td><para style="P2">Status: [[ getSel(o, 'state') ]]</para></td>
@@ -202,7 +213,7 @@
     </blockTable>
 
     <section>
-      <para style="P2">
+      <para style="P2W">
         <font color="white"> </font>
       </para>
     </section>

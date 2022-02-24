@@ -48,7 +48,8 @@
             <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="0,1" stop="-1,-1" />
             <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="0,0" stop="0,-1" />
             <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" start="-1,0" stop="-1,-1" />
-
+            <blockLeftPadding length="0" start="0,0" stop="-1,-1"/>
+            <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
         <blockTableStyle id="LinesTableTotal">
             <blockAlignment value="LEFT"/>
@@ -59,7 +60,7 @@
             <paraStyle name="all" alignment="justify"/>
         </initialize>
 
-        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" spaceAfer="10"/>
 
         <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="12.0" leading="15.0" alignement="CENTER" />
         <paraStyle name="TextInfo" fontName="Helvetica" fontSize="8.0" leading="7.0" textColor="blue" alignment="CENTER" />

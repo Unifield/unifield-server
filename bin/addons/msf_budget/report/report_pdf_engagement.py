@@ -99,29 +99,17 @@ class report_pdf_engagement(report_sxw.rml_parse):
         if (has_one_distribution and has_all_distribution) or not has_one_distribution:
             return has_one_distribution
 
-    def _cmp_cc_dest(self, a, b):
+    def _cmp_cc_dest(self, a):
         """
         Comparison function to sort by cost center code and then destination code
         """
         analytic_acc_obj = self.pool.get('account.analytic.account')
         a = a.split('_')
-        b = b.split('_')
-        if len(a) != 2 or len(b) != 2 or not a[0] or not b[0] or not a[1] or not b[1]:
-            return 0
+        if len(a) != 2 or not a[0] or not a[1]:
+            return ''
         a_cc = analytic_acc_obj.read(self.cr, self.uid, int(a[0]), ['code'])['code'].upper()
         a_dest = analytic_acc_obj.read(self.cr, self.uid, int(a[1]), ['code'])['code'].upper()
-        b_cc = analytic_acc_obj.read(self.cr, self.uid, int(b[0]), ['code'])['code'].upper()
-        b_dest = analytic_acc_obj.read(self.cr, self.uid, int(b[1]), ['code'])['code'].upper()
-        if a_cc > b_cc:
-            return 1
-        elif a_cc < b_cc:
-            return -1
-        else:
-            if a_dest > b_dest:
-                return 1
-            elif a_dest < b_dest:
-                return -1
-        return 0
+        return '%s-%s' % (a_cc, a_dest)
 
     def get_report_lines(self, purchase_order):
         # Input: a purchase order
@@ -246,8 +234,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
 
             # Now we format the data to form the result
             total_values = [0, 0, 0, 0, 0]
-            cost_center_ids = list(temp_data.keys())
-            cost_center_ids.sort(self._cmp_cc_dest)
+            cost_center_ids = sorted(temp_data.keys(), key=lambda x: self._cmp_cc_dest(x))
 
             for cost_dest in cost_center_ids:
 

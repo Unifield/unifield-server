@@ -155,7 +155,7 @@
         <paraStyle alignment="CENTER" fontName="Helvetica-Bold"
             fontSize="14.0" leading="19" name="P26" spaceAfter="0.0" spaceBefore="0.0"/>
         <paraStyle alignment="CENTER" fontName="Helvetica-Bold"
-            fontSize="10.0" leading="19" name="P27" spaceAfter="0.0" spaceBefore="0.0"/>
+            fontSize="10.0" leading="19" name="P27" spaceAfter="10.0" spaceBefore="0.0"/>
         <paraStyle fontName="Helvetica" name="Standard"/>
         <paraStyle fontName="Helvetica" name="Text body"
             spaceAfter="6.0" spaceBefore="0.0"/>
@@ -258,13 +258,13 @@
         <para style="P27">
             <font color="white"/>
         </para>
-        <para style="P5">
+        <para style="P27">
             <font color="white"/>
         </para>
         <para style="P5">
             <font color="red">[[ check_distribution(o) and ' ' or 'WARNING: analytic distribution for this PO is not complete!' ]]</font>
         </para>
-        <para style="P5">
+        <para style="P27">
             <font color="white"/>
         </para>
                     <blockTable
@@ -328,7 +328,7 @@
                             </td>
                         </tr>
                     </blockTable>
-        <para style="P5">
+        <para style="P27">
             <font color="white"/>
         </para>
         <para style="P5">Actuals amounts in this report include confirmed POs (commitments) but not open / validated POs</para>

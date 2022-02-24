@@ -37,7 +37,10 @@
     		<blockAlignment value="LEFT"/>
             <blockValign value="MIDDLE"/>
             <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
+	    <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
+            <blockLeftPadding length="0" start="1,0" stop="1,-1"/>
+            <blockRightPadding length="0" start="1,0" stop="1,-1"/>
+
     	</blockTableStyle>
     	<blockTableStyle id="LinesTable">
     		<blockAlignment value="LEFT"/>
@@ -47,6 +50,12 @@
             <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="0,1" stop="-1,-1" />
             <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="0,0" stop="0,-1" />
             <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" start="-1,0" stop="-1,-1" />
+            <blockSpan start="0,0" stop="1,0"/>
+            <blockSpan start="3,0" stop="5,0"/>
+            <blockSpan start="6,0" stop="9,0"/>
+            <blockSpan start="11,0" stop="12,0"/>
+            <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>
+            <blocRightPadding length="0" start="0,0" stop="-1,-1"/>
     	</blockTableStyle>
     	<blockTableStyle id="Notes">
     		<blockAlignment value="LEFT"/>
@@ -57,7 +66,7 @@
             <paraStyle name="all" alignment="justify"/>
         </initialize>
 
-        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" spaceAfter="10"/>
 
         <!-- information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontRize="9.0" alignment="LEFT" leading="9.0" spaceBefore="1.0" spaceAfter="1.0" />
@@ -172,45 +181,31 @@
             [[ repeatIn(getOrders(r, grouped=True, only_bo=r.only_bo), 'o', 'section') ]]
         <blockTable colWidths="32.0,80.0,135.0,45.0,30.0,50.0,50.0,50.0,50.0,41.0,55.0,60.0,47.0,47.0" style="LinesTable" repeatRows="2">
 	    	<tr>
-	    		<td colspan="2">
-                    <para style="Lines">Order ref:</para>
+	    	<td>
+                    <para style="Lines">Order ref: [[o.name]]</para>
                 </td>
-                <td>
-                    <para style="Lines">[[ o.name ]]       </para>
-                </td>
+		<td/>
                 <td>
                     <para style="Lines">Doc. Status: [[ getSel(o, 'state') ]]</para>
                 </td>
                 <td>
                     <para style="Lines">Received: [[ formatLang(o.date_order, date=True) ]]</para>
-                </td>
-                <td>
-                    <para style="Lines"></para>
-                </td>
-                <td>
-                    <para style="Lines"></para>
-                </td>
+	        </td>
+		<td/>
+		<td/>
                 <td>
                     <para style="Lines">Req. Delivery date: [[ o.delivery_requested_date and formatLang(o.delivery_requested_date, date=True) or '' ]]</para>
                 </td>
-                <td>
-                    <para style="Lines"></para>
-                </td>
-                <td>
-                    <para style="Lines"></para>
-                </td>
-                <td>
-                    <para style="Lines"></para>
-                </td>
+		<td/>
+		<td/>
+		<td/>
                 <td>
                     <para style="Lines"># Items: [[ getProducts(o) ]]</para>
                 </td>
                 <td>
                     <para style="Lines">Estimated amount: [[ formatLang(o.amount_total or 0.00) ]] [[ o.pricelist_id.currency_id.name ]]</para>
                 </td>
-                <td>
-                    <para style="Lines"></para>
-                </td>
+		<td/>
             </tr>
 	    	<tr>
 	    		<td>
@@ -329,7 +324,7 @@
             </tr>
         </blockTable>
 
-        <para style="LinesBlue">
+        <para style="Standard">
             <font color="white"> </font>
         </para>
 

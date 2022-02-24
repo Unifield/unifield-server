@@ -38,6 +38,8 @@
             <blockValign value="MIDDLE"/>
             <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
+            <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>	
+            <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
     	</blockTableStyle>
     	<blockTableStyle id="LinesTable">
     		<blockAlignment value="LEFT"/>
@@ -47,6 +49,11 @@
             <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="0,1" stop="-1,-1" />
             <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="0,0" stop="0,-1" />
             <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" start="-1,0" stop="-1,-1" />
+            <blockSpan start="5,0" stop="6,0"/>
+            <blockSpan start="7,0" stop="8,0"/>
+            <blockSpan start="10,0" stop="12,0"/>
+            <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>	
+            <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
     	</blockTableStyle>
     	<blockTableStyle id="Notes">
     		<blockAlignment value="LEFT"/>
@@ -57,7 +64,7 @@
             <paraStyle name="all" alignment="justify"/>
         </initialize>
 
-        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" spaceAfter="10"/>
 
         <!-- information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontRize="9.0" alignment="LEFT" leading="9.0" spaceBefore="1.0" spaceAfter="1.0" />

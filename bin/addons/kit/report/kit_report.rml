@@ -51,6 +51,7 @@
         <!-- Font styles -->
         <paraStyle name="Title" fontName="Helvetica" fontSize="20.0" leading="20" alignment="CENTER" />
         <paraStyle name="Header" fontName="Helvetica" fontSize="8.0" alignment="LEFT" />
+        <paraStyle name="HeaderW" fontName="Helvetica" fontSize="8.0" alignment="LEFT" spaceAfter="10"/>
         <paraStyle name="HeaderRight" fontName="Helvetica-Bold" fontSize="8.0" alignment="RIGHT" />
         <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignment="CENTER" />
         <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignment="LEFT" />
@@ -70,7 +71,7 @@
             </tr>
         </blockTable>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
@@ -118,7 +119,7 @@
             </tr>
         </blockTable>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 
@@ -260,7 +261,7 @@
 
         </section>
 
-        <para style="Header">
+        <para style="HeaderW">
             <font color="white"> </font>
         </para>
 

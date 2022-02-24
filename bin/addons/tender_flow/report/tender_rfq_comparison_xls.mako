@@ -501,7 +501,7 @@
    <Column ss:AutoFitWidth="0" ss:Width="250"/>
    <Column ss:Width="40"/>
    <Column ss:AutoFitWidth="0" ss:Width="50"/>
-   % for numsup in xrange(0, len(o.supplier_ids)):
+   % for numsup in range(0, len(o.supplier_ids)):
    <Column ss:AutoFitWidth="0" ss:Width="120"/>
    <Column ss:AutoFitWidth="0" ss:Width="70"/>
    <Column ss:AutoFitWidth="0" ss:Width="90"/>
@@ -561,7 +561,7 @@
      <Cell />
      <Cell />
      <Cell />
-    % for numsup in xrange(0, len(o.supplier_ids)):
+    % for numsup in range(0, len(o.supplier_ids)):
     <Cell ss:MergeAcross="3" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Supplier')} ${numsup+1}</Data></Cell>
     % endfor
     <Cell ss:MergeDown="1" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Selected Supplier')}</Data></Cell>
@@ -572,7 +572,7 @@
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Product Description')}</Data></Cell>
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Quantity')}</Data></Cell>
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('UoM')}</Data></Cell>
-    % for numsup in xrange(0, len(o.supplier_ids)):
+    % for numsup in range(0, len(o.supplier_ids)):
     <Cell ss:StyleID="mSupName"><Data ss:Type="String">${_('Name')}</Data></Cell>
     <Cell ss:StyleID="mSupUnit"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
     <Cell ss:StyleID="mSupConfDate"><Data ss:Type="String">${_('Confirmed Delivery Date')}</Data></Cell>
@@ -612,7 +612,7 @@
     <Cell />
     <Cell />
     <Cell />
-    % for numsup in xrange(0, len(o.supplier_ids)):
+    % for numsup in range(0, len(o.supplier_ids)):
     <Cell ss:StyleID="mLastLine" />
     <Cell ss:StyleID="mLastLine" />
     <Cell ss:StyleID="mLastLine" />
@@ -624,7 +624,7 @@
     <Cell ss:StyleID="s68"></Cell>
     <Cell ss:StyleID="s68"></Cell>
     <Cell ss:StyleID="s68"></Cell>
-    % for numsup in xrange(0, len(o.supplier_ids)*3):
+    % for numsup in range(0, len(o.supplier_ids)*3):
     <Cell ss:StyleID="s68"></Cell>
     % endfor
     <Cell ss:StyleID="s70"></Cell>
@@ -650,7 +650,7 @@
    <Row>
     <Cell />
     <Cell ss:StyleID="s102" ss:MergeAcross="3"><Data ss:Type="String">${_('Prepared by')}:</Data></Cell>
-    % for numsup in xrange(0, len(o.supplier_ids)):
+    % for numsup in range(0, len(o.supplier_ids)):
     <Cell ss:StyleID="s102" ss:MergeAcross="1"><Data ss:Type="String">${_('Approved by')}:</Data></Cell>
     <Cell ss:StyleID="s103"/>
     % endfor
@@ -662,7 +662,7 @@
     <Cell ss:StyleID="mBottomCell"/>
     <Cell ss:StyleID="mBottomCell" />
     <Cell ss:StyleID="mLastBottom" />
-    % for numsup in xrange(0, len(o.supplier_ids)):
+    % for numsup in range(0, len(o.supplier_ids)):
     <Cell ss:StyleID="s104"/>
     <Cell ss:StyleID="mBottomCell"/>
     <Cell ss:StyleID="mLastBottom"/>

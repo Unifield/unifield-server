@@ -544,7 +544,7 @@
    </Row>
    % endfor
 
-    % for x in xrange(1, 500):
+    % for x in range(1, 500):
     <Row ss:AutoFitHeight="0" ss:StyleID="s82"/>
     % endfor
   </Table>

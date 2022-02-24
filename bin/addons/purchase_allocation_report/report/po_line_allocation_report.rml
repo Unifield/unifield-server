@@ -36,7 +36,7 @@
     </initialize>
     
     <!-- PARAGRAPH STYLES -->
-    <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="Standard" fontName="Helvetica" fontSize="10" spaceAfter="10.0"/>
     <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="15.0" leading="20" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0" />
     <paraStyle name="InformationHeader" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" />
     <paraStyle name="Information" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER" />
