@@ -278,7 +278,8 @@ class finance_archive(finance_export.finance_archive):
         return self.postprocess_selection_columns(cr, uid, new_data, changes, column_deletion=column_deletion)
 
 
-# request & postprocess method used for OCB and OCP VI, and for Liquidity Balances report
+# request & postprocess method used for OCP VI, and for Liquidity Balances report
+# NOTE: the Liquidity Bal. report is actually not included in OCB VI anymore, so all liquidity-related code in this file could sometime be moved
 liquidity_sql = """
             SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,
