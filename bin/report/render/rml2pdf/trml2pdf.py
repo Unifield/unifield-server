@@ -193,6 +193,8 @@ class _rml_styles(object,):
                      'borderWidth','borderPadding','borderRadius']:
             if node.get(attr):
                 data[attr] = utils.unit_get(node.get(attr))
+        if 'splitLongWords' not in node:
+            data['splitLongWords'] = 0
         if node.get('alignment'):
             align = {
                 'right':reportlab.lib.enums.TA_RIGHT,
