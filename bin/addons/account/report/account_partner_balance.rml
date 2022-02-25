@@ -141,6 +141,7 @@
       <paraStyle name="all" alignment="justify"/>
     </initialize>
 
+    <paraStyle name="SW" fontName="Helvetica" spaceAfter="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P4Bold" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -181,7 +182,7 @@
         </td>
       </tr>
     </blockTable>
-    <para style="terp_default_8">
+    <para style="SW">
       <font color="white"> </font>
     </para>
     <section>
@@ -241,7 +242,7 @@
         </tr>
       </blockTable>
 
-      <para style="terp_default_8">
+      <para style="SW">
         <font color="white"> </font>
       </para>
       <blockTable colWidths="140.0,55.0,75.0,65.0,70.0,70.0,69.0" repeatRows="1" style="Table2">

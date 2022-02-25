@@ -128,8 +128,6 @@ class report_budget_actual(report_sxw.report_sxw):
         return result
 
     def _enc(self, st):
-        if isinstance(st, str):
-            return st.encode('utf8')
         return st
 
     def create(self, cr, uid, ids, data, context=None):

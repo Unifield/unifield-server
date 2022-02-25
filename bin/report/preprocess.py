@@ -67,7 +67,7 @@ class report(object):
                     if txt.group(3):
                         match = [txt.group(3)]
                     n = node
-                    while n and n.tag not in match:
+                    while n.tag not in match:
                         n = n.getparent()
                     n.set('rml_loop', txt.group(2))
                     return '[['+txt.group(1)+"''"+txt.group(4)+']]'

@@ -12,6 +12,8 @@
         <blockAlignment value="CENTER" />
         <blockValign value="MIDDLE" />
         <lineStyle kind="OUTLINE" colorName="#000000" />
+        <blockLeftPadding length="0" start="0,0" stop="-1,-1"/>
+        <blockRightPadding length="4" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
 
     <blockTableStyle id="InformationTable">
@@ -21,6 +23,8 @@
         <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
         <lineStyle kind="LINEBEFORE" colorName="#000000" />
         <lineStyle kind="LINEAFTER" colorName="#000000" />
+        <blockLeftPadding length="0" start="0,0" stop="-1,-1"/>
+        <blockRightPadding length="4" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
 
     <blockTableStyle id="ProductList">
@@ -28,7 +32,9 @@
         <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" />
         <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
         <lineStyle kind="LINEBEFORE" colorName="#0b0b0b" />
-        <lineStyle kind="LINEAFTER" colorName="#000000" />
+	<lineStyle kind="LINEAFTER" colorName="#000000" />
+        <blockLeftPadding length="0" start="0,0" stop="-1,-1"/>
+        <blockRightPadding length="4" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
 
     <initialize>
@@ -37,6 +43,7 @@
 
     <!-- PARAGRAPH STYLES -->
     <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="sw" fontName="Helvetica" spaceAfter="10" leading="10"/>
     <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="15.0" leading="20" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0" />
     <paraStyle name="InformationHeader" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" />
     <paraStyle name="Information" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER" />
@@ -57,8 +64,8 @@
     </blockTable>
 
 
-   <para style="Standard">
-      <font color="white"> </font>
+   <para style="sw">
+      <font color="white"> </font>
     </para>
 
 
@@ -129,8 +136,8 @@
    </blockTable>
 
 
-    <para style="Standard">
-      <font color="white"> </font>
+    <para style="sw">
+      <font color="white"> </font>
     </para>
 
 
@@ -295,8 +302,8 @@
         </tr>
    </blockTable>
 
-    <para style="Standard">
-      <font color="white"> </font>
+    <para style="sw">
+      <font color="white"> </font>
     </para>
   </pto>
   </story>

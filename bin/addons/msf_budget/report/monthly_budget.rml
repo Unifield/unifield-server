@@ -49,10 +49,10 @@
     <blockTableStyle id="Table10">
       <blockAlignment value="LEFT"/>
       <blockValign value="MIDDLE"/>
-
-
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,0" stop="13,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="13,-1"/>
+      <blockLeftPadding length="0" start="0,0" stop="-1,-1"/>
+      <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
     <blockTableStyle id="Table8">
       <blockAlignment value="LEFT"/>
@@ -138,11 +138,15 @@
     <paraStyle name="terp_default_Centre_9_Bold" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <blockTableStyle id="trBold">
         <blockFont name="Helvetica-Bold" size="10.0" leading="13" start="1,-1" stop="-1,-1"/>
-        <blockAlignment value="RIGHT" start="1,-1" stop="-1,-1"/>
+	<blockAlignment value="RIGHT" start="1,-1" stop="-1,-1"/>
+        <blockleftpadding length="0" start="0,0" stop="-1,-1"/>
+        <blockrightpadding length="0" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
     <blockTableStyle id="trNotBold">
         <blockFont name="Helvetica" size="10.0" leading="13" start="1,-1" stop="-1,-1"/>
         <blockAlignment value="RIGHT" start="1,-1" stop="-1,-1"/>
+        <blockLeftPadding length="0" start="0,0" stop="-1,-1"/>
+        <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
     <images/>
   </stylesheet>
@@ -159,9 +163,7 @@
 
     <blockTable colWidths="49.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0" style="Table10"  repeatRows="1" >
       <tr>
-        <td>
-          <para style="P2a">Account</para>
-        </td>
+        <td><para style="P2a">Account</para></td>
         <td>
           <para style="P2">Jan</para>
         </td>

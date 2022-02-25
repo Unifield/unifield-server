@@ -136,7 +136,7 @@ class combined_journals_report(report_sxw.rml_parse):
                 }
                 amls.append(aml_dict)
                 self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
-        amls.sort(self._cmp_sequence_account_type)
+        amls = sorted(amls, key=lambda a: '%s-%s' % (a['entry_sequence'], a['account_analytic_addicted']))
         if bg_id:
             self.percent += 0.05  # 20% of the total process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)

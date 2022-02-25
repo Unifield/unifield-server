@@ -709,7 +709,7 @@ class report_sxw(report_rml, preprocess.report):
         rml = sxw_z.read('content.xml')
         meta = sxw_z.read('meta.xml')
         mime_type = sxw_z.read('mimetype')
-        if mime_type == 'application/vnd.sun.xml.writer':
+        if mime_type == b'application/vnd.sun.xml.writer':
             mime_type = 'sxw'
         else :
             mime_type = 'odt'

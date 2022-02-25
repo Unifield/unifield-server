@@ -301,16 +301,17 @@
         <paraStyle name="terp_default_9_italic" fontName="Helvetica-Oblique" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
         <paraStyle name="terp_default_Bold_9_Right" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
         <paraStyle name="terp_default_2" fontName="Helvetica" fontSize="2.0" leading="3" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+        <paraStyle name="SW" fontName="Helvetica" spaceAfter="10"/>
         <paraStyle name="Heading 3" fontName="Helvetica-Bold" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
         <images/>
     </stylesheet>
     <story>
-        <para style="terp_default_8">
+        <para style="SW">
             <font color="white"> </font>
         </para>
         <para style="terp_default_8">[[ setLang(data['lang']) ]]</para>
         <para style="terp_header_Centre">Partner Ledger</para>
-        <para style="terp_default_8">
+        <para style="SW">
             <font color="white"> </font>
         </para>
         <!-- NOTE: if this HEADER has to be modified: modify also the "One partner per page" version -->
@@ -401,7 +402,7 @@
                             </td>
                         </tr>
                     </blockTable>
-                    <para style="terp_default_8">
+                    <para style="SW">
                         <font color="white"> </font>
                     </para>
                 </td>
@@ -418,10 +419,10 @@
                 </td>
             </tr>
         </blockTable>
-        <para style="terp_default_8">
+        <para style="SW">
             <font color="white"> </font>
         </para>
-        <para style="terp_default_8">
+        <para style="SW">
             <font color="white"> </font>
         </para>
         <blockTable colWidths="72.0,25.0,101.0,46.0,104.0,60.0,51.0,67.0,67.0,77.0,89.0" style="Table2">
@@ -466,52 +467,52 @@
             <blockTable colWidths="59.0,44.0,89.0,89.0,89.0,40.0,80.0,80.0,90.0,102.0" style="Table8">
                 <tr>
                     <td>
-                        <para style="terp_tblheader_Details">
+                        <para style="SW">
+                            <font color="white"> </font>
+                        </para>
+                    </td>
+                    <td>
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
                     <td>
-                        <para style="terp_tblheader_Details">
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
                     <td>
-                        <para style="terp_tblheader_Details_Centre">
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
                     <td>
-                        <para style="terp_tblheader_Details_Centre">
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
                     <td>
-                        <para style="terp_tblheader_Details">
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
                     <td>
-                        <para style="terp_tblheader_Details_Right">
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
                     <td>
-                        <para style="terp_tblheader_Details_Right">
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
                     <td>
-                        <para style="terp_tblheader_Details_Right">
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
                     <td>
-                        <para style="terp_tblheader_Details_Right">
-                            <font color="white"> </font>
-                        </para>
-                    </td>
-                    <td>
-                        <para style="terp_tblheader_Details_Right">
+                        <para style="SW">
                             <font color="white"> </font>
                         </para>
                     </td>
@@ -569,7 +570,7 @@
                             </td>
                         </tr>
                     </blockTable>
-                    <para style="terp_default_2">
+                    <para style="SW">
                         <font color="white"> </font>
                     </para>
                 </section>
@@ -601,7 +602,7 @@
                             </td>
                         </tr>
                     </blockTable>
-                    <para style="terp_default_2">
+                    <para style="SW">
                         <font color="white"> </font>
                     </para>
                 </section>
@@ -645,12 +646,12 @@
                             </td>
                         </tr>
                     </blockTable>
-                    <para style="terp_default_2">
+                    <para style="SW">
                         <font color="white"> </font>
                     </para>
                 </section>
             </section>
-            <para style="terp_default_2">
+            <para style="SW">
                 <font color="white"> </font>
             </para>
         </section>

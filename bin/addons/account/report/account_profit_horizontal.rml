@@ -88,6 +88,7 @@
       <lineStyle kind="LINEBEFORE" colorName="#cccccc" start="5,0" stop="5,-1"/>
       <lineStyle kind="LINEABOVE" colorName="#cccccc" start="5,0" stop="5,0"/>
       <lineStyle kind="LINEBELOW" colorName="#cccccc" start="5,-1" stop="5,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#cccccc" start="5,0" stop="5,-1"/>
       <lineStyle kind="LINEBEFORE" colorName="#cccccc" start="6,0" stop="6,-1"/>
       <lineStyle kind="LINEAFTER" colorName="#cccccc" start="6,0" stop="6,-1"/>
       <lineStyle kind="LINEABOVE" colorName="#cccccc" start="6,0" stop="6,0"/>
