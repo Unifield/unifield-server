@@ -749,7 +749,7 @@ class instance_auto_creation(osv.osv):
             # rename auto configuration folder
             config.set('instance', 'sync_pwd', '')
             config.set('instance', 'admin_password', '')
-            config_fp = open(config_file_path, 'wb')
+            config_fp = open(config_file_path, 'w')
             config.write(config_fp)
             config_fp.close()
             shutil.move(config_file_path, "%s-%s" % (config_file_path, time.strftime('%Y%m%d-%H%M')))
