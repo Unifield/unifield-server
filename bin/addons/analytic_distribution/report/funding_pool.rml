@@ -92,7 +92,7 @@
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P7" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P8" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="10.0" leading="19" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="P10" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -122,7 +122,7 @@
     <paraStyle name="Table Heading" fontName="Helvetica" alignment="CENTER"/>
     <paraStyle name="Caption" fontName="Helvetica" fontSize="12.0" leading="15" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="Index" fontName="Helvetica"/>
-    <paraStyle name="terp_header" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="terp_header" fontName="Helvetica-Bold" fontSize="10.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="terp_default_8" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Bold_8" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Bold_9" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -138,8 +138,8 @@
     <paraStyle name="terp_tblheader_Details_Centre" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="terp_tblheader_Details_Right" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="terp_default_Right_8" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="terp_header_Right" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="terp_header_Centre" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="terp_header_Right" fontName="Helvetica-Bold" fontSize="10.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="terp_header_Centre" fontName="Helvetica-Bold" fontSize="10.0" leading="19" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="terp_default_address" fontName="Helvetica" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Centre_9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Right_9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -148,22 +148,25 @@
     <paraStyle name="terp_default_Italic" rightIndent="0.0" leftIndent="20.0" fontName="Helvetica-Oblique" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="Preformatted Text" fontName="Helvetica" fontSize="10.0" leading="13" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Centre_9_Bold" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="PW" spaceAfter="10"/>
     <images/>
   </stylesheet>
   <story>
     <para style="P5">[[repeatIn(objects,'o')]]</para>
-    <para style="P4">
+    <para style="PW">
       <font color="white"> </font>
     </para>
     <para style="P9">Funding pool code/name: [[ o.code ]]/[[ o.name ]]</para>
-    <para style="P5">
+    <para style="PW">
       <font color="white"> </font>
     </para>
-    <para style="P4">
+    <para style="PW">
       <font color="white"> </font>
     </para>
     <para style="P6">Report edition date: [[ formatLang(today(), date=True) ]]</para>
-    <para><br /></para>
+    <para style="PW">
+      <font color="white"> </font>
+    </para>
     <blockTable colWidths="266.0,269.0" style="Table2">
       <tr>
         <td>
@@ -185,13 +188,13 @@
         </td>
       </tr>
     </blockTable>
-    <para style="P8">
+    <para style="PW">
       <font color="white"> </font>
     </para>
-    <para style="P8">
+    <para style="PW">
       <font color="white"> </font>
     </para>
-    <para style="P4">
+    <para style="PW">
       <font color="white"> </font>
     </para>
     <para style="P6">Cost centers:</para>
@@ -216,10 +219,10 @@
         </tr>
       </blockTable>
 
-    <para style="P4">
+    <para style="PW">
       <font color="white"> </font>
     </para>
-    <para style="P8">
+    <para style="PW">
       <font color="white"> </font>
     </para>
     <para style="P6">[[ o.select_accounts_only and translate("G/L Accounts:") or translate("Account/Destination:") ]]</para>
@@ -281,10 +284,10 @@
       </tr>
     </blockTable>
 
-    <para style="P5">
+    <para style="PW">
       <font color="white"> </font>
     </para>
-    <para style="P6">
+    <para style="PW">
       <font color="white"> </font>
     </para>
     <para style="P6" alignment="LEFT">Comments:</para>
@@ -295,7 +298,7 @@
         </td>
       </tr>
     </blockTable>
-    <para style="P5">
+    <para style="PW">
       <font color="white"> </font>
     </para>
   </story>

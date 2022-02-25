@@ -52,7 +52,8 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,0" />
-
+      <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>
+      <blockRightPadding length="2" start="0,0" stop="-1,-1"/>
     </blockTableStyle>
     <blockTableStyle id="Table8">
       <blockAlignment value="LEFT"/>
