@@ -446,7 +446,7 @@ class patch_scripts(osv.osv):
                 l.mission_report_id = %s
         ''', (report_id,))
         if cr.rowcount:
-            zipstr = base64.b64encode(zlib.compress(','.join([x[0] for x in cr.fetchall()])))
+            zipstr = base64.b64encode(zlib.compress(bytes(','.join([x[0] for x in cr.fetchall()]), 'utf8')))
             self.pool.get('sync.trigger.something.up').create(cr, uid, {'name': 'msr_used', 'args': zipstr})
         return True
 
@@ -5367,7 +5367,7 @@ class sync_tigger_something_up(osv.osv):
                         d.model='stock.mission.report.line' and
                         d.res_id = l.id and
                         d.name in %s
-                ''', (tuple((zlib.decompress(base64.b64decode(vals.get('args'))).split(','))),))
+                ''', (tuple((str(zlib.decompress(base64.b64decode(bytes(vals.get('args'), 'utf8'))), 'utf8').split(','))),))
         return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
 
 sync_tigger_something_up()
