@@ -114256,3 +114256,9 @@ msgstr "Le BdC doit être dans le statut Brouillon"
 #, python-format
 msgid "Unable to read file. Please check the file format."
 msgstr "Impossible de lire le fichier. Veuillez vérifier le format du fichier."
+
+#. module: base
+#: code:osv/orm.py:1224
+#, python-format
+msgid "Error at data validation: %s"
+msgstr "Erreur à la validation des données : %s"
