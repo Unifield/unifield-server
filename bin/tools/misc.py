@@ -889,7 +889,7 @@ def _generate_keys(multi, dbname, kwargs2, reset_fields=None):
         reset_fields = []
     def to_tuple(d):
         pairs = list(d.items())
-        pairs.sort(key=lambda k_v: k_v[0])
+        pairs.sort(key=lambda k_v: '%s'%k_v[0])
         for i, (k, v) in enumerate(pairs):
             if isinstance(v, dict):
                 pairs[i] = (k, to_tuple(v))
