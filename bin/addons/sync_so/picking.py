@@ -279,7 +279,6 @@ class stock_picking(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
         move_obj = self.pool.get('stock.move')
-        product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         warehouse_obj = self.pool.get('stock.warehouse')
 
@@ -340,6 +339,30 @@ class stock_picking(osv.osv):
             msf_supplier_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')[1]
 
             partner_id = self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0]
+            move_lines = []
+            for x in pick_dict.get('move_lines', False):
+                prod_id = self.pool.get('so.po.common').get_product_id(cr, uid, x['product_id'], x.get('product_id', {}).get('default_code'), context=context)
+                if not prod_id:
+                    raise Exception("Product %s not found" % x.get('product_id', {}).get('default_code'))
+                move_lines.append((0, 0, {
+                    'change_reason': x.get('change_reason', False),
+                    'comment': x.get('comment', False),
+                    'date': x.get('date', False),
+                    'date_expected': x.get('date_expected', False),
+                    'expired_date': x.get('expired_date', False),
+                    'line_number': x.get('line_number', False),
+                    'name': x.get('name', False),
+                    'note': x.get('note', False),
+                    'original_qty_partial': x.get('product_qty', False),
+                    'product_id': prod_id,
+                    'product_qty': x.get('product_qty', False),
+                    'product_uom': uom_obj.search(cr, uid, [('name', '=', x.get('product_uom', False)['name'])],
+                                                  limit=1, context=context)[0],
+                    'reason_type_id': context['common']['rt_goods_return'],
+                    'location_id': msf_supplier_id,
+                    'location_dest_id': location_input_id,
+                }))
+
 
             in_claim_dict = {
                 'claim': pick_dict.get('claim', False),
@@ -353,25 +376,7 @@ class stock_picking(osv.osv):
                 'type': 'in',
                 'subtype': 'standard',
                 'shipment_ref': shipment_ref,
-                'move_lines': [(0, 0, {
-                    'change_reason': x.get('change_reason', False),
-                    'comment': x.get('comment', False),
-                    'date': x.get('date', False),
-                    'date_expected': x.get('date_expected', False),
-                    'expired_date': x.get('expired_date', False),
-                    'line_number': x.get('line_number', False),
-                    'name': x.get('name', False),
-                    'note': x.get('note', False),
-                    'original_qty_partial': x.get('product_qty', False),
-                    'product_id': product_obj.search(cr, uid, [('name', '=', x.get('product_id', False)['name'])],
-                                                     limit=1, context=context)[0],
-                    'product_qty': x.get('product_qty', False),
-                    'product_uom': uom_obj.search(cr, uid, [('name', '=', x.get('product_uom', False)['name'])],
-                                                  limit=1, context=context)[0],
-                    'reason_type_id': context['common']['rt_goods_return'],
-                    'location_id': msf_supplier_id,
-                    'location_dest_id': location_input_id,
-                }) for x in pick_dict.get('move_lines', False)]
+                'move_lines': move_lines
             }
 
             # when OUT line has been split in Pick or PLL
