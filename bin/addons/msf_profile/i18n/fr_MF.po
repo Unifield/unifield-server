@@ -114213,7 +114213,7 @@ msgstr "Le document n'est pas dans le statut Brouilllon"
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:156
 #, python-format
 msgid "%s line %d: Cost Center %s not found"
-msgstr "Ligne %s %d: Centre de Coût non trouvé"
+msgstr "Ligne %s %d: Centre de Coût %s non trouvé"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:159
