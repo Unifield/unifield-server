@@ -114,8 +114,8 @@ def mkPatch(old, new, log=_defaultLog):
 # TODO: Figure out if this is dangerous, fix it?
 def applyPatch(patchdata, todir, doIt=True, log=_defaultLog):
     patchdata = bz2.decompress(patchdata)
-    unpickler = pickle.Unpickler(io.StringIO(patchdata))
-    unpickler.find_global = None
+    unpickler = pickle.Unpickler(io.BytesIO(patchdata))
+    #unpickler.find_global = None
     patch = unpickler.load()
     for fn in patch.get('delete', []):
         if fn.endswith('/'):

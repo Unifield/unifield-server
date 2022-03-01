@@ -699,6 +699,8 @@ def _archive_patch(pf):
     again.
     """
     warn('Archiving patch file %s' % pf)
+    if os.path.isfile('backup'):
+        os.remove('backup')
     if not os.path.exists('backup'):
         os.mkdir('backup')
     bf = os.path.join('backup', pf)
@@ -810,7 +812,7 @@ def do_pg_update():
             except subprocess.CalledProcessError as e:
                 warn(e)
                 warn("out is", out)
-            if out is None or 'f' not in out:
+            if out is None or b'f' not in out:
                 raise RuntimeError("User-defined tablespaces might be in use. Upgrade needs human intervention.")
 
         # 1: use old PG install to make a new one to patch
@@ -836,13 +838,13 @@ def do_pg_update():
 
         if is_major:
             # 3: prepare the new db
-            pg_old_db = r'D:\MSF data\Unifield\PostgreSQL\data'
+            pg_old_db = r'D:\MSF data\Unifield\PostgreSQL'
             if not os.path.exists(pg_old_db):
                 raise RuntimeError('Could not find existing PostgreSQL data in %s' % pg_old_db)
             pg_new_db = pg_old_db + '-new'
             if os.path.exists(pg_new_db):
                 raise RuntimeError('New data directory %s already exists.' % pg_new_db)
-            pwf = tempfile.NamedTemporaryFile(delete=False)
+            pwf = tempfile.NamedTemporaryFile('w', delete=False)
             pwf.write(tools.config.get('db_password'))
             pwf.close()
             cmd = [ os.path.join(pg_new, 'bin', 'initdb.exe'),
@@ -876,7 +878,7 @@ def do_pg_update():
                 out = ""
             dbs = out.split()
 
-            cf = tempfile.NamedTemporaryFile(delete=False)
+            cf = tempfile.NamedTemporaryFile('w', delete=False)
             for db in dbs:
                 warn("alter tables in %s" % db)
                 cf.write("\\connect \"%s\"\n alter table ir_actions alter column \"name\" drop not null;\n" % db)
@@ -997,7 +999,7 @@ def do_pg_update():
 
         # 9. re-alter tables to put the problematic constraint back on
         if re_alter:
-            cf = tempfile.NamedTemporaryFile(delete=False)
+            cf = tempfile.NamedTemporaryFile('w', delete=False)
             for db in dbs:
                 warn("alter tables in %s" % db)
                 cf.write("\\connect \"%s\"\n alter table ir_actions alter column \"name\" set not null;\n" % db)
