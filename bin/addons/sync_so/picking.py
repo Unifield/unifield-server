@@ -279,7 +279,6 @@ class stock_picking(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
         move_obj = self.pool.get('stock.move')
-        uom_obj = self.pool.get('product.uom')
         warehouse_obj = self.pool.get('stock.warehouse')
 
         # package data
@@ -340,28 +339,32 @@ class stock_picking(osv.osv):
 
             partner_id = self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0]
             move_lines = []
-            for x in pick_dict.get('move_lines', False):
-                prod_id = self.pool.get('so.po.common').get_product_id(cr, uid, x['product_id'], x.get('product_id', {}).get('default_code'), context=context)
-                if not prod_id:
-                    raise Exception("Product %s not found" % x.get('product_id', {}).get('default_code'))
-                move_lines.append((0, 0, {
-                    'change_reason': x.get('change_reason', False),
-                    'comment': x.get('comment', False),
-                    'date': x.get('date', False),
-                    'date_expected': x.get('date_expected', False),
-                    'expired_date': x.get('expired_date', False),
-                    'line_number': x.get('line_number', False),
-                    'name': x.get('name', False),
-                    'note': x.get('note', False),
-                    'original_qty_partial': x.get('product_qty', False),
-                    'product_id': prod_id,
-                    'product_qty': x.get('product_qty', False),
-                    'product_uom': uom_obj.search(cr, uid, [('name', '=', x.get('product_uom', False)['name'])],
-                                                  limit=1, context=context)[0],
-                    'reason_type_id': context['common']['rt_goods_return'],
-                    'location_id': msf_supplier_id,
-                    'location_dest_id': location_input_id,
-                }))
+            line_number = 0
+            for line in pack_data:
+                for x in pack_data[line]['data']:
+                    prod_id = x.get('product_id')
+                    if not prod_id:
+                        raise Exception("Product %s not found" % x.get('name'))
+                    line_number += 1
+                    move_lines.append((0, 0, {
+                        'change_reason': x.get('change_reason', False),
+                        'comment': x.get('comment', False),
+                        'date': x.get('date', False),
+                        'date_expected': x.get('date_expected', False),
+                        'expired_date': x.get('expired_date', False),
+                        'prodlot_id': x.get('prodlot_id', False),
+                        'line_number': line_number,
+                        'name': x.get('name', False),
+                        'note': x.get('note', False),
+                        'original_qty_partial': x.get('product_qty', False),
+                        'product_id': prod_id,
+                        'product_qty': x.get('product_qty', False),
+                        'product_uom': x.get('product_uom'),
+                        'reason_type_id': context['common']['rt_goods_return'],
+                        'location_id': msf_supplier_id,
+                        'location_dest_id': location_input_id,
+                    }))
+                    x['line_number'] = line_number
 
 
             in_claim_dict = {
