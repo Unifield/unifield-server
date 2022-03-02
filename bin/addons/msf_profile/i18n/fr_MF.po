@@ -16139,6 +16139,7 @@ msgstr "Supprimer tous les quadruplets"
 #: view:international.transport.cost.report:0
 #: view:local.transport.cost.report:0
 #: view:account.destination.summary:0
+#: view:sync.version.instance.monitor:0
 msgid "Group By..."
 msgstr "Grouper Par..."
 
@@ -82178,7 +82179,6 @@ msgstr "Règle"
 msgid "RR Type"
 msgstr "Type RR"
 
-
 #. module: base
 #: code:addons/base/ir/ir_attachment.py:519
 #, python-format
@@ -110472,8 +110472,10 @@ msgstr "Pick d'origine"
 msgid "Please correct red lines before processing or do not process to ship"
 msgstr "Veuillez corriger les lignes en rouge ou ne pas traiter jusqu'à l'expédition"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, sync_client
 #: field:shipment.add.pack.processor.line,wizard_id:0
+#: view:sync.version.instance.monitor:0
+#: field:sync.version.instance.monitor,processor:0
 msgid "Processor"
 msgstr "Processeur"
 
@@ -113584,8 +113586,7 @@ msgstr "A %s doit être le dernier jour du mois"
 #, python-format
 msgid "You can not remove \"Specific Periods Only\" on a segment with periods on lines:\n"
 "%s"
-msgstr "Vous ne pouvez pas supprimer \"Périodes Spécifiques\" sur un Segment ayant des lignes avec une période"
-"%s"
+msgstr "Vous ne pouvez pas supprimer \"Périodes Spécifiques\" sur un Segment ayant des lignes avec une période%s"
 
 #. module: analytic_override
 #: field:account.analytic.line,ad_updated:0
@@ -114156,7 +114157,7 @@ msgstr "Import effectué.\n"
 "                    # Lignes de %(doc_name)s non modifiées: %(no_change)s\n"
 "                    # Lignes fractionnées ignorées dans le fichier: %(split_line_ignored)s\n"
 "\n"
-"
+""
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:214
@@ -114262,3 +114263,14 @@ msgstr "Impossible de lire le fichier. Veuillez vérifier le format du fichier."
 #, python-format
 msgid "Error at data validation: %s"
 msgstr "Erreur à la validation des données : %s"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,machine:0
+#: view:sync.version.instance.monitor:0
+msgid "Machine"
+msgstr "Machine"
+
+#: view:sync.version.instance.monitor:0
+#: field:sync.version.instance.monitor,platform:0
+msgid "Platform"
+msgstr "Plate-forme"
