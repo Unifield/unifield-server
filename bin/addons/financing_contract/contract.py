@@ -127,6 +127,7 @@ class financing_contract_contract(osv.osv):
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
     _trace = True
+    _order = 'id desc'
 
     def contract_open_proxy(self, cr, uid, ids, context=None):
         # utp-1030/7: check grant amount when going on in workflow
