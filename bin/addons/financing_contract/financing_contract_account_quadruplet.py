@@ -190,11 +190,18 @@ class financing_contract_account_quadruplet(osv.osv):
         if contract_id:
             ctr_obj = self.pool.get('financing.contract.contract')
             contract = ctr_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids', 'cost_center_ids', 'quad_gen_date'], context=context)
-            cr.execute('''select max(last_modification) from ir_model_data where module='sd' and (
-                model in ('account.analytic.account', 'account.destination.link', 'dest.cc.link') or (model = 'financing.contract.contract' and res_id = %s)
-            )''', (contract_id,))
+            cr.execute('''
+                select max(last_modification)
+                from 
+                    ir_model_data
+                where
+                    module='sd' and 
+                    model in ('account.analytic.account', 'account.destination.link', 'dest.cc.link')
+            ''')
             last_obj_modified = cr.fetchone()[0]
             if not contract.quad_gen_date or last_obj_modified > contract.quad_gen_date or contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S'):
+                print 'contract_id:', contract_id, not contract.quad_gen_date, last_obj_modified, '>', contract.quad_gen_date, last_obj_modified > contract.quad_gen_date, contract.quad_gen_date, '>', time.strftime('%Y-%m-%d %H:%M:%S'), contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S')
+                a = time.time()
                 # ignore quad_gen_date in the future
                 cc_ids = [cc.id for cc in contract.cost_center_ids]
                 fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
@@ -203,14 +210,12 @@ class financing_contract_account_quadruplet(osv.osv):
                     cc_ids = [0]
                 if not fp_ids:
                     fp_ids = [0]
-
                 cr.execute('''
                     update financing_contract_account_quadruplet set disabled='t'
                     where
                         funding_pool_id in %s and
                         cost_center_id in %s
                 ''', (tuple(fp_ids), tuple(cc_ids)))
-
                 cr.execute('''
                     INSERT INTO financing_contract_account_quadruplet
                         (account_destination_name, account_id, cost_center_id, disabled, account_destination_link_id, funding_pool_id, account_destination_id)
@@ -224,7 +229,7 @@ class financing_contract_account_quadruplet(osv.osv):
                     )
                     ON CONFLICT ON CONSTRAINT financing_contract_account_quadruplet_check_unique DO UPDATE SET disabled=EXCLUDED.disabled''', (tuple(fp_ids), tuple(cc_ids)))
                 cr.execute('update financing_contract_contract set quad_gen_date=%s where id=%s', (last_obj_modified, contract_id))
-
+                print 'end of gen', time.time() - a
         return True
 
     # The result set with {ID:Flag} if Flag=True, the line will be grey, otherwise, it is selectable
@@ -312,19 +317,15 @@ class financing_contract_account_quadruplet(osv.osv):
             res[_id] = False
 
         cr.execute('''select
-            quad.id, view.disabled
+            quad.id, quad.disabled
             from
-                financing_contract_account_quadruplet quad, financing_contract_account_quadruplet_view view
+                financing_contract_account_quadruplet quad
             where
-                quad.account_id = view.account_id and
-                quad.account_destination_id = view.account_destination_id and
-                quad.cost_center_id = view.cost_center_id and
-                quad.funding_pool_id = view.funding_pool_id and
                 quad.id in %s
         ''', (tuple(ids), ))
+
         for x in cr.fetchall():
             res[x[0]] = not x[1]
-
         return res
 
     _columns = {
@@ -337,6 +338,7 @@ class financing_contract_account_quadruplet(osv.osv):
         'account_id': fields.many2one('account.account', 'Account ID', relate=True, readonly=True, select=1),
         'account_destination_link_id': fields.many2one('account.destination.link', 'Link id', readonly=True, select=1),
         'disabled': fields.boolean('Disabled'),
+        # TODO: no more needed, disabled can be used instead as (hopefully) recomputed when needed
         'valid': fields.function(_get_valid,  method=True, type='boolean', string='Is quad valid ?'),
     }
 

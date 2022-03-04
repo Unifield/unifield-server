@@ -118,6 +118,8 @@ class financing_contract_funding_pool_line(osv.osv):
         self.check_fp(cr, uid, ids)
         return res
 
+    # def unlink ..... TODO update quad
+
 financing_contract_funding_pool_line()
 
 class financing_contract_contract(osv.osv):
@@ -595,6 +597,37 @@ class financing_contract_contract(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+        print 'WRITE'
+        # get previous list of cc
+        previous_cc = {}
+        cr.execute('''
+                select ct.id, array_agg(cc.cost_center_id)
+                from
+                    financing_contract_cost_center cc, financing_contract_format fmt, financing_contract_contract ct
+                where 
+                    ct.id in %s and
+                    ct.format_id = fmt.id and
+                    fmt.id = cc.contract_id
+                group by ct.id
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            previous_cc[x[0]] = set(x[1])
+
+
+        previous_fp = {}
+        # get previous list of fp
+        cr.execute('''
+                select ct.id, array_agg(fp.funding_pool_id)
+                from
+                    financing_contract_funding_pool_line fp, financing_contract_format fmt, financing_contract_contract ct
+                where 
+                    ct.id in %s and
+                    ct.format_id = fmt.id and
+                    fmt.id = fp.contract_id
+                group by ct.id
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            previous_fp[x[0]] = set(x[1])
 
         if 'donor_id' in vals:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, vals['donor_id'], context=context)
@@ -623,21 +656,72 @@ class financing_contract_contract(osv.osv):
         if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
             cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''', (ids[0],))
 
+        # get current list of cc
+        current_cc = {}
+        cr.execute('''
+                select ct.id, array_agg(cc.cost_center_id)
+                from
+                    financing_contract_cost_center cc, financing_contract_format fmt, financing_contract_contract ct
+                where 
+                    ct.id in %s and
+                    ct.format_id = fmt.id and
+                    fmt.id = cc.contract_id
+                group by ct.id
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            current_cc[x[0]] = set(x[1])
+
+
+        current_fp = {}
+        # get previous list of fp
+        cr.execute('''
+                select ct.id, array_agg(fp.funding_pool_id)
+                from
+                    financing_contract_funding_pool_line fp, financing_contract_format fmt, financing_contract_contract ct
+                where 
+                    ct.id in %s and
+                    ct.format_id = fmt.id and
+                    fmt.id = fp.contract_id
+                group by ct.id
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            current_fp[x[0]] = set(x[1])
+
+        import time
+        for _id in ids:
+            # if cc added or fp added, we don't care of fp or cc deletion bc quad used will be deleted
+            if not current_cc.get(_id, set()).issubset(previous_cc.get(_id, set())) or not current_fp.get(_id, set()).issubset(previous_fp.get(_id, set())):
+                # reset flag to refresh quad combination if needed
+                print 'NEW'
+                cr.execute('''update financing_contract_contract set quad_gen_date=NULL where id = %s''', (_id,))
+            cc_removed = previous_cc.get(_id, set()) - current_cc.get(_id, set())
+            print 'DELETE', 'cc', cc_removed
+            cc_removed.add(0)
+            current_fp[_id].add(0)
+            # TODO TRIGGER SYNC ??
+            a = time.time()
+            cr.execute("""
+                delete from
+                    financing_contract_actual_account_quadruplets quadl using financing_contract_format_line fl, financing_contract_format fm, financing_contract_contract fc, financing_contract_account_quadruplet quad
+                where
+                    fl.id = quadl.actual_line_id and
+                    fm.id = fl.format_id and
+                    fc.format_id = fm.id and
+                    fc.id = %s and
+                    quad.id = quadl.account_quadruplet_id and
+                    (quad.funding_pool_id not in %s  or quad.cost_center_id in %s)
+            """, (_id, tuple(current_fp[_id]), tuple(cc_removed)))
+            print 'delete time', time.time() - a, cr.rowcount
+
         # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
         # get list of all valid ids for this contract
         format =  self.browse(cr,uid,ids,context=context)[0].format_id
-        funding_pool_ids = [x.funding_pool_id.id for x in format.funding_pool_ids]
 
         if not context.get('sync_update_execution'):
             earmarked_funding_pools = [x.funded for x in format.funding_pool_ids]
             if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
                 raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
 
-
-        cost_center_ids = [x.id for x in format.cost_center_ids]
-
-        quad_obj = self.pool.get('financing.contract.account.quadruplet')
-        valid_quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','in',funding_pool_ids),('cost_center_id','in',cost_center_ids)], context=context)
 
         # filter current assignments and re-write entries if necessary
         format_obj = self.pool.get('financing.contract.format')
@@ -658,12 +742,7 @@ class financing_contract_contract(osv.osv):
                 format_obj.write(cr, uid, format.id, {'hidden_instance_id': instance_id}, context=context)
 
         for format_line in format_browse.actual_line_ids:
-            account_quadruplet_ids = [account_quadruplet.id for account_quadruplet in format_line.account_quadruplet_ids]
-            filtered_quads = [x for x in account_quadruplet_ids if x in valid_quad_ids]
-            list_diff = set(account_quadruplet_ids).symmetric_difference(set(filtered_quads))
             list_to_update = {}
-            if list_diff:
-                list_to_update['account_quadruplet_ids'] = [(6, 0, filtered_quads)]
             if instance_id:
                 if not format_line.instance_id or format_line.instance_id.id != instance_id:
                     list_to_update['instance_id'] = instance_id
