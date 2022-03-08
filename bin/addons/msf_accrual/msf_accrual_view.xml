@@ -8,7 +8,7 @@
                 <field name="type">form</field>
                 <field name="arch" type="xml">
                     <form>
-                        <group col="6">
+                        <group colspan="6" col="6">
                             <field name="journal_id" readonly="1"/>
                             <field name="entry_sequence" readonly="1"/>
                             <field name="currency_id" string="Booking Currency" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
@@ -44,17 +44,20 @@
                             <field name="reference" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         </group>
 
-                        <newline/>
-                        <group colspan="2" col="4">
-                            <field name="description" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <newline/>
-                            <field name="expense_account_id" colspan="2" domain="[('restricted_area', '=', 'accruals')]" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <newline/>
-                            <field name="accrual_amount" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <newline/>
-                            <field name="state" colspan="2" readonly="1"/>
-                        </group>
-                        <newline />
+                        <notebook colspan="6">
+                            <page string="Accruals">
+                                <field name="description" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <newline/>
+                                <field name="expense_account_id" colspan="2" domain="[('restricted_area', '=', 'accruals')]" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <newline/>
+                                <field name="accrual_amount" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <newline/>
+                                <field name="state" colspan="2" readonly="1"/>
+                            </page>
+                            <page string="Journal Items">
+                            </page>
+                        </notebook>
+
                         <group colspan="2" col="4">
                             <button name="button_cancel" string="Cancel" states="posted" type="object" icon="gtk-cancel"
                                 confirm="Are you sure you want to cancel this accrual line ?"/>
