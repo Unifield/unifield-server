@@ -101,7 +101,7 @@ class msf_accrual_line(osv.osv):
                                                                    ('is_active', '=', True)],
                                                                   order='id', limit=1, context=context)
         if not acc_journal_ids:
-            raise osv.except_osv(_('Warning !'), _("No journal of type Accrual has been found for the current instance."))
+            raise osv.except_osv(_('Warning !'), _("No active journal of type Accrual has been found for the current instance."))
         return acc_journal_ids[0]
 
     _columns = {
