@@ -29,7 +29,7 @@ from time import strptime
 import decimal_precision as dp
 from account_override.period import get_period_from_date
 from tools.misc import flatten
-
+import netsvc
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
@@ -48,11 +48,23 @@ class account_commitment(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        for _id in ids:
+            res[_id] = 0
         # Browse commitments
-        for co in self.browse(cr, uid, ids, context=context):
-            res[co.id] = 0.0
-            for line in co.line_ids:
-                res[co.id] += line.amount
+        if ids:
+            cr.execute('''
+                select
+                    commit_id, sum(amount)
+                from
+                    account_commitment_line
+                where
+                    commit_id in %s
+                group by
+                    commit_id
+            ''', (tuple(ids),))
+            for x in cr.fetchall():
+                res[x[0]] = round(x[1], 2)
+
         return res
 
     def _get_cv(self, cr, uid, ids, context=None):
@@ -86,8 +98,9 @@ class account_commitment(osv.osv):
 
     def _display_super_done_button(self, cr, uid, ids, name, arg, context=None):
         """
-        For now the "Super" Done button, which allows to always set a CV to Done whatever its state and origin,
-        is visible only by the Admin user. It is displayed only when the standard Done button isn't usable.
+        The "Super" Done button, which allows to always set a CV to Done whatever its state and origin, is displayed:
+        - when the standard Done button isn't usable.
+        - only for some "admin" users (the restriction is made by User Rights).
         """
         if context is None:
             context = {}
@@ -96,14 +109,14 @@ class account_commitment(osv.osv):
         res = {}
         for cv in self.read(cr, uid, ids, ['state', 'type'], context=context):
             other_done_button_usable = cv['state'] == 'open' and cv['type'] not in ('external', 'intermission', 'intersection')
-            res[cv['id']] = not other_done_button_usable and uid == 1 and cv['state'] != 'done'
+            res[cv['id']] = not other_done_button_usable and cv['state'] != 'done'
         return res
 
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
-        'partner_id': fields.many2one('res.partner', string="Supplier", required=True),
+        'partner_id': fields.many2one('res.partner', string="Partner", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
@@ -115,7 +128,9 @@ class account_commitment(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'type': fields.selection(get_cv_type, string="Type", readonly=True),
         'notes': fields.text(string="Comment"),
+        'cv_flow_type': fields.selection([('customer', 'Customer'), ('supplier', 'Supplier')], string="Type of CV"),
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
+        'sale_id': fields.many2one('sale.order', string="Source document", readonly=True),
         'description': fields.char(string="Description", size=256),
         'version': fields.integer('Version', required=True,
                                   help="Technical field to distinguish old CVs from new ones which have a different behavior."),
@@ -155,6 +170,10 @@ class account_commitment(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
+        if vals.get('sale_id'):
+            vals['cv_flow_type'] = 'customer'
+        elif vals.get('purchase_id'):
+            vals['cv_flow_type'] = 'supplier'
         # Add sequence
         sequence_number = self.pool.get('ir.sequence').get(cr, uid, self._name)
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
@@ -441,6 +460,9 @@ class account_commitment(osv.osv):
             ids = [ids]
         # Browse commitments
         for c in self.browse(cr, uid, ids, context=context):
+            sign = 1
+            if c.cv_flow_type == 'customer':
+                sign = -1
             for cl in c.line_ids:
                 # Verify that analytic distribution is present
                 if cl.analytic_distribution_state != 'valid':
@@ -456,10 +478,10 @@ class account_commitment(osv.osv):
                 if not al_ids:
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').\
-                        create_account_analytic_lines(cr, uid, [distrib_id], c.description or c.name, c.date, cl.amount,
+                        create_account_analytic_lines(cr, uid, [distrib_id], c.description or c.name, c.date, sign * cl.amount,
                                                       c.journal_id and c.journal_id.id,
                                                       c.currency_id and c.currency_id.id, c.date or False,
-                                                      (c.purchase_id and c.purchase_id.name) or c.name or False, c.date,
+                                                      (c.purchase_id and c.purchase_id.name or c.sale_id and c.sale_id.name) or c.name or False, c.date,
                                                       cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
         return True
 
@@ -500,12 +522,56 @@ class account_commitment(osv.osv):
             self.write(cr, uid, [c.id], {'state':'done'}, context=context)
         return True
 
+    def test_and_close_cv_so(self, cr, uid, ids, invoice_ids=None, context=None):
+        """
+            set amout=0 on CV lines linked to closed, cancelled(-r) FO line (no more invoices expected)
+            and with no draft invoice
+
+
+            invoice_ids: list of draft invoices to ignore (state will be changed later in the code)
+        """
+
+        if invoice_ids is None:
+            invoice_ids = []
+
+        iv_ids = invoice_ids[:]
+        if not iv_ids:
+            iv_ids.append(0)
+
+        cv_line_obj = self.pool.get('account.commitment.line')
+        cr.execute('''
+            select
+                line.id, line.amount
+            from
+                account_commitment_line line
+            left join
+                sale_order_line sol on sol.id = line.so_line_id
+            left join
+                account_invoice_line inv_line on inv_line.sale_order_line_id = sol.id and inv_line.invoice_id not in %s
+            left join
+                account_invoice inv on inv_line.invoice_id = inv.id and inv.type = 'out_invoice' and inv.from_supply = 't'
+            where
+                sol.state in ('done', 'cancel', 'cancel_r') and
+                line.amount != 0 and
+                line.commit_id in %s
+            group by
+                line.id, line.amount
+            having (count(inv.state='draft' or NULL) = 0)
+        ''', (tuple(iv_ids), tuple(ids)))
+        # from_supply + out_invoice : to ignore draft refund
+
+        for x in cr.fetchall():
+            cv_line_obj._update_so_commitment_line(cr, uid, x[0], x[1], from_cancel=True, context=context)
+
+        return True
+
+
 account_commitment()
 
 class account_commitment_line(osv.osv):
     _name = 'account.commitment.line'
     _description = "Account Commitment Voucher Line"
-    _order = "po_line_id, id desc"
+    _order = "line_number, id desc"
     _rec_name = 'account_id'
     _trace = True
 
@@ -555,7 +621,7 @@ class account_commitment_line(osv.osv):
         'account_id': fields.many2one('account.account', string="Account", required=True),
         'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=False),
         'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=True),
-        'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", on_delete="cascade"),
+        'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", ondelete="cascade"),
         'commit_number': fields.related('commit_id', 'name', type='char', size=64,
                                         readonly=True, store=False, string="Commitment Voucher Number"),
         'commit_type': fields.related('commit_id', 'type', string="Commitment Voucher Type", type='selection', readonly=True,
@@ -574,10 +640,9 @@ class account_commitment_line(osv.osv):
                                                     string="Purchase Order Lines (deprecated)", readonly=True),
         # for CV starting from version 2
         'po_line_id': fields.many2one('purchase.order.line', "PO Line"),
-        'po_line_product_id': fields.related('po_line_id', 'product_id', type='many2one', relation='product.product',
-                                             string="Product", readonly=True, store=True, write_relate=False),
-        'po_line_number': fields.related('po_line_id', 'line_number', type='integer_null', string="PO Line", readonly=True,
-                                         store=True, write_relate=False, _fnct_migrate=lambda *a: True),
+        'so_line_id': fields.many2one('sale.order.line', "SO Line"),
+        'line_product_id': fields.many2one('product.product', string="Product", readonly=True),
+        'line_number': fields.integer_null('Line', readonly=True),
     }
 
     _defaults = {
@@ -608,20 +673,23 @@ class account_commitment_line(osv.osv):
         # Prepare some values
         for cl in self.browse(cr, uid, ids, context=context):
             # Browse distribution
+            sign = 1
+            if cl.commit_id.cv_flow_type == 'customer':
+                sign = -1
             distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or False
             if not distrib_id:
                 distrib_id = cl.commit_id and cl.commit_id.analytic_distribution_id and cl.commit_id.analytic_distribution_id.id or False
             if distrib_id:
                 analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
-                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or False
+                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or cl.commit_id.sale_id and cl.commit_id.sale_id.name or False
                 if cl.commit_id:
                     desc = cl.commit_id.description or cl.commit_id.name
                 else:
                     desc = 'Commitment voucher line'
                 self.pool.get('analytic.distribution').\
                     create_account_analytic_lines(cr, uid, [distrib_id], desc,
-                                                  cl.commit_id.date, amount, cl.commit_id.journal_id.id, cl.commit_id.currency_id.id,
+                                                  cl.commit_id.date, sign * amount, cl.commit_id.journal_id.id, cl.commit_id.currency_id.id,
                                                   cl.commit_id and cl.commit_id.date or False, ref, cl.commit_id.date,
                                                   account_id or cl.account_id.id, move_id=False, invoice_line_id=False,
                                                   commitment_line_id=cl.id, context=context)
@@ -678,15 +746,16 @@ class account_commitment_line(osv.osv):
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot write a commitment voucher line on a 'view' account type!"))
-        # Verify amount validity
-        if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-            raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
-        if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
-            raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
         # Update analytic distribution if needed and initial_amount
         for line in self.browse(cr, uid, ids, context=context):
-            # verify that initial amount is superior to amount left
+            # Verify amount validity
+            if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
+                raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
+            if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
+                raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
             message = _('Initial Amount should be superior to Amount Left')
+
+            # verify that initial amount is superior to amount left
             if 'amount' in vals and 'initial_amount' in vals:
                 if vals.get('initial_amount') < vals.get('amount'):
                     raise osv.except_osv(_('Warning'), message)
@@ -782,6 +851,33 @@ class account_commitment_line(osv.osv):
             'res_id': [wiz_id],
             'context': context,
         }
+
+    def _update_so_commitment_line(self, cr, uid, id, amount, from_cancel=True, context=None):
+        """
+            reduce amount on CV line from SO
+            called when:
+              * FO line is canceled(-r)
+              * SI is opened or canceled
+        """
+        if context is None:
+            context = {}
+        wf_service = netsvc.LocalService("workflow")
+        cv_obj = self.pool.get('account.commitment')
+
+        cv_line = self.browse(cr, uid, id, context=context)
+        if not from_cancel and cv_line.commit_id.state == 'draft':
+            wf_service.trg_validate(uid, 'account.commitment', cv_line.commit_id.id, 'commitment_open', cr)
+
+        amount_left = max(round(cv_line.amount - amount, 2), 0)
+        # this will trigger AJIs update
+        self.write(cr, uid, [id], {'amount': amount_left}, context=context)
+
+        cv = cv_obj.read(cr, uid, cv_line.commit_id.id, ['total'], context=context)
+        if abs(cv['total']) < 0.001:
+            cv_obj.action_commitment_done(cr, uid, [cv_line.commit_id.id], context=context)
+
+        return True
+
 
 account_commitment_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

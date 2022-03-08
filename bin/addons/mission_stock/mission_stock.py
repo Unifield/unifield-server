@@ -36,7 +36,7 @@ import cStringIO
 import base64
 from msf_field_access_rights.osv_override import _get_instance_level
 from datetime import datetime
-from xlwt import Workbook, easyxf, Borders, add_palette_colour, Formula
+from xlwt import Workbook, easyxf, Borders, add_palette_colour
 import tempfile
 import shutil
 from mx.DateTime import DateTime as mxdt
@@ -57,7 +57,8 @@ HEADER_DICT = {
         (_('Cross-Docking Qty.'), 'l_cross_qty'),
         (_('Secondary Stock Qty.'), 'l_secondary_qty'),
         (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
-        (_('Quarantine Qty'), 'l_quarantine_qty'),
+        (_('Eprep Qty.'), 'l_eprep_qty'),
+        (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
         (_('Input Qty'), 'l_input_qty'),
         (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
         (_('AMC'), 'product_amc'),
@@ -76,7 +77,8 @@ HEADER_DICT = {
         (_('Cross-Docking Qty.'), 'l_cross_qty'),
         (_('Secondary Stock Qty.'), 'l_secondary_qty'),
         (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
-        (_('Quarantine Qty'), 'l_quarantine_qty'),
+        (_('Eprep Qty.'), 'l_eprep_qty'),
+        (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
         (_('Input Qty'), 'l_input_qty'),
         (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
         (_('AMC'), 'product_amc'),
@@ -90,21 +92,22 @@ GET_EXPORT_REQUEST = '''SELECT
         l.default_code as default_code,
         COALESCE(trans.value, pt.name) as pt_name,
         pu.name as pu_name,
-        trim(to_char(l.internal_qty, '999999999999.999')) as l_internal_qty,
-        trim(to_char(l.wh_qty, '999999999999.999')) as l_wh_qty,
-        trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
-        trim(to_char(l.secondary_qty, '999999999999.999')) as l_secondary_qty,
-        trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
-        trim(to_char(l.in_pipe_qty, '999999999999.999')) as l_in_pipe_qty,
-        trim(to_char(l.stock_qty, '999999999999.999')) as l_stock_qty,
-        trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
-        trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
-        trim(to_char(pt.standard_price, '999999999999.999')) as pt_standard_price,
+        l.internal_qty as l_internal_qty,
+        l.wh_qty as l_wh_qty,
+        l.cross_qty as l_cross_qty,
+        l.secondary_qty as l_secondary_qty,
+        l.eprep_qty as l_eprep_qty,
+        l.cu_qty as l_cu_qty,
+        l.in_pipe_qty as l_in_pipe_qty,
+        l.stock_qty as l_stock_qty,
+        l.cross_qty as l_cross_qty,
+        l.cu_qty as l_cu_qty,
+        pt.standard_price as pt_standard_price,
         rc.name as rc_name,
-        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')) as l_internal_qty_pt_price,
-        trim(to_char(l.quarantine_qty, '999999999999.999')) as l_quarantine_qty,
-        trim(to_char(l.input_qty, '999999999999.999')) as l_input_qty,
-        trim(to_char(l.opdd_qty, '999999999999.999')) as l_opdd_qty,
+        round(l.internal_qty * pt.standard_price, 2) as l_internal_qty_pt_price,
+        l.quarantine_qty as l_quarantine_qty,
+        l.input_qty as l_input_qty,
+        l.opdd_qty as l_opdd_qty,
         l.product_amc as product_amc,
         l.product_consumption as product_consumption,
         mission_report_id,
@@ -252,18 +255,21 @@ class stock_mission_report(osv.osv):
     def xls_write_styled_header(self, sheet, cell_list):
         column_count = 0
         for style, column in cell_list:
-            sheet.write(3, column_count, _(column), style)
+            sheet.write(4, column_count, _(column), style)
             column_count += 1
 
     def xls_write_header(self, sheet, cell_list, style):
         column_count = 0
         for column in cell_list:
-            sheet.write(4, column_count, _(column), style)
+            sheet.write(3, column_count, _(column), style)
             column_count += 1
 
-    def xls_write_row(self, sheet, cell_list, row_count, style):
+    def xls_write_row(self, sheet, cell_list, row_count, style, style_price):
         for column_count, column in enumerate(cell_list):
-            sheet.write(row_count, column_count, _(column), style)
+            if column_count == 4:  # style for price
+                sheet.write(row_count, column_count, column, style_price)
+            else:
+                sheet.write(row_count, column_count, _(column), style)
         sheet.row(row_count).height = 60*20
 
 
@@ -313,7 +319,7 @@ class stock_mission_report(osv.osv):
             writer = UnicodeWriter(export_file, dialect=excel_semicolon)
             # Write common data: Current Instance, Instance Selection, Generation Date, Export Date
             writer.writerows([[_("Generating instance"), instance_name], [_("Instance selection"), report_name],
-                              [_("Last update"), report_last_updt], [_("Export Date"), time.strftime('%Y-%m-%d %H:%M:%S')]])
+                              [_("Last update"), report_last_updt]])
             # write headers of the csv file
             writer.writerow(header_row)
 
@@ -339,6 +345,12 @@ class stock_mission_report(osv.osv):
                     align: wrap on, vert center, horiz center;
                 """)
             row_style.borders = borders
+            row_style_price = easyxf("""
+                    font: height 220;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='0.000')
+            row_style_price.borders = borders
 
             data_row_style = easyxf("""
                     font: height 220;
@@ -360,29 +372,22 @@ class stock_mission_report(osv.osv):
             # Third Line
             sheet.write(2, 0, _("Last update"), row_style)
             sheet.write(2, 1,  report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '', data_row_style)
-            # Fourth Line
-            sheet.write(3, 0, _("Export Date"), row_style)
-            sheet.write(3, 1, Formula('IF(D2=0;NOW();D2)'), data_row_style)
 
             self.xls_write_header(sheet, header_row, header_style)
 
             # tab header bigger height:
-            sheet.row(4).height_mismatch = True
-            sheet.row(4).height = 45*20
-            sheet.col(0).width=8000
-            sheet.col(1).width=10000
+            sheet.row(3).height_mismatch = True
+            sheet.row(3).height = 45*20
+            sheet.col(0).width = 8000
+            sheet.col(1).width = 10000
 
         # write the lines
-        row_count = 5
+        row_count = 4
         for row in request_result:
             try:
                 data_list = []
-                data_list_append = data_list.append
                 for columns_name, property_name in header:
-                    if 'qty' in property_name:
-                        data_list_append(eval(row.get(property_name, False)))
-                    else:
-                        data_list_append(row.get(property_name, False))
+                    data_list.append(row.get(property_name))
 
                 # remove the 5 firsts column are they are not stock qty
                 # and check if there is any other value than 0 on this last columns
@@ -396,7 +401,7 @@ class stock_mission_report(osv.osv):
                         continue
 
                 if file_type == 'xls':
-                    self.xls_write_row(sheet, data_list, row_count, row_style)
+                    self.xls_write_row(sheet, data_list, row_count, row_style, row_style_price)
                 else:
                     writer.writerow(data_list)
                 row_count += 1
@@ -418,11 +423,13 @@ class stock_mission_report(osv.osv):
         # close file
         export_file.close()
 
-    def generate_full_xls(self, cr, uid, xls_name):
+    def generate_full_xls(self, cr, uid, report_id, xls_name):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
         instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
         uom_obj = self.pool.get('product.uom')
+
+        report_last_updt = self.read(cr, uid, report_id, ['last_update'])['last_update']
 
         instance_dict = {}
         for x in instance_obj.read(cr, uid, instance_ids, ['name']):
@@ -470,6 +477,16 @@ class stock_mission_report(osv.osv):
                 font: name Calibri;
                 align: wrap on, vert center, horiz center;
             """)
+        date_row_style = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                align: wrap on, vert center, horiz center;
+            """, num_format_str='DD/MMM/YYYY HH:MM')
+        row_style_price = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                align: wrap on, vert center, horiz center;
+            """, num_format_str='0.000')
 
         book = Workbook()
         add_palette_colour("custom_colour_1", 0x21)
@@ -493,20 +510,23 @@ class stock_mission_report(osv.osv):
 
         header_styles = [header_style1, header_style2]
         row_style.borders = borders
+        date_row_style.borders = borders
+        row_style_price.borders = borders
 
         sheet = book.add_sheet('Sheet 1')
         sheet.row_default_height = 60*20
 
         sheet.write(0, 0, _("Generating instance"), row_style)
-        instance_name = local_instance.name
-        sheet.write(0, 1, instance_name, row_style)
-        sheet.col(0).width=5000
+        sheet.write(0, 1, local_instance.name, row_style)
+        sheet.col(0).width = 5000
         sheet.write(1, 0, _("Instance selection"), row_style)
-        report_name = _('All loc')
-        sheet.write(1, 1, report_name, row_style)
-        sheet.col(1).width=5000
+        sheet.write(1, 1, _('All loc'), row_style)
+        sheet.col(1).width = 5000
+        sheet.write(2, 0, _("Last update"), row_style)
+        sheet.write(2, 1, report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '', date_row_style)
+        sheet.col(2).width = 5000
 
-        sheet.set_horz_split_pos(4)
+        sheet.set_horz_split_pos(5)
         sheet.set_vert_split_pos(5)
         sheet.panes_frozen = True
         sheet.remove_splits = True
@@ -526,7 +546,8 @@ class stock_mission_report(osv.osv):
             (_('Cross-Docking Qty.'), 'l_cross_qty'),
             (_('Secondary Stock Qty.'), 'l_secondary_qty'),
             (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
-            (_('Quarantine Qty'), 'l_quarantine_qty'),
+            (_('Eprep Qty.'), 'l_eprep_qty'),
+            (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
             (_('Input Qty'), 'l_input_qty'),
             (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
             (_('AMC'), 'product_amc'),
@@ -542,7 +563,7 @@ class stock_mission_report(osv.osv):
         begin = len(fixed_data)
         for inst_id in all_instances:
             max_size = begin + len(repeated_data) + len(instance_loc.get(inst_id, [])) - 1
-            sheet.write_merge(2, 2, begin, max_size, instance_dict[inst_id], style=header_styles[i])
+            sheet.write_merge(3, 3, begin, max_size, instance_dict[inst_id], style=header_styles[i])
             begin = max_size + 1
             i = 1 - i
 
@@ -557,12 +578,13 @@ class stock_mission_report(osv.osv):
         self.xls_write_styled_header(sheet, header_row)
 
         # tab header bigger height:
-        sheet.row(2).height_mismatch = True
+        sheet.row(3).height_mismatch = True
         sheet.row(0).height = 45*20
         sheet.row(1).height = 45*20
         sheet.row(2).height = 45*20
-        sheet.row(3).height_mismatch = True
         sheet.row(3).height = 45*20
+        sheet.row(4).height_mismatch = True
+        sheet.row(4).height = 45*20
 
 
         report_id_by_instance_id = {}
@@ -586,7 +608,7 @@ class stock_mission_report(osv.osv):
 
         p_code = False
         last_stock_level_line = cr1.dictfetchone()
-        row_count = 4
+        row_count = 5
         data = {}
         srl = cr.dictfetchone()
         while srl:
@@ -619,7 +641,7 @@ class stock_mission_report(osv.osv):
                     for x in instance_loc.get(inst_id, []):
                         to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
-                self.xls_write_row(sheet, to_write, row_count, row_style)
+                self.xls_write_row(sheet, to_write, row_count, row_style, row_style_price)
                 row_count += 1
 
 
@@ -884,7 +906,7 @@ class stock_mission_report(osv.osv):
                                  context=context)
 
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
-                    self.generate_full_xls(cr, uid, 'consolidate_mission_stock.xls')
+                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls')
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
@@ -929,6 +951,7 @@ class stock_mission_report(osv.osv):
             secondary_location_id = secondary_location_id[1]
             secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
 
+        eprep_locations = location_obj.search(cr, uid, [('eprep_location', '=', True)], context=context)
         if cu_loc:
             cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
 
@@ -1019,6 +1042,7 @@ class stock_mission_report(osv.osv):
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
 
                 vals['in_pipe_qty'] += qty
+                vals['used_in_transaction'] = True
 
                 if partner == coordo_id:
                     vals['in_pipe_coor_qty'] += qty
@@ -1038,15 +1062,67 @@ class stock_mission_report(osv.osv):
                 'in_pipe_coor_qty': 0.00,
             }, context=context)
 
+            reset_flag_location = {}
             # All other moves
             cr.execute('''
-                        SELECT id, product_id, product_uom, product_qty, location_id, location_dest_id
-                        FROM stock_move
-                        WHERE state = 'done'
-                        AND included_in_mission_stock='f'
+                        SELECT m.id, m.product_id, m.product_uom, m.product_qty, m.location_id, m.location_dest_id, m.included_in_mission_stock, src.moved_location, dest.moved_location
+                        FROM stock_move m, stock_location src, stock_location dest
+                        WHERE
+                            m.state = 'done' AND
+                            src.id = m.location_id AND
+                            dest.id = m.location_dest_id AND
+                            m.location_id != m.location_dest_id AND
+                            ( m.included_in_mission_stock='f' or src.moved_location = 't' or dest.moved_location = 't' )
             ''')
             res = cr.fetchall()
             all_move_ids = []
+            doc_field_error_dom = [
+                ('stock_move', 'product_id'),
+                ('stock_production_lot', 'product_id'),
+                ('purchase_order_line', 'product_id'),
+                ('sale_order_line', 'product_id'),
+                ('tender_line', 'product_id'),
+                ('physical_inventory_counting', 'product_id'),
+                ('initial_stock_inventory_line', 'product_id'),
+                ('real_average_consumption_line', 'product_id'),
+                ('replenishment_segment_line', 'product_id'),
+                ('product_list_line', 'name'),
+                ('composition_kit', 'composition_product_id'),
+                ('composition_item', 'item_product_id'),
+            ]
+
+            timer_used = time.time()
+            # record the current value in transaction_updated
+            cr.execute("update stock_mission_report_line set transaction_updated=coalesce(used_in_transaction, 'f'), used_in_transaction='f' where mission_report_id=%s", (report_id, ))
+            for table, foreign_field in doc_field_error_dom:
+                # set used_in_transaction='t'
+                cr.execute('''
+                    update
+                        stock_mission_report_line l
+                    set
+                        used_in_transaction='t'
+                    from
+                        ''' + table + ''' ft
+                    where
+                        coalesce(l.used_in_transaction,'f')='f' and
+                        l.mission_report_id = %s and
+                        ft.''' + foreign_field + ''' = l.product_id
+                    ''', (report_id, )) # not_a_user_entry
+
+            # trigger sync update
+            cr.execute('''
+                update ir_model_data d
+                    set last_modification=NOW(), touched='[''used_in_transaction'']'
+                from
+                    stock_mission_report_line l
+                where
+                    l.id = d.res_id and
+                    l.transaction_updated!=used_in_transaction and
+                    d.model='stock.mission.report.line' and
+                    l.mission_report_id = %s
+            ''', (report_id, ))
+            logging.getLogger('MSR').info("""___ computation of used in transaction in %.2f sec.""" % (time.time() - timer_used))
+
             for move in res:
                 all_move_ids.append(move[0])
                 product = product_obj.browse(cr, uid, move[1],
@@ -1056,55 +1132,75 @@ class stock_mission_report(osv.osv):
                 if line_id:
                     line = line_obj.browse(cr, uid, line_id[0])
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[2], move[3], product.uom_id.id)
-                    vals = {'internal_qty': line.internal_qty or 0.00,
-                            'stock_qty': line.stock_qty or 0.00,
-                            'cross_qty': line.cross_qty or 0.00,
-                            'secondary_qty': line.secondary_qty or 0.00,
-                            'cu_qty': line.cu_qty or 0.00,
-                            'quarantine_qty': line.quarantine_qty or 0.00,
-                            'input_qty': line.input_qty or 0.00,
-                            'opdd_qty': line.opdd_qty or 0.00,
-                            'updated': True,
-                            'product_state': line.product_id.state and line.product_id.state.code,}
+                    vals = {
+                        'internal_qty': line.internal_qty or 0.00,
+                        'stock_qty': line.stock_qty or 0.00,
+                        'cross_qty': line.cross_qty or 0.00,
+                        'secondary_qty': line.secondary_qty or 0.00,
+                        'eprep_qty': line.eprep_qty or 0.00,
+                        'cu_qty': line.cu_qty or 0.00,
+                        'quarantine_qty': line.quarantine_qty or 0.00,
+                        'input_qty': line.input_qty or 0.00,
+                        'opdd_qty': line.opdd_qty or 0.00,
+                        'updated': True,
+                        'product_state': line.product_id.state and line.product_id.state.code,
+                        'used_in_transaction': True
+                    }
+                    if move[6]:
+                        # stock move already processed in previous msr, but location has moved from secondary to eprep
+                        if move[7]:
+                            vals['secondary_qty'] += qty
+                            reset_flag_location[move[4]] = True
+                            vals['eprep_qty'] -= qty
+                        if move[8]:
+                            vals['secondary_qty'] -= qty
+                            reset_flag_location[move[5]] = True
+                            vals['eprep_qty'] += qty
+                    else:
+                        if move[4] in internal_loc:
+                            vals['internal_qty'] -= qty
+                        if move[4] in stock_loc:
+                            vals['stock_qty'] -= qty
+                        if move[4] in cross_loc:
+                            vals['cross_qty'] -= qty
+                        if move[4] in secondary_location_ids:
+                            vals['secondary_qty'] -= qty
+                        if move[4] in eprep_locations:
+                            vals['eprep_qty'] -= qty
+                        if move[4] in cu_loc:
+                            vals['cu_qty'] -= qty
+                        if move[4] in quarantine_loc:
+                            vals['quarantine_qty'] -= qty
+                        if move[4] in input_loc:
+                            vals['input_qty'] -= qty
+                        if move[4] in opdd_loc:
+                            vals['opdd_qty'] -= qty
 
-                    if move[4] in internal_loc:
-                        vals['internal_qty'] -= qty
-                    if move[4] in stock_loc:
-                        vals['stock_qty'] -= qty
-                    if move[4] in cross_loc:
-                        vals['cross_qty'] -= qty
-                    if move[4] in secondary_location_ids:
-                        vals['secondary_qty'] -= qty
-                    if move[4] in cu_loc:
-                        vals['cu_qty'] -= qty
-                    if move[4] in quarantine_loc:
-                        vals['quarantine_qty'] -= qty
-                    if move[4] in input_loc:
-                        vals['input_qty'] -= qty
-                    if move[4] in opdd_loc:
-                        vals['opdd_qty'] -= qty
+                        if move[5] in internal_loc:
+                            vals['internal_qty'] += qty
+                        if move[5] in stock_loc:
+                            vals['stock_qty'] += qty
+                        if move[5] in cross_loc:
+                            vals['cross_qty'] += qty
+                        if move[5] in secondary_location_ids:
+                            vals['secondary_qty'] += qty
+                        if move[5] in eprep_locations:
+                            vals['eprep_qty'] += qty
+                        if move[5] in cu_loc:
+                            vals['cu_qty'] += qty
+                        if move[5] in quarantine_loc:
+                            vals['quarantine_qty'] += qty
+                        if move[5] in input_loc:
+                            vals['input_qty'] += qty
+                        if move[5] in opdd_loc:
+                            vals['opdd_qty'] += qty
 
-                    if move[5] in internal_loc:
-                        vals['internal_qty'] += qty
-                    if move[5] in stock_loc:
-                        vals['stock_qty'] += qty
-                    if move[5] in cross_loc:
-                        vals['cross_qty'] += qty
-                    if move[5] in secondary_location_ids:
-                        vals['secondary_qty'] += qty
-                    if move[5] in cu_loc:
-                        vals['cu_qty'] += qty
-                    if move[5] in quarantine_loc:
-                        vals['quarantine_qty'] += qty
-                    if move[5] in input_loc:
-                        vals['input_qty'] += qty
-                    if move[5] in opdd_loc:
-                        vals['opdd_qty'] += qty
-
-                    vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
+                        vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
                     line_obj.write(cr, uid, line.id, vals)
             if all_move_ids:
                 cr.execute("update stock_move set included_in_mission_stock='t' where id in %s", (tuple(all_move_ids), ))
+            if reset_flag_location:
+                cr.execute("update stock_location set moved_location='f' where id in %s", (tuple(reset_flag_location.keys()), ))
         return True
 
     def delete_previous_reports_attachments(self, cr, uid, ids, context=None):
@@ -1500,8 +1596,8 @@ class stock_mission_report_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade", select=1),
         'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True, write_relate=False),
         'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True, write_relate=False, _fnct_migrate=xmlid_code_migration),
-        'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
-        'name': fields.related('product_id', 'name', string='Name', type='char'),
+        'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char', write_relate=False),
+        'name': fields.related('product_id', 'name', string='Name', type='char', write_relate=False),
         'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
                                    store={'product.template': (_get_template, ['type'], 10),
                                           'stock.mission.report.line': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 10)},
@@ -1526,17 +1622,17 @@ class stock_mission_report_line(osv.osv):
         ),
         'product_state': fields.char(size=128, string='Unifield state'),
         # mandatory nomenclature levels
-        'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type'),
-        'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group'),
-        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', type='many2one', relation='product.nomenclature', string='Family'),
-        'nomen_manda_3': fields.related('product_id', 'nomen_manda_3', type='many2one', relation='product.nomenclature', string='Root'),
+        'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type', write_relate=False),
+        'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group', write_relate=False),
+        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', type='many2one', relation='product.nomenclature', string='Family', write_relate=False),
+        'nomen_manda_3': fields.related('product_id', 'nomen_manda_3', type='many2one', relation='product.nomenclature', string='Root', write_relate=False),
         # optional nomenclature levels
-        'nomen_sub_0': fields.related('product_id', 'nomen_sub_0', type='many2one', relation='product.nomenclature', string='Sub Class 1'),
-        'nomen_sub_1': fields.related('product_id', 'nomen_sub_1', type='many2one', relation='product.nomenclature', string='Sub Class 2'),
-        'nomen_sub_2': fields.related('product_id', 'nomen_sub_2', type='many2one', relation='product.nomenclature', string='Sub Class 3'),
-        'nomen_sub_3': fields.related('product_id', 'nomen_sub_3', type='many2one', relation='product.nomenclature', string='Sub Class 4'),
-        'nomen_sub_4': fields.related('product_id', 'nomen_sub_4', type='many2one', relation='product.nomenclature', string='Sub Class 5'),
-        'nomen_sub_5': fields.related('product_id', 'nomen_sub_5', type='many2one', relation='product.nomenclature', string='Sub Class 6'),
+        'nomen_sub_0': fields.related('product_id', 'nomen_sub_0', type='many2one', relation='product.nomenclature', string='Sub Class 1', write_relate=False),
+        'nomen_sub_1': fields.related('product_id', 'nomen_sub_1', type='many2one', relation='product.nomenclature', string='Sub Class 2', write_relate=False),
+        'nomen_sub_2': fields.related('product_id', 'nomen_sub_2', type='many2one', relation='product.nomenclature', string='Sub Class 3', write_relate=False),
+        'nomen_sub_3': fields.related('product_id', 'nomen_sub_3', type='many2one', relation='product.nomenclature', string='Sub Class 4', write_relate=False),
+        'nomen_sub_4': fields.related('product_id', 'nomen_sub_4', type='many2one', relation='product.nomenclature', string='Sub Class 5', write_relate=False),
+        'nomen_sub_5': fields.related('product_id', 'nomen_sub_5', type='many2one', relation='product.nomenclature', string='Sub Class 6', write_relate=False),
         'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
@@ -1552,8 +1648,8 @@ class stock_mission_report_line(osv.osv):
         'product_amc': fields.float('AMC'),
         'product_consumption': fields.float('FMC'),
 
-        'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
-        'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
+        'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.', write_relate=False),
+        'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price', write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
                                  store={
                                      'product.template': (_get_template, ['type'], 10),
@@ -1575,6 +1671,7 @@ class stock_mission_report_line(osv.osv):
         'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
         'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.', related_uom='uom_id'),
         'secondary_val': fields.float(digits=(16,2), string='Secondary Stock Val.'),
+        'eprep_qty': fields.float(digits=(16,2), string='Eprep Qty.', related_uom='uom_id'),
         'cu_qty': fields.float(digits=(16,2), string='Internal Cons. Unit Qty.', related_uom='uom_id'),
         'cu_val': fields.float(digits=(16,2), string='Internal Cons. Unit Val.'),
         'in_pipe_qty': fields.float(digits=(16,2), string='In Pipe Qty.', related_uom='uom_id'),
@@ -1582,15 +1679,17 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'updated': fields.boolean(string='Updated'),
-        'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
+        'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True, write_relate=False),
         'instance_id': fields.many2one(
             'msf.instance',
             string='HQ Instance',
             required=True,
         ),
-        'quarantine_qty': fields.float(digits=(16, 2), string='Quarantine Qty.', related_uom='uom_id'),
+        'quarantine_qty': fields.float(digits=(16, 2), string='Quarantine / For Scrap Qty.', related_uom='uom_id'),
         'input_qty': fields.float(digits=(16, 2), string='Input Qty.', related_uom='uom_id'),
         'opdd_qty': fields.float(digits=(16, 2), string='Output/Packing/Dispatch/Distribution Qty.', related_uom='uom_id'),
+        'used_in_transaction': fields.boolean('Used in a transaction'),
+        'transaction_updated': fields.boolean('Used changed', help='temporary value used to touch ir.model.data'),
     }
 
     @tools.cache(skiparg=2)
@@ -1615,6 +1714,7 @@ class stock_mission_report_line(osv.osv):
         'cross_val': 0.00,
         'secondary_qty': 0.00,
         'secondary_val': 0.00,
+        'eprep_qty': 0.00,
         'cu_qty': 0.00,
         'cu_val': 0.00,
         'in_pipe_qty': 0.00,
@@ -1642,7 +1742,9 @@ class stock_mission_report_line(osv.osv):
                             sum(l.internal_qty)*t.standard_price AS internal_val,
                             sum(l.quarantine_qty) AS quarantine_qty,
                             sum(l.input_qty) AS input_qty,
-                            sum(l.opdd_qty) AS opdd_qty
+                            sum(l.opdd_qty) AS opdd_qty,
+                            bool_or(used_in_transaction) AS used_in_transaction,
+                            sum(l.eprep_qty) AS eprep_qty
                      FROM stock_mission_report_line l
                        LEFT JOIN
                           stock_mission_report m
@@ -1683,10 +1785,10 @@ class stock_mission_report_line(osv.osv):
                     internal_qty=%s, stock_qty=%s,
                     cross_qty=%s, secondary_qty=%s,
                     cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
-                    wh_qty=%s, quarantine_qty=%s, input_qty=%s, opdd_qty=%s
+                    wh_qty=%s, quarantine_qty=%s, input_qty=%s, opdd_qty=%s, used_in_transaction=%s, eprep_qty=%s
                     WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00, line[3] or 0.00, line[4] or 0.00,
                                       line[5] or 0.00, line[6] or 0.00, line[7] or 0.00,
-                                      (line[2] or 0.00) + (line[3] or 0.00), line[9], line[10], line[11], line_id)) # not_a_user_entry
+                                      (line[2] or 0.00) + (line[3] or 0.00), line[9], line[10], line[11], line[12] or False, line[13], line_id)) # not_a_user_entry
         return True
 
 

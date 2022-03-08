@@ -27,186 +27,6 @@
             </field>
         </record>
 
-    <!--
-        Supplier Invoice
-    -->
-        <record id="invoice_supplier_form_3" model="ir.ui.view">
-            <field name="name">account.invoice.supplier.form.3</field>
-            <field name="model">account.invoice</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="account.invoice_supplier_form"/>
-            <field name="priority">20</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='account_id']" position="attributes">
-                        <attribute name="domain">[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]</attribute>
-                    </xpath>
-                    <xpath expr="/form/group[1]/field[@name='partner_id']" position="attributes">
-                        <attribute name="on_change">onchange_partner_id(type,partner_id,date_invoice,payment_term,partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice,False)</attribute>
-                    </xpath>
-                    <xpath expr="//tree[@string='Invoice lines']/field[@name='product_id']" position="before">
-                        <field name="line_number" displayon="noteditable"/>
-                    </xpath>
-                    <xpath expr="//field[@name='date_invoice']" position="before">
-                        <field name="document_date" />
-                    </xpath>
-                    <xpath expr="//field[@name='period_id']" position="replace">
-                    </xpath>
-                    <xpath expr="//label[@string='(keep empty to use the current period)']" position="replace">
-                    </xpath>
-                    <xpath expr="//button[@name='invoice_open']" position="after" >
-                        <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
-                        <newline/>
-                        <field name="can_merge_lines" invisible="1"/>
-                        <button name="button_merge_lines" type="object"
-                            colspan="3"
-                            string="Merge Lines by Account" icon="gtk-convert"
-                            confirm="You are about to merge invoice lines; are you sure you want to proceed ? THIS OPERATION CAN NOT BE UNDONE"
-                            attrs="{'invisible': [('can_merge_lines', '!=', True)]}"/>
-                    </xpath>
-               </data>
-            </field>
-        </record>
-
-    <!-- Change account_id domain -->
-        <record id="invoice_line_form3" model="ir.ui.view">
-            <field name="name">account.invoice.line.form</field>
-            <field name="model">account.invoice.line</field>
-            <field name="type">form</field>
-            <field name="priority" eval="20"/>
-            <field name="inherit_id" ref="account.view_invoice_line_form"/>
-            <field name="arch" type="xml">
-              <xpath expr="//field[@name='account_id']" position="attributes">
-                  <attribute name="domain">[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]</attribute>
-              </xpath>
-            </field>
-        </record>
-
-    <!--
-        Delete some field from account_invoice tree:
-        - Salesman or User (user_id)
-        - Total amount (amount_total)
-        - Untaxed (amount_untaxed)
-        Add some elements:
-        - Document date
-    -->
-        <record id="inherit_invoice_tree" model="ir.ui.view">
-            <field name="name">inherit.invoice.tree</field>
-            <field name="model">account.invoice</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.invoice_tree"/>
-            <field name="priority">17</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree/field[@name='date_invoice']" position="before">
-                        <field name="document_date"/>
-                        <field name="supplier_reference"/>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='user_id']" position="replace">
-                    </xpath>
-                    <xpath expr="/tree/field[@name='amount_untaxed']" position="replace">
-                    </xpath>
-                    <xpath expr="/tree/field[@name='residual']" position="attributes">
-                        <attribute name="sum"></attribute>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='amount_total']" position="attributes">
-                        <attribute name="sum"></attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-    <!--
-        Delete some element from Search views:
-        - Salesman or user (user_id)
-        - Total (amount_total)
-        - Responsible button (group by)
-        - Proforma button
-        - Invoices button
-        - Unpaid button
-        And add some ones:
-        - Open button
-        - Paid button
-    -->
-        <record id="inherit_view_account_invoice_filter" model="ir.ui.view">
-            <field name="name">inherit.view.account.invoice.filter</field>
-            <field name="model">account.invoice</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
-            <field name="priority">17</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/search/group[1]/filter[@name='proforma']" position="replace">
-                    </xpath>
-                    <xpath expr="/search/group[1]/filter[@name='invoices']" position="replace">
-                    </xpath>
-                    <xpath expr="/search/group[1]/filter[@name='unpaid']" position="attributes">
-                      <attribute name="string">Open</attribute>
-                      <attribute name="help">Open Invoices</attribute>
-                    </xpath>
-                    <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
-                    </xpath>
-                    <xpath expr="/search/group[3]/filter[@string='Responsible']" position="replace">
-                    </xpath>
-                    <xpath expr="/search/group[2]/field[@name='period_id']" position="after">
-                        <field name="supplier_reference"/>
-                        <field name="name"/>
-                    </xpath>
-                    <xpath expr="/search/group[1]/separator[1]" position="replace">
-                    </xpath>
-                    <xpath expr="/search/group[1]/filter[@name='unpaid']" position="after">
-                        <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
-                        <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
-                        <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
-                        <separator orientation="vertical"/>
-                            <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
-                            <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
-                            <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
-                        <separator orientation="vertical"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-    <!--
-        Delete some elements from Stock transfer voucher (customer invoices):
-        - period_id
-        - label with "keep empty…"
-        Add some others elements:
-        - document_date
-    -->
-        <record id="invoice_form_4" model="ir.ui.view">
-            <field name="name">account.invoice.supplier.form.4</field>
-            <field name="model">account.invoice</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="account.invoice_form"/>
-            <field name="priority">22</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='date_invoice']" position="before">
-                        <field name="document_date"/>
-                    </xpath>
-                    <xpath expr="//field[@name='period_id']" position="replace">
-                    </xpath>
-                    <xpath expr="//label[@string='(keep empty to use the current period)']" position="replace">
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-    <!-- Add Split Invoice Button on invoices -->
-        <record id="invoice_form_3" model="ir.ui.view">
-            <field name="name">account.invoice.form.3</field>
-            <field name="model">account.invoice</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="account.invoice_form"/>
-            <field name="priority">40</field>
-            <field name="arch" type="xml">
-                <button name='invoice_open' position="after">
-                    <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
-                </button>
-            </field>
-        </record>
 
         <!--
             Debit Note views
@@ -245,7 +65,7 @@
             <field name="arch" type="xml">
                 <form string="Debit Note" hide_duplicate_button="1">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True), ('is_active', '=', True)]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" width="50"/>
@@ -269,7 +89,7 @@
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
                                 <tree editable="top" string="Invoice Line" noteditable="1" hide_new_button="1">
                                     <field name="name"/>
-                                    <field name="account_id" domain="[('restricted_area', '=', 'invoice_lines')]"/>
+                                    <field name="account_id" domain="[('restricted_area', '=', 'invoice_lines')]" required="1"/>
                                     <field name="quantity"/>
                                     <field name="uos_id" string="UoM"/>
                                     <field name="price_unit"/>
@@ -286,8 +106,7 @@
                                 <field name="state"/>
                                 <field name="residual"/>
                             </group>
-                            <group col="8" colspan="4">
-                                <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid,inv_close' icon="gtk-execute"/>
+                            <group col="4" colspan="4">
                                 <button name="invoice_open" type="object" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
                                 <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,inv_close,proforma,sale,proforma2"/>
                             </group>
@@ -345,7 +164,7 @@
             <field name="arch" type="xml">
                 <form string="In-kind Donation" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True), ('is_active', '=', True)]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="is_inkind_donation" invisible="1"/>
@@ -402,7 +221,7 @@
                                            attrs="{'readonly': [('from_supply', '=', True)]}"
                                            on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
                                     />
-                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
+                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]" required="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
                                         context="{'d_journal_id': parent.journal_id , 'd_partner_id': parent.partner_id, 'd_address_invoice_id':parent.address_invoice_id,'d_date_invoice': parent.date_invoice, 'd_register_posting_date': parent.register_posting_date, 'd_account_id': parent.account_id, 'd_partner_bank_id': parent.partner_bank_id, 'd_payment_term': parent.payment_term, 'd_name': parent.name, 'd_origine': parent.origin, 'd_address_contact_id': parent.address_contact_id, 'd_user_id': parent.user_id, 'd_comment': parent.comment}"
                                         />
@@ -426,7 +245,7 @@
                                            on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
                                            default_focus="1"
                                     />
-                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
+                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]" required="1"/>
                                     <field name="name" colspan="4" />
                                     <field name="quantity"
                                            attrs="{'readonly': [('from_supply', '=', True)]}"
@@ -508,7 +327,7 @@
             <field name="arch" type="xml">
                 <form string="Intermission Voucher" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
-                        <field name="fake_journal_id" domain="[('is_current_instance','=',True)]" />
+                        <field name="fake_journal_id"/> <!-- readonly -->
                         <field name="journal_type" invisible="1"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
@@ -526,8 +345,9 @@
                                                      ('state', '!=', 'draft'),
                                                      '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}" />
                         <newline/>
+                        <field name="doc_type" invisible="1"/>
                         <field string="Partner" name="partner_id"
-                               on_change="onchange_partner_id(type,partner_id, date_invoice,payment_term, partner_bank_id, company_id, False, is_intermission, False, False, account_id)"
+                               on_change="onchange_partner_id(type, partner_id, date_invoice, payment_term, partner_bank_id, company_id, False, is_intermission, False, False, account_id, doc_type, from_supply)"
                                domain="[('by_invoice_type', '=', True), ('partner_type', '=', 'intermission')]"
                                context="{'type': context.get('type')}"
                                attrs="{'readonly': ['|', '|',
@@ -570,7 +390,7 @@
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True, 'from_inv_form': True}">
                                 <tree string="Intermission Voucher Lines"
                                       editable="both"
-                                      colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none', 'valid')">
+                                      colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:inactive_product == False and analytic_distribution_state in ('none', 'valid') and account_id">
                                     <field name="from_supply" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
                                     <field name="invoice_type" invisible="1"/>
@@ -583,6 +403,7 @@
                                                                         ('from_supply', '=', True),
                                                                         '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}" />
                                     <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"
+                                           required="1"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type, 'intermission_type': parent.type == 'out_invoice' and 'out' or 'in'}"
                                     />
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
@@ -633,7 +454,7 @@
                                             <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="discount" groups="base.group_extended" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="name" colspan="4"/>
-                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"/>
+                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]" required="1"/>
                                             <group colspan="6">
                                                 <field name="analytic_distribution_state" invisible="1"/>
                                                 <field name="newline" invisible="1" />
@@ -747,113 +568,6 @@
         </record>
 
         <!--
-            Delete some elements on customer invoices:
-            - fiscal_position field
-            - proforma button (invoice_proforma2)
-            - payment_term field
-            - tax frame
-            - compute tax button (button_reset_taxes)
-            - amount untaxed field
-            - amount tax field
-            Update some other ones:
-            - account_id field to add a domain on accounts regarding "ACCOUNT_RESTRICTED_AREA" variable
-        -->
-        <record id="inherit_invoice_form" model="ir.ui.view">
-            <field name="name">inherit.invoice.form</field>
-            <field name="model">account.invoice</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="account.invoice_form"/>
-            <field name="priority">61</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form" position="attributes">
-                        <attribute name="string">Stock Transfer Voucher</attribute>
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='account_id']" position="attributes">
-                        <attribute name="domain">[('company_id', '=', company_id), ('restricted_area', '=', 'out_invoice')]</attribute>
-                    </xpath>
-                    <field name="fiscal_position" position="replace"/>
-                    <field name="payment_term" position="replace"/>
-                    <field name="tax_line" position="replace"/>
-                    <button name="button_reset_taxes" position="replace"/>
-                    <button name="invoice_proforma2" position="replace"/>
-                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
-                        <group name="import" string=" Import Lines " colspan="4" col="4"
-                               attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}">
-                            <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
-                                    attrs="{'readonly': [('state', '!=', 'draft')],
-                                            'invisible': [('type', '!=', 'out_invoice')]}"/>
-                            <button name="export_invoice" string="Export Invoice Line" icon="gtk-execute" colspan="2" type="object"
-                                    attrs="{'invisible': [('type', '!=', 'out_invoice')]}"
-                                    force_editable="1"/>
-                            <newline/>
-                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
-                                    attrs="{'invisible': [('state', '!=', 'draft')],
-                                            'readonly': [('type', '=', 'out_invoice'),
-                                                         ('from_supply', '=', True),
-                                                         ('partner_type', 'in', ('intermission', 'section'))]}"/>
-                        </group>
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Invoice']/group[3]" position="replace">
-                        <group col="8" colspan="4">
-                            <label string="" colspan="3"/>
-                            <field name="reconciled"/>
-                            <field name="amount_total"/>
-                            <label string="" colspan="3"/>
-                            <field name="state"/>
-                            <field name="residual"/>
-                            <field name="is_debit_note" invisible="1"/>
-                        </group>
-                        <field name="partner_type" invisible="1"/>
-                        <group col="8" colspan="4">
-
-                            <button string="Cancel document" name="invoice_cancel"
-                                    type="workflow" icon="gtk-cancel"
-                                    confirm="Do you really want to cancel this document?"
-                                    attrs="{'invisible': ['|', '|',
-                                                          ('state', '!=', 'draft'),
-                                                          ('type', '!=', 'out_invoice'),
-                                                          ('from_supply', '=', False)]}"/>
-
-                            <button name="button_split_invoice" type="object" string="Split Stock Transfer Voucher"
-                                    icon="gtk-cut"
-                                    context="{'from_stv': True}"
-                                    attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
-
-                            <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
-                            <!-- add a confirmation step only for STV (not for Customer Refunds)
-                                 when the partner type is compatible with a synchro but "synced" isn't ticked -->
-                            <button name="invoice_open" type="object" string="Validate"
-                                    icon="gtk-go-forward"
-                                    attrs="{'invisible': ['|',
-                                                          ('state', '!=', 'draft'),
-                                                          '&amp;',
-                                                          ('type', '=', 'out_invoice'), ('partner_type', 'in', ('intermission', 'section')) ]}"/>
-                            <button name="invoice_open_with_confirmation" type="object" string="Validate"
-                                    icon="gtk-go-forward"
-                                    confirm="Are you sure you want to validate this invoice without synchronization?"
-                                    attrs="{'invisible': ['|', '|', '|',
-                                                          ('state', '!=', 'draft'),
-                                                          ('type', '!=', 'out_invoice'),
-                                                          ('synced', '=', True),
-                                                          ('partner_type', 'not in', ('intermission', 'section'))]}"/>
-
-                            <button name="invoice_open_with_sync_confirmation" type="object" string="Validate"
-                                    icon="gtk-go-forward"
-                                    confirm="This invoice will sync to its counterpart instance."
-                                    attrs="{'invisible': ['|', '|', '|',
-                                                          ('state', '!=', 'draft'),
-                                                          ('type', '!=', 'out_invoice'),
-                                                          ('synced', '=', False),
-                                                          ('partner_type', 'not in', ('intermission', 'section'))]}"/>
-                            <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,inv_close,proforma,sale,proforma2"/>
-                        </group>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-        <!--
             Debit note actions
         -->
 
@@ -864,8 +578,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}</field>
+            <field name="domain">[('doc_type', '=', 'dn')]</field>
+            <field name="context">{'doc_type': 'dn', 'type': 'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -901,13 +615,13 @@
                         <field name="number"/>
                         <field name="partner_id"/>
                         <field name="origin"/>
-                        <field name="amount_total"/>
                     </group>
                     <newline/>
-                    <group col="10" colspan="4">
-                        <field name="journal_id" widget="selection" select='1'/>
+                    <group col="8" colspan="4">
+                        <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>
                         <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="name"/>
+                        <field name="amount_total"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
@@ -931,8 +645,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True)]</field>
-            <field name="context">{'type': 'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_open': 1}</field>
+            <field name="domain">[('doc_type', '=', 'donation')]</field>
+            <field name="context">{'doc_type': 'donation', 'type': 'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_open': 1}</field>
             <field name="search_view_id" ref="view_account_invoice_filter_donation"/>
         </record>
 
@@ -959,8 +673,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
-            <field name="context">{'type': 'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
+            <field name="domain">[('doc_type', '=', 'ivo')]</field>
+            <field name="context">{'doc_type': 'ivo', 'type': 'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1, 'search_default_open_fy': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -987,8 +701,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field name="view_id" ref="view_intermission_form"/>
-            <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True}</field>
+            <field name="domain">[('doc_type', '=', 'ivi')]</field>
+            <field name="context">{'doc_type': 'ivi', 'type': 'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True, 'search_default_open_fy': 1}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -1008,34 +722,6 @@
             <field name="act_window_id" ref="action_intermission_in"/>
         </record>
 
-        <!-- Fix customer invoice display with a bypass on 'is_debit_note' set to True -->
-        <record id="account.action_invoice_tree1" model="ir.actions.act_window">
-            <field name="name">Customer Invoices</field>  <!-- Stock Transfer Vouchers -->
-            <field name="res_model">account.invoice</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,calendar,graph</field>
-            <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', False)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
-            <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
-        </record>
-
-        <!-- Fix supplier invoice display with a bypass on 'is_inkind_donation' set to True -->
-        <record id="account.action_invoice_tree2" model="ir.actions.act_window">
-            <field name="name">Supplier Invoices</field>
-            <field name="res_model">account.invoice</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,calendar,graph</field>
-            <field eval="False" name="view_id"/>
-            <!-- US-2704 if the domain change, do not forget to update the domain of account_board_supplier_invoice_draft in finance/board_account_view.xml -->
-            <field name="domain">[('type','=','in_invoice'), ('is_direct_invoice', '=', False), ('is_inkind_donation', '=', False), ('is_debit_note', "=", False), ('is_intermission', '=', False)]</field>
-            <field name="context">{'type': 'in_invoice', 'journal_type': 'purchase', 'from_inv_form': True}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
-            <field name="help">With Supplier Invoices you can enter and manage invoices issued by your suppliers.
-                OpenERP can also generate draft invoices automatically from purchase orders or receipts. This way, you can control the invoice
-                from your supplier according to what you purchased or received.</field>
-        </record>
 
         <!--
             Debit Note Menu
@@ -1045,13 +731,13 @@
         <menuitem action="action_debit_note" id="menu_action_debit_note" parent="account.menu_finance_receivables" sequence="10"/>
 
         <!-- In-kind Donation Menu in "Supplier Invoices" -->
-        <menuitem action="action_inkind_donation" id="menu_action_inkind_donation" parent="account.menu_finance_payables" sequence="11"/>
+        <menuitem action="action_inkind_donation" id="menu_action_inkind_donation" parent="account.menu_finance_payables" sequence="30"/>
 
         <!-- Intermission Voucher OUT in "Customer Invoices" -->
-        <menuitem action="action_intermission_out" id="menu_action_intermission_out" parent="account.menu_finance_receivables" sequence="10"/>
+        <menuitem action="action_intermission_out" id="menu_action_intermission_out" parent="account.menu_finance_receivables" sequence="12"/>
 
         <!-- Intermission Voucher IN in "Supplier Invoices" -->
-        <menuitem action="action_intermission_in" id="menu_action_intermission_in" parent="account.menu_finance_payables" sequence="12"/>
+        <menuitem action="action_intermission_in" id="menu_action_intermission_in" parent="account.menu_finance_payables" sequence="40"/>
 
         <!--
             Account invoice report redefinition

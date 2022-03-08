@@ -23,6 +23,7 @@ import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from operator import itemgetter
+from . import DEFAULT_JOURNALS
 
 import netsvc
 import pooler
@@ -580,6 +581,71 @@ account_journal_column()
 class account_journal(osv.osv):
     _name = "account.journal"
     _description = "Journal"
+
+    def _get_false(self, cr, uid, ids, *a, **b):
+        """
+        Returns False for all ids (cf. only the search method is used for the field)
+        """
+        return {}.fromkeys(ids, False)
+
+    def _search_inv_doc_type(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain (based on the context) to get all journals matching with the doc type of the selected invoice.
+
+        Note: this method is currently not used for IVO and IVI which use a fake_journal_id forced to INT instead of the regular journal_id.
+        """
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        doc_type = context.get('doc_type', '')
+        if doc_type == 'str':
+            journal_types = ['sale']
+        elif doc_type in ('isi', 'isr'):
+            journal_types = ['purchase']
+        elif doc_type == 'donation':
+            journal_types = ['inkind', 'extra']
+        else:
+            journals = {
+                'out_invoice': 'sale',
+                'in_invoice': 'purchase',
+                'out_refund': 'sale_refund',
+                'in_refund': 'purchase_refund',
+            }
+            journal_types = [journals.get(context.get('type', ''), 'purchase')]
+        journal_dom = [('type', 'in', journal_types), ('is_current_instance', '=', True)]
+        if doc_type in ('isi', 'isr'):
+            journal_dom.append(('code', '=', 'ISI'))
+        else:
+            journal_dom.append(('code', '!=', 'ISI'))
+        return journal_dom
+
+    def _get_is_default(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the journal,
+        and value = True if the journal belongs to the list of journals imported by default in new instances, False otherwise
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for j in self.browse(cr, uid, ids, fields_to_fetch=['code', 'type'], context=context):
+            res[j.id] = (j.code, j.type) in DEFAULT_JOURNALS
+        return res
+
+    def _get_current_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns a dict with key = value = current DB id.
+
+        current_id is an internal field used to make the "Active" checkbox read-only at first creation (= without DB id),
+        so that new journals are always created as Active, and for new Liquidity journals registers are always created.
+        """
+        res = {}
+        for i in ids:
+            res[i] = i
+        return res
+
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True),
         'code': fields.char('Code', size=5, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
@@ -609,14 +675,35 @@ class account_journal(osv.osv):
         'bank_account_name': fields.char('Bank Account Name', size=256, required=False),
         'bank_swift_code': fields.char('Swift Code', size=32, required=False),
         'bank_address': fields.text('Address', required=False),
+        'inv_doc_type': fields.function(_get_false, method=True, type='boolean', string='Document Type', store=False,
+                                        fnct_search=_search_inv_doc_type),
+        'is_active': fields.boolean('Active'),
+        'is_default': fields.function(_get_is_default, method=True, type='boolean', string='Default Journal',
+                                      store=False, help="Journals created by default in new instances"),
+        'current_id': fields.function(_get_current_id, method=True, type='integer', string="DB Id (used by the UI)",
+                                      store=False, internal=True),
     }
 
     _defaults = {
         'user_id': lambda self, cr, uid, context: uid,
         'company_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
+        'is_active': True,
     }
 
     _order = 'code'
+
+    def _check_default_journal(self, cr, uid, ids, context=None):
+        """
+        Prevents the inactivation of the journals imported by default in new instances.
+        """
+        for j in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'is_default']):
+            if not j.is_active and j.is_default:
+                return False
+        return True
+
+    _constraints = [
+        (_check_default_journal, "The journals imported by default at instance creation can't be inactivated.", ['is_active']),
+    ]
 
     def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
         journal = self.browse(cr, uid, id, context=context)
@@ -625,6 +712,7 @@ class account_journal(osv.osv):
         default = default.copy()
         default['code'] = (journal['code'] or '') + '(copy)'
         default['name'] = (journal['name'] or '') + '(copy)'
+        default['is_active'] = True
         return super(account_journal, self).copy(cr, uid, id, default, context=context)
 
     def _check_journal_constraints(self, cr, uid, journal_ids, context=None):
@@ -703,6 +791,62 @@ class account_journal(osv.osv):
                              'bank_address': '',
                              })
 
+    def _check_journal_inactivation(self, cr, uid, ids, vals, context=None):
+        """
+        Raises an error in case the journal is being inactivated while it is not allowed:
+        - for all liquidity journals: not all registers have been closed, or not all manual journal entries have been posted.
+        - for bank and cash journals only: the balance of the last register is not zero.
+        - for non-liquidity journals: not all entries have been posted, some invoices are still Draft, or some Recurring Plans are not Done.
+
+        Note: there is a Python constraint preventing the inactivation of the journals imported by default at instance creation.
+        """
+        if context is None:
+            context = {}
+        reg_obj = self.pool.get('account.bank.statement')
+        am_obj = self.pool.get('account.move')
+        inv_obj = self.pool.get('account.invoice')
+        rec_model_obj = self.pool.get('account.model')
+        rec_plan_obj = self.pool.get('account.subscription')
+        if 'is_active' in vals and not vals['is_active']:
+            for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'code', 'is_active'], context=context):
+                if not journal.is_active:  # skip the checks if the journal is already inactive
+                    continue
+                if journal.type in ['bank', 'cheque', 'cash']:  # liquidity journals
+                    if reg_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'confirm')], context=context):
+                        raise osv.except_osv(_('Error'),
+                                             _("Please close the registers linked to the journal %s before inactivating it.") % journal.code)
+                    if am_obj.search_exist(cr, uid,
+                                           [('journal_id', '=', journal.id), ('status', '=', 'manu'), ('state', '!=', 'posted')],
+                                           context=context):
+                        raise osv.except_osv(_('Error'),
+                                             _("Please post all the manual Journal Entries on the journal %s before inactivating it.") %
+                                             journal.code)
+                    if journal.type in ['bank', 'cash']:
+                        last_reg_id = reg_obj.search(cr, uid, [('journal_id', '=', journal.id)],
+                                                     order='period_start_date DESC', limit=1, context=context)
+                        if last_reg_id:
+                            balance_end = reg_obj.browse(cr, uid, last_reg_id[0], fields_to_fetch=['balance_end']).balance_end or 0.0
+                            if abs(balance_end) > 10**-3:
+                                raise osv.except_osv(_('Error'),
+                                                     _("The journal %s cannot be inactivated because the balance of the "
+                                                       "last register is not zero.") % journal.code)
+                else:  # non-liquidity journals
+                    if am_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'posted')], context=context):
+                        raise osv.except_osv(_('Error'),
+                                             _("All entries booked on %s must be posted before inactivating the journal.") % journal.code)
+                    if inv_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '=', 'draft')], context=context):
+                        raise osv.except_osv(_('Error'),
+                                             _("The journal %s cannot be inactivated because there are still some invoices "
+                                               "in Draft state on this journal.") % journal.code)
+                    rec_model_ids = rec_model_obj.search(cr, uid, [('journal_id', '=', journal.id)], order='NO_ORDER', context=context)
+                    if rec_model_ids and rec_plan_obj.search_exist(cr, uid,
+                                                                   [('model_id', 'in', rec_model_ids), ('state', '!=', 'done')],
+                                                                   context=context):
+                        raise osv.except_osv(_('Error'),
+                                             _("The journal %s cannot be inactivated because a Recurring Plan which is not Done "
+                                               "uses a Recurring Model with this journal.") % journal.code)
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -716,6 +860,7 @@ class account_journal(osv.osv):
             if not journal.is_current_instance and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
+        self._check_journal_inactivation(cr, uid, ids, vals, context=context)
         ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)
         self._check_journal_constraints(cr, uid, ids, context=context)
         return ret
@@ -924,6 +1069,33 @@ account_fiscalyear()
 class account_period(osv.osv):
     _name = "account.period"
     _description = "Account period"
+
+    def _get_false(self, cr, uid, ids, *a, **b):
+        """
+        Returns False for all ids (cf. only the search method is used for the field)
+        """
+        return {}.fromkeys(ids, False)
+
+    def _search_period_visible(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with the periods to display, based on args looking like:
+        [('period_visible', '=', [fiscalyear_id, instance_id, all_missions])]
+        """
+        if context is None:
+            context = {}
+        period_dom = []
+        if args:
+            if len(args[0]) < 3 or args[0][1] != '=' or not isinstance(args[0][2], list) or len(args[0][2]) < 3:
+                raise osv.except_osv(_('Error'), _('Filter not implemented.'))
+            fy_id = args[0][2][0]
+            inst_id = args[0][2][1]
+            all_missions = args[0][2][2]
+            if all_missions:
+                period_dom = [('number', '!=', 16), ('fiscalyear_id', '=', fy_id), ('state', '!=', 'created')]
+            else:
+                period_dom = [('number', '!=', 16), ('child_mission_closed', '=', [inst_id, fy_id])]
+        return period_dom
+
     _columns = {
         'name': fields.char('Period Name', size=64, required=True),
         'code': fields.char('Code', size=24),
@@ -934,8 +1106,12 @@ class account_period(osv.osv):
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal Year', required=True, states={'done':[('readonly',True)]}, select=True),
         'state': fields.selection([('draft','Open'), ('done','Closed')], 'State', readonly=True,
                                   help='When monthly periods are created. The state is \'Draft\'. At the end of monthly period it is in \'Done\' state.'),
-        'company_id': fields.related('fiscalyear_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True)
+        'company_id': fields.related('fiscalyear_id', 'company_id', type='many2one', relation='res.company',
+                                     string='Company', store=True, readonly=True),
+        'period_visible': fields.function(_get_false, method=True, type='boolean', string='Display the period', store=False,
+                                          fnct_search=_search_period_visible),
     }
+
     _defaults = {
         'state': 'draft',
     }
@@ -2450,6 +2626,7 @@ class account_subscription(osv.osv):
     def copy(self, cr, uid, acc_sub_id, default=None, context=None):
         """
         Account Subscription duplication:
+        - block the process if the model uses an inactive journal
         - block the process if the model has been set to Done as it shouldn't be used in any plans created afterwards
         - don't copy the link with subscription lines
         - add " (copy)" after the name
@@ -2457,6 +2634,9 @@ class account_subscription(osv.osv):
         if context is None:
             context = {}
         sub_copied = self.browse(cr, uid, acc_sub_id, fields_to_fetch=['name', 'model_id'], context=context)
+        if not sub_copied.model_id.journal_id.is_active:
+            raise osv.except_osv(_('Warning'), _("You cannot duplicate a Recurring Plan with a model on an inactive journal (%s).") %
+                                 sub_copied.model_id.journal_id.code)
         if sub_copied.model_id.state == 'done':
             raise osv.except_osv(_('Warning'), _('You cannot duplicate a Recurring Plan with a Done model.'))
         suffix = ' (copy)'

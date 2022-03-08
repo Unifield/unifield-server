@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from lxml import etree
+from tools.translate import _
 
 
 class view_entity_id(osv.osv_memory):
@@ -44,12 +45,12 @@ class view_entity_id(osv.osv_memory):
             last_seq = entity.update_last or ''
 
             doc = etree.XML(res['arch'])
-            nodes = doc.xpath("//label[@string='name']")
+            nodes = doc.xpath("//label[@id='name']")
             if nodes:
                 nodes[0].set('string', 'Hardware ID: %s' % hw_id)
-            nodes = doc.xpath("//label[@string='sequence']")
+            nodes = doc.xpath("//label[@id='sequence']")
             if nodes:
-                nodes[0].set('string', 'Last update: %s'%last_seq)
+                nodes[0].set('string', _('Last update: %s')%last_seq)
             res['arch'] = etree.tostring(doc)
 
         return res

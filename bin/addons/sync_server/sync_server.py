@@ -91,9 +91,9 @@ class entity_group(osv.osv):
 
     _columns = {
         'name': fields.char('Group Name', size = 64, required=True),
-        'entity_ids': fields.many2many('sync.server.entity', 'sync_entity_group_rel', 'group_id', 'entity_id', string="Instances"),
+        'entity_ids': fields.many2many('sync.server.entity', 'sync_entity_group_rel', 'group_id', 'entity_id', string="Instances", domain="[('oc', '=', oc)]"),
         'type_id': fields.many2one('sync.server.group_type', 'Group Type', ondelete="set null", required=True),
-        'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center', required=True),
+        'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center', required=True, add_empty=True),
     }
 
     def get_group_name(self, cr, uid, context=None):
@@ -110,8 +110,45 @@ class entity_group(osv.osv):
     def get(self, cr, uid, name, context=None):
         return self.search(cr, uid, [('name', '=', name)], context=context)
 
+    def _check_instance_oc(self, cr, uid, ids, context=None):
+        cr.execute('''
+            select
+                e.name
+            from
+                sync_server_entity_group grp, sync_entity_group_rel rel, sync_server_entity e
+            where
+                grp.id in %s and
+                rel.group_id = grp.id and
+                rel.entity_id = e.id and
+                e.oc != grp.oc
+            ''', (tuple(ids), ))
+
+        mismatch = [x[0] for x in cr.fetchall()]
+        if mismatch:
+            raise osv.except_osv(_("Error!"), _("OC on these instances does not match OC on group: %s") % (", ".join(mismatch),))
+
+        return True
+
+    def write_web(self, cr, uid, ids, values, context=None):
+        check_entity = False
+        if 'entity_ids' in values:
+            instance_ids = self.pool.get('sync.server.entity').search(cr, uid, [('state', '=', 'validated'), ('group_ids', 'in', ids)], context=context)
+            if len(instance_ids) > 1:
+                check_entity = True
+        ret = super(entity_group, self).write_web(cr, uid, ids, values, context=context)
+
+        if check_entity:
+            new_instance_ids = self.pool.get('sync.server.entity').search(cr, uid, [('state', '=', 'validated'), ('group_ids', 'in', ids)], context=context)
+            if set(instance_ids) != set(new_instance_ids):
+                raise osv.except_osv(_("Error!"), _("Sorry you can not change instances list on a group with a least 2 Validated instances"))
+        return ret
+
     #Check that the group has an unique name
     _sql_constraints = [('unique_name', 'unique(name)', 'Group name must be unique')]
+
+    _constraints = [
+        (_check_instance_oc, 'Error! OC on group and on instances must match.', []),
+    ]
 
 entity_group()
 
@@ -201,16 +238,16 @@ class entity(osv.osv):
         'name':fields.char('Instance Name', size=64, required=True, select=True),
         'identifier':fields.char('Identifier', size=64, readonly=True, select=True),
         'hardware_id' : fields.char('Hardware Identifier', size=128, select=True),
-        'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='cascade'),
+        'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='cascade', domain="[('oc', '=', oc)]"),
         'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center',
-                               required=True),
-        'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups"),
+                               required=True, add_empty=True),
+        'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups", domain="[('oc', '=', oc)]"),
         'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Config updated')], 'State'),
         'email':fields.char('Contact Email', size=512),
         'user_id': fields.many2one('res.users', 'User', ondelete='restrict', required=True),
 
         #just in case, since the many2one exist it has no cost in database
-        'children_ids' : fields.one2many('sync.server.entity', 'parent_id', 'Children Instances'),
+        'children_ids' : fields.one2many('sync.server.entity', 'parent_id', 'Children Instances', readonly=1),
         'update_token' : fields.char('Update security token', size=256),
 
         'activity' : fields.function(_get_activity, type='char', string="Activity", method=True, multi="_get_act"),
@@ -230,7 +267,7 @@ class entity(osv.osv):
         'mission': fields.char('Mission', size=64),
         'latitude': fields.float('Latitude',digits=(16,6)),
         'longitude': fields.float('Longitude', digits=(16,6)),
-        'pgversion': fields.char('Postgres Version', size=64),
+        'pgversion': fields.char('Postgres Version', size=64, readonly=1),
     }
     _defaults = {
         'version': lambda *a: 0,
@@ -338,16 +375,22 @@ class entity(osv.osv):
 
         # Be careful to only put it into state updated when something
         # that needs to be sent down to the client changes. (US-1809)
-        # Except: don't check group_ids because they are not used by
-        # sync_client anyway (and tricky to check right).
+        groups_list = []
         if context.get('update', False):
             for before in self.browse(cr, uid, ids):
+                groups_list += [x.id for x in before.group_ids]
                 if ('name' in vals and before.name != vals['name'] or
                     'parent_id' in vals and before.parent_id.id != vals['parent_id'] or
                         'email' in vals and before.email != vals['email']):
                     vals['state'] = 'updated'
 
-        return super(entity, self).write(cr, uid, ids, vals, context=context)
+        ret = super(entity, self).write(cr, uid, ids, vals, context=context)
+
+        if context.get('update', False):
+            new_groups = self.pool.get('sync.server.entity_group').search(cr, uid, [('entity_ids', 'in', ids)], context=context)
+            if set(new_groups) != set(groups_list):
+                super(entity, self).write(cr, uid, ids, {'state': 'updated'}, context=context)
+        return ret
 
     def create(self, cr, uid, vals, context=None):
         if not context:
@@ -498,6 +541,39 @@ class entity(osv.osv):
     def validate_action(self, cr, uid, ids, context=None):
         if not context:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for instance in self.browse(cr, uid, ids, fields_to_fetch=['oc', 'group_ids', 'parent_id'], context=context):
+            oc = instance.oc
+            parent_id = instance.parent_id and instance.parent_id.id
+
+            if instance.parent_id and instance.oc != instance.parent_id.oc:
+                raise osv.except_osv(_("Error!"), _("OC on %s and %s is not the same !") % (instance.name, instance.parent_id.name))
+
+            grp_type = []
+            for grp in instance.group_ids:
+                if grp.oc != oc:
+                    raise osv.except_osv(_("Error!"), _("OC on group %s does not match oc on instance %s") % (grp.name, instance.name))
+                if parent_id and grp.type_id.name == 'HQ + MISSION':
+                    if parent_id not in [x.id for x in  grp.entity_ids]:
+                        raise osv.except_osv(_("Error!"), _("Instance %s: the HQ + Mission group %s must contain the parent instance %s") % (instance.name, grp.name, instance.parent_id.name))
+
+                if grp.type_id.name == 'MISSION' and instance.parent_id and instance.parent_id.parent_id:
+                    if parent_id not in [x.id for x in  grp.entity_ids]:
+                        raise osv.except_osv(_("Error!"), _("Instance %s: the Mission group %s must contain the parent instance %s") % (instance.name, grp.name, instance.parent_id.name))
+
+                grp_type.append(grp.type_id.name)
+
+            if instance.parent_id and instance.parent_id.parent_id:
+                # project
+                if len(grp_type) != 3 or set(['OC', 'MISSION', 'HQ + MISSION']) != set(grp_type):
+                    raise osv.except_osv(_("Error!"), _("A Project instance must be in exactly 3 groups: OC, MISSION and HQ + MISSION"))
+            elif instance.parent_id:
+                # coordo
+                if len(grp_type) != 4 or set(['OC', 'MISSION', 'HQ + MISSION', 'COORDINATIONS']) != set(grp_type):
+                    raise osv.except_osv(_("Error!"), _("A Coordo must be in exactly 4 groups: OC, COORDINATIONS, MISSION and HQ + MISSION"))
 
         context['update'] = False
         self.write(cr, uid, ids, {'state': 'validated'}, context)

@@ -223,6 +223,7 @@ class stock_incoming_processor(osv.osv):
         'fields_as_ro': fields.boolean('Hide split/change prod', internal=True),
         'sequence_issue': fields.boolean('Issue with To ship'),
         'physical_reception_date': fields.datetime('Physical Reception Date'),
+        'imp_shipment_ref': fields.char(string='Ship Reference from the IN VI import', size=256, readonly=True),
     }
 
     _defaults = {

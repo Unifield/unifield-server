@@ -112,7 +112,7 @@
                             </p>
 
                          <script language="javascript">
-                            var invalid_small_amount = $('#invalid_small_amount').val() || $('invalid_small_amount').text();
+                            var invalid_small_amount = $('#invalid_small_amount').val() || $('#invalid_small_amount').text();
                             if (invalid_small_amount) {
                                 $('#label_invalid_small_amount').show();
                             }

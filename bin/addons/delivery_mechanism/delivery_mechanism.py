@@ -1008,6 +1008,12 @@ class stock_picking(osv.osv):
                         # min(move.product_qty, count) used if more qty is received
                         move_obj.decrement_sys_init(cr, uid, min(move.product_qty, count), pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
 
+            # Set the Shipment Ref from the IN import
+            pick_partner = wizard.picking_id.partner_id
+            imp_shipment_ref = ''
+            if not sync_in and wizard.imp_shipment_ref and (not pick_partner or pick_partner.partner_type in ['external', 'esc']):
+                imp_shipment_ref = wizard.imp_shipment_ref
+
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
             }, context=context)
@@ -1067,6 +1073,9 @@ class stock_picking(osv.osv):
                         # => analytic_distribution_supply/stock.py _invoice_hook
                         #    picking.purchase_id was False
                         back_order_post_copy_vals['purchase_id'] = picking_dict['purchase_id'][0]
+
+                    if imp_shipment_ref:
+                        back_order_post_copy_vals['shipment_ref'] = imp_shipment_ref
 
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
@@ -1176,8 +1185,13 @@ class stock_picking(osv.osv):
                     'close_in': _('In progress'),
                 }, context=context)
 
+                to_write = {}
                 if wizard.physical_reception_date:
-                    self.write(cr, uid, picking_id, {'physical_reception_date': wizard.physical_reception_date})
+                    to_write.update({'physical_reception_date': wizard.physical_reception_date})
+                if imp_shipment_ref:
+                    to_write.update({'shipment_ref': imp_shipment_ref})
+                if to_write:
+                    self.write(cr, uid, picking_id, to_write, context=context)
 
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking_id, context=context)
@@ -1328,9 +1342,12 @@ class stock_picking(osv.osv):
         model = 'enter.reason'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
-        pick = self.read(cr, uid, ids[0], ['from_wkf_sourcing', 'dpo_incoming', 'type'])
+        pick = self.browse(cr, uid, ids[0], fields_to_fetch=['from_wkf_sourcing', 'dpo_incoming', 'type', 'state', 'partner_id'])
         if pick['type'] == 'in' and pick['dpo_incoming'] and not pick['from_wkf_sourcing']:
             context['in_from_dpo'] = True
+        if pick['type'] == 'in' and not pick['dpo_incoming'] and pick['state'] == 'assigned' and pick.partner_id.partner_type not in ('esc', 'external'):
+            if self.pool.get('stock.move').search_exists(cr, uid, [('picking_id', '=', pick.id), ('in_forced', '=', False), ('state', '!=', 'cancel')], context=context):
+                context['display_warning'] = True
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, picking_id=ids[0]))
 

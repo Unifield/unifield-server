@@ -10,7 +10,7 @@
     </record>
 
     <record id="stock_location_quarantine_scrap" model="stock.location">
-        <field name="name">Quarantine (before scrap)</field>
+        <field name="name">Expired / Damaged / For Scrap</field>
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
         <field name="quarantine_location">True</field>

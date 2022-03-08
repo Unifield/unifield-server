@@ -157,6 +157,7 @@
                     <field name="delivery_requested_date" required="1" />
                     <field name="origin" />
                     <field name="requestor" />
+                    <field name="location_requestor_id" />
                     <field name="ir_total_amount" string="Indicative Total Value"/>
                     <field name="functional_currency_id" />
                     <field name="line_count"/>
@@ -184,7 +185,7 @@
                         <field name="name" />
                         <field name="origin" />
                         <field name="requestor" />
-                        <field name="warehouse_id" />
+                        <field name="location_requestor_id" />
                     </group>
                     <newline />
                     <group string="Group By...">

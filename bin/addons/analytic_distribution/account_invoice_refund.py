@@ -33,7 +33,6 @@ class account_invoice_refund(osv.osv_memory):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
-        # @@@override@account.wizard.account_invoice_refund.py
         obj_journal = self.pool.get('account.journal')
         obj_inv = self.pool.get('account.invoice')
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
@@ -43,13 +42,23 @@ class account_invoice_refund(osv.osv_memory):
         # in case of a DI refund from a register line use the dir_invoice_id in context
         doc_to_refund_id = context.get('dir_invoice_id', False) or (context.get('active_ids') and context['active_ids'][0])
         if doc_to_refund_id:
-            source = obj_inv.read(cr, uid, doc_to_refund_id, ['type', 'is_intermission'], context=context)
-            if source['is_intermission']:
+            source = obj_inv.read(cr, uid, doc_to_refund_id, ['type', 'is_intermission', 'doc_type', 'journal_id'], context=context)
+            if source['doc_type'] == 'stv':
+                if source['journal_id']:
+                    # by default use the same journal for the refund
+                    args = [('id', '=', source['journal_id'][0])]
+                else:
+                    args = [('type', '=', 'sale')]
+            elif source['doc_type'] == 'isi':
+                args = [('type', '=', 'purchase'), ('code', '=', 'ISI')]
+            elif source['is_intermission']:
                 args = [('type', '=', 'intermission')]
             elif source['type'] in ('in_invoice', 'in_refund'):
                 args = [('type', '=', 'purchase_refund')]
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
+        args.append(('is_active', '=', True))
+        # get the first journal created matching with the defined criteria
         journal = obj_journal.search(cr, uid, args, order='id', limit=1, context=context)
         return journal and journal[0] or False
 
@@ -69,17 +78,29 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         journal_obj = self.pool.get('account.journal')
         res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        jtype = 'sale_refund'
-        if context.get('journal_type'):
-            jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
-        if jtype in ('sale', 'sale_refund'):
-            jtype = 'sale_refund'
-        elif jtype != 'intermission':  # for IVO/IVI keep using the Interm. journal
-            jtype = 'purchase_refund'
+        if context.get('doc_type', '') in ('ivo', 'ivi'):
+            # only the first Intermission journal created (INT, always active because it is one of the default journals created)
+            int_journal_id = self.pool.get('account.invoice')._get_int_journal_for_current_instance(cr, uid, context=context)
+            journal_domain = [('id', '=', int_journal_id)]
+        else:
+            if context.get('doc_type', '') == 'stv':
+                jtype = 'sale'
+            elif context.get('doc_type', '') == 'isi':
+                jtype = 'purchase'
+            else:
+                jtype = 'sale_refund'
+                if context.get('journal_type'):
+                    jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
+                if jtype in ('sale', 'sale_refund'):
+                    jtype = 'sale_refund'
+                else:
+                    jtype = 'purchase_refund'
+            journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True), ('is_active', '=', True)]
+        if context.get('doc_type', '') == 'isi':
+            journal_domain.append(('code', '=', 'ISI'))
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         for field in res['fields']:
             if field == 'journal_id' and user.company_id.instance_id:
-                journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True)]
                 journal_select = journal_obj._name_search(cr, uid, '', journal_domain, context=context, limit=None, name_get_uid=1)
                 res['fields'][field]['selection'] = journal_select
                 res['fields'][field]['domain'] = journal_domain
@@ -88,7 +109,9 @@ class account_invoice_refund(osv.osv_memory):
     _columns = {
         'date': fields.date('Posting date'),
         'document_date': fields.date('Document Date', required=True),
-        'is_intermission': fields.boolean("Wizard opened from an Intermission Voucher", readonly=True)
+        'is_intermission': fields.boolean("Wizard opened from an Intermission Voucher", readonly=True),
+        'is_stv': fields.boolean("Wizard opened from a Stock Transfer Voucher", readonly=True),
+        'is_isi': fields.boolean("Wizard opened from an Intersection Supplier Invoice", readonly=True),
     }
 
     def _get_refund(self, cr, uid, context=None):
@@ -97,8 +120,10 @@ class account_invoice_refund(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if context.get('is_intermission', False):
+        if context.get('is_intermission', False) or context.get('doc_type', '') == 'stv':
             return 'modify'
+        elif context.get('doc_type', '') == 'isi':
+            return 'cancel'
         return 'refund'  # note that only the "Refund" option is available in DI
 
     def _get_is_intermission(self, cr, uid, context=None):
@@ -109,11 +134,29 @@ class account_invoice_refund(osv.osv_memory):
             context = {}
         return context.get('is_intermission', False)
 
+    def _get_is_stv(self, cr, uid, context=None):
+        """
+        Returns True if the wizard has been opened from a Stock Transfer Voucher
+        """
+        if context is None:
+            context = {}
+        return context.get('doc_type', '') == 'stv'
+
+    def _get_is_isi(self, cr, uid, context=None):
+        """
+        Returns True if the wizard has been opened from an Intersection Supplier Invoice
+        """
+        if context is None:
+            context = {}
+        return context.get('doc_type', '') == 'isi'
+
     _defaults = {
         'document_date': _get_document_date,
         'filter_refund': _get_refund,
         'journal_id': _get_journal,  # US-193
         'is_intermission': _get_is_intermission,
+        'is_stv': _get_is_stv,
+        'is_isi': _get_is_isi,
     }
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
@@ -143,7 +186,7 @@ class account_invoice_refund(osv.osv_memory):
         else:
             return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, context=context)
 
-    def _hook_create_invoice(self, cr, uid, data, form, *args):
+    def _hook_create_invoice(self, cr, uid, data, form, context=None):
         """
         Permits to adapt invoice creation
         """
@@ -151,7 +194,7 @@ class account_invoice_refund(osv.osv_memory):
             self.pool.get('finance.tools').check_document_date(cr, uid,
                                                                form['document_date'], form['date'])
             data.update({'document_date': form['document_date']})
-        return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form)
+        return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form, context=context)
 
     def _hook_get_period_from_date(self, cr, uid, invoice_id, date=False, period=False):
         """

@@ -30,7 +30,6 @@
     "depends" : ["base", "account_journal", "analytic_distribution", "purchase_override", "stock", "res_currency_functional"],
     "init_xml" : [],
     "update_xml" : [
-        "account_commitment_view.xml",
     ],
     "demo_xml" : [],
     "test": [

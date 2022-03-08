@@ -69,6 +69,7 @@
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="search_color">darkorchid</field>
         <field name="posz">1</field>
     </record>
     
@@ -88,6 +89,7 @@
         <field name="chained_location_type">nomenclature</field>
         <field name="chained_auto_packing">transparent</field>
         <field name="chained_picking_type">internal</field>
+        <field name="search_color">dimgray</field>
         <field name="posz">1</field>
     </record>
 
@@ -99,6 +101,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="search_color">dimgray</field>
         <field name="posz">1</field>
     </record>
     
@@ -122,6 +125,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="search_color">dimgray</field>
         <field name="posz">2</field>
     </record>
     
@@ -154,6 +158,7 @@
         <field name="location_id" ref="stock.stock_location_company"/>
         <field name="usage">internal</field>
         <field name="location_category">transition</field>
+        <field name="search_color">darkorchid</field>
         <field name="posz">3</field>
     </record>
 
@@ -200,7 +205,7 @@
     </record>
 
     <record id="stock_location_quarantine_view" model="stock.location">
-        <field name="name">Quarantine</field>
+        <field name="name">Quarantine / For Scrap</field>
         <field name="location_category">other</field>
         <field name="usage">view</field>
         <field name="location_id" ref="stock.stock_location_locations" />
@@ -221,10 +226,11 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
         <field name="quarantine_location">True</field>
+        <field name="search_color">darkorange</field>
     </record>
 
     <record id="stock_override.stock_location_quarantine_scrap" model="stock.location">
-        <field name="name">Quarantine (before scrap)</field>
+        <field name="name">Expired / Damaged / For Scrap</field>
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
         <field name="location_id" ref="stock_location_quarantine_view" />
@@ -232,6 +238,7 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
         <field name="quarantine_location">True</field>
+        <field name="search_location">sandybrown</field>
     </record>
 
     <record id="stock.location_inventory" model="stock.location">
@@ -308,6 +315,7 @@
         <field name="chained_picking_type">internal</field>
         <field name="active" eval="False" />
         <field name="optional_loc" eval="True" />
+        <field name="search_color">royalblue</field>
         <field name="posz">2</field>
     </record>
 
@@ -321,21 +329,9 @@
         <field name="chained_picking_type">internal</field>
         <field name="active" eval="False" />
         <field name="optional_loc" eval="True" />
+        <field name="search_color">royalblue</field>
         <field name="posz">1</field>
     </record>
-    
-<!--     <record id="stock_location_eprep" model="stock.location">
-        <field name="name">EPREP</field>
-        <field name="location_category">eprep</field>
-        <field name="usage">internal</field>
-        <field name="location_id" ref="stock_location_intermediate_client_view" />
-        <field name="chained_location_type">fixed</field>
-        <field name="chained_location_id" ref="stock.stock_location_stock" />
-        <field name="chained_auto_packing">manual</field>
-        <field name="active" eval="False" />
-        <field name="optional_loc" eval="True" />
-        <field name="chained_picking_type">internal</field>
-    </record> -->
 
     <record id="stock_location_consumption_units_view" model="stock.location">
         <field name="name">Internal Consumption Units</field>
@@ -347,9 +343,24 @@
         <field name="chained_picking_type">internal</field>
         <field name="active" eval="False" />
         <field name="optional_loc" eval="True" />
+        <field name="search_color">royalblue</field>
         <field name="posz">2</field>
     </record>
-    
+
+    <record id="stock_location_eprep_view" model="stock.location">
+        <field name="name">EPREP Stocks</field>
+        <field name="location_category">other</field>
+        <field name="location_id" ref="stock_location_internal_client_view" />
+        <field name="usage">view</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
+        <field name="search_color">lightpink</field>
+        <field name="posz">30</field>
+    </record>
+
     <record id="stock.stock_location_internal_suppliers_view" model="stock.location">
         <field name="name">Supplier</field>
         <field name="location_id" ref="stock.stock_location_locations_partner" />

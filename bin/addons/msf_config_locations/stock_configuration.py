@@ -179,7 +179,7 @@ class stock_location(osv.osv):
                     # Cross-docking locations
                     res = [('cross_docking_location_ok', '=' ,True)]
                 else:
-                    # All internal locations except Quarantine (both), Output (& children) and Input locations
+                    # All internal locations except Quarantine, Expired/Damaged/For Scrap, Output (& children) and Input locations
                     res = [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]
 
         return res
@@ -484,14 +484,13 @@ class stock_location_configuration_wizard(osv.osv_memory):
                 raise osv.except_osv(errors.get('warning', {}).get('title', ''), errors.get('warning', {}).get('message', ''))
             # Returns an error if no given location name
             if not wizard.location_name:
-                #                # Raise error if location with the same name and the same parameters already exists
-                #                if location_obj.search(cr, uid, [('name', '=', wizard.location_name),
-                #                                                 ('usage', '=', wizard.location_type or 'internal'),
-                #                                                 ('location_category', '=', wizard.location_usage)], context=context):
                 raise osv.except_osv(_('Error'), _('You should give a name for the new location !'))
             location = wizard.location_id
             location_name = wizard.location_name
-            # Check if all parent locations are activated in the system
+
+            search_color = False
+            # Check if all parent locations are activated in the system
+            eprep_location = False
             if wizard.location_usage in ('stock', 'eprep') or (wizard.location_type == 'internal' and wizard.location_usage == 'consumption_unit'):
                 # Check if 'Configurable locations' location is active − If not, activate it !
                 location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')
@@ -502,25 +501,21 @@ class stock_location_configuration_wizard(osv.osv_memory):
                     location_obj.write(cr, uid, [location_id[1]], {'active': True}, context=context)
 
                 if wizard.location_usage in ('stock', 'eprep'):
-                    #                    if wizard.location_usage == 'stock':
-                    location_category = 'stock'
                     location_usage = 'internal'
-                    # Check if 'Intermediate Stocks' is active − If note activate it !
-                    parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
-#                    else:
-#                        location_stock_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')
-#                        if not location_stock_id:
-#                            raise osv.except_osv(_('Error'), _('Location \'Stock\' not found in the instance or is not activated !'))
-#                        location_category = 'eprep'
-#                        location_usage = 'internal'
-#                        chained_location_type = 'fixed'
-#                        chained_auto_packing = 'manual'
-#                        chained_picking_type = 'internal'
-#                        chained_location_id = location_stock_id[1]
-#                        parent_location_id = location_id
-
-                    if not parent_location_id:
-                        raise osv.except_osv(_('Error'), _('Location \'Intermediate Stocks\' not found in the instance or is not activated !'))
+                    location_category = 'stock'
+                    if wizard.location_usage == 'stock':
+                        # Check if 'Intermediate Stocks' is active − If note activate it !
+                        parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
+                        if not parent_location_id:
+                            raise osv.except_osv(_('Error'), _('Location \'Intermediate Stocks\' not found in the instance or is not activated !'))
+                    else:
+                        if not location_name or 'eprep' not in location_name.lower():
+                            raise osv.except_osv(_('Error'), _('The location name must contain the word "EPREP"'))
+                        eprep_location = True
+                        search_color = 'lightpink'
+                        parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')
+                        if not parent_location_id:
+                            raise osv.except_osv(_('Error'), _('Location \'EPREP stocks\' not found in the instance or is not activated !'))
 
                     parent_location_id = parent_location_id[1]
 
@@ -529,7 +524,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
                 elif wizard.location_usage == 'consumption_unit':
                     location_category = 'consumption_unit'
                     location_usage = 'internal'
-                    # Check if 'Internal Consumption Units' is active − If note activate it !
+                    # Check if 'Internal Consumption Units' is active − If note activate it !
                     parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')
 
                     parent_location_id = parent_location_id[1]
@@ -571,9 +566,11 @@ class stock_location_configuration_wizard(osv.osv_memory):
                                           'chained_picking_type': chained_picking_type,
                                           'chained_location_id': chained_location_id,
                                           'optional_loc': True,
+                                          'search_color': search_color,
+                                          'eprep_location': eprep_location,
                                           }, context=context)
         else:
-            # Reactivate the location
+            # Reactivate the location
             location_obj.write(cr, uid, [location.id], {'active': True}, context=context)
 
         return_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_location_tree')
@@ -795,6 +792,7 @@ class stock_remove_location_wizard(osv.osv_memory):
         configurable_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
         intermediate_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
         internal_cu_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
+        eprep_view_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1]
 
         for wizard in self.browse(cr, uid, ids, context=context):
             if (wizard.error and not wizard.can_force) or wizard.has_child or wizard.not_empty or wizard.move_from:
@@ -805,7 +803,7 @@ class stock_remove_location_wizard(osv.osv_memory):
         location_obj.write(cr, uid, [location.id], {'active': False}, context=context)
 
         # Check if parent location should be also de-activated
-        if location.location_id.id in (intermediate_loc_id, internal_cu_loc_id, configurable_loc_id):
+        if location.location_id.id in (intermediate_loc_id, internal_cu_loc_id, configurable_loc_id, eprep_view_id):
             empty = True
             for child in location.location_id.child_ids:
                 if child.active:
@@ -987,4 +985,55 @@ class stock_remove_location_wizard(osv.osv_memory):
 
 stock_remove_location_wizard()
 
+class stock_location_convert_eprep(osv.osv_memory):
+    _name = 'stock.location.convert_eprep'
+
+    _columns = {
+        'location_id': fields.many2one('stock.location', string='Intermediate Stock to convert', required=1, domain=[('location_category', '=', 'stock'), ('usage', '=', 'internal'), ('intermediate_parent', '=', True)]),
+    }
+
+    def convert_location(self, cr, uid, ids, context=None):
+        convert = self.browse(cr, uid, ids[0], context=context)
+        if not convert.location_id or not convert.location_id.intermediate_parent:
+            raise osv.except_osv(_('Error'), _('Location can not be moved !'))
+
+        current_parent_id = convert.location_id.location_id.id
+
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+        eprep_view = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')
+        if not eprep_view:
+            raise osv.except_osv(_('Error'), _('Eprep stock not found !'))
+
+        if not loc_obj.browse(cr, uid, eprep_view[1], fields_to_fetch=['active'], context=context).active:
+            loc_obj.write(cr, uid, eprep_view[1], {'active': True}, context=context)
+
+        loc_obj.write(cr, uid, convert.location_id.id, {
+            'location_category': 'stock',
+            'eprep_location': True,
+            'location_id': eprep_view[1],
+            'search_color': 'lightpink',
+            'moved_location': True,
+        }, context=context)
+        return_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_location_tree')
+
+        self.pool.get('res.log').create(cr, uid, {'name': 'Location %s (id:%d) converted to Eprep' % (convert.location_id.name, convert.location_id.id), 'read': True}, context=context)
+        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'stock.location', convert.location_id.id, {},
+                                                                              'stock.location.instance.create_record', logger=None, check_identifier=False, context=context, force_domain=False)
+
+        if not loc_obj.search_exists(cr, uid, [('location_id', '=', current_parent_id), ('active', '=', True)], context=context):
+            loc_obj.write(cr, uid, current_parent_id, {'active': False}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Locations Structure',
+            'res_model': 'stock.location',
+            'domain': [('location_id','=',False)],
+            'view_type': 'tree',
+            'target': 'crush',
+            'view_id': [return_view_id[1]],
+        }
+
+
+stock_location_convert_eprep()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

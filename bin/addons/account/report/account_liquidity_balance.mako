@@ -141,14 +141,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="${_('Liquidity Balances')}">
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="1" />
 <Column ss:AutoFitWidth="1" ss:Width="270" />
 <Column ss:AutoFitWidth="1" ss:Width="90" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="4" />
 
 <!-- TABLE HEADER -->
 <Row>
@@ -176,6 +172,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Currency')}</Data>
 </Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Journal status')}</Data>
+</Cell>
 </Row>
 
 <!-- TABLE LINES -->
@@ -189,6 +188,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
  <Cell ss:StyleID="ssRegLineNumber"><Data ss:Type="Number">${ line['calculated'] or 0.0|x}</Data></Cell>
  <Cell ss:StyleID="ssRegLineNumber"><Data ss:Type="Number">${ line['closing'] or 0.0|x}</Data></Cell>
  <Cell ss:StyleID="ssRegLineRight"><Data ss:Type="String">${ line['currency'] or ''|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLineRight"><Data ss:Type="String">${ line['journal_status'] or ''|x}</Data></Cell>
 </Row>
 % endfor
 

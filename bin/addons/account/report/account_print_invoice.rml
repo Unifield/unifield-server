@@ -139,6 +139,7 @@
   </stylesheet>
   <story>
   <pto>
+    <!-- NOTE: this report seems to be overwritten by account_override/report/account_print_invoice.rml -->
     <para style="terp_default_8">[[ repeatIn(objects,'o') ]]</para>
     <para style="terp_default_8"></para>
     <pto_header><!-- Must be after setLang() -->

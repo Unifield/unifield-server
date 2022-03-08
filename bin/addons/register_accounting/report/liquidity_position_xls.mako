@@ -250,15 +250,15 @@
 
   </Styles>
 
-  <Worksheet ss:Name="Liquidity position">
+  <Worksheet ss:Name="${_('Liquidity Position')|x}">
     <Table >
       <Column ss:AutoFitWidth="0" ss:Width="161.25"/>
       <Column ss:AutoFitWidth="0" ss:Width="40.5"/>
       <Column ss:AutoFitWidth="0" ss:Width="138.75"/>
       <Column ss:AutoFitWidth="0" ss:Width="57"/>
-      <Column ss:AutoFitWidth="0" ss:Width="60.75"/>
+      <Column ss:AutoFitWidth="0" ss:Width="72"/>
       <Column ss:AutoFitWidth="0" ss:Width="75.75" ss:Span="2"/>
-      <Column ss:AutoFitWidth="0" ss:Width="57"/>
+      <Column ss:AutoFitWidth="0" ss:Width="70"/>
       <Column ss:AutoFitWidth="0" ss:Width="75.75" ss:Span="1"/>
       <Column ss:AutoFitWidth="0" ss:Width="55.5"/>
 
@@ -307,7 +307,7 @@
       % for reg_type in getRegistersByType():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s34" >
-          <Data ss:Type="String">${ reg_type.title()|x }</Data>
+          <Data ss:Type="String">${ _(reg_type.title())|x }</Data>
         </Cell>
       </Row>
       <Row  ss:AutoFitHeight="1" ss:StyleID="s35">
@@ -321,7 +321,7 @@
           <Data ss:Type="String">${_('Journal Name')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Status')|x}</Data>
+          <Data ss:Type="String">${_('State')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Period')|x}</Data>
@@ -405,7 +405,7 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">Subtotal ${ str(cur)|x }</Data>
+          <Data ss:Type="String">${"%s %s" % (_("Subtotal"), str(cur))|x}</Data>
         </Cell>
         <Cell ss:StyleID="s26">
             <Data ss:Type="Number">${ getOpeningBalance(reg_type, cur) or '0.00' }</Data>
@@ -442,7 +442,11 @@
         <Cell ss:StyleID="s25c"/>
 
         <Cell ss:StyleID="s49">
-          <Data ss:Type="String">Total ${ reg_type.title()|x }:</Data>
+          % if reg_type == 'cash':
+            <Data ss:Type="String">${_("Total Cash:")|x }</Data>
+          % else:
+            <Data ss:Type="String">${_("Total Bank:")|x}</Data>
+          % endif
         </Cell>
         <Cell ss:StyleID="s50">
           <Data ss:Type="Number">${ getReg()[reg_type]['func_amount_calculated'] or '0.00' }</Data>
@@ -473,7 +477,7 @@
           <Data ss:Type="String">${_('Journal Name')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Status')|x}</Data>
+          <Data ss:Type="String">${_('State')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Period')|x}</Data>
@@ -577,7 +581,7 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">Subtotal ${ str(cur)|x }</Data>
+          <Data ss:Type="String">${"%s %s" % (_("Subtotal"), str(cur))|x}</Data>
         </Cell>
         <Cell ss:StyleID="s26">
           <Data ss:Type="Number">${ pending_cheques['currency_amounts'][cur]['total_amount_reg_currency'] or '0.00' }</Data>

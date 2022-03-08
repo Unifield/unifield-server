@@ -88,7 +88,7 @@
                 <para style="Information">[[ o.partner_id.name ]]</para>
             </td>
             <td>
-            	<para style="Information">[[ getSel(o, 'type') ]]</para>
+            	<para style="Information">[[ get_doc_type(o) ]]</para>
             </td>
             <td>
                 <para style="Information">[[ get_journal_code(o) ]]</para>

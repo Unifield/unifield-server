@@ -137,7 +137,7 @@ class local_message_rule(osv.osv):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-            partner = model_obj.browse(cr, uid, res_id)[rule.destination_name]
+            partner = model_obj.browse(cr, uid, res_id, fields_to_fetch=[rule.destination_name])[rule.destination_name]
             partner_name = partner.name
             arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=partner, context=context)
             if extra_arg:
@@ -261,16 +261,20 @@ class message_to_send(osv.osv):
         obj_ids = []
         identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids_temp, rule.server_id, context=context)
 
-        # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
-        obj_ids = [obj_id for obj_id in obj_ids_temp_order if obj_id in obj_ids_temp and not \
-                   self.search(cr, uid, [('identifier', '=',
-                                          identifiers[obj_id])], context=context)]
+        allow_duplicates = rule.remote_call == 'purchase.order.line.update_dates_from_pol'
+
+        if not allow_duplicates:
+            # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
+            obj_ids = [obj_id for obj_id in obj_ids_temp_order if obj_id in obj_ids_temp and not \
+                       self.search(cr, uid, [('identifier', '=',
+                                              identifiers[obj_id])], context=context)]
+        else:
+            obj_ids = obj_ids_temp
 
         ignored_ids = list(set(obj_ids_temp) - set(obj_ids))
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         generated_ids = []
-
 
         if obj_ids and rule.model == 'stock.picking' and rule.remote_call in ('stock.picking.partial_shipped_fo_updates_in_po', 'stock.picking.partial_shippped_dpo_updates_in_po'):
             cr.execute("select array_agg(id) from stock_picking where id in %s group by subtype, partner_id, origin, claim, coalesce(shipment_id, id)", (tuple(obj_ids),))
@@ -293,8 +297,11 @@ class message_to_send(osv.osv):
                     if destination is False:
                         destination = 'fake'
                     # UF-2483: By default the "sent" parameter is False
-                    self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context)
+                    self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context, allow_duplicates=allow_duplicates)
                 generated_ids.append(id)
+
+        if generated_ids and rule.remote_call == 'purchase.order.line.update_dates_from_pol':
+            cr.execute("update purchase_order_line set dates_modified='f' where id in %s", (tuple(generated_ids), ))
 
         return generated_ids, ignored_ids
 
@@ -302,7 +309,7 @@ class message_to_send(osv.osv):
         return dict( (id, "%s_%s" % (name, server_rule_id)) \
                      for id, name in self.pool.get(model).get_sd_ref(cr, uid, ids, context=context).items() )
 
-    def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, sent=False, context=None):
+    def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, sent=False, context=None, allow_duplicates=False):
         data = {
             'identifier' : identifier,
             'remote_call': remote_call,
@@ -311,12 +318,13 @@ class message_to_send(osv.osv):
             'sent' : sent,
             'generate_message' : False,
         }
-        ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
+        if allow_duplicates:
+            ids = []
+        else:
+            ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
         if not ids:
             ids = [self.create(cr, uid, data, context=context)]
         return ids[0]
-        #else:
-        #sync_log(self, "Message %s already exist" % identifier)
 
     """
         Sending Part

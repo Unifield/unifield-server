@@ -106,4 +106,4 @@ class chronogram(report_sxw.rml_parse):
 
         return {'date': start_date, 'cols': cols}
 
-SpreadsheetReport('report.report_replenishment_parent_segment_chronogram_xls', 'replenishment.parent.segment', 'addons/procurement_cycle/report/chronogram.mako', parser=chronogram)
+SpreadsheetReport('report.report_replenishment_parent_segment_chronogram_xls', 'replenishment.parent.segment', 'addons/procurement_cycle/report_doc/chronogram.mako', parser=chronogram)

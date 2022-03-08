@@ -124,13 +124,18 @@
                   
                 <menuitem id="msf_config_locations.menu_stock_remove_location_wizard"
                   action="msf_config_locations.action_stock_remove_location_wizard"
-                  parent="menu_reg_wh_mngt" 
-                  sequence="11"/>
+                  parent="menu_reg_wh_mngt"
+                  sequence="20"/>
                   
+                <menuitem id="msf_config_locations.menu_stock_location_convert_eprep"
+                    action="msf_config_locations.action_stock_location_convert_eprep"
+                    parent="menu_reg_wh_mngt"
+                    sequence="15"/>
+
                 <menuitem id="msf_outgoing.menu_action_pack_type_tree" 
                 action="msf_outgoing.action_pack_type_tree" 
                 parent="menu_reg_wh_mngt"
-                sequence="12" />
+                sequence="30" />
                 
             <menuitem id="menu_adv_wh_mngt" 
             name="Advanced Warehouse Management"

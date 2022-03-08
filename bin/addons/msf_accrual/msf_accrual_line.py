@@ -96,7 +96,9 @@ class msf_accrual_line(osv.osv):
         if context is None:
             context = {}
         acc_journal_ids = self.pool.get('account.journal').search(cr, uid,
-                                                                  [('type', '=', 'accrual'), ('is_current_instance', '=', True)],
+                                                                  [('type', '=', 'accrual'),
+                                                                   ('is_current_instance', '=', True),
+                                                                   ('is_active', '=', True)],
                                                                   order='id', limit=1, context=context)
         if not acc_journal_ids:
             raise osv.except_osv(_('Warning !'), _("No journal of type Accrual has been found for the current instance."))

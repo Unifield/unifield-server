@@ -43,11 +43,11 @@ class inventory_parser(XlsxReportParser):
         red_cell_style = self.create_style_from_template('red_cell_style', 'H7')
 
         self.duplicate_row_dimensions(range(1, 16))
-        self.duplicate_column_dimensions(default_width=10.75)
+        self.duplicate_column_dimensions(default_width=15)
 
-        sheet.column_dimensions.group('AR', get_column_letter(column_index_from_string('AR')+2*inventory.projected_view - 1), hidden=False)
+        sheet.column_dimensions.group('AN', get_column_letter(column_index_from_string('AN')+2*inventory.projected_view - 1), hidden=False)
         sheet.column_dimensions.group('D', 'E', hidden=False)
-        sheet.column_dimensions.group('V', 'Y', hidden=False)
+        sheet.column_dimensions.group('R', 'U', hidden=False)
         sheet.row_dimensions.group(2, 14, hidden=False)
 
 
@@ -102,11 +102,7 @@ class inventory_parser(XlsxReportParser):
             (_('Primary Product list'), green_header_style),
             (_('Warnings Recap'), red_header_style),
             (_('Segment Ref/name'), orange_header_style),
-            (_('RR (threshold) applied'), orange_header_style),
-            (_('RR (qty) applied'), orange_header_style),
-            (_('Min'), orange_header_style),
-            (_('Max'), orange_header_style),
-            (_('Automatic Supply order  qty'), orange_header_style),
+            (_('RR Type'), orange_header_style),
             ('%s %s' % (_('Internal LT'), time_unit_str), orange_header_style),
             ('%s %s' % (_('External LT'), time_unit_str), orange_header_style),
             (_('Total lead time'), orange_header_style),
@@ -142,7 +138,7 @@ class inventory_parser(XlsxReportParser):
 
 
         for nb_month in range(0, inventory.projected_view):
-            row_headers.append(('%s M%s\n %s' % (_('RR-FMC'), nb_month, self.get_month(inventory.generation_date, nb_month)), pink1_header_style))
+            row_headers.append(('%s M%s\n %s' % (_('RR value'), nb_month, self.get_month(inventory.generation_date, nb_month)), pink1_header_style))
 
         for nb_month in range(0, inventory.projected_view):
             row_headers.append(('%s\nM%s %s' % (_('Projected'), nb_month, self.get_month(inventory.generation_date, nb_month)), pink2_header_style))
@@ -171,19 +167,7 @@ class inventory_parser(XlsxReportParser):
                 self.add_cell(line.primay_product_list or None)
                 self.add_cell(line.warning or None)
                 self.add_cell(line.segment_ref_name or None)
-                self.add_cell(line.rule == 'cycle' and 'PAS' or None)
                 self.add_cell(line.segment_ref_name and self.getSel(line, 'rule') or None)
-                if line.rule == 'minmax':
-                    self.add_cell(line.min_qty)
-                    self.add_cell(line.max_qty)
-                else:
-                    self.add_cell('', grey_style)
-                    self.add_cell('', grey_style)
-
-                if line.segment_ref_name and line.rule == 'auto':
-                    self.add_cell(line.auto_qty)
-                else:
-                    self.add_cell('', grey_style)
 
                 if inventory.time_unit == 'd':
                     lt_style = default_style
@@ -236,12 +220,12 @@ class inventory_parser(XlsxReportParser):
                     self.add_cell()
 
                 if line.expired_qty_before_cons:
-                    self.add_cell(line.expired_qty_before_cons, date_style)
+                    self.add_cell(line.expired_qty_before_cons)
                 else:
                     self.add_cell()
 
                 if line.total_expired_qty:
-                    self.add_cell(line.total_expired_qty, date_style)
+                    self.add_cell(line.total_expired_qty)
                 else:
                     self.add_cell()
 
@@ -259,11 +243,18 @@ class inventory_parser(XlsxReportParser):
                 self.add_cell(self.to_datetime(line.date_next_order_validated), date_style)
                 self.add_cell(self.to_datetime(line.date_next_order_rdd), date_style)
 
+                nb_pas = 0
                 for detail_pas in line.pas_ids:
+                    nb_pas += 1
                     if detail_pas.rr_fmc is not None and detail_pas.rr_fmc is not False:
-                        self.add_cell(detail_pas.rr_fmc)
+                        if line.rule != 'minmax':
+                            self.add_cell(detail_pas.rr_fmc)
+                        elif detail_pas.rr_max is not False:
+                            self.add_cell('%g / %g'% (detail_pas.rr_fmc, detail_pas.rr_max))
+                        else:
+                            self.add_cell(_('Invalid'))
                     else:
-                        self.add_cell(_('Invalid FMC'))
+                        self.add_cell(_('Invalid'))
 
                 for detail_pas in line.pas_ids:
                     if detail_pas.projected is not None and detail_pas.projected is not False:
@@ -273,10 +264,10 @@ class inventory_parser(XlsxReportParser):
                             self.add_cell(detail_pas.projected, red_cell_style)
                     else:
                         self.add_cell()
-                if not line.pas_ids:
-                    for nb_month in range(0, inventory.projected_view):
-                        self.add_cell()
-                        self.add_cell()
+
+                for nb_month in range(nb_pas, inventory.projected_view):
+                    self.add_cell()
+                    self.add_cell()
 
                 sheet.append(self.rows)
                 new_row += 1
@@ -284,5 +275,5 @@ class inventory_parser(XlsxReportParser):
     def get_month(self, start, nb_month):
         return _(misc.month_abbr[(datetime.strptime(start, '%Y-%m-%d %H:%M:%S') + relativedelta(hour=0, minute=0, second=0, months=nb_month)).month])
 
-XlsxReport('report.report_replenishment_inventory_review_xls2', parser=inventory_parser, template='addons/procurement_cycle/report/replenishment_inventory_review.xlsx')
+XlsxReport('report.report_replenishment_inventory_review_xls2', parser=inventory_parser, template='addons/procurement_cycle/report_doc/replenishment_inventory_review.xlsx')
 

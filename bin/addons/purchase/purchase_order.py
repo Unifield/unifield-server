@@ -776,6 +776,7 @@ class purchase_order(osv.osv):
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True, domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),
+        'dest_partner_type': fields.related('dest_partner_id', 'partner_type', string='DPO Dest Partner Type', type='selection', selection=PARTNER_TYPE, readonly=True, write_relate=False),
         'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True,
                                               help="The address where the invoice will be sent."),
         'invoice_method': fields.selection([('manual', 'Manual'), ('order', 'From Order'), ('picking', 'From Picking')], 'Invoicing Control', required=True, readonly=True,
@@ -884,9 +885,9 @@ class purchase_order(osv.osv):
             'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
         },
         ),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+        'delivery_requested_date': fields.date(string='Requested Delivery Date', required=True),
         'delivery_requested_date_modified': fields.date(string='Estimated Delivery Date'),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+        'delivery_confirmed_date': fields.date(string='Confirmed Delivery Date'),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
@@ -2916,9 +2917,8 @@ class purchase_order(osv.osv):
 
             # Display a message to inform that a commitment was created
             commit_data = self.pool.get('account.commitment').read(cr, uid, commit_id, ['name'], context=context)
-            message = _("Commitment Voucher %s has been created.") % commit_data.get('name', '')
-            view_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'account_commitment_form')
-            self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_ids and view_ids[1] or False})
+            message = _("Supplier Commitment Voucher %s has been created.") % commit_data.get('name', '')
+            self.pool.get('account.commitment').log(cr, uid, commit_id, message, action_xmlid='analytic_distribution.action_account_commitment_tree')
             self.infolog(cr, uid, message)
 
             # Add analytic distribution from purchase

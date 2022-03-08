@@ -74,7 +74,6 @@ class finance_archive(finance_export.finance_archive):
         partner_search_dict = {}
         employee_search_dict = {}
         employee_code_dict = {}
-        partner_name_dict = {}
         partner_hash_dict = {}
 
         partner_id_list = list(set([x[partner_id_cl] for x in data if x[partner_id_cl]]))
@@ -279,7 +278,8 @@ class finance_archive(finance_export.finance_archive):
         return self.postprocess_selection_columns(cr, uid, new_data, changes, column_deletion=column_deletion)
 
 
-# request & postprocess method used for OCB and OCP VI, and for Liquidity Balances report
+# request & postprocess method used for OCP VI, and for Liquidity Balances report
+# NOTE: the Liquidity Bal. report is actually not included in OCB VI anymore, so all liquidity-related code in this file could sometime be moved
 liquidity_sql = """
             SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,
@@ -399,11 +399,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         mi_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
-        journal_obj = pool.get('account.journal')
-        # note: this list is used for both G/L and analytic journal types
-        excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
-        if not context.get('old_vi'):
-            excluded_journal_types.extend(['cur_adj', 'inkind', 'extra', 'system'])
+        # note: this list of excluded journals is used for both G/L and analytic journal types
+        excluded_journal_types = ['hq', 'migration', 'cur_adj', 'inkind', 'extra', 'system']
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -415,19 +412,14 @@ class hq_report_ocb(report_sxw.report_sxw):
         if not fy_id or not period_id or not instance_ids or not instance_id:
             raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscalyear or period or instance.'))
         instance_lvl = mi_obj.browse(cr, uid, instance_id, fields_to_fetch=['level'], context=context).level
-        fy = pool.get('account.fiscalyear').browse(cr, uid, fy_id)
-        last_fy_year = strptime(fy.date_start, '%Y-%m-%d').tm_year - 1 # Take previous year regarding given fiscalyear
-        first_day_of_last_fy = '%s-01-01' % (last_fy_year)
         period = period_obj.browse(cr, uid, period_id, fields_to_fetch=['date_stop', 'date_start', 'number'])
         previous_period_id = period_obj.get_previous_period_id(cr, uid, period_id, context=context)
-        last_day_of_period = period.date_stop
         first_day_of_period = period.date_start
         selection = form.get('selection', False)
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
         year = str(year_num)
         month = '%02d' % (tm.tm_mon)
-        period_yyyymm = "{0}{1}".format(year,month)
         if not selection:
             raise osv.except_osv(_('Error'), _('No selection value for lines to select.'))
         # Default export value for exported field on analytic/move lines
@@ -438,49 +430,17 @@ class hq_report_ocb(report_sxw.report_sxw):
         else:
             raise osv.except_osv(_('Error'), _('Wrong value for selection: %s.') % (selection,))
 
-        # US-822: if December is picked should:
-        # - include Period 16 action 2 Year end PL RESULT entries
-        #   of target Coordo
-        plresult_ji_in_ids = []
-        if period.number == 12:
-            ayec_obj = pool.get("account.year.end.closing")
-            m_obj = pool.get('account.move')
-            ml_obj = pool.get('account.move.line')
-
-            period16_id = ayec_obj._get_period_id(cr, uid, fy_id, 16)
-            if period16_id:
-                # get potential PL RESULT entries of us-822 book_pl_results
-                func_ccy_name = pool.get('res.users').browse(cr, uid, [uid],
-                                                             context=context)[0].company_id.currency_id.name
-                seqnums = [
-                    ayec_obj._book_pl_results_seqnum_pattern % (year_num,
-                                                                instance_rec.code, func_ccy_name, ) \
-                    for instance_rec in mi_obj.browse(cr, uid, instance_ids,
-                                                      context=context) \
-                    if instance_rec.level == 'coordo'
-                ]
-
-                if seqnums:
-                    excluded_journal_ids = journal_obj.search(cr, uid, [('type', 'in', excluded_journal_types)],
-                                                              order='NO_ORDER', context=context)
-                    je_ids = m_obj.search(cr, uid, [('name', 'in', seqnums), ('journal_id', 'not in', excluded_journal_ids)],
-                                          order='NO_ORDER', context=context)
-                    if je_ids:
-                        plresult_ji_in_ids = ml_obj.search(cr, uid, [
-                            ('move_id', 'in', je_ids)
-                        ], context=context)
-
         # Prepare SQL requests and PROCESS requests for finance_archive object
 
         # SQLREQUESTS DICTIONNARY
         # - key: name of the SQL request
         # - value: the SQL request to use
         partner_sql = """
-                SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active%s
+                SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active, comment
                 FROM res_partner 
                 WHERE partner_type != 'internal'
                   and name != 'To be defined';
-                """ % (not context.get("old_vi") and ", comment" or "")
+                """
         if not previous_period_id or instance_lvl == 'section':
             # empty report in case there is no previous period or an HQ instance is selected
             balance_previous_month_sql = "SELECT '' AS no_line;"
@@ -665,30 +625,6 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
             'balance_previous_month': balance_previous_month_sql,
         }
-        if plresult_ji_in_ids:
-            # NOTE: for these entries: booking and fonctional ccy are same
-            ''' columns
-                'DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description',
-                'Reference', 'Document date', 'Posting date', 'G/L Account',
-                'Third party', 'Destination', 'Cost centre', 'Funding pool',
-                'Booking debit', 'Booking credit', 'Booking currency',
-                'Functional debit', 'Functional credit', 'Functional CCY',
-                'Emplid', 'Partner DB ID' '''
-            sqlrequests['plresult'] = """
-                SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name,
-                    aml.ref, aml.document_date, aml.date, a.code,
-                    aml.partner_txt, '', '', '',
-                    ROUND(aml.debit_currency, 2), ROUND(aml.credit_currency, 2), c.name,
-                    ROUND(aml.debit, 2), ROUND(aml.credit, 2), c.name,
-                    '', ''
-                FROM account_move_line aml
-                INNER JOIN msf_instance i on i.id = aml.instance_id
-                INNER JOIN account_journal j on j.id = aml.journal_id
-                INNER JOIN account_move m on m.id = aml.move_id
-                INNER JOIN account_account a on a.id = aml.account_id
-                INNER JOIN res_currency c on c.id = aml.currency_id
-                WHERE aml.id in %s AND aml.exported in %s
-            """
 
         # PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
         # Dict:
@@ -705,10 +641,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         instance_name = 'OCB'  # since US-949
-        reg_types = ('cash', 'bank', 'cheque')
-        partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive']
-        if not context.get('old_vi'):
-            partner_header.append('Notes')
+        partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes']
         processrequests = [
             {
                 'headers': partner_header,
@@ -737,7 +670,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'rawdata',
                 'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
                 'fnct_params': 'account.analytic.line',
-                'query_params': (period_id, period_id, period.date_start, period.date_stop, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
+                'query_params': (period_id, period_id, first_day_of_period, period.date_stop, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
@@ -759,73 +692,16 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'id': 0,
                 'object': 'account.move.line',
             },
+            {
+                'headers': ['G/L Account', 'Booking currency', 'Balance'],
+                'filename': instance_name + '_' + year + month + '_Balance_previous_month.csv',
+                'key': 'balance_previous_month',
+                'query_params': (previous_period_id,
+                                 # note: engagements are also excluded since there are no ENG/ENGI "G/L" journals
+                                 tuple(excluded_journal_types),
+                                 tuple(instance_ids)),
+            },
         ]
-        if context.get('old_vi'):
-            processrequests.extend([
-                {
-                    'headers': ['Name', 'Code', 'Type', 'Status'],
-                    'filename': instance_name + '_' + year + month + '_Cost Centres.csv',
-                    'key': 'costcenter',
-                    'query_params': (
-                        last_day_of_period, last_day_of_period, tuple(instance_ids), last_day_of_period,
-                        last_day_of_period,
-                        tuple(instance_ids)),
-                    'function': 'postprocess_selection_columns',
-                    'fnct_params': [('account.analytic.account', 'type', 2)],
-                },
-                {
-                    'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
-                    'filename': instance_name + '_' + year + month + '_Financing contracts.csv',
-                    'key': 'contract',
-                    'query_params': (tuple(instance_ids),),
-                    'function': 'postprocess_selection_columns',
-                    'fnct_params': [('financing.contract.contract', 'state', 5)],
-                },
-                {
-                    'headers': ['CCY name', 'CCY code', 'Rate', 'Month'],
-                    'filename': instance_name + '_' + year + month + '_FX rates.csv',
-                    'key': 'fxrate',
-                    'query_params': (first_day_of_last_fy, last_day_of_period),
-                },
-                {
-                    'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance',
-                                'Closing balance', 'Currency'],
-                    'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
-                    'key': 'liquidity',
-                    'query_params': (
-                        tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
-                        last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
-                    'function': 'postprocess_liquidity_balances',
-                    'fnct_params': context,
-                },
-            ])
-        if not context.get('old_vi'):
-            processrequests.extend([
-                {
-                    'headers': ['G/L Account', 'Booking currency', 'Balance'],
-                    'filename': instance_name + '_' + year + month + '_Balance_previous_month.csv',
-                    'key': 'balance_previous_month',
-                    'query_params': (previous_period_id,
-                                     # note: engagements are also excluded since there are no ENG/ENGI "G/L" journals
-                                     tuple(excluded_journal_types),
-                                     tuple(instance_ids)),
-                }
-            ])
-        if plresult_ji_in_ids:
-            if not context.get('old_vi'):
-                # Feb. 2020: log if this is used at least once. Cf. the whole code related to plresult_ji_in_ids might
-                # be obsolete in new OCB VI (in any case it's only used for Dec. export)
-                pool.get('ir.config_parameter').set_param(cr, 1, 'ocb_vi.has_pl_result', True)
-            processrequests.append({
-                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
-                'key': 'plresult',
-                'function': 'postprocess_add_db_id', # to take move line ids and make a DB ID with
-                'fnct_params': 'account.move.line',
-                'query_params': (tuple(plresult_ji_in_ids), tuple(to_export), ),
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'account.move.line',
-            })
 
         # Launch finance archive object
         fe = finance_archive(sqlrequests, processrequests, context=context)

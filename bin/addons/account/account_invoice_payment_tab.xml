@@ -1,5 +1,5 @@
 <!-- PAYMENT TAB -->
-<!-- added in SI / SR / IVO / STV -->
+<!-- added in SI / SR / ISI / ISR / IVO / STV -->
 <page string="Payments"
       attrs="{'invisible': [('type', 'not in', ('in_refund', 'out_invoice')),
                             '|', ('type', '!=', 'in_invoice'), ('is_intermission', '=', True)]}">

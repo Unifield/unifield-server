@@ -301,6 +301,49 @@ class stock_location(osv.osv):
 
             return [('id', 'in', retrict)]
 
+    def _search_from_histo(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            if arg[2] and isinstance(arg[2], list) and isinstance(arg[2][0], tuple) and len(arg[2][0]) == 3:
+                if context is None:
+                    context = {}
+                dom = []
+                if arg[2][0][2]:
+                    dom = [('id', 'not in', arg[2][0][2])]
+                elif context.get('dest_location'):
+                    dom += [('usage', '=', 'customer')]
+
+                return dom
+
+            return []
+
+    def _is_intermediate_parent(self, cr, uid, ids, name, args, context=None):
+        """
+        Check if the Parent Location is Intermediate Stocks
+        """
+        if context is None:
+            context = {}
+
+        interm = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                     'stock_location_intermediate_client_view')[1]
+
+        res = {}
+        for loc in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
+            res[loc.id] = loc.location_id and loc.location_id.id == interm or False
+        return res
+
+    def _search_intermediate_parent(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            itermediate_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                                      'stock_location_intermediate_client_view')[1]
+            return [('location_id', 'child_of', itermediate_view_id)]
+        return []
+
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active', help="By unchecking the active field, you may hide a location without deleting it."),
@@ -366,7 +409,12 @@ class stock_location(osv.osv):
         'db_id': fields.function(_get_coordo_db_id, type='integer', method=True, string='DB id for sync', internal=True, multi='coordo_db_id'),
         'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
         'from_config': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_config, string='Set in Loc. Config', internal=1),
+        'from_histo': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_histo, string='Set in Historical Consumption', internal=1),
         'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=False, fnct_search=_search_initial_stock_inv_display, string='Display in Initial stock inventory', readonly=True),
+        'search_color': fields.selection([('dimgray', 'Dim Gray'), ('darkorchid', 'Dark Orchid'), ('lightpink', 'Light Pink'), ('royalblue', 'Royal Blue'), ('yellowgreen', 'Yellow Green'), ('darkorange', 'Dark Orange'), ('sandybrown', 'Sandy Brown'), ], string="Color for Search views"),
+        'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?", fnct_search=_search_intermediate_parent),
+        'moved_location': fields.boolean('Eprep location moved from Intermediate Stock', internal=1, readonly=1),
+
     }
     _defaults = {
         'active': True,
@@ -379,7 +427,15 @@ class stock_location(osv.osv):
         'posz': 0,
         'icon': False,
         'scrap_location': False,
+        'moved_location': False,
     }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if 'moved_location' not in default:
+            default['moved_location'] = False
+        return super(stock_location, self).copy(cr, uid, id, default, context)
 
     def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
         return kwargs.get('result', None)
@@ -768,9 +824,14 @@ class stock_picking(osv.osv):
         if vals.get('type', False) and vals['type'] == 'in' \
                 and not vals.get('from_wkf', False) and not vals.get('from_wkf_sourcing', False):
             reason_type = self.pool.get('stock.reason.type').browse(cr, user, vals.get('reason_type_id', False), context=context)
-            if reason_type and reason_type.name == 'Damage':
-                raise osv.except_osv(_('Error'), _('You can not create an Incoming Shipment from scratch with %s reason type')
-                                     % (reason_type.name,))
+            return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, user, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            if reason_type:
+                if reason_type.name == 'Damage':
+                    raise osv.except_osv(_('Error'), _('You can not create an Incoming Shipment from scratch with %s reason type')
+                                         % (reason_type.name,))
+                if reason_type.id == return_reason_type_id and vals.get('partner_id2', False):
+                    vals['partner_id2'] = False
+
         if 'type' in vals and (('name' not in vals) or (vals.get('name')=='/')):
             seq_obj_name =  'stock.picking.' + vals['type']
             vals['name'] = self.pool.get('ir.sequence').get(cr, user, seq_obj_name)
@@ -1342,7 +1403,10 @@ class stock_picking(osv.osv):
             if move_line.sale_line_id:
                 ana_obj = self.pool.get('analytic.distribution')
                 vals.update({'sale_order_line_id': move_line.sale_line_id.id})
-                distrib_id = move_line.sale_line_id.analytic_distribution_id and move_line.sale_line_id.analytic_distribution_id.id or False
+                distrib_id = False
+                if not move_line.sale_line_id.cv_line_ids:
+                    # AD on FO line from CV: already set in fetch_analytic_distribution
+                    distrib_id = move_line.sale_line_id.analytic_distribution_id and move_line.sale_line_id.analytic_distribution_id.id or False
                 if distrib_id:
                     new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
                     if not new_invl_distrib_id:
@@ -1444,6 +1508,16 @@ class stock_picking(osv.osv):
         if picking.claim:
             # don't invoice claim
             return False, False
+
+        all_claim = True
+        for move_line in picking.move_lines:
+            if not move_line.sale_line_id or not move_line.sale_line_id.in_name_goods_return:
+                all_claim = False
+                break
+        if all_claim:
+            # don't invoice return goods
+            return False, False
+
 
         if not partner:
             raise osv.except_osv(_('Error, no partner !'),
@@ -1561,6 +1635,7 @@ class stock_picking(osv.osv):
             di = 'is_direct_invoice' in invoice_vals and invoice_vals['is_direct_invoice']
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
+            # SI or ISI
             is_si = in_invoice and not di and not inkind_donation and not debit_note and not intermission
             is_ivi = in_invoice and not debit_note and not inkind_donation and intermission
             po = picking and picking.purchase_id
@@ -1589,12 +1664,15 @@ class stock_picking(osv.osv):
             if origin_ivi:
                 invoice_vals.update({'origin': origin_ivi})
 
-            # Add "synced" tag for STV and IVO created from Supply flow
+            # Add "synced" tag + real_doc_type for STV and IVO created from Supply flow
             out_invoice = inv_type == 'out_invoice'
             is_stv = out_invoice and not di and not inkind_donation and not intermission
             is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
             if is_stv or is_ivo:
-                invoice_vals.update({'synced': True, })
+                real_doc_type = is_stv and 'stv' or 'ivo'
+                invoice_vals.update({'synced': True,
+                                     'real_doc_type': real_doc_type,
+                                     })
 
             # Update Payment terms and due date for the Supplier Invoices and Refunds
             if is_si or inv_type == 'in_refund':
@@ -1625,6 +1703,10 @@ class stock_picking(osv.osv):
         if picking.type == 'out' and context.get('invoice_dpo_confirmation') and move_line.dpo_id.id != context.get('invoice_dpo_confirmation'):
             return False
 
+        if move_line.sale_line_id and move_line.sale_line_id.in_name_goods_return:
+            # do not invoice goods return
+            return False
+
         if not inv_type:
             inv_type = self.pool.get('account.invoice').read(cr, uid, invoice_id, ['type'], context=context)['type']
 
@@ -1638,23 +1720,31 @@ class stock_picking(osv.osv):
         else:
             name = move_line.name
 
-        cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
-            move_line.purchase_line_id.cv_line_ids[0] or False
-        cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
-        if inv_type in ('out_invoice', 'out_refund'):
-            account_id = move_line.product_id.product_tmpl_id.\
-                property_account_income.id
+        cv_version = 0
+        if move_line.picking_id.type == 'in':
+            cv_line = move_line and move_line.purchase_line_id and move_line.purchase_line_id.cv_line_ids and \
+                move_line.purchase_line_id.cv_line_ids[0] or False
+            cv_version = cv_line and cv_line.commit_id and cv_line.commit_id.version or 1
+            if cv_version > 1:
+                account_id = cv_line.account_id.id
+            else:
+                account_id = move_line.product_id.product_tmpl_id.\
+                    property_account_expense.id
+                if not account_id:
+                    account_id = move_line.product_id.categ_id.\
+                        property_account_expense_categ.id
+        elif move_line.picking_id.type == 'out':
+            account_id = False
+            if move_line.sale_line_id and move_line.sale_line_id.cv_line_ids and move_line.sale_line_id.cv_line_ids[0].account_id:
+                cv_line = move_line.sale_line_id.cv_line_ids[0] or False
+                account_id = move_line.sale_line_id.cv_line_ids[0].account_id.id
+                cv_version = 2
             if not account_id:
-                account_id = move_line.product_id.categ_id.\
-                    property_account_income_categ.id
-        elif cv_version > 1:
-            account_id = cv_line.account_id.id
-        else:
-            account_id = move_line.product_id.product_tmpl_id.\
-                property_account_expense.id
-            if not account_id:
-                account_id = move_line.product_id.categ_id.\
-                    property_account_expense_categ.id
+                account_id = move_line.product_id.product_tmpl_id.\
+                    property_account_income.id
+                if not account_id:
+                    account_id = move_line.product_id.categ_id.\
+                        property_account_income_categ.id
 
         price_unit = self._get_price_unit_invoice(cr, uid,
                                                   move_line, inv_type)
@@ -1682,13 +1772,15 @@ class stock_picking(osv.osv):
             'account_analytic_id': account_analytic_id,
         }
         if cv_version > 1:
-            inv_vals.update({'cv_line_ids': [(4, cv_line.id)],})
+            inv_vals.update({'cv_line_ids': [(4, cv_line.id)]})
+
         invoice_line_id = invoice_line_obj.create(cr, uid, inv_vals, context=context)
         self._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
 
         if picking.sale_id:
             for sale_line in picking.sale_id.order_line:
                 if sale_line.product_id.type == 'service' and sale_line.invoiced == False:
+                    # TODO: DEPRECATED ?
                     if group:
                         name = picking.name + '-' + sale_line.name
                     else:

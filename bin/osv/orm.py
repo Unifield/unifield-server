@@ -233,7 +233,7 @@ class browse_record(object):
                         if field_column._type in self._fields_process:
                             for result_line in field_values:
                                 result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
-                                if result_line[field_name]:
+                                if result_line[field_name] is not None and result_line[field_name] is not False:
                                     result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj, result_line['id'])
 
             if not field_values:
@@ -1015,7 +1015,6 @@ class orm_template(object):
                     else:
                         while pos < len(datas):
                             res2 = process_liness(self, datas, prefix + [field[len(prefix)]], current_module, relation_obj._name, newfd, pos, first)
-                            print res2
                             if not res2:
                                 break
                             (newrow, pos, w2, data_res_id2, xml_id2) = res2
@@ -1960,6 +1959,8 @@ class orm_template(object):
 
             inherit_result = etree.fromstring(encode(result['arch']))
             result['arch'] = _inherit_apply_rec(inherit_result, sql_res[3])
+            if view_id_kept:
+                result['arch'] = _inherit_apply_rec(result['arch'], view_id_kept)
             result['name'] = sql_res[1]
             result['field_parent'] = sql_res[2] or False
         else:
@@ -2067,7 +2068,9 @@ class orm_template(object):
         or approximate.
         :return: (count, boolean) boolean is True in case of approximation
         """
-        if not args:
+        if not args or \
+                (self._table in ['account_move_line', 'account_move'] and args in ([('period_id.number', '!=', 0)], [('period_id.number', '!=', 0), ('move_id.state', '=', 'posted')])) or \
+                (self._table == 'account_analytic_line' and args == [('account_id.category', '=', 'FUNDING')]):
             cr.execute("""
                 SELECT reltuples::BIGINT AS approximate_row_count
                 FROM pg_class WHERE relname = '%s'
@@ -2076,7 +2079,15 @@ class orm_template(object):
             approximative_result = approximative_result and approximative_result[0][0] or 0
             # check if approximative is big
             if approximative_result > 100000:
-                return int(approximative_result), True
+                exclude = 0
+                if self._table in ['account_move_line', 'account_move']:
+                    exclude = self.search_count(cr, user, [('period_id.number', '=', 0)], context={'show_period_0': 1})
+                if self._table == 'account_move_line' and args == [('period_id.number', '!=', 0), ('move_id.state', '=', 'posted')]:
+                    exclude += self.search_count(cr, user, [('move_id.state', '=', 'draft')], context=context)
+                if self._table == 'account_analytic_line':
+                    exclude = self.search_count(cr, user, [('account_id.category', '!=', 'FUNDING')], context=context)
+                    print exclude
+                return int(approximative_result) - exclude, True
         return self.search_count(cr, user, args, context=context), False
 
 
@@ -4837,6 +4848,10 @@ class orm(orm_template):
             for order_part in m2o_order.split(","):
                 m2o_order_list.append(order_part.strip().split(" ",1)[0].strip())
             m2o_order = m2o_order_list
+            if m2o_order == ['id']:
+                # default order on m2o table is "id", not need to join table
+                return qualified_field
+
 
         # Join the dest m2o table if it's not joined yet. We use [LEFT] OUTER join here
         # as we don't want to exclude results that have NULL values for the m2o

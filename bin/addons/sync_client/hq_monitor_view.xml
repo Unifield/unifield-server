@@ -66,11 +66,18 @@
                     <field name="cloud_date" />
                     <field name="cloud_backup" />
                     <field name="cloud_size" widget="human_size" />
+                    <field name="backup_type" />
+                    <field name="basebackup_date" />
+                    <field name="rsync_date" />
                     <field name="postgresql_disk_space" />
                     <field name="unifield_disk_space" />
                     <field name="instance_state" />
                     <field name="nb_late_vi"/>
                     <field name="vi_details" />
+                    <field name="machine" invisible="1"/>
+                    <field name="platform" invisible="1"/>
+                    <field name="processor" invisible="1"/>
+
                 </tree>
             </field>
         </record>
@@ -90,9 +97,17 @@
                     <field name="cloud_date"/>
                     <field name="cloud_backup"/>
                     <field name="cloud_size"/>
+                    <field name="backup_type" />
+                    <field name="wal_directory" />
+                    <field name="ssh_config_dir" />
+                    <field name="basebackup_date" />
+                    <field name="rsync_date" />
                     <field name="postgresql_disk_space"/>
                     <field name="unifield_disk_space"/>
                     <field name="instance_state"/>
+                    <field name="machine" />
+                    <field name="platform" />
+                    <field name="processor" />
                     <field name="nb_late_vi"/>
                     <field name="vi_details" colspan="4" />
                 </form>
@@ -107,7 +122,22 @@
             <field name="arch" type="xml">
                 <search>
                     <filter string="Late jobs"  icon="terp-gnome-cpu-frequency-applet+" domain="[('nb_late_vi', '>', 0)]"/>
+                    <separator orientation="vertical"/>
+                    <filter domain="[('instance_state', '=', 'active')]" icon="terp-check" name="active" string="Active"/>
+                    <filter domain="[('instance_state', '=', 'inactive')]" icon="gtk-dialog-error" name="inactive" string="Inactive"/>
+                    <separator orientation="vertical"/>
                     <field name="instance_id"/>
+                    <field name="backup_type" />
+                    <field name="machine" />
+                    <field name="platform" />
+                    <field name="processor" />
+                    <newline />
+                    <group expand="1" string="Group By..." colspan="4">
+                        <filter string="Machine" icon="gtk-zoom-fit" domain="[]" context="{'group_by':'machine'}"/>
+                        <filter string="Platform" icon="gtk-directory-remote" domain="[]" context="{'group_by':'platform'}"/>
+                        <filter string="Processor" icon="gtk-execute" domain="[]" context="{'group_by':'processor'}"/>
+                    </group>
+
                 </search>
             </field>
         </record>
@@ -118,6 +148,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('instance_id', '!=', False)]</field>
+            <field name="context">{'search_default_active':1}</field>
             <field name="view_id" ref="sync_hq_instance_version_tree" />
             <field name="search_view_id" ref="sync_hq_instance_version_search" />
         </record>

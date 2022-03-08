@@ -65,17 +65,6 @@ class ocb_export_wizard(osv.osv_memory):
         if wizard.period_id:
             data['form'].update({'period_id': wizard.period_id.id})
             period_name = strftime('%Y%m', strptime(wizard.period_id.date_start, '%Y-%m-%d'))
-            # US-822: check period
-            # 1) can not pick 16 as included in 12 for OCB
-            # 2) when picking 12: target mission FY should be closed
-            # OCB cancels the check 2) but keep it in case they rollback
-            # => they want to export whereas there is PL RESULT entries or not
-            # for the target coordo
-            if wizard.period_id.number == 16:
-                msg = _("You can not select '%s' as already included in' \
-                    '  December export")  % (
-                    wizard.period_id.name or 'Period 16', )
-                raise osv.except_osv(_('Warning'), msg)
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})
@@ -92,10 +81,7 @@ class ocb_export_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 2
 
-        if context.get('old_vi'):
-            report_name = _('Export to HQ system (OCB) Access Interface')
-        else:
-            report_name = _('Export to HQ system (OCB)')
+        report_name = _('Export to HQ system (OCB)')
         finance_export.log_vi_exported(self, cr, uid, report_name, wizard.id, data['target_filename'])
 
         data['context'] = context

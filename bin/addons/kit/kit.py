@@ -320,7 +320,7 @@ class composition_kit(osv.osv):
             request_context.update({ 'states': ('done',),
                                      'what': ('in', 'out'),
                                      'location_usage': ['internal'],
-                                     'location_category': ['stock', 'consumption_unit'] })
+                                     'location_category': ['stock', 'consumption_unit', 'eprep'] })
             if not kit.composition_reference and kit.composition_lot_id:
                 request_context['prodlot_id'] = kit.composition_lot_id.id
 
@@ -773,6 +773,7 @@ class composition_kit(osv.osv):
                 'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
+                'old_version_id': fields.many2one('composition.kit', string='Version to import', help='Used to select from which old version of this Kit Product you want to import the products'),
                 }
 
     _defaults = {'composition_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
@@ -880,6 +881,43 @@ class composition_kit(osv.osv):
                         # the composition list with lot A should not be taken into account if state is in ['done', 'cancel']
                         #                        ('unique_composition_kit_real_lot', "unique(composition_lot_id)", 'Batch Number can only be used by one Kit Composition List.'),
                         ]
+
+    def import_from_old_version(self, cr, uid, ids, context=None):
+        """
+        Import products from previous theoretical kits of this product
+        """
+        if context is None:
+            context = {}
+
+        kit = self.browse(cr, uid, ids[0], context=context)
+        if not kit.old_version_id:
+            raise osv.except_osv(_('Warning !'), _('You must select an old version of the Kit to be able to import from it'))
+
+        item_obj = self.pool.get('composition.item')
+        for item in kit.old_version_id.composition_item_ids:
+            values = {
+                'item_module': item.item_module,
+                'item_product_id': item.item_product_id.id,
+                'item_qty': item.item_qty,
+                'item_uom_id': item.item_uom_id.id,
+                'item_lot': item.item_lot,
+                'item_exp': item.item_exp,
+                'item_kit_id': kit.id,
+                'item_description': item.item_description,
+            }
+            item_obj.create(cr, uid, values, context=context)
+
+        return {
+            'name': 'Kit Composition List',
+            'view_mode': 'form, tree',
+            'view_type': 'form',
+            'res_model': 'composition.kit',
+            'res_id': kit.id,
+            'type': 'ir.actions.act_window',
+            'target': 'dummy',
+            'domain': [('composition_type', '=', 'theoretical')],
+            'context': {'composition_type': 'theoretical'},
+        }
 
 composition_kit()
 

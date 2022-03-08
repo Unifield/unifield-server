@@ -279,8 +279,6 @@ class stock_picking(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
         move_obj = self.pool.get('stock.move')
-        product_obj = self.pool.get('product.product')
-        uom_obj = self.pool.get('product.uom')
         warehouse_obj = self.pool.get('stock.warehouse')
 
         # package data
@@ -337,38 +335,51 @@ class stock_picking(osv.osv):
             # locations
             warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
             location_input_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
-            location_output_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_stock_id'])[0]['lot_stock_id'][0]
+            msf_supplier_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')[1]
+
+            partner_id = self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0]
+            move_lines = []
+            line_number = 0
+            for line in pack_data:
+                for x in pack_data[line]['data']:
+                    prod_id = x.get('product_id')
+                    if not prod_id:
+                        raise Exception("Product %s not found" % x.get('name'))
+                    line_number += 1
+                    move_lines.append((0, 0, {
+                        'change_reason': x.get('change_reason', False),
+                        'comment': x.get('comment', False),
+                        'date': x.get('date', False),
+                        'date_expected': x.get('date_expected', False),
+                        'expired_date': x.get('expired_date', False),
+                        'prodlot_id': x.get('prodlot_id', False),
+                        'line_number': line_number,
+                        'name': x.get('name', False),
+                        'note': x.get('note', False),
+                        'original_qty_partial': x.get('product_qty', False),
+                        'product_id': prod_id,
+                        'product_qty': x.get('product_qty', False),
+                        'product_uom': x.get('product_uom'),
+                        'reason_type_id': context['common']['rt_goods_return'],
+                        'location_id': msf_supplier_id,
+                        'location_dest_id': location_input_id,
+                    }))
+                    x['line_number'] = line_number
+
 
             in_claim_dict = {
                 'claim': pick_dict.get('claim', False),
                 'min_date': pick_dict.get('min_date', False),
                 'note': pick_dict.get('note', False),
-                'partner_id': self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0],
+                'partner_id': partner_id,
+                'partner_id2': partner_id,
                 'origin': pick_dict.get('origin', False),
                 'partner_type_stock_picking': pick_dict.get('partner_type_stock_picking', False),
                 'reason_type_id': context['common']['rt_goods_return'],
                 'type': 'in',
                 'subtype': 'standard',
                 'shipment_ref': shipment_ref,
-                'move_lines': [(0, 0, {
-                    'change_reason': x.get('change_reason', False),
-                    'comment': x.get('comment', False),
-                    'date': x.get('date', False),
-                    'date_expected': x.get('date_expected', False),
-                    'expired_date': x.get('expired_date', False),
-                    'line_number': x.get('line_number', False),
-                    'name': x.get('name', False),
-                    'note': x.get('note', False),
-                    'original_qty_partial': x.get('product_qty', False),
-                    'product_id': product_obj.search(cr, uid, [('name', '=', x.get('product_id', False)['name'])],
-                                                     limit=1, context=context)[0],
-                    'product_qty': x.get('product_qty', False),
-                    'product_uom': uom_obj.search(cr, uid, [('name', '=', x.get('product_uom', False)['name'])],
-                                                  limit=1, context=context)[0],
-                    'reason_type_id': context['common']['rt_goods_return'],
-                    'location_id': location_output_id,
-                    'location_dest_id': location_input_id,
-                }) for x in pick_dict.get('move_lines', False)]
+                'move_lines': move_lines
             }
 
             # when OUT line has been split in Pick or PLL
@@ -1045,13 +1056,23 @@ class stock_picking(osv.osv):
         partner_adress_obj = self.pool.get('res.partner.address')
         pricelist_obj = self.pool.get('product.pricelist')
         sp_com_obj = self.pool.get('so.po.common')
+        distrib_obj = self.pool.get('analytic.distribution')
 
         po_info = stock_picking.purchase_id
         lines = stock_picking.move_lines
         partner_id = partner_obj.search(cr, uid, [('name', '=', source)], limit=1, context=context)[0]
         partner_type = partner_obj.read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type']
         partner_address_id = partner_adress_obj.search(cr, uid, [('partner_id', '=', partner_id)], limit=1, context=context)[0]
-        po_analytic_distrib = sp_com_obj.get_analytic_distribution_id(cr, uid, po_info.to_dict(), context)
+        po_analytic_distrib = False
+        if partner_type == 'internal':
+            po_analytic_distrib = sp_com_obj.get_analytic_distribution_id(cr, uid, po_info.to_dict(), context)
+        else:
+            # set FO AD from orginal FO
+            orig_fo_id = sale_obj.search(cr, uid, [('client_order_ref', '=', source + '.' + po_info.name)], limit=1, context=context)
+            if orig_fo_id:
+                orignal_so = sale_obj.browse(cr, uid, orig_fo_id[0], fields_to_fetch=['analytic_distribution_id'], context=context)
+                if orignal_so.analytic_distribution_id:
+                    po_analytic_distrib = distrib_obj.copy(cr, uid, orignal_so.analytic_distribution_id.id, {}, context=context)
 
         fo_data = {
             'client_order_ref': source + '.' + po_info.name,
@@ -1080,16 +1101,26 @@ class stock_picking(osv.osv):
 
         # Create FO Lines
         for line in lines:
-            line_product = product_obj.search(cr, uid, [('name', '=', line.product_id.name)], limit=1, context=context)
+            if hasattr(line.product_id, 'id') and hasattr(line.product_id, 'default_code'):
+                line_product = self.pool.get('so.po.common').get_product_id(cr, uid, line.product_id, line.product_id.default_code, context=context)
+            else:
+                line_product = product_obj.search(cr, uid, [('name', '=', line.product_id.name)], limit=1, context=context)[0]
             line_uom = uom_obj.search(cr, uid, [('name', '=', line.product_uom.name)], limit=1, context=context)
             # Search the analytic distribution of the original SO line
             original_sol_analytic_distrib_id = False
             original_sol_id = sol_obj.search(cr, uid, [('sync_linked_pol', '=', line.purchase_line_id.sync_local_id)],
                                              limit=1, context=context)
-            if len(original_sol_id) > 0:
-                original_sol_analytic_distrib_id = sol_obj.browse(cr, uid, original_sol_id[0],
-                                                                  fields_to_fetch=['analytic_distribution_id'],
-                                                                  context=context).analytic_distribution_id.id
+            if not original_sol_id and hasattr(line.purchase_line_id, 'original_line_id') and line.purchase_line_id.original_line_id and hasattr(line.purchase_line_id.original_line_id, 'sync_local_id') and line.purchase_line_id.original_line_id.sync_local_id:
+                # try to retrieve the AD on the original line
+                original_sol_id = sol_obj.search(cr, uid, [('sync_linked_pol', '=', line.purchase_line_id.original_line_id.sync_local_id)],
+                                                 limit=1, context=context)
+            if original_sol_id:
+                current_analytic_distrib_id = sol_obj.browse(cr, uid, original_sol_id[0],
+                                                             fields_to_fetch=['analytic_distribution_id'],
+                                                             context=context).analytic_distribution_id.id
+                original_sol_analytic_distrib_id = distrib_obj.copy(cr, uid, current_analytic_distrib_id, {}, context=context)
+
+
             else:
                 original_sol_analytic_distrib_id = sp_com_obj.get_analytic_distribution_id(cr, uid, line.purchase_line_id.to_dict(), context)
 
@@ -1098,7 +1129,7 @@ class stock_picking(osv.osv):
                 'order_id': fo_id,
                 'name': line.name,
                 'line_number': line.line_number,
-                'product_id': line_product[0] or False,
+                'product_id': line_product or False,
                 'product_uom_qty': line.product_qty,
                 'product_uom': line_uom[0] or False,
                 'price_unit': line.price_unit,
@@ -1107,7 +1138,7 @@ class stock_picking(osv.osv):
                 'in_name_goods_return': source + '.' + stock_picking.name,
                 'date_planned': po_info.delivery_requested_date,
                 'stock_take_date': po_info.stock_take_date,
-                'analytic_distribution_id': original_sol_analytic_distrib_id or po_analytic_distrib or False,
+                'analytic_distribution_id': original_sol_analytic_distrib_id,
                 'sync_linked_pol': line.purchase_line_id.sync_local_id,
             }
             sol_obj.create(cr, uid, fo_line_data, context=context)

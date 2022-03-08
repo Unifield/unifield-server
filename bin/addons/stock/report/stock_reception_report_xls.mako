@@ -137,6 +137,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Qty Received
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## Batch Number
+        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
+        ## Expiry Date
+        <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Currency
@@ -151,9 +155,11 @@
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Line Comment
         <Column ss:AutoFitWidth="1" ss:Width="200.0" />
-        ## Destination Location
+        ## Reception Destination
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Final Destination Location
+        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
+        ## Final Dest. Partner
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Expected Receipt Date
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
@@ -223,8 +229,16 @@
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.nomen_manda_0 and r.nomen_manda_0.name or ''|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Destination Location')|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Reception Destination')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.location_dest_id and r.location_dest_id.name or ''|x}</Data></Cell>
+        </Row>
+        <Row>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Final Destination Location')|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.final_dest_id and r.final_dest_id.name or ''|x}</Data></Cell>
+        </Row>
+        <Row>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Final Dest. Partner')|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.final_partner_id and r.final_partner_id.name or ''|x}</Data></Cell>
         </Row>
 
         <Row></Row>
@@ -249,6 +263,8 @@
             _('UoM'),
             _('Qty Ordered'),
             _('Qty Received'),
+            _('Batch Number'),
+            _('Expiry Date'),
             _('Unit Price'),
             _('Currency'),
             _('Ave. Cost Price (Functional currency)'),
@@ -256,8 +272,9 @@
             _('Total Cost (Functional currency)'),
             _('Ave. Cost Price Total Cost (Functional currency)'),
             _('Line Comment'),
-            _('Destination Location'),
+            _('Reception Destination'),
             _('Final Destination Location'),
+            _('Final Dest. Partner'),
             _('Expected Receipt Date'),
             _('Actual Receipt Date'),
             _('Physical Reception Date'),
@@ -270,7 +287,7 @@
         % endfor
         </Row>
 
-        % for move in getMoves(r.moves_ids):
+        % for move in getMoves(r['id'], r.company_id.partner_id, r.nb):
             <Row ss:Height="12.0">
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['ref']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>
@@ -301,6 +318,12 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${move['qty_received']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['prodlot']|x}</Data></Cell>
+                % if move['expiry_date'] and isDate(move['expiry_date']):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['expiry_date'])|n}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['unit_price']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['currency']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['ave_price_func']|x}</Data></Cell>
@@ -314,6 +337,7 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['comment']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['dest_loc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_loc']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_partner']|x}</Data></Cell>
                 % if move['exp_receipt_date'] and isDateTime(move['exp_receipt_date']):
                 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['exp_receipt_date'])|n}</Data></Cell>
                 % else:
@@ -334,6 +358,8 @@
         % endfor
 
     </Table>
+<AutoFilter x:Range="R17C1:R17C33" xmlns="urn:schemas-microsoft-com:office:excel">
+</AutoFilter>
 </ss:Worksheet>
 % endfor
 </Workbook>

@@ -489,7 +489,7 @@
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>
-                   <group  expand='0' string='Group by...'>
+                   <group  expand='0' string='Group by...' name="group_by">
                        <filter string='Category' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'categ_id'}" />
                        <separator orientation="vertical"/>
                        <filter string='Default UOM' icon="terp-mrp" domain="[]" context="{'group_by' : 'uom_id'}" />
