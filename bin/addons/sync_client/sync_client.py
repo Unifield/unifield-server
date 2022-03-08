@@ -32,6 +32,7 @@ import os
 import math
 import hashlib
 import time
+import platform
 from random import random
 
 from psycopg2 import OperationalError
@@ -1315,6 +1316,9 @@ class Entity(osv.osv):
                 'version': version,
                 'postgresql_disk_space': postgres_disk_space,
                 'unifield_disk_space': unifield_disk_space,
+                'machine': platform.machine(),
+                'platform': platform.platform(),
+                'processor': platform.processor(),
             }
 
             config_data = config_obj.read(cr, uid, backup_config_id, ['backup_type', 'wal_directory', 'ssh_config_dir', 'basebackup_date', 'rsync_date'], context=context)

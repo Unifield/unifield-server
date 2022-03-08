@@ -74,6 +74,10 @@
                     <field name="instance_state" />
                     <field name="nb_late_vi"/>
                     <field name="vi_details" />
+                    <field name="machine" invisible="1"/>
+                    <field name="platform" invisible="1"/>
+                    <field name="processor" invisible="1"/>
+
                 </tree>
             </field>
         </record>
@@ -101,6 +105,9 @@
                     <field name="postgresql_disk_space"/>
                     <field name="unifield_disk_space"/>
                     <field name="instance_state"/>
+                    <field name="machine" />
+                    <field name="platform" />
+                    <field name="processor" />
                     <field name="nb_late_vi"/>
                     <field name="vi_details" colspan="4" />
                 </form>
@@ -121,6 +128,16 @@
                     <separator orientation="vertical"/>
                     <field name="instance_id"/>
                     <field name="backup_type" />
+                    <field name="machine" />
+                    <field name="platform" />
+                    <field name="processor" />
+                    <newline />
+                    <group expand="1" string="Group By..." colspan="4">
+                        <filter string="Machine" icon="gtk-zoom-fit" domain="[]" context="{'group_by':'machine'}"/>
+                        <filter string="Platform" icon="gtk-directory-remote" domain="[]" context="{'group_by':'platform'}"/>
+                        <filter string="Processor" icon="gtk-execute" domain="[]" context="{'group_by':'processor'}"/>
+                    </group>
+
                 </search>
             </field>
         </record>
