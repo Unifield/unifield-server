@@ -111,8 +111,9 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_ids = reg_obj.search(self.cr, self.uid, args, order='journal_id')
         regs = reg_obj.browse(self.cr, self.uid, reg_ids, context={'lang': self.localcontext.get('lang')})
 
-        self.func_currency = regs[0].journal_id.company_id.currency_id.name
-        self.func_currency_id = regs[0].journal_id.company_id.currency_id.id
+        func_curr = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id']).company_id.currency_id
+        self.func_currency = func_curr.name
+        self.func_currency_id = func_curr.id
         for reg in regs:
 
             journal = reg.journal_id

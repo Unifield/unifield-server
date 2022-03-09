@@ -89,7 +89,7 @@ IR_COLUMNS_FOR_IMPORT = [x for (x, y) in IR_COLUMNS_HEADER_FOR_IMPORT]
 
 TENDER_COLUMNS_HEADER_FOR_IMPORT=[
     (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'),
-    (_('Price'), 'number'), (_('Delivery Requested Date'), 'DateTime')]
+    (_('Unit Price'), 'number'), (_('Unit Price (Comparison Currency)'), 'number'), (_('Delivery Requested Date'), 'DateTime')]
 TENDER_COLUMNS_FOR_IMPORT = [x for (x, y) in TENDER_COLUMNS_HEADER_FOR_IMPORT]
 
 AUTO_SUPPLY_COLUMNS_HEADER_FOR_IMPORT = [

@@ -16139,6 +16139,7 @@ msgstr "Supprimer tous les quadruplets"
 #: view:international.transport.cost.report:0
 #: view:local.transport.cost.report:0
 #: view:account.destination.summary:0
+#: view:sync.version.instance.monitor:0
 msgid "Group By..."
 msgstr "Grouper Par..."
 
@@ -23763,12 +23764,13 @@ msgstr "\n"
 "Ceci est un message généré automatiquement, ne pas répondre svp.\n"
 ""
 
-#. modules: msf_supply_doc_export, purchase_followup, msf_budget
+#. modules: msf_supply_doc_export, purchase_followup, msf_budget, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:231
 #: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:75
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:75
 #: field:purchase.order.followup,delivery_requested_date:0
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:212
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:102
 msgid "Delivery requested date"
 msgstr "Date de Livraison Demandée"
 
@@ -25596,13 +25598,19 @@ msgstr "Détermine les restrictions pour le pays."
 #: field:wizard.simu.import.po.line,initial_req_date:0
 #: field:sale.order,delivery_requested_date:0
 #: field:update.lines,delivery_requested_date:0
-#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:110
 #: field:purchase.order.merged.line,date_planned:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:232
 #, python-format
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Demandée"
+
+#. modules: msf_supply_doc_export, msf_doc_import
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
+#: code:addons/msf_doc_import/wizard/__init__.py:92
+#, python-format
+msgid "Delivery Requested Date"
+msgstr "Date Demandée"
 
 #. modules: purchase, msf_supply_doc_export
 #: field:purchase.order,delivery_requested_date:0
@@ -33774,7 +33782,7 @@ msgstr "Création du produit"
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
 msgid "Delivery confirmed date:"
-msgstr "Date de Livraison confirmée:"
+msgstr "Date de Livraison Confirmée:"
 
 #. module: base
 #: view:ir.module.module:0
@@ -70336,7 +70344,7 @@ msgstr "Vue"
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
 msgid "Delivery requested date:"
-msgstr "Date de Livraison demandée: "
+msgstr "Date de Livraison Demandée: "
 
 #. module: msf_outgoing
 #: report:invoice:0
@@ -76366,6 +76374,7 @@ msgstr "# de lignes importées"
 #: report:addons/account/report/export_invoice.mako:123
 #: report:msf.purchase.quotation:0
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:73
+#: code:addons/msf_doc_import/wizard/__init__.py:92
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -79882,18 +79891,15 @@ msgstr "Check this attribute if you want to consolidate entries on this account 
 msgid "Current available quantity of products with this Batch Numbre Number in company warehouses"
 msgstr "Quantité de produits actuellement disponibles sous ce Numéro de Lot dans les entrepôts de la société."
 
-#. modules: msf_supply_doc_export
+#. modules: msf_supply_doc_export, msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:57
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:103
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:249
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:75
 #, python-format
 msgid "Delivery Request Date"
 msgstr "Date de Livraison Demandée"
-
-#. modules: msf_doc_import
-#: code:addons/msf_doc_import/wizard/__init__.py:58
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:249
-#, python-format
-msgid "Delivery Request Date"
-msgstr "Date de Livraison Requise"
 
 #. module: account_reconciliation
 #: code:addons/account_reconciliation/wizard/account_reconcile.py:168
@@ -82176,7 +82182,6 @@ msgstr "Règle"
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:55
 msgid "RR Type"
 msgstr "Type RR"
-
 
 #. module: base
 #: code:addons/base/ir/ir_attachment.py:519
@@ -109659,8 +109664,9 @@ msgstr "Vous ne pouvez pas %s des lignes dans le registre %s (%s) car il n'est p
 msgid "post"
 msgstr "comptabiliser"
 
-#. module: msf_supply_doc_export
+#. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
+#: code:addons/msf_doc_import/wizard/__init__.py:92
 msgid "Unit Price (Comparison Currency)"
 msgstr "Prix Unitaire (Devise de Comparaison)"
 
@@ -110471,8 +110477,10 @@ msgstr "Pick d'origine"
 msgid "Please correct red lines before processing or do not process to ship"
 msgstr "Veuillez corriger les lignes en rouge ou ne pas traiter jusqu'à l'expédition"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, sync_client
 #: field:shipment.add.pack.processor.line,wizard_id:0
+#: view:sync.version.instance.monitor:0
+#: field:sync.version.instance.monitor,processor:0
 msgid "Processor"
 msgstr "Processeur"
 
@@ -113583,7 +113591,7 @@ msgstr "A %s doit être le dernier jour du mois"
 #, python-format
 msgid "You can not remove \"Specific Periods Only\" on a segment with periods on lines:\n"
 "%s"
-msgstr "Vous ne pouvez pas supprimer \"Périodes Spécifiques\" sur un Segment ayant des lignes avec une période"
+msgstr "Vous ne pouvez pas supprimer \"Périodes Spécifiques\" sur un Segment ayant des lignes avec une période:\n"
 "%s"
 
 #. module: analytic_override
@@ -114155,7 +114163,7 @@ msgstr "Import effectué.\n"
 "                    # Lignes de %(doc_name)s non modifiées: %(no_change)s\n"
 "                    # Lignes fractionnées ignorées dans le fichier: %(split_line_ignored)s\n"
 "\n"
-"
+""
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:214
@@ -114212,7 +114220,7 @@ msgstr "Le document n'est pas dans le statut Brouilllon"
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:156
 #, python-format
 msgid "%s line %d: Cost Center %s not found"
-msgstr "Ligne %s %d: Centre de Coût non trouvé"
+msgstr "Ligne %s %d: Centre de Coût %s non trouvé"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:159
@@ -114255,3 +114263,20 @@ msgstr "Le BdC doit être dans le statut Brouillon"
 #, python-format
 msgid "Unable to read file. Please check the file format."
 msgstr "Impossible de lire le fichier. Veuillez vérifier le format du fichier."
+
+#. module: base
+#: code:osv/orm.py:1224
+#, python-format
+msgid "Error at data validation: %s"
+msgstr "Erreur à la validation des données : %s"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,machine:0
+#: view:sync.version.instance.monitor:0
+msgid "Machine"
+msgstr "Machine"
+
+#: view:sync.version.instance.monitor:0
+#: field:sync.version.instance.monitor,platform:0
+msgid "Platform"
+msgstr "Plate-forme"

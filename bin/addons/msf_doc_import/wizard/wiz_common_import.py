@@ -99,7 +99,7 @@ class wiz_common_import(osv.osv_memory):
             if upper_k not in upper_translated_headers:
                 if origin:
                     # special case from document origin
-                    if origin == 'PO' and k == 'Delivery requested date' \
+                    if origin == 'PO' and k == _('Delivery requested date') \
                             and 'Delivery Request Date' in real_columns:
                         continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'state': 'draft',

@@ -407,6 +407,10 @@ class sync_version_instance_monitor(osv.osv):
         'ssh_config_dir': fields.char('SSH dir.', size=512),
         'basebackup_date': fields.datetime('BB Date'),
         'rsync_date': fields.datetime('Rsync Date'),
+
+        'machine': fields.char('Machine', size=128),
+        'platform': fields.char('Platform', size=128),
+        'processor': fields.char('Processor', size=128),
     }
 
     _defaults = {

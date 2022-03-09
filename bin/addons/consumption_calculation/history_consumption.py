@@ -379,6 +379,7 @@ class product_history_consumption(osv.osv):
             else:
                 context['histo_src_location_ids'] = [x.id for x in res.src_location_ids]
                 context['histo_dest_location_ids'] = [x.id for x in res.dest_location_ids]
+                full_cond = context['histo_src_location_ids'] + context['histo_dest_location_ids']
                 if not context['histo_dest_location_ids'] and res.adjusted_rr_amc:
                     context['adjusted_rr_amc'] = True
 
@@ -387,7 +388,7 @@ class product_history_consumption(osv.osv):
                     FROM stock_move s
                     WHERE
                         location_id in %s or location_dest_id in %s
-                ''', (tuple(context['histo_src_location_ids'] or [0]), tuple(context['histo_dest_location_ids'] or [0])))
+                ''', (tuple(full_cond or [0]), tuple(full_cond or [0])))
 
             product_ids = [x[0] for x in cr.fetchall()]
 

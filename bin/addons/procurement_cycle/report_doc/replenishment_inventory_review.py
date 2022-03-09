@@ -43,7 +43,7 @@ class inventory_parser(XlsxReportParser):
         red_cell_style = self.create_style_from_template('red_cell_style', 'H7')
 
         self.duplicate_row_dimensions(range(1, 16))
-        self.duplicate_column_dimensions(default_width=10.75)
+        self.duplicate_column_dimensions(default_width=15)
 
         sheet.column_dimensions.group('AN', get_column_letter(column_index_from_string('AN')+2*inventory.projected_view - 1), hidden=False)
         sheet.column_dimensions.group('D', 'E', hidden=False)
@@ -220,12 +220,12 @@ class inventory_parser(XlsxReportParser):
                     self.add_cell()
 
                 if line.expired_qty_before_cons:
-                    self.add_cell(line.expired_qty_before_cons, date_style)
+                    self.add_cell(line.expired_qty_before_cons)
                 else:
                     self.add_cell()
 
                 if line.total_expired_qty:
-                    self.add_cell(line.total_expired_qty, date_style)
+                    self.add_cell(line.total_expired_qty)
                 else:
                     self.add_cell()
 

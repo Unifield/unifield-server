@@ -206,7 +206,6 @@ class return_claim(osv.osv):
 
         wf_service = netsvc.LocalService("workflow")
         event_obj = self.pool.get('claim.event')
-        loc_obj = self.pool.get('stock.location')
         address_obj = self.pool.get('res.partner.address')
         sale_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
@@ -223,7 +222,7 @@ class return_claim(osv.osv):
 
             sale_with_claim = sale_obj.browse(cr, uid, sale_with_claim_id[0], context=context)
             is_from_missing = False
-            other_supplier_id = loc_obj.search(cr, uid, [('name', '=', 'Other Supplier')], limit=1, context=context)[0]
+            other_supplier_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')[1]
             lines_to_confirm = []
             for line in sale_with_claim.order_line:
                 if line.state not in ('draft', 'validated'):
