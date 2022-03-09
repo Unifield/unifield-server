@@ -1964,6 +1964,26 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return commit_id
 
+    def wizard_import_ad(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning !'), _('The FO must be in Draft state.'))
+        if not self.pool.get('sale.order.line').search_exists(cr, uid, [('order_id', 'in', ids), ('state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning !'), _('The FO has no draft line.'))
+
+        export_id = self.pool.get('wizard.import.ad.line').create(cr, uid, {'sale_id': ids[0], 'state': 'draft'}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.ad.line',
+            'res_id': export_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
+
 sale_order()
 
 

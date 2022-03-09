@@ -32,11 +32,9 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
 
     _columns = {
-        'reconcile_date': fields.date('Reconcile date',
-                                      help="Date of reconciliation"),
-        'unreconcile_date': fields.date('Unreconcile date',
-                                        help="Date of unreconciliation"),
-        'unreconcile_txt': fields.text(string='Unreconcile number', required=False, readonly=True,
+        'reconcile_date': fields.date('Reconcile date', help="Date of reconciliation", select=1),
+        'unreconcile_date': fields.date('Unreconcile date', help="Date of unreconciliation", select=1),
+        'unreconcile_txt': fields.text(string='Unreconcile number', required=False, readonly=True, select=1,
                                        help="Store the old reconcile number when the entry has been unreconciled"),
     }
 

@@ -139,7 +139,8 @@
                     <!-- exclude extra-accounting journals from this report (IKD, ODX). -->
                     <field name="journal_ids" colspan="4" nolabel="1" noteditable="1"
                         domain="[('type', 'not in', ['inkind', 'extra'])]">
-                        <tree noteditable="1" editable="top" string="Account Journal">
+                        <tree noteditable="1" editable="top" string="Account Journal" colors="red:is_active==False;black:is_active==True">
+                            <field name="is_active" invisible="1" />
                             <field name="instance_id" />
                             <field name="code" />
                             <field name="name" />

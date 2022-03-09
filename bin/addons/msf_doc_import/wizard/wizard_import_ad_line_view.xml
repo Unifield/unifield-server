@@ -7,9 +7,10 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Import AD on lines">
-                    <separator colspan="2" string="Purchase information"/>
+                    <separator colspan="2" string="Document"/>
                      <newline />
-                    <field name="purchase_id" readonly="1" colspan="2"/>
+                    <field name="purchase_id" readonly="1" colspan="2" attrs="{'invisible': [('purchase_id', '=', False)]}"/>
+                    <field name="sale_id" readonly="1" colspan="2" attrs="{'invisible': [('sale_id', '=', False)]}"/>
                      <newline />
 
                     <group colspan="4"><html><br/><br/></html></group>

@@ -16139,6 +16139,7 @@ msgstr "Supprimer tous les quadruplets"
 #: view:international.transport.cost.report:0
 #: view:local.transport.cost.report:0
 #: view:account.destination.summary:0
+#: view:sync.version.instance.monitor:0
 msgid "Group By..."
 msgstr "Grouper Par..."
 
@@ -16164,6 +16165,7 @@ msgstr "Vérifier Lignes"
 #: field:wizard.import.ir.line,fo_id:0
 #: report:addons/sale/report/fo_allocation_report.mako:155
 #: report:sale.order.allocation.report:0
+#: field:wizard.import.ad.line,sale_id:0
 #, python-format
 msgid "Field Order"
 msgstr "Commande de Terrain"
@@ -16633,8 +16635,6 @@ msgstr ","
 #: field:stock.location.chained.options,dest_location_id:0
 #: view:manage.expired.stock:0
 #: field:manage.expired.stock,dest_loc_id:0
-#: report:addons/stock/report/stock_reception_report_xls.mako:216
-#: report:addons/stock/report/stock_reception_report_xls.mako:245
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:228
 #: field:stock.picking,destinations_list:0
 #: field:product.history.consumption,location_dest_id:0
@@ -23764,12 +23764,13 @@ msgstr "\n"
 "Ceci est un message généré automatiquement, ne pas répondre svp.\n"
 ""
 
-#. modules: msf_supply_doc_export, purchase_followup, msf_budget
+#. modules: msf_supply_doc_export, purchase_followup, msf_budget, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:231
 #: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:75
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:75
 #: field:purchase.order.followup,delivery_requested_date:0
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:212
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:102
 msgid "Delivery requested date"
 msgstr "Date de Livraison Demandée"
 
@@ -24812,12 +24813,6 @@ msgstr "Identifiant de la Session"
 msgid "Pacific/Tongatapu"
 msgstr "Pacific/Tongatapu"
 
-#. module: vertical_integration
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:84
-#, python-format
-msgid "Missing info: instance."
-msgstr "Missing info: instance."
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:62
 #, python-format
@@ -25603,13 +25598,19 @@ msgstr "Détermine les restrictions pour le pays."
 #: field:wizard.simu.import.po.line,initial_req_date:0
 #: field:sale.order,delivery_requested_date:0
 #: field:update.lines,delivery_requested_date:0
-#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:110
 #: field:purchase.order.merged.line,date_planned:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:232
 #, python-format
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Demandée"
+
+#. modules: msf_supply_doc_export, msf_doc_import
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
+#: code:addons/msf_doc_import/wizard/__init__.py:92
+#, python-format
+msgid "Delivery Requested Date"
+msgstr "Date Demandée"
 
 #. modules: purchase, msf_supply_doc_export
 #: field:purchase.order,delivery_requested_date:0
@@ -33781,7 +33782,7 @@ msgstr "Création du produit"
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
 msgid "Delivery confirmed date:"
-msgstr "Date de Livraison confirmée:"
+msgstr "Date de Livraison Confirmée:"
 
 #. module: base
 #: view:ir.module.module:0
@@ -46067,11 +46068,6 @@ msgstr "Europe/Ulyanovsk"
 msgid "Updated"
 msgstr "Mise à jour"
 
-#. module: vertical_integration
-#: model:ir.model,name:vertical_integration.model_ocb_matching_export_wizard
-msgid "ocb.matching.export.wizard"
-msgstr "ocb.matching.export.wizard"
-
 #. module: account
 #: selection:account.subscription,period_type:0
 msgid "year"
@@ -50316,6 +50312,7 @@ msgstr "Importer les Lignes"
 
 #. module: purchase
 #: view:purchase.order:0
+#: view:sale.order:0
 msgid "Import AD"
 msgstr "Importer DA"
 
@@ -52385,9 +52382,10 @@ msgstr "Mois: %(month)s"
 #: field:purchase.order.merged.line,select_fo:0
 #: code:addons/sale/sale_order.py:704
 #: code:addons/sale/sale_order.py:1023
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:123
 #, python-format
 msgid "FO"
-msgstr "FO"
+msgstr "CdT"
 
 #. module: stock
 #: view:stock.move:0
@@ -57613,7 +57611,6 @@ msgstr "Info sur Fournisseur Connexe"
 #: code:addons/vertical_integration/report/hq_report_ocp.py:217
 #: code:addons/vertical_integration/report/hq_report_ocp_matching.py:136
 #: code:addons/vertical_integration/report/hq_report_ocb.py:327
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:77
 #, python-format
 msgid "No data retrieved. Check that the wizard is filled in."
 msgstr "Aucune donnée récupérée. Vérifiez que le wizard est rempli."
@@ -58150,8 +58147,6 @@ msgstr "Journal Ajustement"
 #: code:addons/unifield_setup/installer/sales_price.py:145
 #: code:addons/vertical_integration/report/hq_report_ocb.py:160
 #: code:addons/vertical_integration/report/hq_report_ocb.py:334
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:81
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:84
 #: code:addons/vertical_integration/report/hq_report_ocp.py:224
 #: code:addons/vertical_integration/report/hq_report_ocp_matching.py:143
 #: code:addons/vertical_integration/wizard/ocb_export.py:77
@@ -65849,7 +65844,6 @@ msgstr "Africa/Dakar"
 #. modules: vertical_integration, account
 #: field:liquidity.balance.wizard,instance_id:0
 #: field:ocb.export.wizard,instance_id:0
-#: field:ocb.matching.export.wizard,instance_id:0
 #: field:ocba.export.wizard,instance_id:0
 #: field:ocp.export.wizard,instance_id:0
 #: field:ocp.matching.export.wizard,instance_id:0
@@ -67548,17 +67542,9 @@ msgstr "File %s not found.\n"
 #. module: vertical_integration
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export
-#: view:ocb.matching.export.wizard:0
 #: code:addons/vertical_integration/wizard/ocp_matching_export.py:87
 msgid "OCB matching export"
 msgstr "OCB matching export"
-
-#. module: vertical_integration
-#: model:ir.actions.act_window,name:vertical_integration.action_hq_ocb_matching_export_old
-#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_ocb_matching_export_old
-#: code:addons/vertical_integration/wizard/ocb_matching_export.py:69
-msgid "OCB matching export Access Interface"
-msgstr "Interface d'accès de OCB matching export"
 
 #. module: stock
 #: model:ir.ui.menu,name:stock.menu_stock_configuration
@@ -70358,7 +70344,7 @@ msgstr "Vue"
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
 msgid "Delivery requested date:"
-msgstr "Date de Livraison demandée: "
+msgstr "Date de Livraison Demandée: "
 
 #. module: msf_outgoing
 #: report:invoice:0
@@ -70450,12 +70436,6 @@ msgstr "Créer et gérer les unités de mesure que vous souhaitez utiliser dans 
 #: view:cash.request:0
 msgid "Banking references"
 msgstr "Références de la Banque"
-
-#. module: vertical_integration
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:81
-#, python-format
-msgid "Some info are missing: instance."
-msgstr "Some info are missing: instance."
 
 #. module: msf_outgoing
 #: field:shipment,shipment_expected_date:0
@@ -73328,7 +73308,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/vertical_integration/report/hq_report_ocb.py:327
 #: code:addons/vertical_integration/report/hq_report_ocb.py:348
 #: code:addons/vertical_integration/report/hq_report_ocb.py:355
-#: code:addons/vertical_integration/report/hq_report_ocb_matching.py:77
 #: code:addons/vertical_integration/report/hq_report_ocba.py:242
 #: code:addons/vertical_integration/report/hq_report_ocba.py:249
 #: code:addons/vertical_integration/report/hq_report_ocp.py:217
@@ -75778,6 +75757,8 @@ msgstr "Canada/Yukon"
 #: field:allocation.stock.setup,error_po_ids:0
 #: field:wizard.export.po,po_id:0
 #: field:purchase.order,po_confirmed:0
+#: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:122
+#, python-format
 msgid "PO"
 msgstr "BC"
 
@@ -76394,6 +76375,7 @@ msgstr "# de lignes importées"
 #: report:addons/account/report/export_invoice.mako:123
 #: report:msf.purchase.quotation:0
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:73
+#: code:addons/msf_doc_import/wizard/__init__.py:92
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -79910,18 +79892,15 @@ msgstr "Check this attribute if you want to consolidate entries on this account 
 msgid "Current available quantity of products with this Batch Numbre Number in company warehouses"
 msgstr "Quantité de produits actuellement disponibles sous ce Numéro de Lot dans les entrepôts de la société."
 
-#. modules: msf_supply_doc_export
+#. modules: msf_supply_doc_export, msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:57
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:103
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:249
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:75
 #, python-format
 msgid "Delivery Request Date"
 msgstr "Date de Livraison Demandée"
-
-#. modules: msf_doc_import
-#: code:addons/msf_doc_import/wizard/__init__.py:58
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:249
-#, python-format
-msgid "Delivery Request Date"
-msgstr "Date de Livraison Requise"
 
 #. module: account_reconciliation
 #: code:addons/account_reconciliation/wizard/account_reconcile.py:168
@@ -80513,7 +80492,6 @@ msgstr "Compte Fournisseur Donation "
 #: field:automated.export.job.progress,export_id:0
 #: view:wizard.liquidity.position:0
 #: view:ocb.export.wizard:0
-#: view:ocb.matching.export.wizard:0
 #: view:ocba.export.wizard:0
 #: view:ocp.export.wizard:0
 #: view:ocp.matching.export.wizard:0
@@ -81204,12 +81182,18 @@ msgstr "\n"
 #. module: stock
 #: field:report.stock.move,location_dest_id:0
 #: field:stock.picking,location_dest_id:0
-#: field:stock.reception.wizard,location_dest_id:0
 #: field:stock.delivery.wizard,location_dest_id:0
 #: view:report.stock.move:0
 #: field:report.stock.move,location_dest_name:0
 msgid "Dest. Location"
 msgstr "Zone Dest."
+
+#. module: stock
+#: field:stock.reception.wizard,location_dest_id:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:216
+#: report:addons/stock/report/stock_reception_report_xls.mako:245
+msgid "Reception Destination"
+msgstr "Destination Réception"
 
 #. module: account_reconciliation
 #: model:ir.module.module,description:account_reconciliation.module_meta_information
@@ -82199,7 +82183,6 @@ msgstr "Règle"
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:55
 msgid "RR Type"
 msgstr "Type RR"
-
 
 #. module: base
 #: code:addons/base/ir/ir_attachment.py:519
@@ -87325,12 +87308,6 @@ msgstr "Accès de l'utilisateur à l'importation depuis le fichier"
 #: selection:res.users,context_tz:0
 msgid "Atlantic/Reykjavik"
 msgstr "Atlantique/Reykjavik"
-
-#. module: vertical_integration
-#: code:addons/vertical_integration/wizard/ocb_export.py:74
-#, python-format
-msgid "You can not select '%s' as already included in'                     '  December export"
-msgstr "Vous ne pouvez pas sélectionner '%s' puisqu il est dans'                     '  l' export de Décembre"
 
 #. modules: account_override, account
 #: field:account.balance.report,account_type:0
@@ -96369,7 +96346,6 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:tender:0
 #: view:threshold.value.compute.all:0
 #: view:ocb.export.wizard:0
-#: view:ocb.matching.export.wizard:0
 #: view:ocba.export.wizard:0
 #: view:ocp.export.wizard:0
 #: view:ocp.matching.export.wizard:0
@@ -107000,13 +106976,6 @@ msgstr "Voulez-vous re-sourcer les besoins de cette ligne d'Appel d'Offre ?"
 msgid "INT Ref."
 msgstr "Réf. du INT"
 
-#. module: vertical_integration
-#: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb_old
-#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb_old
-#: code:addons/vertical_integration/wizard/ocb_export.py:96
-msgid "Export to HQ system (OCB) Access Interface"
-msgstr "Interface d'accès de l'Export vers le système HQ (OCB)"
-
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_picking_ticket
 #: view:stock.picking:0
@@ -109696,8 +109665,9 @@ msgstr "Vous ne pouvez pas %s des lignes dans le registre %s (%s) car il n'est p
 msgid "post"
 msgstr "comptabiliser"
 
-#. module: msf_supply_doc_export
+#. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
+#: code:addons/msf_doc_import/wizard/__init__.py:92
 msgid "Unit Price (Comparison Currency)"
 msgstr "Prix Unitaire (Devise de Comparaison)"
 
@@ -110508,8 +110478,10 @@ msgstr "Pick d'origine"
 msgid "Please correct red lines before processing or do not process to ship"
 msgstr "Veuillez corriger les lignes en rouge ou ne pas traiter jusqu'à l'expédition"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, sync_client
 #: field:shipment.add.pack.processor.line,wizard_id:0
+#: view:sync.version.instance.monitor:0
+#: field:sync.version.instance.monitor,processor:0
 msgid "Processor"
 msgstr "Processeur"
 
@@ -113620,7 +113592,7 @@ msgstr "A %s doit être le dernier jour du mois"
 #, python-format
 msgid "You can not remove \"Specific Periods Only\" on a segment with periods on lines:\n"
 "%s"
-msgstr "Vous ne pouvez pas supprimer \"Périodes Spécifiques\" sur un Segment ayant des lignes avec une période"
+msgstr "Vous ne pouvez pas supprimer \"Périodes Spécifiques\" sur un Segment ayant des lignes avec une période:\n"
 "%s"
 
 #. module: analytic_override
@@ -113770,6 +113742,18 @@ msgstr "Génère le \"Monthly Export\" (uniquement) pour toutes les missions à 
 #: field:ocp.export.wizard,warning_db_name:0
 msgid "Display a warning on database name"
 msgstr "Affiche un avertissement sur le nom de la base de données"
+
+#. module: stock
+#: field:stock.reception.wizard,final_dest_id:0
+msgid "Final Dest. Location"
+msgstr "Zone de Dest. Finale"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:236
+#: report:addons/stock/report/stock_reception_report_xls.mako:271
+#: field:stock.reception.wizard,final_partner_id:0
+msgid "Final Dest. Partner"
+msgstr "Partenaire de Dest. Finale"
 
 #. module: sync_client
 #: field:sync_client.survey.user.detailed,answer_later:0
@@ -114167,20 +114151,20 @@ msgstr "Import DA sur les lignes"
 #, python-format
 msgid "Import done.\n"
 "\n"
-"                    # PO lines updated: %(updated)s\n"
-"                    # AD deleted on PO lines: %(delete_ad)s\n"
-"                    # PO lines not modified: %(no_change)s\n"
+"                    # %(doc_name)s lines updated: %(updated)s\n"
+"                    # AD deleted on %(doc_name)s lines: %(delete_ad)s\n"
+"                    # %(doc_name)s lines not modified: %(no_change)s\n"
 "                    # Split lines ignored in file: %(split_line_ignored)s\n"
 "\n"
 "                    "
 msgstr "Import effectué.\n"
 "\n"
-"                    # Lignes de BdC mises à jour: %(updated)s\n"
-"                    # DA supprimée sur les lignes du BdC: %(delete_ad)s\n"
-"                    # Lignes du BdC non modifiées: %(no_change)s\n"
+"                    # Lignes de %(doc_name)s mises à jour: %(updated)s\n"
+"                    # DA supprimée sur les lignes de %(doc_name)s: %(delete_ad)s\n"
+"                    # Lignes de %(doc_name)s non modifiées: %(no_change)s\n"
 "                    # Lignes fractionnées ignorées dans le fichier: %(split_line_ignored)s\n"
 "\n"
-"
+""
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:214
@@ -114207,8 +114191,8 @@ msgstr "Fichier incomplet."
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:120
 #, python-format
-msgid "Line not found in PO: #%s %s"
-msgstr "Ligne non trouvée dans le BdC: #%s %s"
+msgid "Line / product does not match %s: #%s %s"
+msgstr "Ligne / produit ne correspond pas %s: #%s %s"
 
 #. module: msf_doc_import
 #: model:ir.actions.report.xml,name:msf_doc_import.export_po_ad_line
@@ -114218,44 +114202,44 @@ msgstr "DA BdC"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:66
 #, python-format
-msgid "PO Reference does not match."
-msgstr "La référence du BdC ne correspond pas."
+msgid "%s Reference does not match."
+msgstr "La référence %s ne correspond pas."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:63
 #, python-format
-msgid "PO Reference not found in file."
-msgstr "Référence du BdC non trouvée dans le fichier."
+msgid "%s Reference not found in file."
+msgstr "Référence %s non trouvée dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:43
 #, python-format
-msgid "PO is not in Draft state."
-msgstr "Le BdC n'est pas dans le statut Brouilllon"
+msgid "Document is not in Draft state."
+msgstr "Le document n'est pas dans le statut Brouilllon"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:156
 #, python-format
-msgid "PO line %d: Cost Center %s not found"
-msgstr "Ligne BdC %d: Centre de Coût non trouvé"
+msgid "%s line %d: Cost Center %s not found"
+msgstr "Ligne %s %d: Centre de Coût %s non trouvé"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:159
 #, python-format
-msgid "PO line %d: Destination %s not found"
-msgstr "Ligne BdC %d: Destination %s non trouvée"
+msgid "%s line %d: Destination %s not found"
+msgstr "Ligne %s %d: Destination %s non trouvée"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:215
 #, python-format
-msgid "PO line %s %s: Percentage cannot have number other than 100"
-msgstr "Ligne BdC %s %s: le pourcentage ne peut pas être différent de 100"
+msgid "%s line %s %s: Percentage cannot have number other than 100"
+msgstr "Ligne %s %s %s: le pourcentage ne peut pas être différent de 100"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:142
 #, python-format
-msgid "PO line %s %s: please empty or set both Cost Center and Destination"
-msgstr "Ligne BdC %s %s: veuillez remplir ou vider les deux valeurs Centre de Coût et Destination"
+msgid "%s line %s %s: please empty or set both Cost Center and Destination"
+msgstr "Ligne %s %s %s: veuillez remplir ou vider les deux valeurs Centre de Coût et Destination"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ad_line.py:49
@@ -114280,3 +114264,20 @@ msgstr "Le BdC doit être dans le statut Brouillon"
 #, python-format
 msgid "Unable to read file. Please check the file format."
 msgstr "Impossible de lire le fichier. Veuillez vérifier le format du fichier."
+
+#. module: base
+#: code:osv/orm.py:1224
+#, python-format
+msgid "Error at data validation: %s"
+msgstr "Erreur à la validation des données : %s"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,machine:0
+#: view:sync.version.instance.monitor:0
+msgid "Machine"
+msgstr "Machine"
+
+#: view:sync.version.instance.monitor:0
+#: field:sync.version.instance.monitor,platform:0
+msgid "Platform"
+msgstr "Plate-forme"
