@@ -153,6 +153,8 @@ class msf_accrual_line(osv.osv):
         'accrual_type' : 'reversing_accrual',
     }
 
+    _order = 'id desc'
+
     def _create_write_set_vals(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
