@@ -114,6 +114,10 @@
                             <filter name="cancel" icon="terp-gtk-stop" string="Cancelled"
                                     domain="[('state', '=', 'cancel')]"/>
                             <separator orientation="vertical"/>
+                            <filter name="filter_one_time_accrual" icon="gtk-dnd" string="One Time accruals"
+                                    domain="[('accrual_type', '=', 'one_time_accrual')]"/>
+                            <filter name="filter_reversing_accrual" icon="gtk-revert-to-saved" string="Reversing accruals"
+                                    domain="[('accrual_type', '=', 'reversing_accrual')]"/>
                             <field name="period_id"/>
                             <field name="expense_account_id"/>
                             <field name="accrual_account_id"/>
