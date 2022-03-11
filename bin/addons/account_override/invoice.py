@@ -1099,28 +1099,6 @@ class account_invoice(osv.osv):
             ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
         return True
 
-    def action_cancel(self, cr, uid, ids, *args):
-        """
-        Reverse move if this object is a In-kind Donation. Otherwise do normal job: cancellation.
-        Don't cancel an invoice that is linked to a PO.
-        """
-        # Oct. 2019: log if this method is used at least once (cf it may be dead code?)
-        self.pool.get('ir.config_parameter').set_param(cr, 1, 'action_cancel.in_use', True)
-        to_cancel = []
-        for i in self.browse(cr, uid, ids):
-            if i.is_inkind_donation:
-                move_id = i.move_id.id
-                tmp_res = self.pool.get('account.move').reverse(cr, uid, [move_id], strftime('%Y-%m-%d'))
-                # If success change invoice to cancel and detach move_id
-                if tmp_res:
-                    # Change invoice state
-                    self.write(cr, uid, [i.id], {'state': 'cancel', 'move_id':False})
-                continue
-            to_cancel.append(i.id)
-        # Check PO link
-        self.check_po_link(cr, uid, ids)
-        return super(account_invoice, self).action_cancel(cr, uid, to_cancel, args)
-
     def action_date_assign(self, cr, uid, ids, *args):
         """
         Check Document date.

@@ -436,29 +436,6 @@ class journal_items_corrections(osv.osv_memory):
             res += 2
         return res
 
-    # UF-2056: Delete reverse button
-#    def action_reverse(self, cr, uid, ids, context=None):
-#        """
-#        Do a reverse from the lines attached to this wizard
-#        NB: The reverse is done on the first correction journal found (type = 'correction')
-#        """
-#        # Verifications
-#        if not context:
-#            context = {}
-#        if isinstance(ids, int):
-#            ids = [ids]
-#        # Verify that date is superior to line's date
-#        for wiz in self.browse(cr, uid, ids, context=context):
-#            if wiz.move_line_id and wiz.move_line_id.date:
-#                if not wiz.date >= wiz.move_line_id.date:
-#                    raise osv.except_osv(_('Warning'), _('Please insert a correction date from the entry date onwards.'))
-#        # Retrieve values
-#        wizard = self.browse(cr, uid, ids[0], context=context)
-#        aml_obj = self.pool.get('account.move.line')
-#        # Do reverse
-#        res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
-#        return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
-
     def _check_account_partner_compatibility(self, cr, uid, account, aml, context):
         """
         Check the compatibility between the account and the aml Third Party: raise a warning if they are not compatible.

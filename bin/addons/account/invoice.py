@@ -1232,34 +1232,6 @@ class account_invoice(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel', 'synced': False})
         return True
 
-    def action_cancel(self, cr, uid, ids, *args):
-        context = {} # TODO: Use context from arguments
-        account_move_obj = self.pool.get('account.move')
-        invoices = self.read(cr, uid, ids, ['move_id', 'payment_ids'])
-        move_ids = [] # ones that we will need to remove
-        for i in invoices:
-            if i['move_id']:
-                move_ids.append(i['move_id'][0])
-            if i['payment_ids']:
-                account_move_line_obj = self.pool.get('account.move.line')
-                pay_ids = account_move_line_obj.browse(cr, uid, i['payment_ids'])
-                for move_line in pay_ids:
-                    if move_line.reconcile_partial_id and move_line.reconcile_partial_id.line_partial_ids:
-                        raise osv.except_osv(_('Error !'), _('You cannot cancel the Invoice which is Partially Paid! You need to unreconcile concerned payment entries!'))
-
-        # First, set the invoices as cancelled and detach the move ids
-        self.write(cr, uid, ids, {'state':'cancel', 'move_id':False})
-        if move_ids:
-            # second, invalidate the move(s)
-            account_move_obj.button_cancel(cr, uid, move_ids, context=context)
-            # delete the move this invoice was pointing to
-            # Note that the corresponding move_lines and move_reconciles
-            # will be automatically deleted too
-            account_move_obj.unlink(cr, uid, move_ids, context=context)
-        self._log_event(cr, uid, ids, -1.0, 'Cancel Invoice')
-        return True
-
-    ###################
 
 
     def _log_event(self, cr, uid, ids, factor=1.0, name='Open Invoice'):
