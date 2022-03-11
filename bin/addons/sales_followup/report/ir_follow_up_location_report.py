@@ -71,7 +71,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 else:
                     # No line exist for this order, go to the next one
                     continue
-            yield self.pool.get('sale.order').browse(self.cr, self.uid, order)
+            yield self.pool.get('sale.order').browse(self.cr, self.uid, order, context=self.localcontext)
 
         raise StopIteration
 

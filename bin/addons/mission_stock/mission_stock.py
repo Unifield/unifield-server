@@ -423,7 +423,9 @@ class stock_mission_report(osv.osv):
         # close file
         export_file.close()
 
-    def generate_full_xls(self, cr, uid, report_id, xls_name):
+    def generate_full_xls(self, cr, uid, report_id, xls_name, context=None):
+        if context is None:
+            context = {}
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
         instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
@@ -449,12 +451,13 @@ class stock_mission_report(osv.osv):
         all_instances = instance_loc.keys()
         all_instances.insert(0, local_instance.id)
         cr.execute("""
-            select distinct location.name
+            select distinct coalesce(t.value, location.name)
             from stock_mission_report_line_location l, stock_location location
+            left join ir_translation t on t.lang=%s and t.name='stock.location,name' and t.res_id = location.id 
             where location.id=l.location_id
                 and remote_instance_id is null and location.usage = 'internal'
-            order by location.name
-        """)
+            order by coalesce(t.value, location.name)
+        """, (context.get('lang', 'en_MF'),))
         for x in cr.fetchall():
             instance_loc.setdefault(local_instance.id, []).append(x[0])
 
@@ -906,7 +909,7 @@ class stock_mission_report(osv.osv):
                                  context=context)
 
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
-                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls')
+                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)

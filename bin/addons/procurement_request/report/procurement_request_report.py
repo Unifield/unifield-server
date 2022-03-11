@@ -37,7 +37,7 @@ class procurement_request_report(report_sxw.rml_parse):
         '''
         Return the name of the obj_id with the name_get method
         '''
-        return self.pool.get(obj).name_get(self.cr, self.uid, [obj_id])[0][1]
+        return self.pool.get(obj).name_get(self.cr, self.uid, [obj_id], context=self.localcontext)[0][1]
 
 report_sxw.report_sxw('report.procurement.request.report','sale.order','addons/procurement_request/report/procurement_request_report.rml',parser=procurement_request_report, header=False)
 
