@@ -2,44 +2,6 @@
 <openerp>
     <data>
 
-        <!--Account Moves-->
-        <record id="validate_account_move_view" model="ir.ui.view">
-            <field name="name">Post Journal Entries</field>
-            <field name="model">validate.account.move</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-            <form string="Post Journal Entries">
-                <separator string="Post Journal Entries of a Journal" colspan="4"/>
-                <label string="All draft account entries in this journal and period will be validated. It means you won't be able to modify their accounting fields anymore." colspan="4"/>
-                <field name="journal_id"/>
-                <newline/>
-                <field name="period_id"/>
-                <separator colspan="4"/>
-                <group colspan="4" col="6">
-                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
-                    <button icon="terp-camera_test" string="Approve" name="validate_move" type="object"/>
-               </group>
-               </form>
-            </field>
-        </record>
-
-        <record id="action_validate_account_move" model="ir.actions.act_window">
-            <field name="name">Open Journal</field>
-            <field name="res_model">validate.account.move</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="validate_account_move_view"/>
-            <field name="target">new</field>
-            <field name="help">The validation of journal entries process is also called 'ledger posting' and is the process of transferring debit and credit amounts from a journal of original entry to a ledger book.</field>
-        </record>
-
-        <menuitem
-            name="Post Journal Entries"
-            parent="periodical_processing_journal_entries_validation"
-            action="action_validate_account_move"
-            id="menu_validate_account_moves"
-           />
-
         <!--Account Move lines-->
         <record id="validate_account_move_line_view" model="ir.ui.view">
             <field name="name">Post Journal Entries</field>

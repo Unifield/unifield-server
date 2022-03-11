@@ -14,7 +14,6 @@
         <menuitem id="sale.menu_invoiced" parent="menu_hidden" sequence="5"/>
         <menuitem id="sale.menu_action_picking_list_to_invoice" parent="menu_hidden" sequence="20"/>
         <menuitem id="sale.menu_invoicing_sales_order_lines" parent="menu_hidden" sequence="2"/>
-        <menuitem id="account_move_line_reconcile_writeoff"  parent="menu_hidden" sequence="10"/>
         <menuitem id="base.menu_localisation" parent="menu_hidden" sequence="1"/>
 
 
@@ -67,24 +66,17 @@
         <menuitem parent="menu_hidden" id="stock.menu_stock_products_menu" sequence="1"/>
 
 
-        <menuitem parent="menu_hidden" id="account.menu_eaction_account_moves_sale" sequence="16"/>
-        <menuitem parent="menu_hidden" id="account.menu_eaction_account_moves_purchase" sequence="16"/>
-        <menuitem parent="menu_hidden" id="account.menu_action_tax_code_tree" sequence="12"/>
-        <menuitem parent="menu_hidden" id="account.menu_validate_account_moves" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.periodical_processing_journal_entries_validation" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_manual_reconcile" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.periodical_processing_reconciliation" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_menu_Bank_process" sequence="7"/>
         <menuitem parent="menu_hidden" id="account.menu_account_pp_statements" sequence="12"/>
         <menuitem parent="menu_hidden" id="account.menu_action_manual_recurring" sequence="10"/>
-        <menuitem parent="menu_hidden" id="account.menu_wizard_account_open_closed_fiscalyear" sequence="18"/>
         <menuitem parent="menu_hidden" id="account.menu_account_print_journal" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_account_general_journal" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_account_central_journal" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_journals_report" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_aged_trial_balance" sequence="10"/>
-        <menuitem parent="menu_hidden" id="account.menu_account_vat_declaration" sequence="10"/>
-        <menuitem parent="menu_hidden" id="account.menu_tax_report" sequence="3"/>
         <menuitem parent="menu_hidden" id="account.account_analytic_journal_print" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.next_id_40" sequence="4"/>
         <menuitem parent="menu_hidden" id="account.menu_action_analytic_entries_report" sequence="4"/>
@@ -93,7 +85,6 @@
         <menuitem parent="menu_hidden" id="account.menu_finance_statistic_report_statement" sequence="300"/>
         <menuitem parent="menu_hidden" id="account.menu_action_account_journal_view" sequence="10"/>
 
-        <menuitem parent="menu_hidden"  id="account.menu_action_account_moves_bank" sequence="16"/>
 
 		<!-- UF-1555: END Hidden menus block -->
         

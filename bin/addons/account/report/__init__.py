@@ -31,7 +31,6 @@ from . import account_print_invoice
 from . import account_print_overdue
 from . import account_aged_partner_balance
 #import tax_report
-from . import account_tax_report
 from . import account_tax_code
 from . import account_balance_landscape
 from . import account_invoice_report

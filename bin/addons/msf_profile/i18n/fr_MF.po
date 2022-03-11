@@ -504,8 +504,6 @@ msgstr "Ligne de transaction Partenaire"
 #: view:account.move:0
 #: view:account.move.line:0
 #: view:account.move.line.reconcile:0
-#: view:account.move.line.reconcile.select:0
-#: code:addons/account/wizard/account_move_line_reconcile_select.py:45
 #: model:ir.ui.menu,name:account.periodical_processing_reconciliation
 #: model:process.node,name:account.process_node_reconciliation0
 #: model:process.node,name:account.process_node_supplierreconciliation0
@@ -605,11 +603,6 @@ msgstr "Comptes de Charge"
 #, python-format
 msgid "Cell %s%d: %s"
 msgstr "Cellule %s%d: %s"
-
-#. module: account
-#: view:account.move.bank.reconcile:0
-msgid "Open for bank reconciliation"
-msgstr "Ouvrir pour réconciliation des écritures bancaires"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:1027
@@ -3082,12 +3075,6 @@ msgstr "Réservation"
 msgid "Partner Type"
 msgstr "Partenaire - Type"
 
-#. module: account
-#: report:account.vat.declaration:0
-#: field:account.vat.declaration,based_on:0
-msgid "Based On"
-msgstr "Basé sur"
-
 #. module: mission_stock
 #: field:stock.mission.report.line,in_pipe_qty:0
 msgid "In Pipe Qty."
@@ -3183,7 +3170,6 @@ msgstr "Sainte-Lucie"
 #: field:account.move.line,fiscalyear_id:0
 #: field:account.period,fiscalyear_id:0
 #: field:account.sequence.fiscalyear,fiscalyear_id:0
-#: report:account.vat.declaration:0
 #: report:addons/account/report/account_partner_ledger.mako:209
 #: model:ir.model,name:account.model_account_fiscalyear
 #: field:account.mcdb,fiscalyear_id:0
@@ -3217,14 +3203,11 @@ msgstr "Real period"
 #: selection:account.common.partner.report,target_move:0
 #: selection:account.common.report,target_move:0
 #: selection:account.general.journal,target_move:0
-#: selection:account.move.journal,target_move:0
 #: selection:account.partner.balance,target_move:0
 #: selection:account.partner.ledger,target_move:0
 #: selection:account.pl.report,target_move:0
 #: selection:account.print.journal,target_move:0
 #: selection:account.report.general.ledger,target_move:0
-#: selection:account.tax.chart,target_move:0
-#: selection:account.vat.declaration,target_move:0
 #: code:addons/account/report/common_report_header.py:100
 #: code:addons/finance/report/account_partner_balance_tree.py:152
 #: selection:wizard.account.partner.balance.tree,target_move:0
@@ -3453,11 +3436,6 @@ msgstr "Journal d'enchaînements"
 #: view:mass.reallocation.wizard:0
 msgid "- Unposted items"
 msgstr "- Unposted items"
-
-#. module: account
-#: report:account.vat.declaration:0
-msgid "Tax Statement"
-msgstr "Déclaration Fiscale"
 
 #. module: account
 #: code:addons/account/account.py:1393
@@ -4067,11 +4045,6 @@ msgstr "Paquet de produit"
 #, python-format
 msgid "No lines…"
 msgstr "Pas de lignes…"
-
-#. module: account
-#: view:account.tax.chart:0
-msgid "Account tax charts"
-msgstr "Compte - Plans de taxes"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -5220,7 +5193,6 @@ msgstr "Nom de l'Employé"
 #: view:account.move.line.unreconcile.select:0
 #: view:account.unreconcile:0
 #: view:account.unreconcile.reconcile:0
-#: model:ir.model,name:account.model_account_move_line_unreconcile_select
 msgid "Unreconciliation"
 msgstr "Délettrage"
 
@@ -5578,11 +5550,6 @@ msgstr "Entrées Siège Défractionner"
 msgid "Fiscal Year Closure"
 msgstr "Fermeture d'Exercice Comptable"
 
-#. module: account
-#: model:ir.actions.act_window,help:account.action_account_tax_chart
-msgid "Chart of Taxes is a tree view reflecting the structure of the Tax Cases (or tax codes) and shows the current tax situation. The tax chart represents the amount of each area of the tax declaration for your country. It’s presented in a hierarchical structure, which can be modified to fit your needs."
-msgstr "Le Plan de Taxes est une vue arborescente représentant la structure des différents codes de taxes et qui indique leur situation. Le plan de taxe présente les montants des différents types de déclaration de taxe pour votre pays. Sa présentation est sous structure hiérarchique, mais peut être modifiée pour la faire correspondre à vos besoins."
-
 #. module: register_accounting
 #: view:wizard.advance.line:0
 #: field:wizard.cash.return,advance_line_ids:0
@@ -5685,11 +5652,6 @@ msgstr "Si coché, le système utilisera la consommation moyenne mensuelle pour 
 #: report:liquidity.position.pdf:0
 msgid "Liquidity Position"
 msgstr "Point de trésorerie"
-
-#. module: account
-#: view:account.move.line.reconcile.writeoff:0
-msgid "Information addendum"
-msgstr "Informations supplémentaires"
 
 #. module: kit
 #: view:composition.item:0
@@ -6789,18 +6751,6 @@ msgstr "Catégorie Appel d'Offres"
 msgid "Configure Picking Policy for Sales Order"
 msgstr "Configurer la Politique de Picking pour la Commande Terrain"
 
-#. modules: account, account_override
-#: code:addons/account/wizard/account_move_journal.py:63
-#, python-format
-msgid "Can't find any account journal of %s type for this company.\n"
-"\n"
-"You can create one in the menu: \n"
-"Configuration/Financial Accounting/Accounts/Journals."
-msgstr "Aucun journal de type %s n'existe pour cette société.\n"
-"\n"
-"Vous pouvez en créer un à partir du menu :\n"
-"Configuration/Comptabilité Financière/Comptes/Journaux."
-
 #. modules: stock_move_tracking, stock, stock_override
 #: selection:report.stock.move,type:0
 #: selection:stock.location,chained_picking_type:0
@@ -6954,11 +6904,6 @@ msgstr "La description de votre société personnalisera les documents généré
 #: selection:res.users,context_tz:0
 msgid "GB"
 msgstr "GB"
-
-#. module: account
-#: model:ir.actions.act_window,help:account.action_account_vat_declaration
-msgid "This menu print a VAT declaration based on invoices or payments. You can select one or several periods of the fiscal year. Information required for a tax declaration is automatically generated by OpenERP from invoices (or payments, in some countries). This data is updated in real time. That’s very useful because it enables you to preview at any time the tax that you owe at the start and end of the month or quarter."
-msgstr "Ce menu permet d'imprimer une déclaration de TVA fondée sur des factures ou des paiements. Vous pouvez sélectionner une ou plusieurs périodes de l'exercice. L'information requise pour une déclaration fiscale  est automatiquement générée par OpenERP à partir des factures (ou des paiements, dans certains pays). Ces données sont actualisées en temps réel. Cela vous permet de voir à tout moment  les taxes dues en début et fin de mois ou de trimestre."
 
 #. modules: purchase, purchase_override
 #: field:purchase.order,merged_line_ids:0
@@ -8768,11 +8713,6 @@ msgstr "Mouvement Int. Rapport Excel"
 msgid "Asia/Magadan"
 msgstr "Asia/Magadan"
 
-#. module: account
-#: view:account.move.line.reconcile.writeoff:0
-msgid "Write-Off Move"
-msgstr "Ecritures Comptables d'Ajustement"
-
 #. module: sourcing
 #: view:multiple.sourcing.wizard:0
 msgid "Procurement method"
@@ -9932,12 +9872,6 @@ msgstr "Accounts/Destinations/Funding Pools/Cost Centres"
 msgid "Is an Intermission Voucher?"
 msgstr "Est-ce un Bon Intermission?"
 
-#. module: account
-#: code:addons/account/wizard/account_open_closed_fiscalyear.py:40
-#, python-format
-msgid "No End of year journal defined for the fiscal year"
-msgstr "Pas de journal de fin d'exercice défini pour l'exercice"
-
 #. module: base
 #: selection:res.request,state:0
 msgid "waiting"
@@ -10119,14 +10053,6 @@ msgstr "Intermission"
 #: field:ir.module.module,certificate:0
 msgid "Quality Certificate"
 msgstr "Certificat de Qualité"
-
-#. module: account
-#: code:addons/account/wizard/account_move_bank_reconcile.py:49
-#, python-format
-msgid "You have to define the bank account\n"
-"in the journal definition for reconciliation."
-msgstr "Vous devez définir le compte bancaire\n"
-"dans la définition du journal pour effectuer le lettrage."
 
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.connection_manager_action
@@ -17966,11 +17892,6 @@ msgstr "Valeur de crédit ou débit erronée dans le modèle (le Crédit ou le D
 msgid "Greenwich"
 msgstr "Greenwich"
 
-#. module: account
-#: model:ir.model,name:account.model_account_move_line_reconcile_select
-msgid "Move line reconcile select"
-msgstr "Sélection de la ligne du mouvement à lettrer"
-
 #. module: hr
 #: help:hr.employee,partner_id:0
 msgid "Partner that is related to the current employee. Accounting transaction will be written on this partner belongs to employee."
@@ -18514,7 +18435,6 @@ msgstr "Politique de Picking par Défaut"
 #: report:account.central.journal:0
 #: report:account.general.journal:0
 #: report:account.journal.period.print:0
-#: report:account.vat.declaration:0
 msgid "End Period"
 msgstr "Période de Fin"
 
@@ -18624,11 +18544,6 @@ msgstr "Une erreur est survenue : %s"
 #: field:product.deactivation.error.line,view_id:0
 msgid "Reference of the view to open"
 msgstr "Reference of the view to open"
-
-#. module: account
-#: view:account.vat.declaration:0
-msgid "This menu prints a VAT declaration based on invoices or payments. Select one or several periods of the fiscal year. The information required for a tax declaration is automatically generated by OpenERP from invoices (or payments, in some countries). This data is updated in real time. That’s very useful because it enables you to preview at any time the tax that you owe at the start and end of the month or quarter."
-msgstr "Ce menu permet d'imprimer une déclaration de TVA fondée sur des factures ou des paiements. Vous pouvez sélectionner une ou plusieurs périodes de l'exercice. L'information requise pour une déclaration fiscale  est automatiquement générée par OpenERP à partir des factures (ou des paiements, dans certains pays). Ces données sont actualisées en temps réel. Cela vous permet de voir à tout moment  les taxes dues en début et fin de mois ou de trimestre."
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -19066,11 +18981,6 @@ msgstr "Antarctica/McMurdo"
 #: view:cash.request:0
 msgid "Total Payable"
 msgstr "Total Fournisseurs"
-
-#. module: account
-#: model:ir.model,name:account.model_account_move_journal
-msgid "Move journal"
-msgstr "Journal de mouvements (écritures) "
 
 #. module: msf_doc_import
 #: field:wizard.import.po.simulation.screen,with_ad:0
@@ -21594,7 +21504,6 @@ msgstr "Le travail se terminera à"
 
 #. module: account
 #: view:account.period:0
-#: view:account.period.close:0
 msgid "Close Period"
 msgstr "Clôturer la Période"
 
@@ -22082,7 +21991,6 @@ msgstr "Remplir les champs commande"
 #: field:account.pl.report,filter:0
 #: field:account.print.journal,filter:0
 #: field:account.report.general.ledger,filter:0
-#: field:account.vat.declaration,filter:0
 #: field:wizard.account.partner.balance.tree,filter:0
 #: field:integrity.finance.wizard,filter:0
 msgid "Filter by"
@@ -22549,11 +22457,6 @@ msgstr "Mouvements Créés"
 #: model:ir.ui.menu,name:consumption_calculation.warehouse_consumption_menu
 msgid "Consumption reports"
 msgstr "Consommation -  Rapports"
-
-#. module: account
-#: field:account.move.line.reconcile.writeoff,writeoff_acc_id:0
-msgid "Write-Off account"
-msgstr "Compte Ajustement"
 
 #. module: procurement_request
 #: report:procurement.request.report:0
@@ -23668,7 +23571,6 @@ msgstr "Créer une Liste de Composition"
 #: field:account.pl.report,period_from:0
 #: field:account.print.journal,period_from:0
 #: field:account.report.general.ledger,period_from:0
-#: field:account.vat.declaration,period_from:0
 #: field:wizard.report.currency.table,start_period_id:0
 #: field:wizard.report.rates.table,start_period_id:0
 #: field:integrity.finance.wizard,period_from:0
@@ -24327,7 +24229,6 @@ msgstr "Produits Supprimés"
 
 #. modules: tender_flow, product_asset, update_client, register_accounting, return_claim, msf_doc_import, supplier_catalogue, purchase_compare_rfq, product_list, stock, reason_types_moves, stock_override, purchase_override, specific_rules, kit, base, msf_tools, sales_followup, account, msf_outgoing, order_nomenclature, msf_field_access_rights, sale, msf_button_access_rights, analytic_distribution, msf_supply_doc_export, consumption_calculation, procurement_request
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:153
-#: field:account.move.line.reconcile.writeoff,comment:0
 #: field:account.commitment,notes:0
 #: field:account.invoice.line,inactive_error:0
 #: field:res.groups,comment:0
@@ -24704,7 +24605,6 @@ msgstr "Contrepartie pour les balances de Bilan au crédit "
 #: view:account.move.line:0
 #: field:account.move.line,period_id:0
 #: view:account.period:0
-#: field:account.tax.chart,period_id:0
 #: code:addons/account/account_move_line.py:869
 #: report:addons/account/report/account_liquidity_balance.mako:165
 #: report:combined.journals.report.pdf:0
@@ -24859,11 +24759,6 @@ msgstr "The instance code %s is not in the database!"
 #: model:res.currency,currency_name:base.FKP
 msgid "FALKLAND ISLANDS POUND"
 msgstr "FALKLAND ISLANDS POUND"
-
-#. module: account
-#: report:account.vat.declaration:0
-msgid "Tax Amount"
-msgstr "Montant de Taxe"
 
 #. modules: account, register_accounting
 #: view:account.invoice.refund:0
@@ -25532,7 +25427,6 @@ msgstr "SYRIAN POUND"
 #: field:account.pl.report,is_report_cross_fy:0
 #: field:account.print.journal,is_report_cross_fy:0
 #: field:account.report.general.ledger,is_report_cross_fy:0
-#: field:account.vat.declaration,is_report_cross_fy:0
 #: field:wizard.account.partner.balance.tree,is_report_cross_fy:0
 msgid "Is report cross FY"
 msgstr "Is report cross FY"
@@ -26352,7 +26246,6 @@ msgstr "Affichage Picking (Transbordement)"
 #: code:addons/account/invoice.py:631
 #: code:addons/account/invoice.py:652
 #: code:addons/account/invoice.py:1586
-#: code:addons/account/wizard/account_move_journal.py:63
 #: code:addons/register_accounting/account_bank_statement.py:293
 #: code:addons/register_accounting/wizard/cashbox_closing.py:72
 #: code:addons/account_override/invoice.py:285
@@ -26681,12 +26574,6 @@ msgstr "Le nombre de colis par couche"
 #: code:addons/board/queries_finance.py:100
 msgid "Reconcile date"
 msgstr "Date de lettrage"
-
-#. module: account
-#: report:account.vat.declaration:0
-#: field:account.vat.declaration,chart_tax_id:0
-msgid "Chart of Tax"
-msgstr "Plan de la Taxe"
 
 #. module: stock
 #: view:stock.move:0
@@ -29101,7 +28988,6 @@ msgstr "Choisir des jours"
 #: field:account.pl.report,period_to:0
 #: field:account.print.journal,period_to:0
 #: field:account.report.general.ledger,period_to:0
-#: field:account.vat.declaration,period_to:0
 #: field:wizard.report.currency.table,end_period_id:0
 #: field:wizard.report.rates.table,end_period_id:0
 msgid "End period"
@@ -30572,12 +30458,6 @@ msgid "If a location is choosen, only stock moves that comes\n"
 "from/to this location will be shown."
 msgstr "Si une zone est choisi, seuls les mouvements de stock de/ vers cette zone seront affichés"
 
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_vat_declaration
-#: model:ir.model,name:account.model_account_vat_declaration
-msgid "Account Vat Declaration"
-msgstr "Compte - Déclaration de TVA "
-
 #. module: base
 #: selection:ir.translation,lang:0
 msgid "Vietnamese / Tiếng Việt"
@@ -31303,11 +31183,6 @@ msgstr "Tous les autres éléments"
 #: field:sale.installer,sale_order_dates:0
 msgid "Sales Order Dates"
 msgstr "Commande de terrain - Date"
-
-#. module: account
-#: view:account.move.journal:0
-msgid "Standard entries"
-msgstr "Ecritures Standards"
 
 #. modules: account, res_currency_functional
 #: help:account.move.line,currency_id:0
@@ -35538,7 +35413,6 @@ msgid "Create report"
 msgstr "Créer un rapport"
 
 #. modules: account, register_accounting
-#: view:account.period.close:0
 #: field:wizard.closing.cashbox,be_sure:0
 msgid "Are you sure ?"
 msgstr "Etes-vous sûr ?"
@@ -36775,7 +36649,6 @@ msgstr "Sur Plusieurs Documents"
 #: report:account.journal.period.print:0
 #: view:account.move:0
 #: field:account.move,date:0
-#: field:account.move.line.reconcile.writeoff,date_p:0
 #: report:account.partner.balance:0
 #: selection:account.partner.balance,filter:0
 #: selection:account.partner.ledger,filter:0
@@ -36787,7 +36660,6 @@ msgstr "Sur Plusieurs Documents"
 #: report:account.tax.code.entries:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
-#: selection:account.vat.declaration,filter:0
 #: code:addons/account/report/account_balance_sheet.py:319
 #: code:addons/account/report/account_general_ledger.py:443
 #: report:addons/account/report/account_partner_ledger.mako:219
@@ -37016,7 +36888,6 @@ msgstr "De"
 #: help:account.pl.report,chart_account_id:0
 #: help:account.print.journal,chart_account_id:0
 #: help:account.report.general.ledger,chart_account_id:0
-#: help:account.vat.declaration,chart_account_id:0
 #: help:wizard.account.partner.balance.tree,chart_account_id:0
 msgid "Select Charts of Accounts"
 msgstr "Sélectionner les Plans de Comptes"
@@ -37087,11 +36958,6 @@ msgstr "UNITED ARAB EMIRATES DIRHAM"
 #: field:stock.remove.location.wizard,location_id:0
 msgid "Location to remove"
 msgstr "Zone à supprimer"
-
-#. module: account
-#: model:ir.model,name:account.model_account_move_bank_reconcile
-msgid "Move bank reconcile"
-msgstr "Lettrage de mouvements bancaires"
 
 #. module: purchase_compare_rfq
 #: code:addons/purchase_compare_rfq/wizard/compare_rfq.py:203
@@ -38338,12 +38204,6 @@ msgstr "This report is closed. You cannot delete it !"
 msgid "Source Loc."
 msgstr "Zone Source"
 
-#. module: account
-#: code:addons/account/wizard/account_move_journal.py:102
-#, python-format
-msgid "Period: %s"
-msgstr "Période : %s"
-
 #. modules: account_override, account
 #: selection:account.journal.column,field:0
 #: field:account.move.line,invoice_line_id:0
@@ -39130,7 +38990,6 @@ msgstr "Vous ne pouvez pas modifier un Journal qui n'appartient pas à l'instanc
 
 #. module: account
 #: field:account.tax,name:0
-#: report:account.vat.declaration:0
 msgid "Tax Name"
 msgstr "Nom de Taxe"
 
@@ -42202,12 +42061,6 @@ msgstr "Précision des prix"
 msgid "An error occurred on line %s: %s"
 msgstr "Une erreur est survenue à la ligne %s: %s"
 
-#. module: account
-#: code:addons/account/wizard/account_move_journal.py:165
-#, python-format
-msgid "This period is already closed !"
-msgstr "Cette période est déjà clôturée !"
-
 #. module: base
 #: view:ir.actions.act_window:0
 #: view:ir.actions.report.xml:0
@@ -42216,11 +42069,6 @@ msgstr "Cette période est déjà clôturée !"
 #: model:ir.ui.menu,name:base.menu_security
 msgid "Security"
 msgstr "Sécurité"
-
-#. module: account
-#: help:account.vat.declaration,chart_tax_id:0
-msgid "Select Charts of Taxes"
-msgstr "Sélectionner les Plans de Taxes"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -43620,7 +43468,6 @@ msgstr "Send a test email"
 #: selection:account.journal.column,field:0
 #: field:account.model.line,analytic_account_id:0
 #: field:account.move.line,analytic_account_id:0
-#: field:account.move.line.reconcile.writeoff,analytic_id:0
 #: report:combined.journals.report.pdf:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:181
 #: report:addons/account_mcdb/report/combined_journals_report.mako:240
@@ -44112,7 +43959,6 @@ msgstr "Paie - Importation"
 #: code:addons/account/account.py:1430
 #: code:addons/account/account_move_line.py:948
 #: code:addons/account/invoice.py:1038
-#: code:addons/account/wizard/account_move_journal.py:165
 #: code:addons/account/wizard/account_report_aged_partner_balance.py:55
 #: code:addons/account/wizard/account_report_aged_partner_balance.py:57
 #: code:addons/stock/stock.py:2818
@@ -44183,7 +44029,6 @@ msgstr "La société choisie ne fait pas partie des sociétés autorisées pour 
 #: field:account.pl.report,date_to:0
 #: field:account.print.journal,date_to:0
 #: field:account.report.general.ledger,date_to:0
-#: field:account.vat.declaration,date_to:0
 #: field:product.pricelist.version,date_end:0
 #: field:resource.calendar.leaves,date_to:0
 #: field:sync.monitor,end:0
@@ -44953,7 +44798,6 @@ msgstr "%W - Numéro de semaine de l'année (Lundi est le premier jour de la sem
 #: field:account.pl.report,saved_templates:0
 #: field:account.print.journal,saved_templates:0
 #: field:account.report.general.ledger,saved_templates:0
-#: field:account.vat.declaration,saved_templates:0
 #: field:wizard.account.partner.balance.tree,saved_templates:0
 #: field:wizard.template.form,saved_templates:0
 msgid "Saved templates"
@@ -45184,7 +45028,6 @@ msgstr "Exclure la sélection d'employés"
 #: field:account.pl.report,rev_journal_ids:0
 #: field:account.print.journal,rev_journal_ids:0
 #: field:account.report.general.ledger,rev_journal_ids:0
-#: field:account.vat.declaration,rev_journal_ids:0
 #: field:wizard.account.partner.balance.tree,rev_journal_ids:0
 msgid "Exclude journal selection"
 msgstr "Exclure la sélection de journaux"
@@ -46943,7 +46786,6 @@ msgstr "Ecritures non compatibles trouvées : %s"
 #: code:addons/account/invoice.py:1199
 #: code:addons/account/wizard/account_invoice_refund.py:146
 #: code:addons/account/wizard/account_invoice_refund.py:148
-#: code:addons/account/wizard/account_open_closed_fiscalyear.py:40
 #: code:addons/account/wizard/account_use_model.py:44
 #: code:addons/account_period_closing_level/account_journal_period.py:36
 #: code:addons/account_period_closing_level/account_period.py:190
@@ -49386,11 +49228,6 @@ msgstr "Croatian / hrvatski jezik"
 msgid "Start memory cleaning cron job from linux crontab"
 msgstr "Start memory cleaning cron job from linux crontab"
 
-#. module: account
-#: model:ir.model,name:account.model_account_period_close
-msgid "period close"
-msgstr "fermeture de période"
-
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:1636
 #, python-format
@@ -50146,7 +49983,6 @@ msgstr "/"
 #: field:account.pl.report,rev_account_ids:0
 #: field:account.print.journal,rev_account_ids:0
 #: field:account.report.general.ledger,rev_account_ids:0
-#: field:account.vat.declaration,rev_account_ids:0
 #: field:wizard.account.partner.balance.tree,rev_account_ids:0
 msgid "Exclude account selection"
 msgstr "Exclure la sélection Compte"
@@ -50399,7 +50235,6 @@ msgstr "Donation Line"
 #: selection:account.pl.report,filter:0
 #: selection:account.print.journal,filter:0
 #: selection:account.report.general.ledger,filter:0
-#: selection:account.vat.declaration,filter:0
 #: selection:integrity.finance.wizard,filter:0
 msgid "No Filters"
 msgstr "Aucun Filtre"
@@ -52228,7 +52063,6 @@ msgstr "Journal de transfert"
 #: view:account.bank.statement:0
 #: view:account.move:0
 #: view:account.move.line:0
-#: code:addons/account/wizard/account_move_journal.py:153
 #: model:ir.actions.act_window,name:account.act_account_journal_2_account_move_line
 #: model:ir.actions.act_window,name:account.act_account_move_to_account_move_line_open
 #: model:ir.actions.act_window,name:account.act_account_partner_account_move
@@ -52992,12 +52826,6 @@ msgstr "account.installer.modules"
 msgid "Check this box if you want to allow the cancellation the entries related to this journal or of the invoice related to this journal"
 msgstr "Cochez cette case si vous voulez autoriser l'annulation des écritures ou des factures associées à ce journal."
 
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_open_closed_fiscalyear
-#: model:ir.ui.menu,name:account.menu_wizard_account_open_closed_fiscalyear
-msgid "Cancel Opening Entries"
-msgstr "Annuler les Ecritures d'Ouverture"
-
 #. module: base
 #: code:addons/base/res/res_user.py:733
 #, python-format
@@ -53074,7 +52902,6 @@ msgstr "Balance Agée Partenaire"
 #: field:account.model.line,account_id:0
 #: view:account.move.line:0
 #: field:account.move.line,account_id:0
-#: field:account.move.line.reconcile.select,account_id:0
 #: field:account.move.line.unreconcile.select,account_id:0
 #: report:account.partner.balance:0
 #: report:account.third_party_ledger:0
@@ -53567,9 +53394,6 @@ msgstr "Africa/Timbuktu"
 #: selection:account.report.general.ledger,filter:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
-#: report:account.vat.declaration:0
-#: view:account.vat.declaration:0
-#: selection:account.vat.declaration,filter:0
 #: report:addons/account/report/account_partner_ledger.mako:221
 #: code:addons/account/report/common_report_header.py:168
 #: model:ir.actions.act_window,name:account.action_account_period_form
@@ -54303,7 +54127,6 @@ msgid "Divorced"
 msgstr "Divorcé(e)"
 
 #. module: account
-#: model:ir.actions.act_window,name:account.action_account_tax_chart
 #: model:ir.actions.act_window,name:account.action_tax_code_tree
 #: model:ir.ui.menu,name:account.menu_action_tax_code_tree
 msgid "Chart of Taxes"
@@ -56783,7 +56606,6 @@ msgstr "Dépenses budgétisées pour la période M+3"
 #: field:account.model,journal_id:0
 #: view:account.move:0
 #: field:account.move,journal_id:0
-#: field:account.move.bank.reconcile,journal_id:0
 #: view:account.move.line:0
 #: code:addons/account/account_move_line.py:870
 #: view:analytic.entries.report:0
@@ -57068,11 +56890,6 @@ msgstr "Royaume-Uni"
 msgid "Selected quantity must be greater than 0.0."
 msgstr "Quantité Sélectionnée doit être supérieure à 0.0."
 
-#. module: account
-#: model:ir.model,name:account.model_account_open_closed_fiscalyear
-msgid "Choose Fiscal Year"
-msgstr "Choisir l'Exercice Comptable "
-
 #. module: analytic_distribution
 #: field:analytic.distribution.wizard,fp_line_ids:0
 msgid "Funding Pool Allocation"
@@ -57261,11 +57078,6 @@ msgstr "Mois d'Expiration"
 msgid "Analytic Journals"
 msgstr "Journaux analytiques"
 
-#. module: account
-#: field:account.period.close,sure:0
-msgid "Check this box"
-msgstr "Cocher cette case"
-
 #. modules: register_accounting, analytic_distribution
 #: selection:analytic.distribution.wizard,register_line_state:0
 #: view:account.bank.statement:0
@@ -57344,11 +57156,6 @@ msgstr "La hauteur du colis"
 #: field:stock.picking.not.available,move_id:0
 msgid "Move id"
 msgstr "Déplacer id."
-
-#. module: account
-#: field:account.move.line.reconcile.writeoff,journal_id:0
-msgid "Write-Off Journal"
-msgstr "Journal Ajustement"
 
 #. modules: analytic_distribution_supply, financing_contract, account_hq_entries, account_override, product_attributes, account_journal, register_accounting, msf_accrual, sync_client, account_mcdb, supplier_catalogue, stock_schedule, procurement_request, unifield_setup, order_types, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_cross_docking, msf_homere_interface, account_reconciliation, msf_instance, purchase_override, base, account_period_closing_level, msf_currency_revaluation, account_subscription, threshold_value, res_currency_functional, msf_budget, account_corrections, account, msf_outgoing, vertical_integration, sale, sales_followup, sourcing, purchase, product_list, consumption_calculation, stock, msf_profile, msf_config_locations, tender_flow, msf_partner, res_currency_tables, product, msf_tools, procurement_cycle
 #: code:addons/msf_doc_import/account.py:206
@@ -57971,12 +57778,6 @@ msgstr "Date de modification"
 msgid "Delivery address name"
 msgstr "Delivery address name"
 
-#. module: account
-#: code:addons/account/wizard/account_move_journal.py:104
-#, python-format
-msgid "Open Journal Items !"
-msgstr "Ouvrir Lignes d'Ecritures Comptables!"
-
 #. module: finance
 #: view:hr.payroll.msf:0
 msgid "Payroll Entries to be validated"
@@ -58314,7 +58115,6 @@ msgid "Automated exports"
 msgstr "Export automatisés"
 
 #. module: account
-#: view:account.move.bank.reconcile:0
 #: model:ir.actions.act_window,name:account.action_account_bank_reconcile_tree
 msgid "Bank reconciliation"
 msgstr "Réconciliation bancaire"
@@ -59543,7 +59343,6 @@ msgstr "Palette"
 #: field:account.pl.report,display_load_button:0
 #: field:account.print.journal,display_load_button:0
 #: field:account.report.general.ledger,display_load_button:0
-#: field:account.vat.declaration,display_load_button:0
 #: field:account.mcdb,copied_id:0
 #: field:wizard.account.partner.balance.tree,display_load_button:0
 #: field:wizard.template.form,display_load_button:0
@@ -60999,7 +60798,6 @@ msgstr "Erreur utilisateur!"
 #: field:account.account,reconcile:0
 #: field:account.move.line,reconcile_id:0
 #: view:account.move.line.reconcile:0
-#: view:account.move.line.reconcile.writeoff:0
 #: report:account.move.line:0
 #: report:account.move.line_csv:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:67
@@ -61997,9 +61795,7 @@ msgid "Scheduler"
 msgstr "Planificateur"
 
 #. modules: account, account_period_closing_level
-#: model:ir.actions.act_window,name:account.action_account_period_close
 #: model:ir.actions.act_window,name:account.action_account_period_tree
-#: model:ir.ui.menu,name:account.menu_action_account_period_close_tree
 #: model:ir.actions.act_window,name:account_period_closing_level.action_account_period_closing_level_tree
 msgid "Close a Period"
 msgstr "Clôturer une Période"
@@ -62736,7 +62532,6 @@ msgstr "Coefficient pour le parent"
 #: report:account.tax.code.entries:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
-#: report:account.vat.declaration:0
 #: report:addons/account/report/account_partner_ledger.mako:287
 #: field:report.account.receivable,credit:0
 #: field:account.account,credit:0
@@ -67549,11 +67344,6 @@ msgstr "Import de ligne dans le catalogue fournisseur"
 msgid "Post type has to be hard or temp"
 msgstr "Le type de Comptabilisation doit être définitif ou temporaire."
 
-#. module: account
-#: view:account.open.closed.fiscalyear:0
-msgid "Choose Fiscal Year "
-msgstr "Choisir l'Exercice Comptable"
-
 #. module: base
 #: selection:ir.module.module,license:0
 msgid "Other Proprietary"
@@ -68117,7 +67907,6 @@ msgstr "Manage the VAT locally"
 #: view:account.print.journal:0
 #: field:account.print.journal,journal_ids:0
 #: field:account.report.general.ledger,journal_ids:0
-#: field:account.vat.declaration,journal_ids:0
 #: model:ir.actions.act_window,name:account.action_account_journal_form
 #: model:ir.actions.act_window,name:account.action_account_journal_period_tree
 #: model:ir.ui.menu,name:account.menu_account_print_journal
@@ -68245,13 +68034,6 @@ msgstr "Devise :"
 #: selection:res.users,context_tz:0
 msgid "America/Argentina/Catamarca"
 msgstr "America/Argentina/Catamarca"
-
-#. module: account
-#: view:account.vat.declaration:0
-#: model:ir.actions.report.xml,name:account.account_vat_declaration
-#: model:ir.ui.menu,name:account.menu_account_vat_declaration
-msgid "Taxes Report"
-msgstr "Rapport des Taxes"
 
 #. modules: account, register_accounting, account_corrections
 #: field:account.bank.statement.line,partner_type_mandatory:0
@@ -69570,7 +69352,6 @@ msgstr "Solde de Caisse :"
 #: report:account.tax.code.entries:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
-#: report:account.vat.declaration:0
 #: report:addons/account/report/account_partner_ledger.mako:284
 #: field:report.account.receivable,debit:0
 #: field:account.account,debit:0
@@ -70924,16 +70705,13 @@ msgstr "L'origine de la réclamation client doit être une Livraison Entrante"
 #: report:account.general.ledger:0
 #: report:account.general.ledger_landscape:0
 #: report:account.journal.period.print:0
-#: field:account.move.journal,target_move:0
 #: field:account.partner.balance,target_move:0
 #: field:account.partner.ledger,target_move:0
 #: field:account.pl.report,target_move:0
 #: field:account.print.journal,target_move:0
 #: field:account.report.general.ledger,target_move:0
-#: field:account.tax.chart,target_move:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
-#: field:account.vat.declaration,target_move:0
 #: report:addons/account/report/account_partner_ledger.mako:214
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:317
 #: field:wizard.account.partner.balance.tree,target_move:0
@@ -71319,11 +71097,6 @@ msgstr "Zone Inventaire"
 #: help:account.move,state:0
 msgid "All manually created new journal entry are usually in the state 'Unposted', but you can set the option to skip that state on the related journal. In that case, they will be behave as journal entries automatically created by the system on document validation (invoices, bank statements...) and will be created in 'Posted' state."
 msgstr "Toutes les nouvelles écritures comptables créées manuellement sont généralement sous statut «Non Comptabilisé», mais on peut choisir l'option de sauter ce statut dans le journal associé. Dans ce cas, elles seront traitées comme des pièces comptables créées automatiquement par le système lors de la validation des documents (factures, relevés bancaires ...) et seront créées sous statut «Comptabilisé»."
-
-#. module: account
-#: field:account.open.closed.fiscalyear,fyear_id:0
-msgid "Fiscal Year to Open"
-msgstr "Exercice comptable à Ouvrir"
 
 #. modules: sales_followup, product, stock_move_tracking, stock
 #: field:product.product,outgoing_qty:0
@@ -71727,7 +71500,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account/wizard/account_change_currency.py:59
 #: code:addons/account/wizard/account_change_currency.py:64
 #: code:addons/account/wizard/account_change_currency.py:70
-#: code:addons/account/wizard/account_move_bank_reconcile.py:49
 #: code:addons/account/wizard/account_report_common.py:163
 #: code:addons/account/wizard/account_report_common.py:169
 #: code:addons/account_corrections/account_move_line.py:424
@@ -74008,7 +73780,6 @@ msgstr "Il n'y a qu'une Zone Transbordement"
 #: field:account.subscription,date_start:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
-#: field:account.vat.declaration,date_from:0
 #: field:product.pricelist.version,date_start:0
 #: field:resource.calendar.leaves,date_from:0
 #: field:sync.monitor,start:0
@@ -74099,7 +73870,6 @@ msgstr "Surveillance des Mises à jour Envoyées"
 #: field:account.pl.report,fiscalyear_id:0
 #: field:account.print.journal,fiscalyear_id:0
 #: field:account.report.general.ledger,fiscalyear_id:0
-#: field:account.vat.declaration,fiscalyear_id:0
 #: field:liquidity.balance.wizard,fiscalyear_id:0
 #: field:account.period.create,fiscalyear:0
 #: field:wizard.account.partner.balance.tree,fiscalyear_id:0
@@ -74315,11 +74085,6 @@ msgstr "Produits par Zone"
 #: field:sale.order.line,address_allotment_id:0
 msgid "Allotment Partner"
 msgstr "Partenaire Répartition"
-
-#. module: account
-#: model:ir.model,name:account.model_account_tax_chart
-msgid "Account tax chart"
-msgstr "Compte - Plan de taxes"
 
 #. module: msf_budget
 #: code:addons/msf_budget/wizard/wizard_budget_import.py:106
@@ -77879,12 +77644,6 @@ msgstr "Bons d'Engement dans l'état Terminé"
 msgid "Supplier Catalogue"
 msgstr "Supplier Catalogue"
 
-#. module: account
-#: code:addons/account/wizard/account_move_journal.py:95
-#, python-format
-msgid "Journal: %s"
-msgstr "Journal : %s"
-
 #. module: msf_outgoing
 #: field:pack.family.memory,amount:0
 #: field:stock.move,amount:0
@@ -78471,7 +78230,6 @@ msgstr "Cible Parent"
 #: report:account.central.journal:0
 #: report:account.general.journal:0
 #: report:account.journal.period.print:0
-#: report:account.vat.declaration:0
 msgid "Start Period"
 msgstr "Période de Début"
 
@@ -79688,11 +79446,6 @@ msgstr "You cannot validate this document in the given period: %s because it's n
 msgid "N/A"
 msgstr "N/A"
 
-#. module: account
-#: field:account.move.line.reconcile,writeoff:0
-msgid "Write-Off amount"
-msgstr "Montant Ajustement"
-
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:367
 #, python-format
@@ -80431,14 +80184,11 @@ msgstr "Il n'est pas permis de changer le compte des salaires des expatriés!"
 #: selection:account.common.partner.report,target_move:0
 #: selection:account.common.report,target_move:0
 #: selection:account.general.journal,target_move:0
-#: selection:account.move.journal,target_move:0
 #: selection:account.partner.balance,target_move:0
 #: selection:account.partner.ledger,target_move:0
 #: selection:account.pl.report,target_move:0
 #: selection:account.print.journal,target_move:0
 #: selection:account.report.general.ledger,target_move:0
-#: selection:account.tax.chart,target_move:0
-#: selection:account.vat.declaration,target_move:0
 #: code:addons/account/report/common_report_header.py:99
 #: model:ir.actions.report.xml,name:account.account_move_line_list
 #: code:addons/finance/report/account_partner_balance_tree.py:151
@@ -81139,7 +80889,6 @@ msgstr "Log created in last month"
 #: help:account.pl.report,fiscalyear_id:0
 #: help:account.print.journal,fiscalyear_id:0
 #: help:account.report.general.ledger,fiscalyear_id:0
-#: help:account.vat.declaration,fiscalyear_id:0
 #: help:wizard.account.partner.balance.tree,fiscalyear_id:0
 msgid "Keep empty for all open fiscal year"
 msgstr "Laisser vide pour tous les exercices comptables ouverts"
@@ -82306,11 +82055,6 @@ msgstr "L2"
 #: field:wizard.import.ad.line,purchase_id:0
 msgid "Purchase Order"
 msgstr "Bon de Commande"
-
-#. module: account
-#: view:account.vat.declaration:0
-msgid "Print Tax Statement"
-msgstr "Imprimer le Relevé de Taxe"
 
 #. module: purchase
 #: field:purchase.installer,purchase_requisition:0
@@ -84076,11 +83820,6 @@ msgstr "Veuillez clôturer le Registre précédent avant de clôturer celui-ci !
 #, python-format
 msgid "Product %s is not ED managed, ED ignored"
 msgstr "Produit %s n'a pas de gestion des EXP, date ignorée"
-
-#. module: account
-#: view:account.move.line.reconcile.select:0
-msgid "Open for Reconciliation"
-msgstr "Ouvrir pour Lettrage"
 
 #. module: msf_doc_import
 #: field:wizard.simu.import.po.line,import_id:0
@@ -86213,8 +85952,6 @@ msgstr "GMDN Code"
 #: selection:account.fiscalyear,state:0
 #: selection:account.invoice,state:0
 #: selection:account.invoice.report,state:0
-#: view:account.open.closed.fiscalyear:0
-#: code:addons/account/wizard/account_move_journal.py:106
 #: selection:report.invoice.created,state:0
 #: selection:wizard.journal.items.corrections,state:0
 #: view:account.invoice:0
@@ -86719,7 +86456,6 @@ msgstr "Erreur ! Vous ne pouvez pas lier une catégorie à deux familles différ
 #: field:account.pl.report,template_name:0
 #: field:account.print.journal,template_name:0
 #: field:account.report.general.ledger,template_name:0
-#: field:account.vat.declaration,template_name:0
 #: field:account.mcdb,template_name:0
 #: field:wizard.account.partner.balance.tree,template_name:0
 #: field:wizard.template,name:0
@@ -86897,12 +86633,6 @@ msgstr "Expédition - fermé"
 #, python-format
 msgid "Kitting Order must be In Production."
 msgstr "Commande d'Assemblage de Kit doit être en Production"
-
-#. module: account
-#: code:addons/account/wizard/account_move_bank_reconcile.py:53
-#, python-format
-msgid "Standard Encoding"
-msgstr "Encodage standard"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:643
@@ -87488,7 +87218,6 @@ msgstr "No donation expense account defined for this PO Line: %s"
 #: field:account.pl.report,chart_account_id:0
 #: field:account.print.journal,chart_account_id:0
 #: field:account.report.general.ledger,chart_account_id:0
-#: field:account.vat.declaration,chart_account_id:0
 #: field:wizard.account.partner.balance.tree,chart_account_id:0
 msgid "Chart of account"
 msgstr "Plan comptable"
@@ -88311,11 +88040,6 @@ msgstr "The technical name for the field. This is used to make searching for Fie
 msgid "User Type Report Type"
 msgstr "Utilisateur - Type Rapport "
 
-#. module: account
-#: help:account.open.closed.fiscalyear,fyear_id:0
-msgid "Select Fiscal Year which you want to remove entries for its End of year entries journal"
-msgstr "Sélectionner l'exercice dans lequel vous souhaitez supprimer des entrées du journal de fin d'exercice"
-
 #. modules: msf_processes, account
 #: model:process.transition,note:account.process_transition_supplierentriesreconcile0
 #: model:process.transition,note:msf_processes.process_transition_supplierentriesreconcile0
@@ -89022,7 +88746,6 @@ msgstr "Zone Fournisseur"
 
 #. modules: account_reconciliation, account
 #: model:ir.model,name:account.model_account_move_line_reconcile
-#: model:ir.model,name:account.model_account_move_line_reconcile_writeoff
 #: model:ir.model,name:account_reconciliation.model_account_move_line_reconcile
 msgid "Account move line reconcile"
 msgstr "Lettrage Ligne d'Ecriture Comptable "
@@ -90234,11 +89957,6 @@ msgstr "Ligne %s. La monnaie n'est pas active : %s"
 msgid "Registration Status"
 msgstr "Statut Enregistrement"
 
-#. module: account
-#: view:account.tax.chart:0
-msgid "(If you do not select period it will take all open periods)"
-msgstr "(Toutes les périodes ouvertes seront prises en compte, si vous ne sélectionnez pas de période précise)"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -90352,7 +90070,6 @@ msgstr "Valeur commerciale estimée:"
 #. module: account
 #: view:account.analytic.chart:0
 #: view:account.chart:0
-#: view:account.tax.chart:0
 msgid "Open Charts"
 msgstr "Ouvrir les plans comptables"
 
@@ -90495,7 +90212,6 @@ msgstr "Track different dates on products and production lots:\n"
 
 #. modules: purchase, account, sale, register_accounting, account_override, analytic_override
 #: view:account.invoice:0
-#: selection:account.vat.declaration,based_on:0
 #: model:ir.actions.act_window,name:account.act_res_partner_2_account_invoice_opened
 #: model:ir.actions.act_window,name:account.action_invoice_tree
 #: view:report.invoice.created:0
@@ -95425,7 +95141,6 @@ msgstr "Ecritures Ouvertes"
 #: view:account.invoice:0
 #: field:account.invoice,payment_ids:0
 #: field:account.invoice,payment_to_display_ids:0
-#: selection:account.vat.declaration,based_on:0
 #: view:account.invoice:0
 #: view:account.invoice:0
 #: field:wizard.account.invoice,payment_ids:0
@@ -95478,22 +95193,14 @@ msgstr "Rechercher Lignes non-facturées"
 #: selection:account.invoice.refund,filter_refund:0
 #: view:account.journal.select:0
 #: view:account.move:0
-#: view:account.move.bank.reconcile:0
 #: view:account.move.line.reconcile:0
-#: view:account.move.line.reconcile.select:0
-#: view:account.move.line.reconcile.writeoff:0
 #: view:account.move.line.unreconcile.select:0
-#: view:account.open.closed.fiscalyear:0
 #: view:account.partner.ledger:0
 #: view:account.partner.reconcile.process:0
-#: view:account.period.close:0
 #: view:account.subscription.generate:0
-#: view:account.tax.chart:0
 #: view:account.unreconcile:0
 #: view:account.unreconcile.reconcile:0
 #: view:account.use.model:0
-#: view:account.vat.declaration:0
-#: code:addons/account/wizard/account_move_journal.py:105
 #: view:liquidity.balance.wizard:0
 #: view:project.account.analytic.line:0
 #: view:validate.account.move:0
@@ -97122,12 +96829,6 @@ msgstr "Le Montant de la taxe."
 #: field:cash.request.recap.expense,budget_expense_m2:0
 msgid "Budgeted expenses for the period M+2"
 msgstr "Dépenses budgétisées pour la période M+2"
-
-#. module: account
-#: code:addons/account/wizard/account_move_journal.py:97
-#, python-format
-msgid "Journal: All"
-msgstr "Journal : Tous"
 
 #. module: out_step
 #: model:ir.module.module,description:out_step.module_meta_information

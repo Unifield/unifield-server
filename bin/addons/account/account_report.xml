@@ -41,20 +41,6 @@
 
         <report id="account_move_line_list" model="account.tax.code" name="account.tax.code.entries" rml="account/report/account_tax_code.rml" string="All Entries"/>
 
-        <report
-            auto="False"
-            id="account_vat_declaration"
-            menu="False"
-            model="account.tax.code"
-            name="account.vat.declaration"
-            rml="account/report/account_tax_report.rml"
-            string="Taxes Report"/>
-
-        <menuitem
-            id="menu_tax_report"
-            name="Taxes"
-            groups="group_account_user,group_account_manager"
-            parent="account.menu_finance_generic_reporting" sequence="3"/>
 
         <report id="account_account_balance_landscape"
             string="Account balance"
