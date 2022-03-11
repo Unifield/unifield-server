@@ -693,11 +693,6 @@ msgstr "The server last sum is %s and has been applied on that database at %s."
 msgid "Job Positions are used to define jobs and their requirements. You can keep track of the number of employees you have per job position and how many you expect in the future. You can also attach a survey to a job position that will be used in the recruitment process to evaluate the applicants for this job position."
 msgstr "Les Postes de travail sont utilisés pour définir les emplois et leurs exigences. Vous pouvez garder une trace du nombre d'employés que vous avez par poste de travail et à combien vous vous attendez à l'avenir. Vous pouvez également joindre une enquête/étude à un poste de travail. Il peut alors être utilisé lors du processus de recrutement afin d'évaluer les candidats à ce poste de travail.."
 
-#. module: account
-#: field:account.fiscalyear.close,fy2_id:0
-msgid "New Fiscal Year"
-msgstr "Nouvel Exercice Comptable"
-
 #. modules: account, account_subscription
 #: model:ir.model,name:account.model_account_subscription
 #: model:ir.model,name:account_subscription.model_account_subscription
@@ -3153,7 +3148,6 @@ msgid "Generated purchase order subflow."
 msgstr "Sous-flux de Commande de Terrain généré."
 
 #. modules: import_data, account, base, stock, msf_outgoing
-#: view:account.fiscalyear.close:0
 #: wizard_button:server.action.create,step_1,create:0
 #: selection:import_data,import_mode:0
 #: selection:import_product,import_mode:0
@@ -12331,11 +12325,6 @@ msgstr "Journal Général"
 msgid "TURKISH LIRA"
 msgstr "TURKISH LIRA"
 
-#. module: account
-#: help:account.fiscalyear.close,fy_id:0
-msgid "Select a Fiscal year to close"
-msgstr "Sélectionnez un Exercice Comptable à Clôturer"
-
 #. module: base
 #: field:instance.auto.creation,dbname:0
 msgid "Database name"
@@ -16617,11 +16606,6 @@ msgstr "Lignes de calcul"
 #: selection:ir.actions.server,trigger_name:0
 msgid "return_cancel - (stock.picking)"
 msgstr "return_cancel - (stock.picking)"
-
-#. module: account
-#: view:account.fiscalyear.close:0
-msgid "This wizard will generate the end of year journal entries of selected fiscal year. Note that you can run this wizard many times for the same fiscal year: it will simply replace the old opening entries with the new ones."
-msgstr "Cet assistant va générer des écritures de fin d'exercice de l'exercice comptable sélectionné. Vous pouvez utiliser cet assistant plusieurs fois pour le même exercice : il va simplement remplacer les écritures d'ouvertures précédentes par de nouvelles."
 
 #. modules: register_accounting, analytic_distribution
 #: model:ir.actions.server,name:analytic_distribution.action_analytic_lines_from_account_ml_search
@@ -22602,11 +22586,6 @@ msgstr "Installation de la Langue"
 #: model:ir.model,name:sale.model_sync_sale_order_line_split
 msgid "sync.sale.order.line.split"
 msgstr "sync.sale.order.line.split"
-
-#. module: account
-#: help:account.fiscalyear.close.state,fy_id:0
-msgid "Select a fiscal year to close"
-msgstr "Sélectionnez un exercice comptable à clôturer"
 
 #. modules: account, account_period_closing_level, sync_so
 #: constraint:account.fiscalyear:0
@@ -30030,11 +30009,6 @@ msgstr "Propriétés des Commandes"
 msgid "This informs system that we can display or not an analytic button"
 msgstr "Ceci informe le système de la possibilité d'afficher ou de ne pas afficher un bouton analytique"
 
-#. module: account
-#: view:account.fiscalyear.close.state:0
-msgid "If no additional entries should be recorded on a fiscal year, you can close it from here. It will close all opened periods in this year that will make impossible any new entry record. Close a fiscal year when you need to finalize your end of year results definitive "
-msgstr "Vous pouvez clôturer à partir d'ici, s'il n'y a pas d'autres écritures à consigner pour cette exercice comptable. Cela fermera toutes les périodes ouvertes de l'année et cela rendra impossible toute nouvelle écriture. Ne clôturez donc un exercice comptable que lorsque vous avez besoin de finaliser vos résultats de fin d'exercice (définitivement). "
-
 #. modules: sync_client, update_client
 #: field:backup.download,mtime:0
 #: field:sync.client.logs,mtime:0
@@ -36038,12 +36012,6 @@ msgstr "Supplier Locations"
 msgid "SMS"
 msgstr "SMS"
 
-#. module: account
-#: code:addons/account/wizard/account_fiscalyear_close.py:41
-#, python-format
-msgid "End of Fiscal Year Entry"
-msgstr "Entrée de fin d'exercice"
-
 #. module: stock
 #: model:process.node,name:stock.process_node_in_done
 msgid "In - closed"
@@ -38514,11 +38482,6 @@ msgstr "PO with name %s not found"
 #: code:addons/account_period_closing_level/account_period.py:646
 msgid "Currencies"
 msgstr "Devises"
-
-#. module: account
-#: help:account.fiscalyear.close,report_name:0
-msgid "Give name of the new entries"
-msgstr "Indique le nom des nouvelles écritures"
 
 #. module: vat_management
 #: model:ir.module.module,description:vat_management.module_meta_information
@@ -44149,8 +44112,6 @@ msgstr "Paie - Importation"
 #: code:addons/account/account.py:1430
 #: code:addons/account/account_move_line.py:948
 #: code:addons/account/invoice.py:1038
-#: code:addons/account/wizard/account_fiscalyear_close.py:78
-#: code:addons/account/wizard/account_fiscalyear_close.py:81
 #: code:addons/account/wizard/account_move_journal.py:165
 #: code:addons/account/wizard/account_report_aged_partner_balance.py:55
 #: code:addons/account/wizard/account_report_aged_partner_balance.py:57
@@ -49992,11 +49953,6 @@ msgstr "Pas de taux trouvé \n"
 "pour la devise: %s \n"
 "à la date du: %s"
 
-#. module: account
-#: model:ir.model,name:account.model_account_fiscalyear_close
-msgid "Fiscalyear Close"
-msgstr "Clôture de l'Exercice Comptable"
-
 #. module: stock
 #: view:stock.picking:0
 msgid "System internal moves"
@@ -53657,12 +53613,6 @@ msgstr "\n"
 "        Disallow the cron of the mission stock data on runbot\n"
 "        "
 
-#. module: account
-#: code:addons/account/wizard/account_fiscalyear_close.py:82
-#, python-format
-msgid "The journal must have centralised counterpart without the Skipping draft state option checked!"
-msgstr "Le journal doit avoir centralisé la contrepartie sans que l'option \"passer le statut brouillon\" n'ait été activée !"
-
 #. module: export_import_lang
 #: code:addons/export_import_lang/data_import.py:96
 #, python-format
@@ -53673,11 +53623,6 @@ msgstr "Line %s, incorrect column number src should not be empty."
 #: view:account.commitment:0
 msgid "ESC Commitment Vouchers"
 msgstr "Bons d'Engagement ESC"
-
-#. module: account
-#: field:account.fiscalyear.close,period_id:0
-msgid "Opening Entries Period"
-msgstr "Période des Ecritures d'ouverture"
 
 #. module: msf_button_access_rights
 #: field:msf_button_access_rights.button_access_rule,type:0
@@ -54084,11 +54029,6 @@ msgstr "Vous ne pouvez pas supprimer un compte qui contient des écritures compt
 #: help:analytic.distribution.wizard,is_writable:0
 msgid "This informs wizard if it could be saved or not regarding invoice state or purchase order state"
 msgstr "Ceci informe l'assistant du statut de facture ou du bon de commande, à savoir s'il a pu ou n'a pas pu être sauvé"
-
-#. module: account
-#: view:account.fiscalyear.close.state:0
-msgid "Close states of Fiscal year and periods"
-msgstr "Fermer les statuts de l'Exercice Comptable et des périodes"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1076
@@ -60158,7 +60098,6 @@ msgid "po.track.changes.wizard"
 msgstr "po.track.changes.wizard"
 
 #. module: account
-#: model:ir.actions.act_window,name:account.action_account_fiscalyear_close
 #: model:ir.ui.menu,name:account.menu_wizard_fy_close
 msgid "Generate Opening Entries"
 msgstr "Générer les Ecritures d'Ouverture"
@@ -62139,11 +62078,6 @@ msgstr "Registre)"
 #: selection:res.users,context_tz:0
 msgid "Zulu"
 msgstr "Zulu"
-
-#. module: account
-#: view:account.fiscalyear.close:0
-msgid "Generate Fiscal Year Opening Entries"
-msgstr "Générer les Ecritures d'Ouverture d'Exercice Comptable"
 
 #. module: report_webkit
 #: field:ir.actions.report.xml,webkit_debug:0
@@ -65035,12 +64969,6 @@ msgstr "Syrie"
 msgid "Purchase Analytic Plans"
 msgstr "Achat - Plans Analytiques "
 
-#. module: account
-#: field:account.fiscalyear.close,fy_id:0
-#: field:account.fiscalyear.close.state,fy_id:0
-msgid "Fiscal Year to close"
-msgstr "Exercice comptable à Clôturer"
-
 #. module: product
 #: field:product.template,type:0
 msgid "Product Type"
@@ -65056,12 +64984,6 @@ msgstr "Comm10E 25  105 x 241 mm, U.S. Commun 10 Enveloppe"
 #: field:stock.frequence,yearly_choose_month_freq:0
 msgid "Choose a month"
 msgstr "Choisir un mois"
-
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_fiscalyear_close_state
-#: model:ir.ui.menu,name:account.menu_wizard_fy_close_state
-msgid "Close a Fiscal Year"
-msgstr "Clôturer un Exercice Comptable"
 
 #. module: tender_flow
 #: code:addons/tender_flow/tender_flow.py:540
@@ -67257,11 +67179,6 @@ msgstr "Commandes de Terrain par Catégorie de Produit durant les 90 derniers jo
 #, python-format
 msgid "Validate PPL"
 msgstr "Valider LPCL"
-
-#. module: account
-#: field:account.fiscalyear.close,journal_id:0
-msgid "Opening Entries Journal"
-msgstr "Journal des Ecritures d'ouverture"
 
 #. module: stock
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:632
@@ -70311,7 +70228,6 @@ msgid "Only Kit products can be used for kits."
 msgstr "Seuls les Produits de Kit peuvent être utilisés pour les Kits."
 
 #. modules: sales_followup, account, purchase_override, procurement_request, res_currency_tables, sync_client, documents_done, product, kit, base, purchase_followup, sale, stock, msf_profile
-#: view:account.invoice.confirm:0
 #: view:base.language.install:0
 #: view:base.module.import:0
 #: view:base.module.update:0
@@ -71508,11 +71424,6 @@ msgstr "Ceci EFFACERA d'abord tous les registres correspondants à ce journal et
 #: selection:res.users,context_tz:0
 msgid "Etc/GMT+12"
 msgstr "Etc/GMT+12"
-
-#. module: account
-#: view:account.fiscalyear.close.state:0
-msgid "Close Fiscalyear"
-msgstr "Clôturer l'Exercice Comptable"
 
 #. module: base
 #: model:res.currency,currency_name:base.KMF
@@ -74163,11 +74074,6 @@ msgstr "Sauvegarde après sync automatique"
 #: help:msf_field_access_rights.field_access_rule,instance_level:0
 msgid "The Instance Level that this rule applies to"
 msgstr "The Instance Level that this rule applies to"
-
-#. module: account
-#: view:account.invoice.confirm:0
-msgid "Confirm Draft Invoices"
-msgstr "Confirmer Brouillons de Factures"
 
 #. module: sync_client
 #: code:addons/sync_client/update.py:1019
@@ -77276,11 +77182,6 @@ msgstr "Mouvements pour ce colis"
 msgid "Period Type"
 msgstr "Type de Période"
 
-#. module: account
-#: field:account.fiscalyear.close,report_name:0
-msgid "Name of new entries"
-msgstr "Nom des nouvelles écritures"
-
 #. module: base
 #: help:ir.ui.view_sc,res_id:0
 msgid "Reference of the target resource, whose model/table depends on the 'Resource Name' field."
@@ -78655,12 +78556,6 @@ msgstr "The article is potentially subject to important modifications (supply so
 #: view:base.setup.config:0
 msgid "Information about your new database"
 msgstr "Informations sur votre nouvelle base de données"
-
-#. module: account
-#: code:addons/account/wizard/account_fiscalyear_close.py:79
-#, python-format
-msgid "The journal must have default credit and debit account"
-msgstr "Le journal doit posséder un compte de crédit&débit par défaut"
 
 #. module: register_accounting
 #: model:ir.model,name:register_accounting.model_wizard_invoice_date
@@ -80891,11 +80786,6 @@ msgstr "Bons d'Engagement Externes"
 #: field:hr.employee,address_id:0
 msgid "Working Address"
 msgstr "Adresse Professionnelle"
-
-#. module: account
-#: model:ir.model,name:account.model_account_invoice_confirm
-msgid "Confirm the selected invoices"
-msgstr "Confirmer les factures sélectionnées"
 
 #. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
 #: view:account.bank.statement:0
@@ -87337,11 +87227,6 @@ msgstr "Année à ce jour"
 msgid "Initial Stock Inventory Line"
 msgstr "Initial Stock Inventory Line"
 
-#. module: account
-#: help:account.fiscalyear.close,journal_id:0
-msgid "The best practice here is to use a journal dedicated to contain the opening entries of all fiscal years. Note that you should define it with default debit/credit accounts, of type 'situation' and with a centralized counterpart."
-msgstr "Les règles de l'art exigent qu'on utilise un journal dédié aux écritures d'ouverture pour tous les exercices comptables. Notez que celui-ci doit avoir des comptes de crédits et de débits par défaut, être de type \"Situation\", et avoir une contrepartie centralisée."
-
 #. module: procurement_request
 #: code:addons/procurement_request/procurement_request.py:670
 #: view:procurement.request.line.wizard:0
@@ -88636,11 +88521,6 @@ msgstr "Regrouper par champs"
 #: field:purchase.double.validation.installer,limit_amount:0
 msgid "Maximum Purchase Amount"
 msgstr "Montant Maximum d'Achat"
-
-#. module: account
-#: view:account.invoice.confirm:0
-msgid "Confirm Invoices"
-msgstr "Confirmer Factures"
 
 #. module: base
 #: help:res.groups,level:0
@@ -95593,8 +95473,6 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:account.change.currency:0
 #: view:account.chart:0
 #: view:account.common.report:0
-#: view:account.fiscalyear.close:0
-#: view:account.fiscalyear.close.state:0
 #: view:account.invoice:0
 #: view:account.invoice.refund:0
 #: selection:account.invoice.refund,filter_refund:0
@@ -97918,11 +97796,6 @@ msgstr "America/Eirunepe"
 #: field:account.fiscalyear,is_hq_closable:0
 msgid "HQ Closable ? (all periods HQ closed)"
 msgstr "HQ Closable ? (all periods HQ closed)"
-
-#. module: account
-#: model:ir.model,name:account.model_account_fiscalyear_close_state
-msgid "Fiscalyear Close state"
-msgstr "Exercice Comptable sous statut Fermé"
 
 #. module: account_override
 #: code:addons/account_override/invoice.py:1425

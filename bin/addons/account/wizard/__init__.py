@@ -38,16 +38,11 @@ from . import account_report_aged_partner_balance
 from . import account_report_partner_ledger
 from . import account_report_partner_balance
 from . import account_period_close
-from . import account_fiscalyear_close
-from . import account_fiscalyear_close_state
 from . import account_vat
 from . import account_open_closed_fiscalyear
 
-from . import account_invoice_state
 from . import account_chart
 from . import account_tax_chart
-#TODO: remove this file no moe used
-# also remove related view fiel
 
 from . import account_validate_account_move
 from . import account_use_model

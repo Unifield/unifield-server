@@ -77,9 +77,7 @@
         <menuitem parent="menu_hidden" id="account.menu_menu_Bank_process" sequence="7"/>
         <menuitem parent="menu_hidden" id="account.menu_account_pp_statements" sequence="12"/>
         <menuitem parent="menu_hidden" id="account.menu_action_manual_recurring" sequence="10"/>
-        <menuitem parent="menu_hidden" id="account.menu_wizard_fy_close" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_wizard_account_open_closed_fiscalyear" sequence="18"/>
-        <menuitem parent="menu_hidden" id="account.menu_wizard_fy_close_state" sequence="20"/>
         <menuitem parent="menu_hidden" id="account.menu_account_print_journal" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_account_general_journal" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_account_central_journal" sequence="10"/>
