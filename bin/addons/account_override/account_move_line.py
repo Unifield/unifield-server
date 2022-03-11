@@ -34,15 +34,6 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
-    # @@@override account>account_move_line.py>account_move_line>name_get
-    def name_get(self, cr, uid, ids, context=None):
-        # Override default name_get (since it displays the move line reference)
-        if not ids:
-            return []
-        result = []
-        for line in self.browse(cr, uid, ids, context=context):
-            result.append((line.id, line.move_id.name))
-        return result
 
     def join_without_redundancy(self, text='', string=''):
         """

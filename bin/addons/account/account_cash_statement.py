@@ -126,20 +126,26 @@ class account_cash_statement(osv.osv):
             res[statement.id] = amount_total
         return res
 
-    def _get_sum_entry_encoding(self, cr, uid, ids, name, arg, context=None):
-
-        """ Find encoding total of statements "
-        @param name: Names of fields.
-        @param arg: User defined arguments
-        @return: Dictionary of values.
+    def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
-        res2 = {}
-        for statement in self.browse(cr, uid, ids, context=context):
-            encoding_total=0.0
-            for line in statement.line_ids:
-                encoding_total += line.amount
-            res2[statement.id] = encoding_total
-        return res2
+        Sum of given register's transactions
+        """
+        res = {}
+        if not ids:
+            return res
+        # Complete those that have no result
+        for i in ids:
+            res[i] = 0.0
+        # COMPUTE amounts
+        cr.execute("""
+        SELECT statement_id, SUM(amount)
+        FROM account_bank_statement_line
+        WHERE statement_id in %s
+        GROUP BY statement_id""", (tuple(ids,),))
+        sql_res = cr.fetchall()
+        if sql_res:
+            res.update(dict(sql_res))
+        return res
 
     def _get_company(self, cr, uid, context=None):
         user_pool = self.pool.get('res.users')
@@ -179,17 +185,6 @@ class account_cash_statement(osv.osv):
                 'number': 0
             }
             res.append(dct)
-        return res
-
-    def _get_cash_close_box_lines(self, cr, uid, context=None):
-        res = []
-        curr = [1, 2, 5, 10, 20, 50, 100, 500]
-        for rs in curr:
-            dct = {
-                'pieces': rs,
-                'number': 0
-            }
-            res.append((0, 0, dct))
         return res
 
     def _get_cash_open_close_box_lines(self, cr, uid, context=None):

@@ -197,26 +197,6 @@ class account_cash_statement(osv.osv):
                         self.write(cr, 1, [next_st.id], {'balance_start': amount}, context=context)
         return res
 
-    def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        """
-        Sum of given register's transactions
-        """
-        res = {}
-        if not ids:
-            return res
-        # Complete those that have no result
-        for i in ids:
-            res[i] = 0.0
-        # COMPUTE amounts
-        cr.execute("""
-        SELECT statement_id, SUM(amount)
-        FROM account_bank_statement_line
-        WHERE statement_id in %s
-        GROUP BY statement_id""", (tuple(ids,),))
-        sql_res = cr.fetchall()
-        if sql_res:
-            res.update(dict(sql_res))
-        return res
 
     _columns = {
         'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines',
@@ -227,8 +207,6 @@ class account_cash_statement(osv.osv):
         'comments': fields.char('Comments', size=64, required=False, readonly=False),
         'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance',
                                                   help="Starting Balance + Cash Transactions"),
-        # Because of UTP-382, need to change store=True to FALSE for total_entry_encoding (which do not update fields at register line deletion/copy)
-        'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=False, string="Cash Transaction", help="Total cash transactions"),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context=None):

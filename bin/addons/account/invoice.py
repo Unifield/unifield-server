@@ -46,14 +46,6 @@ class account_invoice(osv.osv):
             res[invoice.id]['amount_total'] = res[invoice.id]['amount_tax'] + res[invoice.id]['amount_untaxed']
         return res
 
-    def _get_journal_analytic(self, cr, uid, type_inv, context=None):
-        type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale', 'in_refund': 'purchase'}
-        tt = type2journal.get(type_inv, 'sale')
-        result = self.pool.get('account.analytic.journal').search(cr, uid, [('type','=',tt)], context=context)
-        if not result:
-            raise osv.except_osv(_('No Analytic Journal !'),_("You must define an analytic journal of type '%s' !") % (tt,))
-        return result[0]
-
     def _get_type(self, cr, uid, context=None):
         if context is None:
             context = {}
@@ -1269,14 +1261,6 @@ class account_invoice(osv.osv):
 
     ###################
 
-    def list_distinct_taxes(self, cr, uid, ids):
-        invoices = self.browse(cr, uid, ids)
-        taxes = {}
-        for inv in invoices:
-            for tax in inv.tax_line:
-                if not tax['name'] in taxes:
-                    taxes[tax['name']] = {'name': tax['name']}
-        return list(taxes.values())
 
     def _log_event(self, cr, uid, ids, factor=1.0, name='Open Invoice'):
         #TODO: implement messages system
@@ -1498,106 +1482,6 @@ class account_invoice(osv.osv):
 
         return new_ids
 
-    def pay_and_reconcile(self, cr, uid, ids, pay_amount, pay_account_id, period_id, pay_journal_id, writeoff_acc_id, writeoff_period_id, writeoff_journal_id, context=None, name=''):
-        if context is None:
-            context = {}
-        #TODO check if we can use different period for payment and the writeoff line
-        assert len(ids)==1, "Can only pay one invoice at a time"
-        invoice = self.browse(cr, uid, ids[0], context=context)
-        src_account_id = invoice.account_id.id
-        # Take the seq as name for move
-        types = {'out_invoice': -1, 'in_invoice': 1, 'out_refund': 1, 'in_refund': -1}
-        direction = types[invoice.type]
-        #take the choosen date
-        if 'date_p' in context and context['date_p']:
-            date=context['date_p']
-        else:
-            date=time.strftime('%Y-%m-%d')
-
-        # Take the amount in currency and the currency of the payment
-        if 'amount_currency' in context and context['amount_currency'] and 'currency_id' in context and context['currency_id']:
-            amount_currency = context['amount_currency']
-            currency_id = context['currency_id']
-        else:
-            amount_currency = False
-            currency_id = False
-
-        pay_journal = self.pool.get('account.journal').read(cr, uid, pay_journal_id, ['type'], context=context)
-        if invoice.type in ('in_invoice', 'out_invoice'):
-            if pay_journal['type'] == 'bank':
-                entry_type = 'bank_pay_voucher' # Bank payment
-            else:
-                entry_type = 'pay_voucher' # Cash payment
-        else:
-            entry_type = 'cont_voucher'
-        if invoice.type in ('in_invoice', 'in_refund'):
-            ref = invoice.reference
-        else:
-            ref = self._convert_ref(cr, uid, invoice.number)
-        # Pay attention to the sign for both debit/credit AND amount_currency
-        l1 = {
-            'debit': direction * pay_amount>0 and direction * pay_amount,
-            'credit': direction * pay_amount<0 and - direction * pay_amount,
-            'account_id': src_account_id,
-            'partner_id': invoice.partner_id.id,
-            'ref':ref,
-            'date': date,
-            'currency_id':currency_id,
-            'amount_currency':amount_currency and direction * amount_currency or 0.0,
-            'company_id': invoice.company_id.id,
-        }
-        l2 = {
-            'debit': direction * pay_amount<0 and - direction * pay_amount,
-            'credit': direction * pay_amount>0 and direction * pay_amount,
-            'account_id': pay_account_id,
-            'partner_id': invoice.partner_id.id,
-            'ref':ref,
-            'date': date,
-            'currency_id':currency_id,
-            'amount_currency':amount_currency and - direction * amount_currency or 0.0,
-            'company_id': invoice.company_id.id,
-        }
-
-        if not name:
-            name = invoice.invoice_line and invoice.invoice_line[0].name or invoice.number
-        l1['name'] = name
-        l2['name'] = name
-
-        lines = [(0, 0, l1), (0, 0, l2)]
-        move = {'ref': ref, 'line_id': lines, 'journal_id': pay_journal_id, 'period_id': period_id, 'date': date, 'type': entry_type}
-        move_id = self.pool.get('account.move').create(cr, uid, move, context=context)
-
-        line_ids = []
-        total = 0.0
-        line = self.pool.get('account.move.line')
-        move_ids = [move_id,]
-        if invoice.move_id:
-            move_ids.append(invoice.move_id.id)
-        cr.execute('SELECT id FROM account_move_line '\
-                   'WHERE move_id IN %s',
-                   ((move_id, invoice.move_id.id),))
-        lines = line.browse(cr, uid, [x[0] for x in cr.fetchall()] )
-        for l in lines+invoice.payment_ids:
-            if l.account_id.id == src_account_id:
-                line_ids.append(l.id)
-                total += (l.debit or 0.0) - (l.credit or 0.0)
-
-        inv_id, name = self.name_get(cr, uid, [invoice.id], context=context)[0]
-        if (not round(total,self.pool.get('decimal.precision').precision_get(cr, uid, 'Account'))) or writeoff_acc_id:
-            self.pool.get('account.move.line').reconcile(cr, uid, line_ids, 'manual', writeoff_acc_id, writeoff_period_id, writeoff_journal_id, context)
-        else:
-            code = invoice.currency_id.symbol
-            # TODO: use currency's formatting function
-            msg = _("Invoice '%s' is paid partially: %s%s of %s%s (%s%s remaining)") % \
-                (name, pay_amount, code, invoice.amount_total, code, total, code)
-            self.log(cr, uid, inv_id,  msg)
-            self.pool.get('account.move.line').reconcile_partial(cr, uid, line_ids, 'manual', context)
-
-        # Update the stored value (fields.function), so we write to trigger recompute
-        self.pool.get('account.invoice').write(cr, uid, ids, {}, context=context)
-        return True
-
-
     def action_gen_sync_msg(self, cr, uid, ids, context=None):
         for inv_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'account.invoice', inv_id, {},
@@ -1635,24 +1519,6 @@ class account_invoice_line(osv.osv):
                 res[line.id] = cur_obj.round(cr, uid, cur.rounding, res[line.id])
         return res
 
-    def _price_unit_default(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        if 'check_total' in context:
-            t = context['check_total']
-            for l in context.get('invoice_line', {}):
-                if isinstance(l, (list, tuple)) and len(l) >= 3 and l[2]:
-                    tax_obj = self.pool.get('account.tax')
-                    p = l[2].get('price_unit', 0) * (1-l[2].get('discount', 0)/100.0)
-                    t = t - (p * l[2].get('quantity'))
-                    taxes = l[2].get('invoice_line_tax_id')
-                    if len(taxes[0]) >= 3 and taxes[0][2]:
-                        taxes = tax_obj.browse(cr, uid, list(taxes[0][2]))
-                        for tax in tax_obj.compute_all(cr, uid, taxes, p,l[2].get('quantity'), context.get('address_invoice_id', False), l[2].get('product_id', False), context.get('partner_id', False))['taxes']:
-                            t = t - tax['amount']
-            return t
-        return 0
-
     _name = "account.invoice.line"
     _description = "Invoice Line"
     _columns = {
@@ -1679,7 +1545,6 @@ class account_invoice_line(osv.osv):
     _defaults = {
         'quantity': 1,
         'discount': 0.0,
-        'price_unit': _price_unit_default,
     }
 
     def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, context=None):
