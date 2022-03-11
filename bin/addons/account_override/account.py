@@ -877,29 +877,6 @@ class account_journal(osv.osv):
     _name = 'account.journal'
     _inherit = 'account.journal'
 
-    # @@@override account>account.py>account_journal>create_sequence
-    def create_sequence(self, cr, uid, vals, context=None):
-        seq_pool = self.pool.get('ir.sequence')
-        seq_typ_pool = self.pool.get('ir.sequence.type')
-
-        name = vals['name']
-        code = vals['code'].lower()
-
-        types = {
-            'name': name,
-            'code': code
-        }
-        seq_typ_pool.create(cr, uid, types)
-
-        seq = {
-            'name': name,
-            'code': code,
-            'active': True,
-            'prefix': '',
-            'padding': 4,
-            'number_increment': 1
-        }
-        return seq_pool.create(cr, uid, seq)
 
     def _get_fake(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -1027,19 +1004,6 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Error'), _('Posting date should be include in defined Period%s.') % (m.period_id and ': ' + m.period_id.name or '',))
         return True
 
-    def _hook_check_move_line(self, cr, uid, move_line, context=None):
-        """
-        Check date on move line. Should be the same as Journal Entry (account.move)
-        """
-        if not context:
-            context = {}
-        res = super(account_move, self)._hook_check_move_line(cr, uid, move_line, context=context)
-        if not move_line:
-            return res
-        if move_line.date != move_line.move_id.date:
-            raise osv.except_osv(_('Error'), _("Journal item does not have same posting date (%s) as journal entry (%s).") % (move_line.date, move_line.move_id.date))
-        return res
-
     def create_sequence(self, cr, uid, vals, context=None):
         """
         Create new entry sequence for every new journal entry
@@ -1149,10 +1113,6 @@ class account_move(osv.osv):
         self._check_document_date(cr, uid, res, context)
         self._check_date_in_period(cr, uid, res, context)
         return res
-
-    def name_get(self, cursor, user, ids, context=None):
-        # Override default name_get (since it displays "*12" names for unposted entries)
-        return super(osv.osv, self).name_get(cursor, user, ids, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """

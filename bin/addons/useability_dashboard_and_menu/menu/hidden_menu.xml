@@ -94,7 +94,6 @@
         <menuitem parent="menu_hidden" id="account.menu_action_account_entries_report_all" sequence="2"/>
         <menuitem parent="menu_hidden" id="account.menu_action_account_invoice_report_all" sequence="0"/>
         <menuitem parent="menu_hidden" id="account.menu_finance_statistic_report_statement" sequence="300"/>
-        <menuitem parent="menu_hidden" id="account.menu_act_ir_actions_bleble" sequence="1"/>
         <menuitem parent="menu_hidden" id="account.menu_action_account_journal_view" sequence="10"/>
 
         <menuitem parent="menu_hidden"  id="account.menu_action_account_moves_bank" sequence="16"/>
@@ -125,6 +124,5 @@
             
         <menuitem id="purchase.menu_purchase_config_pricelist" parent="menu_hidden" sequence="50"/>
 
-        <menuitem id="account.account_template_folder" parent="menu_hidden" sequence="10"/>
     </data>
 </openerp>

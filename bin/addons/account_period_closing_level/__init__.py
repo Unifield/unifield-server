@@ -19,11 +19,11 @@
 #
 ##############################################################################
 
-    # To avoid issues with existing OpenERP code (account move line for example),
-    # the state are:
-    #  - 'created' for Draft
-    #  - 'draft' for Open
-    #  - 'done' for HQ-Closed
+# To avoid issues with existing OpenERP code (account move line for example),
+# the state are:
+#  - 'created' for Draft
+#  - 'draft' for Open
+#  - 'done' for HQ-Closed
 ACCOUNT_PERIOD_STATE_SELECTION = [
     ('created','Draft'),
     ('draft', 'Open'),
@@ -41,7 +41,6 @@ ACCOUNT_FY_STATE_SELECTION = [
 import account
 from . import account_period
 from . import account_fiscalyear
-from . import account_journal_period
 from . import account_year_end_closing
 from . import wizard
 

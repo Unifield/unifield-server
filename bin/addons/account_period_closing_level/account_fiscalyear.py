@@ -21,8 +21,6 @@
 ##############################################################################
 
 from osv import fields, osv
-import datetime
-from dateutil.relativedelta import relativedelta
 from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
 
 
@@ -100,44 +98,6 @@ class account_fiscalyear(osv.osv):
         'is_hq_closable': False,
         'can_reopen_mission': False,
     }
-
-    def create_period(self,cr, uid, ids, context=None, interval=1):
-        period_obj = self.pool.get('account.period')
-        for fy in self.browse(cr, uid, ids, context=context):
-            ds = datetime.datetime.strptime(fy.date_start, '%Y-%m-%d')
-            i = 0
-            while ds.strftime('%Y-%m-%d')<fy.date_stop:
-                i += 1
-                de = ds + relativedelta(months=interval, days=-1)
-
-                if de.strftime('%Y-%m-%d')>fy.date_stop:
-                    de = datetime.datetime.strptime(fy.date_stop, '%Y-%m-%d')
-
-                period_obj.create(cr, uid, {
-                    'name': ds.strftime('%b %Y'),
-                    'code': ds.strftime('%b %Y'),
-                    'date_start': ds.strftime('%Y-%m-%d'),
-                    'date_stop': de.strftime('%Y-%m-%d'),
-                    'fiscalyear_id': fy.id,
-                    'special': False,
-                    'number': i,
-                })
-                ds = ds + relativedelta(months=interval)
-
-            ds = datetime.datetime.strptime(fy.date_stop, '%Y-%m-%d')
-            for period_nb in (13, 14, 15):
-                period_obj.create(cr, uid, {
-                    'name': 'Period %d %d' % (period_nb, ds.year),
-                    'code': 'Period %d %d' % (period_nb, ds.year),
-                    'date_start': '%d-12-01' % (ds.year),
-                    'date_stop': '%d-12-31' % (ds.year),
-                    'fiscalyear_id': fy.id,
-                    'special': True,
-                    'number': period_nb,
-                })
-        # create extra period 16
-        self.pool.get('account.year.end.closing').create_periods(cr, uid, fy.id, periods_to_create=[16], context=context)
-        return True
 
     def create(self, cr, uid, vals, context=None):
         """

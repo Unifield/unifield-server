@@ -921,12 +921,6 @@ msgstr "Vous aide à générer des lettres de relance pour les factures impayée
 msgid "MSF Proprietary Instance"
 msgstr "MSF Proprietary Instance"
 
-#. module: account
-#: view:account.chart.template:0
-#: field:account.chart.template,account_root_id:0
-msgid "Root Account"
-msgstr "Compte Racine"
-
 #. module: process
 #: view:process.process:0
 msgid "Search Process"
@@ -1001,8 +995,6 @@ msgstr "Pacifique/Auckland"
 #: selection:account.journal,type:0
 #: view:account.model:0
 #: selection:account.tax,type_tax_use:0
-#: view:account.tax.template:0
-#: selection:account.tax.template,type_tax_use:0
 #: field:stock.move,purchase_ref_id:0
 #: report:product.asset:0
 #: selection:account.analytic.line,journal_type:0
@@ -2560,7 +2552,6 @@ msgstr "Est Corrigé Manuellement"
 
 #. module: account
 #: field:account.tax,parent_id:0
-#: field:account.tax.template,parent_id:0
 msgid "Parent Tax Account"
 msgstr "Compte de Taxe Parent"
 
@@ -2680,12 +2671,6 @@ msgstr "Modifier date d'expiration"
 #: selection:sale.config.picking_policy,picking_policy:0
 msgid "All at Once"
 msgstr "Tout d'un Coup"
-
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_chart_template_form
-#: model:ir.ui.menu,name:account.menu_action_account_chart_template_form
-msgid "Chart of Accounts Templates"
-msgstr "Modèles de Plans de Comptes"
 
 #. modules: msf_doc_import, product, msf_outgoing, sale, msf_supply_doc_export
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:71
@@ -3644,7 +3629,6 @@ msgid "Picking - available"
 msgstr "Picking - disponible"
 
 #. modules: account, msf_audittrail, account_mcdb
-#: selection:account.tax.template,applicable_type:0
 #: code:addons/account_mcdb/account_mcdb.py:1056
 #: code:addons/account_mcdb/account_mcdb.py:1059
 #: code:addons/account_mcdb/account_mcdb.py:1063
@@ -4147,11 +4131,6 @@ msgstr "Importer Traduction"
 msgid "Couldn't find previous ir.actions.todo"
 msgstr "Impossible de trouver les ir.actions.todo précédentes"
 
-#. module: account
-#: field:account.account.template,parent_id:0
-msgid "Parent Account Template"
-msgstr "Modèle de Compte Parent"
-
 #. module: res_currency_tables
 #: field:wizard.report.rates.table,export_all:0
 msgid "Export all currencies"
@@ -4463,12 +4442,6 @@ msgstr "Deleted Object"
 #, python-format
 msgid "Please put a partner on the picking list if you want to generate invoice."
 msgstr "Veuillez indiquer un partenaire sur la liste de picking si vous souhaitez générer une facture."
-
-#. module: account
-#: view:account.chart.template:0
-#: field:account.chart.template,property_account_receivable:0
-msgid "Receivable Account"
-msgstr "Compte Clients"
 
 #. modules: msf_processes, account
 #: model:process.node,note:account.process_node_draftinvoices0
@@ -5190,7 +5163,6 @@ msgstr "Rechercher Compte/Destination"
 
 #. module: account
 #: help:account.account,currency_id:0
-#: help:account.account.template,currency_id:0
 #: help:account.bank.accounts.wizard,currency_id:0
 msgid "Forces all moves for this account to have this secondary currency."
 msgstr "Oblige toutes les écritures de ce compte à avoir cette devise secondaire."
@@ -5678,20 +5650,10 @@ msgstr "Modèle WebKit (utilisé si le rapport n'est pas trouvé)"
 msgid "Intermission Voucher"
 msgstr "Bons Intermission "
 
-#. module: account
-#: field:account.chart.template,property_account_expense_categ:0
-msgid "Expense Category Account"
-msgstr "Catégorie de Compte de Charge"
-
 #. module: msf_homere_interface
 #: model:ir.actions.act_window,name:msf_homere_interface.action_employee_analytic_reallocation
 msgid "Employee Analytic reallocation"
 msgstr "Employé(e) - Réallocation Analytique"
-
-#. module: account
-#: view:account.tax.template:0
-msgid "Keep empty to use the expense account"
-msgstr "Laisser vide pour utiliser le compte de charge"
 
 #. module: account
 #: code:addons/account/wizard/account_validate_account_move.py:39
@@ -5762,8 +5724,6 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:account.payment.term,note:0
 #: view:account.tax.code:0
 #: field:account.tax.code,info:0
-#: view:account.tax.code.template:0
-#: field:account.tax.code.template,info:0
 #: field:analytic.entries.report,name:0
 #: view:audittrail.log.line:0
 #: report:combined.journals.report.pdf:0
@@ -7483,7 +7443,6 @@ msgstr "Ce lien indique que cette ligne provient du total d'une facture, directe
 
 #. module: account
 #: field:account.fiscal.position.tax,tax_dest_id:0
-#: field:account.fiscal.position.tax.template,tax_dest_id:0
 msgid "Replacement Tax"
 msgstr "Taxe de Remplacement"
 
@@ -7638,7 +7597,6 @@ msgstr "Africa/Mbabane"
 #: field:account.payment.term.line,sequence:0
 #: field:account.sequence.fiscalyear,sequence_id:0
 #: field:account.tax,sequence:0
-#: field:account.tax.template,sequence:0
 #: field:audittrail.log.line,other_column:0
 #: view:audittrail.log.line:0
 #: report:account.bank.statement.line:0
@@ -9515,7 +9473,6 @@ msgid "Go to tender form"
 msgstr "Aller sur Formulaire Appels d'Offres"
 
 #. modules: account, base_setup, purchase_double_validation, msf_instance, sale, msf_config_locations, base, msf_button_access_rights, unifield_setup
-#: view:wizard.multi.charts.accounts:0
 #: view:res.config:0
 #: view:res.config.users:0
 #: view:base.setup.company:0
@@ -10651,11 +10608,6 @@ msgstr "Juin"
 #: report:kitting.order.report:0
 msgid "Version :"
 msgstr "Version :"
-
-#. module: account
-#: view:account.tax.template:0
-msgid "Taxes used in Purchases"
-msgstr "Taxes used in Purchases"
 
 #. module: msf_audittrail
 #: field:audittrail.rule,log_unlink:0
@@ -12109,11 +12061,6 @@ msgid "0=Very Urgent\n"
 msgstr "0=Très Urgent\n"
 "10=Pas Urgent"
 
-#. module: account
-#: view:account.account.template:0
-msgid "Account Template"
-msgstr "Modèle de Compte"
-
 #. module: stock
 #: code:addons/stock/stock.py:2819
 #, python-format
@@ -12256,11 +12203,6 @@ msgstr "Plug-in (Greffon) du Concepteur de Rapports OpenObject"
 #: view:account.analytic.chart:0
 msgid "Do you really want to delete the selected template?"
 msgstr "Voulez-vous vraiment supprimer le modèle sélectionné ?"
-
-#. module: account
-#: view:wizard.multi.charts.accounts:0
-msgid "Generate Your Accounting Chart from a Chart Template"
-msgstr "Générer Votre Plan Comptable à partir d'un Modèle "
 
 #. module: account
 #: view:account.installer:0
@@ -12951,11 +12893,6 @@ msgstr "Importation Unique"
 msgid "Unable to connect with given login and password"
 msgstr "Impossible de se connecter avec le login/mot de passe donné"
 
-#. module: account
-#: field:account.chart.template,property_account_income_categ:0
-msgid "Income Category Account"
-msgstr "Catégorie de Compte Produits"
-
 #. module: msf_outgoing
 #: model:process.node,note:msf_outgoing.process_node_ppl_done
 msgid "Closed state of pre-packing list."
@@ -13503,7 +13440,6 @@ msgstr "Statut de la commande:"
 #. module: account
 #: view:account.account:0
 #: field:account.account,tax_ids:0
-#: field:account.account.template,tax_ids:0
 msgid "Default Taxes"
 msgstr "Taxes par défaut"
 
@@ -14344,11 +14280,6 @@ msgstr "Dans le sélecteur de montants (de - à), la valeur \"de\" doit être la
 msgid "From procurement to tender."
 msgstr "De l'approvisionnement à l'appel"
 
-#. module: account
-#: model:ir.model,name:account.model_account_tax_template
-msgid "account.tax.template"
-msgstr "account.tax.template"
-
 #. module: base
 #: help:ir.model,osv_memory:0
 msgid "Indicates whether this object model lives in memory only, i.e. is not persisted (osv.osv_memory)"
@@ -14403,7 +14334,6 @@ msgstr "Plus d'une période trouvée pour la date donnée: %s"
 #: view:account.move:0
 #: view:account.move.line:0
 #: model:ir.actions.act_window,name:account.action_tax_form
-#: model:ir.ui.menu,name:account.account_template_taxes
 #: model:ir.ui.menu,name:account.menu_action_tax_form
 #: model:ir.ui.menu,name:account.menu_tax_report
 #: model:ir.ui.menu,name:account.next_id_27
@@ -16044,12 +15974,10 @@ msgstr "Supprimer tous les quadruplets"
 
 #. modules: tender_flow, process, account_hq_entries, account_override, procurement_cycle, return_claim, finance, sync_client, account_mcdb, procurement_request, product_asset, board, stock_override, msf_button_access_rights, analytic_distribution, msf_homere_interface, hr, consumption_calculation, register_accounting, kit, base, procurement_report, threshold_value, purchase, account, msf_outgoing, resource, stock_move_tracking, msf_partner, procurement_auto, msf_field_access_rights, sale, transport_mgmt, procurement, sourcing, msf_audittrail, stock
 #: view:account.account:0
-#: view:account.account.template:0
 #: view:account.analytic.account:0
 #: view:account.analytic.journal:0
 #: view:account.analytic.line:0
 #: view:account.bank.statement:0
-#: view:account.chart.template:0
 #: view:account.entries.report:0
 #: view:account.fiscalyear:0
 #: view:account.invoice:0
@@ -16059,7 +15987,6 @@ msgstr "Supprimer tous les quadruplets"
 #: view:account.move:0
 #: view:account.move.line:0
 #: view:account.subscription:0
-#: view:account.tax.code.template:0
 #: view:analytic.entries.report:0
 #: view:hq.entries:0
 #: view:account.move:0
@@ -17106,11 +17033,6 @@ msgstr "Les taxes sont interdites avec les partenaires Intermission et Intersect
 msgid "Fiscal Positions"
 msgstr "Positions Fiscales"
 
-#. module: account
-#: constraint:account.tax.code.template:0
-msgid "Error ! You can not create recursive Tax Codes."
-msgstr "Erreur ! Vous ne pouvez pas créer des Codes de Taxe récursifs."
-
 #. module: purchase_compare_rfq
 #: view:wizard.compare.rfq:0
 msgid "Update Tender"
@@ -17340,11 +17262,6 @@ msgstr "L'instance est unique, vous ne pouvez pas en créer une nouvelle."
 #: field:purchase.report,negociation:0
 msgid "Purchase-Standard Price"
 msgstr "Achat -  Prix Standard "
-
-#. module: account
-#: view:account.tax.template:0
-msgid "Credit Notes"
-msgstr "Notes de Crédit"
 
 #. module: procurement_request
 #: report:procurement.request.report:0
@@ -18881,11 +18798,6 @@ msgstr "Australia/West"
 msgid "Supported file formats: *.csv (Comma-separated values) or *.xml (XML SpreadSheet 2003"
 msgstr "Supported file formats: *.csv (Comma-separated values) or *.xml (XML SpreadSheet 2003"
 
-#. module: account
-#: help:wizard.multi.charts.accounts,seq_journal:0
-msgid "Check this box if you want to use a different sequence for each created journal. Otherwise, all will use the same sequence."
-msgstr "Cochez cette case si vous voulez utiliser une séquence différente pour chaque journal créé. Autrement ils utiliseront tous la même séquence."
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -19795,12 +19707,6 @@ msgstr "Note de débit en brouillon"
 msgid "Can not find patches for revisions:"
 msgstr "Pas de patchs trouvés pour révisions:"
 
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_template_form
-#: model:ir.ui.menu,name:account.menu_action_account_template_form
-msgid "Account Templates"
-msgstr "Modèles de Compte"
-
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1764
 #, python-format
@@ -19850,11 +19756,6 @@ msgstr "Sous-total"
 #: field:multi_company.default,company_dest_id:0
 msgid "Default Company"
 msgstr "Société par défaut"
-
-#. module: account
-#: view:account.tax.code.template:0
-msgid "Account Tax Code Template"
-msgstr "Modèle Code Comptable Taxe"
 
 #. module: stock, msf_outgoing
 #: model:ir.model,name:stock.model_stock_tracking
@@ -20994,9 +20895,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, account_override, product_attributes, mission_stock, return_claim, analytic_override, finance, account_mcdb, supplier_catalogue, procurement_request, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, stock_override, object_query, stock, msf_profile, procurement_cycle
 #: field:sync.trigger.something,name:0
 #: field:account.account,name:0
-#: field:account.account.template,name:0
 #: report:account.analytic.account.inverted.balance:0
-#: field:account.chart.template,name:0
 #: field:account.subscription,name:0
 #: report:addons/account/report/account_liquidity_balance.mako:162
 #: view:account.mcdb:0
@@ -21341,11 +21240,6 @@ msgstr "Remettre à brouillon"
 msgid "Corresponding Incoming Shipment cannot be found. Registration of claim cannot be processed. (no back order)"
 msgstr "Livraison Entrante Correspondante ne peut être trouvée. L'Enregistrement de la réclamation ne peut être traité. (pas de commande en souffrance)"
 
-#. module: account
-#: view:account.chart.template:0
-msgid "Search Chart of Account Templates"
-msgstr "Rechercher des Modèles de Plan Comptable"
-
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/register_creation.py:194
 #, python-format
@@ -21664,7 +21558,6 @@ msgstr "Etc/GMT-2"
 
 #. modules: purchase, account, msf_outgoing, purchase_override, procurement_request, process, financing_contract, sale, kit, account_override, purchase_compare_rfq, base, board, stock_override, msf_supply_doc_export, tender_flow, msf_doc_import, register_accounting, return_claim, stock, consumption_calculation
 #: view:account.account:0
-#: view:account.account.template:0
 #: view:account.bank.statement:0
 #: field:account.bank.statement.line,note:0
 #: view:account.fiscal.position:0
@@ -21809,11 +21702,6 @@ msgstr "Le code ISO du pays à deux caractères.\n"
 #: view:mass.reallocation.wizard:0
 msgid "Items not considered in reallocation"
 msgstr "Items not considered in reallocation"
-
-#. module: account
-#: field:account.chart.template,property_account_expense:0
-msgid "Expense Account on Product Template"
-msgstr "Compte de Charge sur le Modèle Produit"
 
 #. modules: resource, account_mcdb
 #: code:addons/account_mcdb/account_mcdb.py:1282
@@ -22497,7 +22385,6 @@ msgstr "Valeur de disponibilité"
 
 #. module: account
 #: field:account.tax,account_collected_id:0
-#: field:account.tax.template,account_collected_id:0
 msgid "Invoice Tax Account"
 msgstr "Facture - Compte de Taxe"
 
@@ -22791,7 +22678,6 @@ msgstr "Livre les zones disponibles comme zone de destination d'un picking inter
 
 #. module: account
 #: help:account.account,type:0
-#: help:account.account.template,type:0
 #: help:account.entries.report,type:0
 msgid "This type is used to differentiate types with special effects in OpenERP: view can not have entries, consolidation are accounts that can have children accounts for multi-company consolidations, payable/receivable are for partners accounts (for debit/credit computations), closed for depreciated accounts."
 msgstr "Ce type est utilisé pour différencier les types avec des effets spéciaux dans OpenERP : \"vue\" ne peut pas avoir d'écritures, \"consolidation\" sont des comptes qui peuvent avoir des comptes enfants pour les consolidations multi-sociétés, \"Dette/Créance\" sont pour les comptes partenaires (pour les calculs de débit / crédit), \"fermé\" pour les comptes dépréciés."
@@ -23592,11 +23478,6 @@ msgstr "Importer des lignes de CdT à partir de feuilles Excel"
 msgid "%s :: not able to confirm line #%s"
 msgstr "%s :: not able to confirm line #%s"
 
-#. module: account
-#: field:account.chart.template,tax_template_ids:0
-msgid "Tax Template List"
-msgstr "Liste Modèle de Taxe"
-
 #. module: msf_audittrail
 #: help:audittrail.rule,log_unlink:0
 msgid "Select this if you want to keep track of deletion on any record of the object of this rule"
@@ -24363,13 +24244,6 @@ msgstr "Ecritures de sorties créées"
 #: selection:res.users,context_tz:0
 msgid "America/Moncton"
 msgstr "America/Moncton"
-
-#. module: account
-#: field:account.fiscal.position.template,chart_template_id:0
-#: field:account.tax.template,chart_template_id:0
-#: field:wizard.multi.charts.accounts,chart_template_id:0
-msgid "Chart Template"
-msgstr "Modèle de Plan "
 
 #. modules: purchase, purchase_override
 #: help:purchase.order.line,block_resourced_line_creation:0
@@ -25407,11 +25281,6 @@ msgid "You cannot choose a source location which is the destination location of 
 msgstr "Vous ne pouvez pas choisir une zone source qui est la zone de destination de la Demande Interne"
 
 #. module: account
-#: help:account.chart.template,tax_template_ids:0
-msgid "List of all the taxes that have to be installed by the wizard"
-msgstr "Liste de toutes les taxes qui doivent être installées via l'assistant"
-
-#. module: account
 #: code:addons/account/report/account_general_ledger.py:558
 #, python-format
 msgid "CUR"
@@ -26070,7 +25939,6 @@ msgstr "Ligne %s. La destination %s n'est pas compatible avec le compte %s."
 #. module: account
 #: field:account.invoice.tax,tax_code_id:0
 #: field:account.tax,description:0
-#: field:account.tax.template,tax_code_id:0
 #: model:ir.model,name:account.model_account_tax_code
 msgid "Tax Code"
 msgstr "Code de Taxe"
@@ -26633,7 +26501,6 @@ msgstr "Purchase orders which are in cancelled state."
 
 #. module: account
 #: view:account.tax:0
-#: view:account.tax.template:0
 msgid "Applicable Code (if type=code)"
 msgstr "Code Applicable (si type=code)"
 
@@ -27486,11 +27353,6 @@ msgid "Configure Your Country Restrictions"
 msgstr "Configurer Vos Restrictions du Pays"
 
 #. module: account
-#: view:account.tax.template:0
-msgid "Account Tax Template"
-msgstr "Modèle de Compte de Taxe"
-
-#. module: account
 #: view:account.payment.term.line:0
 msgid "  valuation: percent"
 msgstr "  valorisation : pourcentage"
@@ -27548,11 +27410,6 @@ msgstr "Canada/Newfoundland"
 #: report:purchase.quotation:0
 msgid "Request for Quotation :"
 msgstr "Demande de Devis : "
-
-#. module: account
-#: view:account.account.template:0
-msgid "Default taxes"
-msgstr "Taxes par défaut"
 
 #. module: sync_client
 #: view:sync.monitor:0
@@ -27683,10 +27540,6 @@ msgstr "Ligne %s du fichier: %s"
 #: field:account.tax,python_applicable:0
 #: field:account.tax,python_compute:0
 #: selection:account.tax,type:0
-#: selection:account.tax.template,applicable_type:0
-#: field:account.tax.template,python_applicable:0
-#: field:account.tax.template,python_compute:0
-#: selection:account.tax.template,type:0
 #: view:ir.actions.server:0
 #: field:ir.actions.server,code:0
 #: selection:ir.actions.server,state:0
@@ -27988,11 +27841,6 @@ msgstr "Identifiant XML"
 msgid "Print"
 msgstr "Imprimer"
 
-#. module: account
-#: view:account.tax.template:0
-msgid "Compute Code (if type=code)"
-msgstr "Calculer Code (si type=code)"
-
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
 #: selection:base.setup.company,bill_state_id:0
@@ -28248,7 +28096,6 @@ msgstr "QTÉ COMMANDÉE"
 
 #. module: account
 #: field:account.tax.code,code:0
-#: field:account.tax.code.template,code:0
 msgid "Case Code"
 msgstr "Code Affaire (cas)"
 
@@ -28281,11 +28128,6 @@ msgstr "Ce nom de modèle existe déjà pour cet assistant. Veuillez choisir un 
 #: selection:res.users,context_tz:0
 msgid "Atlantic/Jan_Mayen"
 msgstr "Atlantic/Jan_Mayen"
-
-#. module: account
-#: field:account.account.template,nocreate:0
-msgid "Optional create"
-msgstr "Création Facultative"
 
 #. module: hr
 #: field:hr.department,child_ids:0
@@ -28667,7 +28509,6 @@ msgstr "Import Nomenclatures"
 
 #. module: account
 #: selection:account.account,type:0
-#: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
 msgid "Consolidation"
 msgstr "Consolidation"
@@ -28812,7 +28653,6 @@ msgstr "Calculer le Prix du Produit par unité selon cette version de liste de p
 
 #. module: account
 #: field:account.tax,type:0
-#: field:account.tax.template,type:0
 msgid "Tax Type"
 msgstr "Type de Taxe"
 
@@ -29301,12 +29141,6 @@ msgstr "Ecritures périodiques"
 msgid "Choose days"
 msgstr "Choisir des jours"
 
-#. module: account
-#: view:account.fiscal.position.template:0
-#: field:account.fiscal.position.template,name:0
-msgid "Fiscal Position Template"
-msgstr "Modèle de Position Fiscale"
-
 #. modules: account, finance, account_override, res_currency_tables
 #: field:account.partner.balance,period_to:0
 #: field:account.partner.ledger,period_to:0
@@ -29357,7 +29191,6 @@ msgstr "Paramètres"
 
 #. modules: threshold_value, purchase, account, resource, msf_homere_interface, procurement_auto, sales_followup, account_override, procurement, base, product_list, stock, procurement_cycle, res_currency_functional, purchase_compare_rfq, partner_modification, msf_instance,account_hq_entries
 #: view:account.account:0
-#: view:account.account.template:0
 #: view:account.journal:0
 #: view:account.move.line:0
 #: view:account.account:0
@@ -29620,11 +29453,6 @@ msgstr "Réapprovisionnement"
 #: view:tender:0
 msgid "Generate RfQs"
 msgstr "Générer des Demandes de Devis"
-
-#. module: account
-#: model:ir.model,name:account.model_wizard_multi_charts_accounts
-msgid "wizard.multi.charts.accounts"
-msgstr "wizard.multi.charts.accounts"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,location_id:0
@@ -30156,7 +29984,6 @@ msgstr "Close it"
 
 #. modules: purchase, account, sales_followup, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, tender_flow, order_types, stock, msf_supply_doc_export
 #: selection:account.account,type:0
-#: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
 #: selection:stock.move,order_type:0
 #: view:purchase.order:0
@@ -31191,7 +31018,6 @@ msgstr "B"
 #: field:account.move,amount:0
 #: view:account.move.line:0
 #: field:account.tax,amount:0
-#: field:account.tax.template,amount:0
 #: view:analytic.entries.report:0
 #: field:analytic.entries.report,amount:0
 #: field:hq.entries,amount:0
@@ -31281,7 +31107,6 @@ msgstr "Financial and accounting module that covers:\n"
 
 #. modules: account, finance
 #: selection:account.account,type:0
-#: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
 #: selection:account.partner.balance.tree,account_type:0
 #: view:account.account:0
@@ -31433,11 +31258,6 @@ msgstr "Point de Trésorerie Chèques"
 #: field:wizard.currency.revaluation,result_period_internal_id:0
 msgid "Entry period"
 msgstr "Entrée - Période"
-
-#. module: account
-#: field:wizard.multi.charts.accounts,purchase_tax:0
-msgid "Default Purchase Tax"
-msgstr "Taxe d'Achat par défaut"
 
 #. module: register_accounting
 #: field:wizard.cash.return,returned_amount:0
@@ -32052,11 +31872,6 @@ msgstr "Nouveau Code"
 msgid "Operation not allowed"
 msgstr "Operation not allowed"
 
-#. module: account
-#: help:account.tax.template,amount:0
-msgid "For Tax Type percent enter % ratio between 0-1."
-msgstr "Pour le Type de pourcentage de Taxe saisir le ratio % entre 0-1."
-
 #. modules: object_query, msf_partner
 #: model:ir.module.module,shortdesc:msf_partner.module_meta_information
 #: model:ir.module.module,shortdesc:object_query.module_meta_information
@@ -32100,11 +31915,6 @@ msgstr "Suffixe"
 #: field:tender.line,created_by_rfq:0
 msgid "Created by RfQ"
 msgstr "Créé par DdD"
-
-#. module: account
-#: field:account.tax.template,description:0
-msgid "Internal Name"
-msgstr "Nom Interne"
 
 #. module: useability_dashboard_and_menu
 #: view:board.board:0
@@ -32322,7 +32132,6 @@ msgstr "Ligne d'origine"
 
 #. module: account
 #: help:account.tax.code,notprintable:0
-#: help:account.tax.code.template,notprintable:0
 msgid "Check this box if you don't want any VAT related to this Tax Code to appear on invoices"
 msgstr "Cochez cette case si vous voulez éviter que cette Taxe associée à ce Code de Taxe apparaisse sur les factures"
 
@@ -32401,7 +32210,6 @@ msgstr "MSF Financing Module"
 #: field:account.tax.code,company_id:0
 #: view:analytic.entries.report:0
 #: field:analytic.entries.report,company_id:0
-#: field:wizard.multi.charts.accounts,company_id:0
 #: view:account.journal:0
 #: view:ir.attachment:0
 #: field:account.analytic.account,company_id:0
@@ -32607,11 +32415,6 @@ msgstr "Date de gel du solde final"
 #: view:stock.change.product.qty:0
 msgid "Select Quantity"
 msgstr "Sélectionner Quantité"
-
-#. module: account
-#: view:account.tax.template:0
-msgid "Keep empty to use the income account"
-msgstr "Laisser vide pour utiliser le compte de produit"
 
 #. module: base
 #: selection:res.request,ref_doc1:0
@@ -33239,7 +33042,6 @@ msgstr "5-Commun"
 #: selection:account.account.type,close_method:0
 #: selection:account.installer,charts:0
 #: selection:account.tax,type:0
-#: selection:account.tax.template,type:0
 #: selection:wizard.journal.items.corrections.lines,analytic_distribution_state:0
 #: selection:hq.entries,analytic_state:0
 #: selection:hq.entries.split.lines,state:0
@@ -34171,11 +33973,6 @@ msgstr "Antarctique"
 msgid "Quantity (UoM)"
 msgstr "Quantité (UdM)"
 
-#. module: account
-#: field:account.tax.template,include_base_amount:0
-msgid "Include in Base Amount"
-msgstr "Inclure dans le Montant de Base"
-
 #. modules: procurement_cycle, threshold_value, consumption_calculation
 #: field:expiry.quantity.report.line,real_stock:0
 #: field:stock.warehouse.order.cycle.line,real_stock:0
@@ -34841,7 +34638,6 @@ msgstr "Michigan"
 #. modules: financing_contract, account_override, product_attributes, res_currency_tables, stock_override, analytic, purchase_followup, msf_supply_doc_export, stock, product, reason_types_moves, msf_homere_interface, msf_instance, base, msf_tools, msf_budget, sales_followup, account, msf_outgoing, resource, sale, analytic_distribution, specific_rules
 #: field:account.account,code:0
 #: report:account.account.balance:0
-#: field:account.account.template,code:0
 #: field:account.account.type,code:0
 #: report:account.analytic.account.balance:0
 #: report:account.analytic.account.inverted.balance:0
@@ -34973,11 +34769,6 @@ msgstr "D'une commande de terrain"
 #: selection:res.users,context_tz:0
 msgid "Etc/GMT-8"
 msgstr "Etc/GMT-8"
-
-#. module: account
-#: field:wizard.multi.charts.accounts,seq_journal:0
-msgid "Separated Journal Sequences"
-msgstr "Séquences de Journal Séparées"
 
 #. module: account
 #: help:account.account.type,report_type:0
@@ -35413,8 +35204,6 @@ msgstr "You cannot create a direct purchase order from scratch"
 #: field:account.fiscal.position,name:0
 #: field:account.fiscal.position.account,position_id:0
 #: field:account.fiscal.position.tax,position_id:0
-#: field:account.fiscal.position.tax.template,position_id:0
-#: view:account.fiscal.position.template:0
 #: field:account.invoice,fiscal_position:0
 #: field:account.invoice.report,fiscal_position:0
 #: model:ir.model,name:account.model_account_fiscal_position
@@ -35689,7 +35478,6 @@ msgstr "wizard.account.year.end.closing"
 
 #. module: account
 #: field:account.fiscal.position.account,account_src_id:0
-#: field:account.fiscal.position.account.template,account_src_id:0
 msgid "Account Source"
 msgstr "Compte - Source"
 
@@ -35727,11 +35515,6 @@ msgstr "_Ok"
 msgid "Calculated Balance - Pending cheque:"
 msgstr "Solde calculé - Chèques en attente :"
 
-#. module: account
-#: field:account.account.template,reconcile:0
-msgid "Allow Reconciliation"
-msgstr "Autoriser le Lettrage"
-
 #. modules: account, analytic_override, account_corrections
 #: selection:account.journal.column,field:0
 #: field:account.analytic.line,is_reversal:0
@@ -35761,11 +35544,6 @@ msgstr "Puissance"
 #: field:po.follow.up,background_time:0
 msgid "Number of second before background processing"
 msgstr "Number of second before background processing"
-
-#. module: account
-#: constraint:account.account.template:0
-msgid "Error ! You can not create recursive account templates."
-msgstr "Erreur ! Vous ne pouvez pas créer des modèles de compte récursif"
 
 #. module: account_override
 #: code:addons/account_override/finance_export.py:225
@@ -36762,11 +36540,6 @@ msgstr "Alerte Fournisseur"
 msgid "Pro-forma"
 msgstr "Pro-forma"
 
-#. module: account
-#: model:ir.model,name:account.model_account_chart_template
-msgid "Templates for Account Chart"
-msgstr "Modèles de Plan Comptable"
-
 #. module: product
 #: model:ir.actions.act_window,help:product.product_normal_action
 msgid "You must define a Product for everything you buy or sell. Products can be raw materials, stockable products, consumables or services. The Product form contains detailed information about your products related to procurement logistics, sales price, product category, suppliers and so on."
@@ -37022,16 +36795,6 @@ msgstr "wizard.liquidity.position"
 #: selection:res.users,context_tz:0
 msgid "Europe/San_Marino"
 msgstr "Europe/San_Marino"
-
-#. module: account
-#: field:wizard.multi.charts.accounts,code_digits:0
-msgid "# of Digits"
-msgstr "Nombre de Chiffres"
-
-#. module: account
-#: help:account.account.template,reconcile:0
-msgid "Check this option if you want the user to reconcile entries in this account."
-msgstr "Cocher cette option si vous souhaitez que l'utilisateur lettre les écritures dans ce compte."
 
 #. module: purchase
 #: code:addons/purchase/purchase_order.py:2430
@@ -37700,7 +37463,6 @@ msgstr "Méthode"
 
 #. module: account
 #: field:account.tax,ref_tax_code_id:0
-#: field:account.tax.template,ref_tax_code_id:0
 msgid "Refund Tax Code"
 msgstr "Code de Taxe sur Avoirs"
 
@@ -37869,7 +37631,6 @@ msgstr "Journal de bord - Identité"
 
 #. module: account
 #: field:account.fiscal.position.account,account_dest_id:0
-#: field:account.fiscal.position.account.template,account_dest_id:0
 msgid "Account Destination"
 msgstr "Compte- Destination"
 
@@ -38760,7 +38521,6 @@ msgstr "Le budget a été correctement téléchargé."
 #. modules: purchase, account, base_setup, hr, purchase_double_validation, sale, base, base_report_designer, msf_button_access_rights
 #: view:account.installer:0
 #: view:account.installer.modules:0
-#: view:wizard.multi.charts.accounts:0
 #: view:res.config:0
 #: view:res.config.installer:0
 #: view:base_report_designer.installer:0
@@ -39453,7 +39213,6 @@ msgstr "Vous ne pouvez pas modifier un Journal qui n'appartient pas à l'instanc
 
 #. module: account
 #: field:account.tax,name:0
-#: field:account.tax.template,name:0
 #: report:account.vat.declaration:0
 msgid "Tax Name"
 msgstr "Nom de Taxe"
@@ -39589,11 +39348,6 @@ msgstr "Activation de Période"
 msgid "Exclude closed contract"
 msgstr "Exclure contrat clôturé"
 
-#. module: account
-#: field:account.fiscal.position.account.template,position_id:0
-msgid "Fiscal Mapping"
-msgstr "Correspondance Fiscale"
-
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_split.py:174
 #: code:addons/account_hq_entries/wizard/hq_entries_split.py:226
@@ -39623,7 +39377,6 @@ msgstr "Montant maximum de l'ajustement"
 
 #. module: account
 #: selection:account.payment.term.line,value:0
-#: selection:account.tax.template,type:0
 msgid "Percent"
 msgstr "Pourcent"
 
@@ -40445,7 +40198,6 @@ msgstr "Numéro de Lot Obligatoire"
 
 #. modules: account, hr, msf_instance, register_accounting, account_override, board
 #: field:account.account,note:0
-#: field:account.account.template,note:0
 #: view:account.invoice:0
 #: view:board.note:0
 #: field:board.note,note:0
@@ -42016,11 +41768,6 @@ msgstr "Nom de la transaction"
 #: field:audittrail.log.line,old_value_text:0
 msgid "Old Value"
 msgstr "Ancienne Valeur"
-
-#. module: account
-#: view:account.tax.template:0
-msgid "Search Tax Templates"
-msgstr "Rechercher des Modèle de Taxe"
 
 #. module: product
 #: help:product.template,uom_po_id:0
@@ -43639,11 +43386,6 @@ msgstr "sans erreurs"
 msgid "Register Statements"
 msgstr "Register Statements"
 
-#. module: account
-#: view:wizard.multi.charts.accounts:0
-msgid "Bank Information"
-msgstr "Informations Bancaires"
-
 #. module: sync_so
 #: field:stock.picking,rw_force_seq:0
 msgid "Force sequence on stock picking in Remote warehouse"
@@ -43881,7 +43623,6 @@ msgid "Import data"
 msgstr "Importer les données"
 
 #. modules: account, base
-#: field:wizard.multi.charts.accounts,bank_accounts_id:0
 #: model:ir.model,name:base.model_res_partner_bank
 #: view:res.partner.bank:0
 msgid "Bank Accounts"
@@ -45246,11 +44987,6 @@ msgstr "Créer une Expédition"
 msgid "Determine if the product is visible in the list of products within a selection from a purchase order line."
 msgstr "Détermine si le produit est visible sous la liste des produits à partir d'une sélection faite d'une ligne de commande"
 
-#. module: account
-#: help:account.account.template,nocreate:0
-msgid "If checked, the new chart of accounts will not contain this by default."
-msgstr "Si cochée, le nouveau plan de comptes ne contiendra pas ceci par défaut."
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -45651,7 +45387,6 @@ msgstr "Exporter la Distribution Analytique"
 
 #. module: account
 #: help:account.tax,price_include:0
-#: help:account.tax.template,price_include:0
 msgid "Check this if the price you use on the product and invoices includes this tax."
 msgstr "Cochez cette case si le prix que vous utilisez pour le produit et les factures inclut cette taxe."
 
@@ -48296,7 +48031,6 @@ msgstr "Total Général en Devise Fonctionnelle"
 
 #. module: account
 #: field:account.tax.code,name:0
-#: field:account.tax.code.template,name:0
 msgid "Tax Case Name"
 msgstr "Nom du cas de Taxe"
 
@@ -48628,11 +48362,6 @@ msgstr "Japon"
 #: selection:base.setup.company,ship_country_id:0
 msgid "Moldavia"
 msgstr "Moldavie"
-
-#. module: account
-#: field:account.tax.template,type_tax_use:0
-msgid "Tax Use In"
-msgstr "Usage de la Taxe"
 
 #. module: account
 #: help:account.model.line,sequence:0
@@ -50606,7 +50335,6 @@ msgstr "Africa/Windhoek"
 
 #. module: account
 #: field:account.tax,python_compute_inv:0
-#: field:account.tax.template,python_compute_inv:0
 msgid "Python Code (reverse)"
 msgstr "Code Python "
 
@@ -52251,11 +51979,6 @@ msgstr "Champ Relation"
 msgid "The Price Unit was not defined properly."
 msgstr "Le prix unitaire n'a pas été défini correctement."
 
-#. module: account
-#: help:account.tax.template,sequence:0
-msgid "The sequence field is used to order the taxes lines from lower sequences to higher ones. The order is important if you have a tax that has several tax children. In this case, the evaluation order is important."
-msgstr "Le champ séquence est utilisé pour ordonner les lignes de taxes,  de la séquence la plus basse vers la plus haute. L'ordre est important si vous avez une taxe qui possède plusieurs taxes enfants. Dans ce cas, l'ordre d'évaluation est important."
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_po.py:796
 #, python-format
@@ -52427,11 +52150,6 @@ msgstr "Destination lien entre comptes G/L et Comptes Analytiques"
 #, python-format
 msgid "%s :: New import job created"
 msgstr "%s :: New import job created"
-
-#. module: account
-#: field:account.chart.template,property_account_income:0
-msgid "Income Account on Product Template"
-msgstr "Compte de Produits sur Modèle Produit"
 
 #. module: base_report_designer
 #: view:base.report.file.sxw:0
@@ -52908,7 +52626,6 @@ msgstr "Créer des Ecritures"
 
 #. module: account
 #: field:account.invoice.tax,base_code_id:0
-#: field:account.tax.template,base_code_id:0
 msgid "Base Code"
 msgstr "Code de Base"
 
@@ -53547,7 +53264,6 @@ msgstr "Montant des chèques en attente en devise fonctionnelle"
 
 #. modules: msf_budget, account, msf_instance
 #: field:account.account,child_parent_ids:0
-#: field:account.account.template,child_parent_ids:0
 #: field:msf.budget.summary,child_ids:0
 #: field:msf.budget.summary.line,child_ids:0
 #: field:account.target.costcenter,child_ids:0
@@ -53926,7 +53642,6 @@ msgstr "Vermont"
 
 #. module: account
 #: field:account.tax,ref_base_code_id:0
-#: field:account.tax.template,ref_base_code_id:0
 msgid "Refund Base Code"
 msgstr "Code de Base des Avoirs"
 
@@ -54180,7 +53895,6 @@ msgstr "Valider les lignes"
 
 #. module: account
 #: selection:account.account,type:0
-#: selection:account.account.template,type:0
 msgid "Liquidity"
 msgstr "Liquidités"
 
@@ -54326,7 +54040,6 @@ msgid "Current Activity"
 msgstr "Activité en cours"
 
 #. modules: process, account, base, sale, stock
-#: view:account.chart.template:0
 #: view:ir.model:0
 #: view:ir.model.fields:0
 #: view:workflow.activity:0
@@ -54534,7 +54247,6 @@ msgstr "Vérification des lignes…"
 
 #. modules: tender_flow, purchase_allocation_report, register_accounting, return_claim, transport_mgmt, res_currency_tables, stock_override, stock_forecast, analytic, stock, msf_order_date, reason_types_moves, procurement_request, consumption_calculation, purchase_override, kit, out_step, purchase, account, msf_outgoing, sale, sales_followup, procurement
 #: selection:account.account,type:0
-#: selection:account.account.template,type:0
 #: view:account.bank.statement:0
 #: selection:account.bank.statement,state:0
 #: selection:account.entries.report,type:0
@@ -55325,8 +55037,6 @@ msgstr "America/Fort_Wayne"
 
 #. modules: account, register_accounting
 #: field:account.bank.accounts.wizard,bank_account_id:0
-#: view:account.chart.template:0
-#: field:account.chart.template,bank_account_view_id:0
 #: field:account.invoice,partner_bank_id:0
 #: field:account.invoice.report,partner_bank_id:0
 #: field:wizard.account.invoice,partner_bank_id:0
@@ -56113,7 +55823,6 @@ msgstr "Approuvé par"
 
 #. module: account
 #: help:account.account,user_type:0
-#: help:account.account.template,user_type:0
 msgid "These types are defined according to your country. The type contains more information about the account and its specificities."
 msgstr "Ces types sont définis selon votre pays. Ils contiennent des indications sur les comptes et leurs spécificités."
 
@@ -56172,7 +55881,6 @@ msgstr "Operational advance linked po invoices"
 #. modules: purchase, account, base_setup, hr, purchase_double_validation, msf_instance, sale, msf_config_locations, base, base_report_designer, unifield_setup, msf_button_access_rights
 #: field:account.installer,progress:0
 #: field:account.installer.modules,progress:0
-#: field:wizard.multi.charts.accounts,progress:0
 #: field:ir.actions.configuration.wizard,progress:0
 #: field:res.config,progress:0
 #: field:res.config.installer,progress:0
@@ -56568,7 +56276,6 @@ msgstr "Afficher la fiche"
 
 #. module: account
 #: field:account.tax.code,child_ids:0
-#: field:account.tax.code.template,child_ids:0
 msgid "Child Codes"
 msgstr "Codes Enfant"
 
@@ -57516,11 +57223,6 @@ msgstr "Importer le rapport des écarts au format XLS"
 #: field:sync_client.upgrade,message:0
 msgid "Caption"
 msgstr "Caption"
-
-#. module: account
-#: view:account.tax.template:0
-msgid "Tax Declaration"
-msgstr "Déclaration de Taxe"
 
 #. module: msf_profile
 #: constraint:email.configuration:0
@@ -58743,11 +58445,6 @@ msgid "Automated exports"
 msgstr "Export automatisés"
 
 #. module: account
-#: view:account.tax.template:0
-msgid "Taxes used in Sales"
-msgstr "Taxes used in Sales"
-
-#. module: account
 #: view:account.move.bank.reconcile:0
 #: model:ir.actions.act_window,name:account.action_account_bank_reconcile_tree
 msgid "Bank reconciliation"
@@ -58783,7 +58480,6 @@ msgstr "Positif"
 
 #. modules: account, base
 #: field:account.account,shortcut:0
-#: field:account.account.template,shortcut:0
 #: view:ir.ui.view_sc:0
 #: field:res.partner.title,shortcut:0
 msgid "Shortcut"
@@ -61135,7 +60831,6 @@ msgstr "JRNL"
 
 #. module: account
 #: field:account.tax,price_include:0
-#: field:account.tax.template,price_include:0
 #: view:account.tax:0
 msgid "Tax Included in Price"
 msgstr "Taxe Incluse dans le Prix"
@@ -62801,7 +62496,6 @@ msgid "Parent reason"
 msgstr "Raison Parent"
 
 #. modules: account, product
-#: selection:account.tax.template,type:0
 #: selection:product.template,mes_type:0
 msgid "Fixed"
 msgstr "Fixé"
@@ -63291,7 +62985,6 @@ msgid "Accrual Account"
 msgstr "Compte de Régularisation"
 
 #. module: account, product
-#: view:account.chart.template:0
 #: field:product.category,property_account_income_categ:0
 #: field:product.template,property_account_income:0
 #: field:product.mass.update,property_account_income:0
@@ -65054,11 +64747,6 @@ msgstr "Pacific/Tahiti"
 msgid "This account is not reconciliable: %s"
 msgstr "Ce compte ne peut être lettré: %s"
 
-#. module: account
-#: help:wizard.multi.charts.accounts,code_digits:0
-msgid "No. of Digits to use for account code"
-msgstr "Nombre de Chiffres du code de compte"
-
 #. module: stock_schedule
 #: field:stock.frequence,monthly_day27:0
 msgid "27th"
@@ -65607,11 +65295,6 @@ msgstr "Lignes sélectionnées à sourcer"
 msgid "Open CashBox"
 msgstr "Ouvrir la Caisse"
 
-#. module: account
-#: model:ir.model,name:account.model_account_fiscal_position_account_template
-msgid "Template Account Fiscal Mapping"
-msgstr "Modèle de Correspondance Fiscale de Compte"
-
 #. module: unifield_setup
 #: model:ir.model,name:unifield_setup.model_delivery_process_setup
 msgid "delivery.process.setup"
@@ -66086,11 +65769,6 @@ msgstr "Vous devriez choisir des périodes appartenant à la même société"
 #: field:board.note,name:0
 msgid "Subject"
 msgstr "Objet"
-
-#. module: account
-#: field:account.tax.code.template,sign:0
-msgid "Sign For Parent"
-msgstr "Signer pour le Parent"
 
 #. module: stock
 #: view:physical.inventory:0
@@ -68319,7 +67997,6 @@ msgstr "Il n'y a pas de compte de produit de stock défini pour ce produit ou sa
 
 #. module: account
 #: field:account.fiscal.position.tax,tax_src_id:0
-#: field:account.fiscal.position.tax.template,tax_src_id:0
 msgid "Tax Source"
 msgstr "Source de Taxe "
 
@@ -70019,11 +69696,6 @@ msgstr "No Intermission journal found!"
 msgid "Name of the file to import"
 msgstr "Name of the file to import"
 
-#. module: account
-#: view:wizard.multi.charts.accounts:0
-msgid "This will automatically configure your chart of accounts, bank accounts, taxes and journals according to the selected template"
-msgstr "L'opération suivante paramétrera automatiquement votre plan  de comptes, vos comptes bancaires, les taxes et les journaux selon le modèle choisi."
-
 #. module: hr
 #: field:hr.installer,hr_expense:0
 msgid "Expenses"
@@ -70318,7 +69990,6 @@ msgstr "Gestion d'Entrepôt"
 
 #. modules: msf_budget, account, stock_move_tracking, financing_contract, product, analytic, base, msf_button_access_rights, stock_batch_recall, stock
 #: selection:account.account,type:0
-#: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
 #: selection:account.analytic.account,type:0
 #: field:ir.actions.act_window.view,view_id:0
@@ -70443,7 +70114,6 @@ msgid "Expected Ship Date"
 msgstr "Date Prévue d'Expédition"
 
 #. modules: account, msf_accrual, product
-#: view:account.chart.template:0
 #: field:product.category,property_account_expense_categ:0
 #: field:product.template,property_account_expense:0
 #: field:msf.accrual.line,expense_account_id:0
@@ -70773,12 +70443,6 @@ msgstr "Statuts des Periodes"
 #: field:financing.contract.format.line,project_budget_value:0
 msgid "Budget project amount (value)"
 msgstr "Montant du Budget de Projet (valeur)"
-
-#. module: account
-#: view:account.chart.template:0
-#: field:account.chart.template,property_account_payable:0
-msgid "Payable Account"
-msgstr "Compte Fournisseur"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -71445,8 +71109,6 @@ msgstr "Transactions Cibles"
 #. modules: account_override, account
 #: view:account.account:0
 #: field:account.account,type:0
-#: view:account.account.template:0
-#: field:account.account.template,type:0
 #: field:account.entries.report,type:0
 #: view:account.account:0
 msgid "Internal Type"
@@ -71701,7 +71363,6 @@ msgstr "Get Files"
 
 #. module: account
 #: help:account.tax,child_depend:0
-#: help:account.tax.template,child_depend:0
 msgid "Set if the tax computation is based on the computation of child taxes rather than on the total amount."
 msgstr "Cochez si le calcul de la taxe est basé sur le calcul des taxes enfants plutôt que sur le montant total."
 
@@ -74155,7 +73816,6 @@ msgstr "Give all analytic lines linked to this invoice line. With correction one
 
 #. module: account
 #: help:account.tax,domain:0
-#: help:account.tax.template,domain:0
 msgid "This field is only used if you develop your own module allowing developers to create specific taxes in a custom domain."
 msgstr "Ce champ est uniquement utilisé si vous développez votre propre module, permettant ainsi aux développeurs de créer des taxes spécifiques dans un domaine spécifique."
 
@@ -74249,10 +73909,6 @@ msgstr "Outstanding cheques only"
 #: help:account.tax,ref_base_code_id:0
 #: help:account.tax,ref_tax_code_id:0
 #: help:account.tax,tax_code_id:0
-#: help:account.tax.template,base_code_id:0
-#: help:account.tax.template,ref_base_code_id:0
-#: help:account.tax.template,ref_tax_code_id:0
-#: help:account.tax.template,tax_code_id:0
 msgid "Use this code for the VAT declaration."
 msgstr "Utilisez ce code pour la déclaration de TVA"
 
@@ -74982,7 +74638,6 @@ msgstr "%j - Jour dans l'année [001,366]."
 
 #. modules: account, base, msf_audittrail, sync_client, account_mcdb
 #: field:account.tax,domain:0
-#: field:account.tax.template,domain:0
 #: field:output.currency.for.export,domain:0
 #: view:ir.filters:0
 #: field:ir.model.fields,domain:0
@@ -75723,7 +75378,6 @@ msgid "Export to HQ system (OCA)"
 msgstr "Export to HQ system (OCA)"
 
 #. modules: msf_doc_import, account
-#: model:ir.ui.menu,name:account.account_template_folder
 #: field:wizard.import.auto.supply.line,filename_template:0
 #: field:wizard.import.fo.line,filename_template:0
 #: field:wizard.import.invoice.line,filename_template:0
@@ -75991,11 +75645,6 @@ msgstr "Ligne %s du fichier Excel: %s: %s\n"
 #: selection:res.users,context_tz:0
 msgid "Africa/Douala"
 msgstr "Africa/Douala"
-
-#. module: account
-#: view:account.fiscal.position.template:0
-msgid "Taxes Mapping"
-msgstr "Correspondance des Taxes"
 
 #. module: base
 #: model:res.currency,currency_name:base.BHD
@@ -76534,8 +76183,6 @@ msgstr "Australie"
 #. modules: account_override, register_accounting, msf_instance, finance, sale, order_types
 #: view:account.model:0
 #: selection:account.tax,type_tax_use:0
-#: view:account.tax.template:0
-#: selection:account.tax.template,type_tax_use:0
 #: field:stock.move,sale_ref_id:0
 #: selection:account.analytic.line,journal_type:0
 #: selection:account.move,journal_type:0
@@ -76698,11 +76345,6 @@ msgstr "F"
 #: help:stock.warehouse.order.cycle,order_coverage:0
 msgid "In months. Define the time between two replenishments. Time used to compute the quantity of products to order according to the monthly consumption."
 msgstr "En mois. Définir le temps entre deux réapprovisionnements. Temps utilisé pour calculer la quantité de produits à commander en fonction de la consommation mensuelle."
-
-#. module: account
-#: help:account.tax.template,include_base_amount:0
-msgid "Set if the amount of tax must be included in the base amount before computing the next taxes."
-msgstr "Cochez si le montant de la taxe doit être inclus dans le montant de base avant le calcul des autres taxes."
 
 #. modules: register_accounting, account
 #: field:account.move.line,from_import_invoice_ml_id:0
@@ -77111,11 +76753,6 @@ msgid "Official Destruction Refrence:"
 msgstr "Référence destruction officielle :"
 
 #. module: account
-#: view:account.chart.template:0
-msgid "Chart of Accounts Template"
-msgstr "Modèle de Plan de Comptes"
-
-#. module: account
 #: view:account.analytic.line:0
 msgid "Analytic Journal Item"
 msgstr "Analytic Journal Item"
@@ -77194,7 +76831,6 @@ msgstr "You must choose an action for each order"
 #: view:account.installer:0
 #: view:account.installer.modules:0
 #: model:ir.actions.act_window,name:account.action_account_installer
-#: view:wizard.multi.charts.accounts:0
 msgid "Accounting Application Configuration"
 msgstr "Paramétrage de l'application de comptabilité"
 
@@ -77419,11 +77055,6 @@ msgstr "Page du Catalogue Produits"
 #, python-format
 msgid "HQ Entries import successful"
 msgstr "Importation réussie Ecritures HQ"
-
-#. module: account
-#: view:account.tax.template:0
-msgid "Compute Code for Taxes included prices"
-msgstr "Calculer Code pour les prix taxes comprises"
 
 #. module: kit
 #: code:addons/kit/wizard/kit_mass_import.py:568
@@ -77908,7 +77539,6 @@ msgstr "Tiers"
 
 #. module: account
 #: field:account.tax.code,notprintable:0
-#: field:account.tax.code.template,notprintable:0
 msgid "Not Printable in Invoice"
 msgstr "Ne peut pas être impirmé sur la Facture"
 
@@ -78285,7 +77915,6 @@ msgstr "Cette ligne a été corrigée manuellement. Voulez-vous annuler la corre
 
 #. module: account
 #: field:account.account,currency_id:0
-#: field:account.account.template,currency_id:0
 #: field:account.bank.accounts.wizard,currency_id:0
 msgid "Secondary Currency"
 msgstr "2ème Devise "
@@ -78448,11 +78077,6 @@ msgstr "Valeur Colis"
 #: view:ir.model:0
 msgid "In Memory"
 msgstr "En mémoire"
-
-#. module: account
-#: field:wizard.multi.charts.accounts,sale_tax:0
-msgid "Default Sale Tax"
-msgstr "Taxe de Vente par défaut"
 
 #. module: sale
 #: selection:sale.order,order_policy:0
@@ -78627,7 +78251,6 @@ msgstr "Compte - Rapport de Bilan Comptable"
 
 #. modules: account, finance, account_hq_entries, account_override, account_period_closing_level, msf_currency_revaluation, msf_accrual, analytic_distribution
 #: constraint:account.account:0
-#: constraint:account.account.template:0
 #: constraint:account.account:0
 #: constraint:account.account:0
 #: constraint:account.account:0
@@ -78892,7 +78515,6 @@ msgstr "Écritures ouvertes à"
 
 #. module: account
 #: field:account.tax,account_paid_id:0
-#: field:account.tax.template,account_paid_id:0
 msgid "Refund Tax Account"
 msgstr "Compte de Taxe sur Avoirs"
 
@@ -79245,11 +78867,6 @@ msgstr "Date de début"
 #: model:ir.actions.act_window,name:account.action_aged_income
 msgid "Income Accounts"
 msgstr "Comptes de Produits"
-
-#. module: account
-#: model:ir.model,name:account.model_account_account_template
-msgid "Templates for Accounts"
-msgstr "Modèles de Comptes"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.action_view_created_invoice_dashboard
@@ -80033,11 +79650,6 @@ msgstr "Colisage (debogage)"
 #: model:res.country,name:base.es
 msgid "Spain"
 msgstr "Espagne"
-
-#. module: account
-#: model:ir.model,name:account.model_account_fiscal_position_template
-msgid "Template for Fiscal Position"
-msgstr "Modèle pour Position Fiscale"
 
 #. module: base
 #: field:res.request,create_date:0
@@ -81924,10 +81536,6 @@ msgstr "Compte par défaut pour les écritures de Paie. Ceci permet de lettrer l
 #: help:account.tax,ref_base_sign:0
 #: help:account.tax,ref_tax_sign:0
 #: help:account.tax,tax_sign:0
-#: help:account.tax.template,base_sign:0
-#: help:account.tax.template,ref_base_sign:0
-#: help:account.tax.template,ref_tax_sign:0
-#: help:account.tax.template,tax_sign:0
 msgid "Usually 1 or -1."
 msgstr "Couramment 1 ou -1."
 
@@ -83098,11 +82706,6 @@ msgstr "La ligne doit au minimum avoir le numéro de ligne ou la ref. externe"
 msgid "Location Name"
 msgstr "Zone - Nom"
 
-#. module: account
-#: view:account.fiscal.position.template:0
-msgid "Accounts Mapping"
-msgstr "Correspondance des Comptes"
-
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 msgid "Signature & stamp:"
@@ -83749,7 +83352,6 @@ msgstr "Field order created in current year"
 
 #. module: account
 #: view:account.tax:0
-#: view:account.tax.template:0
 msgid "Special Computation"
 msgstr "Calcul Spécial"
 
@@ -83979,7 +83581,6 @@ msgstr "NOUVELLE QTÉ"
 #: selection:account.pl.report,display_account:0
 #: selection:account.report.general.ledger,display_account:0
 #: selection:account.tax,type_tax_use:0
-#: selection:account.tax.template,type_tax_use:0
 #: code:addons/account/report/account_profit_loss.py:196
 #: code:addons/account/report/account_profit_loss.py:201
 #: selection:account.balance.report,account_type:0
@@ -84149,7 +83750,6 @@ msgid "Add RML header"
 msgstr "Ajouter un en-tête RML"
 
 #. modules: account, finance
-#: view:account.account.template:0
 #: selection:account.aged.trial.balance,result_selection:0
 #: selection:account.common.partner.report,result_selection:0
 #: selection:account.partner.balance,result_selection:0
@@ -84385,7 +83985,6 @@ msgstr "Erreur de paramétrage !"
 #: code:addons/account/report/account_profit_loss.py:206
 #: model:ir.actions.act_window,name:account.action_account_form
 #: model:ir.ui.menu,name:account.account_account_menu
-#: model:ir.ui.menu,name:account.account_template_accounts
 #: model:ir.ui.menu,name:account.menu_action_account_form
 #: model:ir.ui.menu,name:account.menu_analytic
 #: view:account.journal:0
@@ -84690,7 +84289,6 @@ msgstr "Simulation"
 
 #. module: account
 #: help:account.tax,applicable_type:0
-#: help:account.tax.template,applicable_type:0
 msgid "If not applicable (computed through a Python code), the tax won't appear on the invoice."
 msgstr "Si non applicable (calculé par un code Python), la taxe n'apparaîtra pas sur la facture."
 
@@ -84748,7 +84346,6 @@ msgstr "La combinaison du numéro de série et de la référence interne doit ê
 
 #. module: account
 #: view:account.tax:0
-#: view:account.tax.template:0
 msgid "Tax Definition"
 msgstr "Définition Taxe"
 
@@ -85297,11 +84894,6 @@ msgstr "Montant Initial de l'Avance"
 msgid "Donor grant reference"
 msgstr "Référence Subvention Bailleur"
 
-#. module: account
-#: model:ir.model,name:account.model_account_tax_code_template
-msgid "Tax Code Template"
-msgstr "Modèle de Code de Taxe"
-
 #. module: finance
 #: report:cash.request.export:0
 msgid "Payable Invoices:"
@@ -85525,7 +85117,6 @@ msgstr "Turkménistan"
 #: model:ir.ui.menu,name:vertical_integration.export_mapping_menu
 #: view:account.fiscal.position:0
 #: field:account.fiscal.position,account_ids:0
-#: field:account.fiscal.position.template,account_ids:0
 msgid "Account Mapping"
 msgstr "Compte-Correspondance"
 
@@ -85780,7 +85371,6 @@ msgstr "Urgent"
 #. modules: msf_budget, account, finance, stock_override, account_override, analytic_distribution
 #: report:account.general.ledger_landscape_tb:0
 #: selection:account.journal.column,field:0
-#: selection:account.tax.template,type:0
 #: report:addons/account_override/report/account_chart_export.mako:137
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:149
 #: view:account.partner.balance.tree:0
@@ -85978,11 +85568,6 @@ msgstr "Date d'initialisation"
 #, python-format
 msgid "No quantity to process, please fill quantity to process before processing the moves"
 msgstr "No quantity to process, please fill quantity to process before processing the moves"
-
-#. module: account
-#: view:account.account.template:0
-msgid "Receivale Accounts"
-msgstr "Comptes Clients "
 
 #. module: account_mcdb
 #: field:account.mcdb,instance_ids:0
@@ -86365,11 +85950,6 @@ msgstr "Consommations réelles"
 #: view:ir.actions.act_window:0
 msgid "Open Window"
 msgstr "Ouvrir Fenêtre"
-
-#. module: account
-#: model:ir.model,name:account.model_account_fiscal_position_tax_template
-msgid "Template Tax Fiscal Position"
-msgstr "Modèle de Position Fiscal de Taxe"
 
 #. modules: account_override, account
 #: selection:account.journal.column,field:0
@@ -87434,12 +87014,6 @@ msgstr "Création Bons de Commande - Configuration Lots"
 msgid "8 months"
 msgstr "8 mois"
 
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_fiscal_position_template_form
-#: model:ir.ui.menu,name:account.menu_action_account_fiscal_position_form_template
-msgid "Fiscal Position Templates"
-msgstr "Modèles de Position Fiscale"
-
 #. module: base
 #: model:ir.model,name:base.model_ir_exports
 msgid "ir.exports"
@@ -88157,7 +87731,6 @@ msgstr "Import invoice that come from the default account given in Company confi
 
 #. modules: account, finance
 #: selection:account.account,type:0
-#: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
 #: selection:account.partner.balance.tree,account_type:0
 #: view:account.account:0
@@ -89000,7 +88573,6 @@ msgstr "Référence IN"
 
 #. module: account
 #: field:account.tax,child_depend:0
-#: field:account.tax.template,child_depend:0
 msgid "Tax on Children"
 msgstr "Taxe sur Enfants"
 
@@ -90075,7 +89647,6 @@ msgid "Model Validated"
 msgstr "Model Validated"
 
 #. module: account
-#: field:account.chart.template,property_reserve_and_surplus_account:0
 #: field:res.company,property_reserve_and_surplus_account:0
 msgid "Reserve and Profit/Loss Account"
 msgstr "Comptes de Réserves et de Résultats"
@@ -90309,8 +89880,6 @@ msgstr "sync_client.version"
 #. module: account
 #: field:account.tax,base_sign:0
 #: field:account.tax,ref_base_sign:0
-#: field:account.tax.template,base_sign:0
-#: field:account.tax.template,ref_base_sign:0
 msgid "Base Code Sign"
 msgstr "Signe Code de Base"
 
@@ -90381,11 +89950,6 @@ msgstr "Vous ne pouvez pas utiliser un compte inactif!"
 #: report:msf.sale.order:0
 msgid "Transport mode :"
 msgstr "Mode de Transport :"
-
-#. module: account
-#: field:account.tax.template,applicable_type:0
-msgid "Applicable Type"
-msgstr "Type Applicable"
 
 #. modules: account, account_period_closing_level, account_override
 #: model:ir.actions.act_window,name:account.action_invoice_tree3
@@ -90807,8 +90371,6 @@ msgstr "Configuration Mensuelle"
 
 #. module: account
 #: field:account.tax.code,parent_id:0
-#: view:account.tax.code.template:0
-#: field:account.tax.code.template,parent_id:0
 msgid "Parent Code"
 msgstr "Code Parent"
 
@@ -91014,11 +90576,6 @@ msgstr "Communications"
 msgid "Linked shipments"
 msgstr "Expéditions Connexes"
 
-#. module: account
-#: view:account.account.template:0
-msgid "Search Account Templates"
-msgstr "Rechercher des Modèles de Comptes"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -91148,7 +90705,6 @@ msgstr "Track different dates on products and production lots:\n"
 
 #. modules: purchase, account, sale, register_accounting, account_override, analytic_override
 #: view:account.invoice:0
-#: view:account.tax.template:0
 #: selection:account.vat.declaration,based_on:0
 #: model:ir.actions.act_window,name:account.act_res_partner_2_account_invoice_opened
 #: model:ir.actions.act_window,name:account.action_invoice_tree
@@ -91695,8 +91251,6 @@ msgstr "Traitements Périodiques"
 #: selection:account.journal.column,field:0
 #: view:account.account:0
 #: field:account.account,user_type:0
-#: view:account.account.template:0
-#: field:account.account.template,user_type:0
 #: view:account.account.type:0
 #: field:account.bank.accounts.wizard,account_type:0
 #: field:account.entries.report,user_type:0
@@ -93425,11 +92979,6 @@ msgstr "Prix - Type"
 msgid "Duplicate events from an instance are not allowed."
 msgstr "La duplication des événements d'une instance n'est pas autorisé."
 
-#. module: account
-#: view:account.tax.code.template:0
-msgid "Search tax template"
-msgstr "Rechercher un Modèle de Taxe"
-
 #. module: report_webkit
 #: help:ir.header_img,type:0
 msgid "Image type(png,gif,jpeg)"
@@ -93722,12 +93271,6 @@ msgstr "Chèques en Attente - Voir le détail pour les sous-totaux"
 #, python-format
 msgid "No stock moves found for these parameters"
 msgstr "Pas de mouvements de stock trouvés pour ces paramètres"
-
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_tax_code_template_form
-#: model:ir.ui.menu,name:account.menu_action_account_tax_code_template_form
-msgid "Tax Code Templates"
-msgstr "Modèles de Code de Taxe"
 
 #. module: msf_currency_revaluation
 #: field:account.account,user_type_code:0
@@ -94430,12 +93973,6 @@ msgstr "RIYAL SAOUDIEN"
 #: field:sync.client.update_to_send,owner:0
 msgid "Owner"
 msgstr "Propriétaire"
-
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_tax_template_form
-#: model:ir.ui.menu,name:account.menu_action_account_tax_template_form
-msgid "Tax Templates"
-msgstr "Modèles de Taxe"
 
 #. module: sourcing
 #: field:res.partner,check_partner:0
@@ -95730,7 +95267,6 @@ msgstr "Arrondi QcS"
 #. module: account
 #: view:account.fiscal.position:0
 #: field:account.fiscal.position,tax_ids:0
-#: field:account.fiscal.position.template,tax_ids:0
 msgid "Tax Mapping"
 msgstr "Correspondance de Taxe"
 
@@ -96472,11 +96008,6 @@ msgstr "Appel d'offres"
 msgid "# lines"
 msgstr "# de lignes"
 
-#. module: account
-#: help:account.chart.template,property_reserve_and_surplus_account:0
-msgid "This Account is used for transferring Profit/Loss(If It is Profit: Amount will be added, Loss: Amount will be deducted.), Which is calculated from Profilt & Loss Report"
-msgstr "Ce compte est utilisé pour transférer les pertes&profits (Profit : le montant sera ajouté, Perte : le montant sera déduit), qui sont calculés à partir du rapport sur les pertes & profits."
-
 #. module: base_setup
 #: field:base.setup.company,account_no:0
 msgid "Bank Account No"
@@ -97122,11 +96653,6 @@ msgstr "Créé sur :"
 #: model:ir.actions.act_window,name:board.action_user_connection_tree
 msgid "User Connections"
 msgstr "Connexions Utilisateur"
-
-#. module: account
-#: field:account.chart.template,tax_code_root_id:0
-msgid "Root Tax Code"
-msgstr "Racine du Code de Taxe "
 
 #. module: sale
 #: field:sale.order.line,in_name_goods_return:0
@@ -98903,8 +98429,6 @@ msgstr "Statut :"
 #. module: account
 #: field:account.tax,ref_tax_sign:0
 #: field:account.tax,tax_sign:0
-#: field:account.tax.template,ref_tax_sign:0
-#: field:account.tax.template,tax_sign:0
 msgid "Tax Code Sign"
 msgstr "Signe du Code de Taxe"
 
@@ -99150,7 +98674,6 @@ msgstr "Ligne de Révision Mensuelle des Consommations"
 #. modules: purchase, account, base_setup, hr, import_data, msf_instance, sale, msf_config_locations, export_import_lang, base, base_report_designer, unifield_setup, report_webkit, purchase_double_validation, msf_button_access_rights
 #: field:account.installer,config_logo:0
 #: field:account.installer.modules,config_logo:0
-#: field:wizard.multi.charts.accounts,config_logo:0
 #: field:base.language.export,config_logo:0
 #: field:base.language.import,config_logo:0
 #: field:base.language.install,config_logo:0

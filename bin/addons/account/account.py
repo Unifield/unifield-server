@@ -162,11 +162,6 @@ class account_account_type(osv.osv):
 
 account_account_type()
 
-def _code_get(self, cr, uid, context=None):
-    acc_type_obj = self.pool.get('account.account.type')
-    ids = acc_type_obj.search(cr, uid, [])
-    res = acc_type_obj.read(cr, uid, ids, ['code', 'name'], context=context)
-    return [(r['code'], r['name']) for r in res]
 
 #----------------------------------------------------------
 # Accounts
@@ -867,14 +862,6 @@ class account_journal(osv.osv):
         return ret
 
     def create_sequence(self, cr, uid, vals, context=None):
-        """
-        Create new entry sequence for every new Joural
-        @param cr: cursor to database
-        @param user: id of current user
-        @param ids: list of record ids to be process
-        @param context: context arguments, like lang, time zone
-        @return: return a result
-        """
         seq_pool = self.pool.get('ir.sequence')
         seq_typ_pool = self.pool.get('ir.sequence.type')
 
@@ -891,7 +878,7 @@ class account_journal(osv.osv):
             'name': name,
             'code': code,
             'active': True,
-            'prefix': code + "/%(year)s/",
+            'prefix': '',
             'padding': 4,
             'number_increment': 1
         }
@@ -1024,23 +1011,43 @@ class account_fiscalyear(osv.osv):
         return self.create_period(cr, uid, ids, context, 3)
 
     def create_period(self,cr, uid, ids, context=None, interval=1):
+        period_obj = self.pool.get('account.period')
         for fy in self.browse(cr, uid, ids, context=context):
-            ds = datetime.strptime(fy.date_start, '%Y-%m-%d')
+            ds = datetime.datetime.strptime(fy.date_start, '%Y-%m-%d')
+            i = 0
             while ds.strftime('%Y-%m-%d')<fy.date_stop:
+                i += 1
                 de = ds + relativedelta(months=interval, days=-1)
 
                 if de.strftime('%Y-%m-%d')>fy.date_stop:
-                    de = datetime.strptime(fy.date_stop, '%Y-%m-%d')
+                    de = datetime.datetime.strptime(fy.date_stop, '%Y-%m-%d')
 
-                self.pool.get('account.period').create(cr, uid, {
-                    'name': ds.strftime('%m/%Y'),
-                    'code': ds.strftime('%m/%Y'),
+                period_obj.create(cr, uid, {
+                    'name': ds.strftime('%b %Y'),
+                    'code': ds.strftime('%b %Y'),
                     'date_start': ds.strftime('%Y-%m-%d'),
                     'date_stop': de.strftime('%Y-%m-%d'),
                     'fiscalyear_id': fy.id,
+                    'special': False,
+                    'number': i,
                 })
                 ds = ds + relativedelta(months=interval)
+
+            ds = datetime.datetime.strptime(fy.date_stop, '%Y-%m-%d')
+            for period_nb in (13, 14, 15):
+                period_obj.create(cr, uid, {
+                    'name': 'Period %d %d' % (period_nb, ds.year),
+                    'code': 'Period %d %d' % (period_nb, ds.year),
+                    'date_start': '%d-12-01' % (ds.year),
+                    'date_stop': '%d-12-31' % (ds.year),
+                    'fiscalyear_id': fy.id,
+                    'special': True,
+                    'number': period_nb,
+                })
+        # create extra period 16
+        self.pool.get('account.year.end.closing').create_periods(cr, uid, fy.id, periods_to_create=[16], context=context)
         return True
+
 
     def find(self, cr, uid, dt=None, exception=True, context=None):
         if not dt:
@@ -1281,7 +1288,13 @@ class account_journal_period(osv.osv):
         period_id=vals.get('period_id',False)
         if period_id:
             period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
-            vals['state']=period.state
+            # If the period is not open, the move line/account journal period are not created.
+            if period.state == 'created':
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open!') % (period.name,))
+            elif period.state != 'done':
+                vals['state'] = 'draft'
+            else:
+                vals['state'] = 'done'
         return super(account_journal_period, self).create(cr, uid, vals, context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -1348,21 +1361,6 @@ class account_move(osv.osv):
             ids += self.search(cr, user, args, limit=limit, context=context)
 
         return self.name_get(cr, user, ids, context=context)
-
-    def name_get(self, cursor, user, ids, context=None):
-        if isinstance(ids, int):
-            ids = [ids]
-        if not ids:
-            return []
-        res = []
-        data_move = self.pool.get('account.move').browse(cursor, user, ids, context=context)
-        for move in data_move:
-            if move.state=='draft':
-                name = '*' + str(move.id)
-            else:
-                name = move.name
-            res.append((move.id, name))
-        return res
 
     def _get_period(self, cr, uid, context=None):
         periods = self.pool.get('account.period').find(cr, uid)
@@ -1623,13 +1621,6 @@ class account_move(osv.osv):
         result = super(account_move, self).unlink(cr, uid, toremove, context)
         return result
 
-    def _compute_balance(self, cr, uid, id, context=None):
-        move = self.browse(cr, uid, id, context=context)
-        amount = 0
-        for line in move.line_id:
-            amount+= (line.debit - line.credit)
-        return amount
-
     def _centralise(self, cr, uid, move, mode, context=None):
         assert mode in ('debit', 'credit'), 'Invalid Mode' #to prevent sql injection
         currency_obj = self.pool.get('res.currency')
@@ -1716,12 +1707,14 @@ class account_move(osv.osv):
 
     def _hook_check_move_line(self, cr, uid, move_line, context=None):
         """
-        Some checks on move line
+        Check date on move line. Should be the same as Journal Entry (account.move)
         """
         if not context:
             context = {}
         if not move_line:
             return False
+        if move_line.date != move_line.move_id.date:
+            raise osv.except_osv(_('Error'), _("Journal item does not have same posting date (%s) as journal entry (%s).") % (move_line.date, move_line.move_id.date))
         return True
 
     #
@@ -2819,783 +2812,13 @@ account_subscription_line()
 #   Account Templates: Account, Tax, Tax Code and chart. + Wizard
 #  ---------------------------------------------------------------
 
-class account_tax_template(osv.osv):
-    _name = 'account.tax.template'
-account_tax_template()
 
-class account_account_template(osv.osv):
-    _order = "code"
-    _name = "account.account.template"
-    _description ='Templates for Accounts'
-
-    _columns = {
-        'name': fields.char('Name', size=128, required=True, select=True),
-        'currency_id': fields.many2one('res.currency', 'Secondary Currency', help="Forces all moves for this account to have this secondary currency."),
-        'code': fields.char('Code', size=64, select=1),
-        'type': fields.selection([
-            ('receivable','Receivable'),
-            ('payable','Payable'),
-            ('view','View'),
-            ('consolidation','Consolidation'),
-            ('liquidity','Liquidity'),
-            ('other','Regular'),
-            ('closed','Closed'),
-        ], 'Internal Type', required=True,help="This type is used to differentiate types with "\
-            "special effects in OpenERP: view can not have entries, consolidation are accounts that "\
-            "can have children accounts for multi-company consolidations, payable/receivable are for "\
-            "partners accounts (for debit/credit computations), closed for depreciated accounts."),
-        'user_type': fields.many2one('account.account.type', 'Account Type', required=True,
-                                     help="These types are defined according to your country. The type contains more information "\
-                                     "about the account and its specificities."),
-        'reconcile': fields.boolean('Allow Reconciliation', help="Check this option if you want the user to reconcile entries in this account."),
-        'shortcut': fields.char('Shortcut', size=12),
-        'note': fields.text('Note'),
-        'parent_id': fields.many2one('account.account.template', 'Parent Account Template', ondelete='cascade'),
-        'child_parent_ids':fields.one2many('account.account.template', 'parent_id', 'Children'),
-        'tax_ids': fields.many2many('account.tax.template', 'account_account_template_tax_rel', 'account_id', 'tax_id', 'Default Taxes'),
-        'nocreate': fields.boolean('Optional create', help="If checked, the new chart of accounts will not contain this by default."),
-    }
-
-    _defaults = {
-        'reconcile': False,
-        'type': 'view',
-        'nocreate': False,
-    }
-
-    def _check_type(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        accounts = self.browse(cr, uid, ids, context=context)
-        for account in accounts:
-            if account.parent_id and account.parent_id.type != 'view':
-                return False
-        return True
-
-    _check_recursion = check_cycle
-    _constraints = [
-        (_check_recursion, 'Error ! You can not create recursive account templates.', ['parent_id']),
-        (_check_type, 'Configuration Error! \nYou cannot define children to an account with internal type different of "View"! ', ['type']),
-
-    ]
-
-    def name_get(self, cr, uid, ids, context=None):
-        if not ids:
-            return []
-        reads = self.read(cr, uid, ids, ['name','code'], context=context)
-        res = []
-        for record in reads:
-            name = record['name']
-            if record['code']:
-                name = record['code']+' '+name
-            res.append((record['id'],name ))
-        return res
-
-account_account_template()
-
-class account_add_tmpl_wizard(osv.osv_memory):
-    """Add one more account from the template.
-
-    With the 'nocreate' option, some accounts may not be created. Use this to add them later."""
-    _name = 'account.addtmpl.wizard'
-
-    def _get_def_cparent(self, cr, uid, context=None):
-        acc_obj=self.pool.get('account.account')
-        tmpl_obj=self.pool.get('account.account.template')
-        tids=tmpl_obj.read(cr, uid, [context['tmpl_ids']], ['parent_id'])
-        if not tids or not tids[0]['parent_id']:
-            return False
-        ptids = tmpl_obj.read(cr, uid, [tids[0]['parent_id'][0]], ['code'])
-        res = None
-        if not ptids or not ptids[0]['code']:
-            raise osv.except_osv(_('Error !'), _('Cannot locate parent code for template account!'))
-            res = acc_obj.search(cr, uid, [('code','=',ptids[0]['code'])])
-
-        return res and res[0] or False
-
-    _columns = {
-        'cparent_id':fields.many2one('account.account', 'Parent target', help="Creates an account with the selected template under this existing parent.", required=True),
-    }
-    _defaults = {
-        'cparent_id': _get_def_cparent,
-    }
-
-    def action_create(self,cr,uid,ids,context=None):
-        if context is None:
-            context = {}
-        acc_obj = self.pool.get('account.account')
-        tmpl_obj = self.pool.get('account.account.template')
-        data = self.read(cr, uid, ids)
-        company_id = acc_obj.read(cr, uid, [data[0]['cparent_id']], ['company_id'])[0]['company_id'][0]
-        account_template = tmpl_obj.browse(cr, uid, context['tmpl_ids'])
-        vals = {
-            'name': account_template.name,
-            'currency_id': account_template.currency_id and account_template.currency_id.id or False,
-            'code': account_template.code,
-            'type': account_template.type,
-            'user_type': account_template.user_type and account_template.user_type.id or False,
-            'reconcile': account_template.reconcile,
-            'shortcut': account_template.shortcut,
-            'note': account_template.note,
-            'parent_id': data[0]['cparent_id'],
-            'company_id': company_id,
-        }
-        acc_obj.create(cr, uid, vals)
-        return {'type':'state', 'state': 'end' }
-
-    def action_cancel(self, cr, uid, ids, context=None):
-        return { 'type': 'state', 'state': 'end' }
-
-account_add_tmpl_wizard()
-
-class account_tax_code_template(osv.osv):
-
-    _name = 'account.tax.code.template'
-    _description = 'Tax Code Template'
-    _order = 'code'
-    _rec_name = 'code'
-    _columns = {
-        'name': fields.char('Tax Case Name', size=64, required=True),
-        'code': fields.char('Case Code', size=64),
-        'info': fields.text('Description'),
-        'parent_id': fields.many2one('account.tax.code.template', 'Parent Code', select=True),
-        'child_ids': fields.one2many('account.tax.code.template', 'parent_id', 'Child Codes'),
-        'sign': fields.float('Sign For Parent', required=True),
-        'notprintable':fields.boolean("Not Printable in Invoice", help="Check this box if you don't want any VAT related to this Tax Code to appear on invoices"),
-    }
-
-    _defaults = {
-        'sign': 1.0,
-        'notprintable': False,
-    }
-
-    def name_get(self, cr, uid, ids, context=None):
-        if not ids:
-            return []
-        if isinstance(ids, int):
-            ids = [ids]
-        reads = self.read(cr, uid, ids, ['name','code'], context, load='_classic_write')
-        return [(x['id'], (x['code'] and x['code'] + ' - ' or '') + x['name']) \
-                for x in reads]
-
-    _check_recursion = check_cycle
-    _constraints = [
-        (_check_recursion, 'Error ! You can not create recursive Tax Codes.', ['parent_id'])
-    ]
-    _order = 'code,name'
-account_tax_code_template()
-
-
-class account_chart_template(osv.osv):
-    _name="account.chart.template"
-    _description= "Templates for Account Chart"
-
-    _columns={
-        'name': fields.char('Name', size=64, required=True),
-        'account_root_id': fields.many2one('account.account.template','Root Account',required=True,domain=[('parent_id','=',False)]),
-        'tax_code_root_id': fields.many2one('account.tax.code.template','Root Tax Code',required=True,domain=[('parent_id','=',False)]),
-        'tax_template_ids': fields.one2many('account.tax.template', 'chart_template_id', 'Tax Template List', help='List of all the taxes that have to be installed by the wizard'),
-        'bank_account_view_id': fields.many2one('account.account.template','Bank Account',required=True),
-        'property_account_receivable': fields.many2one('account.account.template','Receivable Account'),
-        'property_account_payable': fields.many2one('account.account.template','Payable Account'),
-        'property_account_expense_categ': fields.many2one('account.account.template','Expense Category Account'),
-        'property_account_income_categ': fields.many2one('account.account.template','Income Category Account'),
-        'property_account_expense': fields.many2one('account.account.template','Expense Account on Product Template'),
-        'property_account_income': fields.many2one('account.account.template','Income Account on Product Template'),
-        'property_reserve_and_surplus_account': fields.many2one('account.account.template', 'Reserve and Profit/Loss Account', domain=[('type', '=', 'payable')], help='This Account is used for transferring Profit/Loss(If It is Profit: Amount will be added, Loss: Amount will be deducted.), Which is calculated from Profilt & Loss Report'),
-    }
-
-account_chart_template()
-
-class account_tax_template(osv.osv):
-
-    _name = 'account.tax.template'
-    _description = 'Templates for Taxes'
-
-    _columns = {
-        'chart_template_id': fields.many2one('account.chart.template', 'Chart Template', required=True),
-        'name': fields.char('Tax Name', size=64, required=True),
-        'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the taxes lines from lower sequences to higher ones. The order is important if you have a tax that has several tax children. In this case, the evaluation order is important."),
-        'amount': fields.float('Amount', required=True, digits=(14,4), help="For Tax Type percent enter % ratio between 0-1."),
-        'type': fields.selection( [('percent','Percent'), ('fixed','Fixed'), ('none','None'), ('code','Python Code'), ('balance','Balance')], 'Tax Type', required=True),
-        'applicable_type': fields.selection( [('true','True'), ('code','Python Code')], 'Applicable Type', required=True, help="If not applicable (computed through a Python code), the tax won't appear on the invoice."),
-        'domain':fields.char('Domain', size=32, help="This field is only used if you develop your own module allowing developers to create specific taxes in a custom domain."),
-        'account_collected_id':fields.many2one('account.account.template', 'Invoice Tax Account'),
-        'account_paid_id':fields.many2one('account.account.template', 'Refund Tax Account'),
-        'parent_id':fields.many2one('account.tax.template', 'Parent Tax Account', select=True),
-        'child_depend':fields.boolean('Tax on Children', help="Set if the tax computation is based on the computation of child taxes rather than on the total amount."),
-        'python_compute':fields.text('Python Code'),
-        'python_compute_inv':fields.text('Python Code (reverse)'),
-        'python_applicable':fields.text('Python Code'),
-
-        #
-        # Fields used for the VAT declaration
-        #
-        'base_code_id': fields.many2one('account.tax.code.template', 'Base Code', help="Use this code for the VAT declaration."),
-        'tax_code_id': fields.many2one('account.tax.code.template', 'Tax Code', help="Use this code for the VAT declaration."),
-        'base_sign': fields.float('Base Code Sign', help="Usually 1 or -1."),
-        'tax_sign': fields.float('Tax Code Sign', help="Usually 1 or -1."),
-
-        # Same fields for refund invoices
-
-        'ref_base_code_id': fields.many2one('account.tax.code.template', 'Refund Base Code', help="Use this code for the VAT declaration."),
-        'ref_tax_code_id': fields.many2one('account.tax.code.template', 'Refund Tax Code', help="Use this code for the VAT declaration."),
-        'ref_base_sign': fields.float('Base Code Sign', help="Usually 1 or -1."),
-        'ref_tax_sign': fields.float('Tax Code Sign', help="Usually 1 or -1."),
-        'include_base_amount': fields.boolean('Include in Base Amount', help="Set if the amount of tax must be included in the base amount before computing the next taxes."),
-        'description': fields.char('Internal Name', size=32),
-        'type_tax_use': fields.selection([('sale','Sale'),('purchase','Purchase'),('all','All')], 'Tax Use In', required=True,),
-        'price_include': fields.boolean('Tax Included in Price', help="Check this if the price you use on the product and invoices includes this tax."),
-    }
-
-    def name_get(self, cr, uid, ids, context=None):
-        if not ids:
-            return []
-        res = []
-        for record in self.read(cr, uid, ids, ['description','name'], context=context):
-            name = record['description'] and record['description'] or record['name']
-            res.append((record['id'],name ))
-        return res
-
-    def _default_company(self, cr, uid, context=None):
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        if user.company_id:
-            return user.company_id.id
-        return self.pool.get('res.company').search(cr, uid, [('parent_id', '=', False)])[0]
-
-    _defaults = {
-        'python_compute': lambda *a: '''# price_unit\n# address: res.partner.address object or False\n# product: product.product object or None\n# partner: res.partner object or None\n\nresult = price_unit * 0.10''',
-        'python_compute_inv': lambda *a: '''# price_unit\n# address: res.partner.address object or False\n# product: product.product object or False\n\nresult = price_unit * 0.10''',
-        'applicable_type': 'true',
-        'type': 'percent',
-        'amount': 0,
-        'sequence': 1,
-        'ref_tax_sign': 1,
-        'ref_base_sign': 1,
-        'tax_sign': 1,
-        'base_sign': 1,
-        'include_base_amount': False,
-        'type_tax_use': 'all',
-        'price_include': 0,
-    }
-    _order = 'sequence'
-
-
-account_tax_template()
-
-# Fiscal Position Templates
-
-class account_fiscal_position_template(osv.osv):
-    _name = 'account.fiscal.position.template'
-    _description = 'Template for Fiscal Position'
-
-    _columns = {
-        'name': fields.char('Fiscal Position Template', size=64, required=True),
-        'chart_template_id': fields.many2one('account.chart.template', 'Chart Template', required=True),
-        'account_ids': fields.one2many('account.fiscal.position.account.template', 'position_id', 'Account Mapping'),
-        'tax_ids': fields.one2many('account.fiscal.position.tax.template', 'position_id', 'Tax Mapping')
-    }
-
-account_fiscal_position_template()
-
-class account_fiscal_position_tax_template(osv.osv):
-    _name = 'account.fiscal.position.tax.template'
-    _description = 'Template Tax Fiscal Position'
-    _rec_name = 'position_id'
-
-    _columns = {
-        'position_id': fields.many2one('account.fiscal.position.template', 'Fiscal Position', required=True, ondelete='cascade'),
-        'tax_src_id': fields.many2one('account.tax.template', 'Tax Source', required=True),
-        'tax_dest_id': fields.many2one('account.tax.template', 'Replacement Tax')
-    }
-
-account_fiscal_position_tax_template()
-
-class account_fiscal_position_account_template(osv.osv):
-    _name = 'account.fiscal.position.account.template'
-    _description = 'Template Account Fiscal Mapping'
-    _rec_name = 'position_id'
-    _columns = {
-        'position_id': fields.many2one('account.fiscal.position.template', 'Fiscal Mapping', required=True, ondelete='cascade'),
-        'account_src_id': fields.many2one('account.account.template', 'Account Source', domain=[('type','<>','view')], required=True),
-        'account_dest_id': fields.many2one('account.account.template', 'Account Destination', domain=[('type','<>','view')], required=True)
-    }
-
-account_fiscal_position_account_template()
-
-# Multi charts of Accounts wizard
-
-class wizard_multi_charts_accounts(osv.osv_memory):
-    """
-    Create a new account chart for a company.
-    Wizards ask for:
-        * a company
-        * an account chart template
-        * a number of digits for formatting code of non-view accounts
-        * a list of bank accounts owned by the company
-    Then, the wizard:
-        * generates all accounts from the template and assigns them to the right company
-        * generates all taxes and tax codes, changing account assignations
-        * generates all accounting properties and assigns them correctly
-    """
-    _name='wizard.multi.charts.accounts'
-    _inherit = 'res.config'
-
-    _columns = {
-        'company_id':fields.many2one('res.company', 'Company', required=True),
-        'chart_template_id': fields.many2one('account.chart.template', 'Chart Template', required=True),
-        'bank_accounts_id': fields.one2many('account.bank.accounts.wizard', 'bank_account_id', 'Bank Accounts', required=True),
-        'code_digits':fields.integer('# of Digits', required=True, help="No. of Digits to use for account code"),
-        'seq_journal':fields.boolean('Separated Journal Sequences', help="Check this box if you want to use a different sequence for each created journal. Otherwise, all will use the same sequence."),
-        "sale_tax": fields.many2one("account.tax.template", "Default Sale Tax"),
-        "purchase_tax": fields.many2one("account.tax.template", "Default Purchase Tax"),
-    }
-    def onchange_chart_template_id(self, cr, uid, ids, chart_template_id=False, context=None):
-        res = {}
-        res['value'] = {}
-        res['value']["sale_tax"] = False
-        res['value']["purchase_tax"] = False
-        if chart_template_id:
-            sale_tax_ids = self.pool.get('account.tax.template').search(cr, uid, [("chart_template_id"
-                                                                                   , "=", chart_template_id), ('type_tax_use', 'in', ('sale','all'))], order="sequence")
-            purchase_tax_ids = self.pool.get('account.tax.template').search(cr, uid, [("chart_template_id"
-                                                                                       , "=", chart_template_id), ('type_tax_use', 'in', ('purchase','all'))], order="sequence")
-            res['value']["sale_tax"] = sale_tax_ids and sale_tax_ids[0] or False
-            res['value']["purchase_tax"] = purchase_tax_ids and purchase_tax_ids[0] or False
-        return res
-
-    def _get_purchase_tax(self, cr, uid, context=None):
-        ids = self.pool.get('account.chart.template').search(cr, uid, [], context=context)
-        if ids:
-            chart_template_id = ids[0]
-            purchase_tax_ids = self.pool.get('account.tax.template').search(cr, uid, [("chart_template_id"
-                                                                                       , "=", chart_template_id), ('type_tax_use', 'in', ('purchase','all'))], order="sequence")
-            return purchase_tax_ids and purchase_tax_ids[0] or False
-        return False
-
-    def _get_sale_tax(self, cr, uid, context=None):
-        ids = self.pool.get('account.chart.template').search(cr, uid, [], context=context)
-        if ids:
-            chart_template_id = ids[0]
-            sale_tax_ids = self.pool.get('account.tax.template').search(cr, uid, [("chart_template_id"
-                                                                                   , "=", chart_template_id), ('type_tax_use', 'in', ('sale','all'))], order="sequence")
-            return sale_tax_ids and sale_tax_ids[0] or False
-        return False
-
-    def _get_chart(self, cr, uid, context=None):
-        ids = self.pool.get('account.chart.template').search(cr, uid, [], context=context)
-        if ids:
-            return ids[0]
-        return False
-
-    def _get_default_accounts(self, cr, uid, context=None):
-        accounts = [{'acc_name':'Current','account_type':'bank'},
-                    {'acc_name':'Deposit','account_type':'bank'},
-                    {'acc_name':'Cash','account_type':'cash'}]
-        return accounts
-
-    _defaults = {
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, [uid], c)[0].company_id.id,
-        'chart_template_id': _get_chart,
-        'bank_accounts_id': _get_default_accounts,
-        'sale_tax': _get_sale_tax,
-        'purchase_tax': _get_purchase_tax,
-        'code_digits': 6,
-        'seq_journal': True
-    }
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        res = super(wizard_multi_charts_accounts, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
-        configured_cmp = []
-        unconfigured_cmp = []
-        cmp_select = []
-        company_ids = self.pool.get('res.company').search(cr, uid, [], context=context)
-        #display in the widget selection of companies, only the companies that haven't been configured yet (but don't care about the demo chart of accounts)
-        cr.execute("SELECT company_id FROM account_account WHERE active = 't' AND account_account.parent_id IS NULL AND name != %s", ("Chart For Automated Tests",))
-        configured_cmp = [r[0] for r in cr.fetchall()]
-        unconfigured_cmp = list(set(company_ids)-set(configured_cmp))
-        for field in res['fields']:
-            if field == 'company_id':
-                res['fields'][field]['domain'] = [('id','in',unconfigured_cmp)]
-                res['fields'][field]['selection'] = [('', '')]
-                if unconfigured_cmp:
-                    cmp_select = [(line.id, line.name) for line in self.pool.get('res.company').browse(cr, uid, unconfigured_cmp)]
-                    res['fields'][field]['selection'] = cmp_select
-        return res
-
-    def execute(self, cr, uid, ids, context=None):
-        obj_multi = self.browse(cr, uid, ids[0])
-        obj_acc = self.pool.get('account.account')
-        obj_acc_tax = self.pool.get('account.tax')
-        obj_journal = self.pool.get('account.journal')
-        obj_sequence = self.pool.get('ir.sequence')
-        obj_acc_template = self.pool.get('account.account.template')
-        obj_fiscal_position_template = self.pool.get('account.fiscal.position.template')
-        obj_fiscal_position = self.pool.get('account.fiscal.position')
-        obj_data = self.pool.get('ir.model.data')
-        analytic_journal_obj = self.pool.get('account.analytic.journal')
-        obj_tax_code = self.pool.get('account.tax.code')
-        # Creating Account
-        obj_acc_root = obj_multi.chart_template_id.account_root_id
-        tax_code_root_id = obj_multi.chart_template_id.tax_code_root_id.id
-        company_id = obj_multi.company_id.id
-
-        #new code
-        acc_template_ref = {}
-        tax_template_ref = {}
-        tax_code_template_ref = {}
-        todo_dict = {}
-
-        #create all the tax code
-        children_tax_code_template = self.pool.get('account.tax.code.template').search(cr, uid, [('parent_id','child_of',[tax_code_root_id])], order='id')
-        children_tax_code_template.sort()
-        for tax_code_template in self.pool.get('account.tax.code.template').browse(cr, uid, children_tax_code_template, context=context):
-            vals={
-                'name': (tax_code_root_id == tax_code_template.id) and obj_multi.company_id.name or tax_code_template.name,
-                'code': tax_code_template.code,
-                'info': tax_code_template.info,
-                'parent_id': tax_code_template.parent_id and ((tax_code_template.parent_id.id in tax_code_template_ref) and tax_code_template_ref[tax_code_template.parent_id.id]) or False,
-                'company_id': company_id,
-                'sign': tax_code_template.sign,
-            }
-            new_tax_code = obj_tax_code.create(cr, uid, vals)
-            #recording the new tax code to do the mapping
-            tax_code_template_ref[tax_code_template.id] = new_tax_code
-
-        #create all the tax
-        tax_template_to_tax = {}
-        for tax in obj_multi.chart_template_id.tax_template_ids:
-            #create it
-            vals_tax = {
-                'name':tax.name,
-                'sequence': tax.sequence,
-                'amount':tax.amount,
-                'type':tax.type,
-                'applicable_type': tax.applicable_type,
-                'domain':tax.domain,
-                'parent_id': tax.parent_id and ((tax.parent_id.id in tax_template_ref) and tax_template_ref[tax.parent_id.id]) or False,
-                'child_depend': tax.child_depend,
-                'python_compute': tax.python_compute,
-                'python_compute_inv': tax.python_compute_inv,
-                'python_applicable': tax.python_applicable,
-                'base_code_id': tax.base_code_id and ((tax.base_code_id.id in tax_code_template_ref) and tax_code_template_ref[tax.base_code_id.id]) or False,
-                'tax_code_id': tax.tax_code_id and ((tax.tax_code_id.id in tax_code_template_ref) and tax_code_template_ref[tax.tax_code_id.id]) or False,
-                'base_sign': tax.base_sign,
-                'tax_sign': tax.tax_sign,
-                'ref_base_code_id': tax.ref_base_code_id and ((tax.ref_base_code_id.id in tax_code_template_ref) and tax_code_template_ref[tax.ref_base_code_id.id]) or False,
-                'ref_tax_code_id': tax.ref_tax_code_id and ((tax.ref_tax_code_id.id in tax_code_template_ref) and tax_code_template_ref[tax.ref_tax_code_id.id]) or False,
-                'ref_base_sign': tax.ref_base_sign,
-                'ref_tax_sign': tax.ref_tax_sign,
-                'include_base_amount': tax.include_base_amount,
-                'description':tax.description,
-                'company_id': company_id,
-                'type_tax_use': tax.type_tax_use,
-                'price_include': tax.price_include
-            }
-            new_tax = obj_acc_tax.create(cr, uid, vals_tax)
-            tax_template_to_tax[tax.id] = new_tax
-            #as the accounts have not been created yet, we have to wait before filling these fields
-            todo_dict[new_tax] = {
-                'account_collected_id': tax.account_collected_id and tax.account_collected_id.id or False,
-                'account_paid_id': tax.account_paid_id and tax.account_paid_id.id or False,
-            }
-            tax_template_ref[tax.id] = new_tax
-
-        #deactivate the parent_store functionnality on account_account for rapidity purpose
-        ctx = context and context.copy() or {}
-        ctx['defer_parent_store_computation'] = True
-
-        children_acc_template = obj_acc_template.search(cr, uid, [('parent_id','child_of',[obj_acc_root.id]),('nocreate','!=',True)])
-        children_acc_template.sort()
-        for account_template in obj_acc_template.browse(cr, uid, children_acc_template,context=context):
-            tax_ids = []
-            for tax in account_template.tax_ids:
-                tax_ids.append(tax_template_ref[tax.id])
-            #create the account_account
-
-            dig = obj_multi.code_digits
-            code_main = account_template.code and len(account_template.code) or 0
-            code_acc = account_template.code or ''
-            if code_main>0 and code_main<=dig and account_template.type != 'view':
-                code_acc=str(code_acc) + (str('0'*(dig-code_main)))
-            vals={
-                'name': (obj_acc_root.id == account_template.id) and obj_multi.company_id.name or account_template.name,
-                'currency_id': account_template.currency_id and account_template.currency_id.id or False,
-                'code': code_acc,
-                'type': account_template.type,
-                'user_type': account_template.user_type and account_template.user_type.id or False,
-                'reconcile': account_template.reconcile,
-                'shortcut': account_template.shortcut,
-                'note': account_template.note,
-                'parent_id': account_template.parent_id and ((account_template.parent_id.id in acc_template_ref) and acc_template_ref[account_template.parent_id.id]) or False,
-                'tax_ids': [(6,0,tax_ids)],
-                'company_id': company_id,
-            }
-            new_account = obj_acc.create(cr, uid, vals, context=ctx)
-            acc_template_ref[account_template.id] = new_account
-        #reactivate the parent_store functionnality on account_account
-        self.pool.get('account.account')._parent_store_compute(cr)
-
-        for key,value in list(todo_dict.items()):
-            if value['account_collected_id'] or value['account_paid_id']:
-                obj_acc_tax.write(cr, uid, [key], {
-                    'account_collected_id': acc_template_ref.get(value['account_collected_id'], False),
-                    'account_paid_id': acc_template_ref.get(value['account_paid_id'], False),
-                })
-
-        # Creating Journals Sales and Purchase
-        vals_journal={}
-        data_id = obj_data.search(cr, uid, [('model','=','account.journal.view'), ('name','=','account_sp_journal_view')])
-        data = obj_data.browse(cr, uid, data_id[0], context=context)
-        view_id = data.res_id
-
-        seq_id = obj_sequence.search(cr, uid, [('name','=','Account Journal')])[0]
-
-        if obj_multi.seq_journal:
-            seq_id_sale = obj_sequence.search(cr, uid, [('name','=','Sale Journal')])[0]
-            seq_id_purchase = obj_sequence.search(cr, uid, [('name','=','Purchase Journal')])[0]
-            seq_id_sale_refund = obj_sequence.search(cr, uid, [('name','=','Sales Refund Journal')])
-            if seq_id_sale_refund:
-                seq_id_sale_refund = seq_id_sale_refund[0]
-            seq_id_purchase_refund = obj_sequence.search(cr, uid, [('name','=','Purchase Refund Journal')])
-            if seq_id_purchase_refund:
-                seq_id_purchase_refund = seq_id_purchase_refund[0]
-        else:
-            seq_id_sale = seq_id
-            seq_id_purchase = seq_id
-            seq_id_sale_refund = seq_id
-            seq_id_purchase_refund = seq_id
-
-        vals_journal['view_id'] = view_id
-
-        #Sales Journal
-        analitical_sale_ids = analytic_journal_obj.search(cr,uid,[('type','=','sale')])
-        analitical_journal_sale = analitical_sale_ids and analitical_sale_ids[0] or False
-
-        vals_journal['name'] = _('Sales Journal')
-        vals_journal['type'] = 'sale'
-        vals_journal['code'] = _('SAJ')
-        vals_journal['sequence_id'] = seq_id_sale
-        vals_journal['company_id'] =  company_id
-        vals_journal['analytic_journal_id'] = analitical_journal_sale
-
-        if obj_multi.chart_template_id.property_account_receivable:
-            vals_journal['default_credit_account_id'] = acc_template_ref[obj_multi.chart_template_id.property_account_income_categ.id]
-            vals_journal['default_debit_account_id'] = acc_template_ref[obj_multi.chart_template_id.property_account_income_categ.id]
-
-        obj_journal.create(cr,uid,vals_journal)
-
-        # Purchase Journal
-        analitical_purchase_ids = analytic_journal_obj.search(cr,uid,[('type','=','purchase')])
-        analitical_journal_purchase = analitical_purchase_ids and analitical_purchase_ids[0] or False
-
-        vals_journal['name'] = _('Purchase Journal')
-        vals_journal['type'] = 'purchase'
-        vals_journal['code'] = _('EXJ')
-        vals_journal['sequence_id'] = seq_id_purchase
-        vals_journal['view_id'] = view_id
-        vals_journal['company_id'] =  company_id
-        vals_journal['analytic_journal_id'] = analitical_journal_purchase
-
-        if obj_multi.chart_template_id.property_account_payable:
-            vals_journal['default_credit_account_id'] = acc_template_ref[obj_multi.chart_template_id.property_account_expense_categ.id]
-            vals_journal['default_debit_account_id'] = acc_template_ref[obj_multi.chart_template_id.property_account_expense_categ.id]
-
-        obj_journal.create(cr,uid,vals_journal)
-
-        # Creating Journals Sales Refund and Purchase Refund
-        vals_journal = {}
-        data_id = obj_data.search(cr, uid, [('model', '=', 'account.journal.view'), ('name', '=', 'account_sp_refund_journal_view')], context=context)
-        data = obj_data.browse(cr, uid, data_id[0], context=context)
-        view_id = data.res_id
-
-        #Sales Refund Journal
-        vals_journal = {
-            'view_id': view_id,
-            'name': _('Sales Refund Journal'),
-            'type': 'sale_refund',
-            'refund_journal': True,
-            'code': _('SCNJ'),
-            'sequence_id': seq_id_sale_refund,
-            'analytic_journal_id': analitical_journal_sale,
-            'company_id': company_id
-        }
-
-        if obj_multi.chart_template_id.property_account_receivable:
-            vals_journal['default_credit_account_id'] = acc_template_ref[obj_multi.chart_template_id.property_account_income_categ.id]
-            vals_journal['default_debit_account_id'] = acc_template_ref[obj_multi.chart_template_id.property_account_income_categ.id]
-
-
-#        if obj_multi.property_account_receivable:
-#            vals_journal.update({
-#                'default_credit_account_id': acc_template_ref[obj_multi.chart_template_id.property_account_income_categ.id],
-#                'default_debit_account_id': acc_template_ref[obj_multi.chart_template_id.property_account_income_categ.id]
-#            })
-        obj_journal.create(cr, uid, vals_journal, context=context)
-
-        # Purchase Refund Journal
-        vals_journal = {
-            'view_id': view_id,
-            'name': _('Purchase Refund Journal'),
-            'type': 'purchase_refund',
-            'refund_journal': True,
-            'code': _('ECNJ'),
-            'sequence_id': seq_id_purchase_refund,
-            'analytic_journal_id': analitical_journal_purchase,
-            'company_id': company_id
-        }
-
-        if obj_multi.chart_template_id.property_account_payable:
-            vals_journal['default_credit_account_id'] = acc_template_ref[obj_multi.chart_template_id.property_account_expense_categ.id]
-            vals_journal['default_debit_account_id'] = acc_template_ref[obj_multi.chart_template_id.property_account_expense_categ.id]
-
-
-#        if obj_multi.property_account_payable:
-#            vals_journal.update({
-#                'default_credit_account_id': acc_template_ref[obj_multi.property_account_expense_categ.id],
-#                'default_debit_account_id': acc_template_ref[obj_multi.property_account_expense_categ.id]
-#            })
-        obj_journal.create(cr, uid, vals_journal, context=context)
-
-        # Bank Journals
-        data_id = obj_data.search(cr, uid, [('model','=','account.journal.view'), ('name','=','account_journal_bank_view')])
-        data = obj_data.browse(cr, uid, data_id[0], context=context)
-        view_id_cash = data.res_id
-
-        data_id = obj_data.search(cr, uid, [('model','=','account.journal.view'), ('name','=','account_journal_bank_view_multi')])
-        data = obj_data.browse(cr, uid, data_id[0], context=context)
-        view_id_cur = data.res_id
-        ref_acc_bank = obj_multi.chart_template_id.bank_account_view_id
-
-        current_num = 1
-        for line in obj_multi.bank_accounts_id:
-            #create the account_account for this bank journal
-            tmp = line.acc_name
-            dig = obj_multi.code_digits
-            if ref_acc_bank.code:
-                try:
-                    new_code = str(int(ref_acc_bank.code.ljust(dig,'0')) + current_num)
-                except:
-                    new_code = str(ref_acc_bank.code.ljust(dig-len(str(current_num)),'0')) + str(current_num)
-            vals = {
-                'name': tmp,
-                'currency_id': line.currency_id and line.currency_id.id or False,
-                'code': new_code,
-                'type': 'liquidity',
-                'user_type': account_template.user_type and account_template.user_type.id or False,
-                'reconcile': True,
-                'parent_id': acc_template_ref[ref_acc_bank.id] or False,
-                'company_id': company_id,
-            }
-            acc_cash_id  = obj_acc.create(cr,uid,vals)
-
-            if obj_multi.seq_journal:
-                vals_seq={
-                    'name': _('Bank Journal ') + vals['name'],
-                    'code': 'account.journal',
-                }
-                seq_id = obj_sequence.create(cr,uid,vals_seq)
-
-            #create the bank journal
-            analitical_bank_ids = analytic_journal_obj.search(cr,uid,[('type','=','situation')])
-            analitical_journal_bank = analitical_bank_ids and analitical_bank_ids[0] or False
-
-            vals_journal = {}
-            vals_journal['name']= vals['name']
-            vals_journal['code']= _('BNK') + str(current_num)
-            vals_journal['sequence_id'] = seq_id
-            vals_journal['type'] = line.account_type == 'cash' and 'cash' or 'bank'
-            vals_journal['company_id'] =  company_id
-            vals_journal['analytic_journal_id'] = analitical_journal_bank
-
-            if line.currency_id:
-                vals_journal['view_id'] = view_id_cur
-                vals_journal['currency'] = line.currency_id.id
-            else:
-                vals_journal['view_id'] = view_id_cash
-            vals_journal['default_credit_account_id'] = acc_cash_id
-            vals_journal['default_debit_account_id'] = acc_cash_id
-            obj_journal.create(cr, uid, vals_journal)
-            current_num += 1
-
-        #create the properties
-        property_obj = self.pool.get('ir.property')
-        fields_obj = self.pool.get('ir.model.fields')
-
-        todo_list = [
-            ('property_account_receivable','res.partner','account.account'),
-            ('property_account_payable','res.partner','account.account'),
-            ('property_account_expense_categ','product.category','account.account'),
-            ('property_account_income_categ','product.category','account.account'),
-            ('property_account_expense','product.template','account.account'),
-            ('property_account_income','product.template','account.account'),
-            ('property_reserve_and_surplus_account','res.company','account.account')
-        ]
-        for record in todo_list:
-            r = []
-            r = property_obj.search(cr, uid, [('name','=', record[0] ),('company_id','=',company_id)])
-            account = getattr(obj_multi.chart_template_id, record[0])
-            field = fields_obj.search(cr, uid, [('name','=',record[0]),('model','=',record[1]),('relation','=',record[2])])
-            vals = {
-                'name': record[0],
-                'company_id': company_id,
-                'fields_id': field[0],
-                'value': account and 'account.account,'+str(acc_template_ref[account.id]) or False,
-            }
-
-            if r:
-                #the property exist: modify it
-                property_obj.write(cr, uid, r, vals)
-            else:
-                #create the property
-                property_obj.create(cr, uid, vals)
-
-        fp_ids = obj_fiscal_position_template.search(cr, uid, [('chart_template_id', '=', obj_multi.chart_template_id.id)])
-
-        if fp_ids:
-
-            obj_tax_fp = self.pool.get('account.fiscal.position.tax')
-            obj_ac_fp = self.pool.get('account.fiscal.position.account')
-
-            for position in obj_fiscal_position_template.browse(cr, uid, fp_ids, context=context):
-
-                vals_fp = {
-                    'company_id': company_id,
-                    'name': position.name,
-                }
-                new_fp = obj_fiscal_position.create(cr, uid, vals_fp)
-
-                for tax in position.tax_ids:
-                    vals_tax = {
-                        'tax_src_id': tax_template_ref[tax.tax_src_id.id],
-                        'tax_dest_id': tax.tax_dest_id and tax_template_ref[tax.tax_dest_id.id] or False,
-                        'position_id': new_fp,
-                    }
-                    obj_tax_fp.create(cr, uid, vals_tax)
-
-                for acc in position.account_ids:
-                    vals_acc = {
-                        'account_src_id': acc_template_ref[acc.account_src_id.id],
-                        'account_dest_id': acc_template_ref[acc.account_dest_id.id],
-                        'position_id': new_fp,
-                    }
-                    obj_ac_fp.create(cr, uid, vals_acc)
-
-        ir_values = self.pool.get('ir.values')
-        if obj_multi.sale_tax:
-            ir_values.set(cr, uid, key='default', key2=False, name="taxes_id", company=obj_multi.company_id.id,
-                          models =[('product.product',False)], value=[tax_template_to_tax[obj_multi.sale_tax.id]])
-        if obj_multi.purchase_tax:
-            ir_values.set(cr, uid, key='default', key2=False, name="supplier_taxes_id", company=obj_multi.company_id.id,
-                          models =[('product.product',False)], value=[tax_template_to_tax[obj_multi.purchase_tax.id]])
-
-wizard_multi_charts_accounts()
 
 class account_bank_accounts_wizard(osv.osv_memory):
     _name = 'account.bank.accounts.wizard'
 
     _columns = {
         'acc_name': fields.char('Account Name.', size=64, required=True),
-        'bank_account_id': fields.many2one('wizard.multi.charts.accounts', 'Bank Account', required=True),
         'currency_id': fields.many2one('res.currency', 'Currency'),
         'account_type': fields.selection([('cash','Cash'),('check','Check'),('bank','Bank')], 'Type', size=32),
     }
