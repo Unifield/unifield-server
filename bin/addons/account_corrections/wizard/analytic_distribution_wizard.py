@@ -25,7 +25,6 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import time
-from collections import defaultdict
 from base import currency_date
 
 
@@ -50,72 +49,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
         'invalid_small_amount': False,
     }
-
-    def _check_lines(self, cr, uid, distribution_line_id, wiz_line_id, ltype):
-        """
-        Check components compatibility
-        """
-        # Prepare some values
-        wiz_line_types = {'cost.center': '', 'funding.pool': 'fp', 'free.1': 'f1', 'free.2': 'f2',}
-        obj = '.'.join([ltype, 'distribution', 'line'])
-        oline = self.pool.get(obj).browse(cr, uid, distribution_line_id)
-        nline_type = '.'.join([wiz_line_types.get(ltype), 'lines'])
-        nline_obj = '.'.join(['analytic.distribution.wizard', nline_type])
-        nline = self.pool.get(nline_obj).browse(cr, uid, wiz_line_id)
-        to_reverse = []
-        to_override = defaultdict(list)
-        period = nline.wizard_id and nline.wizard_id.move_line_id and nline.wizard_id.move_line_id.period_id or False
-        if not period:
-            raise osv.except_osv(_('Error'), _('No attached period to the correction wizard. Do you come from a correction wizard attached to a journal item?'))
-        # Some cases
-        if ltype == 'funding.pool':
-            old_component = [oline.destination_id.id, oline.analytic_id.id, oline.cost_center_id.id, oline.percentage]
-            new_component = [nline.destination_id.id, nline.analytic_id.id, nline.cost_center_id.id, nline.percentage]
-            if old_component != new_component:
-                # Don't do anything if the old FP account is on a soft/hard closed contract!
-                if oline.analytic_id.id != nline.analytic_id.id:
-                    check_fp = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [oline.analytic_id.id])
-                    if check_fp and oline.analytic_id.id in check_fp:
-                        return False, _("Old funding pool is on a soft/hard closed contract: %s") % (oline.analytic_id.code,), to_reverse, to_override
-                    to_override[oline.id].append(('account_id', nline.analytic_id.id))
-                # Override CC on open period, otherwise reverse line
-                if oline.cost_center_id.id != nline.cost_center_id.id:
-                    # if period is open, do an override, except if FP needs to reverse the line
-                    if period.state not in ['done', 'mission-closed'] and oline.id not in to_reverse:
-                        to_override[oline.id].append(('cost_center_id', nline.cost_center_id.id))
-                    elif period.state in ['done', 'mission-closed']:
-                        to_reverse.append(oline.id)
-                # Only reverse line if destination have changed
-                if oline.destination_id.id != nline.destination_id.id:
-                    if period.state not in ['done', 'mission-closed'] and oline.id not in to_reverse:
-                        to_override[oline.id].append(('destination_id', nline.destination_id.id))
-                    elif period.state in ['done', 'mission-closed']:
-                        to_reverse.append(oline.id)
-                # Override line if percentage have changed
-                if oline.percentage != nline.percentage and oline.id not in to_reverse:
-                    to_override[oline.id].append(('percentage', nline.percentage))
-                # Check that if old_component and new_component have changed we should find oline.id in to_reverse OR to_override
-                if oline.id not in to_override and oline.id not in to_reverse:
-                    raise osv.except_osv(_('Error'), _('Code error: A case has not been taken.'))
-        else:
-            old_component = [oline.analytic_id.id, oline.percentage]
-            new_component = [nline.analytic_id.id, nline.percentage]
-            if old_component != new_component:
-                field_name = ''
-                value = None
-                if oline.analytic_id.id != nline.analytic_id.id:
-                    field_name = 'account_id'
-                    value = nline.analytic_id.id
-                if oline.percentage != nline.percentage:
-                    field_name = 'percentage'
-                    value = nline.percentage
-                if not value:
-                    raise osv.except_osv(_('Error'), _('A value is missing.'))
-                to_override[oline.id].append((field_name, value))
-        # Delete lines that are in override if they are in to_reverse
-        if oline.id in to_override and oline.id in to_reverse:
-            del to_override[oline.id]
-        return True, _("All is OK."), to_reverse, to_override
 
     def _check_period_closed_on_fp_distrib_line(self, cr, uid, distrib_line_id,
                                                 context=None, is_HQ_origin=None):
