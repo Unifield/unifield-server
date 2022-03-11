@@ -35,10 +35,10 @@ class wizard_accrual_validation(osv.osv_memory):
         if 'active_ids' in context:
             for accrual_line in accrual_line_obj.browse(cr, uid, context['active_ids'], context=context):
                 # check for periods, distribution, etc.
-                if accrual_line.state == 'posted':
-                    raise osv.except_osv(_('Warning !'), _("The line '%s' is already posted!") % accrual_line.description)
-                elif accrual_line.state == 'partially_posted':
-                    raise osv.except_osv(_('Warning !'), _("The line '%s' is already partially posted!") % accrual_line.description)
+                if accrual_line.state == 'done':
+                    raise osv.except_osv(_('Warning !'), _('The line "%s" is already in Done state!') % accrual_line.description)
+                elif accrual_line.state == 'running':
+                    raise osv.except_osv(_('Warning !'), _('The line "%s" is already in Running state!') % accrual_line.description)
                 elif accrual_line.state == 'cancel':
                     raise osv.except_osv(_('Warning !'), _("The line '%s' is cancelled and can't be re-posted.") % accrual_line.description)
                 elif not accrual_line.period_id:

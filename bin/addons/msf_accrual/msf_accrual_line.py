@@ -136,8 +136,8 @@ class msf_accrual_line(osv.osv):
             ('one_time_accrual', 'One Time accrual'),
         ], 'Accrual type', required=True),
         'state': fields.selection([('draft', 'Draft'),
-                                   ('posted', 'Posted'),
-                                   ('partially_posted', 'Partially posted'),
+                                   ('done', 'Done'),
+                                   ('running', 'Running'),
                                    ('cancel', 'Cancelled')], 'Status', required=True),
         # Field to store the third party's name for list view
         'third_party_name': fields.char('Third Party', size=64),
@@ -238,8 +238,8 @@ class msf_accrual_line(osv.osv):
         move_line_obj = self.pool.get('account.move.line')
         for accrual_line in self.browse(cr, uid, ids, context=context):
             # check for periods, distribution, etc.
-            if accrual_line.state != 'posted':
-                raise osv.except_osv(_('Warning !'), _("The line '%s' is already posted!") % accrual_line.description)
+            if accrual_line.state != 'done':
+                raise osv.except_osv(_('Warning !'), _("The line \"%s\" is not Done!") % accrual_line.description)
 
             # US-770/1
             if accrual_line.period_id.state not in ('draft', 'field-closed'):
@@ -514,9 +514,9 @@ class msf_accrual_line(osv.osv):
 
                 # validate the accrual line
                 if accrual_line.accrual_type == 'one_time_accrual':
-                    status = 'partially_posted'
+                    status = 'running'
                 else:
-                    status = 'posted'
+                    status = 'done'
                 self.write(cr, uid, [accrual_line.id], {'state': status, 'move_line_id': accrual_move_line_id}, context=context)
 
     def accrual_reversal_post(self, cr, uid, ids, document_date, posting_date, context=None):
@@ -595,8 +595,8 @@ class msf_accrual_line(osv.osv):
                 # Reconcile the accrual move line with its reversal
                 move_line_obj.reconcile_partial(cr, uid, [accrual_line.move_line_id.id, reversal_accrual_move_line_id], context=context)
 
-                # Change the status to "Posted"
-                self.write(cr, uid, [accrual_line.id], {'state': 'posted', 'rev_move_id': reversal_move_id}, context=context)
+                # Change the status to "Done"
+                self.write(cr, uid, [accrual_line.id], {'state': 'done', 'rev_move_id': reversal_move_id}, context=context)
 
 msf_accrual_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

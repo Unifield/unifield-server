@@ -59,7 +59,7 @@
                         </notebook>
 
                         <group colspan="2" col="4">
-                            <button name="button_cancel" string="Cancel" states="posted" type="object" icon="gtk-cancel"
+                            <button name="button_cancel" string="Cancel" states="done" type="object" icon="gtk-cancel"
                                 confirm="Are you sure you want to cancel this accrual line ?"/>
                         </group>
                     </form>
@@ -72,7 +72,7 @@
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
                     <tree string="Accruals Management" 
-                        colors="red:not analytic_distribution_id; black: state in ('posted', 'partially_posted'); grey: state == 'cancel'; blue:analytic_distribution_id and state not in ('posted', 'cancel', 'partially_posted')"
+                        colors="red:not analytic_distribution_id; black: state in ('done', 'running'); grey: state == 'cancel'; blue:analytic_distribution_id and state not in ('done', 'cancel', 'running')"
                         hide_delete_button="1">
                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                         <field name="document_date"/>
@@ -107,10 +107,10 @@
                         <group>
                             <filter name="draft" icon="terp-check" string="Draft"
                                     domain="[('state', '=', 'draft')]"/>
-                            <filter name="partially_posted" icon="terp-document-new" string="Partially Posted"
-                                    domain="[('state', '=', 'partially_posted')]"/>
-                            <filter name="posted" icon="terp-camera_test" string="Posted"
-                                    domain="[('state', '=', 'posted')]"/>
+                            <filter name="filter_running" icon="terp-document-new" string="Running"
+                                    domain="[('state', '=', 'running')]"/>
+                            <filter name="filter_done" icon="terp-camera_test" string="Done"
+                                    domain="[('state', '=', 'done')]"/>
                             <filter name="cancel" icon="terp-gtk-stop" string="Cancelled"
                                     domain="[('state', '=', 'cancel')]"/>
                             <separator orientation="vertical"/>

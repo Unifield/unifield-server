@@ -45,10 +45,10 @@ class wizard_accrual_reversal(osv.osv_memory):
 
         if 'active_ids' in context:
             for accrual_line in accrual_line_obj.browse(cr, uid, context['active_ids'], context=context):
-                # this option is valid only if the status is "partially posted"
-                if accrual_line.state != 'partially_posted':
+                # this option is valid only if the status is "running"
+                if accrual_line.state != 'running':
                     raise osv.except_osv(_('Warning !'),
-                                         _("The line '%s' isn't partially posted, the accrual reversal can't be posted!") % accrual_line.description)
+                                         _("The line \"%s\" isn't in Running state, the accrual reversal can't be posted!") % accrual_line.description)
 
                 # check for dates consistency
                 document_date = self.browse(cr, uid, ids, context=context)[0].document_date
