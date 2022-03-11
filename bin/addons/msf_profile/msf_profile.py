@@ -56,6 +56,14 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF25.0
+    def us_5722_update_accruals_states(self, cr, uid, *a, **b):
+        cr.execute("UPDATE msf_accrual_line SET state = 'running' WHERE state = 'partially_posted'")
+        self.log_info(cr, uid, '%d Accrual(s) set to: Running.' % (cr.rowcount,))
+        cr.execute("UPDATE msf_accrual_line SET state = 'done' WHERE state = 'posted'")
+        self.log_info(cr, uid, '%d Accrual(s) set to: Done.' % (cr.rowcount,))
+        return True
+
     # UF24.0
     def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')

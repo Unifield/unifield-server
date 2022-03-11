@@ -753,5 +753,10 @@
         <record id="us_9570_ocb_auto_sync_time" model="patch.scripts">
             <field name="method">us_9570_ocb_auto_sync_time</field>
         </record>
+
+        <!-- UF25.0 -->
+        <record id="us_5722_update_accruals_states" model="patch.scripts">
+            <field name="method">us_5722_update_accruals_states</field>
+        </record>
     </data>
 </openerp>
