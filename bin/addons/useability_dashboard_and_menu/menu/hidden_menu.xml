@@ -73,7 +73,6 @@
         <menuitem parent="menu_hidden" id="account.menu_validate_account_moves" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.periodical_processing_journal_entries_validation" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_manual_reconcile" sequence="10"/>
-        <menuitem parent="menu_hidden" id="account.menu_automatic_reconcile" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.periodical_processing_reconciliation" sequence="10"/>
         <menuitem parent="menu_hidden" id="account.menu_menu_Bank_process" sequence="7"/>
         <menuitem parent="menu_hidden" id="account.menu_account_pp_statements" sequence="12"/>

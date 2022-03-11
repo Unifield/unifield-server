@@ -84,7 +84,6 @@ module named account_voucher.
         'wizard/account_report_partner_ledger_view.xml',
         'wizard/account_reconcile_view.xml',
         'wizard/account_reconcile_partner_process_view.xml',
-        'wizard/account_automatic_reconcile_view.xml',
         'wizard/account_invoice_import.xml',
         'project/wizard/project_account_analytic_line_view.xml',
         'account_end_fy.xml',

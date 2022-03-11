@@ -24,7 +24,6 @@ from . import account_report_common_partner
 from . import account_report_common_journal
 from . import account_report_common_account
 
-from . import account_automatic_reconcile
 from . import account_move_line_reconcile_select
 from . import account_move_line_unreconcile_select
 from . import account_reconcile_partner_process

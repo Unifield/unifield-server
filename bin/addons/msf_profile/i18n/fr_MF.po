@@ -501,7 +501,6 @@ msgid "Partner move line"
 msgstr "Ligne de transaction Partenaire"
 
 #. modules: msf_processes, account, account_mcdb
-#: view:account.automatic.reconcile:0
 #: view:account.move:0
 #: view:account.move.line:0
 #: view:account.move.line.reconcile:0
@@ -4767,11 +4766,6 @@ msgstr "Un écart existe dans la séquence"
 msgid "Cancel Only"
 msgstr "Annuler Seulement"
 
-#. module: account
-#: field:account.automatic.reconcile,unreconciled:0
-msgid "Not reconciled transactions"
-msgstr "Transactions non lettrées"
-
 #. modules: msf_doc_import, msf_supply_doc_export
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:69
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:140
@@ -6783,11 +6777,6 @@ msgstr "\n"
 "          * Valide jusqu'au (DD-MMM-YYYY)\n"
 "        "
 
-#. module: account
-#: selection:account.automatic.reconcile,power:0
-msgid "8"
-msgstr "8"
-
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/report/pro_forma_invoice.py:40
 #, python-format
@@ -8786,7 +8775,6 @@ msgid "Asia/Magadan"
 msgstr "Asia/Magadan"
 
 #. module: account
-#: view:account.automatic.reconcile:0
 #: view:account.move.line.reconcile.writeoff:0
 msgid "Write-Off Move"
 msgstr "Ecritures Comptables d'Ajustement"
@@ -9496,11 +9484,6 @@ msgstr "Aller sur Formulaire Appels d'Offres"
 msgid "res_config_contents"
 msgstr "res_config_contents"
 
-#. module: account
-#: field:account.automatic.reconcile,allow_write_off:0
-msgid "Allow write off"
-msgstr "Autoriser les annulations"
-
 #. module: msf_partner
 #: help:res.partner,manufacturer:0
 msgid "Check this box if the partner is a manufacturer"
@@ -10038,7 +10021,6 @@ msgid "To partner"
 msgstr "Au Partenaire"
 
 #. modules: account, product_nomenclature
-#: selection:account.automatic.reconcile,power:0
 #: selection:product.nomenclature,sub_level:0
 msgid "5"
 msgstr "5"
@@ -12652,11 +12634,6 @@ msgstr "Value NOT Synchronised on Write"
 #: model:product.justification.code,description:product_attributes.justification_code_jf
 msgid "Monitor the use, efficacy for at least one year after the introduction of new drugs."
 msgstr "Monitor the use, efficacy for at least one year after the introduction of new drugs."
-
-#. module: account
-#: view:account.automatic.reconcile:0
-msgid "For an invoice to be considered as paid, the invoice entries must be reconciled with counterparts, usually payments. With the automatic reconciliation functionality, OpenERP makes its own search for entries to reconcile in a series of accounts. It finds entries for each partner where the amounts correspond."
-msgstr "Pour considérer une facture comme payée il faut que les saisies des factures aient été rapprochées de leurs contreparties (généralement les paiements). Avec la fonctionnalité de lettrage automatique, OpenERP recherche lui même des écritures à lettrer dans toute une série de comptes. OpenERP repère les écritures, pour chacun des partenaires, dont les montants correspondent."
 
 #. modules: stock_override, stock
 #: model:ir.model,name:stock.model_report_stock_move
@@ -18162,11 +18139,6 @@ msgstr "Valeur en cours"
 msgid "Change currency"
 msgstr "Changer de devise"
 
-#. module: account
-#: selection:account.automatic.reconcile,power:0
-msgid "7"
-msgstr "7"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:334
 #, python-format
@@ -22481,7 +22453,6 @@ msgid "This is a model for recurring accounting entries"
 msgstr "Ceci est un modèle pour des écritures comptables périodiques"
 
 #. modules: account, sale, finance, product_nomenclature
-#: selection:account.automatic.reconcile,power:0
 #: report:cash.request.export:0
 #: selection:product.nomenclature,sub_level:0
 #: selection:sale.order,split_type_sale_order:0
@@ -22818,7 +22789,6 @@ msgid "product.likely.expire.report.item.line"
 msgstr "product.likely.expire.report.item.line"
 
 #. modules: account, base
-#: field:account.automatic.reconcile,date1:0
 #: field:publisher_warranty.contract,date_start:0
 msgid "Starting Date"
 msgstr "Date de Début"
@@ -24079,11 +24049,6 @@ msgstr "Maximum à Commander"
 msgid "UniData status"
 msgstr "Statut UniData"
 
-#. module: account
-#: field:account.automatic.reconcile,reconciled:0
-msgid "Reconciled transactions"
-msgstr "Transactions lettrées"
-
 #. module: procurement_request
 #: field:procurement.request.line.wizard,original_uom:0
 #: field:sale.order.line,original_uom:0
@@ -24747,7 +24712,6 @@ msgid "Counterpart for B/S credit balance"
 msgstr "Contrepartie pour les balances de Bilan au crédit "
 
 #. modules: account_override, account, finance, account_mcdb, msf_homere_interface, account_hq_entries, account_corrections, account_period_closing_level, board, register_accounting, msf_accrual, analytic_distribution, vertical_integration, stock_override, msf_currency_revaluation, msf_doc_import, consumption_calculation
-#: field:account.automatic.reconcile,period_id:0
 #: view:account.bank.statement:0
 #: field:account.bank.statement,period_id:0
 #: view:account.entries.report:0
@@ -32666,11 +32630,6 @@ msgstr "Statut de la Commande"
 msgid "Procurement started late"
 msgstr "Procurement started late"
 
-#. module: account
-#: selection:account.automatic.reconcile,power:0
-msgid "9"
-msgstr "9"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -35533,11 +35492,6 @@ msgstr "partial pymt"
 #: selection:res.users,context_tz:0
 msgid "W-SU"
 msgstr "W-SU"
-
-#. module: account
-#: field:account.automatic.reconcile,power:0
-msgid "Power"
-msgstr "Puissance"
 
 #. modules: msf_supply_doc_export, account_mcdb
 #: field:output.currency.for.export,background_time:0
@@ -39371,11 +39325,6 @@ msgid "Serial Number"
 msgstr "Numéro de Série"
 
 #. module: account
-#: field:account.automatic.reconcile,max_amount:0
-msgid "Maximum write-off amount"
-msgstr "Montant maximum de l'ajustement"
-
-#. module: account
 #: selection:account.payment.term.line,value:0
 msgid "Percent"
 msgstr "Pourcent"
@@ -39393,11 +39342,6 @@ msgstr "Atlantic/South_Georgia"
 #: selection:base.setup.company,ship_country_id:0
 msgid "Kenya"
 msgstr "Kenya"
-
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_automatic_reconcile
-msgid "Account Automatic Reconcile"
-msgstr "Compte - Lettrage automatique"
 
 #. module: account_mcdb
 #: view:account.mcdb:0
@@ -44205,7 +44149,6 @@ msgstr "Paie - Importation"
 #: code:addons/account/account.py:1430
 #: code:addons/account/account_move_line.py:948
 #: code:addons/account/invoice.py:1038
-#: code:addons/account/wizard/account_automatic_reconcile.py:152
 #: code:addons/account/wizard/account_fiscalyear_close.py:78
 #: code:addons/account/wizard/account_fiscalyear_close.py:81
 #: code:addons/account/wizard/account_move_journal.py:165
@@ -47427,12 +47370,6 @@ msgstr "De gauche à droite"
 msgid "Europe/Gibraltar"
 msgstr "Europe/Gibraltar"
 
-#. module: account
-#: code:addons/account/wizard/account_automatic_reconcile.py:152
-#, python-format
-msgid "You must select accounts to reconcile"
-msgstr "Vous devez sélectionner les comptes à lettrer"
-
 #. module: base
 #: view:base.language.install:0
 #: model:ir.ui.menu,name:base.menu_view_base_language_install
@@ -47973,11 +47910,6 @@ msgstr "Montant négatif interdit!"
 #: report:account.move.line_csv:0
 msgid "Out. Currency"
 msgstr "Dev. Sortante"
-
-#. module: account
-#: model:ir.ui.menu,name:account.menu_automatic_reconcile
-msgid "Automatic Reconciliation"
-msgstr "Lettrage automatique"
 
 #. modules: import_data, base
 #: view:res.partner.category:0
@@ -49239,7 +49171,6 @@ msgid "restrictive.country.setup"
 msgstr "restrictive.country.setup"
 
 #. modules: account, product_nomenclature
-#: selection:account.automatic.reconcile,power:0
 #: selection:product.nomenclature,sub_level:0
 msgid "6"
 msgstr "6"
@@ -53175,7 +53106,6 @@ msgstr "Balance Agée Partenaire"
 #: field:wizard.account.invoice,virtual_account_id:0
 #: view:account.account:0
 #: report:account.account.balance:0
-#: field:account.automatic.reconcile,writeoff_acc_id:0
 #: field:account.bank.statement.line,account_id:0
 #: view:account.entries.report:0
 #: field:account.entries.report,account_id:0
@@ -56896,7 +56826,6 @@ msgstr "Dépenses budgétisées pour la période M+3"
 
 #. modules: stock, account_override, account, msf_outgoing, account_mcdb, msf_homere_interface, msf_instance, account_corrections, account_journal, register_accounting, msf_doc_import, sync_so, msf_accrual, analytic_distribution
 #: view:account.analytic.line:0
-#: field:account.automatic.reconcile,journal_id:0
 #: view:account.bank.statement:0
 #: field:account.bank.statement,journal_id:0
 #: report:account.central.journal:0
@@ -58937,11 +58866,6 @@ msgstr "Pas de fournisseur sélectionné"
 msgid "Ms."
 msgstr "Mme"
 
-#. module: account
-#: help:account.automatic.reconcile,power:0
-msgid "Number of partial amounts that can be combined to find a balance point can be chosen as the power of the automatic reconciliation"
-msgstr "Le nombre de montants partiels, combinables pour trouver un point d'équilibre, peut être choisi comme générateur du lettrage automatique"
-
 #. module: account_subscription
 #: code:addons/account_subscription/account_model.py:155
 #, python-format
@@ -60855,11 +60779,6 @@ msgstr "res.country.restriction"
 msgid "ROMANIAN NEW LEU"
 msgstr "ROMANIAN NEW LEU"
 
-#. module: account
-#: model:ir.model,name:account.model_account_automatic_reconcile
-msgid "Automatic Reconcile"
-msgstr "Lettrage Automatique"
-
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:134
 #, python-format
@@ -61139,7 +61058,6 @@ msgstr "Erreur utilisateur!"
 #. modules: account_reconciliation, account, res_currency_functional, finance, account_mcdb
 #: view:account.account:0
 #: field:account.account,reconcile:0
-#: view:account.automatic.reconcile:0
 #: field:account.move.line,reconcile_id:0
 #: view:account.move.line.reconcile:0
 #: view:account.move.line.reconcile.writeoff:0
@@ -75251,7 +75169,6 @@ msgid "Export XLS discrepancy report"
 msgstr "Exporter le rapport des écarts au format XLS"
 
 #. modules: account, sale, finance, product_nomenclature
-#: selection:account.automatic.reconcile,power:0
 #: report:cash.request.export:0
 #: selection:product.nomenclature,sub_level:0
 #: selection:sale.order,split_type_sale_order:0
@@ -78322,11 +78239,6 @@ msgstr "Import Catégorie Produit"
 msgid "System Update"
 msgstr "Mise à jour du Système"
 
-#. module: account
-#: field:account.automatic.reconcile,account_ids:0
-msgid "Accounts to Reconcile"
-msgstr "Comptes à Lettrer"
-
 #. module: account_override
 #: code:addons/account_override/invoice.py:396
 #, python-format
@@ -80250,7 +80162,6 @@ msgid "Products to remove from the Kit"
 msgstr "Produits à retirer du Kit"
 
 #. modules: account, product_nomenclature
-#: selection:account.automatic.reconcile,power:0
 #: selection:product.nomenclature,sub_level:0
 msgid "4"
 msgstr "4"
@@ -82517,7 +82428,6 @@ msgid "Purchase Requisition"
 msgstr "Demande d'Achat"
 
 #. modules: account, base
-#: field:account.automatic.reconcile,date2:0
 #: field:publisher_warranty.contract,date_stop:0
 msgid "Ending Date"
 msgstr "Date de Clôture"
@@ -92531,11 +92441,6 @@ msgstr "Code du compte"
 msgid "Line to correct"
 msgstr "Ligne à corriger"
 
-#. module: account
-#: view:account.automatic.reconcile:0
-msgid "Reconciliation result"
-msgstr "Résultat du Lettrage "
-
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Re-open period (Field)"
@@ -95684,7 +95589,6 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:account.analytic.cost.ledger:0
 #: view:account.analytic.cost.ledger.journal.report:0
 #: view:account.analytic.inverted.balance:0
-#: view:account.automatic.reconcile:0
 #: view:account.bank.statement:0
 #: view:account.change.currency:0
 #: view:account.chart:0
@@ -97044,7 +96948,6 @@ msgid "To"
 msgstr "À"
 
 #. modules: delivery_mechanism, account, msf_outgoing, msf_homere_interface, sync_client, stock_override, kit, account_override, register_accounting, msf_doc_import, return_claim, stock
-#: view:account.automatic.reconcile:0
 #: view:account.use.model:0
 #: view:debit.note.import.invoice:0
 #: view:change.product.move.processor:0
