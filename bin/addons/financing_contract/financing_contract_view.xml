@@ -243,8 +243,9 @@
                     <search string="Search Account/Destination/Funding Pool/Cost Centre">
                             <filter icon="gtk-missing-image" name="active" string="Show Active" domain="[('disabled', '=', False)]" separator="1" />
                             <field name="account_destination_name" string="Account"/>
+                            <field name="account_destination_id" domain="[('category', '=', 'DEST')]"/>
                             <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
-                            <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
+			    <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
                     </search>
                 </field>
             </record>
