@@ -310,26 +310,6 @@ class financing_contract_account_quadruplet(osv.osv):
         fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
         return [('cost_center_id', 'in', cc_ids), ('funding_pool_id', 'in', fp_ids)]
 
-    def _get_valid(self, cr, uid, ids, field_name, arg, context=None):
-        res = {}
-        if not ids:
-            return []
-
-        for _id in ids:
-            res[_id] = False
-
-        cr.execute('''select
-            quad.id, quad.disabled
-            from
-                financing_contract_account_quadruplet quad
-            where
-                quad.id in %s
-        ''', (tuple(ids), ))
-
-        for x in cr.fetchall():
-            res[x[0]] = not x[1]
-        return res
-
     _columns = {
         'account_destination_id': fields.many2one('account.analytic.account', 'Destination', relate=True, readonly=True, select=1),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre', relate=True, readonly=True, select=1),
@@ -340,8 +320,6 @@ class financing_contract_account_quadruplet(osv.osv):
         'account_id': fields.many2one('account.account', 'Account ID', relate=True, readonly=True, select=1),
         'account_destination_link_id': fields.many2one('account.destination.link', 'Link id', readonly=True, select=1),
         'disabled': fields.boolean('Disabled'),
-        # TODO: no more needed, disabled can be used instead as (hopefully) recomputed when needed
-        'valid': fields.function(_get_valid,  method=True, type='boolean', string='Is quad valid ?'),
     }
 
     _sql_constraints = {
