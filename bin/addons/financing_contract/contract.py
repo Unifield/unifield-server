@@ -677,7 +677,7 @@ class financing_contract_contract(osv.osv):
                 select ct.id, array_agg(fp.funding_pool_id)
                 from
                     financing_contract_funding_pool_line fp, financing_contract_format fmt, financing_contract_contract ct
-                where 
+                where
                     ct.id in %s and
                     ct.format_id = fmt.id and
                     fmt.id = fp.contract_id
@@ -694,7 +694,6 @@ class financing_contract_contract(osv.osv):
             cc_removed = previous_cc.get(_id, set()) - current_cc.get(_id, set())
             cc_removed.add(0)
             current_fp[_id].add(0)
-            # TODO TRIGGER SYNC ??
             cr.execute("""
                 delete from
                     financing_contract_actual_account_quadruplets quadl using financing_contract_format_line fl, financing_contract_format fm, financing_contract_contract fc, financing_contract_account_quadruplet quad
@@ -706,6 +705,11 @@ class financing_contract_contract(osv.osv):
                     quad.id = quadl.account_quadruplet_id and
                     (quad.funding_pool_id not in %s  or quad.cost_center_id in %s)
             """, (_id, tuple(current_fp[_id]), tuple(cc_removed)))
+            if cr.rowcount and not context.get('sync_update_execution'):
+                # trigger sync, in fact trigger a write that will trigger the same deletion
+                self.sql_synchronize(cr, [_id], 'format_name')
+
+
 
         # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
         # get list of all valid ids for this contract
