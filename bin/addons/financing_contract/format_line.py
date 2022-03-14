@@ -691,9 +691,6 @@ class financing_contract_format_line(osv.osv):
                     quad.actual_line_id = fl.id
                 """, (tuple(ids),))
             for x in cr.fetchall():
-                print('gen by read', f, context)
-                import traceback
-                traceback.print_stack()
                 self.pool.get('financing.contract.account.quadruplet').gen_quadruplet(cr, uid, context={'contract_id': x[0]})
 
         return super(financing_contract_format_line, self).read(cr, uid, ids, f, context=context, load=load)
