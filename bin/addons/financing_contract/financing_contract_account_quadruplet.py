@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools import sql
 import time
+import logging
 
 class financing_contract_account_quadruplet(osv.osv):
     _name = 'financing.contract.account.quadruplet'
@@ -29,6 +30,7 @@ class financing_contract_account_quadruplet(osv.osv):
     _description = 'FP / CC / destination valid values view'
     _log_access = False
     _auto = True
+    _logger = logging.getLogger('contract.quad')
 
     def migrate_old_quad(self, cr, uid, ids, context=None):
         '''
@@ -195,13 +197,13 @@ class financing_contract_account_quadruplet(osv.osv):
                 from 
                     ir_model_data
                 where
-                    module='sd' and 
+                    module='sd' and
                     model in ('account.analytic.account', 'account.destination.link', 'dest.cc.link')
             ''')
             last_obj_modified = cr.fetchone()[0]
             if not contract.quad_gen_date or last_obj_modified > contract.quad_gen_date or contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S'):
-                print 'contract_id:', contract_id, not contract.quad_gen_date, last_obj_modified, '>', contract.quad_gen_date, last_obj_modified > contract.quad_gen_date, contract.quad_gen_date, '>', time.strftime('%Y-%m-%d %H:%M:%S'), contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S')
-                a = time.time()
+                self._logger.info('contract_id: %s, last mod: %s, quad date: %s' % (contract_id, last_obj_modified, contract.quad_gen_date))
+                timer = time.time()
                 # ignore quad_gen_date in the future
                 cc_ids = [cc.id for cc in contract.cost_center_ids]
                 fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
@@ -229,7 +231,7 @@ class financing_contract_account_quadruplet(osv.osv):
                     )
                     ON CONFLICT ON CONSTRAINT financing_contract_account_quadruplet_check_unique DO UPDATE SET disabled=EXCLUDED.disabled''', (tuple(fp_ids), tuple(cc_ids)))
                 cr.execute('update financing_contract_contract set quad_gen_date=%s where id=%s', (last_obj_modified, contract_id))
-                print 'end of gen', time.time() - a
+                self._logger.info('Gen time: %s' % (time.time() - timer))
         return True
 
     # The result set with {ID:Flag} if Flag=True, the line will be grey, otherwise, it is selectable

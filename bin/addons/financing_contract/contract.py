@@ -118,7 +118,6 @@ class financing_contract_funding_pool_line(osv.osv):
         self.check_fp(cr, uid, ids)
         return res
 
-    # def unlink ..... TODO update quad
 
 financing_contract_funding_pool_line()
 
@@ -598,7 +597,6 @@ class financing_contract_contract(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        print 'WRITE'
         # get previous list of cc
         previous_cc = {}
         cr.execute('''
@@ -688,19 +686,15 @@ class financing_contract_contract(osv.osv):
         for x in cr.fetchall():
             current_fp[x[0]] = set(x[1])
 
-        import time
         for _id in ids:
             # if cc added or fp added, we don't care of fp or cc deletion bc quad used will be deleted
             if not current_cc.get(_id, set()).issubset(previous_cc.get(_id, set())) or not current_fp.get(_id, set()).issubset(previous_fp.get(_id, set())):
                 # reset flag to refresh quad combination if needed
-                print 'NEW'
                 cr.execute('''update financing_contract_contract set quad_gen_date=NULL where id = %s''', (_id,))
             cc_removed = previous_cc.get(_id, set()) - current_cc.get(_id, set())
-            print 'DELETE', 'cc', cc_removed
             cc_removed.add(0)
             current_fp[_id].add(0)
             # TODO TRIGGER SYNC ??
-            a = time.time()
             cr.execute("""
                 delete from
                     financing_contract_actual_account_quadruplets quadl using financing_contract_format_line fl, financing_contract_format fm, financing_contract_contract fc, financing_contract_account_quadruplet quad
@@ -712,7 +706,6 @@ class financing_contract_contract(osv.osv):
                     quad.id = quadl.account_quadruplet_id and
                     (quad.funding_pool_id not in %s  or quad.cost_center_id in %s)
             """, (_id, tuple(current_fp[_id]), tuple(cc_removed)))
-            print 'delete time', time.time() - a, cr.rowcount
 
         # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
         # get list of all valid ids for this contract
