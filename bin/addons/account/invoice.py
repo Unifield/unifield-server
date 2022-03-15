@@ -1925,7 +1925,7 @@ class account_invoice_tax(osv.osv):
 
 
     def _check_untaxed_amount(self, cr, uid, vals, context=None):
-        if 'account_tax_id' in vals and vals['account_tax_id'] and vals['base_amount'] == 0:
+        if 'account_tax_id' in vals and vals['account_tax_id'] and 'base_amount' in vals and vals['base_amount'] == 0:
             raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Save & Edit button before saving the %s tax.') % (vals['name']))
         return True
 
@@ -1978,6 +1978,7 @@ class account_invoice_tax(osv.osv):
 
     _columns = {
         'invoice_id': fields.many2one('account.invoice', 'Invoice Line', ondelete='cascade', select=True),
+        'purchase_id': fields.many2one('purchase.order', 'PO', ondelete='cascade', select=True),
         'name': fields.char('Tax Description', size=64, required=True),
         'account_id': fields.many2one('account.account', 'Tax Account', required=True, domain=[('type','<>','view'),('type','<>','income'), ('type', '<>', 'closed')]),
         'base': fields.float('Base', digits_compute=dp.get_precision('Account')),
