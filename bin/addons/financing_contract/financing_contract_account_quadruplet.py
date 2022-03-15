@@ -192,9 +192,11 @@ class financing_contract_account_quadruplet(osv.osv):
         if contract_id:
             ctr_obj = self.pool.get('financing.contract.contract')
             contract = ctr_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids', 'cost_center_ids', 'quad_gen_date'], context=context)
+            # last_modification: is modified when the record is Save&Edit on the instance
+            # date_update: is modified by a sync update
             cr.execute('''
-                select max(last_modification)
-                from 
+                select max(greatest(last_modification, date_update))
+                from
                     ir_model_data
                 where
                     module='sd' and
@@ -202,9 +204,9 @@ class financing_contract_account_quadruplet(osv.osv):
             ''')
             last_obj_modified = cr.fetchone()[0]
             if not contract.quad_gen_date or last_obj_modified > contract.quad_gen_date or contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S'):
+                # ignore quad_gen_date in the future
                 self._logger.info('contract_id: %s, last mod: %s, quad date: %s' % (contract_id, last_obj_modified, contract.quad_gen_date))
                 timer = time.time()
-                # ignore quad_gen_date in the future
                 cc_ids = [cc.id for cc in contract.cost_center_ids]
                 fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
                 if not cc_ids:

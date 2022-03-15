@@ -693,7 +693,7 @@ class financing_contract_contract(osv.osv):
                 cr.execute('''update financing_contract_contract set quad_gen_date=NULL where id = %s''', (_id,))
             cc_removed = previous_cc.get(_id, set()) - current_cc.get(_id, set())
             cc_removed.add(0)
-            current_fp[_id].add(0)
+            current_fp.setdefault(_id, set()).add(0)
             cr.execute("""
                 delete from
                     financing_contract_actual_account_quadruplets quadl using financing_contract_format_line fl, financing_contract_format fm, financing_contract_contract fc, financing_contract_account_quadruplet quad
@@ -704,10 +704,12 @@ class financing_contract_contract(osv.osv):
                     fc.id = %s and
                     quad.id = quadl.account_quadruplet_id and
                     (quad.funding_pool_id not in %s  or quad.cost_center_id in %s)
+                returning fl.id
             """, (_id, tuple(current_fp[_id]), tuple(cc_removed)))
             if cr.rowcount and not context.get('sync_update_execution'):
                 # trigger sync, in fact trigger a write that will trigger the same deletion
-                self.sql_synchronize(cr, [_id], 'format_name')
+                fl = set([x[0] for x in cr.fetchall()])
+                self.pool.get('financing.contract.format.line').sql_synchronize(cr, fl, 'quadruplet_sync_list')
 
 
 
