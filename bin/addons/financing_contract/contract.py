@@ -66,12 +66,15 @@ class financing_contract_funding_pool_line(osv.osv):
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
         format_obj = self.pool.get('financing.contract.format')
+        contract_obj = self.pool.get('financing.contract.contract')
         # US-113: Check if the call is from sync update
         if context.get('sync_update_execution') and vals.get('contract_id', False):
             # US-113: and if there is any financing contract existed for this format, if no, then ignore this call
-            exist = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', vals['contract_id'])])
+            exist = contract_obj.search_exists(cr, uid, [('format_id', '=', vals['contract_id'])])
             if not exist:
                 return None
+            # new fp from sync: request new quad generation
+            cr.execute('''update financing_contract_contract set quad_gen_date=NULL where format_id = %s''', (vals['contract_id'],))
 
         result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
         # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
@@ -103,16 +106,23 @@ class financing_contract_funding_pool_line(osv.osv):
         """
         if not ids:
             return True
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         if context is None:
             context = {}
 
         # US-180: Check if it comes from the sync update, and if any contract
-        if context.get('sync_update_execution') and vals.get('format_id', False):
+        if context.get('sync_update_execution') and vals.get('contract_id', False):
             # Check if this format line belongs to any financing contract/format
             ctr_obj = self.pool.get('financing.contract.contract')
-            exist = ctr_obj.search(cr, uid, [('format_id', '=', vals['format_id'])])
+            exist = ctr_obj.search_exists(cr, uid, [('format_id', '=', vals['contract_id'])])
             if not exist:
                 return True
+            if vals.get('funding_pool_id') and self.search_exists(cr, uid, [('id', 'in', ids), ('funding_pool_id', '!=', vals['funding_pool_id'])]):
+                # sync, change of FP in existing line, request quad generation
+                cr.execute('''update financing_contract_contract set quad_gen_date=NULL where format_id = %s''', (vals['contract_id'],))
 
         res = super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
         self.check_fp(cr, uid, ids)
@@ -597,36 +607,6 @@ class financing_contract_contract(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        # get previous list of cc
-        previous_cc = {}
-        cr.execute('''
-                select ct.id, array_agg(cc.cost_center_id)
-                from
-                    financing_contract_cost_center cc, financing_contract_format fmt, financing_contract_contract ct
-                where 
-                    ct.id in %s and
-                    ct.format_id = fmt.id and
-                    fmt.id = cc.contract_id
-                group by ct.id
-            ''', (tuple(ids),))
-        for x in cr.fetchall():
-            previous_cc[x[0]] = set(x[1])
-
-
-        previous_fp = {}
-        # get previous list of fp
-        cr.execute('''
-                select ct.id, array_agg(fp.funding_pool_id)
-                from
-                    financing_contract_funding_pool_line fp, financing_contract_format fmt, financing_contract_contract ct
-                where 
-                    ct.id in %s and
-                    ct.format_id = fmt.id and
-                    fmt.id = fp.contract_id
-                group by ct.id
-            ''', (tuple(ids),))
-        for x in cr.fetchall():
-            previous_fp[x[0]] = set(x[1])
 
         if 'donor_id' in vals:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, vals['donor_id'], context=context)
@@ -651,70 +631,20 @@ class financing_contract_contract(osv.osv):
                     cc_ids.append(cc.id)
                 vals['cost_center_ids'] = [(6,0,cc_ids)] # this will be used at final value of cc list to this contract
 
+        # US-113: Populate the instance_id down to format, format line and also funding pool line
+        instance_id = vals.get('instance_id', False)
+        if not instance_id:
+            # US-330: If the prop instance is not in vals, still check in the FC
+            instance_id =  self.browse(cr,uid,ids,context=context)[0].instance_id
+            if instance_id:
+                instance_id = instance_id.id
+        if instance_id:
+            vals['hidden_instance_id'] = instance_id
+
         res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
         if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
             cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''', (ids[0],))
 
-        # get current list of cc
-        current_cc = {}
-        cr.execute('''
-                select ct.id, array_agg(cc.cost_center_id)
-                from
-                    financing_contract_cost_center cc, financing_contract_format fmt, financing_contract_contract ct
-                where 
-                    ct.id in %s and
-                    ct.format_id = fmt.id and
-                    fmt.id = cc.contract_id
-                group by ct.id
-            ''', (tuple(ids),))
-        for x in cr.fetchall():
-            current_cc[x[0]] = set(x[1])
-
-
-        current_fp = {}
-        # get previous list of fp
-        cr.execute('''
-                select ct.id, array_agg(fp.funding_pool_id)
-                from
-                    financing_contract_funding_pool_line fp, financing_contract_format fmt, financing_contract_contract ct
-                where
-                    ct.id in %s and
-                    ct.format_id = fmt.id and
-                    fmt.id = fp.contract_id
-                group by ct.id
-            ''', (tuple(ids),))
-        for x in cr.fetchall():
-            current_fp[x[0]] = set(x[1])
-
-        for _id in ids:
-            # if cc added or fp added, we don't care of fp or cc deletion bc quad used will be deleted
-            if not current_cc.get(_id, set()).issubset(previous_cc.get(_id, set())) or not current_fp.get(_id, set()).issubset(previous_fp.get(_id, set())):
-                # reset flag to refresh quad combination if needed
-                cr.execute('''update financing_contract_contract set quad_gen_date=NULL where id = %s''', (_id,))
-            cc_removed = previous_cc.get(_id, set()) - current_cc.get(_id, set())
-            cc_removed.add(0)
-            current_fp.setdefault(_id, set()).add(0)
-            cr.execute("""
-                delete from
-                    financing_contract_actual_account_quadruplets quadl using financing_contract_format_line fl, financing_contract_format fm, financing_contract_contract fc, financing_contract_account_quadruplet quad
-                where
-                    fl.id = quadl.actual_line_id and
-                    fm.id = fl.format_id and
-                    fc.format_id = fm.id and
-                    fc.id = %s and
-                    quad.id = quadl.account_quadruplet_id and
-                    (quad.funding_pool_id not in %s  or quad.cost_center_id in %s)
-                returning fl.id
-            """, (_id, tuple(current_fp[_id]), tuple(cc_removed)))
-            if cr.rowcount and not context.get('sync_update_execution'):
-                # trigger sync, in fact trigger a write that will trigger the same deletion
-                fl = set([x[0] for x in cr.fetchall()])
-                self.pool.get('financing.contract.format.line').sql_synchronize(cr, fl, 'quadruplet_sync_list')
-
-
-
-        # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
-        # get list of all valid ids for this contract
         format =  self.browse(cr,uid,ids,context=context)[0].format_id
 
         if not context.get('sync_update_execution'):
@@ -728,18 +658,6 @@ class financing_contract_contract(osv.osv):
         format_line_obj = self.pool.get('financing.contract.format.line')
         format_browse = format_obj.browse(cr, uid, format.id, context=context)
         fcfpl_line_obj = self.pool.get('financing.contract.funding.pool.line')
-
-        # US-113: Populate the instance_id down to format, format line and also funding pool line
-        instance_id = vals.get('instance_id', False)
-        if not instance_id:
-            # US-330: If the prop instance is not in vals, still check in the FC
-            instance_id =  self.browse(cr,uid,ids,context=context)[0].instance_id
-            if instance_id:
-                instance_id = instance_id.id
-
-        if instance_id:
-            if not format.hidden_instance_id or format.hidden_instance_id.id != instance_id:
-                format_obj.write(cr, uid, format.id, {'hidden_instance_id': instance_id}, context=context)
 
         for format_line in format_browse.actual_line_ids:
             list_to_update = {}
