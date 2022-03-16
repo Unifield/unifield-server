@@ -78,7 +78,8 @@ class purchase_order(osv.osv):
         res = {}
         cur_obj = self.pool.get('res.currency')
         pol_obj = self.pool.get('purchase.order.line')
-        for order in self.browse(cr, uid, ids, context=context):
+        tax_obj = self.pool.get('account.tax')
+        for order in self.browse(cr, uid, ids, fields_to_fetch=['pricelist_id', 'partner_address_id', 'partner_id', 'tender_id'], context=context):
             res[order.id] = {
                 'amount_untaxed': 0.0,
                 'amount_tax': 0.0,
@@ -86,7 +87,8 @@ class purchase_order(osv.osv):
                 'amount_total_tender_currency': 0.0,
                 'has_tax_at_line_level': False,
             }
-            amount_tax = amount_untaxed = 0.0
+            amount_tax = 0
+            amount_untaxed = 0
             cur = order.pricelist_id.currency_id
 
             cr.execute("""select exists(
@@ -95,30 +97,29 @@ class purchase_order(osv.osv):
                     t.ord_id = pol.id and pol.state not in ('cancel', 'cancel_r') and pol.order_id = %s)""", (order.id, ))
             res[order.id]['has_tax_at_line_level'] = cr.fetchone()[0]
 
-            cr.execute("select sum(price_unit * product_qty) from purchase_order_line where order_id = %s and state not in ('cancel', 'cancel_r')", (order.id, ))
-            amount_untaxed = cr.fetchone()[0] or 0
-
             if not res[order.id]['has_tax_at_line_level']:
+                cr.execute("select sum(price_unit * product_qty) from purchase_order_line where order_id = %s and state not in ('cancel', 'cancel_r')", (order.id, ))
+                amount_untaxed = cr.fetchone()[0] or 0
+
                 cr.execute("select sum(amount) from account_invoice_tax where purchase_id = %s", (order.id, ))
                 amount_tax = cr.fetchone()[0] or 0
 
             else:
-                cr.execute("""
-                    select pol.id
-                    from purchase_order_line pol, purchase_order_taxe t
-                    where t.ord_id = pol.id and pol.state not in ('cancel', 'cancel_r') and pol.order_id = %s""", (order.id, ))
+                cr.execute("select pol.id from purchase_order_line pol where pol.state not in ('cancel', 'cancel_r') and pol.order_id = %s", (order.id, ))
                 pol_ids = [x[0] for x in cr.fetchall()]
                 max_size = 400
                 offset = 0
                 while offset < len(pol_ids):
                     for line in pol_obj.browse(cr, uid, pol_ids[offset:max_size+offset], fields_to_fetch=['taxes_id', 'price_unit', 'product_qty', 'product_id'], context=context):
-                        for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
+                        tax_data = tax_obj.compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)
+                        amount_untaxed += tax_data.get('total', 0)
+                        for c in tax_data['taxes']:
                             amount_tax += c.get('amount', 0.0)
                         offset += max_size
+
             res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, amount_tax)
             res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, amount_untaxed)
             res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
-
 
             if order.tender_id and order.tender_id.currency_id \
                     and order.tender_id.currency_id.id != order.pricelist_id.currency_id.id:
