@@ -2124,7 +2124,7 @@ class purchase_order_line(osv.osv):
                 inv_ids[pol.order_id.id] = pol.order_id.action_invoice_get_or_create(context=context)
 
             all_taxes = {}
-            if pol.order_id.tax_line:
+            if pol.order_id.tax_line and pol.order_id.amount_untaxed:
                 percent = (pol.product_qty * pol.price_unit) / pol.order_id.amount_untaxed
                 all_taxes.setdefault(inv_ids[pol.order_id.id], {})
                 for tax_line in pol.order_id.tax_line:
