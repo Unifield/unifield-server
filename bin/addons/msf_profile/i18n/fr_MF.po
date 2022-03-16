@@ -114281,3 +114281,15 @@ msgstr "Machine"
 #: field:sync.version.instance.monitor,platform:0
 msgid "Platform"
 msgstr "Plate-forme"
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "Remove taxes on all PO lines ?"
+msgstr "Supprimer les taxes sur toutes les lignes ?"
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "Remove taxes on lines"
+msgstr "Supprimer les taxes des lignes"
+
+
