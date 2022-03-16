@@ -56,6 +56,26 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_6475_set_has_tax_on_po(self, cr, uid, *a, **b):
+        cr.execute('''
+            update purchase_order
+                set has_tax_at_line_level='t'
+            where
+                id in (
+                select po.id
+                    from
+                purchase_order_line pol, purchase_order po, purchase_order_taxe tax
+                where
+                    po.state in ('draft', 'draft_p', 'validated', 'validated_p') and
+                    pol.order_id = po.id and
+                    pol.state not in ('cancel', 'cancel_r') and
+                    tax.ord_id = pol.id
+            )
+        ''')
+        self.log_info(cr, uid, 'US-6475: set PO has tax on %d records' % cr.rowcount)
+        return True
+
+
     # UF24.0
     def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
