@@ -997,21 +997,29 @@ class account_invoice(osv.osv):
             # the journal used for Intermission Vouchers must be the INT journal of the current instance
             is_iv = context and context.get('type') in ['in_invoice', 'out_invoice'] and not context.get('is_debit_note') \
                 and not context.get('is_inkind_donation') and context.get('is_intermission')
+            ignore_check_total = False
             if is_iv:
                 int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                 # update the IV if the INT journal exists but isn't used in the IV (= journal created after the IV creation)
+                inv_data = {}
                 if int_journal_id:
                     if not inv.journal_id or inv.journal_id.id != int_journal_id:
-                        self.write(cr, uid, inv.id, {'journal_id': int_journal_id}, context=context)
+                        inv_data = {'journal_id': int_journal_id}
                 else:
                     raise osv.except_osv(_('Warning'), _('No Intermission journal found for the current instance.'))
+                if inv.type == 'in_invoice':
+                    inv_data['check_total'] = inv.amount_total
+                    ignore_check_total = True
+                if inv_data:
+                    self.write(cr, uid, inv.id, inv_data, context=context)
+
             if not inv.date_invoice and not inv.document_date:
                 values.update({'date': curr_date, 'document_date': curr_date, 'state': 'date'})
             elif not inv.date_invoice:
                 values.update({'date': curr_date, 'document_date': inv.document_date, 'state': 'date'})
             elif not inv.document_date:
                 values.update({'date': inv.date_invoice, 'document_date': curr_date, 'state': 'date'})
-            if inv.type in ('in_invoice', 'in_refund') and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
+            if inv.type in ('in_invoice', 'in_refund') and not ignore_check_total and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
                 state = values and 'both' or 'amount'
                 values.update({'check_total': inv.check_total , 'amount_total': inv.amount_total, 'state': state})
             if values:
