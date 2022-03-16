@@ -1195,7 +1195,8 @@ Nothing has been imported because of %s. See below:
         del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
-        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_filename': simu_id.filename, 'note': simu_id.imp_notes}, context=context)
+        to_write['last_imported_filename'] = simu_id.filename or ''
+        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'note': simu_id.imp_notes}, context=context)
 
         context['from_simu_screen'] = True
 
