@@ -203,7 +203,7 @@
                             <field name="origin" attrs="{'readonly': [('from_supply', '=', True)]}"/>
                             <newline/>
                             <label string="" colspan="2"/>
-                            <field name="check_total" required="2"/>
+                            <field name="check_total" required="2" attrs="{'invisible': [('doc_type', '=', 'isi')]}"/>
                             <group name="import" string=" Import Lines " colspan="4" col="4">
                                 <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
                                         attrs="{'readonly': [('state', '!=', 'draft')]}"/>

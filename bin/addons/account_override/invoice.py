@@ -1021,7 +1021,7 @@ class account_invoice(osv.osv):
                 values.update({'date': inv.date_invoice, 'document_date': curr_date, 'state': 'date'})
             if inv.type in ('in_invoice', 'in_refund') and not ignore_check_total and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
                 state = values and 'both' or 'amount'
-                values.update({'check_total': inv.check_total , 'amount_total': inv.amount_total, 'state': state})
+                values.update({'check_total': inv.check_total, 'amount_total': inv.amount_total, 'state': state})
             if values:
                 values['invoice_id'] = inv.id
                 wiz_id = self.pool.get('wizard.invoice.date').create(cr, uid, values, context)
