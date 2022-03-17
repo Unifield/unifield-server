@@ -228,6 +228,17 @@ class msf_accrual_line(osv.osv):
 
         return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
 
+    def _check_period_state(self, cr, uid, period_id, context=None):
+        """
+        Raises an error in case the period is either not opened yet or already Mission-Closed or HQ-Closed.
+        """
+        if context is None:
+            context = {}
+        period = self.pool.get('account.period').browse(cr, uid, period_id, fields_to_fetch=['state', 'name'], context=context)
+        if period.state not in ('draft', 'field-closed'):
+            raise osv.except_osv(_('Warning !'), _("The period \"%s\" is not Open!" % (period.name,)))
+        return True
+
     def button_cancel(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -241,9 +252,7 @@ class msf_accrual_line(osv.osv):
             if accrual_line.state != 'done':
                 raise osv.except_osv(_('Warning !'), _("The line \"%s\" is not Done!") % accrual_line.description)
 
-            # US-770/1
-            if accrual_line.period_id.state not in ('draft', 'field-closed'):
-                raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
+            self._check_period_state(cr, uid, accrual_line.period_id.id, context=context)
 
             move_date = accrual_line.period_id.date_stop
             curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
@@ -256,6 +265,8 @@ class msf_accrual_line(osv.osv):
                 reversal_move_posting_date = accrual_line.rev_move_id.date
                 reversal_move_document_date = accrual_line.rev_move_id.document_date
                 reversal_period_id = accrual_line.rev_move_id.period_id.id
+
+            self._check_period_state(cr, uid, reversal_period_id, context=context)
 
             # Create moves
             move_vals = {
@@ -536,6 +547,8 @@ class msf_accrual_line(osv.osv):
 
                 reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
                 reversal_period_id = reversal_period_ids[0]
+
+                self._check_period_state(cr, uid, reversal_period_id, context=context)
 
                 reversal_move_vals = {
                     'ref': accrual_line.reference,

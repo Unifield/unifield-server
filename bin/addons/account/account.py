@@ -1154,7 +1154,7 @@ class account_period(osv.osv):
         if not dt:
             dt = time.strftime('%Y-%m-%d')
 #CHECKME: shouldn't we check the state of the period?
-        ids = self.search(cr, uid, [('date_start','<=',dt),('date_stop','>=',dt)])
+        ids = self.search(cr, uid, [('date_start', '<=', dt), ('date_stop', '>=', dt)], order='date_start, number')
         if not ids:
             raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create a fiscal year.')%dt)
         return ids
