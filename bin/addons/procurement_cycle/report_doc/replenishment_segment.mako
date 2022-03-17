@@ -547,13 +547,7 @@
            <% j = 0 %>
            <% styles = [('s144', 's145'), ('s165', 's151')] %>
            % for fmc in range(1, 19):
-             <Cell ss:StyleID="${styles[j][0]}">
-             % if objects[0].rule == 'minmax':
-                <Data ss:Type="String"></Data>
-             % else:
-                <Data ss:Type="String" />
-             % endif
-             </Cell>
+             <Cell ss:StyleID="${styles[j][0]}"><Data ss:Type="String"></Data></Cell>
              % if fmc == 1:
                 <Cell ss:StyleID="${styles[j][1]}"><Data ss:Type="String"></Data></Cell>
              % endif
