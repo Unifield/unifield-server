@@ -229,9 +229,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     fp_id = 0
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
-                    # for accrual lines, only Private Funds must be available
-                    if context.get('from_accrual_line', False) \
-                            or context.get('is_intermission', False):
+                    if context.get('is_intermission', False):
                         field.set('domain', "[('id', '=', %s)]" % fp_id)
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \

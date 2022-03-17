@@ -430,7 +430,6 @@ class msf_accrual_line(osv.osv):
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
-            'from_accrual_line': True
         })
         # Open it!
         return {
