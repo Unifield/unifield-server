@@ -143,6 +143,7 @@ class msf_accrual_line(osv.osv):
         'third_party_name': fields.char('Third Party', size=64),
         'entry_sequence': fields.function(_get_entry_sequence, method=True,
                                           store=False, string="Number", type="char", readonly="True"),
+        'expense_line_ids': fields.one2many('msf.accrual.line.expense', 'accrual_line_id', string="Accrual Expense Lines"),
     }
 
     _defaults = {
