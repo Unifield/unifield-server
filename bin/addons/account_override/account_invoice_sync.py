@@ -374,8 +374,6 @@ class account_invoice_sync(osv.osv):
         inv_id = self.create(cr, uid, vals, context=context)
         if inv_id:
             partially_run_msg = self._create_invoice_lines(cr, uid, inv_lines, inv_id, posting_date, po, from_supply, context=context)
-            amount_total = self.browse(cr, uid, inv_id, fields_to_fetch=['amount_total'], context=context).amount_total
-            self.write(cr, uid, inv_id, {'check_total': amount_total}, context=context)
             msg = self._get_msg(journal_type, partially_run_msg, inv_id)
             self._logger.info(msg)
             return msg

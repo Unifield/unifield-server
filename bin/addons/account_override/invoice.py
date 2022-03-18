@@ -998,18 +998,18 @@ class account_invoice(osv.osv):
             is_iv = context and context.get('type') in ['in_invoice', 'out_invoice'] and not context.get('is_debit_note') \
                 and not context.get('is_inkind_donation') and context.get('is_intermission')
             ignore_check_total = False
+            inv_data = {}
             if is_iv:
                 int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                 # update the IV if the INT journal exists but isn't used in the IV (= journal created after the IV creation)
-                inv_data = {}
                 if int_journal_id:
                     if not inv.journal_id or inv.journal_id.id != int_journal_id:
                         inv_data = {'journal_id': int_journal_id}
                 else:
                     raise osv.except_osv(_('Warning'), _('No Intermission journal found for the current instance.'))
-                if inv.type == 'in_invoice':
-                    inv_data['check_total'] = inv.amount_total
-                    ignore_check_total = True
+            if inv.doc_type in ('isi', 'ivi'):
+                inv_data['check_total'] = inv.amount_total
+                ignore_check_total = True
                 if inv_data:
                     self.write(cr, uid, inv.id, inv_data, context=context)
 
