@@ -474,7 +474,7 @@
                             </group>
                             <field colspan="4" name="invoice_line" nolabel="1" context="{'fake': 1, 'from_inv_form': True}">
                                 <tree string="Invoice Line"
-                                      colors="red:inactive_product == True or analytic_distribution_state in ('invalid', 'invalid_small_amount');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')"
+                                      colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:inactive_product == False and analytic_distribution_state in ('none', 'valid') and account_id"
                                       editable="both">
                                     <field name="invoice_type" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
