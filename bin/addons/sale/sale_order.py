@@ -2168,6 +2168,8 @@ class sale_order_line(osv.osv):
 
     _max_value = 10**10
     _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
+    _limit_amount = 10**28
+    _limit_msg = _('The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed')
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {

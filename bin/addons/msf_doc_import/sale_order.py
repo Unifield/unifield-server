@@ -265,6 +265,21 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def onchange_ir_qty(self, cr, uid, ids, product_id, uom_id, product_qty=0.00, price_unit=0.00, context=None):
+        if context is None:
+            context = {}
+
+        sol = {}
+        if ids:
+            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty', 'price_unit'], context=context)
+
+        res = self.onchange_uom(cr, uid, ids, product_id, uom_id, product_qty, context=context)
+
+        p_unit = res.get('value') and res['value'].get('price_unit', price_unit) or price_unit
+        self.check_digits(cr, uid, res, sol, product_qty, p_unit, context=context)
+
+        return res
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True

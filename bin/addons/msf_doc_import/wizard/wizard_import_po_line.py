@@ -90,6 +90,7 @@ class wizard_import_po_line(osv.osv_memory):
         categ_log = False
         line_with_error = []
         vals = {'order_line': []}
+        max_qty = purchase_line_obj._max_qty
 
         for wiz in self.browse(cr, uid, ids, context):
             if not wiz.po_id.pricelist_id \
@@ -210,7 +211,7 @@ class wizard_import_po_line(osv.osv_memory):
                         # Cell 2: Quantity
                         qty_value = check_line.quantity_value(
                             product_obj=product_obj, cell_nb=header_index[_('Quantity')],
-                            row=row, to_write=to_write, context=context)
+                            row=row, to_write=to_write, max_qty=max_qty, context=context)
                         to_write.update(
                             product_qty=qty_value['product_qty'],
                             error_list=qty_value['error_list'],

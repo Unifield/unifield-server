@@ -1810,8 +1810,11 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
 
+        pol = {}
+        if ids:
+            pol = self.read(cr, uid, ids[0], ['product_qty', 'price_unit'], context=context)
         if not product_id or not product_uom or not product_qty:
-            self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
+            self.check_digits(cr, uid, res, pol, qty=product_qty, price_unit=price_unit, context=context)
             return res
 
         order_id = context.get('purchase_id', False)
@@ -1835,7 +1838,7 @@ class purchase_order_line(osv.osv):
         else:
             res['value'].update({'old_price_unit': price_unit})
 
-        self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
+        self.check_digits(cr, uid, res, pol, qty=product_qty, price_unit=price_unit, context=context)
         return res
 
     def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):

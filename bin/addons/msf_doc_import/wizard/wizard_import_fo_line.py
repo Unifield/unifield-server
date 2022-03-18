@@ -78,6 +78,7 @@ class wizard_import_fo_line(osv.osv_memory):
         sale_line_obj = self.pool.get('sale.order.line')
         line_with_error = []
         vals = {'order_line': []}
+        max_value = sale_line_obj._max_value
 
         context_sol_create = context.copy()
         context_sol_create['no_store_function'] = ['sale.order.line']
@@ -203,7 +204,7 @@ class wizard_import_fo_line(osv.osv_memory):
 
                             # Cell 2: Quantity
                             qty_value = {}
-                            qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                            qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, max_qty=max_value, context=context)
                             to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
                             # Cell 3: UOM

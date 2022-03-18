@@ -103187,6 +103187,7 @@ msgstr "Voir les lignes disponibles non traitées"
 #: code:addons/purchase/purchase_order_line.py:604
 #: constraint:purchase.order.line:0
 #: constraint:purchase.order.merged.line:0
+#: code:addons/sale/sale_order.py:2172
 #, python-format
 msgid "The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"
 msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs acutelles ne sont pas autorisées"
@@ -114281,3 +114282,29 @@ msgstr "Machine"
 #: field:sync.version.instance.monitor,platform:0
 msgid "Platform"
 msgstr "Plate-forme"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:345
+#, python-format
+msgid "The Product Quantity can not have more than 10 digits"
+msgstr "La Quantité de Produit ne peut pas avoir plus de 10 chiffres"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:386
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:478
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:538
+#, python-format
+msgid "The Quantity of the product %s can not have more than 10 digits."
+msgstr "La Quantité du produit %s ne peut pas avoir plus de 10 chiffres."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1594
+#, python-format
+msgid "Quantity can not have more than 10 digits."
+msgstr "La Quantité ne peut pas avoir plus de 10 chiffres."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:659
+#, python-format
+msgid "Quantity can not have more than 10 digits. "
+msgstr "La Quantité ne peut pas avoir plus de 10 chiffres. "

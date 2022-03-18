@@ -78,11 +78,11 @@
                                     type="object" 
                                     attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"
                                     icon="terp-go-week" />
-                                    <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
+                                    <field name="product_uom_qty" on_change="onchange_ir_qty(product_id, product_uom, product_uom_qty, price_unit)" />
                                     <field name="original_changed" readonly="1"/>
                                     <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom"
                                             attrs="{'invisible': [('original_qty', '=', False), ('modification_comment', '=', False), ('original_changed', '=', False)]}"/>
-                                    <field name="price_unit"/>
+                                    <field name="price_unit" on_change="change_price_unit(product_uom_qty, price_unit)"/>
                                     <field name="notes" />
                                     <field name="display_resourced_orig_line" />
                                     <field name="display_confirm_button" invisible="1" />

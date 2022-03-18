@@ -376,13 +376,15 @@ class purchase_order_line(osv.osv):
         '''
         Create lines according to product in list
         '''
-        p_obj  = self.pool.get('product.product')
+        p_obj = self.pool.get('product.product')
         po_obj = self.pool.get('purchase.order')
 
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price', 'import_product_qty'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['default_code', 'uom_id', 'standard_price', 'import_product_qty'], context=context):
+            if p_data['import_product_qty'] >= self._max_qty:
+                raise osv.except_osv(_('Error'), _('The Quantity of the product %s can not have more than 10 digits.') % p_data['default_code'])
             po_data = po_obj.read(cr, uid, parent_id, ['pricelist_id', 'partner_id', 'date_order',
                                                        'fiscal_position', 'state'], context=context)
 
@@ -471,7 +473,10 @@ class tender_line(osv.osv):
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty', 'categ_id'], context=context):
+        max_qty = self.pool.get('purchase.order.line')._max_qty
+        for p_data in p_obj.read(cr, uid, product_ids, ['default_code', 'uom_id', 'import_product_qty', 'categ_id'], context=context):
+            if p_data['import_product_qty'] >= max_qty:
+                raise osv.except_osv(_('Error'), _('The Quantity of the product %s can not have more than 10 digits.') % p_data['default_code'])
             values = {
                 'tender_id': parent_id,
                 'product_id': p_data['id'],
@@ -529,7 +534,9 @@ class sale_order_line(osv.osv):
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['default_code', 'uom_id', 'import_product_qty'], context=context):
+            if p_data['import_product_qty'] >= self._max_value:
+                raise osv.except_osv(_('Error'), _('The Quantity of the product %s can not have more than 10 digits.') % p_data['default_code'])
             order_data = order_obj.read(cr, uid, parent_id, ['pricelist_id',
                                                              'partner_id',
                                                              'date_order',

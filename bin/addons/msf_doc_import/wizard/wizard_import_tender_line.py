@@ -79,6 +79,7 @@ class wizard_import_tender_line(osv.osv_memory):
         line_with_error = []
         vals = {'tender_line_ids': []}
         categ_log = ''
+        max_qty = self.pool.get('purchase.order.line')._max_qty
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             tender_browse = wiz_browse.tender_id
@@ -139,7 +140,7 @@ class wizard_import_tender_line(osv.osv_memory):
 
                     # Cell 2: Quantity
                     qty_value = {}
-                    qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, max_qty=max_qty, context=context)
                     to_write.update({'qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
 
                     # Cell 3: UoM

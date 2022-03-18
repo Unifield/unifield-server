@@ -324,6 +324,7 @@ class internal_request_import(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
 
+            max_value = self.pool.get('sale.order.line')._max_value
             start_time = time.time()
             for ir_imp in self.browse(cr, uid, ids, context=context):
                 # Delete old error lines
@@ -651,7 +652,11 @@ class internal_request_import(osv.osv):
                     try:
                         qty = float(qty)
                         if qty > 0:
-                            line_data.update({'imp_qty': qty})
+                            if qty < max_value:
+                                line_data.update({'imp_qty': qty})
+                            else:
+                                red = True
+                                line_errors += _('Quantity can not have more than 10 digits. ')
                         else:
                             red = True
                             line_errors += _('Quantity \'%s\' must be above 0. ') % (qty,)

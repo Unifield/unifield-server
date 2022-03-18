@@ -78,6 +78,7 @@ class wizard_import_ir_line(osv.osv_memory):
         line_with_error = []
         vals = {'order_line': []}
         wiz_browse = self.browse(cr, uid, ids, context)[0]
+        max_value = sale_line_obj._max_value
         try:
             fo_browse = wiz_browse.fo_id
             if not fo_browse.functional_currency_id:
@@ -174,7 +175,7 @@ class wizard_import_ir_line(osv.osv_memory):
                                          'type': p_value['proc_type']})
 
                         # Cell 2: Quantity
-                        qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                        qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, max_qty=max_value, context=context)
                         to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
                         # Cell 3: Cost Price
