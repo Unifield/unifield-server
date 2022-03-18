@@ -130,7 +130,9 @@ ACCOUNT_RESTRICTED_AREA = {
         ('is_not_hq_correctible', '=', False),
         '|', '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable'), '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'), # Receivable/Receivable allowed + expense accounts (without extra-accounting) allowed
     ],
-    # ACCRUALS - expense field
+    # ACCRUALS - expense lines
+    # WARNING: keep in mind that the AD button is always displayed in the Accrual Expense Lines, so if the following
+    # domain is modified, this may have to be adapted.
     'accruals': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),

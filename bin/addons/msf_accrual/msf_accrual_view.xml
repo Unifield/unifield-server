@@ -53,11 +53,16 @@
                                 <field name="accrual_amount" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <newline/>
                                 <field name="expense_line_ids" nolabel="1" colspan="6">
-                                    <tree>
+                                    <tree colors="blue:state in ('draft') and analytic_distribution_state in ('valid', 'none');black:state in ('valid') and analytic_distribution_state in ('valid', 'none');red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or state in ('draft')">
                                         <field name="line_number"/>
                                         <field name="description"/>
                                         <field name="expense_account_id"/>
                                         <field name="accrual_amount"/>
+                                        <field name="analytic_distribution_id" invisible="1"/>
+                                        <!-- AD button always displayed (to adapt in case the domain of expense_account_id is changed) -->
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
+                                        <field name="analytic_distribution_state_recap"/>
                                     </tree>
                                 </field>
                                 <newline/>

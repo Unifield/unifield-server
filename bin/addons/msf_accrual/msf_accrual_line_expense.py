@@ -26,6 +26,64 @@ class msf_accrual_line_expense(osv.osv):
     # this object corresponds to the "lines" of the "msf.accrual.line"
     _name = 'msf.accrual.line.expense'
 
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns False if the expense line has its own AD, else returns True (i.e. the AD to consider is at header level)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for expense_line in self.browse(cr, uid, ids, fields_to_fetch=['analytic_distribution_id'], context=context):
+            if expense_line.analytic_distribution_id:
+                res[expense_line.id] = False
+            else:
+                res[expense_line.id] = True
+        return res
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Gets Analytic Distribution state:
+         - if the AD is compatible with the line, then "valid"
+         - if there is no distribution at line level, use the AD at header level: if it is compatible with the line, then "valid"
+         - if there is no AD at header level either, then "none"
+         - in the specific UC where several distrib. lines are applied to a booking amount <= 1, then "invalid_small_amount"
+         - all other cases are "invalid"
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for expense_line in self.browse(cr, uid, ids,
+                                        fields_to_fetch=['analytic_distribution_id', 'accrual_line_id', 'expense_account_id'],
+                                        context=context):
+            res[expense_line.id] = self.pool.get('analytic.distribution').\
+                _get_distribution_state(cr, uid, expense_line.analytic_distribution_id.id,
+                                        expense_line.accrual_line_id.analytic_distribution_id.id,
+                                        expense_line.expense_account_id.id)
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        """
+        Displays the AD state and "(from header)" if applicable
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for expense_line in self.browse(cr, uid, ids, context=context):
+            # note: all accounts used in the expense lines are accounts "with AD"
+            if expense_line.have_analytic_distribution_from_header:
+                from_header = _(' (from header)')
+            else:
+                from_header = ''
+            ad_state = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, expense_line, 'analytic_distribution_state', context)
+            res[expense_line.id] = '%s%s' % (ad_state, from_header)
+        return res
+
     _columns = {
         'line_number': fields.integer(string='Line Number'),
         'description': fields.char('Description', size=64, required=True),
@@ -33,6 +91,18 @@ class msf_accrual_line_expense(osv.osv):
                                               domain=[('restricted_area', '=', 'accruals')]),
         'accrual_amount': fields.float('Accrual Amount', required=True),
         'accrual_line_id': fields.many2one('msf.accrual.line', 'Accrual Line', required=True, ondelete='cascade'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True,
+                                                                  type='boolean', string='Header Distribution'),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
+                                                       selection=[('none', 'None'),
+                                                                  ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'),
+                                                                  ('invalid_small_amount', 'Invalid')],
+                                                       string="Distribution state"),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char',
+                                                             size=30, string="Distribution",
+                                                             help="Gives the AD state and specify \"from header\" if applicable"),
     }
 
     _order = 'line_number'
