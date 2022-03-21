@@ -704,6 +704,11 @@ class internal_request_import(osv.osv):
                             red = True
                             line_errors += _('UoM \'%s\' does not exist in this database. ') % (vals[5],)
 
+                    # Check the total amount
+                    if qty and cost_price and len(str(int(qty * cost_price))) > 25:
+                        red = True
+                        line_errors += _('The Total amount is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed. ')
+
                     # Date of Stock Take
                     if vals[8]:
                         dost = vals[8]
