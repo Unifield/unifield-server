@@ -753,5 +753,11 @@
         <record id="us_9570_ocb_auto_sync_time" model="patch.scripts">
             <field name="method">us_9570_ocb_auto_sync_time</field>
         </record>
+
+
+        <!-- UF25.0 -->
+        <record id="fol_order_id_join_change_rules" model="patch.scripts">
+            <field name="method">fol_order_id_join_change_rules</field>
+        </record>
     </data>
 </openerp>

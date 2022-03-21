@@ -484,7 +484,7 @@ class purchase_order_line(osv.osv):
         'set_as_resourced': fields.boolean(string='Force resourced state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
         'original_line_id': fields.many2one('purchase.order.line', string='Original line', help='ID of the original line before split'),
-        'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
+        'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True, select=1),
         'sync_linked_sol': fields.char(size=256, string='Linked FO line at synchro'),
         # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
@@ -542,11 +542,11 @@ class purchase_order_line(osv.osv):
                                           digits_compute=dp.get_precision('Purchase Price')),
         'notes': fields.text('Notes'),
         'order_id': fields.many2one('purchase.order', 'Order Reference', select=True, required=True,
-                                    ondelete='cascade'),
-        'account_analytic_id': fields.many2one('account.analytic.account', 'Analytic Account', ),
+                                    ondelete='cascade', join=True),
+        'account_analytic_id': fields.many2one('account.analytic.account', 'Analytic Account'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company',
                                      string='Company', store=True, readonly=True),
-        'state': fields.selection(PURCHASE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
+        'state': fields.selection(PURCHASE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True, select=1,
                                   help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \

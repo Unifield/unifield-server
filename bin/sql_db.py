@@ -150,6 +150,7 @@ class Cursor(object):
             self.__logger.warn("SQL queries cannot contain %d or %f anymore. "
                                "Use only %s")
 
+        #self.sql_log = False
         if self.sql_log:
             now = mdt.now()
 
@@ -196,19 +197,9 @@ class Cursor(object):
         if self.sql_log:
             delay = mdt.now() - now
             delay = delay.seconds * 1E6 + delay.microseconds
-
-            self.__logger.log(logging.DEBUG_SQL, "query: %s", self._obj.query)
-            self.sql_log_count+=1
-            res_from = re_from.match(query.lower())
-            if res_from:
-                self.sql_from_log.setdefault(res_from.group(1), [0, 0])
-                self.sql_from_log[res_from.group(1)][0] += 1
-                self.sql_from_log[res_from.group(1)][1] += delay
-            res_into = re_into.match(query.lower())
-            if res_into:
-                self.sql_into_log.setdefault(res_into.group(1), [0, 0])
-                self.sql_into_log[res_into.group(1)][0] += 1
-                self.sql_into_log[res_into.group(1)][1] += delay
+            if len(self._obj.query) > 500:
+                self.__logger.warn(misc.get_stack())
+            self.__logger.warn("query: %s %s", self._obj.query, delay)
         return res
 
 

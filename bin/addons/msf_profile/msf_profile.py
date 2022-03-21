@@ -56,6 +56,24 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def fol_order_id_join_change_rules(self, cr, uid, *a, **b):
+        """
+            order_id now uses sql join for queries like order_id.state = draft
+            update client sync rules to not generate sync messages for IR lines
+            (this changes cannot wait for the following sync)
+        """
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        cr.execute('''update sync_client_message_rule
+                set
+                    domain=$$[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft'), ('order_id.procurement_request', '=', False), ('product_uom_qty', '!=', 0.0), '!', '&', ('order_id.fo_created_by_po_sync', '=', False), ('order_id.state', '=', 'draft')]$$,
+                    wait_while=$$[('order_id.procurement_request', '=', False), ('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc']), ('order_id.client_order_ref', '=', False)]$$
+                where
+                    remote_call = 'purchase.order.line.sol_update_original_pol'
+        ''')
+        return True
+
     # UF24.0
     def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
@@ -3011,14 +3029,14 @@ class patch_scripts(osv.osv):
             'name': 'FO line updates PO line',
             'server_id': 999,
             'model': 'sale.order.line',
-            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft'), ('product_uom_qty', '!=', 0.0)]",
+            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft'), ('product_uom_qty', '!=', 0.0), ('order_id.procurement_request', '=', False)]",
             'sequence_number': 12,
             'remote_call': 'purchase.order.line.sol_update_original_pol',
             'arguments': "['resourced_original_line/id', 'resourced_original_remote_line','sync_sourced_origin', 'sync_local_id', 'sync_linked_pol', 'order_id/name', 'product_id/id', 'product_id/name', 'name', 'state','product_uom_qty', 'product_uom', 'price_unit', 'in_name_goods_return', 'analytic_distribution_id/id','comment','have_analytic_distribution_from_header','line_number', 'nomen_manda_0/id','nomen_manda_1/id','nomen_manda_2/id','nomen_manda_3/id', 'nomenclature_description','notes','default_name','default_code','date_planned','is_line_split', 'original_line_id/id', 'confirmed_delivery_date', 'stock_take_date', 'cancel_split_ok', 'modification_comment']",
             'destination_name': 'partner_id',
             'active': True,
             'type': 'MISSION',
-            'wait_while': "[('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc']), ('order_id.client_order_ref', '=', False)]",
+            'wait_while': "[('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc']), ('order_id.client_order_ref', '=', False), ('order_id.procurement_request', '=', False)]",
         })
 
         # tigger WKF
