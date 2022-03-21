@@ -271,7 +271,7 @@ class sale_order_line(osv.osv):
 
         sol = {}
         if ids:
-            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty', 'price_unit'], context=context)
+            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty'], context=context)
 
         res = self.onchange_uom(cr, uid, ids, product_id, uom_id, product_qty, context=context)
 

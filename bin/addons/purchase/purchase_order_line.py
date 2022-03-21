@@ -1812,7 +1812,7 @@ class purchase_order_line(osv.osv):
 
         pol = {}
         if ids:
-            pol = self.read(cr, uid, ids[0], ['product_qty', 'price_unit'], context=context)
+            pol = self.read(cr, uid, ids[0], ['product_qty'], context=context)
         if not product_id or not product_uom or not product_qty:
             self.check_digits(cr, uid, res, pol, qty=product_qty, price_unit=price_unit, context=context)
             return res

@@ -2165,11 +2165,8 @@ class sale_order_line(osv.osv):
             ret[x[0]] = x[1]
         return ret
 
-
     _max_value = 10**10
     _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
-    _limit_amount = 10**28
-    _limit_msg = _('The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed')
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
@@ -3260,6 +3257,32 @@ class sale_order_line(osv.osv):
                     }
                     }
         return {}
+
+    def _check_max_price(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        msg = _('The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed')
+        error = []
+        ftf = ['product_uom_qty', 'price_unit', 'order_id', 'line_number']
+        for sol in self.browse(cr, uid, ids, ftf, context=context):
+            nb_digits_allowed = 25
+            if sol.product_uom_qty >= 10**nb_digits_allowed:
+                error.append('%s #%s' % (sol.order_id.name, sol.line_number))
+            else:
+                total_int = int(sol.product_uom_qty * sol.price_unit)
+                if len(str(total_int)) > nb_digits_allowed:
+                    error.append('%s #%s' % (sol.order_id.name, sol.line_number))
+
+        if error:
+            raise osv.except_osv(_('Error'), '%s: %s' % (msg, ' ,'.join(error)))
+
+        return True
+
+    _constraints = [
+        (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_uom_qty']),
+    ]
+
 
 sale_order_line()
 

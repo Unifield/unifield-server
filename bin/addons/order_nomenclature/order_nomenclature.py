@@ -408,11 +408,6 @@ class sale_order_line(osv.osv):
                 result.update({
                     'value': {'product_uom_qty': sol.get('product_uom_qty', 0.00), 'product_uos_qty': sol.get('product_uos_qty', 0.00)},
                 })
-            if new_qty * new_price >= self._limit_amount:
-                result.update({
-                    'value': {'product_uom_qty': sol.get('product_uom_qty', 0.00), 'product_uos_qty': sol.get('product_uos_qty', 0.00), 'price_unit': sol.get('price_unit', 0.00)},
-                    'warning': {'message': _(self._limit_msg)}
-                })
         return True
 
     def change_price_unit(self, cr, uid, ids, product_uom_qty, price_unit, context=None):
@@ -421,7 +416,7 @@ class sale_order_line(osv.osv):
         result = {}
         sol = {}
         if ids:
-            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty', 'price_unit'], context=context)
+            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty'], context=context)
         self.check_digits(cr, uid, result, sol, product_uom_qty, price_unit, context=context)
         return result
 
@@ -433,7 +428,7 @@ class sale_order_line(osv.osv):
         '''
         sol = {}
         if ids:
-            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty', 'price_unit'], context=context)
+            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty'], context=context)
 
         result = self.product_id_change(cr, uid, ids, pricelist, product, qty,
                                         uom, qty_uos, uos, name, partner_id,
