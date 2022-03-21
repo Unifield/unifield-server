@@ -103198,6 +103198,12 @@ msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 c
 msgid "The Total amount is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed. "
 msgstr "Le montant total est trop élevé (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs actuelles ne sont pas autorisées. "
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1645
+#, python-format
+msgid "The Total amount is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"
+msgstr "Le montant total est trop élevé (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs actuelles ne sont pas autorisées"
+
 #. modules: msf_supply_doc_export, msf_outgoing
 #: view:stock.picking:0
 #: view:wizard.pick.import:0
