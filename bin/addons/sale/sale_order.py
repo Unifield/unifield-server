@@ -3265,7 +3265,7 @@ class sale_order_line(osv.osv):
         msg = _('The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed')
         error = []
         ftf = ['product_uom_qty', 'price_unit', 'order_id', 'line_number']
-        for sol in self.browse(cr, uid, ids, ftf, context=context):
+        for sol in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             nb_digits_allowed = 25
             if sol.product_uom_qty >= 10**nb_digits_allowed:
                 error.append('%s #%s' % (sol.order_id.name, sol.line_number))
