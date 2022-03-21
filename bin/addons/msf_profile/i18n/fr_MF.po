@@ -103614,6 +103614,12 @@ msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
 msgid "The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
 msgstr "Le montant total de la ligne est sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
 
+#. module: tender_flow
+#: code:addons/tender_flow/tender_flow.py:865
+#, python-format
+msgid "The quantity of the line has more than 10 digits. Please check the Qty to avoid loss of exact information"
+msgstr "La quantité de la ligne a plus de 10 chiffres. Veuillez vérifier la Qté pour éviter des pertes d'information"
+
 #. module: purchase
 #: view:purchase.order:0
 msgid "\n"
