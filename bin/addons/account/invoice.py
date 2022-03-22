@@ -1670,7 +1670,7 @@ class account_invoice_line(osv.osv):
                                           digits_compute= dp.get_precision('Account'), store=True),
         'quantity': fields.float('Quantity', required=True),
         'discount': fields.float('Discount (%)', digits_compute= dp.get_precision('Account')),
-        'invoice_line_tax_id': fields.many2many('account.tax', 'account_invoice_line_tax', 'invoice_line_id', 'tax_id', 'Taxes', domain=[('parent_id','=',False)]),
+        'invoice_line_tax_id': fields.many2many('account.tax', 'account_invoice_line_tax', 'invoice_line_id', 'tax_id', 'Taxes', domain=[('parent_id','=',False)], ondelete="restrict"),
         'note': fields.text('Notes'),
         'account_analytic_id':  fields.many2one('account.analytic.account', 'Analytic Account'),
         'company_id': fields.related('invoice_id','company_id',type='many2one',relation='res.company',string='Company', store=True, readonly=True),
@@ -1991,7 +1991,7 @@ class account_invoice_tax(osv.osv):
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'factor_base': fields.function(_count_factor, method=True, string='Multipication factor for Base code', type='float', multi="all"),
         'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all"),
-        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)]),
+        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)], ondelete="restrict"),
         'partner_id': fields.many2one('res.partner', 'Partner', ondelete='restrict'),
     }
 

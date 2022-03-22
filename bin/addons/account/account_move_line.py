@@ -564,7 +564,7 @@ class account_move_line(osv.osv):
                                    type='many2one', relation='account.invoice', fnct_search=_invoice_search),
         'purchase_order_id': fields.function(_get_purchase_order_id, method=True, string='Purchase Order',
                                              type='many2one', relation='purchase.order', readonly=True, store=False),
-        'account_tax_id':fields.many2one('account.tax', 'Tax'),
+        'account_tax_id':fields.many2one('account.tax', 'Tax', ondelete="restrict"),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account'),
         #TODO: remove this
         #'amount_taxed':fields.float("Taxed Amount", digits_compute=dp.get_precision('Account')),

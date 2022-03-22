@@ -335,7 +335,7 @@ class account_account(osv.osv):
         'prevent_multi_curr_rec': fields.boolean('Prevent Reconciliation with different currencies'),
         'shortcut': fields.char('Shortcut', size=12),
         'tax_ids': fields.many2many('account.tax', 'account_account_tax_default_rel',
-                                    'account_id', 'tax_id', 'Default Taxes'),
+                                    'account_id', 'tax_id', 'Default Taxes', ondelete="restrict"),
         'note': fields.char('Note', size=160),
         'company_currency_id': fields.function(_get_company_currency, method=True, type='many2one', relation='res.currency', string='Company Currency'),
         'company_id': fields.many2one('res.company', 'Company', required=True),
@@ -2092,17 +2092,15 @@ class account_tax(osv.osv):
     _columns = {
         'name': fields.char('Tax Name', size=64, required=True, translate=True, help="This name will be displayed on reports"),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the tax lines from the lowest sequences to the higher ones. The order is important if you have a tax with several tax children. In this case, the evaluation order is important."),
-        'amount': fields.float('Amount', required=True, digits_compute=get_precision_tax(), help="For taxes of type percentage, enter % ratio between 0-1."),
+        'amount': fields.float('Amount', required=True, digits_compute=get_precision_tax(), help="For taxes of type percentage, enter % ratio between 0 and 1."),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the tax without removing it."),
-        'type': fields.selection( [('percent','Percentage'), ('fixed','Fixed Amount'), ('none','None'), ('code','Python Code'), ('balance','Balance')], 'Tax Type', required=True,
-                                  help="The computation method for the tax amount."),
-        'applicable_type': fields.selection( [('true','Always'), ('code','Given by Python Code')], 'Applicability', required=True,
-                                             help="If not applicable (computed through a Python code), the tax won't appear on the invoice."),
+        'type': fields.selection([('percent','Percentage'), ('fixed','Fixed Amount')], 'Tax Type', required=True, help="The computation method for the tax amount."),
+        'applicable_type': fields.selection([('true','Always'), ('code','Given by Python Code')], 'Applicability', required=True, help="If not applicable (computed through a Python code), the tax won't appear on the invoice."),
         'domain':fields.char('Domain', size=32, help="This field is only used if you develop your own module allowing developers to create specific taxes in a custom domain."),
         'account_collected_id':fields.many2one('account.account', 'Invoice Tax Account'),
         'account_paid_id':fields.many2one('account.account', 'Refund Tax Account'),
-        'parent_id':fields.many2one('account.tax', 'Parent Tax Account', select=True),
-        'child_ids':fields.one2many('account.tax', 'parent_id', 'Child Tax Accounts'),
+        'parent_id':fields.many2one('account.tax', 'Parent Tax Account', select=True, ondelete="restrict"),
+        'child_ids':fields.one2many('account.tax', 'parent_id', 'Child Tax Accounts', ondelete="restrict"),
         'child_depend':fields.boolean('Tax on Children', help="Set if the tax computation is based on the computation of child taxes rather than on the total amount."),
         'partner_id': fields.many2one('res.partner', 'Partner',
                                       domain=[('partner_type', '=', 'external'), ('active', '=', True)],
@@ -2132,6 +2130,15 @@ class account_tax(osv.osv):
         'type_tax_use': fields.selection([('sale','Sale'),('purchase','Purchase'),('all','All')], 'Tax Application', required=True)
 
     }
+
+    def _check_percent(self, cr, uid, ids, context=None):
+        obj = self.browse(cr, uid, ids[0], context=context)
+        if obj.type == 'percent' and (obj.amount < 0.0 or obj.amount > 1.0):
+            return False
+        return True
+    _constraints = [
+        (_check_percent, 'For taxes of type percentage, enter % ratio between 0 and 1, Example: 0.02 for 2% ', ['amount']),
+    ]
 
     def name_search(self, cr, user, name, args=None, operator='ilike', context=None, limit=80):
         """
