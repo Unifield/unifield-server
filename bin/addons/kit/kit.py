@@ -919,6 +919,45 @@ class composition_kit(osv.osv):
             'context': {'composition_type': 'theoretical'},
         }
 
+    def update_lines_bned(self, cr, uid, ids, context=None):
+        '''
+        Update products whose BN/ED attributes have changed
+        '''
+        if context is None:
+            context = {}
+
+        for kcl in self.browse(cr, uid, ids, context=context):
+            # Remove the BN/ED from non-BN/ED KCL items of the KCLs
+            cr.execute('''UPDATE composition_item SET item_lot = NULL, item_exp = NULL 
+                WHERE id IN (SELECT i.id FROM composition_item i 
+                                        LEFT JOIN composition_kit k ON i.item_kit_id = k.id 
+                                        LEFT JOIN product_product p ON i.item_product_id = p.id 
+                                WHERE k.state = 'completed' AND i.item_lot IS NOT NULL AND p.batch_management = 'f' AND p.perishable = 'f' AND k.composition_type = 'real')
+                    AND item_kit_id = %s''', (kcl.id,))
+
+            # Add a temporary BN/ED to BN/ED KCL items of the KCLs
+            cr.execute('''UPDATE composition_item SET item_lot = 'TO-BE-REPLACED', item_exp = '2999-12-31' 
+                WHERE id IN (SELECT i.id FROM composition_item i 
+                                        LEFT JOIN composition_kit k ON i.item_kit_id = k.id 
+                                        LEFT JOIN product_product p ON i.item_product_id = p.id 
+                            WHERE k.state = 'completed' AND i.item_lot IS NULL AND (p.batch_management = 't' OR p.perishable = 't') AND k.composition_type = 'real') 
+                    AND item_kit_id = %s''', (kcl.id,))
+
+            return {
+                'name': 'Kit Composition List',
+                'view_mode': 'form, tree',
+                'view_type': 'form',
+                'res_model': 'composition.kit',
+                'res_id': kcl.id,
+                'type': 'ir.actions.act_window',
+                'target': 'dummy',
+                'domain': [('composition_type', '=', 'theoretical')],
+                'context': {'composition_type': 'theoretical'},
+            }
+
+        return True
+
+
 composition_kit()
 
 

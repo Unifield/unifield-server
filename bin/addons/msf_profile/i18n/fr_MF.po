@@ -114281,3 +114281,8 @@ msgstr "Machine"
 #: field:sync.version.instance.monitor,platform:0
 msgid "Platform"
 msgstr "Plate-forme"
+
+#. module: kit
+#: view:composition.kit:0
+msgid "Update products whose BN/ED attributes have changed"
+msgstr "MàJ les produits dont les attributs BL/DE ont changé"
