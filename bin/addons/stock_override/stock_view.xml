@@ -859,7 +859,7 @@
                                         </group>
                                         <field name="reason_type_id" widget="selection"
                                                domain="[('outgoing_ok', '=', True)]" 
-                                               attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                               attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf_line', '=', True)]}"/>
                                     </group>
 
                                     <group colspan="2" col="2">

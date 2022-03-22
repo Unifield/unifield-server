@@ -114270,6 +114270,12 @@ msgstr "Le BdC doit être dans le statut Brouillon"
 msgid "Unable to read file. Please check the file format."
 msgstr "Impossible de lire le fichier. Veuillez vérifier le format du fichier."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:503
+#, python-format
+msgid "%s must be 'Available' to use the import"
+msgstr "%s doit être 'Disponible' pour utiliser l'import"
+
 #. module: base
 #: code:osv/orm.py:1224
 #, python-format
