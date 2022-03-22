@@ -38,7 +38,7 @@ class hr_payroll_validation(osv.osv_memory):
     _columns = {
         'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In Progress'), ('done', 'Done')], string='State', readonly=True),
         'percent': fields.float('Process percentage', readonly=True),
-        'message': fields.char(string='Message', size=256, readonly=True),
+        'message': fields.char(string='Message', size=256, readonly=True, translate=True),
     }
 
     _defaults = {
