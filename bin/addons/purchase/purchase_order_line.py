@@ -28,7 +28,13 @@ class purchase_order_line(osv.osv):
         '''
         Return True if the system configuration VAT management is set to True
         '''
+
+        if context is None:
+            context = {}
         vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        if vat_ok and 'purchase_id' in context:
+            vat_ok = not self.pool.get('account.invoice.tax').search_exists(cr, uid, [('purchase_id', '=', context['purchase_id'])], context=context)
+
         res = {}
         for id in ids:
             res[id] = vat_ok
@@ -2117,6 +2123,18 @@ class purchase_order_line(osv.osv):
             if pol.order_id.id not in inv_ids:
                 inv_ids[pol.order_id.id] = pol.order_id.action_invoice_get_or_create(context=context)
 
+            all_taxes = {}
+            if pol.order_id.tax_line and pol.order_id.amount_untaxed:
+                percent = (pol.product_qty * pol.price_unit) / pol.order_id.amount_untaxed
+                all_taxes.setdefault(inv_ids[pol.order_id.id], {})
+                for tax_line in pol.order_id.tax_line:
+                    key = (tax_line.account_tax_id and tax_line.account_tax_id.id or False, tax_line.account_id.id, tax_line.partner_id and tax_line.partner_id.id or False)
+                    if key not in all_taxes[inv_ids[pol.order_id.id]]:
+                        all_taxes[inv_ids[pol.order_id.id]][key] = {
+                            'tax_line': tax_line,
+                            'amount': 0,
+                        }
+                    all_taxes[inv_ids[pol.order_id.id]][key]['amount'] +=  tax_line.amount * percent
 
             if pol.product_id:
                 account_id = pol.product_id.product_tmpl_id.property_account_expense.id
@@ -2150,6 +2168,21 @@ class purchase_order_line(osv.osv):
             }, context=context)
 
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
+
+        for inv_id in all_taxes:
+            for key in all_taxes[inv_id]:
+                tax_id = self.pool.get('account.invoice.tax').search(cr, uid, [('invoice_id', '=', inv_id), ('account_tax_id', '=', key[0]), ('account_id', '=', key[1]), ('partner_id', '=', key[2])], context=context)
+                if not tax_id:
+                    self.pool.get('account.invoice.tax').create(cr, uid, {
+                        'invoice_id': inv_id,
+                        'account_tax_id':  key[0],
+                        'account_id': key[1],
+                        'partner_id': key[2],
+                        'name': all_taxes[inv_id][key]['tax_line'].name,
+                        'amount': all_taxes[inv_id][key]['amount']}, context=context)
+                else:
+                    cr.execute('update account_invoice_tax set amount=amount+%s where id = %s', (all_taxes[inv_id][key]['amount'], tax_id[0]))
+
         self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
 
 

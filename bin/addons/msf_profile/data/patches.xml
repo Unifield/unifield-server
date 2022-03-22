@@ -759,5 +759,9 @@
         <record id="fol_order_id_join_change_rules" model="patch.scripts">
             <field name="method">fol_order_id_join_change_rules</field>
         </record>
+
+        <record id="us_6475_set_has_tax_on_po" model="patch.scripts">
+            <field name="method">us_6475_set_has_tax_on_po</field>
+        </record>
     </data>
 </openerp>
