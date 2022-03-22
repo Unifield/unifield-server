@@ -89653,6 +89653,11 @@ msgstr "Le système n'a pas trouvé de \"code_terrain\" pour le travailleur %s !
 msgid "Show synchronized"
 msgstr "Montrer synchronisés"
 
+#. module: msf_profile
+#: view:res.users:0
+msgid "Show not synchronized"
+msgstr "Montrer non synchronisés"
+
 #. modules: purchase, tender_flow
 #: view:purchase.report:0
 #: field:purchase.report,partner_zone:0
