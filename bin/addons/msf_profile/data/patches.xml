@@ -753,5 +753,9 @@
         <record id="us_9570_ocb_auto_sync_time" model="patch.scripts">
             <field name="method">us_9570_ocb_auto_sync_time</field>
         </record>
+
+        <record id="us_7791_gdpr_patch" model="patch.scripts">
+            <field name="method">us_7791_gdpr_patch</field>
+        </record>
     </data>
 </openerp>
