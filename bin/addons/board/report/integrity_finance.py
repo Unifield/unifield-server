@@ -138,8 +138,11 @@ class integrity_finance(report_sxw.rml_parse):
                 self.cr.execute(sql, tuple(self.sql_rec_params))
             else:
                 self.cr.execute(sql)
+        # not run entries query
+        if query_ref == 'not_runs_entries':
+            self.cr.execute(sql)
         # other queries
-        else:
+        elif query_ref in ('mismatch_ji_aji_fctal', 'mismatch_ji_aji_booking', 'ji_unbalanced_fctal', 'ji_unbalanced_booking'):
             sql = sql % self.sql_additional
             if self.sql_params:
                 self.cr.execute(sql, tuple(self.sql_params))

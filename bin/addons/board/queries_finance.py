@@ -136,9 +136,7 @@ order by rec.name;
         'query': """SELECT s.model, s.source, s.sdref, s.create_date, s.execution_date
 from sync_client_update_received s
 where s.run=FALSE AND
-s.model in ('reg.lines', 'account.move','account.move.line','analytic.account.move')
-%s
-group by s.model, s.source, s.sdref, s.create_date, s.execution_date
+s.model in ('account.bank.statement.line', 'account.move','account.move.line','account.analytic.line')
 order by s.model;"""
     },
 ]
