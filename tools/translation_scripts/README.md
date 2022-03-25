@@ -12,6 +12,22 @@ How to use these scripts
 - 6. Replace the master file with the new merge file, and reimport the
      translation in unifield to check everything is okay!
 
+About generate_translation_file
+-------------------------------
+
+- The script is usable by default in local environment, and consider you are 
+  using it while being in the tools/translation_scripts directory.
+- It will only generate a file for the french translation.
+- The options '-db' for database for '-p' for password are mandatory.
+- The option '-m' for modules is optional and can be a list of several modules,
+  each separated by a comma. Any module not found will be ignored and if none
+  are found, all untranslated string will be in the new file.
+- If the script does not find a translation file within 300 seconds, it will stop 
+  without going further.
+- After the script is done, the original translation file will still be there, with the 
+  name 'fr_MF_old.po'. Be careful not to commit it.
+
+Exemple of use: python generate_translation_file.py -db HQ1C1P1 -p admin -m stock,msf_profile
 
 Possible improvements
 ---------------------
