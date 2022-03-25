@@ -68,7 +68,8 @@ class patch_scripts(osv.osv):
         work_email = NULL,
         work_phone = NULL,
         country_id = NULL,
-        ssnid = NULL;
+        ssnid = NULL
+        WHERE employee_type = 'local';
         """)
         self.log_info(cr, uid, 'US-7791 : GDPR patch applied on %d rows' % (cr.rowcount,))
         return True
