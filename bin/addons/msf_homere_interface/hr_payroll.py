@@ -251,7 +251,7 @@ class hr_payroll(osv.osv):
         'partner_id': fields.many2one('res.partner', string="Partner", readonly=True, ondelete="restrict"),
         'journal_id': fields.many2one('account.journal', string="Journal", readonly=True, ondelete="restrict"),
         'employee_id_number': fields.function(_get_employee_identification_id, method=True, type='char', size=255, string='Employee ID', readonly=True),
-        'name': fields.char(string='Description', size=255, readonly=True, translate=True),
+        'name': fields.char(string='Description', size=255, readonly=True),
         'ref': fields.char(string='Reference', size=255, readonly=True),
         'amount': fields.float(string='Amount', digits_compute=get_precision('Account'), readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, readonly=True),
