@@ -453,10 +453,9 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), msg)
 
         # create lines
-        rounding_suffix = _(UF_SIDE_ROUNDING_LINE.get('name', False))
         name = "%s %s" % (
             header_vals.get('name', ''),
-            rounding_suffix,
+            _(UF_SIDE_ROUNDING_LINE.get('name', False)),
         )
         self.pool.get('hr.payroll.msf').create(cr, uid, {
             'date': header_vals['date'],
