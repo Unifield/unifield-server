@@ -18,7 +18,7 @@ About generate_translation_file
 - The script is usable by default in local environment, and consider you are 
   using it while being in the tools/translation_scripts directory.
 - It will only generate a file for the french translation.
-- The options '-db' for database for '-p' for password are mandatory.
+- The options '-db' for database and  for '-p' for password are mandatory.
 - The option '-m' for modules is optional and can be a list of several modules,
   each separated by a comma. Any module not found will be ignored and if none
   are found, all untranslated string will be in the new file.
