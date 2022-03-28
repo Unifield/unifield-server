@@ -745,7 +745,7 @@ class res_partner(osv.osv):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
         if vals.get('active') and vals.get('partner_type') == 'intermission' \
-                and self.search(cr, uid, [('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
+                and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
             raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated") % (vals['name'],))
 
         ret = super(res_partner, self).write(cr, uid, ids, vals, context=context)
@@ -893,7 +893,7 @@ class res_partner(osv.osv):
                                     'message': _("Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
                                                  ) % (objects_linked_to_partner,)}}
         else:
-            if partner_type == 'intermission' and self.search(cr, uid, [('name', '=ilike', name), ('partner_type', '=', 'internal')], context=context):
+            if partner_type == 'intermission' and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', name), ('partner_type', '=', 'internal')], context=context):
                 return {
                     'value': {'active': False},
                     'warning': {
