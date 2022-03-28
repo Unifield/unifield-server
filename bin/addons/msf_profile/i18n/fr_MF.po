@@ -114281,3 +114281,33 @@ msgstr "Machine"
 #: field:sync.version.instance.monitor,platform:0
 msgid "Platform"
 msgstr "Plate-forme"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_line.py:205
+#, python-format
+msgid " selected in this entry %s "
+msgstr "selectionné dans cette entrée %s "
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_line.py:185
+#, python-format
+msgid "The analytic account '%s' %s is inactive."
+msgstr "Le compte analytique '%s' %s n'est pas actif."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_line.py:174
+#: code:addons/analytic_override/analytic_line.py:191
+#, python-format
+msgid "The analytic account '%s' %s is not active."
+msgstr "Le compte analytique '%s' %s n'est pas actif."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_line.py:195
+#, python-format
+msgid "The combination \"%s - %s\"  %s is not active."
+msgstr "La combinaison \"%s - %s\"  %s n'est pas active."
+
+#. module: analytic_override
+#: model:ir.model,name:analytic_override.model_multiple_cc_selection_wizard
+msgid "multiple.cc.selection.wizard"
+msgstr ""
