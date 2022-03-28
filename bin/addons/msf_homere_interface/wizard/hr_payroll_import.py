@@ -609,7 +609,6 @@ class hr_payroll_import(osv.osv_memory):
                                                               context=context)
 
                         # adapt difference by writing on payroll rounding line
-                        pay_rounding_desc = _('Payroll rounding')
                         pr_ids = self.pool.get('hr.payroll.msf').search(
                             cr, uid, [
                                 ('state', '=', 'draft'),
