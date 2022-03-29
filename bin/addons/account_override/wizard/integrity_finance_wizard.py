@@ -91,6 +91,8 @@ class integrity_finance_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         user_obj = self.pool.get('res.users')
+        fisc_obj = self.pool.get('account.fiscalyear')
+        period_obj = self.pool.get('account.period')
         wiz = self.browse(cr, uid, ids[0], context=context)
         data = {
             'form': {},
@@ -111,6 +113,26 @@ class integrity_finance_wizard(osv.osv_memory):
         current_instance = company.instance_id and company.instance_id.code or ''
         current_date = datetime.today().strftime('%Y%m%d')
         data['target_filename'] = "%s %s %s" % (_('Entries Data Integrity'), current_instance, current_date)
+        selected_fisc = fisc_obj.browse(cr, uid, wiz.fiscalyear_id, fields_to_fetch=['name'], context=context).name or ''
+        if wiz.filter == 'filter_no':
+            filter_used = 'No Filters'
+        elif wiz.filter == 'filter_date_doc':
+            filter_used = 'Document Date'
+        elif wiz.filter == 'filter_date':
+            filter_used = 'Posting Date'
+        elif wiz.filter == 'filter_period':
+            filter_used = 'Period'
+        data['selected_fisc'] = selected_fisc
+        data['filter_used'] = _(filter_used)
+        if wiz.move_state == 'posted':
+            entry_status = _('Posted')
+        elif wiz.move_state == 'draft':
+            entry_status = _('Unposted')
+        data['entry_status'] = entry_status
+        period_from = period_obj.browse(cr, uid, wiz.period_from.id, fields_to_fetch=['name'], context=context).name or ''
+        period_to = period_obj.browse(cr, uid, wiz.period_to.id, fields_to_fetch=['name'], context=context).name or ''
+        data['period_from'] = period_from
+        data['period_to'] = period_to
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'integrity.finance',

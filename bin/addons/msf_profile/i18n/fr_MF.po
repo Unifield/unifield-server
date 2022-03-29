@@ -13822,12 +13822,13 @@ msgstr "Le système n'a pas trouvé de journal %s !"
 msgid "System manages VAT locally ?"
 msgstr "System manages VAT locally ?"
 
-#. module: account_mcdb
+#. module: account_mcdb, board
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:187
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
+#: report:addons/board/report/integrity.mako:80
 #, python-format
 msgid "Entry status"
 msgstr "Entrée - Statut"
@@ -30992,6 +30993,9 @@ msgstr "Donation en nature"
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
 #: code:addons/account_override/invoice.py:223
+#: selection:account.account,type_for_register:0
+#: model:ir.actions.act_window,name:account_override.action_inkind_donation
+#: model:ir.ui.menu,name:account_override.menu_action_inkind_donation
 msgid "Donation"
 msgstr "Donation"
 
@@ -56735,13 +56739,14 @@ msgstr "Origine"
 msgid "Parent shipment"
 msgstr "Expédition Parent "
 
-#. modules: sourcing, analytic_distribution, account_mcdb, account, procurement_cycle
+#. modules: sourcing, analytic_distribution, account_mcdb, account, procurement_cycle, account_override
 #: view:analytic.distribution.wizard:0
 #: view:multiple.sourcing.wizard:0
 #: view:account.mcdb:0
 #: view:account.common.report:0
 #: view:free.allocation.wizard:0
 #: view:replenishment.segment.line:0
+#: view:account.chart:0
 msgid "Save"
 msgstr "Sauver"
 
@@ -74604,7 +74609,7 @@ msgstr "Confirmer Brouillons de Factures"
 msgid "Update Sent Monitor"
 msgstr "Surveillance des Mises à jour Envoyées"
 
-#. modules: msf_budget, account, account_period_closing_level, finance, vertical_integration, msf_currency_revaluation, analytic_distribution, account_override
+#. modules: msf_budget, account, account_period_closing_level, finance, vertical_integration, msf_currency_revaluation, analytic_distribution, account_override, board
 #: field:account.aged.trial.balance,fiscalyear_id:0
 #: field:account.balance.report,fiscalyear_id:0
 #: field:account.bs.report,fiscalyear_id:0
@@ -74636,6 +74641,7 @@ msgstr "Surveillance des Mises à jour Envoyées"
 #: field:wizard.hq.report.oca,fiscalyear_id:0
 #: field:wizard.hq.report.ocg,fiscalyear_id:0
 #: field:integrity.finance.wizard,fiscalyear_id:0
+#: report:addons/board/report/integrity.mako:88
 #, python-format
 msgid "Fiscal year"
 msgstr "Exercice Comptable"
@@ -114303,4 +114309,17 @@ msgstr "Supprimer les taxes sur toutes les lignes ?"
 msgid "Remove taxes on lines"
 msgstr "Supprimer les taxes des lignes"
 
+#. module: board
+#: report:addons/board/report/integrity.mako:83
+msgid "Filter used: "
+msgstr "Filtre utilisé: "
 
+#. module: board
+#: report:addons/board/report/integrity.mako:82
+msgid "from "
+msgstr "de"
+
+#. module: board
+#: report:addons/board/report/integrity.mako:90
+msgid "to "
+msgstr "à"
