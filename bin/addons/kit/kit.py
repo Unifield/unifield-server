@@ -943,18 +943,6 @@ class composition_kit(osv.osv):
                             WHERE k.state = 'completed' AND i.item_lot IS NULL AND (p.batch_management = 't' OR p.perishable = 't') AND k.composition_type = 'real') 
                     AND item_kit_id = %s''', (kcl.id,))
 
-            return {
-                'name': 'Kit Composition List',
-                'view_mode': 'form, tree',
-                'view_type': 'form',
-                'res_model': 'composition.kit',
-                'res_id': kcl.id,
-                'type': 'ir.actions.act_window',
-                'target': 'dummy',
-                'domain': [('composition_type', '=', 'theoretical')],
-                'context': {'composition_type': 'theoretical'},
-            }
-
         return True
 
 
