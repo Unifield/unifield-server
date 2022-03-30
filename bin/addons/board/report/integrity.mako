@@ -78,16 +78,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell><Data ss:Type="String">${_('Prop. Instance')}: </Data></Cell>
     <Cell ss:StyleID="propinstance"><Data ss:Type="String">${(company.instance_id and company.instance_id.code or '')|x}</Data></Cell>
     <Cell><Data ss:Type="String">${_('Entry status')}: </Data></Cell>
-    <Cell> ss:StyleID="entrystatus"><Data ss:Type="String">${_(data.get('entry_status') or '')|x}</Data></Cell>
-    <Cell> ss:StyleID="dateorperiodfrom"><Data ss:Type="String">${_('from ')} ${(data.get('period_from') or (data.get('form', {}).get('date_from') or ''))|x}</Data></Cell>
-    <Cell> ss:StyleID="filteredby"><Data ss:Type="String">${_('Filter used: ')}${(data.get('filter_used') or '')|x}</Data></Cell>
+    <Cell> ss:StyleID="entrystatus"><Data ss:Type="String">${(data.get('entry_status', False) or '')|x}</Data></Cell>
+    <Cell> ss:StyleID="dateorperiodfrom"><Data ss:Type="String">${_('from ')} ${(data.get('period_from', False) or (data.get('form', {}).get('date_from', False) or ''))|x}</Data></Cell>
+    <Cell> ss:StyleID="filteredby"><Data ss:Type="String">${_('Filter used: ')}${(data.get('filter_used', False) or '')|x}</Data></Cell>
 </Row>
 <Row>
     <Cell><Data ss:Type="String">${_('Report Date')}:</Data></Cell>
     <Cell ss:StyleID="docdate"><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
     <Cell><Data ss:Type="String">${_('Fiscal year')}: </Data></Cell>
-    <Cell> ss:StyleID="fiscalyear"><Data ss:Type="String">${(data.get('selected_fisc') or '')|x}</Data></Cell>
-    <Cell> ss:StyleID="dateorperiodto"><Data ss:Type="String">${_('to ')} ${(data.get('period_to') or (data.get('form', {}).get('date_to') or ''))|x}</Data></Cell>
+    <Cell> ss:StyleID="fiscalyear"><Data ss:Type="String">${(data.get('selected_fisc', False) or '')|x}</Data></Cell>
+    <Cell> ss:StyleID="dateorperiodto"><Data ss:Type="String">${_('to ')} ${(data.get('period_to', False) or (data.get('form', {}).get('date_to', False) or ''))|x}</Data></Cell>
 </Row>
 <Row />
 <Row />
