@@ -634,9 +634,6 @@ class purchase_order(osv.osv):
         if po.rfq_ok:
             columns = RFQ_LINE_COLUMNS_FOR_IMPORT
             columns_header = [(_(f[0]), f[1]) for f in RFQ_COLUMNS_HEADER_FOR_IMPORT]
-            if po.state != 'rfq_sent':
-                columns = columns[1:]
-                columns_header = columns_header[1:]
 
         # if PO is not a RfQ, then we doesn't take in account the first column (Line Number):
         if not po.rfq_ok:

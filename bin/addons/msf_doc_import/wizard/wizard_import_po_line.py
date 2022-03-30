@@ -28,6 +28,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
 from msf_doc_import import check_line
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
+from msf_doc_import.wizard import RFQ_LINE_COLUMNS_FOR_IMPORT as columns_for_rfq_line_import
 import itertools
 
 
@@ -169,7 +170,7 @@ class wizard_import_po_line(osv.osv_memory):
                     if col_count != template_col_count and col_count != mandatory_col_count:
                         message += _("Line %s: You should have exactly %s columns in this order: %s \n") % (
                             line_num, template_col_count,
-                            ','.join(is_rfq and columns_for_po_line_import + [_('Delivery confirmed date')] or columns_for_po_line_import[1:]))
+                            ','.join(is_rfq and columns_for_rfq_line_import or columns_for_po_line_import[1:]))
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False,
@@ -451,7 +452,7 @@ Importation completed in %s!
                 rfq = purchase_obj.read(cr, uid, po_id, ['state', 'rfq_ok'], context=context)
                 is_rfq = rfq['rfq_ok']
                 res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index, is_rfq and columns_for_po_line_import + [_('Delivery confirmed date')] \
+                    cr, uid, ids, context, header_index, is_rfq and columns_for_rfq_line_import
                     or columns_for_po_line_import[1:], origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
