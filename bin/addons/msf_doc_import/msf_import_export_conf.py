@@ -517,6 +517,8 @@ MODEL_DATA_DICT = {
             'cost_center_ids',
             'tuple_destination_account_ids',
             'instance_id.code',
+            'allow_all_cc_with_fp',
+            'fp_account_ids',
         ],
         'required_field_list': [
             'name',
