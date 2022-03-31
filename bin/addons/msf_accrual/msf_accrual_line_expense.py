@@ -108,6 +108,47 @@ class msf_accrual_line_expense(osv.osv):
 
     _order = 'line_number'
 
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Opens the analytic distribution wizard on the accrual expense line
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        expense_line = self.browse(cr, uid, ids[0],
+                                   fields_to_fetch=['analytic_distribution_id', 'accrual_amount', 'accrual_line_id', 'expense_account_id'],
+                                   context=context)
+        # get the current AD of the line if any
+        distrib_id = expense_line.analytic_distribution_id and expense_line.analytic_distribution_id.id or False
+        vals = {
+            'total_amount': expense_line.accrual_amount or 0.0,
+            'accrual_expense_line_id': expense_line.id,
+            'currency_id': expense_line.accrual_line_id.currency_id.id,
+            'state': 'dispatch',
+            'account_id': expense_line.expense_account_id.id,
+            'posting_date': expense_line.accrual_line_id.date,
+            'document_date': expense_line.accrual_line_id.document_date,
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # create and open the wizard
+        wiz_id = self.pool.get('analytic.distribution.wizard').create(cr, uid, vals, context=context)
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        return {
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
+        }
+
 
 msf_accrual_line_expense()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

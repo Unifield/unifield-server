@@ -490,6 +490,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify accrual line state
             if el.accrual_line_id and el.accrual_line_id.state != 'draft':
                 res[el.id] = False
+            if el.accrual_expense_line_id and el.accrual_expense_line_id.accrual_line_id.state != 'draft':
+                res[el.id] = False
             # verify sale order state
             if el.sale_order_id and el.sale_order_id.state not in ['draft', 'draft_p', 'validated']:
                 res[el.id] = False
@@ -595,6 +597,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'model_id': fields.many2one('account.model', string="Account Model"),
         'model_line_id': fields.many2one('account.model.line', string="Account Model Line"),
         'accrual_line_id': fields.many2one('msf.accrual.line', string="Accrual Line"),
+        'accrual_expense_line_id': fields.many2one('msf.accrual.line.expense', string="Accrual Expense Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True,
                                        help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
@@ -1095,9 +1098,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                 for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'),
                            ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'),
                            ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'),
-                           ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'),
-                           ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
-                           ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
+                           ('direct_invoice_line_id', 'wizard.account.invoice.line'),
+                           ('commitment_id', 'account.commitment'), ('commitment_line_id', 'account.commitment.line'),
+                           ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
+                           ('accrual_line_id', 'msf.accrual.line'), ('accrual_expense_line_id', 'msf.accrual.line.expense'),
+                           ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
                            ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line'),
                            ('account_direct_invoice_wizard_id','account.direct.invoice.wizard'),
                            ('account_direct_invoice_wizard_line_id','account.direct.invoice.wizard.line'),]:
