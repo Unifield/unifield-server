@@ -351,7 +351,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if vals.get('purchase_id'):
+        if vals.get('purchase_id') or vals.get('sale_id'):
             vals['from_wkf'] = True
         # in case me make a copy of a stock.picking coming from a workflow
         if context.get('not_workflow', False):
