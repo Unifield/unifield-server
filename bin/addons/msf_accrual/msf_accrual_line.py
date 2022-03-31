@@ -444,6 +444,12 @@ class msf_accrual_line(osv.osv):
             'context': context,
         }
 
+    def button_analytic_distribution2(self, cr, uid, ids, context=None):
+        """
+        Alias for button_analytic_distribution (used to avoid having 2 buttons with the same name within the same view)
+        """
+        return self.button_analytic_distribution(cr, uid, ids, context=context)
+
     def button_delete(self, cr, uid, ids, context=None):
         return self.unlink(cr, uid, ids, context=context)
 

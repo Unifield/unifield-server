@@ -43,6 +43,18 @@
                                    attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="reference" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         </group>
+                        <group colspan="6" col="4">
+                            <field name="analytic_distribution_id" invisible="1"/>
+                            <!-- AD buttons with a different icon depending on whether there is already an AD or not -->
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
+                                    icon="terp-check" context="context"
+                                    attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                            <button name="button_analytic_distribution2" string="Analytical Distribution" type="object"
+                                    icon="terp-emblem-important" context="context"
+                                    attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object"
+                                    icon="gtk-undelete" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        </group>
 
                         <notebook colspan="6">
                             <page string="Accruals">
