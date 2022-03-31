@@ -58,7 +58,7 @@ class msf_accrual_line_expense(osv.osv):
             ids = [ids]
         res = {}
         for expense_line in self.browse(cr, uid, ids,
-                                        fields_to_fetch=['analytic_distribution_id', 'accrual_line_id', 'expense_account_id'],
+                                        fields_to_fetch=['analytic_distribution_id', 'accrual_line_id', 'expense_account_id', 'accrual_amount'],
                                         context=context):
             res[expense_line.id] = self.pool.get('analytic.distribution').\
                 _get_distribution_state(cr, uid, expense_line.analytic_distribution_id.id,
