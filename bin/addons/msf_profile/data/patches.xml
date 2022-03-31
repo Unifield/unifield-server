@@ -753,5 +753,9 @@
         <record id="us_9570_ocb_auto_sync_time" model="patch.scripts">
             <field name="method">us_9570_ocb_auto_sync_time</field>
         </record>
+
+        <record id="us_9833_set_pick_from_wkf" model="patch.scripts">
+            <field name="method">us_9833_set_pick_from_wkf</field>
+        </record>
     </data>
 </openerp>
