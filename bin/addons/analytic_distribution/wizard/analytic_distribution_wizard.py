@@ -728,7 +728,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             ('account.bank.statement.line', 'register_line_id', False),
             ('account.model', 'model_id', 'lines_id'),
             ('account.model.line', 'model_line_id', False),
-            ('msf.accrual.line', 'accrual_line_id', False),
+            ('msf.accrual.line', 'accrual_line_id', 'expense_line_ids'),
+            ('msf.accrual.line.expense', 'accrual_expense_line_id', False),
         ]
         invalid_small_amount = False
         if context is None:

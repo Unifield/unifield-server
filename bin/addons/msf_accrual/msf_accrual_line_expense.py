@@ -63,7 +63,8 @@ class msf_accrual_line_expense(osv.osv):
             res[expense_line.id] = self.pool.get('analytic.distribution').\
                 _get_distribution_state(cr, uid, expense_line.analytic_distribution_id.id,
                                         expense_line.accrual_line_id.analytic_distribution_id.id,
-                                        expense_line.expense_account_id.id)
+                                        expense_line.expense_account_id.id, context=context,
+                                        amount=expense_line.accrual_amount or 0.0)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
