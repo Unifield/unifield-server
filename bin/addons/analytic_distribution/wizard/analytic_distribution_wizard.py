@@ -207,7 +207,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
                             or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
-                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
+                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)) \
+                            or (context.get('from_accrual', False) and isinstance(context.get('from_accrual'), int)):
                         domain_part = self._dest_compatible_with_cc_domain_part(tree)
                         domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
                         field.set('domain', domain)
@@ -231,12 +232,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 for field in fp_fields:
                     if context.get('is_intermission', False):
                         field.set('domain', "[('id', '=', %s)]" % fp_id)
-                    # If context with 'from' exist AND its content is an integer (so an invoice_id)
-                    elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
+                    # If context with 'from' exist AND its content is an integer (so an object id)
+                    elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) \
+                            or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
-                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int))\
-                            or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)):
+                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)) \
+                            or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
+                            or (context.get('from_accrual', False) and isinstance(context.get('from_accrual'), int)):
                         # Filter is only on cost_centers on invoice header
                         field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
                                             "('hide_closed_fp', '=', True), ('fp_compatible_with_cc_ids', '=', cost_center_id)]")
@@ -249,13 +252,15 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
-                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
-                            or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
+                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) \
+                            or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
+                            or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) \
+                            or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                             or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
-                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
-
+                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)) \
+                            or (context.get('from_accrual', False) and isinstance(context.get('from_accrual'), int)):
                         domain_part = self._dest_compatible_with_cc_domain_part(tree)
                         domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
                         field.set('domain', domain)
