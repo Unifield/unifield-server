@@ -232,7 +232,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 for field in fp_fields:
                     if context.get('is_intermission', False):
                         field.set('domain', "[('id', '=', %s)]" % fp_id)
-                    # If context with 'from' exist AND its content is an integer (so an object id)
+                    # If context with "from" exists AND its content is an integer (so an object id)
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) \
                             or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
