@@ -111,8 +111,8 @@ class integrity_finance_wizard(osv.osv_memory):
         })
         company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
         current_instance = company.instance_id and company.instance_id.code or ''
-        current_date = datetime.today().strftime('%Y%m%d')
-        data['target_filename'] = "%s %s %s" % (_('Entries Data Integrity'), current_instance, current_date)
+        current_date = datetime.today()
+        data['target_filename'] = "%s %s %s" % (_('Entries Data Integrity'), current_instance, current_date.strftime('%Y%m%d'))
         selected_fisc = fisc_obj.browse(cr, uid, wiz.fiscalyear_id, fields_to_fetch=['name'], context=context).name or ''
         data['selected_fisc'] = selected_fisc
         if wiz.filter == 'filter_no':
@@ -128,11 +128,15 @@ class integrity_finance_wizard(osv.osv_memory):
             data['period_from'] = period_from
             data['period_to'] = period_to
         data['filter_used'] = _(filter_used)
+        entry_status = ''
         if wiz.move_state == 'posted':
             entry_status = _('Posted')
         elif wiz.move_state == 'draft':
             entry_status = _('Unposted')
         data['entry_status'] = entry_status
+        data['reportdate'] = current_date.strftime('%d/%m/%Y')
+        data['date_from'] = datetime.strptime(wiz.date_from, '%Y-%m-%d').strftime('%d/%m/%Y')
+        data['date_to'] = datetime.strptime(wiz.date_to, '%Y-%m-%d').strftime('%d/%m/%Y')
 
         return {
             'type': 'ir.actions.report.xml',
