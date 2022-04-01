@@ -2129,7 +2129,7 @@ class account_tax(osv.osv):
 
     def _check_percent(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0], context=context)
-        if obj.type == 'percent' and (abs(obj.amount) < 0.0 or abs(obj.amount) > 1.0):
+        if obj.type == 'percent' and (abs(obj.amount) > 1.0):
             return False
         return True
     _constraints = [
