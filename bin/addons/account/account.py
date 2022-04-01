@@ -2129,11 +2129,11 @@ class account_tax(osv.osv):
 
     def _check_percent(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0], context=context)
-        if obj.type == 'percent' and (obj.amount < 0.0 or obj.amount > 1.0):
+        if obj.type == 'percent' and (abs(obj.amount) < 0.0 or abs(obj.amount) > 1.0):
             return False
         return True
     _constraints = [
-        (_check_percent, 'For taxes of type percentage, enter % ratio between 0 and 1, Example: 0.02 for 2% ', ['amount']),
+        (_check_percent, 'For taxes of type percentage, enter % ratio between -1 and 1, Example: 0.02 for 2% ', ['amount']),
     ]
 
     def name_search(self, cr, user, name, args=None, operator='ilike', context=None, limit=80):

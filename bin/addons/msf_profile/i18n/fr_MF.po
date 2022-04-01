@@ -114281,3 +114281,9 @@ msgstr "Machine"
 #: field:sync.version.instance.monitor,platform:0
 msgid "Platform"
 msgstr "Plate-forme"
+
+#. module: account
+#: constraint:account.tax:0
+msgid ""
+"For taxes of type percentage, enter % ratio between -1 and 1, Example: 0.02 for 2% "
+msgstr "Pour les taxes de type \"Pourcentage\", indiquez le ratio %  entre -1 et 1, Exemple: 0.02 pour 2%"
