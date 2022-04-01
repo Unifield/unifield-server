@@ -49,7 +49,7 @@
                             <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
                                     icon="terp-check" context="context"
                                     attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                            <button name="button_analytic_distribution2" string="Analytical Distribution" type="object"
+                            <button name="button_analytic_distribution_2" string="Analytical Distribution" type="object"
                                     icon="terp-emblem-important" context="context"
                                     attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
                             <button name="button_reset_distribution" string="Reset AD at line level" type="object"
