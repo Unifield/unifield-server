@@ -399,42 +399,39 @@ class msf_accrual_line(osv.osv):
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
-        Launch analytic distribution wizard on an invoice line
+        Opens the analytic distribution wizard on an Accrual
         """
-        # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Prepare some values
-        accrual_line = self.browse(cr, uid, ids[0], context=context)
-        # Search elements for currency
-        currency = accrual_line.currency_id and accrual_line.currency_id.id
-        # Get analytic distribution id from this line
-        distrib_id = accrual_line and accrual_line.analytic_distribution_id and accrual_line.analytic_distribution_id.id or False
-        # Prepare values for wizard
+        accrual_line = self.browse(cr, uid, ids[0],
+                                   fields_to_fetch=['currency_id', 'expense_line_ids', 'analytic_distribution_id', 'date', 'document_date'],
+                                   context=context)
+        amount = 0.0
+        for line in accrual_line.expense_line_ids:
+            amount += line.accrual_amount or 0.0
+        # get the current AD of the header if any
+        distrib_id = accrual_line.analytic_distribution_id and accrual_line.analytic_distribution_id.id or False
         vals = {
-            'total_amount': accrual_line.accrual_amount or 0.0,
+            'total_amount': amount,
             'accrual_line_id': accrual_line.id,
-            'currency_id': currency or False,
+            'currency_id': accrual_line.currency_id.id,
             'state': 'dispatch',
-            'account_id': accrual_line.expense_account_id and accrual_line.expense_account_id.id or False,
             'posting_date': accrual_line.date,
             'document_date': accrual_line.document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
-        # Create the wizard
+        # create and open the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
         wiz_id = wiz_obj.create(cr, uid, vals, context=context)
-        # Update some context values
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
         })
-        # Open it!
         return {
-            'name': _('Analytic distribution'),
+            'name': _('Global analytic distribution'),
             'type': 'ir.actions.act_window',
             'res_model': 'analytic.distribution.wizard',
             'view_type': 'form',
