@@ -450,6 +450,19 @@ class msf_accrual_line(osv.osv):
         """
         return self.button_analytic_distribution(cr, uid, ids, context=context)
 
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Resets the AD at line level.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        expense_line_obj = self.pool.get('msf.accrual.line.expense')
+        to_reset = expense_line_obj.search(cr, uid, [('accrual_line_id', 'in', ids)], order='NO_ORDER', context=context)
+        expense_line_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False}, context=context)
+        return True
+
     def button_delete(self, cr, uid, ids, context=None):
         return self.unlink(cr, uid, ids, context=context)
 
