@@ -98,8 +98,8 @@
                 <field name="model">msf.accrual.line</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree string="Accruals Management" 
-                        colors="red:not analytic_distribution_id; black: state in ('done', 'running'); grey: state == 'cancel'; blue:analytic_distribution_id and state not in ('done', 'cancel', 'running')"
+                    <tree string="Accruals Management"
+                        colors="blue: state == 'draft' and analytic_distribution_state == 'valid';black: state in ('done', 'running') and analytic_distribution_state == 'valid';red: state != 'cancel' and analytic_distribution_state in ('none', 'invalid', 'invalid_small_amount');grey: state == 'cancel'"
                         hide_delete_button="1">
                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                         <field name="document_date"/>
@@ -109,7 +109,7 @@
                         <field name="description"/>
                         <field name="reference"/>
                         <field name="third_party_name"/>
-                        <field name="analytic_distribution_id" invisible="1"/>
+                        <field name="analytic_distribution_state" invisible="1"/>
                         <field name="expense_account_id"/>
                         <field name="accrual_account_id"/>
                         <field name="accrual_amount"/>
