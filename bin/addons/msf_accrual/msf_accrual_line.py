@@ -27,6 +27,7 @@ from base import currency_date
 
 
 class msf_accrual_line(osv.osv):
+    # this object actually corresponds to the "Accruals" and not to their lines...
     _name = 'msf.accrual.line'
     _rec_name = 'date'
 
@@ -74,19 +75,29 @@ class msf_accrual_line(osv.osv):
 
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
-        Gets the Analytic Distribution state of the accrual lines by calling the standard _get_distribution_state method
+        The AD state of an Accrual depends on the AD state of its expense lines:
+        - if no line has an AD => none
+        - else if all lines are "valid" => valid
+        - else if one line is "invalid_small_amount" and no line is "invalid" => invalid_small_amount
+        - other cases => invalid
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
-        distrib_obj = self.pool.get('analytic.distribution')
-        for line in self.browse(cr, uid, ids, fields_to_fetch=['analytic_distribution_id', 'expense_account_id', 'accrual_amount'],
-                                context=context):
-            distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
-            res[line.id] = distrib_obj._get_distribution_state(cr, uid, distrib_id, parent_id=False, account_id=line.expense_account_id.id,
-                                                               context=context, amount=line.accrual_amount or 0.0)
+        for accrual_line in self.browse(cr, uid, ids, fields_to_fetch=['expense_line_ids'], context=context):
+            line_ad_states = [exp_l.analytic_distribution_state for exp_l in accrual_line.expense_line_ids]
+            if all(state == 'none' for state in line_ad_states):
+                ad_state = 'none'
+            elif all(state == 'valid' for state in line_ad_states):
+                ad_state = 'valid'
+            elif any([state == 'invalid_small_amount' for state in line_ad_states]) and not any([state == 'invalid'
+                                                                                                 for state in line_ad_states]):
+                ad_state = 'invalid_small_amount'
+            else:
+                ad_state = 'invalid'
+            res[accrual_line.id] = ad_state
         return res
 
     def _get_accrual_journal(self, cr, uid, context=None):
