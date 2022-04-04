@@ -427,7 +427,7 @@ class stock_picking(osv.osv):
                 if vals.get('partner_id2'):
                     vals['ext_cu'] = False
                 if vals.get('ext_cu'):
-                    vals.update({'partner_id': False, 'partner_id2': False})
+                    vals.update({'partner_id': False, 'partner_id2': False, 'address_id': False})
 
         return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context)
 
