@@ -397,6 +397,29 @@ class msf_accrual_line(osv.osv):
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
 
+    def copy(self, cr, uid, acc_line_id, default=None, context=None):
+        """
+        Duplicates the msf_accrual_line:
+        - adds " (copy)" after the description
+        - links the new record to a COPY of the AD from the initial record
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        acc_line_copied = self.browse(cr, uid, acc_line_id, fields_to_fetch=['description', 'analytic_distribution_id'], context=context)
+        suffix = ' (copy)'
+        description = '%s%s' % (acc_line_copied.description[:64 - len(suffix)], suffix)
+        default.update({
+            'description': description,
+        })
+        if acc_line_copied.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, acc_line_copied.analytic_distribution_id.id, {},
+                                                                         context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
+        return super(msf_accrual_line, self).copy(cr, uid, acc_line_id, default, context=context)
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Opens the analytic distribution wizard on an Accrual
