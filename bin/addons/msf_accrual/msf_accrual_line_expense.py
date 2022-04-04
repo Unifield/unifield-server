@@ -164,7 +164,7 @@ class msf_accrual_line_expense(osv.osv):
                                                                          context=context)
             if new_distrib_id:
                 default.update({'analytic_distribution_id': new_distrib_id})
-        return super(msf_accrual_line_expense, self).copy_data(cr, uid, acc_line_exp_id, default, context)
+        return super(msf_accrual_line_expense, self).copy_data(cr, uid, acc_line_exp_id, default=default, context=context)
 
 
 msf_accrual_line_expense()
