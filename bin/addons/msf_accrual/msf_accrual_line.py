@@ -408,6 +408,7 @@ class msf_accrual_line(osv.osv):
         accrual_line = self.browse(cr, uid, ids[0],
                                    fields_to_fetch=['currency_id', 'expense_line_ids', 'analytic_distribution_id', 'date', 'document_date'],
                                    context=context)
+        # the total amount in the AD wizard is the sum of all lines (they are all on expense accounts)
         amount = 0.0
         for line in accrual_line.expense_line_ids:
             amount += line.accrual_amount or 0.0
