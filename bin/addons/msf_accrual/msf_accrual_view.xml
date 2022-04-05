@@ -67,7 +67,7 @@
                                 <field name="expense_line_ids" nolabel="1" colspan="6">
                                     <tree string="Accrual lines"
                                           editable="top"
-                                          colors="blue:state in ('draft') and analytic_distribution_state in ('valid', 'none');black:state in ('valid') and analytic_distribution_state in ('valid', 'none');red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or state in ('draft')">
+                                          colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');black: analytic_distribution_state in ('none', 'valid')">
                                         <field name="line_number"/>
                                         <field name="description"/>
                                         <field name="expense_account_id"/>
