@@ -75,7 +75,7 @@ class msf_accrual_line(osv.osv):
 
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
-        The AD state of an Accrual depends on the AD state of its expense lines:
+        The AD state of an Accrual depends on the AD state of its expense lines (which all require an AD):
         - if no line has an AD => none
         - else if all lines are "valid" => valid
         - else if one line is "invalid_small_amount" and no line is "invalid" => invalid_small_amount
@@ -481,7 +481,8 @@ class msf_accrual_line(osv.osv):
             ids = [ids]
         expense_line_obj = self.pool.get('msf.accrual.line.expense')
         to_reset = expense_line_obj.search(cr, uid, [('accrual_line_id', 'in', ids)], order='NO_ORDER', context=context)
-        expense_line_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False}, context=context)
+        if to_reset:
+            expense_line_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False}, context=context)
         return True
 
     def button_delete(self, cr, uid, ids, context=None):
