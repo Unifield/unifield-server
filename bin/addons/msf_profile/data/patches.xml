@@ -753,6 +753,12 @@
         <record id="us_9570_ocb_auto_sync_time" model="patch.scripts">
             <field name="method">us_9570_ocb_auto_sync_time</field>
         </record>
+		
+
+        <!-- UF24.1 -->
+		<record id="us_9833_set_pick_from_wkf" model="patch.scripts">
+            <field name="method">us_9833_set_pick_from_wkf</field>
+        </record>
 
 
         <!-- UF25.0 -->
@@ -762,6 +768,7 @@
 
         <record id="us_6475_set_has_tax_on_po" model="patch.scripts">
             <field name="method">us_6475_set_has_tax_on_po</field>
-        </record>
+		</record>
+
     </data>
 </openerp>

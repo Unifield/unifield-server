@@ -93,6 +93,23 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, 'US-6475: set PO has tax on %d records' % cr.rowcount)
         return True
 
+
+    # UF24.1
+    def us_9833_set_pick_from_wkf(self, cr, uid, *a, **b):
+        cr.execute("""
+            update
+                stock_picking
+            set
+                from_wkf='t'
+            where
+                from_wkf='f' and
+                sale_id is not null and
+                type = 'out' and
+                subtype in ('standard', 'picking')
+        """)
+        self.log_info(cr, uid, 'US-9833: %d OUT/Pick fixed' % (cr.rowcount,))
+        return True
+
     # UF24.0
     def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
