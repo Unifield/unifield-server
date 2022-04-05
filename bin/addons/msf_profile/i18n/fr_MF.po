@@ -2756,6 +2756,7 @@ msgstr "Usefull for internal management of save as draft order"
 
 #. module: msf_doc_import
 #: field:wizard.delete.lines,to_remove_type:0
+#: field:wizard.cancel.lines,to_cancel_type:0
 msgid "Model of the lines"
 msgstr "Model of the lines"
 
@@ -34624,6 +34625,7 @@ msgstr "You cannot confirm a stock move without quantity."
 
 #. module: msf_doc_import
 #: field:wizard.delete.lines,initial_doc_type:0
+#: field:wizard.cancel.lines,initial_doc_type:0
 msgid "Model of the initial document"
 msgstr "Model of the initial document"
 
@@ -43341,6 +43343,7 @@ msgstr "Contient des Produits Dangereux"
 #: field:replenishment.segment.line,product_id:0
 #: report:kitting.order.report:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:118
+#: field:wizard.import.po.simulation.screen.line,in_product_code:0
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -43776,6 +43779,7 @@ msgstr "Mise à jour Instance"
 #: constraint:tender:0
 #: constraint:tender:0
 #: constraint:tender:0
+#: constraint:tender.line:0
 msgid "You cannot validate this tender because it contains a line with an inactive product"
 msgstr "Vous ne pouvez pas valider cet appel d'offre car il contient une ligne avec un produit inactif"
 
@@ -45412,10 +45416,11 @@ msgstr "Pas de données à importer"
 msgid "Order Follow Up"
 msgstr "Suivi Commande"
 
-#. module: sales_followup
+#. module: sales_followup, msf_doc_import
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:295
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:295
 #: report:ir.follow.up.location.report_pdf:0
+#: selection:wizard.import.po.simulation.screen.line,type_change:0
 msgid "CDD"
 msgstr "DLC"
 
@@ -48884,6 +48889,9 @@ msgstr "Créer une Facture"
 #: selection:res.partner,transport_2:0
 #: selection:purchase.order,transport_type:0
 #: selection:shipment.add.pack.processor,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
 msgid "Air"
 msgstr "Air"
 
@@ -55920,6 +55928,7 @@ msgstr "Rercherche de Mise à jour Envoyée"
 
 #. module: msf_doc_import
 #: field:wizard.delete.lines,qty_field:0
+#: field:wizard.cancel.lines,qty_field:0
 msgid "Qty field used to select only empty lines"
 msgstr "Qty field used to select only empty lines"
 
@@ -61016,13 +61025,14 @@ msgstr "Commande de Terrain"
 msgid "Invoicing"
 msgstr "Facturation"
 
-#. modules: account, documents_done, sync_client, stock, msf_outgoing
+#. modules: account, documents_done, sync_client, stock, msf_outgoing, msf_doc_import
 #: code:addons/account/report/account_general_ledger.py:442
 #: field:documents.done.problem,doc_name:0
 #: code:addons/stock/stock.py:1719
 #: code:addons/stock/stock.py:1722
 #: field:sync.client.log_sale_purchase,document:0
 #: field:stock.reserved.products,picking_id:0
+#: view:wizard.import.ad.line:0
 #, python-format
 msgid "Document"
 msgstr "Document"
@@ -84425,6 +84435,7 @@ msgstr "Sensible à la temperature"
 
 #. module: msf_doc_import
 #: field:wizard.delete.lines,linked_field_name:0
+#: field:wizard.cancel.lines,linked_field_name:0
 msgid "Field name of the link between lines and original doc"
 msgstr "Field name of the link between lines and original doc"
 
@@ -84616,6 +84627,7 @@ msgstr "PA"
 
 #. module: msf_doc_import
 #: field:wizard.delete.lines,line_ids:0
+#: field:wizard.cancel.lines,line_ids:0
 msgid "Line ids"
 msgstr "Line ids"
 
@@ -90601,6 +90613,7 @@ msgstr "XML non valide pour la Vue Architecture!"
 #: view:stock.move.cancel.more.wizard:0
 #: view:stock.picking.cancel.more.wizard:0
 #: view:product.ask.activate.wizard:0
+#: view:wizard.cancel.lines:0
 msgid "Actions"
 msgstr "Actions"
 
@@ -93093,8 +93106,9 @@ msgstr "annuler"
 msgid "Need Batch Number (Standard) not Expiry Date (Internal)"
 msgstr "Mention nécessaire d'un numéro de lot (Standard) mais pas d'une date d'expiration (Interne)"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, msf_doc_import
 #: code:addons/msf_outgoing/__init__.py:43
+#: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 msgid "BN is linked to another product"
 msgstr "Ce lot est lié à un autre produit"
 
@@ -97972,6 +97986,7 @@ msgstr "Taxes Fonctionnelles"
 
 #. module: msf_doc_import
 #: field:wizard.delete.lines,initial_doc_id:0
+#: field:wizard.cancel.lines,initial_doc_id:0
 msgid "ID of the initial document"
 msgstr "ID of the initial document"
 
@@ -99227,9 +99242,10 @@ msgstr "Fax"
 msgid "Debit Note Import Invoice"
 msgstr "Note de débit - Importation Facture "
 
-#. module: purchase_followup
+#. module: purchase_followup, msf_doc_import
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:203
 #: report:purchase.follow.up.report_pdf:0
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1324
 msgid "QTY"
 msgstr "QTÉ"
 
@@ -100048,11 +100064,12 @@ msgid "\n"
 msgstr "\n"
 "PROD"
 
-#. module: stock, msf_supply_doc_export, msf_outgoing
+#. module: stock, msf_supply_doc_export, msf_outgoing, msf_doc_import
 #: field:stock.picking,physical_reception_date:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:249
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:256
 #: field:stock.incoming.processor,physical_reception_date:0
+#: field:wizard.import.in.simulation.screen,physical_reception_date:0
 msgid "Physical Reception Date"
 msgstr "Date de Réception Physique"
 
@@ -114303,4 +114320,21 @@ msgstr "Supprimer les taxes sur toutes les lignes ?"
 msgid "Remove taxes on lines"
 msgstr "Supprimer les taxes des lignes"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1113
+#, python-format
+msgid "Import error for account \"%s\" : G/L Account \"%s\" not found or not of type Income or Expense"
+msgstr "Erreur lors de l'import du compte \"%s\" : Le Compte Grand Livre \"%s\" n'a pas été trouvé ou n'est pas de type Compte de Produits ou Compte de Charge"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1052
+#, python-format
+msgid "Import error for account \"%s\" : If listing Cost Centers, \"Allow all Cost Centers\" must be set to False."
+msgstr "Erreur lors de l'import du compte \"%s\" : Si vous listez les Centres de Coût, \"Autoriser tous les Centres de Coût\" doit être mis sur Faux"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1073
+#: code:addons/msf_doc_import/msf_import_export.py:1100
+#, python-format
+msgid "Import error for account \"%s\" : Listing both Accounts/Destinations and G/L Accounts is not allowed"
+msgstr "Erreur lors de l'import du compte \"%s\" : Lister à la fois les Comptes/Destinations et les Comptes Grand Livre n'est pas permis"
