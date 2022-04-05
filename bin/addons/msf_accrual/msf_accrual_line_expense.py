@@ -76,7 +76,9 @@ class msf_accrual_line_expense(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
-        for expense_line in self.browse(cr, uid, ids, context=context):
+        for expense_line in self.browse(cr, uid, ids,
+                                        fields_to_fetch=['have_analytic_distribution_from_header', 'analytic_distribution_state'],
+                                        context=context):
             # note: all accounts used in the expense lines are accounts "with AD"
             if expense_line.have_analytic_distribution_from_header:
                 from_header = _(' (from header)')
