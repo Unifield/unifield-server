@@ -819,9 +819,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Verify that Cost Center are done if we come from a purchase order
             if not wiz.line_ids and (wiz.purchase_id or wiz.purchase_line_id or wiz.sale_order_id or wiz.sale_order_line_id):
                 raise osv.except_osv(_('Warning'), _('No Allocation done!'))
-            # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line,
-            #+ move line, commitment, commitment line, model
-            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id', 'cash_return_id', 'cash_return_line_id']:
+            # Check that Funding Pool Lines have been defined for "finance" objects
+            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id',
+                        'move_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'accrual_expense_line_id',
+                        'model_line_id', 'cash_return_id', 'cash_return_line_id']:
                 if getattr(wiz, obj, False) and not wiz.fp_line_ids:
                     raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
