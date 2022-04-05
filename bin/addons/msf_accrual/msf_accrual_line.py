@@ -88,7 +88,7 @@ class msf_accrual_line(osv.osv):
         res = {}
         for accrual_line in self.browse(cr, uid, ids, fields_to_fetch=['expense_line_ids'], context=context):
             line_ad_states = [exp_l.analytic_distribution_state for exp_l in accrual_line.expense_line_ids]
-            if all(state == 'none' for state in line_ad_states):
+            if not line_ad_states or all(state == 'none' for state in line_ad_states):
                 ad_state = 'none'
             elif all(state == 'valid' for state in line_ad_states):
                 ad_state = 'valid'
