@@ -70,7 +70,7 @@ class contract(report_sxw.rml_parse):
             if line.account_quadruplet_ids:
                 # Case of quadruplet
                 for quad in line.account_quadruplet_ids:
-                    if quad.valid:
+                    if not quad.disabled:
                         account_list_index = add_account_list_block_item(
                             " ".join([str(quad.account_destination_name),
                                       str(quad.funding_pool_id.code),

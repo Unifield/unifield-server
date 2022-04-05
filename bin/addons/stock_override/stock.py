@@ -351,7 +351,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if vals.get('purchase_id'):
+        if vals.get('purchase_id') or vals.get('sale_id'):
             vals['from_wkf'] = True
         # in case me make a copy of a stock.picking coming from a workflow
         if context.get('not_workflow', False):
@@ -427,7 +427,7 @@ class stock_picking(osv.osv):
                 if vals.get('partner_id2'):
                     vals['ext_cu'] = False
                 if vals.get('ext_cu'):
-                    vals.update({'partner_id': False, 'partner_id2': False})
+                    vals.update({'partner_id': False, 'partner_id2': False, 'address_id': False})
 
         return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context)
 
@@ -1179,28 +1179,6 @@ class stock_move(osv.osv):
         'has_to_be_resourced': False,
         'is_ext_cu': _default_is_ext_cu,
     }
-
-    def _check_active_product(self, cr, uid, ids, context=None):
-        '''
-        Check if the stock move has an inactive products
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
-        inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('product_id', '!=', product_tbd),
-                                               ('id', 'in', ids), ('state', 'not in', ['draft', 'cancel', 'done', 'hidden'])],
-                                     count=True, context=context)
-
-        if inactive_lines:
-            plural = inactive_lines == 1 and _('A product has') or _('Some products have')
-            l_plural = inactive_lines == 1 and _('line') or _('lines')
-            p_plural = inactive_lines == 1 and _('this inactive product') or _('those inactive products')
-            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this line you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
-        return True
-
-    _constraints = [
-        (_check_active_product, "You cannot validate this line because it has an inactive product", ['order_line', 'state'])
-    ]
 
     @check_rw_warning
     def call_cancel_wizard(self, cr, uid, ids, context=None):
