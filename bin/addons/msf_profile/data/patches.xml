@@ -760,6 +760,7 @@
             <field name="method">us_9833_set_pick_from_wkf</field>
         </record>
 
+
         <!-- UF25.0 -->
         <record id="fol_order_id_join_change_rules" model="patch.scripts">
             <field name="method">fol_order_id_join_change_rules</field>

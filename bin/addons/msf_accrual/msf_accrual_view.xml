@@ -161,5 +161,19 @@
 
             <menuitem action="action_msf_accrual_line_tree" id="menu_action_msf_accrual_line_tree" parent="account.menu_finance_periodical_processing" sequence="1"/>
 
+            <!-- FORM view of the Accrual Expense Lines -->
+            <record id="view_msf_accrual_line_expense_form" model="ir.ui.view">
+                <field name="name">msf.accrual.line.expense.form</field>
+                <field name="model">msf.accrual.line.expense</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Accrual Line">
+                        <field name="description"/>
+                        <field name="expense_account_id"/>
+                        <field name="accrual_amount"/>
+                    </form>
+                </field>
+            </record>
+
        </data>
 </openerp>
