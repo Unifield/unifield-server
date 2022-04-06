@@ -167,12 +167,15 @@ class msf_accrual_line_expense(osv.osv):
 
     def copy_data(self, cr, uid, acc_line_exp_id, default=None, context=None):
         """
-        Duplicates the expense line, and links it to a COPY of the AD from the initial line
+        Duplicates the expense line, resets its line number, and links it to a COPY of the AD from the initial line.
         """
         if context is None:
             context = {}
         if default is None:
             default = {}
+        default.update({
+            'line_number': False,
+        })
         acc_line_exp_copied = self.browse(cr, uid, [acc_line_exp_id], fields_to_fetch=['analytic_distribution_id'], context=context)[0]
         if acc_line_exp_copied.analytic_distribution_id:
             new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, acc_line_exp_copied.analytic_distribution_id.id, {},
