@@ -190,26 +190,6 @@ class stock_picking(osv.osv):
         return res
 
     _columns = {
-        'state': fields.selection([
-            ('draft', 'Draft'),
-            ('auto', 'Waiting'),
-            ('confirmed', 'Confirmed'),
-            ('assigned', 'Available'),
-            ('shipped', 'Available Shipped'),  # UF-1617: new state of IN for partial shipment
-            ('updated', 'Available Updated'),
-            ('done', 'Closed'),
-            ('delivered', 'Delivered'),
-            ('cancel', 'Cancelled'),
-            ('import', 'Import in progress'),
-        ], 'State', readonly=True, select=True,
-            help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
-                 "* Confirmed: still waiting for the availability of products\n"\
-                 "* Available: products reserved, simply waiting for confirmation.\n"\
-                 "* Available Shipped: products already shipped at supplier, simply waiting for arrival confirmation.\n"\
-                 "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
-                 "* Closed: has been processed, can't be modified or cancelled anymore. Can still be processed to Delivered if the document is an OUT\n"
-                 "* Delivered: has been delivered, only for a closed OUT\n"\
-                 "* Cancelled: has been cancelled, can't be confirmed anymore"),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'ext_cu': fields.many2one('stock.location', string='Ext. C.U.'),
