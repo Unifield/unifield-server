@@ -24,6 +24,7 @@ import time
 import logging
 import release
 import tools
+import re
 
 from osv import fields
 from osv import osv, orm
@@ -1101,7 +1102,8 @@ class msf_import_export(osv.osv_memory):
                         else:
                             # Listing "G/L Accounts" ticks the box "Select Accounts Only" in the FP form
                             data['select_accounts_only'] = True
-                        gl_iter = data.get('fp_account_ids').split(',')
+                        # Split the list of G/L accounts using a regex to ignore commas between parentheses (e.g. for 61020 - Food & Drinks (All kind of food, other than therapeutic))
+                        gl_iter = re.split(r',\s*(?![^()]*\))', data.get('fp_account_ids'))
                         for name in gl_iter:
                             gl_name = (name.strip().split('-'))[0].strip()
                             # Allow the same accounts as in the interface
