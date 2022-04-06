@@ -208,7 +208,7 @@ class msf_accrual_line(osv.osv):
                                                                        account_ids, employee_id=employee_id, partner_id=partner_id,
                                                                        raise_it=True,  context=context)
 
-    def create_sequence(self, cr, uid, vals, context=None):
+    def create_sequence(self, cr, uid):
         """
         Initializes a new sequence for each Accrual (for the line number)
         """
@@ -244,7 +244,7 @@ class msf_accrual_line(osv.osv):
                                                                vals['document_date'], posting_date, context=context)
 
         # create a sequence for this new accrual
-        seq_id = self.create_sequence(cr, uid, vals, context)
+        seq_id = self.create_sequence(cr, uid)
         vals.update({'sequence_id': seq_id, })
 
         self._create_write_set_vals(cr, uid, vals, context=context)
