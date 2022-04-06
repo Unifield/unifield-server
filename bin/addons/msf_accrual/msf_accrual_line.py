@@ -155,6 +155,7 @@ class msf_accrual_line(osv.osv):
         'entry_sequence': fields.function(_get_entry_sequence, method=True,
                                           store=False, string="Number", type="char", readonly="True"),
         'expense_line_ids': fields.one2many('msf.accrual.line.expense', 'accrual_line_id', string="Accrual Expense Lines"),
+        'sequence_id': fields.many2one('ir.sequence', string='Sequence of the lines', ondelete='cascade'),
     }
 
     _defaults = {
@@ -207,6 +208,27 @@ class msf_accrual_line(osv.osv):
                                                                        account_ids, employee_id=employee_id, partner_id=partner_id,
                                                                        raise_it=True,  context=context)
 
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        Initializes a new sequence for each Accrual (for the line number)
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+        name = 'Accrual Expense L'  # For Accrual Expense Lines
+        code = 'msf.accrual.line'
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+        seq = {
+            'name': name,
+            'code': code,
+            'prefix': '',
+            'padding': 0,
+        }
+        return seq_pool.create(cr, uid, seq)
+
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -220,6 +242,10 @@ class msf_accrual_line(osv.osv):
                                                                 context=context)['date_stop']
             self.pool.get('finance.tools').check_document_date(cr, uid,
                                                                vals['document_date'], posting_date, context=context)
+
+        # create a sequence for this new accrual
+        seq_id = self.create_sequence(cr, uid, vals, context)
+        vals.update({'sequence_id': seq_id, })
 
         self._create_write_set_vals(cr, uid, vals, context=context)
         return super(msf_accrual_line, self).create(cr, uid, vals, context=context)

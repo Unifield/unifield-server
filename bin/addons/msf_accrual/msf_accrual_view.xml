@@ -68,7 +68,7 @@
                                     <tree string="Accrual lines"
                                           editable="top"
                                           colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');black: analytic_distribution_state in ('none', 'valid')">
-                                        <field name="line_number"/>
+                                        <field name="line_number" displayon="noteditable"/>
                                         <field name="description"/>
                                         <field name="expense_account_id"/>
                                         <!-- AD button always displayed (to adapt in case the domain of expense_account_id is changed) -->

@@ -89,7 +89,7 @@ class msf_accrual_line_expense(osv.osv):
         return res
 
     _columns = {
-        'line_number': fields.integer(string='Line Number'),
+        'line_number': fields.integer(string='Line Number', readonly=True),
         'description': fields.char('Description', size=64, required=True),
         'expense_account_id': fields.many2one('account.account', 'Expense Account', required=True,
                                               domain=[('restricted_area', '=', 'accruals')]),
@@ -110,6 +110,19 @@ class msf_accrual_line_expense(osv.osv):
     }
 
     _order = 'line_number'
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Creates the line and sets the line number.
+        """
+        if context is None:
+            context = {}
+        if vals.get('accrual_line_id') and self._name == 'msf.accrual.line.expense':
+            accrual = self.pool.get('msf.accrual.line').browse(cr, uid, vals['accrual_line_id'], fields_to_fetch=['sequence_id'])
+            if accrual and accrual.sequence_id:
+                line_number = accrual.sequence_id.get_id(code_or_id='id', context=context)
+                vals.update({'line_number': line_number})
+        return super(msf_accrual_line_expense, self).create(cr, uid, vals, context=context)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
