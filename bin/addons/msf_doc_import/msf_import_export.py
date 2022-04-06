@@ -24,7 +24,6 @@ import time
 import logging
 import release
 import tools
-import re
 
 from osv import fields
 from osv import osv, orm
@@ -965,8 +964,13 @@ class msf_import_export(osv.osv_memory):
                                 data[points[0]] = False
                             elif line_data[n]:
                                 data[points[0]] = _get_obj(h, line_data[n], fields_def) or False
-                        elif fields_def[points[0]]['type'] == 'many2many' and line_data[n]:
-                            data.setdefault(points[0], []).append((4, _get_obj(h, line_data[n], fields_def)))
+                        elif fields_def[points[0]]['type'] == 'many2many' and line_data[n] :
+                            if points[0] == 'fp_account_ids' :
+                                value = process_data(points[0], line_data[n], fields_def)
+                                if value is not None:
+                                    data[points[0]] = value
+                            else:
+                                data.setdefault(points[0], []).append((4, _get_obj(h, line_data[n], fields_def)))
 
                 if not line_ok:
                     rejected.append((row_index+1, line_data, ''))
@@ -1102,12 +1106,11 @@ class msf_import_export(osv.osv_memory):
                         else:
                             # Listing "G/L Accounts" ticks the box "Select Accounts Only" in the FP form
                             data['select_accounts_only'] = True
-                        # Split the list of G/L accounts using a regex to ignore commas between parentheses (e.g. for 61020 - Food & Drinks (All kind of food, other than therapeutic))
-                        gl_iter = re.split(r',\s*(?![^()]*\))', data.get('fp_account_ids'))
+                        gl_iter = data.get('fp_account_ids').split(',')
                         for name in gl_iter:
-                            gl_name = (name.strip().split('-'))[0].strip()
+                            name = name.strip()
                             # Allow the same accounts as in the interface
-                            gl_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't'), ('code', '=', gl_name), ('user_type_code', 'in', ['expense', 'income'])]
+                            gl_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't'), ('code', '=', name), ('user_type_code', 'in', ['expense', 'income'])]
                             gl_ids = acc_obj.search(cr, uid, gl_dom, limit=1, context=context)
                             if gl_ids:
                                 gl_list.append(gl_ids[0])
