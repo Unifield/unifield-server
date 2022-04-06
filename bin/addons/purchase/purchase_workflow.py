@@ -614,7 +614,7 @@ class purchase_order_line(osv.osv):
         if to_complete_ids:
             error = []
             for line in self.read(cr, uid, to_complete_ids, ['line_number', 'default_code'], context=context):
-                error.append(_('#%d  %s') % (line['line_number'], line['default_code']))
+                error.append('#%d  %s' % (line['line_number'], line['default_code']))
             if len(error) == 1:
                 raise osv.except_osv(_('Error'), _("This cannot be validated as line source document information is missing: %s") % error[0])
             else:
