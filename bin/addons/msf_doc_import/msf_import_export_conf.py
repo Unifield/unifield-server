@@ -518,7 +518,7 @@ MODEL_DATA_DICT = {
             'tuple_destination_account_ids',
             'instance_id.code',
             'allow_all_cc_with_fp',
-            'fp_account_ids.code',
+            'fp_account_ids',
         ],
         'required_field_list': [
             'name',
