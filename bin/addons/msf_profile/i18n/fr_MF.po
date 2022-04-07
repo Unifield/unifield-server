@@ -50790,6 +50790,7 @@ msgstr "Donation Line"
 #: selection:account.report.general.ledger,filter:0
 #: selection:account.vat.declaration,filter:0
 #: selection:integrity.finance.wizard,filter:0
+#: code:addons/account_override/wizard/integrity_finance_wizard.py:119
 msgid "No Filters"
 msgstr "Aucun Filtre"
 
@@ -65531,6 +65532,7 @@ msgstr "Products date of expiry"
 #: selection:msf.accrual.line,state:0
 #: selection:integrity.finance.wizard,move_state:0
 #: view:msf.accrual.line:0
+#: code:addons/account_override/wizard/integrity_finance_wizard.py:136
 msgid "Posted"
 msgstr "Comptabilisé"
 
@@ -67134,6 +67136,7 @@ msgstr "Devise d'impression:"
 #: selection:account.analytic.line,move_state:0
 #: selection:account.move.line,move_state:0
 #: selection:integrity.finance.wizard,move_state:0
+#: code:addons/account_override/wizard/integrity_finance_wizard.py:138
 msgid "Unposted"
 msgstr "Non comptabilisé"
 
@@ -67779,7 +67782,7 @@ msgstr "Traductions"
 #. module: msf_accrual
 #: view:msf.accrual.line:0
 msgid "Partially Posted"
-msgstr "Partially Posted"
+msgstr "Partiellement Comptabilisé"
 
 #. modules: sales_followup, purchase_followup, account_mcdb
 #: view:account.mcdb:0

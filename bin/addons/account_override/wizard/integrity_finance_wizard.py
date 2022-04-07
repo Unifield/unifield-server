@@ -116,21 +116,21 @@ class integrity_finance_wizard(osv.osv_memory):
         selected_fisc = fisc_obj.browse(cr, uid, wiz.fiscalyear_id, fields_to_fetch=['name'], context=context).name or ''
         data['selected_fisc'] = selected_fisc
         if wiz.filter == 'filter_no':
-            filter_used = 'No Filters'
+            filter_used = _('No Filters')
         elif (wiz.filter == 'filter_date_doc') or (wiz.filter == 'filter_date'):
             data['date_from'] = datetime.strptime(wiz.date_from, '%Y-%m-%d').strftime('%d/%m/%Y')
             data['date_to'] = datetime.strptime(wiz.date_to, '%Y-%m-%d').strftime('%d/%m/%Y')
             if wiz.filter == 'filter_date_doc':
-                filter_used = 'Document Date'
+                filter_used = _('Document Date')
             if wiz.filter == 'filter_date':
-                filter_used = 'Posting Date'
+                filter_used = _('Posting Date')
         elif wiz.filter == 'filter_period':
-            filter_used = 'Period'
+            filter_used = _('Period')
             period_from = period_obj.browse(cr, uid, wiz.period_from.id, fields_to_fetch=['name'],context=context).name or ''
             period_to = period_obj.browse(cr, uid, wiz.period_to.id, fields_to_fetch=['name'], context=context).name or ''
             data['period_from'] = period_from
             data['period_to'] = period_to
-        data['filter_used'] = _(filter_used)
+        data['filter_used'] = filter_used
         entry_status = ''
         if wiz.move_state == 'posted':
             entry_status = _('Posted')
