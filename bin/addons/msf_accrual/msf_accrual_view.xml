@@ -75,7 +75,8 @@
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
                                         <field name="analytic_distribution_state_recap"/>
-                                        <field name="accrual_amount"/>
+                                        <field name="accrual_amount" sum="Total Accrual Amount"/>
+                                        <field name="functional_amount" sum="Total Functional Amount"/>
                                     </tree>
                                 </field>
                                 <newline/>

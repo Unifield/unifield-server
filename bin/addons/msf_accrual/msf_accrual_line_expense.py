@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 from tools.translate import _
+from base import currency_date
 
 
 class msf_accrual_line_expense(osv.osv):
@@ -89,12 +90,50 @@ class msf_accrual_line_expense(osv.osv):
             res[expense_line.id] = '%s%s' % (ad_state, from_header)
         return res
 
+    def _get_expense_lines(self, cr, uid, ids, context=None):
+        """
+        Returns the list of ids of the expenses lines related to the Accruals in param
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = []
+        for accrual_line in self.browse(cr, uid, ids, fields_to_fetch=['expense_line_ids'], context=context):
+            res.extend([l.id for l in accrual_line.expense_line_ids])
+        return res
+
+    def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Returns the functional amount of the expense lines
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for expense_line in self.browse(cr, uid, ids, fields_to_fetch=['accrual_line_id', 'accrual_amount'], context=context):
+            curr_date = currency_date.get_date(self, cr, expense_line.accrual_line_id.document_date, expense_line.accrual_line_id.date)
+            date_context = {'currency_date': curr_date}
+            res[expense_line.id] = self.pool.get('res.currency').compute(cr, uid,
+                                                                         expense_line.accrual_line_id.currency_id.id,
+                                                                         expense_line.accrual_line_id.functional_currency_id.id,
+                                                                         expense_line.accrual_amount or 0.0,
+                                                                         round=True, context=date_context)
+        return res
+
     _columns = {
         'line_number': fields.integer(string='Line Number', readonly=True),
         'description': fields.char('Description', size=64, required=True),
         'expense_account_id': fields.many2one('account.account', 'Expense Account', required=True,
                                               domain=[('restricted_area', '=', 'accruals')]),
         'accrual_amount': fields.float('Accrual Amount', required=True),
+        'functional_amount': fields.function(_get_functional_amount, type='float', method=True, readonly=True,
+                                             string="Functional Amount",
+                                             store={
+                                                 'msf.accrual.line.expense': (lambda self, cr, uid, ids, c=None: ids, ['accrual_amount'], 10),
+                                                 'msf.accrual.line': (_get_expense_lines, ['currency_id'], 20),
+                                             }),
         'accrual_line_id': fields.many2one('msf.accrual.line', 'Accrual Line', required=True, ondelete='cascade'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True,
