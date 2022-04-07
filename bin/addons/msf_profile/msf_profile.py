@@ -55,6 +55,41 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+    # UF24.1
+    def us_9849_trigger_upd_former_nsl(self, cr, uid, *a, **b):
+        # UD prod changer from NSL to ST/NS => trigger sync to update active field on missions
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                update
+                    product_product
+                set
+                    active_change_date=NOW()
+                where id in (
+                    select
+                        p.id
+                    from
+                        product_product p, product_international_status c
+                    where
+                        p.international_status = c.id and
+                        c.code = 'unidata' and
+                        p.active = 't' and
+                        p.standard_ok != 'non_standard_local' and
+                        p.product_tmpl_id in (
+                            select
+                                distinct(res_id)
+                            from
+                                audittrail_log_line
+                            where
+                                old_value_text='non_standard_local' and
+                                object_id = (select id from ir_model where model='product.template')
+                        )
+                )
+            """)
+            self.log_info(cr, uid, 'US-9849: %d updates' % (cr.rowcount, ))
+        return True
 
     def fol_order_id_join_change_rules(self, cr, uid, *a, **b):
         """
@@ -111,6 +146,7 @@ class patch_scripts(osv.osv):
         return True
 
     # UF24.0
+
     def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
         if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
