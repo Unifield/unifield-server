@@ -26,6 +26,7 @@ from tools.translate import _
 class msf_accrual_line_expense(osv.osv):
     # this object corresponds to the "lines" of the "msf.accrual.line"
     _name = 'msf.accrual.line.expense'
+    _rec_name = 'description'
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
         """
