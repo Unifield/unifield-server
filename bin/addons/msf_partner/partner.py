@@ -744,7 +744,7 @@ class res_partner(osv.osv):
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
-        if vals.get('active') and vals.get('partner_type') == 'intermission' \
+        if vals.get('active') and vals.get('partner_type') == 'intermission' and vals.get('name') \
                 and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
             raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated") % (vals['name'],))
 
@@ -792,7 +792,7 @@ class res_partner(osv.osv):
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
-        if vals.get('active') and vals.get('partner_type') == 'intermission' \
+        if vals.get('active') and vals.get('partner_type') == 'intermission' and vals.get('name') \
                 and self.search(cr, uid, [('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
             raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be created and activated") % (vals['name'],))
 
