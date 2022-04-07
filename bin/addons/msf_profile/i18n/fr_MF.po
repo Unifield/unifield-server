@@ -84334,7 +84334,7 @@ msgstr "Grouper par partenaire"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:40
 #, python-format
 msgid "UF Payroll rounding"
-msgstr "UF Payroll rounding"
+msgstr "UF Différence sur paiement"
 
 #. module: account
 #: model:process.node,name:account.process_node_manually0
