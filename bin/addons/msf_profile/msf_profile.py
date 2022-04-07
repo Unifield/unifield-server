@@ -64,7 +64,7 @@ class patch_scripts(osv.osv):
           ==> Partially Posted becomes Running, and Posted becomes Done
         - B) some pieces of data are now handled at line level:
           ==> moves them from the accrual itself (msf.accrual.line) to the expense line (msf.accrual.line.expense)
-        - C) initialize the sequence on the existing Accruals so that the line numbers are consistent (Line number = 1 for point B)
+        - C) initializes the sequence on the existing Accruals so that the line numbers are consistent (Line number = 1 for point B)
         """
         if self.pool.get('sync.client.entity') and not self.pool.get('sync.server.update'):  # existing instances
             cr.execute("UPDATE msf_accrual_line SET state = 'running' WHERE state = 'partially_posted'")
