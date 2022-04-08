@@ -71,11 +71,14 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="150" />
 <Column ss:AutoFitWidth="1" ss:Width="150" />
 <Row>
-    <Cell ss:StyleID="title" ss:MergeAcross="5"><Data ss:Type="String">${_t(get_title()).upper()}</Data></Cell>
+    <Cell ss:StyleID="title"><Data ss:Type="String">${_t(get_title()).upper()}</Data></Cell>
+    <Cell></Cell>
+    <Cell><Data ss:Type="String">${_('Report Date')}:</Data></Cell>
+    <Cell ss:StyleID="docdate"><Data ss:Type="String">${(data.get('reportdate', False)) or ''|x}</Data></Cell>
 </Row>
 <Row ss:AutoFitHeight="0" ss:Height="13.5"/>
 <Row>
-    <Cell><Data ss:Type="String">${_('Prop. Instance')}: </Data></Cell>
+    <Cell><Data ss:Type="String">${_('Prop. Instance export')}: </Data></Cell>
     <Cell ss:StyleID="propinstance"><Data ss:Type="String">${(company.instance_id and company.instance_id.code or '')|x}</Data></Cell>
     <Cell><Data ss:Type="String">${_('Entry status')}: </Data></Cell>
     <Cell ss:StyleID="propinstance"><Data ss:Type="String">${(data.get('entry_status', False) or '')|x}</Data></Cell>
@@ -83,8 +86,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="propinstance"><Data ss:Type="String">${_('Filter used: ')}${(data.get('filter_used', False) or '')|x}</Data></Cell>
 </Row>
 <Row>
-    <Cell><Data ss:Type="String">${_('Report Date')}:</Data></Cell>
-    <Cell ss:StyleID="docdate"><Data ss:Type="String">${(data.get('reportdate', False)) or ''|x}</Data></Cell>
+    <Cell><Data ss:Type="String">${_('Prop. Instances selected')}: </Data></Cell>
+    <Cell ss:StyleID="propinstance"><Data ss:Type="String">${(data.get('selected_instances', False) or '')|x}</Data></Cell>
     <Cell><Data ss:Type="String">${_('Fiscal year')}: </Data></Cell>
     <Cell ss:StyleID="propinstance"><Data ss:Type="String">${(data.get('selected_fisc', False) or '')|x}</Data></Cell>
     <Cell ss:StyleID="docdate"><Data ss:Type="String">${_('to ')} ${(data.get('period_to', False) or (data.get('date_to', False)) or '')|x}</Data></Cell>

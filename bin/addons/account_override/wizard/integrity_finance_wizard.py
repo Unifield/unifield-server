@@ -137,6 +137,10 @@ class integrity_finance_wizard(osv.osv_memory):
             entry_status = _('Unposted')
         data['entry_status'] = entry_status
         data['reportdate'] = current_date.strftime('%d/%m/%Y')
+        selected_instances = company.instance_id.code or ''
+        if wiz.instance_ids:
+            selected_instances = ', '.join([inst.name for inst in wiz.instance_ids])
+        data['selected_instances'] = selected_instances
 
         return {
             'type': 'ir.actions.report.xml',

@@ -114352,3 +114352,13 @@ msgstr "Instance source"
 msgid "Sync date"
 msgstr "Date de Synchronisation"
 
+#. module: board
+#: report:addons/board/report/integrity.mako:81
+msgid "Prop. Instance export"
+msgstr "Instance prop. export"
+
+#. module: board
+#: report:addons/board/report/integrity.mako:89
+msgid "Prop. Instances selected"
+msgstr "Instances prop. sélectionnées"
+
