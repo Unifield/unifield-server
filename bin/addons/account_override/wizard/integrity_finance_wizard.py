@@ -111,12 +111,12 @@ class integrity_finance_wizard(osv.osv_memory):
         current_instance = company.instance_id and company.instance_id.code or ''
         current_date = datetime.today()
         data['target_filename'] = "%s %s %s" % (_('Entries Data Integrity'), current_instance, current_date.strftime('%Y%m%d'))
+        selected_fisc = ''
         if wiz.fiscalyear_id:
             selected_fisc = wiz.fiscalyear_id.name or ''
         data['selected_fisc'] = selected_fisc
-        if wiz.filter == 'filter_no':
-            filter_used = _('No Filters')
-        elif wiz.filter == 'filter_date_doc' or wiz.filter == 'filter_date':
+        filter_used = _('No Filters')
+        if wiz.filter == 'filter_date_doc' or wiz.filter == 'filter_date':
             data['date_from'] = datetime.strptime(wiz.date_from, '%Y-%m-%d').strftime('%d/%m/%Y')
             data['date_to'] = datetime.strptime(wiz.date_to, '%Y-%m-%d').strftime('%d/%m/%Y')
             if wiz.filter == 'filter_date_doc':
