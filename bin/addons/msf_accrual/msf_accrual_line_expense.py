@@ -125,6 +125,7 @@ class msf_accrual_line_expense(osv.osv):
     _columns = {
         'line_number': fields.integer(string='Line Number', readonly=True),
         'description': fields.char('Description', size=64, required=True),
+        'reference': fields.char('Reference', size=64),
         'expense_account_id': fields.many2one('account.account', 'Expense Account', required=True,
                                               domain=[('restricted_area', '=', 'accruals')]),
         'accrual_amount': fields.float('Accrual Amount', required=True),
