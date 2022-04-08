@@ -38,28 +38,27 @@ class msf_accrual_line(osv.osv):
             period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
             return {'value': {'date': period.date_stop, 'document_date': period.date_stop}}
 
-    def _get_total_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_accrual_amounts(self, cr, uid, ids, fields, arg, context=None):
         """
-        WIP
+        Computes the values for fields.function fields, retrieving the sum of the Accrual amounts of all lines:
+        - in booking curr. => total_accrual_amount
+        - in functional curr. => total_functional_amount
         """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = {}
-        for accrual_line in self.browse(cr, uid, ids, context=context):
-            amount = 0
+        for accrual_line in self.browse(cr, uid, ids, fields_to_fetch=['expense_line_ids'], context=context):
+            booking_amount = 0
+            func_amount = 0
             for expense_line in accrual_line.expense_line_ids:
-                amount += expense_line.functional_amount or 0.0
-            res[accrual_line.id] = amount
-        return res
-
-    def _get_total_accrual_amount(self, cr, uid, ids, field_name, arg, context=None):
-        """
-        WIP
-        """
-        res = {}
-        for accrual_line in self.browse(cr, uid, ids, context=context):
-            amount = 0
-            for expense_line in accrual_line.expense_line_ids:
-                amount += expense_line.accrual_amount or 0.0
-            res[accrual_line.id] = amount
+                booking_amount += expense_line.accrual_amount or 0.0
+                func_amount += expense_line.functional_amount or 0.0
+            res[accrual_line.id] = {
+                'total_accrual_amount': booking_amount,
+                'total_functional_amount': func_amount,
+            }
         return res
 
     def _get_entry_sequence(self, cr, uid, ids, field_name, arg, context=None):
@@ -134,10 +133,10 @@ class msf_accrual_line(osv.osv):
         'expense_account_id': fields.many2one('account.account', 'Expense Account', required=True, domain=[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]),
         'accrual_account_id': fields.many2one('account.account', 'Accrual Account', required=True, domain=[('type', '!=', 'view'), ('user_type_code', 'in', ['receivables', 'payables', 'debt'])]),
         'accrual_amount': fields.float('Accrual Amount (deprecated)', required=True),
-        'total_accrual_amount': fields.function(_get_total_accrual_amount, method=True, store=False,
-                                                string="Accrual Amount", type="float", readonly=True),
-        'total_functional_amount': fields.function(_get_total_functional_amount, method=True, store=False,
-                                                   string="Functional Amount", type="float", readonly=True),
+        'total_accrual_amount': fields.function(_get_accrual_amounts, method=True, store=False, readonly=True,
+                                                string="Accrual Amount", type="float", multi="acc_amount"),
+        'total_functional_amount': fields.function(_get_accrual_amounts, method=True, store=False, readonly=True,
+                                                   string="Functional Amount", type="float", multi="acc_amount"),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True),
         'third_party_type': fields.selection([
