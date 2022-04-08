@@ -129,4 +129,14 @@ having(abs(sum(l.credit_currency-l.debit_currency)) > 0.0001 and count(distinct(
 order by rec.name;
 """
     },
+    {
+        'ref': 'not_runs_entries',
+        'title': _('Not runs entries'),
+        'headers': [_('Object/model'), _('Source instance'), _('xml.id'), _('Sync date'), _('Execution date')],
+        'query': """SELECT s.model, s.source, s.sdref, s.create_date, s.execution_date
+from sync_client_update_received s
+where s.run=FALSE AND
+s.model in ('account.bank.statement.line', 'account.move','account.move.line','account.analytic.line')
+order by s.model;"""
+    },
 ]
