@@ -223,7 +223,7 @@
                             <field name="reference_type" nolabel="1" size="0"/>
                             <field name="reference" nolabel="1"/>
                             <field name="date_due"/>
-                            <field name="check_total" required="2" attrs="{'invisible': [('doc_type', '=', 'isi')]}"/>
+                            <field name="check_total" attrs="{'invisible': [('doc_type', 'in', ('isi', 'isr')]}"/>
                             <field name="supplier_reference"/>
                             <group name="import" string=" Import Lines " colspan="4" col="4"
                                attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'in_invoice')]}">

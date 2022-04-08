@@ -1007,7 +1007,7 @@ class account_invoice(osv.osv):
                         inv_data = {'journal_id': int_journal_id}
                 else:
                     raise osv.except_osv(_('Warning'), _('No Intermission journal found for the current instance.'))
-            if inv.doc_type in ('isi', 'ivi'):
+            if inv.doc_type in ('isi', 'ivi', 'isr'):
                 inv_data['check_total'] = inv.amount_total
                 ignore_check_total = True
                 if inv_data:
