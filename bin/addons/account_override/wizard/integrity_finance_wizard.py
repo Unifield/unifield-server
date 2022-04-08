@@ -91,8 +91,6 @@ class integrity_finance_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         user_obj = self.pool.get('res.users')
-        fisc_obj = self.pool.get('account.fiscalyear')
-        period_obj = self.pool.get('account.period')
         wiz = self.browse(cr, uid, ids[0], context=context)
         data = {
             'form': {},
@@ -113,11 +111,12 @@ class integrity_finance_wizard(osv.osv_memory):
         current_instance = company.instance_id and company.instance_id.code or ''
         current_date = datetime.today()
         data['target_filename'] = "%s %s %s" % (_('Entries Data Integrity'), current_instance, current_date.strftime('%Y%m%d'))
-        selected_fisc = fisc_obj.browse(cr, uid, wiz.fiscalyear_id, fields_to_fetch=['name'], context=context).name or ''
+        if wiz.fiscalyear_id:
+            selected_fisc = wiz.fiscalyear_id.name or ''
         data['selected_fisc'] = selected_fisc
         if wiz.filter == 'filter_no':
             filter_used = _('No Filters')
-        elif (wiz.filter == 'filter_date_doc') or (wiz.filter == 'filter_date'):
+        elif wiz.filter == 'filter_date_doc' or wiz.filter == 'filter_date':
             data['date_from'] = datetime.strptime(wiz.date_from, '%Y-%m-%d').strftime('%d/%m/%Y')
             data['date_to'] = datetime.strptime(wiz.date_to, '%Y-%m-%d').strftime('%d/%m/%Y')
             if wiz.filter == 'filter_date_doc':
@@ -126,8 +125,8 @@ class integrity_finance_wizard(osv.osv_memory):
                 filter_used = _('Posting Date')
         elif wiz.filter == 'filter_period':
             filter_used = _('Period')
-            period_from = period_obj.browse(cr, uid, wiz.period_from.id, fields_to_fetch=['name'],context=context).name or ''
-            period_to = period_obj.browse(cr, uid, wiz.period_to.id, fields_to_fetch=['name'], context=context).name or ''
+            period_from = wiz.period_from.name or ''
+            period_to = wiz.period_to.name or ''
             data['period_from'] = period_from
             data['period_to'] = period_to
         data['filter_used'] = filter_used
