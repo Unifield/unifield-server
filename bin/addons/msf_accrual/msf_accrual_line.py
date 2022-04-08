@@ -38,18 +38,28 @@ class msf_accrual_line(osv.osv):
             period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
             return {'value': {'date': period.date_stop, 'document_date': period.date_stop}}
 
-    def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_total_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        WIP
+        """
         res = {}
         for accrual_line in self.browse(cr, uid, ids, context=context):
-            curr_date = currency_date.get_date(self, cr, accrual_line.document_date, accrual_line.date)
-            date_context = {'currency_date': curr_date}
-            res[accrual_line.id] =  self.pool.get('res.currency').compute(cr,
-                                                                          uid,
-                                                                          accrual_line.currency_id.id,
-                                                                          accrual_line.functional_currency_id.id,
-                                                                          accrual_line.accrual_amount or 0.0,
-                                                                          round=True,
-                                                                          context=date_context)
+            amount = 0
+            for expense_line in accrual_line.expense_line_ids:
+                amount += expense_line.functional_amount or 0.0
+            res[accrual_line.id] = amount
+        return res
+
+    def _get_total_accrual_amount(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        WIP
+        """
+        res = {}
+        for accrual_line in self.browse(cr, uid, ids, context=context):
+            amount = 0
+            for expense_line in accrual_line.expense_line_ids:
+                amount += expense_line.accrual_amount or 0.0
+            res[accrual_line.id] = amount
         return res
 
     def _get_entry_sequence(self, cr, uid, ids, field_name, arg, context=None):
@@ -123,7 +133,11 @@ class msf_accrual_line(osv.osv):
         'reference': fields.char('Reference', size=64),
         'expense_account_id': fields.many2one('account.account', 'Expense Account', required=True, domain=[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]),
         'accrual_account_id': fields.many2one('account.account', 'Accrual Account', required=True, domain=[('type', '!=', 'view'), ('user_type_code', 'in', ['receivables', 'payables', 'debt'])]),
-        'accrual_amount': fields.float('Accrual Amount', required=True),
+        'accrual_amount': fields.float('Accrual Amount (deprecated)', required=True),
+        'total_accrual_amount': fields.function(_get_total_accrual_amount, method=True, store=False,
+                                                string="Accrual Amount", type="float", readonly=True),
+        'total_functional_amount': fields.function(_get_total_functional_amount, method=True, store=False,
+                                                   string="Functional Amount", type="float", readonly=True),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True),
         'third_party_type': fields.selection([
@@ -138,7 +152,6 @@ class msf_accrual_line(osv.osv):
                                                        selection=[('none', 'None'), ('valid', 'Valid'),
                                                                   ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state"),
-        'functional_amount': fields.function(_get_functional_amount, method=True, store=False, string="Functional Amount", type="float", readonly="True"),
         'functional_currency_id': fields.many2one('res.currency', 'Functional Currency', required=True, readonly=True),
         'move_line_id': fields.many2one('account.move.line', 'Account Move Line', readonly=True),
         'rev_move_id': fields.many2one('account.move', 'Rev Journal Entry', readonly=True),

@@ -113,9 +113,9 @@
                         <field name="analytic_distribution_state" invisible="1"/>
                         <field name="expense_account_id"/>
                         <field name="accrual_account_id"/>
-                        <field name="accrual_amount"/>
+                        <field name="total_accrual_amount"/>
                         <field name="currency_id"/>
-                        <field name="functional_amount"/>
+                        <field name="total_functional_amount"/>
                         <field name="functional_currency_id"/>
                         <field name="accrual_type"/>
                         <field name="state"/>

@@ -103,7 +103,7 @@ class msf_accrual_line_expense(osv.osv):
             res.extend([l.id for l in accrual_line.expense_line_ids])
         return res
 
-    def _get_expense_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
         """
         Returns the functional amount of the expense lines
         """
@@ -128,7 +128,7 @@ class msf_accrual_line_expense(osv.osv):
         'expense_account_id': fields.many2one('account.account', 'Expense Account', required=True,
                                               domain=[('restricted_area', '=', 'accruals')]),
         'accrual_amount': fields.float('Accrual Amount', required=True),
-        'functional_amount': fields.function(_get_expense_functional_amount, type='float', method=True, readonly=True,
+        'functional_amount': fields.function(_get_functional_amount, type='float', method=True, readonly=True,
                                              string="Functional Amount",
                                              store={
                                                  'msf.accrual.line.expense': (lambda self, cr, uid, ids, c=None: ids, ['accrual_amount'], 10),
