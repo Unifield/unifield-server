@@ -437,15 +437,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'homere_uuid_key': uuid_key,
                 'photo': False,
                 'identification_id': code_staff or False,
-                # 'notes': commentaire and ustr(commentaire) or '',
-                # 'birthday': datenaissance or False,
-                # 'work_email': email or False,
-                # Do "NOM, Prenom"
                 'name': employee_name,
-                # 'ssnid': num_soc or False,
-                # 'mobile_phone': portable or False,
-                # 'work_phone': tel_bureau or False,
-                # 'private_phone': tel_prive or False,
                 'bank_name': bqnom,
                 'bank_account_number': bqnumerocompte,
             }

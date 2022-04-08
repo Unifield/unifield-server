@@ -38,7 +38,7 @@ import codecs
 
 UF_SIDE_ROUNDING_LINE = {
     'account_code': '67000',
-    'name': 'UF Payroll rounding',
+    'name': _('UF Payroll rounding'),
 
     'eur_gap_limit': 1.,  # EUR amount gap limit to not reach
 
@@ -171,7 +171,7 @@ class hr_payroll_import(osv.osv_memory):
                 if cc_ids and cc_ids[0]:
                     cost_center_id = cc_ids[0]
                 else:
-                    error_message = "Invalid Cost Center [" + project[0] + "] will be ignored. "
+                    error_message = _("Invalid Cost Center [%s] will be ignored.") % (project[0])
             if axis1 and axis1[0]:
                 # check if the value exists as a valid DEST in the local system
                 condition = [('category', '=', 'DEST'),('type', '!=', 'view'),('code', '=ilike', axis1[0]),]
@@ -180,7 +180,7 @@ class hr_payroll_import(osv.osv_memory):
                 if dest_ids and dest_ids[0]:
                     destination_id = dest_ids[0]
                 else:
-                    error_message = error_message + "Invalid Destination [" + axis1[0] + "] will be ignored."
+                    error_message = error_message + _("Invalid Destination [%s] will be ignored.") % (axis1[0])
 
         # Check period
         if not date and not date[0]:

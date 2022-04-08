@@ -114312,6 +114312,13 @@ msgid "Salary "
 msgstr "Salaire "
 
 #. module: msf_homere_interface
-#: model:ir.model,name:msf_homere_interface.model_hr_employee_activation
-msgid "hr.employee.activation"
-msgstr ""
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:174
+#, python-format
+msgid "Invalid Cost Center [%s] will be ignored."
+msgstr "Centre de Coût invalide [%s] sera ignoré."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:183
+#, python-format
+msgid "Invalid Destination [%s] will be ignored."
+msgstr "Destination invalide [%s] sera ignorée."
