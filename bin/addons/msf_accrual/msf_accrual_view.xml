@@ -112,7 +112,6 @@
                         <field name="reference"/>
                         <field name="third_party_name"/>
                         <field name="analytic_distribution_state" invisible="1"/>
-                        <field name="expense_account_id"/>
                         <field name="accrual_account_id"/>
                         <field name="total_accrual_amount"/>
                         <field name="currency_id"/>
