@@ -61798,11 +61798,12 @@ msgstr "Actions d'itération"
 msgid "CORDOBA ORO"
 msgstr "CORDOBA ORO"
 
-#. modules: purchase, sale, account_override, register_accounting
+#. modules: purchase, sale, account_override, register_accounting, analytic_distribution
 #: field:purchase.order,line_count:0
 #: field:sale.order,line_count:0
 #: field:account.invoice,line_count:0
 #: field:wizard.account.invoice,line_count:0
+#: field:account.commitment,line_count:0
 msgid "Line count"
 msgstr "# de lignes"
 
@@ -114761,3 +114762,4 @@ msgstr "Vous ne pouvez pas Valider cette ligne de commande car elle contient un 
 #: constraint:sale.order.line:0
 msgid "You cannot validate this sale order line because it has an inactive product"
 msgstr "Vous ne pouvez pas Valider cette ligne de commande car elle contient un produit inactif"
+
