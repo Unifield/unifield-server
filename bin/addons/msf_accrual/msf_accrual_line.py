@@ -574,32 +574,33 @@ class msf_accrual_line(osv.osv):
                     'account_id': accrual_line.accrual_account_id.id,
                     'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                     'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                    booking_field: abs(accrual_line.accrual_amount),
+                    booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                     'currency_id': accrual_line.currency_id.id,
                 }
                 # negative amount for expense would result in an opposite
                 # behavior, expense in credit and a accrual in debit for the
                 # initial entry
                 booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
-                expense_move_line_vals = {
-                    'accrual': True,
-                    'move_id': move_id,
-                    'date': move_date,
-                    'document_date': accrual_line.document_date,
-                    'journal_id': accrual_line.journal_id.id,
-                    'period_id': accrual_line.period_id.id,
-                    'reference': accrual_line.reference,
-                    'name': accrual_line.description,
-                    'account_id': accrual_line.expense_account_id.id,
-                    'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                    'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                    booking_field: abs(accrual_line.accrual_amount),
-                    'currency_id': accrual_line.currency_id.id,
-                    'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
-                }
+                for expense_line in accrual_line.expense_line_ids:
+                    expense_move_line_vals = {
+                        'accrual': True,
+                        'move_id': move_id,
+                        'date': move_date,
+                        'document_date': accrual_line.document_date,
+                        'journal_id': accrual_line.journal_id.id,
+                        'period_id': accrual_line.period_id.id,
+                        'reference': expense_line.reference or '',
+                        'name': expense_line.description,
+                        'account_id': expense_line.expense_account_id.id,
+                        'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
+                        'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
+                        booking_field: abs(expense_line.accrual_amount or 0.0),
+                        'currency_id': accrual_line.currency_id.id,
+                        'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
+                    }
+                    move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
 
                 accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
-                move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
 
                 # Post the moves
                 move_obj.post(cr, uid, move_id, context=context)
