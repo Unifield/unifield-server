@@ -2442,7 +2442,32 @@ class account_tax(osv.osv):
             r['amount'] = round(r['amount'] * quantity, prec)
             total += r['amount']
         return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Prevents deletion in case the tax object is still referenced elsewhere
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        product_obj = self.pool.get('product.template')
+        products = product_obj.search(cr, uid, ['|', ('taxes_id', 'in', ids), ('supplier_taxes_id', 'in', ids)], context=context)
+        acc_obj = self.pool.get('account.account')
+        accounts = acc_obj.search(cr, uid, [('tax_ids', 'in', ids)], context=context)
+        acc_inv_obj = self.pool.get('account.invoice.line')
+        acc_inv_lines = acc_inv_obj.search(cr, uid, [('invoice_line_tax_id', 'in', ids)], context=context)
+        purch_obj = self.pool.get('purchase.order.line')
+        purchase_order_lines = purch_obj.search(cr, uid, [('taxes_id', 'in', ids)], context=context)
+        sale_obj = self.pool.get('sale.order.line')
+        sale_order_lines = sale_obj.search(cr, uid, [('tax_id', 'in', ids)], context=context)
+        if products or accounts or purchase_order_lines or sale_order_lines or acc_inv_lines:
+            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
+        return super(account_tax, self).unlink(cr, uid, ids, context=context)
+
+
 account_tax()
+
 
 # ---------------------------------------------------------
 # Account Entries Models

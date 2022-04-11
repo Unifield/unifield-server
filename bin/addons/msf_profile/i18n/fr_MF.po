@@ -1015,6 +1015,7 @@ msgstr "Pacifique/Auckland"
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "Purchase"
 msgstr "Achat"
 
@@ -7807,6 +7808,7 @@ msgstr "Janvier"
 #: selection:cash.request.liquidity.cheque,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "System"
 msgstr "System"
 
@@ -10179,6 +10181,7 @@ msgstr "Import template"
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:32
 #: field:supplier.performance.wizard,partner_type_intermission:0
 #: code:addons/stock_override/report/report_stock_move.py:23
+#: selection:account.invoice,journal_type:0
 msgid "Intermission"
 msgstr "Intermission"
 
@@ -11266,6 +11269,7 @@ msgstr "Kit/Module"
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: selection:account.journal,type:0
+#: selection:account.invoice,journal_type:0
 msgid "Sale Refund"
 msgstr "Avoir de vente"
 
@@ -12254,6 +12258,7 @@ msgstr "Plug-in (Greffon) du Concepteur de Rapports OpenObject"
 #: view:account.mcdb:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:free.allocation.wizard:0
 msgid "Do you really want to delete the selected template?"
 msgstr "Voulez-vous vraiment supprimer le modèle sélectionné ?"
 
@@ -16946,6 +16951,7 @@ msgstr "Asie/Baghdad"
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "Cash"
 msgstr "Caisse"
 
@@ -24670,6 +24676,7 @@ msgstr "Livraisons"
 #: selection:cash.request.liquidity.cash,type:0
 #: selection:cash.request.liquidity.cheque,type:0
 #: selection:account.journal.fake,type:0
+#: selection:account.invoice,journal_type:0
 msgid "Cheque"
 msgstr "Chèque"
 
@@ -25481,6 +25488,7 @@ msgstr "Hauteur"
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "OD-Extra Accounting"
 msgstr "OD-Extra Accounting"
 
@@ -26394,6 +26402,7 @@ msgstr "Affectation de la Production ou du Bon de Commande."
 #: report:addons/consumption_calculation/report/expiry_report.mako:157
 #: report:addons/consumption_calculation/report/expiry_report.mako:210
 #: selection:stock.location.instance,location_category:0
+#: selection:account.invoice,journal_type:0
 msgid "Stock"
 msgstr "Stock"
 
@@ -30981,6 +30990,7 @@ msgstr "GMT+0"
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "In-kind Donation"
 msgstr "Donation en nature"
 
@@ -31967,6 +31977,7 @@ msgstr "Bons Intermission OUT"
 #: selection:cash.request.liquidity.cheque,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "Depreciation"
 msgstr "Depreciation"
 
@@ -42304,6 +42315,7 @@ msgstr "%w - Numéro de semaine [0(Dimanche),6]."
 #. modules: account, register_accounting
 #: code:addons/account/invoice.py:85
 #: report:account.invoice2:0
+#: selection:account.invoice,reference_type:0
 #, python-format
 msgid "Free Reference"
 msgstr "Référence libre"
@@ -42891,11 +42903,12 @@ msgstr "Les dossier %s des pièces jointes n'existe pas. Veuillez vérifier la c
 msgid "done - (sale.order.line)"
 msgstr "done - (sale.order.line)"
 
-#. modules: register_accounting, analytic_distribution, account_override
+#. modules: register_accounting, analytic_distribution, account_override, account
 #: field:analytic.distribution.wizard,register_line_id:0
 #: view:account.bank.statement.line:0
 #: field:account.direct.invoice.wizard,register_line_id:0
 #: field:account.move.line,partner_register_line_id:0
+#: selection:account.journal.column,field:0
 msgid "Register Line"
 msgstr "Ligne de Registre"
 
@@ -44592,6 +44605,7 @@ msgstr "Le montant maximum devrait être : %s. Le montant de la ligne de registr
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "HR"
 msgstr "HR"
 
@@ -45316,6 +45330,7 @@ msgstr "%W - Numéro de semaine de l'année (Lundi est le premier jour de la sem
 #: field:account.vat.declaration,saved_templates:0
 #: field:wizard.account.partner.balance.tree,saved_templates:0
 #: field:wizard.template.form,saved_templates:0
+#: field:free.allocation.wizard,saved_templates:0
 msgid "Saved templates"
 msgstr "Modèles enregistrés"
 
@@ -45391,6 +45406,7 @@ msgstr "Entrée - Séquence"
 #: selection:cash.request.liquidity.cash,type:0
 #: selection:cash.request.liquidity.cheque,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 #, python-format
 msgid "Currency Adjustment"
 msgstr "Ajustement de la Devise"
@@ -45743,6 +45759,7 @@ msgstr "wizard.import.in.line.simulation.screen"
 #: view:account.mcdb:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:free.allocation.wizard:0
 msgid "Replace"
 msgstr "Remplacer"
 
@@ -52464,6 +52481,7 @@ msgstr "Dashboard main module"
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: view:account.account:0
+#: selection:account.invoice,journal_type:0
 msgid "Accrual"
 msgstr "Accrual"
 
@@ -56161,6 +56179,7 @@ msgstr "An error occurs during the check of the currency: %s"
 #: selection:product.list,creator:0
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: model:product.international.status,name:product_attributes.int_3
+#: selection:account.invoice,journal_type:0
 msgid "HQ"
 msgstr "HQ"
 
@@ -60010,6 +60029,7 @@ msgstr "Palette"
 #: field:purchase.order.line,order_type:0
 #: field:purchase.order.line,po_state:0
 #: field:operations.event,data_short:0
+#: field:free.allocation.wizard,display_load_button:0
 msgid "unknown"
 msgstr "inconnu"
 
@@ -60343,6 +60363,7 @@ msgstr "Remplissage"
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "Migration"
 msgstr "Migration"
 
@@ -64025,7 +64046,7 @@ msgstr "Origine:"
 msgid "ESC Currency"
 msgstr "Devise ESC"
 
-#. modules: account_override, register_accounting, msf_instance, finance
+#. modules: account_override, register_accounting, msf_instance, finance, account
 #: selection:account.journal,type:0
 #: selection:account.move,journal_type:0
 #: selection:account.move.line,journal_type:0
@@ -64035,6 +64056,7 @@ msgstr "Devise ESC"
 #: selection:cash.request.liquidity.cheque,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "Purchase Refund"
 msgstr "Avoir fournisseur"
 
@@ -66029,6 +66051,7 @@ msgstr "Liste de Picking"
 #: view:res.partner:0
 #: view:free.allocation.wizard:0
 #: view:real.average.consumption:0
+#: selection:account.invoice,journal_type:0
 msgid "General"
 msgstr "Général"
 
@@ -70713,6 +70736,7 @@ msgstr "You have to define a valid UOM, i.e. not \"To be define\"."
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:310
 #: report:liquidity.position.pdf:0
+#: selection:account.invoice,journal_type:0
 msgid "Bank"
 msgstr "Banque"
 
@@ -76069,6 +76093,7 @@ msgstr "Dernière version"
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: selection:account.journal,type:0
+#: selection:account.invoice,journal_type:0
 msgid "Opening/Closing Situation"
 msgstr "Journal de situation Ouverture/Clôture"
 
@@ -76532,7 +76557,7 @@ msgstr "Données de démo"
 msgid "Australia"
 msgstr "Australie"
 
-#. modules: account_override, register_accounting, msf_instance, finance, sale, order_types
+#. modules: account_override, register_accounting, msf_instance, finance, sale, order_types, account
 #: view:account.model:0
 #: selection:account.tax,type_tax_use:0
 #: view:account.tax.template:0
@@ -76549,6 +76574,7 @@ msgstr "Australie"
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: field:procurement.order,sale_id:0
+#: selection:account.invoice,journal_type:0
 msgid "Sale"
 msgstr "Commande"
 
@@ -79878,6 +79904,7 @@ msgstr "Traitement des lignes"
 #: selection:cash.request.liquidity.cash,type:0
 #: selection:cash.request.liquidity.cheque,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 #, python-format
 msgid "Revaluation"
 msgstr "Réévaluation"
@@ -80412,6 +80439,7 @@ msgstr "confirmed - (purchase.order.line)"
 #: view:res.payterm:0
 #: field:wizard.account.invoice,payment_term:0
 #: field:sale.order,payment_term:0
+#: model:ir.model,name:account.model_account_payment_term
 msgid "Payment Term"
 msgstr "Délai de Paiement"
 
@@ -82896,6 +82924,7 @@ msgstr "L2"
 #: report:addons/stock/report/stock_reception_report_xls.mako:227
 #: field:purchase.order.manual.export,purchase_id:0
 #: field:wizard.import.ad.line,purchase_id:0
+#: selection:account.journal.column,field:0
 msgid "Purchase Order"
 msgstr "Bon de Commande"
 
@@ -87345,6 +87374,7 @@ msgstr "Erreur ! Vous ne pouvez pas lier une catégorie à deux familles différ
 #: field:wizard.account.partner.balance.tree,template_name:0
 #: field:wizard.template,name:0
 #: field:wizard.template.form,template_name:0
+#: field:free.allocation.wizard,template_name:0
 msgid "Template name"
 msgstr "Nom de modèle"
 
@@ -100057,13 +100087,15 @@ msgstr "Date de Réception Physique"
 msgid "You can't import this file. Please check that it contains data for only one month and one field."
 msgstr "Vous ne pouvez pas importer ce fichier. Veuillez vérifier qu'il contient des données pour seulement un mois et un terrain."
 
-#. module: account_override
+#. module: account_override, account
 #: field:account.move.line,revaluation_date:0
+#: selection:account.journal.column,field:0
 msgid "Revaluation date"
 msgstr "Date de la réévaluation"
 
-#. module: account_override
+#. module: account_override, account
 #: field:account.move.line,revaluation_reference:0
+#: selection:account.journal.column,field:0
 msgid "Revaluation reference"
 msgstr "Référence de la réévaluation"
 
@@ -101223,9 +101255,10 @@ msgstr "Id. Modèle"
 msgid "Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same"
 msgstr "Partenaire %s: la Devise d'Achat (%s) et la Devise de Commande de Projet (%s) doit être indentique"
 
-#. module: account_override
+#. module: account_override, account
 #: field:account.move.line,db_id:0
 #: field:account.analytic.line,db_id:0
+#: selection:account.journal.column,field:0
 msgid "DB ID"
 msgstr "ID BD"
 
@@ -106780,6 +106813,7 @@ msgstr "Funding Pool non trouvé."
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "Correction Auto"
 msgstr "Correction Auto"
 
@@ -106796,6 +106830,7 @@ msgstr "Correction Auto"
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "Correction Manual"
 msgstr "Correction Manuelle"
 
@@ -106812,6 +106847,7 @@ msgstr "Correction Manuelle"
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: selection:account.invoice,journal_type:0
 msgid "Correction HQ"
 msgstr "Correction HQ"
 
@@ -114284,6 +114320,78 @@ msgstr "Plate-forme"
 
 #. module: account
 #: constraint:account.tax:0
-msgid ""
-"For taxes of type percentage, enter % ratio between -1 and 1, Example: 0.02 for 2% "
+msgid "For taxes of type percentage, enter % ratio between -1 and 1, Example: 0.02 for 2% "
 msgstr "Pour les taxes de type \"Pourcentage\", indiquez le ratio %  entre -1 et 1, Exemple: 0.02 pour 2%"
+
+#. module: account
+#: model:account.payment.term,name:account.account_payment_term
+#: model:account.payment.term,note:account.account_payment_term
+msgid "30 Days End of Month"
+msgstr ""
+
+#. module: account
+#: help:account.installer.modules,account_voucher:0
+msgid "Account Voucher module includes all the basic requirements of Voucher Entries for Bank, Cash, Sales, Purchase, Expenses, Contra, etc... "
+msgstr ""
+
+#. module: account
+#: help:account.tax,applicable_type:0
+msgid "Always applicable."
+msgstr ""
+
+#. module: account
+#: model:process.transition,name:account.process_transition_filestatement0
+msgid "Automatic import of the bank statement"
+msgstr ""
+
+#. module: account
+#: help:account.tax,amount:0
+msgid "For taxes of type percentage, enter % ratio between 0 and 1."
+msgstr ""
+
+#. module: account
+#: model:process.node,name:account.process_node_supplierpaymentorder0
+msgid "Payment Order"
+msgstr ""
+
+#. module: account
+#: model:ir.model,name:account.model_account_payment_term_line
+msgid "Payment Term Line"
+msgstr ""
+
+#. module: account
+#: selection:report.account.receivable,type:0
+msgid "Specific"
+msgstr ""
+
+#. module: account
+#: help:account.installer.modules,account_payment:0
+msgid "Streamlines invoice payment and creates hooks to plug automated payment systems in."
+msgstr ""
+
+#. module: account
+#: field:account.installer.modules,account_payment:0
+msgid "Suppliers Payment Management"
+msgstr ""
+
+#. module: account
+#: model:process.transition,name:account.process_transition_customerinvoice0
+#: model:process.transition,name:account.process_transition_paymentorderreconcilation0
+#: model:process.transition,name:account.process_transition_statemententries0
+#: model:process.transition,name:account.process_transition_suppliercustomerinvoice0
+#: model:process.transition,name:account.process_transition_suppliervalidentries0
+#: model:process.transition,name:account.process_transition_validentries0
+msgid "Validation"
+msgstr ""
+
+#. module: account
+#: field:account.installer.modules,account_voucher:0
+msgid "Voucher Management"
+msgstr ""
+
+#. module: account
+#: code:addons/account/account.py:2465
+#, python-format
+msgid "You are trying to delete a tax record that is still referenced!"
+msgstr "Vous essayez de supprimer une taxe qui est encore référencée dans un autre document!"
+

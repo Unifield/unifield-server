@@ -619,7 +619,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
                                  digits_compute=dp.get_precision('Account')),
         'invoice_line_tax_id': fields.many2many('account.tax',
                                                 'account_invoice_line_tax', 'invoice_line_id', 'tax_id', 'Taxes',
-                                                domain=[('parent_id','=',False)], ondelete="restrict"),
+                                                domain=[('parent_id','=',False)]),
         'note': fields.text('Notes'),
         'account_analytic_id':  fields.many2one('account.analytic.account',
                                                 'Analytic Account'),
