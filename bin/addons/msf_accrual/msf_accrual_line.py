@@ -556,6 +556,7 @@ class msf_accrual_line(osv.osv):
                     'journal_id': accrual_line.journal_id.id,
                     'document_date': accrual_line.document_date,
                     'date': move_date,
+                    'analytic_distribution_id': accrual_line.analytic_distribution_id and accrual_line.analytic_distribution_id.id or False,
                 }
 
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
@@ -596,7 +597,7 @@ class msf_accrual_line(osv.osv):
                         'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
                         booking_field: abs(expense_line.accrual_amount or 0.0),
                         'currency_id': accrual_line.currency_id.id,
-                        'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
+                        'analytic_distribution_id': expense_line.analytic_distribution_id and expense_line.analytic_distribution_id.id or False,
                     }
                     move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
 
