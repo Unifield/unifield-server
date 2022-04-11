@@ -63,7 +63,8 @@
                                 <newline/>
                                 <field name="accrual_amount" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <newline/>
-                                <field name="expense_line_ids" nolabel="1" colspan="6" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                <field name="expense_line_ids" nolabel="1" colspan="6" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                                       default_get="{'accrual_description': description, 'accrual_reference': reference}">
                                     <tree string="Accrual lines"
                                           editable="top"
                                           colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');black: analytic_distribution_state in ('none', 'valid')">

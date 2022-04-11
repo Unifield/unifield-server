@@ -152,6 +152,19 @@ class msf_accrual_line_expense(osv.osv):
 
     _order = 'line_number'
 
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        """
+        By default use the description and reference from header level
+        """
+        if context is None:
+            context = {}
+        res = super(msf_accrual_line_expense, self).default_get(cr, uid, fields, context=context, from_web=from_web)
+        if context.get('accrual_description') and 'description' not in res:
+            res.update({'description': context['accrual_description']})
+        if context.get('accrual_reference') and 'reference' not in res:
+            res.update({'reference': context['accrual_reference']})
+        return res
+
     def create(self, cr, uid, vals, context=None):
         """
         Creates the line and sets the line number.
