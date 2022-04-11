@@ -436,7 +436,8 @@ class msf_accrual_line(osv.osv):
         if default is None:
             default = {}
         acc_line_copied = self.browse(cr, uid, acc_line_id, fields_to_fetch=['description', 'analytic_distribution_id'], context=context)
-        description = '(copy) %s' % (acc_line_copied.description,)  # note that "copy" is not translated
+        suffix = ' (copy)'  # "copy" should remain in English i.e. not translated
+        description = '%s%s' % (acc_line_copied.description[:64 - len(suffix)], suffix)
         default.update({
             'description': description,
         })
