@@ -546,6 +546,7 @@ class msf_accrual_line(osv.osv):
             context = {}
         move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
+        ad_obj = self.pool.get('analytic.distribution')
         if ids:
             for accrual_line in self.browse(cr, uid, ids, context=context):
                 move_date = accrual_line.period_id.date_stop
@@ -556,7 +557,9 @@ class msf_accrual_line(osv.osv):
                     'journal_id': accrual_line.journal_id.id,
                     'document_date': accrual_line.document_date,
                     'date': move_date,
-                    'analytic_distribution_id': accrual_line.analytic_distribution_id and accrual_line.analytic_distribution_id.id or False,
+                    'analytic_distribution_id': accrual_line.analytic_distribution_id and ad_obj.copy(cr, uid,
+                                                                                                      accrual_line.analytic_distribution_id.id,
+                                                                                                      {}, context=context) or False,
                 }
 
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
@@ -597,7 +600,10 @@ class msf_accrual_line(osv.osv):
                         'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
                         booking_field: abs(expense_line.accrual_amount or 0.0),
                         'currency_id': accrual_line.currency_id.id,
-                        'analytic_distribution_id': expense_line.analytic_distribution_id and expense_line.analytic_distribution_id.id or False,
+                        'analytic_distribution_id': expense_line.analytic_distribution_id and
+                                                    ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {}, context=context) or
+                                                    False,
+
                     }
                     move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
 
