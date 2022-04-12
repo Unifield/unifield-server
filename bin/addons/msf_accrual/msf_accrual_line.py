@@ -646,6 +646,8 @@ class msf_accrual_line(osv.osv):
                     'journal_id': accrual_line.journal_id.id,
                     'date': posting_date,
                     'document_date': document_date,
+                    # note: for Accruals running before US-5722 and posted after, the AD will be at line level in the
+                    # original entry and at header level in the REV entry but AJIs will still be consistent
                     'analytic_distribution_id': accrual_line.analytic_distribution_id and ad_obj.copy(cr, uid,
                                                                                                       accrual_line.analytic_distribution_id.id,
                                                                                                       {},
