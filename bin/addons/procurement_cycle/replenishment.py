@@ -2761,12 +2761,22 @@ class replenishment_segment_line(osv.osv):
             return True
         cr.execute('''
         select prod.default_code, array_agg(distinct(seg.name_seg)), array_agg(distinct(orig_period.to_date))
-             from replenishment_segment_line orig_seg_line, replenishment_segment orig_seg, replenishment_segment_line_period orig_period, replenishment_segment_line seg_line, replenishment_segment seg, replenishment_parent_segment parent_seg, product_product prod, replenishment_segment_line_period period
+             from
+                replenishment_segment_line orig_seg_line,
+                replenishment_segment orig_seg,
+                replenishment_segment_line_period orig_period,
+                replenishment_parent_segment orig_parent_seg,
+                replenishment_segment_line seg_line,
+                replenishment_segment seg,
+                replenishment_parent_segment parent_seg,
+                replenishment_segment_line_period period,
+                product_product prod
              where
                  ''' + cond + ''' in (%s) and
                  orig_seg_line.segment_id = orig_seg.id and
                  orig_seg_line.product_id = seg_line.product_id and
                  orig_period.line_id = orig_seg_line.id and
+                 orig_seg.parent_id = orig_parent_seg.id and
                  period.line_id = seg_line.id and
                  coalesce(orig_period.value, 0) != 0 and
                  coalesce(period.value, 0) != 0 and
@@ -2776,7 +2786,8 @@ class replenishment_segment_line(osv.osv):
                  orig_seg.state = 'complete' and
                  seg.parent_id = parent_seg.id and
                  prod.id = seg_line.product_id and
-                 orig_seg_line.segment_id != seg.id
+                 orig_seg_line.segment_id != seg.id and
+                 orig_parent_seg.location_config_id = parent_seg.location_config_id
                  group by prod.default_code, parent_seg.location_config_id
         ''', (tuple(ids), )) # not_a_user_entry
 
