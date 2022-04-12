@@ -72,7 +72,7 @@ class patch_scripts(osv.osv):
             cr.execute("UPDATE msf_accrual_line SET state = 'done' WHERE state = 'posted'")
             self.log_info(cr, uid, '%d Accrual(s) set to: Done.' % (cr.rowcount,))
             # NOTE: in all the Accruals created before this ticket there is NO sequence_id and NO Expense Lines
-            cr.execute('''SELECT id, description, expense_account_id, accrual_amount FROM msf_accrual_line''')
+            cr.execute('''SELECT id, description, reference, expense_account_id, accrual_amount FROM msf_accrual_line''')
             accruals = cr.fetchall()
             for accrual_data in accruals:
                 # initialize the sequence for line numbering (ir_sequences are not synchronized)
@@ -83,8 +83,9 @@ class patch_scripts(osv.osv):
                     # no analytic_distribution_id is defined on the line, the global AD is kept
                     'accrual_line_id': accrual_data[0],
                     'description': accrual_data[1],
-                    'expense_account_id': accrual_data[2],
-                    'accrual_amount': accrual_data[3],
+                    'reference': accrual_data[2] or '',
+                    'expense_account_id': accrual_data[3],
+                    'accrual_amount': accrual_data[4] or 0.0,
                 }
                 # call the standard "create" method on Accrual Expense Lines, which are not synchronized
                 self.pool.get('msf.accrual.line.expense').create(cr, uid, new_expense_line_vals)
