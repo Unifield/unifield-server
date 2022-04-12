@@ -298,6 +298,7 @@ class msf_accrual_line(osv.osv):
         period_obj = self.pool.get('account.period')
         move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
+        ad_obj = self.pool.get('analytic.distribution')
         for accrual_line in self.browse(cr, uid, ids, context=context):
             # check for periods, distribution, etc.
             if accrual_line.state != 'done':
@@ -326,14 +327,26 @@ class msf_accrual_line(osv.osv):
                 'journal_id': accrual_line.journal_id.id,
                 'date': move_date,
                 'document_date': accrual_line.document_date,
+                'analytic_distribution_id': accrual_line.analytic_distribution_id and ad_obj.copy(cr, uid,
+                                                                                                  accrual_line.analytic_distribution_id.id,
+                                                                                                  {},
+                                                                                                  context=context) or False,
             }
+
             reversal_move_vals = {
                 'ref': accrual_line.reference,
                 'period_id': reversal_period_id,
                 'journal_id': accrual_line.journal_id.id,
                 'date': reversal_move_posting_date,
                 'document_date': reversal_move_document_date,
+                # note: for Accruals Done before US-5722 and Cancelled after, the AD will be at line level in the
+                # original entries and at header level in the cancellation entries but AJIs will still be consistent
+                'analytic_distribution_id': accrual_line.analytic_distribution_id and ad_obj.copy(cr, uid,
+                                                                                                  accrual_line.analytic_distribution_id.id,
+                                                                                                  {},
+                                                                                                  context=context) or False,
             }
+
             move_id = move_obj.create(cr, uid, move_vals, context=context)
             reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
 
@@ -354,26 +367,31 @@ class msf_accrual_line(osv.osv):
                 'account_id': accrual_line.accrual_account_id.id,
                 'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                 'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                booking_field: abs(accrual_line.accrual_amount),
+                booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                 'currency_id': accrual_line.currency_id.id,
             }
+
             booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
-            expense_move_line_vals = {
-                'accrual': True,
-                'move_id': move_id,
-                'date': move_date,
-                'document_date': accrual_line.document_date,
-                'journal_id': accrual_line.journal_id.id,
-                'period_id': accrual_line.period_id.id,
-                'reference': accrual_line.reference,
-                'name': cancel_description,
-                'account_id': accrual_line.expense_account_id.id,
-                'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                booking_field: abs(accrual_line.accrual_amount),
-                'currency_id': accrual_line.currency_id.id,
-                'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
-            }
+            for expense_line in accrual_line.expense_line_ids:
+                expense_move_line_vals = {
+                    'accrual': True,
+                    'move_id': move_id,
+                    'date': move_date,
+                    'document_date': accrual_line.document_date,
+                    'journal_id': accrual_line.journal_id.id,
+                    'period_id': accrual_line.period_id.id,
+                    'reference': expense_line.reference or '',
+                    'name': "CANCEL - %s" % expense_line.description,
+                    'account_id': expense_line.expense_account_id.id,
+                    'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
+                    'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
+                    booking_field: abs(expense_line.accrual_amount or 0.0),
+                    'currency_id': accrual_line.currency_id.id,
+                    'analytic_distribution_id': expense_line.analytic_distribution_id and
+                                                ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {},
+                                                            context=context) or False,
+                }
+                move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
 
             # and their reversal (source_date to keep the old change rate)
             booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
@@ -390,38 +408,40 @@ class msf_accrual_line(osv.osv):
                 'account_id': accrual_line.accrual_account_id.id,
                 'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                 'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                booking_field: abs(accrual_line.accrual_amount),
+                booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                 'currency_id': accrual_line.currency_id.id,
             }
             booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
-            reversal_expense_move_line_vals = {
-                'accrual': True,
-                'move_id': reversal_move_id,
-                'date': reversal_move_posting_date,
-                'document_date': reversal_move_document_date,
-                'source_date': curr_date,  # date from the original accrual line
-                'journal_id': accrual_line.journal_id.id,
-                'period_id': reversal_period_id,
-                'reference': accrual_line.reference,
-                'name': reverse_cancel_description,
-                'account_id': accrual_line.expense_account_id.id,
-                'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                booking_field: abs(accrual_line.accrual_amount),
-                'currency_id': accrual_line.currency_id.id,
-                'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
-            }
+            for expense_line in accrual_line.expense_line_ids:
+                reversal_expense_move_line_vals = {
+                    'accrual': True,
+                    'move_id': reversal_move_id,
+                    'date': reversal_move_posting_date,
+                    'document_date': reversal_move_document_date,
+                    'source_date': curr_date,  # date from the original accrual line
+                    'journal_id': accrual_line.journal_id.id,
+                    'period_id': reversal_period_id,
+                    'reference': expense_line.reference or '',
+                    'name': "CANCEL - REV - %s" % expense_line.description,
+                    'account_id': expense_line.expense_account_id.id,
+                    'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
+                    'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
+                    booking_field: abs(expense_line.accrual_amount or 0.0),
+                    'currency_id': accrual_line.currency_id.id,
+                    'analytic_distribution_id': expense_line.analytic_distribution_id and
+                                                ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {},
+                                                            context=context) or False,
+                }
+                move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
 
             accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
-            move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
             reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
-            move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
 
             # Post the moves
             move_obj.post(cr, uid, [move_id, reversal_move_id], context=context)
             # Reconcile the accrual move line with its reversal
             move_line_obj.reconcile_partial(cr, uid, [accrual_move_line_id, reversal_accrual_move_line_id], context=context)
-            # validate the accrual line
+            # set the accrual line as Cancelled
             self.write(cr, uid, [accrual_line.id], {'state': 'cancel'}, context=context)
         return True
 
