@@ -2433,7 +2433,10 @@ class replenishment_segment_line(osv.osv):
             ret[_id] = {}
             num[_id] = 0
             for f in field_name:
-                ret[_id][f] = False
+                if f.startswith('rr_min_max_'):
+                    ret[_id][f] = ' / '
+                else:
+                    ret[_id][f] = False
 
         cr.execute("""
          select line_id, value, from_date, to_date, max_value
@@ -2445,7 +2448,7 @@ class replenishment_segment_line(osv.osv):
             where
                 line_id in %s
             ) AS s
-         where pos < %s
+         where pos <= %s
             """, (tuple(ids), max(numbers) ))
 
         for x in cr.fetchall():
@@ -2745,61 +2748,7 @@ class replenishment_segment_line(osv.osv):
     }
 
 
-
-    def _valid_fmc(self, cr, uid, ids, context=None):
-        error = []
-        has_error = False
-
-        for line in self.browse(cr, uid, ids, context=context):
-            prev_to = False
-            md5_data = []
-            for x in range(1, 19):
-                rr_fmc = getattr(line, 'rr_fmc_%d'%x)
-                rr_from = getattr(line, 'rr_fmc_from_%d'%x)
-                rr_to = getattr(line, 'rr_fmc_to_%d'%x)
-                if x == 1 and (rr_to and not rr_from):
-                    error.append(_('%s, FROM / TO %d: please fill or empty both values') % (line.product_id.default_code, x))
-
-                md5_data.append('%s %s %s' % (rr_fmc or False, rr_from, rr_to))
-                if rr_from:
-                    rr_from = datetime.strptime(rr_from, '%Y-%m-%d')
-                    if rr_from.day != 1:
-                        if x == 1:
-                            error.append(_('%s, FROM %d must start the 1st day of the month') % (line.product_id.default_code, x))
-                        else:
-                            # do not display error for computed value
-                            has_error = True
-                    if not rr_to:
-                        if not rr_fmc:
-                            continue
-                        error.append(_("%s, TO %d can't be empty if FROM is set") % (line.product_id.default_code, x))
-                    else:
-                        rr_to = datetime.strptime(rr_to, '%Y-%m-%d')
-                        if rr_to + relativedelta(months=1, day=1, days=-1) != rr_to:
-                            error.append(_("%s, TO %d must be the last day of the month") % (line.product_id.default_code, x))
-                        if rr_from > rr_to:
-                            error.append(_("%s, TO %d must be later than FROM") % (line.product_id.default_code, x))
-
-                        if prev_to:
-                            if prev_to + relativedelta(days=1) != rr_from:
-                                error.append(_("%s, FROM %d must be a day after TO %d") % (line.product_id.default_code, x, x-1))
-                            if prev_to > rr_from:
-                                error.append(_("%s, FROM %d must be later than TO %d") % (line.product_id.default_code, x, x-1))
-                    prev_to = rr_to
-            if error or has_error:
-                raise osv.except_osv(_('Error'), _('Please correct the following  values:\n%s') % ("\n".join(error)))
-
-            if line.segment_id.rule == 'cycle':
-                fmc_version = hashlib.md5(''.join(md5_data)).hexdigest()
-                cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s and coalesce(fmc_version, '')!=%s returning id", (fmc_version, line.id, fmc_version))
-                updated = cr.fetchone()
-                if updated and line.segment_id.state == 'complete':
-                    instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
-                    cr.execute('update replenishment_segment_date_generation gen_date set full_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s', (updated[0], ))
-                    cr.execute('update replenishment_segment_date_generation gen_date set review_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s and instance_id=%s', (updated[0], instance_id))
-        return True
-
-    def _uniq_prod_location(self, cr, uid, ids, context=None):
+    def _delete_line_in_hidden_seg(self, cr, uid, ids, context=None):
         # delete line in hidden seg
         cr.execute('''
            delete from replenishment_segment_line where id in (
@@ -2846,7 +2795,7 @@ class replenishment_segment_line(osv.osv):
 
         error = []
         for x in cr.fetchall():
-            error.append('%s : %s (period to: %s)' % (x[0], " - ".join(x[1]), ' - '.join([z.strftime('%d/%m/%Y') for z in x[2]])))
+            error.append('%s : %s (period to: %s)' % (x[0], " - ".join(x[1]), ' - '.join([z !='2222-02-28' and z.strftime('%d/%m/%Y') or '' for z in x[2]])))
             if len(error) > 10:
                 error.append('%d more lines' % (len(error) - 10))
                 break
@@ -2856,8 +2805,7 @@ class replenishment_segment_line(osv.osv):
         return True
 
     _constraints = [
-        (_valid_fmc, 'FMC is invalid', []),
-        (_uniq_prod_location, 'A product in a location may only belong to one segment.', []),
+        (_delete_line_in_hidden_seg, 'Remove from hidden', []),
     ]
 
     _sql_constraints = [
@@ -2871,7 +2819,9 @@ class replenishment_segment_line(osv.osv):
     }
 
     def _set_merge_minmax(self, cr, uid, vals, context=False):
-
+        '''
+            method to split the single field rr_min_max_XX into rr_fmc_XX and rr_max_XX
+        '''
         decimal = False
         thousands = False
         if context.get('lang'):
@@ -2919,6 +2869,15 @@ class replenishment_segment_line(osv.osv):
                     vals['rr_fmc_%d'% x] = min_value
                     vals['rr_max_%d' % x] = max_value
 
+
+    def _raise_error(self, cr ,uid, vals, msg, context=None):
+        if vals.get('product_id'):
+            prod = self.pool.get('product.product').browse(cr, uid, vals['product_id'], fields_to_fetch=['default_code'], context=context)
+            raise osv.except_osv(_('Error !'), '%s %s' % (prod.default_code, msg))
+
+        raise osv.except_osv(_('Error !'), msg)
+
+
     def _clean_data(self, cr, uid, vals, context=None):
         if vals and 'status' in vals:
             if vals['status'] not in  ('replacing', 'activereplacing'):
@@ -2934,6 +2893,7 @@ class replenishment_segment_line(osv.osv):
             elif (vals.get('min_qty') or vals.get('max_qty')) and not vals.get('rr_fmc_1') and not vals.get('rr_max_1'):
                 vals['rr_fmc_1'] = vals['min_qty']
                 vals['rr_max_1'] = vals['max_qty']
+        # END TODO
         else:
             self._set_merge_minmax(cr, uid, vals, context)
 
@@ -2942,14 +2902,42 @@ class replenishment_segment_line(osv.osv):
             vals['rr_fmc_to_1'] = '2222-02-28'
 
         for x in range(1, 18):
+            if x == 1:
+                if vals.get('rr_fmc_from_1') and vals.get('rr_fmc_to_1') and vals['rr_fmc_from_1'] > vals['rr_fmc_to_1']:
+                    self._raise_error(cr, uid, vals, _('FROM 1 must be before TO 1'), context)
+                if bool(vals.get('rr_fmc_from_1')) != bool(vals.get('rr_fmc_to_1')):
+                    self._raise_error(cr, uid, vals, _('FROM 1 / TO 1: please fill or empty both values'), context)
+                if vals.get('rr_fmc_from_1'):
+                    rr_from = datetime.strptime(vals['rr_fmc_from_1'], '%Y-%m-%d')
+                    if rr_from.day != 1:
+                        self._raise_error(cr, uid, vals, _('FROM 1 must start the 1st day of the month'), context)
+
             if vals.get('rr_fmc_to_%d'%x):
+                rr_to = datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d')
+                if rr_to + relativedelta(months=1, day=1, days=-1) != rr_to:
+                    self._raise_error(cr, uid, vals,  _('TO %d must be the last day of the month') % (x,), context)
                 try:
                     vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
                 except:
                     pass
-        # ENDTODO
+                if x > 1 and vals.get('rr_fmc_to_%d' % x) <= vals.get('rr_fmc_to_%d' % (x-1)):
+                    self._raise_error(cr, uid, vals, _('TO %d must be before TO %d') % (x-1, x), context)
 
     def _set_period(self, cr, uid, ids, vals, context=None):
+        '''
+            store periods in dedicated table replenishment_segment_line_period
+        '''
+
+
+        # if cycle: compute and compare values before and after
+        cycle_line_state = {}
+        all_fields = []
+        cr.execute("select line.id, seg.state from replenishment_segment seg, replenishment_segment_line line where line.segment_id = seg.id and seg.rule = 'cycle'")
+        for x in cr.fetchall():
+            cycle_line_state[x[0]] = x[1]
+            for x in range(1, 19):
+                all_fields+=['rr_fmc_%d' % x, 'rr_fmc_from_%d' % x, 'rr_fmc_to_%d' % x]
+
         for _id in ids:
             p_ids = []
             cr.execute("select id from replenishment_segment_line_period where line_id=%s order by from_date", (_id, ))
@@ -2987,7 +2975,21 @@ class replenishment_segment_line(osv.osv):
                             d_keys = data.keys()
                             #print cr.mogrify('insert into replenishment_segment_line_period ('+', '.join(d_keys)+') values ('+','.join(['%%(%s)s' % k for k in d_keys])+')', data)
                             cr.execute('insert into replenishment_segment_line_period ('+', '.join(d_keys)+') values ('+','.join(['%%(%s)s' % k for k in d_keys])+')', data) # not_a_user_entry
-                cr.execute('delete from replenishment_segment_line_period where line_id=%s and value is NULL', (_id, ))
+
+            cr.execute('delete from replenishment_segment_line_period where line_id=%s and value is NULL', (_id, ))
+
+            if _id in cycle_line_state:
+                all_data = ''
+                d = self.read(cr, uid, _id, all_fields, context=context)
+                for x in all_fields:
+                    all_data +='%s'%d[x]
+                fmc_version = hashlib.md5(''.join(all_data)).hexdigest()
+                cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s and coalesce(fmc_version, '')!=%s returning id", (fmc_version, _id, fmc_version))
+                updated = cr.fetchone()
+                if updated and cycle_line_state[_id] == 'complete':
+                    instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+                    cr.execute('update replenishment_segment_date_generation gen_date set full_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s', (_id, ))
+                    cr.execute('update replenishment_segment_date_generation gen_date set review_date=NULL from replenishment_segment_line line where line.segment_id=gen_date.segment_id and line.id = %s and instance_id=%s', (_id, instance_id))
 
         self._check_overlaps(cr, uid, line_ids=ids, context=context)
         return True
@@ -3006,7 +3008,7 @@ class replenishment_segment_line(osv.osv):
 
         self._clean_data(cr, uid, vals, context=context)
         a = super(replenishment_segment_line, self).write(cr, uid, ids, vals, context=context)
-        # _set_period is called by sync_client/orm.py def write order matters to track changes in ir.model.data and to trigger sync update
+        # _set_period is called by sync_client/orm.py def write, order matters to track changes in ir.model.data and to trigger sync update
         #self._set_period(cr, uid, ids, vals, context=context)
         return a
 

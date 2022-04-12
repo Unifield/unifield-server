@@ -65,6 +65,8 @@ class patch_scripts(osv.osv):
                 from replenishment_segment_line
                 where rr_fmc_%(x)s is not null
             ''', {'x': x})
+        cr.execute('''update replenishment_segment_line_period set from_date='2020-01-01' where from_date is null and value is not null''')
+        cr.execute('''update replenishment_segment_line_period set to_date='2222-02-28' where to_date is null and value is not null''')
         return True
 
 
