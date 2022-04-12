@@ -601,8 +601,8 @@ class msf_accrual_line(osv.osv):
                         booking_field: abs(expense_line.accrual_amount or 0.0),
                         'currency_id': accrual_line.currency_id.id,
                         'analytic_distribution_id': expense_line.analytic_distribution_id and
-                                                    ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {}, context=context) or
-                                                    False,
+                                                    ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {},
+                                                                context=context) or False,
 
                     }
                     move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
@@ -628,6 +628,7 @@ class msf_accrual_line(osv.osv):
         period_obj = self.pool.get('account.period')
         move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
+        ad_obj = self.pool.get('analytic.distribution')
 
         if ids:
             for accrual_line in self.browse(cr, uid, ids, context=context):
@@ -645,6 +646,10 @@ class msf_accrual_line(osv.osv):
                     'journal_id': accrual_line.journal_id.id,
                     'date': posting_date,
                     'document_date': document_date,
+                    'analytic_distribution_id': accrual_line.analytic_distribution_id and ad_obj.copy(cr, uid,
+                                                                                                      accrual_line.analytic_distribution_id.id,
+                                                                                                      {},
+                                                                                                      context=context) or False,
                 }
 
                 reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
@@ -666,30 +671,34 @@ class msf_accrual_line(osv.osv):
                     'account_id': accrual_line.accrual_account_id.id,
                     'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                     'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                    booking_field: abs(accrual_line.accrual_amount),
+                    booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                     'currency_id': accrual_line.currency_id.id,
-                }
-                booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
-                reversal_expense_move_line_vals = {
-                    'accrual': True,
-                    'move_id': reversal_move_id,
-                    'date': posting_date,
-                    'document_date': document_date,
-                    'source_date': curr_date,
-                    'journal_id': accrual_line.journal_id.id,
-                    'period_id': reversal_period_id,
-                    'reference': accrual_line.reference,
-                    'name': reversal_description,
-                    'account_id': accrual_line.expense_account_id.id,
-                    'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                    'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                    booking_field: abs(accrual_line.accrual_amount),
-                    'currency_id': accrual_line.currency_id.id,
-                    'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                 }
 
+                booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+                for expense_line in accrual_line.expense_line_ids:
+                    reversal_expense_move_line_vals = {
+                        'accrual': True,
+                        'move_id': reversal_move_id,
+                        'date': posting_date,
+                        'document_date': document_date,
+                        'source_date': curr_date,
+                        'journal_id': accrual_line.journal_id.id,
+                        'period_id': reversal_period_id,
+                        'reference': expense_line.reference or '',
+                        'name': "REV - %s" % expense_line.description,
+                        'account_id': expense_line.expense_account_id.id,
+                        'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
+                        'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
+                        booking_field: abs(expense_line.accrual_amount or 0.0),
+                        'currency_id': accrual_line.currency_id.id,
+                        'analytic_distribution_id': expense_line.analytic_distribution_id and
+                                                    ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {},
+                                                                context=context) or False,
+                    }
+                    move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
+
                 reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
-                move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
 
                 # Post the moves
                 move_obj.post(cr, uid, reversal_move_id, context=context)
