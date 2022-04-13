@@ -2259,7 +2259,6 @@ class replenishment_segment(osv.osv):
 replenishment_segment()
 
 class replenishment_segment_line_period(osv.osv):
-    # TODO: disable sync
     _name = 'replenishment.segment.line.period'
     _desciption = 'RR Periods'
     _rec_name = 'from_date'
@@ -2415,15 +2414,13 @@ class replenishment_segment_line(osv.osv):
                 n = int(pattern.group(1))
                 numbers.append(n)
 
+        max_num = max(numbers)
         num = {}
         for _id in ids:
             ret[_id] = {}
             num[_id] = 0
-            for f in field_name:
-                if f.startswith('rr_min_max_'):
-                    ret[_id][f] = ' / '
-                else:
-                    ret[_id][f] = False
+            for x in range(1, max_num+1):
+                ret[_id].update({'rr_fmc_from_%d' % x: False, 'rr_fmc_to_%d' % x: False, 'rr_fmc_%d' % x: None, 'rr_max_%d' % x: None, 'rr_min_max_%d' % x: ' / '})
 
         cr.execute("""
          select line_id, value, from_date, to_date, max_value
@@ -2436,7 +2433,7 @@ class replenishment_segment_line(osv.osv):
                 line_id in %s
             ) AS s
          where pos <= %s
-            """, (tuple(ids), max(numbers) ))
+            """, (tuple(ids), max_num ))
 
         for x in cr.fetchall():
             num[x[0]] += 1
