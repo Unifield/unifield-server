@@ -74,13 +74,15 @@ class report_open_invoices2(report_sxw.rml_parse):
         states = context.get('paid_invoice') and ['paid', 'inv_close'] or ['open']
         for doc_type in ['si_di', 'sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo']:
             # determine the domain to use according to the report type and the doc type
-            domain = [('state', 'in', states)]
-            if context.get('paid_invoice') and beginning_date and ending_date:
-                domain += [('date_invoice', '>=', beginning_date), ('date_invoice', '<=', ending_date)]
+            domain = []
             if doc_type == 'si_di':
                 states = context.get('paid_invoice') and ['paid', 'inv_close'] or ['open', 'draft']
-                domain = [('state', 'in', states), ('doc_type', 'in', ['si', 'di'])]
-            elif doc_type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
+                domain += [('state', 'in', states), ('doc_type', 'in', ['si', 'di'])]
+            else:
+                domain += [('state', 'in', states)]
+            if context.get('paid_invoice') and beginning_date and ending_date:
+                domain += [('date_invoice', '>=', beginning_date), ('date_invoice', '<=', ending_date)]
+            if doc_type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
                 domain += [('doc_type', '=', doc_type)]
                 if doc_type in ['stv', 'ivi', 'donation']:
                     domain += [('open_fy', '=', True)]
