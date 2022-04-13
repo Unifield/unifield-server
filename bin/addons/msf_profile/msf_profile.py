@@ -65,20 +65,14 @@ class patch_scripts(osv.osv):
         msf_cust_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1]
 
         # Removing the unbreakable space from the location and the translations
-        cr.execute("""
-            UPDATE stock_location 
-            SET name = (SELECT replace(name, E'\u00a0', ' ') FROM stock_location WHERE id = %s) 
-            WHERE id = %s
-        """, (msf_cust_id, msf_cust_id))
-        cr.execute("""SELECT id, replace(src, E'\u00a0', ' '), replace(value, E'\u00a0', ' ') 
-            FROM ir_translation WHERE name = 'stock.location,name' AND res_id = %s""", (msf_cust_id,))
-        for tr in cr.fetchall():
-            cr.execute("""UPDATE ir_translation SET src = %s, value = %s WHERE id = %s""", (tr[1], tr[2], tr[0]))
+        cr.execute("""UPDATE stock_location SET name = replace(name, E'\u00a0', ' ') WHERE id = %s""", (msf_cust_id,))
+        cr.execute("""UPDATE ir_translation SET src = replace(src, E'\u00a0', ' '), value = replace(value, E'\u00a0', ' ') 
+            WHERE name = 'stock.location,name' AND res_id = %s""", (msf_cust_id,))
 
         # Renaming the non-default 'MSF Customer' locations and their translations
         cr.execute("""UPDATE stock_location SET name = 'Other_MSF_Customer' WHERE name = 'MSF Customer' AND id != %s""", (msf_cust_id,))
         cr.execute("""UPDATE ir_translation SET src = 'Other_MSF_Customer', value = 'Other_MSF_Customer' 
-            WHERE id IN (SELECT id FROM ir_translation WHERE name = 'stock.location,name' AND src = 'MSF Customer' AND res_id != %s)
+            WHERE name = 'stock.location,name' AND src = 'MSF Customer' AND res_id != %s
         """, (msf_cust_id,))
 
         return True
