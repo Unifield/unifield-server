@@ -772,5 +772,9 @@
             <field name="method">us_6475_set_has_tax_on_po</field>
         </record>
 
+        <record id="us_9173_fix_msf_customer_location" model="patch.scripts">
+            <field name="method">us_9173_fix_msf_customer_location</field>
+        </record>
+
     </data>
 </openerp>
