@@ -2,7 +2,7 @@
 
 from osv import osv, fields
 from tools.translate import _
-from datetime import datetime
+from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 import time
 import json
@@ -2792,8 +2792,9 @@ class replenishment_segment_line(osv.osv):
         ''', (tuple(ids), )) # not_a_user_entry
 
         error = []
+        no_date = date(2222, 2, 28)
         for x in cr.fetchall():
-            error.append('%s : %s (period to: %s)' % (x[0], " - ".join(x[1]), ' - '.join([z !='2222-02-28' and z.strftime('%d/%m/%Y') or '' for z in x[2]])))
+            error.append('%s : %s (period to: %s)' % (x[0], " - ".join(x[1]), ' - '.join([z != no_date and z.strftime('%d/%m/%Y') or '-' for z in x[2]])))
             if len(error) > 10:
                 error.append('%d more lines' % (len(error) - 10))
                 break
@@ -3958,10 +3959,10 @@ class replenishment_inventory_review_line_stock(osv.osv):
         fg = super(replenishment_inventory_review_line_stock, self).fields_get(cr, uid, fields=fields, context=context, with_uom_rounding=with_uom_rounding)
         if context.get('review_line_id'):
             cr.execute('''select distinct(date) from replenishment_inventory_review_line_exp where review_line_id=%s and date is not null''', (context.get('review_line_id'),))
-            for date in cr.fetchall():
-                if date and date[0]:
-                    dd = date[0].split('-')
-                    fg[date[0]] =  {'type': 'float', 'string': '%s/%s' % (dd[2], dd[1])}
+            for date1 in cr.fetchall():
+                if date1 and date1[0]:
+                    dd = date1[0].split('-')
+                    fg[date1[0]] =  {'type': 'float', 'string': '%s/%s' % (dd[2], dd[1])}
         return fg
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -3977,9 +3978,9 @@ class replenishment_inventory_review_line_stock(osv.osv):
             '''
 
             cr.execute('''select distinct(date) from replenishment_inventory_review_line_exp where review_line_id=%s and date is not null''', (context.get('review_line_id'),))
-            for date in cr.fetchall():
-                arch += '''<field name="%s" sum="Total"/>''' % date[0]
-                arch += '''<button name="go_to_item" type="object" string="%s" icon="gtk-info" context="{'item_date': '%s', 'review_line_id': %s}" attrs="{'invisible': [('local_instance', '=', False)]}"/>''' % (_('Go to item'), date[0], context.get('review_line_id'))
+            for dd in cr.fetchall():
+                arch += '''<field name="%s" sum="Total"/>''' % dd[0]
+                arch += '''<button name="go_to_item" type="object" string="%s" icon="gtk-info" context="{'item_date': '%s', 'review_line_id': %s}" attrs="{'invisible': [('local_instance', '=', False)]}"/>''' % (_('Go to item'), dd[0], context.get('review_line_id'))
             arch += '''
             <field name="total_exp" sum="Total"/>
             </tree>'''
