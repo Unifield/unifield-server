@@ -2446,7 +2446,7 @@ class replenishment_segment_line(osv.osv):
 
             ret[x[0]].update({'rr_fmc_%d' % num[x[0]]: x[1], 'rr_fmc_from_%d' % num[x[0]]: x[2], 'rr_fmc_to_%d' % num[x[0]]: x[3], 'rr_max_%d' % num[x[0]]: x[4]})
             if get_min_max:
-                ret[x[0]].update({'rr_min_max_%d' % num[x[0]]: '%s / %s' % (format_digit(x[1]), format_digit(x[4]))})
+                ret[x[0]].update({'rr_min_max_%d' % num[x[0]]: '%s / %s' % (x[1] and format_digit(x[1]), x[4] and format_digit(x[4]))})
 
         return ret
 
@@ -3635,21 +3635,27 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
                 'origin': calc.name,
                 'stock_take_date': calc.generation_date,
             })
+            line_seen = {}
             for line in calc.order_calc_line_ids:
                 if line.agreed_order_qty:
-                    sale_line_obj.create(cr, uid, {
-                        'order_id': ir_id,
-                        'procurement_request': True,
-                        'product_id': line.product_id.id,
-                        'product_uom': line.product_id.uom_id.id,
-                        'product_uom_qty': line.agreed_order_qty,
-                        'cost_price': line.product_id.standard_price,
-                        'price_unit': line.product_id.list_price,
-                        'type': 'make_to_order',
-                        'stock_take_date': calc.generation_date,
-                        'date_planned': calc.new_order_reception_date,
-                        'notes': line.order_qty_comment,
-                    }, context=context)
+                    if line.product_id.id in line_seen:
+                        line_seen[line.product_id.id]['qty'] += line.agreed_order_qty
+                        sale_line_obj.write(cr, uid, line_seen[line.product_id.id]['line_id'], {'product_uom_qty': line_seen[line.product_id.id]['qty']}, context=context)
+                    else:
+                        sale_line_id = sale_line_obj.create(cr, uid, {
+                            'order_id': ir_id,
+                            'procurement_request': True,
+                            'product_id': line.product_id.id,
+                            'product_uom': line.product_id.uom_id.id,
+                            'product_uom_qty': line.agreed_order_qty,
+                            'cost_price': line.product_id.standard_price,
+                            'price_unit': line.product_id.list_price,
+                            'type': 'make_to_order',
+                            'stock_take_date': calc.generation_date,
+                            'date_planned': calc.new_order_reception_date,
+                            'notes': line.order_qty_comment,
+                        }, context=context)
+                        line_seen[line.product_id.id] = {'qty': line.agreed_order_qty, 'line_id': sale_line_id}
 
             self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d'), 'ir_id': ir_id}, context=context)
             self.pool.get('replenishment.parent.segment').write(cr, uid, calc.parent_segment_id.id, {'previous_order_rdd': calc.new_order_reception_date, 'date_next_order_received_modified': False}, context=context)
