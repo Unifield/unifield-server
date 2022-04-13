@@ -335,7 +335,7 @@ class account_account(osv.osv):
         'prevent_multi_curr_rec': fields.boolean('Prevent Reconciliation with different currencies'),
         'shortcut': fields.char('Shortcut', size=12),
         'tax_ids': fields.many2many('account.tax', 'account_account_tax_default_rel',
-                                    'account_id', 'tax_id', 'Default Taxes', ondelete="restrict"),
+                                    'account_id', 'tax_id', 'Default Taxes'),
         'note': fields.char('Note', size=160),
         'company_currency_id': fields.function(_get_company_currency, method=True, type='many2one', relation='res.currency', string='Company Currency'),
         'company_id': fields.many2one('res.company', 'Company', required=True),
@@ -2099,8 +2099,8 @@ class account_tax(osv.osv):
         'domain':fields.char('Domain', size=32, help="This field is only used if you develop your own module allowing developers to create specific taxes in a custom domain."),
         'account_collected_id':fields.many2one('account.account', 'Invoice Tax Account'),
         'account_paid_id':fields.many2one('account.account', 'Refund Tax Account'),
-        'parent_id':fields.many2one('account.tax', 'Parent Tax Account', select=True, ondelete="restrict"),
-        'child_ids':fields.one2many('account.tax', 'parent_id', 'Child Tax Accounts', ondelete="restrict"),
+        'parent_id':fields.many2one('account.tax', 'Parent Tax Account', select=True),
+        'child_ids':fields.one2many('account.tax', 'parent_id', 'Child Tax Accounts'),
         'child_depend':fields.boolean('Tax on Children', help="Set if the tax computation is based on the computation of child taxes rather than on the total amount."),
         'partner_id': fields.many2one('res.partner', 'Partner',
                                       domain=[('partner_type', '=', 'external'), ('active', '=', True)],
@@ -2452,18 +2452,22 @@ class account_tax(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         product_obj = self.pool.get('product.template')
-        products = product_obj.search(cr, uid, ['|', ('taxes_id', 'in', ids), ('supplier_taxes_id', 'in', ids)], context=context)
         acc_obj = self.pool.get('account.account')
-        accounts = acc_obj.search(cr, uid, [('tax_ids', 'in', ids)], context=context)
         acc_inv_obj = self.pool.get('account.invoice.line')
-        acc_inv_lines = acc_inv_obj.search(cr, uid, [('invoice_line_tax_id', 'in', ids)], context=context)
         purch_obj = self.pool.get('purchase.order.line')
-        purchase_order_lines = purch_obj.search(cr, uid, [('taxes_id', 'in', ids)], context=context)
         sale_obj = self.pool.get('sale.order.line')
-        sale_order_lines = sale_obj.search(cr, uid, [('tax_id', 'in', ids)], context=context)
-        if products or accounts or purchase_order_lines or sale_order_lines or acc_inv_lines:
+        if product_obj.search_exists(cr, uid, ['|', ('taxes_id', 'in', ids), ('supplier_taxes_id', 'in', ids)], context=context):
             raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
-        return super(account_tax, self).unlink(cr, uid, ids, context=context)
+        if acc_obj.search_exists(cr, uid, [('tax_ids', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
+        if acc_inv_obj.search_exists(cr, uid, [('invoice_line_tax_id', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
+        if purch_obj.search_exists(cr, uid, [('taxes_id', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
+        if sale_obj.search_exists(cr, uid, [('tax_id', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
+        else:
+            return super(account_tax, self).unlink(cr, uid, ids, context=context)
 
 
 account_tax()
