@@ -41,6 +41,9 @@ class wizard_accrual_validation(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('The line "%s" is already in Running state!') % accrual_line.description)
                 elif accrual_line.state == 'cancel':
                     raise osv.except_osv(_('Warning !'), _("The line '%s' is cancelled and can't be re-posted.") % accrual_line.description)
+                elif not accrual_line.expense_line_ids:
+                    raise osv.except_osv(_('Warning'),
+                                         _('Please add some lines to the Accrual "%s" before validating it!') % accrual_line.description)
                 elif not accrual_line.period_id:
                     raise osv.except_osv(_('Warning !'), _("The line '%s' has no period set!") % accrual_line.description)
                 elif not accrual_line.analytic_distribution_id:
