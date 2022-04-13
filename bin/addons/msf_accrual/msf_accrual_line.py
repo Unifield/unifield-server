@@ -187,6 +187,7 @@ class msf_accrual_line(osv.osv):
 
         employee_id = partner_id = False
         if 'third_party_type' in vals:
+            # set the third_party_name + get the employee_id/partner_id for the compatibility check
             if vals['third_party_type'] == 'hr.employee' and 'employee_id' in vals:
                 employee_id = vals['employee_id']
                 employee = self.pool.get('hr.employee').browse(cr, uid, employee_id, context=context)
@@ -195,8 +196,6 @@ class msf_accrual_line(osv.osv):
                 partner_id = vals['partner_id']
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
                 vals['third_party_name'] = partner.name
-            elif not vals['third_party_type']:
-                vals['partner_id'] = False
 
         account_ids = []
         if vals.get('expense_account_id', False):
@@ -242,6 +241,29 @@ class msf_accrual_line(osv.osv):
         }
         return seq_pool.create(cr, uid, seq)
 
+    def _clean_third_party_fields(self, cr, uid, vals, accrual_id=None, context=None):
+        """
+        Removes the irrelevant third party links from the dict vals. E.g.: create an Accrual with a Third Party Employee,
+        then change it to a Partner => the link to the Employee should be removed.
+        """
+        if context is None:
+            context = {}
+        if 'third_party_type' in vals:
+            third_party_type = vals['third_party_type']
+        elif accrual_id:
+            third_party_type = self.browse(cr, uid, accrual_id, fields_to_fetch=['third_party_type'], context=context).third_party_type
+        else:
+            third_party_type = None
+        if third_party_type is not None and not third_party_type:
+            vals.update({'partner_id': False,
+                         'employee_id': False,
+                         })
+        elif third_party_type == 'res.partner':
+            vals.update({'employee_id': False, })
+        elif third_party_type == 'hr.employee':
+            vals.update({'partner_id': False, })
+        return True
+
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -261,6 +283,7 @@ class msf_accrual_line(osv.osv):
         vals.update({'sequence_id': seq_id, })
 
         self._create_write_set_vals(cr, uid, vals, context=context)
+        self._clean_third_party_fields(cr, uid, vals, context=context)
         return super(msf_accrual_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -271,6 +294,8 @@ class msf_accrual_line(osv.osv):
         if isinstance(ids, (int, long, )):
             ids = [ids]
         self._create_write_set_vals(cr, uid, vals, context=context)
+        for accrual_id in ids:
+            self._clean_third_party_fields(cr, uid, vals, accrual_id=accrual_id, context=context)
         # US-192 check doc date regarding post date
         current_values = self.read(cr, uid, ids, ['document_date', 'date'], context=context)[0]
         document_date = 'document_date' in vals and vals['document_date'] or current_values['document_date']
