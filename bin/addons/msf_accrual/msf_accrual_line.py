@@ -379,7 +379,7 @@ class msf_accrual_line(osv.osv):
             reverse_cancel_description = "CANCEL - REV - " + accrual_line.description
 
             # Create move lines
-            booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'  # reverse of initial entry
+            booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'  # reverse of initial entry
             accrual_move_line_vals = {
                 'accrual': True,
                 'move_id': move_id,
@@ -396,7 +396,7 @@ class msf_accrual_line(osv.osv):
                 'currency_id': accrual_line.currency_id.id,
             }
 
-            booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+            booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
             for expense_line in accrual_line.expense_line_ids:
                 expense_move_line_vals = {
                     'accrual': True,
@@ -419,7 +419,7 @@ class msf_accrual_line(osv.osv):
                 move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
 
             # and their reversal (source_date to keep the old change rate)
-            booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+            booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
             reversal_accrual_move_line_vals = {
                 'accrual': True,
                 'move_id': reversal_move_id,
@@ -436,7 +436,7 @@ class msf_accrual_line(osv.osv):
                 booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                 'currency_id': accrual_line.currency_id.id,
             }
-            booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
+            booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
             for expense_line in accrual_line.expense_line_ids:
                 reversal_expense_move_line_vals = {
                     'accrual': True,
@@ -610,7 +610,7 @@ class msf_accrual_line(osv.osv):
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
 
                 # Create move lines
-                booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+                booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                 accrual_move_line_vals = {
                     'accrual': True,
                     'move_id': move_id,
@@ -629,7 +629,7 @@ class msf_accrual_line(osv.osv):
                 # negative amount for expense would result in an opposite
                 # behavior, expense in credit and a accrual in debit for the
                 # initial entry
-                booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
+                booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 for expense_line in accrual_line.expense_line_ids:
                     expense_move_line_vals = {
                         'accrual': True,
@@ -704,7 +704,7 @@ class msf_accrual_line(osv.osv):
                 reversal_description = "REV - " + accrual_line.description
 
                 # Create move lines / reversal entry (source_date to keep the old change rate):
-                booking_field = accrual_line.accrual_amount > 0 and 'debit_currency' or 'credit_currency'
+                booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 reversal_accrual_move_line_vals = {
                     'accrual': True,
                     'move_id': reversal_move_id,
@@ -722,7 +722,7 @@ class msf_accrual_line(osv.osv):
                     'currency_id': accrual_line.currency_id.id,
                 }
 
-                booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+                booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                 for expense_line in accrual_line.expense_line_ids:
                     reversal_expense_move_line_vals = {
                         'accrual': True,
