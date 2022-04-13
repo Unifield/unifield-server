@@ -26036,11 +26036,6 @@ msgstr "This informs system if this item have been corrected in analytic lines. 
 msgid "This picking doesn't require a donation certificate"
 msgstr "Ce prélèvement ne nécessite pas de certificat de donation"
 
-#. module: account
-#: help:account.tax,amount:0
-msgid "For taxes of type percentage, enter % ratio between 0-1."
-msgstr "Pour les taxes de type \"Pourcentage\", indiquez le ratio %  entre 0 et 1."
-
 #. modules: msf_cross_docking, purchase, register_accounting, finance, sales_followup, service_purchasing, sourcing, specific_rules, transport_mgmt, purchase_allocation_report, order_line_number, msf_audittrail, delete_button, tender_flow, msf_doc_import, res_currency_functional, sync_so
 #: constraint:purchase.order:0
 #: constraint:purchase.order:0
@@ -114320,6 +114315,7 @@ msgstr "Plate-forme"
 
 #. module: account
 #: constraint:account.tax:0
+#: help:account.tax,amount:0
 msgid "For taxes of type percentage, enter % ratio between -1 and 1, Example: 0.02 for 2% "
 msgstr "Pour les taxes de type \"Pourcentage\", indiquez le ratio %  entre -1 et 1, Exemple: 0.02 pour 2%"
 
@@ -114329,3 +114325,7 @@ msgstr "Pour les taxes de type \"Pourcentage\", indiquez le ratio %  entre -1 et
 msgid "You are trying to delete a tax record that is still referenced!"
 msgstr "Vous essayez de supprimer une taxe qui est encore référencée dans un autre document!"
 
+#. module: account
+#: help:account.tax.template,amount:0
+msgid "For Tax Type percent enter % ratio between -1 and 1."
+msgstr "Pour le Type de pourcentage de Taxe saisir le ratio % entre -1 et 1."

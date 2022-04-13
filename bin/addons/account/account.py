@@ -2092,7 +2092,7 @@ class account_tax(osv.osv):
     _columns = {
         'name': fields.char('Tax Name', size=64, required=True, translate=True, help="This name will be displayed on reports"),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the tax lines from the lowest sequences to the higher ones. The order is important if you have a tax with several tax children. In this case, the evaluation order is important."),
-        'amount': fields.float('Amount', required=True, digits_compute=get_precision_tax(), help="For taxes of type percentage, enter % ratio between 0 and 1."),
+        'amount': fields.float('Amount', required=True, digits_compute=get_precision_tax(), help="For taxes of type percentage, enter % ratio between -1 and 1, Example: 0.02 for 2% "),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the tax without removing it."),
         'type': fields.selection([('percent','Percentage'), ('fixed','Fixed Amount')], 'Tax Type', required=True, help="The computation method for the tax amount."),
         'applicable_type': fields.selection([('true','Always')], 'Applicability', required=True, readonly=True, help="Always applicable."),
@@ -2129,7 +2129,7 @@ class account_tax(osv.osv):
 
     def _check_percent(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0], context=context)
-        if obj.type == 'percent' and (abs(obj.amount) > 1.0):
+        if obj.type == 'percent' and abs(obj.amount) > 1.0:
             return False
         return True
     _constraints = [
@@ -2456,15 +2456,11 @@ class account_tax(osv.osv):
         acc_inv_obj = self.pool.get('account.invoice.line')
         purch_obj = self.pool.get('purchase.order.line')
         sale_obj = self.pool.get('sale.order.line')
-        if product_obj.search_exists(cr, uid, ['|', ('taxes_id', 'in', ids), ('supplier_taxes_id', 'in', ids)], context=context):
-            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
-        if acc_obj.search_exists(cr, uid, [('tax_ids', 'in', ids)], context=context):
-            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
-        if acc_inv_obj.search_exists(cr, uid, [('invoice_line_tax_id', 'in', ids)], context=context):
-            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
-        if purch_obj.search_exists(cr, uid, [('taxes_id', 'in', ids)], context=context):
-            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
-        if sale_obj.search_exists(cr, uid, [('tax_id', 'in', ids)], context=context):
+        if product_obj.search_exists(cr, uid, ['|', ('taxes_id', 'in', ids), ('supplier_taxes_id', 'in', ids)], context=context) or \
+            acc_obj.search_exists(cr, uid, [('tax_ids', 'in', ids)], context=context) or \
+            acc_inv_obj.search_exists(cr, uid, [('invoice_line_tax_id', 'in', ids)], context=context) or \
+            purch_obj.search_exists(cr, uid, [('taxes_id', 'in', ids)], context=context) or \
+            sale_obj.search_exists(cr, uid, [('tax_id', 'in', ids)], context=context):
             raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
         else:
             return super(account_tax, self).unlink(cr, uid, ids, context=context)
@@ -3010,7 +3006,7 @@ class account_tax_template(osv.osv):
         'chart_template_id': fields.many2one('account.chart.template', 'Chart Template', required=True),
         'name': fields.char('Tax Name', size=64, required=True),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the taxes lines from lower sequences to higher ones. The order is important if you have a tax that has several tax children. In this case, the evaluation order is important."),
-        'amount': fields.float('Amount', required=True, digits=(14,4), help="For Tax Type percent enter % ratio between 0-1."),
+        'amount': fields.float('Amount', required=True, digits=(14,4), help="For Tax Type percent enter % ratio between -1 and 1."),
         'type': fields.selection( [('percent','Percent'), ('fixed','Fixed'), ('none','None'), ('code','Python Code'), ('balance','Balance')], 'Tax Type', required=True),
         'applicable_type': fields.selection( [('true','True'), ('code','Python Code')], 'Applicable Type', required=True, help="If not applicable (computed through a Python code), the tax won't appear on the invoice."),
         'domain':fields.char('Domain', size=32, help="This field is only used if you develop your own module allowing developers to create specific taxes in a custom domain."),
