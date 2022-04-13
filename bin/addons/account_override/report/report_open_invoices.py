@@ -64,11 +64,6 @@ class report_open_invoices2(report_sxw.rml_parse):
         context = self.localcontext or {}
         inv_obj = self.pool.get('account.invoice')
         bg_obj = self.pool.get('memory.background.report')
-        fy_obj = self.pool.get('account.fiscalyear')
-        fy_id = fy_obj.search(self.cr, self.uid, [('state', '=', 'draft')], context=context, limit=1)
-        if isinstance(fy_id, (int, long)):
-            fy_id = [fy_id]
-        fiscalyear = fy_obj.browse(self.cr, self.uid, fy_id[0], fields_to_fetch=['date_start', 'date_stop'], context=context)
         beginning_date = data.get('form') and data['form'].get('beginning_date')
         ending_date = data.get('form') and data['form'].get('ending_date')
         bg_id = False
@@ -88,7 +83,7 @@ class report_open_invoices2(report_sxw.rml_parse):
             elif doc_type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
                 domain += [('doc_type', '=', doc_type)]
                 if doc_type in ['stv', 'ivi', 'donation']:
-                    domain += [('date_invoice', '>=', fiscalyear.date_start), ('date_invoice', '<=', fiscalyear.date_stop)]
+                    domain += [('open_fy', '=', True)]
             type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='state desc, move_name')
             if isinstance(type_ids, (int, long)):
                 type_ids = [type_ids]
