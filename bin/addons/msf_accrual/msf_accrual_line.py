@@ -133,7 +133,7 @@ class msf_accrual_line(osv.osv):
         'expense_account_id': fields.many2one('account.account', 'Expense Account (deprecated)', required=True,
                                               domain=[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]),
         'accrual_account_id': fields.many2one('account.account', 'Accrual Account', required=True, domain=[('type', '!=', 'view'), ('user_type_code', 'in', ['receivables', 'payables', 'debt'])]),
-        'accrual_amount': fields.float('Accrual Amount (deprecated)', required=True),
+        'accrual_amount': fields.float('Accrual Amount (deprecated)'),
         'total_accrual_amount': fields.function(_get_accrual_amounts, method=True, store=False, readonly=True,
                                                 string="Accrual Amount", type="float", multi="acc_amount"),
         'total_functional_amount': fields.function(_get_accrual_amounts, method=True, store=False, readonly=True,
