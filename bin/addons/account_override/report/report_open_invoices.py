@@ -86,7 +86,7 @@ class report_open_invoices2(report_sxw.rml_parse):
                 domain += [('date_invoice', '>=', beginning_date), ('date_invoice', '<=', ending_date)]
             if doc_type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
                 domain += [('doc_type', '=', doc_type)]
-                if doc_type in ['stv', 'ivi', 'donation']:
+                if doc_type in ['stv', 'ivi', 'donation'] and not context.get('paid_invoice'):
                     domain += [('open_fy', '=', True)]
             type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='state desc, move_name')
             if isinstance(type_ids, (int, long)):
