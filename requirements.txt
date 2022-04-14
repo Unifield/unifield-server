@@ -6,7 +6,7 @@ chardet==4.0.0
 cryptography==3.4.7
 DateTime==4.3
 idna==2.10
-lxml==4.6.3
+lxml==4.8.0
 Mako==1.1.4
 MarkupSafe==1.1.1
 msal==1.11.0
