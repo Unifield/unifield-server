@@ -351,7 +351,7 @@
                     ('dn', _('Debit Notes')), ('ivo', _('Intermission Vouchers OUT'))] %>
 % for (doc_type, title) in doc_type_list:
    <Row >
-    % if doc_type in ['stv', 'ivi', 'donation']:
+    % if doc_type in ['stv', 'ivi', 'donation'] and not context.get('paid_invoice'):
             <Cell ss:StyleID="s23"><Data ss:Type="String">${title}${_(' (OPEN FISCAL YEAR ONLY)')}</Data></Cell>
     % else:
             <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
