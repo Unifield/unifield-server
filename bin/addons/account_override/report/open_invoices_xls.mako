@@ -407,7 +407,7 @@
 
 % if doc_type in inv:
 % for o in inv[doc_type]:
-    % if o.state == 'draft' and doc_type == 'si_di':
+    % if o.state == 'draft' and doc_type in ['si_di', 'stv', 'ivi', 'donation']:
         <Row>
             <% nb_line += 1 %>
             <% update_percent(nb_line, context) %>
