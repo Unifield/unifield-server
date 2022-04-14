@@ -3030,7 +3030,7 @@ class replenishment_segment_line_amc(osv.osv):
             if segment.state == 'complete' and (segment.state_parent == 'complete' or segment.hidden):
                 gen_inv_review = force_review
                 full_data = True
-                if segment.next_scheduler < datetime_now.strftime('%Y-%m-%d %H:%M:%S') and (not review_date or review_date < datetime_now.strftime('%Y-%m-%d %H:%M:%S')):
+                if (not segment.next_scheduler or segment.next_scheduler < datetime_now.strftime('%Y-%m-%d %H:%M:%S')) and (not review_date or review_date < datetime_now.strftime('%Y-%m-%d %H:%M:%S')):
                     gen_inv_review = True
 
             seg_context = {
