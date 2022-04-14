@@ -1711,8 +1711,8 @@ class stock_move(osv.osv):
             'auto_picking': picking.type == 'in' and any(m.direct_incoming for m in picking.move_lines),
             'reason_type_id': reason_type_id,
             'previous_chained_pick_id': picking.id,
+            'from_wkf': picking.from_wkf,
         }
-
         return picking_obj.create(cr, uid, pick_values, context=context)
 
 stock_move()
