@@ -13,8 +13,8 @@ msal==1.11.0
 Office365-REST-Python-Client==2.3.3
 paramiko==2.7.2
 passlib==1.7.4
-Pillow==8.2.0
-psutil==5.8.0
+Pillow==9.1.0
+psutil==5.9.0
 psycopg2==2.9.3
 pyaml==20.4.0
 pycparser==2.20
