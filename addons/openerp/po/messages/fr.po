@@ -1867,3 +1867,7 @@ msgstr "Exporter le résultat complet :"
 #: controllers/templates/exp.mako:209
 msgid "could impact machine performance"
 msgstr "peut impacter les performances de la machine"
+
+#: controllers/templates/header.mako:76 controllers/templates/header.mako:78
+msgid "User Manuals"
+msgstr "Manuels d'Utilisateur"
