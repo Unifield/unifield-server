@@ -752,7 +752,6 @@ class stock_move(osv.osv):
                       'location_id': location_id,
                       'location_dest_id': location_dest_id,
                       'name': p_data['name'],
-                      'is_ext_cu': True if picking.ext_cu else False,
                       }
 
             values.update(self.onchange_product_id(cr, uid, False, p_data['id'], location_id, location_dest_id, picking.address_id and picking.address_id.id or False, picking.type, False).get('value', {}))
