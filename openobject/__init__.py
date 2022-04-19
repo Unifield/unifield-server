@@ -108,10 +108,8 @@ def configure(app_config):
     # logging config
     log = cherrypy.log
 
-    error_level = logging._levelToName.get(
-        _global.get('log.error_level'), 'WARNING')
-    access_level = logging._levelToName.get(
-        _global.get('log.access_level'), 'INFO')
+    error_level = _global.get('log.error_level', 'WARNING')
+    access_level = _global.get('log.access_level', 'INFO')
     log.error_log.setLevel(error_level)
     log.access_log.setLevel(access_level)
 
