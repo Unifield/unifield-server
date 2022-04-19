@@ -517,6 +517,9 @@ class account_move_line(osv.osv):
                 # Add account_id because of an error with account_activable module for checking date
                 if not 'account_id' in vals and 'date' in vals:
                     vals.update({'account_id': ml.account_id and ml.account_id.id or False})
+                # Add date for the case of an update of a move_line
+                if 'account_id' in vals and not 'date' in vals:
+                    vals.update({'date': ml.date})
                 tmp_res = super(account_move_line, self).write(cr, uid, [ml.id], vals, context, False, False)
                 res.append(tmp_res)
             return res
