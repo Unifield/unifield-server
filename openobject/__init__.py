@@ -95,6 +95,12 @@ def configure(app_config):
     cherrypy globally and configure the OpenERP WSGI Application.
     """
     _global = app_config.pop('global', {})
+
+    if _global.get('log.error_file'):
+        dirname = os.path.dirname(_global.get('log.error_file'))
+        if dirname and not os.path.isdir(dirname):
+            os.makedirs(dirname)
+
     cherrypy.config.update(BASE_CONFIG)
     cherrypy.config.update(_global)
     application.merge(app_config)

@@ -21,7 +21,7 @@ DISTRIBUTION_CONFIG = os.path.join('doc', 'openerp-web.cfg')
 FROZEN_DISTRIBUTION_CONFIG = os.path.join('conf', 'openerp-web.cfg')
 OVERRIDE_CONFIG = os.path.join('conf', 'openerp-web-oc.cfg')
 def get_config_override_file():
-    if hasattr(sys, 'frozen'):
+    if os.name == 'nt':
         configfile = os.path.join(openobject.paths.root(), OVERRIDE_CONFIG)
         if os.path.exists(configfile):
             return configfile
@@ -29,7 +29,7 @@ def get_config_override_file():
     return False
 
 def get_config_file():
-    if hasattr(sys, 'frozen'):
+    if os.name == 'nt':
         configfile = os.path.join(openobject.paths.root(), FROZEN_DISTRIBUTION_CONFIG)
         if not os.path.exists(configfile):
             configfile = os.path.join(openobject.paths.root(), DISTRIBUTION_CONFIG)
