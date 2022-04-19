@@ -190,8 +190,8 @@ def revprox(redir_port):
     ok = False
     while not ok:
         line = proc.stdout.readline()
-        if line != '':
-            line = line.strip().split(" ", 2)
+        if line:
+            line = str(line, 'utf8').strip().split(" ", 2)
             cherrypy.log(line[-1], ctx)
             if line[-1] == 'Startup OK.':
                 ok = True
@@ -209,8 +209,8 @@ def revprox(redir_port):
     def logRead(proc):
         while True:
             line = proc.stdout.readline()
-            if line != '':
-                line = line.split(" ", 2)
+            if line:
+                line = str(line, 'utf8').split(" ", 2)
                 cherrypy.log(line[-1].strip(), ctx)
             else:
                 break
