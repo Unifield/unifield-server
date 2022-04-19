@@ -327,7 +327,7 @@ class product_history_consumption(osv.osv):
         new_thread = threading.Thread(target=self._create_lines, args=(cr.dbname, uid, ids, domain, new_context))
         new_thread.start()
         new_thread.join(10.0)
-        if new_thread.isAlive():
+        if new_thread.is_alive():
             return False
         return True
 
