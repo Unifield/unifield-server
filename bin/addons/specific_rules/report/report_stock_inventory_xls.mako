@@ -244,7 +244,7 @@
           <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(round(prd['sum_qty'], 2))|x}</Data></Cell>
           <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(round(prd['sum_value'], 2))|x}</Data></Cell>
       </Row>
-        % for line in prd['lines'].itervalues():
+        % for line in iter(prd['lines'].values()):
           % if line['qty'] or prd['with_zero']:
           <Row ss:AutoFitHeight="1">
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>

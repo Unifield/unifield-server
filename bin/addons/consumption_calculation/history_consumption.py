@@ -413,7 +413,7 @@ class product_history_consumption(osv.osv):
             ids_len = len(product_ids)
             slice_len = 500
             if ids_len > slice_len:
-                slice_count = ids_len / slice_len
+                slice_count = ids_len // slice_len
                 if ids_len % slice_len:
                     slice_count = slice_count + 1
                 # http://www.garyrobinson.net/2008/04/splitting-a-pyt.html
@@ -687,7 +687,7 @@ class product_product(osv.osv):
             tmp_months.sort()
 
             for month in tmp_months:
-                line_view += """<field name="%s" />""" % datetime.strptime(month, '%Y-%m-%d').strftime('%m_%Y')
+                line_view += """<field name="%s" />""" % datetime.strptime(month, '%Y-%m').strftime('%m_%Y')
 
             line_view += "</tree>"
 
