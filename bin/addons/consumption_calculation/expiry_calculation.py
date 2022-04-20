@@ -542,7 +542,7 @@ class product_likely_expire_report(osv.osv):
                                     if life_date >= fmc['from'] and tmp_last_expiry_date <= fmc['to']:
                                         # if the given period overlaps FMC interval
                                         end_fmc = min(life_date, fmc['to'])
-                                        lot_days = relativedelta(datetime.strptime(end_fmc, '%Y-%m-%d'), tmp_last_expiry_date)
+                                        lot_days = relativedelta(end_fmc, tmp_last_expiry_date)
                                         consum += fmc['fmc'] * (lot_days.years*364.8 + lot_days.months*30.44 + lot_days.days)/30.44
                                         tmp_last_expiry_date = end_fmc
                                     if life_date <= fmc['to']:

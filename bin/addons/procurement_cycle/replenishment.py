@@ -2740,7 +2740,7 @@ class replenishment_segment_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please correct the following  values:\n%s') % ("\n".join(error)))
 
             if line.segment_id.rule == 'cycle':
-                fmc_version = hashlib.md5(''.join(md5_data)).hexdigest()
+                fmc_version = hashlib.md5(bytes(''.join(md5_data), 'utf8')).hexdigest()
                 cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s and coalesce(fmc_version, '')!=%s returning id", (fmc_version, line.id, fmc_version))
                 updated = cr.fetchone()
                 if updated and line.segment_id.state == 'complete':
