@@ -561,7 +561,7 @@ class weekly_forecast_report(osv.osv):
                         if date < fixed_now:
                             date = fixed_now
                         if report.interval_type == 'week':
-                            st_day = fixed_now.day_of_week
+                            st_day = fixed_now.weekday()
                             last_date = date + relativedelta(weekday=weekday(st_day))
                             if date.iso_week[2] == last_date.iso_week[2]:
                                 return date
