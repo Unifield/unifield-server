@@ -344,6 +344,7 @@ class msf_accrual_line(osv.osv):
             self._check_period_state(cr, uid, reversal_period_id, context=context)
 
             # Create moves
+            # the original ref is kept as is without prefix
             move_vals = {
                 'ref': accrual_line.reference,
                 'period_id': accrual_line.period_id.id,
@@ -684,7 +685,7 @@ class msf_accrual_line(osv.osv):
                 self._check_period_state(cr, uid, reversal_period_id, context=context)
 
                 reversal_move_vals = {
-                    'ref': accrual_line.reference,
+                    'ref': accrual_line.reference,  # the original ref is kept as is without prefix REV
                     'period_id': reversal_period_id,
                     'journal_id': accrual_line.journal_id.id,
                     'date': posting_date,
