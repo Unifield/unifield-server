@@ -621,6 +621,8 @@ class msf_accrual_line(osv.osv):
                     booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                     'currency_id': accrual_line.currency_id.id,
                 }
+                accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
+
                 # negative amount for expense would result in an opposite
                 # behavior, expense in credit and a accrual in debit for the
                 # initial entry
@@ -646,8 +648,6 @@ class msf_accrual_line(osv.osv):
 
                     }
                     move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
-
-                accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
 
                 # Post the moves
                 move_obj.post(cr, uid, move_id, context=context)
@@ -714,6 +714,7 @@ class msf_accrual_line(osv.osv):
                     booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                     'currency_id': accrual_line.currency_id.id,
                 }
+                reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
 
                 booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                 for expense_line in accrual_line.expense_line_ids:
@@ -737,8 +738,6 @@ class msf_accrual_line(osv.osv):
                                                                 context=context) or False,
                     }
                     move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
-
-                reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
 
                 # Post the moves
                 move_obj.post(cr, uid, reversal_move_id, context=context)
