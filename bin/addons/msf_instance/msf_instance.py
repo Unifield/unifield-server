@@ -634,7 +634,9 @@ class msf_instance_cloud(osv.osv):
         try:
             dav = webdav.Client(**data)
         except webdav.ConnectionFailed as e:
-            raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % (e.message))
+            raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % e)
+        except Exception as e:
+            raise osv.except_osv(_('Warning !'), _('Connection error: %s') % e)
 
         return dav
 
@@ -686,7 +688,7 @@ class msf_instance_cloud(osv.osv):
 
                 next_cron = datetime.strptime(cron_data.nextcall, '%Y-%m-%d %H:%M:%S')
                 if not cron_data.active or abs(round(next_cron.hour + next_cron.minute/60.,2) - round(myself['cloud_schedule_time'],2)) > 0.001:
-                    next_time = datetime.now()  + relativedelta(minute=0, second=0, hour=round(myself['cloud_schedule_time'],3)) + relativedelta(seconds=0)
+                    next_time = datetime.now()  + relativedelta(minute=int(myself['cloud_schedule_time']%1*60), second=0, hour=int(myself['cloud_schedule_time'])) + relativedelta(seconds=0)
                     if next_time < datetime.now():
                         next_time += relativedelta(days=1)
                     to_write['nextcall'] = next_time.strftime('%Y-%m-%d %H:%M:00')
@@ -793,7 +795,7 @@ class msf_instance_cloud(osv.osv):
             if progress:
                 progress_obj = self.pool.get('msf.instance.cloud.progress').browse(cr, uid, progress)
 
-            final_name = '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week])
+            final_name = '%s-%s.zip' % (local_instance.instance, day_abr[today.weekday()])
             temp_drive_file = '%s/%s.zip' % (self._temp_folder, local_instance.instance)
 
             dav_connected = False

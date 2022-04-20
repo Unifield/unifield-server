@@ -1916,7 +1916,7 @@ def float_uom_to_str(value, uom_obj):
 
 class crypt():
     def __init__(self, password):
-        password = bytes(password)
+        password = bytes(password, 'utf8')
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -1928,10 +1928,10 @@ class crypt():
         self.Fernet = Fernet(key)
 
     def encrypt(self, string):
-        return self.Fernet.encrypt(string)
+        return self.Fernet.encrypt(bytes(string, 'utf8'))
 
     def decrypt(self, string):
-        return self.Fernet.decrypt(bytes(string))
+        return str(self.Fernet.decrypt(bytes(string, 'utf8')), 'utf8')
 
 
 def get_fake(self, cr, uid, ids, *a, **b):

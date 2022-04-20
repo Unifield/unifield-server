@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import requests
-
-from office365.runtime.auth.authentication_context import AuthenticationContext
-from office365.runtime.client_request import ClientRequest
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.http.request_options import RequestOptions
 from office365.runtime.http.http_method import HttpMethod
-import cgi
+from office365.runtime.auth.providers.saml_token_provider import SamlTokenProvider
 import uuid
 import logging
 import os
@@ -45,16 +42,11 @@ class Client(object):
         self.login()
 
     def login(self):
-        ctx_auth = AuthenticationContext(self.baseurl)
-
-        if ctx_auth.acquire_token_for_user(self.username, cgi.escape(self.password)):
-            self.request = ClientRequest(ctx_auth)
-            self.request.context = ClientContext(self.baseurl, ctx_auth)
-
-            if not ctx_auth.provider.FedAuth or not ctx_auth.provider.rtFa:
-                raise ConnectionFailed(ctx_auth.get_last_error())
-        else:
-            raise requests.exceptions.RequestException(ctx_auth.get_last_error())
+        self.request = ClientContext(self.baseurl)
+        self.request.with_user_credentials(self.username, self.password)
+        if not isinstance(self.request.authentication_context._provider, SamlTokenProvider) or \
+                not self.request.authentication_context._provider.get_authentication_cookie():
+            raise requests.exceptions.RequestException(self.request.get_last_error())
 
     def format_request(self, url, method='POST', data="", session=False):
         assert(method in ['POST', 'DELETE'])
@@ -67,9 +59,9 @@ class Client(object):
         options.set_header("X-HTTP-Method", method)
         options.set_header('Accept', 'application/json')
         options.set_header('Content-Type', 'application/json')
+        self.request.authenticate_request(options)
+        self.request.ensure_form_digest(options)
 
-        self.request.context.authenticate_request(options)
-        self.request.context.ensure_form_digest(options)
 
         if session:
             return session.post(url, data=data, headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
