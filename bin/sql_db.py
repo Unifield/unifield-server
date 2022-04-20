@@ -343,6 +343,9 @@ class Cursor(object):
     def dictfetchall(self):
         return [self.__build_dict(row) for row in self._obj.fetchall()]
 
+    def dictfetchmany(self, num):
+        return [self.__build_dict(row) for row in self._obj.fetchmany(num)]
+
     def dictfetchone(self):
         row = self._obj.fetchone()
         return row and self.__build_dict(row)

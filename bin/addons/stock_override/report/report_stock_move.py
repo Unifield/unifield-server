@@ -640,10 +640,7 @@ product will be shown.""",
             nb_done = 0
             bn_stock_cache = {}
             prod_stock_cache = {}
-            while True:
-                rows = new_cr.dictfetchmany(600)
-                if not rows:
-                    return
+            while rows := new_cr.dictfetchmany(600):
                 for move in rows:
                     nb_done += 1
                     if nb_done % 300 == 0:
@@ -651,7 +648,6 @@ product will be shown.""",
                         if context.get('progress_id'):
                             self.pool.get('export.report.stock.move.progress').write(cr, uid, context.get('progress_id'), {'progress': '%d / %d' % (nb_done, nb_lines)})
                         start_time = time.time()
-
                     move_date = move['date'] or False
                     # Get stock
                     ctx = context.copy()
@@ -900,8 +896,7 @@ product will be shown.""",
         except Exception as e:
             new_cr.rollback()
             if context.get('report_id'):
-                msg = hasattr(e, 'value') and e.value or e.message
-                self.pool.get('export.report.stock.move').write(new_cr, uid, context['report_id'], {'state': 'error', 'error': tools.ustr(msg)})
+                self.pool.get('export.report.stock.move').write(new_cr, uid, context['report_id'], {'state': 'error', 'error': str(e)})
             raise
         finally:
             if context.get('progress_id'):
