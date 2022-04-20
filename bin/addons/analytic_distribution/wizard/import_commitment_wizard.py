@@ -160,7 +160,15 @@ class import_commitment_wizard(osv.osv_memory):
             for wizard in self.browse(cr, uid, ids, context=context):
                 if not wizard.import_file:
                     raise osv.except_osv(_('Error'), _('Nothing to import.'))
-                import_file = base64.b64decode(wizard.import_file)
+                decoded = base64.b64decode(wizard.import_file)
+                try:
+                    import_file = str(decoded, 'utf-8')
+                except UnicodeDecodeError:
+                    try:
+                        import_file = str(decoded, 'iso-8859-15')
+                    except UnicodeDecodeError:
+                        raise osv.except_osv(_('Error'), _('Wrong file format, must be UTF-8 encoded'))
+
                 import_string = io.StringIO(import_file)
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
                 total_line = len(import_data) - 1
@@ -338,7 +346,7 @@ class import_commitment_wizard(osv.osv_memory):
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_DATE', time.strftime('%Y-%m-%d %H:%M:%S'))
 
         except Exception as e:
-            msg = hasattr(e, 'value') and e.value or e.message
+            msg = hasattr(e, 'value') and e.value or '%s' % e
             self.write(cr, 1, ids, {'in_progress': False, 'error': tools.ustr(msg)})
             cr.rollback()
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_ERROR',  tools.ustr(msg))
@@ -434,12 +442,12 @@ class int_commitment_export_wizard(osv.osv_memory):
         export_ids = aal_obj.search(cr, uid, domain, context=context)
         for export_br in aal_obj.browse(cr, uid, export_ids, context=context):
             line_data = self._export_entry(export_br)
-            csv_writer.writerow([isinstance(x, str) and x.encode('utf8') or x for x in line_data])
+            csv_writer.writerow(line_data)
 
         # download csv
         vals = {
             'state': 'get',
-            'data': base64.b64encode(csv_buffer.getvalue()),
+            'data': base64.b64encode(bytes(csv_buffer.getvalue(),'utf8')),
             'name': file_name,
         }
         csv_buffer.close()
