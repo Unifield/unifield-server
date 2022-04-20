@@ -71,7 +71,7 @@ SELECT column_name
                         #sdref = xmlid_to_sdref(data['id'])
                         #cr.execute("UPDATE %s SET sdref = %%s WHERE id = %%s" % self._table, [sdref, id])  # not_a_user_entry
                     except AssertionError as e:
-                        _logger.error("Cannot find SD ref on model=%s id=%d: %s" % (self._name, id, e.message))
+                        _logger.error("Cannot find SD ref on model=%s id=%d: %s" % (self._name, id, e))
                         cr.execute("ROLLBACK TO SAVEPOINT make_sdref")
                     except:
                         _logger.exception("Cannot find SD ref on model=%s id=%d" % (self._name, id))

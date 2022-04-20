@@ -1950,7 +1950,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             except Exception as e:
                 cr.rollback()
                 job_comment = context.get('job_comment', [])
-                error_msg = hasattr(e, 'value') and e.value or e.message
+                error_msg = hasattr(e, 'value') and e.value or '%s' % e
                 job_comment.append({
                     'res_model': 'purchase.order',
                     'res_id': line.simu_id.order_id.id,

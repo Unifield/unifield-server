@@ -205,7 +205,7 @@ class ir_actions_report_xml(osv.osv):
                 report_name = self.pool.get('ir.sequence')._process(cr, uid, report.target_filename)
             except KeyError as e:
                 # Some %(blabla)s remain, cannot parse them
-                error += _('\'%%(%s)s\' cannot be parsed \n') % e.message
+                error += _('\'%%(%s)s\' cannot be parsed \n') % e
                 raise osv.except_osv(_('Error'), error)
                 break
 

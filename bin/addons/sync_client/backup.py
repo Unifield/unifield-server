@@ -157,7 +157,7 @@ class BackupConfig(osv.osv):
             cr.rollback()
             import traceback, sys
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
-            self.write(cr, uid, [ids[0]], {'basebackup_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=ctx_no_write)
+            self.write(cr, uid, [ids[0]], {'basebackup_error': '%s\n\n%s' % (e, tools.ustr(tb_s))}, context=ctx_no_write)
             cr.commit()
             raise e
 
@@ -236,7 +236,7 @@ class BackupConfig(osv.osv):
             cr.rollback()
             import traceback, sys
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
-            self.write(cr, uid, [ids[0]], {'rsync_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=ctx_no_write)
+            self.write(cr, uid, [ids[0]], {'rsync_error': '%s\n\n%s' % (e, tools.ustr(tb_s))}, context=ctx_no_write)
             cr.commit()
             raise e
         finally:

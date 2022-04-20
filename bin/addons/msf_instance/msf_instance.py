@@ -649,18 +649,18 @@ class msf_instance_cloud(osv.osv):
         locale_file.seek(0)
         try:
             dav.upload(locale_file, test_file_name)
-        except webdav.ConnectionFailed as e:
-            raise osv.except_osv(_('Warning !'), _('Unable to upload a test file: %s') % (e.message))
+        except Exception as e:
+            raise osv.except_osv(_('Warning !'), _('Unable to upload a test file: %s') % (e, ))
 
         try:
             dav.delete(test_file_name)
-        except webdav.ConnectionFailed as e:
-            raise osv.except_osv(_('Warning !'), _('Unable to delete a test file: %s') % (e.message))
+        except Exception as e:
+            raise osv.except_osv(_('Warning !'), _('Unable to delete a test file: %s') % (e, ))
 
         try:
             dav.create_folder(self._temp_folder)
-        except webdav.ConnectionFailed as e:
-            raise osv.except_osv(_('Warning !'), _('Unable to create temp folder: %s') % (e.message))
+        except Exception as e:
+            raise osv.except_osv(_('Warning !'), _('Unable to create temp folder: %s') % (e, ))
 
         raise osv.except_osv(_('OK'), _('Connection to remote storage is OK'))
 

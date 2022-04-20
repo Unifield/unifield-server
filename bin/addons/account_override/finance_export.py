@@ -238,7 +238,7 @@ class finance_archive():
                     try:
                         cr.execute(update_request, (tuple(ids),))
                     except Exception as e:
-                        raise osv.except_osv(_('Error'), _('An error occurred: %s') % (e.message and e.message or '',))
+                        raise osv.except_osv(_('Error'), _('An error occurred: %s') % (e ,))
             without_headers = []
             # Check if a function is given. If yes, use it.
             # If not, transform lines into UTF-8. Note that postprocess method should transform lines into UTF-8 ones.

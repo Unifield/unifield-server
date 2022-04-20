@@ -139,7 +139,7 @@ class BackgroundProcess(Thread):
                 logger.append(e.value)
                 raise
             else:
-                error = "%s: %s" % (e.__class__.__name__, tools.ustr(e))
+                error = "%s: %s" % (e.__class__.__name__, e)
                 logger.append(error)
                 raise osv.except_osv(_('Error!'), error)
 
@@ -177,12 +177,12 @@ def sync_subprocess(step='status', defaults_logger={}):
                 raise
             except BaseException as e:
                 # Handle aborting of synchronization
-                if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
+                if isinstance(e, OperationalError) and str(e) == 'Unable to use the cursor after having closed it':
                     logger.switch(step, 'aborted')
                     self.sync_cursor = None
                     raise
                 logger.switch(step, 'failed')
-                error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', tools.ustr(e)))
+                error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', e))
                 self._logger.exception('Error in sync_process at step %s' % step)
                 logger.append(error, step)
                 raise
@@ -323,7 +323,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 raise
             except BaseException as e:
                 # Handle aborting of synchronization
-                if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
+                if isinstance(e, OperationalError) and str(e) == 'Unable to use the cursor after having closed it':
                     if make_log:
                         error = "Synchronization aborted"
                         logger.append(error, 'status')
@@ -334,7 +334,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                         self.sync_cursor = None
                         raise
                 logger.switch(step, 'failed')
-                error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', tools.ustr(e)))
+                error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', e))
                 if is_step:
                     self._logger.exception('Error in sync_process at step %s' % step)
                     logger.append(error, step)
