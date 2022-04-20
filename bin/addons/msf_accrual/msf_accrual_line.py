@@ -130,7 +130,7 @@ class msf_accrual_line(osv.osv):
         'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', '=', 'draft'), ('is_system', '=', False)]),
         'description': fields.char('Description', size=64, required=True),
         'reference': fields.char('Reference', size=64),
-        'expense_account_id': fields.many2one('account.account', 'Expense Account (deprecated)', required=True,
+        'expense_account_id': fields.many2one('account.account', 'Expense Account (deprecated)',
                                               domain=[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]),
         'accrual_account_id': fields.many2one('account.account', 'Accrual Account', required=True, domain=[('type', '!=', 'view'), ('user_type_code', 'in', ['receivables', 'payables', 'debt'])]),
         'accrual_amount': fields.float('Accrual Amount (deprecated)'),
@@ -198,8 +198,6 @@ class msf_accrual_line(osv.osv):
                 vals['third_party_name'] = partner.name
 
         account_ids = []
-        if vals.get('expense_account_id', False):
-            account_ids.append(vals.get('expense_account_id'))
         if vals.get('accrual_account_id', False):
             account_ids.append(vals.get('accrual_account_id'))
 
