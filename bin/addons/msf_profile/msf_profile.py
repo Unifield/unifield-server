@@ -100,8 +100,11 @@ class patch_scripts(osv.osv):
         - B) some pieces of data are now handled at line level:
           ==> moves them from the accrual itself (msf.accrual.line) to the expense line (msf.accrual.line.expense)
         - C) initializes the sequence on the existing Accruals so that the line numbers are consistent (Line number = 1 for point B)
+        - D) sets the value for the fields.char "entry_sequence" by using the function related to the old
+             fields.function "entry_sequence", which has been removed.
         """
         if self.pool.get('sync.client.entity') and not self.pool.get('sync.server.update'):  # existing instances
+            accrual_obj = self.pool.get('msf.accrual.line')
             cr.execute("UPDATE msf_accrual_line SET state = 'running' WHERE state = 'partially_posted'")
             self.log_info(cr, uid, '%d Accrual(s) set to: Running.' % (cr.rowcount,))
             cr.execute("UPDATE msf_accrual_line SET state = 'done' WHERE state = 'posted'")
@@ -110,13 +113,21 @@ class patch_scripts(osv.osv):
             cr.execute('''SELECT id, description, reference, expense_account_id, accrual_amount FROM msf_accrual_line''')
             accruals = cr.fetchall()
             for accrual_data in accruals:
+                accrual_id = accrual_data[0]
+                # get the entry_sequence to set at doc level
+                entry_seq = ''
+                entry_seq_dict = accrual_obj._get_entry_sequence(cr, uid, [accrual_id])
+                if entry_seq_dict and accrual_id in entry_seq_dict:
+                    entry_seq = entry_seq_dict[accrual_id] or ''
                 # initialize the sequence for line numbering (ir_sequences are not synchronized)
-                seq_id = self.pool.get('msf.accrual.line').create_sequence(cr, uid)
-                cr.execute("UPDATE msf_accrual_line SET sequence_id = %s WHERE id = %s", (seq_id, accrual_data[0]))
+                line_seq_id = accrual_obj.create_sequence(cr, uid)
+                cr.execute("UPDATE msf_accrual_line "
+                           "SET entry_sequence = %s, sequence_id = %s "
+                           "WHERE id = %s", (entry_seq, line_seq_id, accrual_id))
                 new_expense_line_vals = {
                     # the line_number will be automatically filled in, using the sequence created above
                     # no analytic_distribution_id is defined on the line, the global AD is kept
-                    'accrual_line_id': accrual_data[0],
+                    'accrual_line_id': accrual_id,
                     'description': accrual_data[1],
                     'reference': accrual_data[2] or '',
                     'expense_account_id': accrual_data[3],

@@ -61,7 +61,10 @@ class msf_accrual_line(osv.osv):
             }
         return res
 
-    def _get_entry_sequence(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_entry_sequence(self, cr, uid, ids, context=None):
+        """
+        Deprecated method, previously used for the old fields.function entry_sequence and now used ONLY for patch script
+        """
         res = {}
         if not ids:
             return res
@@ -165,8 +168,7 @@ class msf_accrual_line(osv.osv):
                                    ('cancel', 'Cancelled')], 'Status', required=True),
         # Field to store the third party's name for list view
         'third_party_name': fields.char('Third Party', size=64),
-        'entry_sequence': fields.function(_get_entry_sequence, method=True,
-                                          store=False, string="Number", type="char", readonly="True"),
+        'entry_sequence': fields.char("Number", size=64, readonly=True),
         'expense_line_ids': fields.one2many('msf.accrual.line.expense', 'accrual_line_id', string="Accrual Expense Lines"),
         'sequence_id': fields.many2one('ir.sequence', string='Sequence of the lines', ondelete='cascade'),
     }
