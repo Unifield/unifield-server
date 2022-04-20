@@ -209,7 +209,7 @@ class hr_employee(osv.osv):
         (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
 
-    def _check_employee_cc_compatibility(self, cr, uid, employee_id, context=None):
+    def _check_employee_cc_compatibility(self, cr, uid, employee_ids, context=None):
         """
         Raises an error in case the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are not compatible.
         """
@@ -217,18 +217,29 @@ class hr_employee(osv.osv):
             context = {}
         ad_obj = self.pool.get('analytic.distribution')
         employee_fields = ['destination_id', 'cost_center_id', 'funding_pool_id', 'name_resource']
-        employee = self.browse(cr, uid, employee_id, fields_to_fetch=employee_fields, context=context)
-        emp_dest = employee.destination_id
-        emp_cc = employee.cost_center_id
-        emp_fp = employee.funding_pool_id
-        if emp_dest and emp_cc:
-            if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
-                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') %
-                                     (employee.name_resource, emp_cc.code or '', emp_dest.code or ''))
-        if emp_fp and emp_cc:
-            if not ad_obj.check_fp_cc_compatibility(cr, uid, emp_fp.id, emp_cc.id, context=context):
-                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.') %
-                                     (employee.name_resource, emp_cc.code or '', emp_fp.code or ''))
+        file_error_msg = ''
+        if isinstance(employee_ids,(int, long)):
+            employee_ids = [employee_ids]
+        for employee_id in employee_ids:
+            error_msg = ''
+            employee = self.browse(cr, uid, employee_id, fields_to_fetch=employee_fields, context=context)
+            emp_dest = employee.destination_id
+            emp_cc = employee.cost_center_id
+            emp_fp = employee.funding_pool_id
+            if emp_dest and emp_cc:
+                if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
+                    # raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') %
+                    #                      (employee.name_resource, emp_cc.code or '', emp_dest.code or ''))
+                    error_msg += _('Employee %s: the Cost Center %s is not compatible with the Destination %s.\n') % (employee.name_resource, emp_cc.code or '', emp_dest.code or '')
+            if emp_fp and emp_cc:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, emp_fp.id, emp_cc.id, context=context):
+                    # raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.') %
+                    #                      (employee.name_resource, emp_cc.code or '', emp_fp.code or ''))
+                    error_msg += _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.\n') % (employee.name_resource, emp_cc.code or '', emp_fp.code or '')
+            if error_msg:
+                file_error_msg += error_msg
+        if file_error_msg:
+            raise osv.except_osv(_('Error'), file_error_msg)
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -272,6 +283,7 @@ class hr_employee(osv.osv):
         ex = False
         allowed = False
         res = []
+        emp_ids = []
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         if setup and not setup.payroll_ok:
             allowed = True
@@ -287,6 +299,7 @@ class hr_employee(osv.osv):
             allowed = True
         # Browse all employees
         for emp in self.browse(cr, uid, ids):
+            emp_ids.append(emp.id)
             new_vals = dict(vals)
             # Raise an error if attempt to change local into expat and expat into local
             if emp.employee_type == 'ex' and local and not allowed:
@@ -303,7 +316,8 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
-            self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
+            # self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
+        self._check_employee_cc_compatibility(cr, uid, emp_ids, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
