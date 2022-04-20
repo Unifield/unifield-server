@@ -356,6 +356,7 @@ class msf_accrual_line(osv.osv):
                                                                                                   {},
                                                                                                   context=context) or False,
             }
+            move_id = move_obj.create(cr, uid, move_vals, context=context)
 
             reversal_move_vals = {
                 'ref': accrual_line.reference,
@@ -370,15 +371,10 @@ class msf_accrual_line(osv.osv):
                                                                                                   {},
                                                                                                   context=context) or False,
             }
-
-            move_id = move_obj.create(cr, uid, move_vals, context=context)
             reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
 
-            cancel_description = "CANCEL - " + accrual_line.description
-            reverse_cancel_description = "CANCEL - REV - " + accrual_line.description
-
             # Create move lines
-            booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'  # reverse of initial entry
+            booking_field_cancel = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'  # reverse of initial entry
             accrual_move_line_vals = {
                 'accrual': True,
                 'move_id': move_id,
@@ -387,15 +383,38 @@ class msf_accrual_line(osv.osv):
                 'journal_id': accrual_line.journal_id.id,
                 'period_id': accrual_line.period_id.id,
                 'reference': accrual_line.reference,
-                'name': cancel_description,
+                'name': "CANCEL - %s" % accrual_line.description,
                 'account_id': accrual_line.accrual_account_id.id,
                 'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                 'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                booking_field: abs(accrual_line.total_accrual_amount or 0.0),
+                booking_field_cancel: abs(accrual_line.total_accrual_amount or 0.0),
                 'currency_id': accrual_line.currency_id.id,
             }
+            accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
 
-            booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+            # and their reversal (source_date to keep the old change rate)
+            booking_field_rev = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+            reversal_accrual_move_line_vals = {
+                'accrual': True,
+                'move_id': reversal_move_id,
+                'date': reversal_move_posting_date,
+                'document_date': reversal_move_document_date,
+                'source_date': curr_date,  # date from the original accrual line
+                'journal_id': accrual_line.journal_id.id,
+                'period_id': reversal_period_id,
+                'reference': accrual_line.reference,
+                'name': "CANCEL - REV - %s" % accrual_line.description,
+                'account_id': accrual_line.accrual_account_id.id,
+                'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
+                'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                booking_field_rev: abs(accrual_line.total_accrual_amount or 0.0),
+                'currency_id': accrual_line.currency_id.id,
+            }
+            reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
+
+            # create the expense lines
+            booking_field_cancel_exp = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+            booking_field_rev_exp = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
             for expense_line in accrual_line.expense_line_ids:
                 expense_move_line_vals = {
                     'accrual': True,
@@ -409,7 +428,7 @@ class msf_accrual_line(osv.osv):
                     'account_id': expense_line.expense_account_id.id,
                     'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
                     'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
-                    booking_field: abs(expense_line.accrual_amount or 0.0),
+                    booking_field_cancel_exp: abs(expense_line.accrual_amount or 0.0),
                     'currency_id': accrual_line.currency_id.id,
                     'analytic_distribution_id': expense_line.analytic_distribution_id and
                                                 ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {},
@@ -417,26 +436,6 @@ class msf_accrual_line(osv.osv):
                 }
                 move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
 
-            # and their reversal (source_date to keep the old change rate)
-            booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
-            reversal_accrual_move_line_vals = {
-                'accrual': True,
-                'move_id': reversal_move_id,
-                'date': reversal_move_posting_date,
-                'document_date': reversal_move_document_date,
-                'source_date': curr_date,  # date from the original accrual line
-                'journal_id': accrual_line.journal_id.id,
-                'period_id': reversal_period_id,
-                'reference': accrual_line.reference,
-                'name': reverse_cancel_description,
-                'account_id': accrual_line.accrual_account_id.id,
-                'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                booking_field: abs(accrual_line.total_accrual_amount or 0.0),
-                'currency_id': accrual_line.currency_id.id,
-            }
-            booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
-            for expense_line in accrual_line.expense_line_ids:
                 reversal_expense_move_line_vals = {
                     'accrual': True,
                     'move_id': reversal_move_id,
@@ -450,16 +449,13 @@ class msf_accrual_line(osv.osv):
                     'account_id': expense_line.expense_account_id.id,
                     'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
                     'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
-                    booking_field: abs(expense_line.accrual_amount or 0.0),
+                    booking_field_rev_exp: abs(expense_line.accrual_amount or 0.0),
                     'currency_id': accrual_line.currency_id.id,
                     'analytic_distribution_id': expense_line.analytic_distribution_id and
                                                 ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {},
                                                             context=context) or False,
                 }
                 move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
-
-            accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
-            reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
 
             # Post the moves
             move_obj.post(cr, uid, [move_id, reversal_move_id], context=context)
@@ -700,8 +696,6 @@ class msf_accrual_line(osv.osv):
 
                 reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
 
-                reversal_description = "REV - " + accrual_line.description
-
                 # Create move lines / reversal entry (source_date to keep the old change rate):
                 booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 reversal_accrual_move_line_vals = {
@@ -713,7 +707,7 @@ class msf_accrual_line(osv.osv):
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': reversal_period_id,
                     'reference': accrual_line.reference,
-                    'name': reversal_description,
+                    'name': "REV - %s" % accrual_line.description,
                     'account_id': accrual_line.accrual_account_id.id,
                     'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                     'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
