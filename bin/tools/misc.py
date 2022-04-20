@@ -1261,7 +1261,7 @@ def ustr(value, hint_encoding='utf8'):
     @return: unicode string
     """
     if isinstance(value, Exception):
-        return exception_to_unicode(value)
+        return '%s' % value
 
     if isinstance(value, str):
         return value
