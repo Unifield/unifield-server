@@ -563,9 +563,9 @@ class weekly_forecast_report(osv.osv):
                         if report.interval_type == 'week':
                             st_day = fixed_now.weekday()
                             last_date = date + relativedelta(weekday=weekday(st_day))
-                            if date.iso_week[2] == last_date.iso_week[2]:
+                            if date.isocalendar().week == last_date.isocalendar().week:
                                 return date
-                            elif date.iso_week[2] > last_date.iso_week[2]:
+                            elif date.socalendar().week > last_date.socalendar().week:
                                 return last_date
                             else:
                                 # TODO JFB weekday

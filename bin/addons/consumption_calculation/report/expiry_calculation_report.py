@@ -181,7 +181,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         if dates:
             l = len(dates)
             if month_cols_count > 1:
-                res = l / month_cols_count
+                res = l // month_cols_count
                 if l % month_cols_count:
                     res += 1
         if not res or res < 1:
