@@ -626,7 +626,7 @@ class msf_accrual_line(osv.osv):
                 # negative amount for expense would result in an opposite
                 # behavior, expense in credit and a accrual in debit for the
                 # initial entry
-                booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
+                booking_field_exp = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 for expense_line in accrual_line.expense_line_ids:
                     expense_move_line_vals = {
                         'accrual': True,
@@ -640,7 +640,7 @@ class msf_accrual_line(osv.osv):
                         'account_id': expense_line.expense_account_id.id,
                         'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
                         'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
-                        booking_field: abs(expense_line.accrual_amount or 0.0),
+                        booking_field_exp: abs(expense_line.accrual_amount or 0.0),
                         'currency_id': accrual_line.currency_id.id,
                         'analytic_distribution_id': expense_line.analytic_distribution_id and
                                                     ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {},
@@ -716,7 +716,7 @@ class msf_accrual_line(osv.osv):
                 }
                 reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
 
-                booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
+                booking_field_exp = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                 for expense_line in accrual_line.expense_line_ids:
                     reversal_expense_move_line_vals = {
                         'accrual': True,
@@ -731,7 +731,7 @@ class msf_accrual_line(osv.osv):
                         'account_id': expense_line.expense_account_id.id,
                         'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
                         'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
-                        booking_field: abs(expense_line.accrual_amount or 0.0),
+                        booking_field_exp: abs(expense_line.accrual_amount or 0.0),
                         'currency_id': accrual_line.currency_id.id,
                         'analytic_distribution_id': expense_line.analytic_distribution_id and
                                                     ad_obj.copy(cr, uid, expense_line.analytic_distribution_id.id, {},
