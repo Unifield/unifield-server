@@ -78,7 +78,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             if wiz.filename.split('.')[-1] != 'xml':
                 raise osv.except_osv(_('Warning'), _('This wizard only accept XML files.'))
             # Read file
-            fileobj = SpreadsheetXML(xmlstring=b64decode(wiz.file).encode('utf8'))
+            fileobj = SpreadsheetXML(xmlstring=b64decode(wiz.file))
             reader = fileobj.getRows()
             line_index = 2  # header taken into account
             header_analyzed = False

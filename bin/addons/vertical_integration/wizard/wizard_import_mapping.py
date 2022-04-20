@@ -50,7 +50,7 @@ class wizard_import_mapping(osv.osv_memory):
 
         for wizard in self.browse(cr, uid, ids, context=context):
             import_file = base64.b64decode(wizard.import_file)
-            import_string = io.StringIO(import_file)
+            import_string = io.StringIO(str(import_file, 'utf8'))
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
 
             if context['active_model'] == 'account.export.mapping':

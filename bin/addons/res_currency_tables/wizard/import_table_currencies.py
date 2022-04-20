@@ -29,16 +29,16 @@ import csv
 
 class import_table_currencies(osv.osv_memory):
     _name = "import.table.currencies"
-    
+
     _columns = {
         'rate_date': fields.date('Date for the uploaded rates', required=True),
         'import_file': fields.binary("CSV File", required=True),
     }
-    
+
     _defaults = {
         'rate_date': lambda *a: datetime.datetime.today().strftime('%Y-%m-%d')
     }
-    
+
     def import_table_rates(self, cr, uid, ids, context=None):
         # UTP-894 get company currency code
         comp_ccy_code = False
@@ -49,29 +49,29 @@ class import_table_currencies(osv.osv_memory):
                 comp_ccy_name = self.pool.get('res.currency').name_get(cr, uid, [comp_ccy_id], context=context)
                 if comp_ccy_name:
                     comp_ccy_code = comp_ccy_name[0][1]
-                                        
+
         if context is None:
             context = {}
         currency_obj = self.pool.get('res.currency')
         currency_rate_obj = self.pool.get('res.currency.rate')
-        
+
         if 'active_id' in context:
             for wizard in self.browse(cr, uid, ids, context=context):
                 if not wizard.import_file:
                     raise osv.except_osv(_('Warning'),
-                        _('Please browse a csv file.'))
+                                         _('Please browse a csv file.'))
                 import_file = base64.b64decode(wizard.import_file)
-                import_string = io.StringIO(import_file)
+                import_string = io.StringIO(str(import_file, 'utf8'))
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
                 if not import_data:
                     raise osv.except_osv(_('Warning'), _('File is empty.'))
-                    
+
                 if comp_ccy_code:
                     # UTP-894 pre-check: currency table MUST contain company/reference currency
                     ccy_codes = [line[0] for line in import_data]
                     if comp_ccy_code not in ccy_codes:
                         raise osv.except_osv(_('Error'), _('The reference currency %s is not defined in the table to import!') % comp_ccy_code)
-                    
+
                 for line in import_data:
                     if len(line) > 0 and len(line[0]) == 3:
                         # we have a currency ISO code; search it and its rates in the table first
@@ -95,7 +95,7 @@ class import_table_currencies(osv.osv_memory):
                                                  'currency_table_id': context['active_id'],
                                                  'reference_currency_id': main_currency.id,
                                                  'active': False
-                                                }
+                                                 }
                                 # update currency_ids for below
                                 currency_ids = [currency_obj.create(cr, uid, currency_vals, context=context)]
                             else:
@@ -114,15 +114,15 @@ class import_table_currencies(osv.osv_memory):
                                                                'currency_id': currency_ids[0]})
                         # Now that there is a rate, update currency as active
                         currency_obj.write(cr, uid, currency_ids, {'active': True}, context=context)
-        
+
         return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'confirm.import.currencies',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': context
+            'type': 'ir.actions.act_window',
+            'res_model': 'confirm.import.currencies',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context
         }
-    
+
 import_table_currencies()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

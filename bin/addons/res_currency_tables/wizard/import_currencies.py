@@ -112,7 +112,7 @@ class import_currencies(osv.osv_memory):
             if not wizard.import_file:
                 raise osv.except_osv(_('Warning'), _('Please browse a csv file.'))
             import_file = base64.b64decode(wizard.import_file)
-            import_string = io.StringIO(import_file)
+            import_string = io.StringIO(str(import_file, 'utf8'))
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
 
             if not import_data:
