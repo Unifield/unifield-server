@@ -349,7 +349,7 @@ class Search(TinyInputWidget):
             elif node.localName=='label':
                 views.append(Label(**attrs))
             elif node.localName=='html':
-                node.localName='div'
+                node.tag = 'div'
                 views.append(Html(content=node.toxml(), **attrs))
             elif node.localName=='newline':
                 views.append(NewLine(**attrs))
