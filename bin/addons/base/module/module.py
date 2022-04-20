@@ -41,7 +41,7 @@ from tools.translate import _
 from osv import fields, osv, orm
 
 class module_category(osv.osv):
-    _name = "ir.module.category"
+    _name = 'ir.module.category'
     _description = "Module Category"
 
     def _module_nbr(self,cr,uid, ids, prop, unknow_none, context):
@@ -70,8 +70,8 @@ class module_category(osv.osv):
 module_category()
 
 class module(osv.osv):
-    _name = "ir.module.module"
-    _description = "Module"
+    _name = 'ir.module.module'
+    _description = 'Module'
     __logger = logging.getLogger('base.' + _name)
 
     @classmethod
@@ -146,8 +146,8 @@ class module(osv.osv):
     _columns = {
         'name': fields.char("Name", size=128, readonly=True, required=True, select=True),
         'category_id': fields.many2one('ir.module.category', 'Category', readonly=True, select=True),
-        'shortdesc': fields.char('Short Description', size=256, readonly=True, translate=True),
-        'description': fields.text("Description", readonly=True, translate=True),
+        'shortdesc': fields.char('Short Description', size=256, readonly=True),
+        'description': fields.text("Description", readonly=True),
         'author': fields.char("Author", size=128, readonly=True),
         'maintainer': fields.char('Maintainer', size=128, readonly=True),
         'contributors': fields.text('Contributors', readonly=True),
@@ -649,8 +649,8 @@ class module(osv.osv):
 module()
 
 class module_dependency(osv.osv):
-    _name = "ir.module.module.dependency"
-    _description = "Module dependency"
+    _name = 'ir.module.module.dependency'
+    _description = 'Module dependency'
 
     def _state(self, cr, uid, ids, name, args, context=None):
         result = {}

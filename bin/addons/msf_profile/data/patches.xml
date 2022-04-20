@@ -754,12 +754,14 @@
             <field name="method">us_9570_ocb_auto_sync_time</field>
         </record>
 
-
         <!-- UF24.1 -->
-		<record id="us_9833_set_pick_from_wkf" model="patch.scripts">
+        <record id="us_9833_set_pick_from_wkf" model="patch.scripts">
             <field name="method">us_9833_set_pick_from_wkf</field>
         </record>
 
+        <record id="us_9849_trigger_upd_former_nsl" model="patch.scripts">
+            <field name="method">us_9849_trigger_upd_former_nsl</field>
+        </record>
 
         <!-- UF25.0 -->
         <record id="fol_order_id_join_change_rules" model="patch.scripts">
@@ -768,7 +770,7 @@
 
         <record id="us_6475_set_has_tax_on_po" model="patch.scripts">
             <field name="method">us_6475_set_has_tax_on_po</field>
-		</record>
+        </record>
 
         <record id="us_5722_update_accruals" model="patch.scripts">
             <field name="method">us_5722_update_accruals</field>

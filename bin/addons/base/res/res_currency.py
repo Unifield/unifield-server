@@ -540,7 +540,7 @@ class res_currency(osv.osv):
                 date = None
 
             if not date:
-                raise osv.except_osv(_('Error'), _("A 'Date' column is needed for each line of %s in this format: '18/10/2016'." % file_to_import))
+                raise osv.except_osv(_('Error'), _("A 'Date' column is needed for each line of %s in this format: '18/10/2016'.") % file_to_import)
 
         import_obj = self.pool.get('import.currencies')
         import_id = import_obj.create(cr, uid, {
