@@ -61,30 +61,6 @@ class msf_accrual_line(osv.osv):
             }
         return res
 
-    def _get_entry_sequence(self, cr, uid, ids, context=None):
-        """
-        Deprecated method, previously used for the old fields.function entry_sequence and now used ONLY for patch script
-        """
-        res = {}
-        if not ids:
-            return res
-        for rec in self.browse(cr, uid, ids, context=context):
-            es = ''
-            if rec.state != 'draft' and rec.analytic_distribution_id \
-                    and rec.analytic_distribution_id.move_line_ids:
-                # get the NOT REV entry
-                # (same period as REV posting date is M+1)
-                move_line_br = False
-                for mv in rec.analytic_distribution_id.move_line_ids:
-                    if mv.period_id.id == rec.period_id.id:
-                        move_line_br = mv
-                        break
-                if move_line_br:
-                    es = move_line_br.move_id \
-                        and move_line_br.move_id.name or ''
-            res[rec.id] = es
-        return res
-
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
         The AD state of an Accrual depends on the AD state of its expense lines (which all require an AD):
