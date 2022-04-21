@@ -42,7 +42,7 @@ class progress_bar(SecuredController):
                     'action': job['target_link'],
                     'data': {}
                 })
-                compressed_payload = base64.urlsafe_b64encode(zlib.compress(payload))
+                compressed_payload = base64.urlsafe_b64encode(zlib.compress(payload.encode('utf8')))
                 url = ('/openerp/execute?' + urllib.parse.urlencode({'payload': compressed_payload}))
             return {'progress': 100, 'state': 'done', 'target': url, 'target_name': job['target_name'], 'src_name': job['src_name'], 'job_name': job['name']}
 
