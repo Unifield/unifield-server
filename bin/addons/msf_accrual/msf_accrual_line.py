@@ -603,7 +603,6 @@ class msf_accrual_line(osv.osv):
                                                                                                       accrual_line.analytic_distribution_id.id,
                                                                                                       {}, context=context) or False,
                 }
-
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
 
                 # Create move lines
@@ -654,12 +653,17 @@ class msf_accrual_line(osv.osv):
                 # Post the moves
                 move_obj.post(cr, uid, move_id, context=context)
 
-                # validate the accrual line
+                # validate the accrual line and set its entry_sequence
                 if accrual_line.accrual_type == 'one_time_accrual':
                     status = 'running'
                 else:
                     status = 'done'
-                self.write(cr, uid, [accrual_line.id], {'state': status, 'move_line_id': accrual_move_line_id}, context=context)
+                entry_seq = move_obj.read(cr, uid, move_id, ['name'], context=context)['name'] or ''
+                self.write(cr, uid, [accrual_line.id],
+                           {'state': status,
+                            'move_line_id': accrual_move_line_id,
+                            'entry_sequence': entry_seq},
+                           context=context)
 
     def accrual_reversal_post(self, cr, uid, ids, document_date, posting_date, context=None):
         """
