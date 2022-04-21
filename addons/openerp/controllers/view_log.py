@@ -46,7 +46,7 @@ class progress_bar(SecuredController):
                 url = ('/openerp/execute?' + urllib.parse.urlencode({'payload': compressed_payload}))
             return {'progress': 100, 'state': 'done', 'target': url, 'target_name': job['target_name'], 'src_name': job['src_name'], 'job_name': job['name']}
 
-        percent = 100*(job['nb_processed'] or 0)/(job['total'] or 1)
+        percent = 100*(job['nb_processed'] or 0)//(job['total'] or 1)
         if job['state'] == 'error':
             return {'state': 'error', 'errormsg': job['error'], 'progress': percent}
 
