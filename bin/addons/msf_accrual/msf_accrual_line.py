@@ -448,6 +448,7 @@ class msf_accrual_line(osv.osv):
         Duplicates the msf_accrual_line:
         - adds "(copy) " before the description
         - links the new record to a COPY of the AD from the initial record
+        - resets the link to the JI
         """
         if context is None:
             context = {}
@@ -458,6 +459,7 @@ class msf_accrual_line(osv.osv):
         description = '%s%s' % (acc_line_copied.description[:64 - len(suffix)], suffix)
         default.update({
             'description': description,
+            'move_line_id': False,
         })
         if acc_line_copied.analytic_distribution_id:
             new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, acc_line_copied.analytic_distribution_id.id, {},
