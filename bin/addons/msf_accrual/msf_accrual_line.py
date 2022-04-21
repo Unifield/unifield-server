@@ -154,7 +154,8 @@ class msf_accrual_line(osv.osv):
         'journal_id': _get_accrual_journal,
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
-        'accrual_type' : 'reversing_accrual',
+        'accrual_type': 'reversing_accrual',
+        'entry_sequence': '',
     }
 
     _order = 'id desc'
@@ -448,7 +449,7 @@ class msf_accrual_line(osv.osv):
         Duplicates the msf_accrual_line:
         - adds "(copy) " before the description
         - links the new record to a COPY of the AD from the initial record
-        - resets the link to the JI
+        - resets the link to the JI and the Entry Seq.
         """
         if context is None:
             context = {}
@@ -460,6 +461,7 @@ class msf_accrual_line(osv.osv):
         default.update({
             'description': description,
             'move_line_id': False,
+            'entry_sequence': '',
         })
         if acc_line_copied.analytic_distribution_id:
             new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, acc_line_copied.analytic_distribution_id.id, {},
