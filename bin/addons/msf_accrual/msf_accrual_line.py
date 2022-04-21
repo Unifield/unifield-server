@@ -103,6 +103,19 @@ class msf_accrual_line(osv.osv):
             raise osv.except_osv(_('Warning !'), _("No active journal of type Accrual has been found for the current instance."))
         return acc_journal_ids[0]
 
+    def _get_move_line_ids(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        WIP
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for acc in self.browse(cr, uid, ids, context=context):
+            res[acc.id] = []
+            if acc.state != 'draft' and acc.move_line_id:
+                res[acc.id].append(acc.move_line_id.id)
+        return res
+
     _columns = {
         'date': fields.date("Date"),
         'document_date': fields.date("Document Date", required=True),
@@ -133,6 +146,8 @@ class msf_accrual_line(osv.osv):
                                                        string="Distribution state"),
         'functional_currency_id': fields.many2one('res.currency', 'Functional Currency', required=True, readonly=True),
         'move_line_id': fields.many2one('account.move.line', 'Account Move Line', readonly=True),
+        'move_line_ids': fields.function(_get_move_line_ids, type='one2many', obj='account.move.line', method=True,
+                                         store=False, string='Journal Items'),
         'rev_move_id': fields.many2one('account.move', 'Rev Journal Entry', readonly=True),
         'accrual_type': fields.selection([
             ('reversing_accrual', 'Reversing accrual'),

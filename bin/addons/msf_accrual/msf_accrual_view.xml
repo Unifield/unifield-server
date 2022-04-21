@@ -80,6 +80,28 @@
                                 <field name="state" colspan="2" readonly="1"/>
                             </page>
                             <page string="Journal Items">
+                                <field nolabel="1" name="move_line_ids" colspan="4">
+                                    <tree>
+                                        <field name="instance_id"/>
+                                        <field name="journal_id"/>
+                                        <field name="move_id"/>
+                                        <field name="name"/>
+                                        <field name="ref"/>
+                                        <field name="document_date"/>
+                                        <field name="date"/>
+                                        <field name="period_id"/>
+                                        <field name="account_id"/>
+                                        <field name="partner_txt"/>
+                                        <field name="debit_currency" sum="Total Book. Debit"/>
+                                        <field name="credit_currency" sum="Total Book. Credit"/>
+                                        <field name="currency_id"/>
+                                        <field name="debit" sum="Total Func. Debit"/>
+                                        <field name="credit" sum="Total Func. Credit"/>
+                                        <field name="functional_currency_id"/>
+                                        <field name="reconcile_txt"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
                             </page>
                         </notebook>
 
