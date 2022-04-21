@@ -813,7 +813,7 @@ class orm_template(object):
         import_obj = self.pool.get('import_data')
         import_id = import_obj.create(cr, uid, {
             'ignore': 1,
-            'file': base64.b64encode(open(csv_file, 'r').read()),
+            'file': base64.b64encode(open(csv_file, 'rb').read()),
             'object': self._name,
             'import_mode': 'create',
         })

@@ -43,7 +43,7 @@ class product_list(osv.osv):
         if context is None:
             context = {}
 
-        xmlstring = open(file_path).read()
+        xmlstring = open(file_path,'rb').read()
         file_obj = SpreadsheetXML(xmlstring=xmlstring)
 
         displayable = {}

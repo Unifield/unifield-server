@@ -18,7 +18,6 @@ from base64 import b64decode
 from io import BytesIO
 import logging
 import subprocess
-import base64
 from zipfile import ZipFile
 import bsdifftree
 
@@ -561,13 +560,13 @@ def reconnect_sync_server():
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
     if os.path.isfile(credential_filepath):
         from . import pooler
-        f = open(credential_filepath, 'r')
+        f = open(credential_filepath, 'rb')
         lines = f.readlines()
         f.close()
         if lines:
             try:
-                dbname = base64.b64decode(lines[0])
-                password = base64.b64decode(lines[1])
+                dbname = str(b64decode(lines[0]), 'utf8')
+                password = str(b64decode(lines[1]), 'utf8')
                 logger.info('dbname = %s' % dbname)
                 db, pool = pooler.get_db_and_pool(dbname)
                 db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have

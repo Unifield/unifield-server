@@ -410,7 +410,7 @@ class hr_employee(osv.osv):
 
         import_obj = self.pool.get('hr.expat.employee.import')
         import_id = import_obj.create(cr, uid, {
-            'file': base64.b64encode(open(file_to_import, 'r').read()),
+            'file': base64.b64encode(open(file_to_import, 'rb').read()),
             'filename': os.path.split(file_to_import)[1],
         })
         processed, rejected, headers = import_obj.button_validate(cr, uid, [import_id], auto_import=True)

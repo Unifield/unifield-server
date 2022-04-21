@@ -55,7 +55,7 @@ class supplier_catalogue(osv.osv):
                 return content.strip()
             return False
 
-        xmlstring = open(file_path).read()
+        xmlstring = open(file_path, 'rb').read()
         file_obj = SpreadsheetXML(xmlstring=xmlstring)
 
         displayable = {}

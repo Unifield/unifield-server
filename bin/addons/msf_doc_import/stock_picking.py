@@ -244,7 +244,7 @@ class stock_picking(osv.osv):
             # create simulation screen to get the simulation report:
             self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, [simu_id], {
                 'filetype': filetype,
-                'file_to_import': base64.b64encode(file_content),
+                'file_to_import': base64.b64encode(bytes(file_content, 'utf8')),
             }, context=context)
 
             context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True, 'simulation_bypass_missing_lot': True, 'auto_import_ok': True})
@@ -287,7 +287,7 @@ class stock_picking(osv.osv):
                 'description': 'IN import file',
                 'res_model': 'stock.picking',
                 'res_id': context.get('new_picking', in_id),
-                'datas': base64.b64encode(file_content),
+                'datas': base64.b64encode(bytes(file_content, 'utf8')),
             })
             import_success = True
         except Exception as e:
