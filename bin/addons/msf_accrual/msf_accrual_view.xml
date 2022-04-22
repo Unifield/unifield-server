@@ -76,9 +76,6 @@
                                         <field name="functional_amount" sum="Total Functional Amount"/>
                                     </tree>
                                 </field>
-                                <newline/>
-                                <label string="" colspan="2"/>
-                                <field name="state" colspan="2" readonly="1"/>
                             </page>
                             <page string="Journal Items">
                                 <field nolabel="1" name="move_line_ids" colspan="4">
@@ -106,6 +103,10 @@
                             </page>
                         </notebook>
 
+                        <group colspan="6" col="6">
+                            <label string="" colspan="4"/>
+                            <field name="state" colspan="2" readonly="1"/>
+                        </group>
                         <group colspan="2" col="4">
                             <button name="button_cancel" string="Cancel" states="done" type="object" icon="gtk-cancel"
                                 confirm="Are you sure you want to cancel this accrual line ?"/>
