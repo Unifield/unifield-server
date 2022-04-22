@@ -54,26 +54,18 @@ class wizard_accrual_validation(osv.osv_memory):
                 # US-770/1
                 elif accrual_line.period_id.state not in ('draft', 'field-closed'):
                     raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!") % accrual_line.period_id.name)
-                elif accrual_line.accrual_type == 'reversing_accrual':
-                    # in case of a reversing accrual the reversal period must be open
-                    move_date = accrual_line.period_id.date_stop
-                    reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
-                    reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)
-                    if len(reversal_period_ids) == 0:
-                        raise osv.except_osv(_('Warning !'), _("No period (M+1) was found in the system!"))
-
-                    reversal_period_id = reversal_period_ids[0]
-                    reversal_period = period_obj.browse(cr, uid, reversal_period_id, context=context)
-                    if reversal_period.state not in ('draft', 'field-closed'):
-                        raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
-
                 # post the accrual
                 accrual_line_obj.accrual_post(cr, uid, [accrual_line.id], context=context)
                 # post its reversal only if it is a reversing accrual
                 if accrual_line.accrual_type == 'reversing_accrual':
                     reversal_date = (datetime.datetime.strptime(accrual_line.date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
-                    accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], reversal_date,
-                                                           reversal_date, context=context)
+                    # use the same method to get the reversal period as from the reversal wizard
+                    reversal_period_id = self.pool.get('wizard.accrual.reversal').get_period_for_reversal(cr, uid,
+                                                                                                          reversal_date,
+                                                                                                          initial_period=accrual_line.period_id,
+                                                                                                          context=context)
+                    accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], reversal_date, reversal_date,
+                                                           reversal_period_id, context=context)
 
         # close the wizard
         return {'type' : 'ir.actions.act_window_close'}

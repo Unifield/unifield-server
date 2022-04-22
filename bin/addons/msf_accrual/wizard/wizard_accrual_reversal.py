@@ -37,11 +37,39 @@ class wizard_accrual_reversal(osv.osv_memory):
         'posting_date': datetime.datetime.now(),
     }
 
+    def get_period_for_reversal(self, cr, uid, posting_date, initial_period=None, context=None):
+        """
+        Returns the period to use for the reversal entry
+        """
+        if context is None:
+            context = {}
+        period_obj = self.pool.get('account.period')
+        reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
+        if len(reversal_period_ids) == 0:
+            raise osv.except_osv(_('Warning !'), _("The reversal period has not been found in the system!"))
+        elif len(reversal_period_ids) > 1:  # December periods
+            # search for the first opened period
+            if initial_period and initial_period.id in reversal_period_ids:
+                # if the initial entry is also in a December period, use this period or above
+                start_number = initial_period.number or 12
+            else:
+                start_number = 12
+            dec_period_ids = period_obj.search(cr, uid,
+                                               [('id', 'in', reversal_period_ids),
+                                                ('number', 'in', range(start_number, 16)),  # Period 16 excluded
+                                                ('state', 'in', ['draft', 'field-closed'])],
+                                               order='number', limit=1, context=context)
+            if not dec_period_ids:
+                raise osv.except_osv(_('Warning !'), _("No opened reversal period!"))
+            reversal_period_id = dec_period_ids[0]
+        else:
+            reversal_period_id = reversal_period_ids[0]  # the period state is checked in accrual_reversal_post
+        return reversal_period_id
+
     def button_accrual_reversal_confirm(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         accrual_line_obj = self.pool.get('msf.accrual.line')
-        period_obj = self.pool.get('account.period')
 
         if 'active_ids' in context:
             for accrual_line in accrual_line_obj.browse(cr, uid, context['active_ids'], context=context):
@@ -59,31 +87,11 @@ class wizard_accrual_reversal(osv.osv_memory):
                 if datetime.datetime.strptime(document_date, "%Y-%m-%d").date() < datetime.datetime.strptime(accrual_move_date, "%Y-%m-%d").date():
                     raise osv.except_osv(_('Warning !'), _("Document Date should be later than the accrual date."))
 
-                # get the period to use for the reversal
-                reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
-                if len(reversal_period_ids) == 0:
-                    raise osv.except_osv(_('Warning !'), _("The reversal period wasn't found in the system!"))
-                elif len(reversal_period_ids) > 1:  # December periods
-                    # search for the first opened period
-                    if accrual_line.period_id.id in reversal_period_ids:
-                        # if the initial entry is also in a December period, use this period or above
-                        start_number = accrual_line.period_id.number or 12
-                    else:
-                        start_number = 12
-                    dec_period_ids = period_obj.search(cr, uid,
-                                                       [('id', 'in', reversal_period_ids),
-                                                        ('number', 'in', range(start_number, 16)),  # Period 16 excluded
-                                                        ('state', 'in', ['draft', 'field-closed'])],
-                                                       order='number', limit=1, context=context)
-                    if not dec_period_ids:
-                        raise osv.except_osv(_('Warning !'), _("No opened reversal period!"))
-                    reversal_period_id = dec_period_ids[0]
-                else:
-                    reversal_period_id = reversal_period_ids[0]  # the period state is checked in accrual_reversal_post
+                reversal_period_id = self.get_period_for_reversal(cr, uid, posting_date, initial_period=accrual_line.period_id, context=context)
 
                 # post the accrual reversal
-                accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], document_date,
-                                                       posting_date, reversal_period_id=reversal_period_id, context=context)
+                accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], document_date, posting_date,
+                                                       reversal_period_id, context=context)
 
         # close the wizard
         return {'type' : 'ir.actions.act_window_close'}
