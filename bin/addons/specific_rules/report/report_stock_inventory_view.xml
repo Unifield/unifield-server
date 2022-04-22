@@ -125,26 +125,13 @@
             sequence="22" />
 
         <report
-            id="report_stock_inventory_xls"
+            id="report_stock_inventory_xlsx"
             string="Export Inventory Level"
             model="export.report.stock.inventory"
-            name="stock.inventory.xls"
-            file="specific_rules/report/report_stock_inventory_xls.mako"
-            report_type="webkit"
-            header="False"
+            name="report_stock_inventory_xlsx"
+            report_type="openpyxl"
             auto="False"
-            menu="False"
-            />
-
-        <report
-            id="report_stock_inventory_all_locations_xls"
-            string="Export Inventory Level (All Locations)"
-            model="export.report.stock.inventory.all.locations"
-            name="stock.inventory.all.locations.xls"
-            file="specific_rules/report/report_stock_inventory_all_locations_xls.mako"
-            report_type="webkit"
-            header="False"
-            auto="False"
+            target_filename="Export Inventory Level"
             menu="False"
             />
 

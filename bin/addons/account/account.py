@@ -818,8 +818,17 @@ class account_journal(osv.osv):
                                              _("Please post all the manual Journal Entries on the journal %s before inactivating it.") %
                                              journal.code)
                     if journal.type in ['bank', 'cash']:
-                        last_reg_id = reg_obj.search(cr, uid, [('journal_id', '=', journal.id)],
-                                                     order='period_start_date DESC', limit=1, context=context)
+                        last_reg_sql = """
+                            SELECT reg.id
+                            FROM account_bank_statement reg
+                            INNER JOIN account_period p ON reg.period_id = p.id
+                            INNER JOIN account_journal j ON reg.journal_id = j.id
+                            WHERE j.id = %s
+                            ORDER BY p.date_start DESC LIMIT 1
+                        """
+                        cr.execute(last_reg_sql, (journal.id,))
+                        last_reg_id = cr.fetchone()
+
                         if last_reg_id:
                             balance_end = reg_obj.browse(cr, uid, last_reg_id[0], fields_to_fetch=['balance_end']).balance_end or 0.0
                             if abs(balance_end) > 10**-3:

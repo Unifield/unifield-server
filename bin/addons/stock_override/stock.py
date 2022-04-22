@@ -351,7 +351,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if vals.get('purchase_id'):
+        if vals.get('purchase_id') or vals.get('sale_id'):
             vals['from_wkf'] = True
         # in case me make a copy of a stock.picking coming from a workflow
         if context.get('not_workflow', False):
@@ -427,7 +427,7 @@ class stock_picking(osv.osv):
                 if vals.get('partner_id2'):
                     vals['ext_cu'] = False
                 if vals.get('ext_cu'):
-                    vals.update({'partner_id': False, 'partner_id2': False})
+                    vals.update({'partner_id': False, 'partner_id2': False, 'address_id': False})
 
         return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context)
 

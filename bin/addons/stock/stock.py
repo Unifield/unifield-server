@@ -931,7 +931,7 @@ class stock_picking(osv.osv):
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
         'auto_picking': fields.boolean('Auto-Picking'),
         'address_id': fields.many2one('res.partner.address', 'Address', help="Address of partner"),
-        'partner_id': fields.related('address_id','partner_id',type='many2one',relation='res.partner',string='Partner',store=True),
+        'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Partner', store=True, write_relate=False),
         'invoice_state': fields.selection([
             ("invoiced", "Invoiced"),
             ("2binvoiced", "To Be Invoiced"),
