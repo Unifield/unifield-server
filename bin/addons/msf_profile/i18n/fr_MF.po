@@ -92663,8 +92663,8 @@ msgstr "Kit Théorique - Article"
 
 #. module: msf_accrual
 #: view:msf.accrual.line:0
-msgid "Are you sure you want to cancel this accrual line ?"
-msgstr "Etes-vous sûr de vouloir annuler cette ligne de régularisation ?"
+msgid "Are you sure you want to cancel this accrual?"
+msgstr "Etes-vous sûr de vouloir annuler cette régularisation ?"
 
 #. module: account
 #: field:account.account,parent_left:0
