@@ -75,15 +75,13 @@ class wizard_accrual_reversal(osv.osv_memory):
                                                         ('number', 'in', range(start_number, 16)),  # Period 16 excluded
                                                         ('state', 'in', ['draft', 'field-closed'])],
                                                        order='number', limit=1, context=context)
-                    if dec_period_ids:
-                        reversal_period_id = dec_period_ids[0]
-                    else:
-                        reversal_period_id = False
+                    if not dec_period_ids:
+                        raise osv.except_osv(_('Warning !'), _("No opened reversal period!"))
+                    reversal_period_id = dec_period_ids[0]
                 else:
                     reversal_period_id = reversal_period_ids[0]
 
-                reversal_period = reversal_period_id and period_obj.browse(cr, uid, reversal_period_id,
-                                                                           fields_to_fetch=['state'], context=context)
+                reversal_period = period_obj.browse(cr, uid, reversal_period_id, fields_to_fetch=['state'], context=context)
                 if not reversal_period or reversal_period.state not in ('draft', 'field-closed'):
                     raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
 
