@@ -105,15 +105,16 @@ class msf_accrual_line(osv.osv):
 
     def _get_move_line_ids(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
-        WIP
+        Gets the JIs linked to the original Accrual, and the REV and CANCEL entries (if any)
         """
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = {}
-        for acc in self.browse(cr, uid, ids, context=context):
-            res[acc.id] = []
-            if acc.state != 'draft' and acc.move_line_id:
-                res[acc.id].append(acc.move_line_id.id)
+        ml_obj = self.pool.get('account.move.line')
+        for acc_id in ids:
+            res[acc_id] = ml_obj.search(cr, uid, [('accrual_line_id', '=', acc_id)], order='move_id', context=context)
         return res
 
     _columns = {
@@ -371,6 +372,7 @@ class msf_accrual_line(osv.osv):
             booking_field_cancel = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'  # reverse of initial entry
             accrual_move_line_vals = {
                 'accrual': True,
+                'accrual_line_id': accrual_line.id,
                 'move_id': move_id,
                 'date': move_date,
                 'document_date': accrual_line.document_date,
@@ -390,6 +392,7 @@ class msf_accrual_line(osv.osv):
             booking_field_rev = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
             reversal_accrual_move_line_vals = {
                 'accrual': True,
+                'accrual_line_id': accrual_line.id,
                 'move_id': reversal_move_id,
                 'date': reversal_move_posting_date,
                 'document_date': reversal_move_document_date,
@@ -412,6 +415,7 @@ class msf_accrual_line(osv.osv):
             for expense_line in accrual_line.expense_line_ids:
                 expense_move_line_vals = {
                     'accrual': True,
+                    'accrual_line_id': accrual_line.id,
                     'move_id': move_id,
                     'date': move_date,
                     'document_date': accrual_line.document_date,
@@ -432,6 +436,7 @@ class msf_accrual_line(osv.osv):
 
                 reversal_expense_move_line_vals = {
                     'accrual': True,
+                    'accrual_line_id': accrual_line.id,
                     'move_id': reversal_move_id,
                     'date': reversal_move_posting_date,
                     'document_date': reversal_move_document_date,
@@ -604,6 +609,7 @@ class msf_accrual_line(osv.osv):
                 booking_field = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
                 accrual_move_line_vals = {
                     'accrual': True,
+                    'accrual_line_id': accrual_line.id,
                     'move_id': move_id,
                     'date': move_date,
                     'document_date': accrual_line.document_date,
@@ -626,6 +632,7 @@ class msf_accrual_line(osv.osv):
                 for expense_line in accrual_line.expense_line_ids:
                     expense_move_line_vals = {
                         'accrual': True,
+                        'accrual_line_id': accrual_line.id,
                         'move_id': move_id,
                         'date': move_date,
                         'document_date': accrual_line.document_date,
@@ -701,6 +708,7 @@ class msf_accrual_line(osv.osv):
                 booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 reversal_accrual_move_line_vals = {
                     'accrual': True,
+                    'accrual_line_id': accrual_line.id,
                     'move_id': reversal_move_id,
                     'date': posting_date,
                     'document_date': document_date,
@@ -721,6 +729,7 @@ class msf_accrual_line(osv.osv):
                 for expense_line in accrual_line.expense_line_ids:
                     reversal_expense_move_line_vals = {
                         'accrual': True,
+                        'accrual_line_id': accrual_line.id,
                         'move_id': reversal_move_id,
                         'date': posting_date,
                         'document_date': document_date,
