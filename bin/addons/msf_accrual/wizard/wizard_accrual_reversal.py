@@ -50,7 +50,7 @@ class wizard_accrual_reversal(osv.osv_memory):
                     raise osv.except_osv(_('Warning !'),
                                          _("The line \"%s\" isn't in Running state, the accrual reversal can't be posted!") % accrual_line.description)
 
-                # check for dates consistency
+                # check for dates consistency (note that it is possible to select in the wizard the same posting date as the original entry)
                 document_date = self.browse(cr, uid, ids, context=context)[0].document_date
                 posting_date = self.browse(cr, uid, ids, context=context)[0].posting_date
                 accrual_move_date = accrual_line.period_id.date_stop
@@ -63,10 +63,28 @@ class wizard_accrual_reversal(osv.osv_memory):
                 reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
                 if len(reversal_period_ids) == 0:
                     raise osv.except_osv(_('Warning !'), _("The reversal period wasn't found in the system!"))
+                elif len(reversal_period_ids) > 1:  # December periods
+                    # search for the first opened period
+                    if accrual_line.period_id.id in reversal_period_ids:
+                        # if the initial entry is also in a December period, use this period or above
+                        start_number = accrual_line.period_id.number or 12
+                    else:
+                        start_number = 12
+                    reversal_period_id = False
+                    for number in range(start_number, 16):  # Period 16 excluded
+                        dec_period_ids = period_obj.search(cr, uid,
+                                                           [('id', 'in', reversal_period_ids),
+                                                            ('number', '=', number),
+                                                            ('state', 'in', ['draft', 'field-closed'])],
+                                                           limit=1, context=context)
+                        if dec_period_ids:
+                            reversal_period_id = dec_period_ids[0]
+                            break
+                else:
+                    reversal_period_id = reversal_period_ids[0]
 
-                reversal_period_id = reversal_period_ids[0]
-                reversal_period = period_obj.browse(cr, uid, reversal_period_id, context=context)
-                if reversal_period.state not in ('draft', 'field-closed'):
+                reversal_period = reversal_period_id and period_obj.browse(cr, uid, reversal_period_id, context=context)
+                if not reversal_period or reversal_period.state not in ('draft', 'field-closed'):
                     raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
 
                 # post the accrual reversal
