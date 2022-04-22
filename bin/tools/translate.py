@@ -663,15 +663,8 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
         if source and tuple not in _to_translate:
             _to_translate.append(tuple)
 
-    def encode(s):
-        if not isinstance(s, str):
-            return s.decode('utf8')
-        return s
-
     for (xml_name,model,res_id,module) in cr.fetchall():
-        module = encode(module)
-        model = encode(model)
-        xml_name = "%s.%s" % (module, encode(xml_name))
+        xml_name = "%s.%s" % (module, xml_name)
 
         if not pool.get(model):
             logger.error("Unable to find object %r", model)
@@ -684,11 +677,11 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
         obj = pool.get(model).browse(cr, uid, res_id)
 
         if model=='ir.ui.view':
-            d = etree.XML(encode(obj.arch))
+            d = etree.XML(obj.arch)
             for t in trans_parse_view(d):
-                push_translation(module, 'view', encode(obj.model), 0, t)
+                push_translation(module, 'view', obj.model, 0, t)
         elif model=='ir.actions.wizard':
-            service_name = 'wizard.'+encode(obj.wiz_name)
+            service_name = 'wizard.' + obj.wiz_name
             if netsvc.Service._services.get(service_name):
                 obj2 = netsvc.Service._services[service_name]
                 for state_name, state_def in obj2.states.items():
@@ -696,12 +689,12 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                         result = state_def['result']
                         if result['type'] != 'form':
                             continue
-                        name = "%s,%s" % (encode(obj.wiz_name), state_name)
+                        name = "%s,%s" % (obj.wiz_name, state_name)
 
                         def_params = {
-                            'string': ('wizard_field', lambda s: [encode(s)]),
-                            'selection': ('selection', lambda s: [encode(e[1]) for e in ((not callable(s)) and s or [])]),
-                            'help': ('help', lambda s: [encode(s)]),
+                            'string': ('wizard_field', lambda s: [s]),
+                            'selection': ('selection', lambda s: [e[1] for e in ((not callable(s)) and s or [])]),
+                            'help': ('help', lambda s: [s]),
                         }
 
                         # export fields
@@ -733,7 +726,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
 
         elif model=='ir.model.fields':
             try:
-                field_name = encode(obj.name)
+                field_name = obj.name
             except AttributeError as exc:
                 logger.error("name error in %s: %s", xml_name, str(exc))
                 continue
@@ -742,11 +735,11 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                 continue
             field_def = objmodel._columns[field_name]
 
-            name = "%s,%s" % (encode(obj.model), field_name)
-            push_translation(module, 'field', name, 0, encode(field_def.string))
+            name = "%s,%s" % (obj.model, field_name)
+            push_translation(module, 'field', name, 0, field_def.string)
 
             if field_def.help:
-                push_translation(module, 'help', name, 0, encode(field_def.help))
+                push_translation(module, 'help', name, 0, field_def.help)
 
             if hasattr(field_def, 'selection'):
                 sel = False
@@ -756,10 +749,10 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                     sel = field_def.selection
                 if isinstance(sel, (list, tuple)):
                     for dummy, val in sel:
-                        push_translation(module, 'selection', name, 0, encode(val))
+                        push_translation(module, 'selection', name, 0, val)
 
         elif model=='ir.actions.report.xml':
-            name = encode(obj.report_name)
+            name = obj.report_name
             fname = ""
             if obj.report_rml:
                 fname = obj.report_rml
@@ -771,7 +764,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                 report_type = "xsl"
             if obj.target_filename:
                 for code in re.findall('\${_\([\'"]([ \w]+)[\'"]\)}',  obj.target_filename):
-                    push_translation(module, 'code', 'ir.actions.report.xml', 'name:%s'%obj.report_name, encode(code))
+                    push_translation(module, 'code', 'ir.actions.report.xml', 'name:%s'%obj.report_name, code)
             if fname and obj.report_type in ('pdf', 'xsl'):
                 try:
                     report_file = tools.file_open(fname)
@@ -791,7 +784,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                     trad = getattr(obj, field_name) or ''
                 except:
                     trad = ''
-                push_translation(module, 'model', name, xml_name, encode(trad))
+                push_translation(module, 'model', name, xml_name, trad)
 
         # End of data for ir.model.data query results
     cr.execute(query_models, query_param)
@@ -800,11 +793,9 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
         # Check presence of __call__ directly instead of using
         # callable() because it will be deprecated as of Python 3.0
         if not hasattr(msg, '__call__'):
-            push_translation(module, term_type, model, 0, encode(msg))
+            push_translation(module, term_type, model, 0, msg)
 
     for (model_id, model, module) in cr.fetchall():
-        module = encode(module)
-        model = encode(model)
 
         model_obj = pool.get(model)
 
@@ -892,7 +883,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                 # now, since we did a binary read of a python source file, we
                 # have to expand pythonic escapes like the interpreter does.
                 src = bytes(src, 'utf-8').decode('unicode_escape')
-                push_translation(module, terms_type, frelativepath, code_line, encode(src))
+                push_translation(module, terms_type, frelativepath, code_line, src)
                 code_line += i.group(1).count('\n')
                 code_offset = i.end() # we have counted newlines up to the match end
 
@@ -908,7 +899,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                     src = join_quotes.sub(r'\1', src)
                 code_line += code_string[code_offset:i.start(1)].count('\n')
                 src = bytes(src, 'utf-8').decode('unicode_escape')
-                push_translation(module, terms_type, frelativepath, code_line, encode(src))
+                push_translation(module, terms_type, frelativepath, code_line, src)
                 code_line += i.group(1).count('\n')
                 code_offset = i.end() # we have counted newlines up to the match end
 
@@ -933,7 +924,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
         if (only_translated_terms == 'y' and trans and trans != source) \
                 or (only_translated_terms == 'n' and (not trans or trans == source)) \
                 or not only_translated_terms:
-            out.append([module, type, name, id, source, encode(trans) or ''])
+            out.append([module, type, name, id, source, trans or ''])
 
     return out
 
