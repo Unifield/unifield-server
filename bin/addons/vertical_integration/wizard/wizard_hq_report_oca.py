@@ -169,7 +169,7 @@ class wizard_hq_report_oca(osv.osv_memory):
         if msg:
             # generate the current log file and push to remote
             current_report = os.path.join(current_report_path, '%s_report.txt' % time.strftime('%Y-%m-%d-%H%M%S'))
-            with open(current_report, 'wb') as current_report_fp:
+            with open(current_report, 'w') as current_report_fp:
                 current_report_fp.write("\n".join(msg))
             if export_wiz.ftp_report_ok:
                 msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), current_report, export_wiz.report_path))
