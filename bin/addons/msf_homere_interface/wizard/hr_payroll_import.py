@@ -35,7 +35,6 @@ from tools import config
 from base import currency_date
 import time
 import sys
-import codecs
 
 UF_SIDE_ROUNDING_LINE = {
     'account_code': '67000',
@@ -353,13 +352,13 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_("Error"), _("File '%s' doesn't exist!") % (homere_file,))
         # Read homere file
         homere_file_data = open(homere_file, 'rb')
-        pwd = homere_file_data.readline()
+        pwd = homere_file_data.readline().strip()
         if pass_type == 'permois':
-            pwd = homere_file_data.readline()
+            pwd = homere_file_data.readline().strip()
         if not pwd:
             raise osv.except_osv(_("Error"), _("File '%s' does not contain the password !") % (homere_file,))
         homere_file_data.close()
-        return b64decode(pwd)
+        return str(b64decode(pwd), 'utf8')
 
     def _uf_side_rounding_line_check_gap(self, cr, uid,
                                          currency_id, currency_code, curr_date, gap_amount, context=None):
@@ -502,9 +501,15 @@ class hr_payroll_import(osv.osv_memory):
         created = 0
         processed = 0
 
+        encoding = self.pool.get('ir.config_parameter').get_param(cr, uid, 'HOMERE_ENCODING')
+        if not encoding:
+            encoding = 'iso-8859-15'
+
         header_vals = {}
 
         xyargv = self._get_homere_password(cr, uid, pass_type='payroll')
+        if xyargv:
+            xyargv = bytes(xyargv, 'utf8')
 
         filename = ""
         error_msg = ""
@@ -543,21 +548,16 @@ class hr_payroll_import(osv.osv_memory):
                     import configparser
                     Config = configparser.SafeConfigParser()
                     ini_desc = zipobj.open('envoi.ini', 'r', xyargv)
-                    is_bom = ini_desc.read(3)
-                    if is_bom != codecs.BOM_UTF8:
-                        ini_desc.close()
-                        ini_desc = zipobj.open('envoi.ini', 'r', xyargv)
-                    Config.readfp(io.TextIOWrapper(ini_desc))
+                    Config.readfp(io.TextIOWrapper(ini_desc, encoding='utf_8_sig'))
                     field = Config.get('DEFAUT', 'PAYS')
                 except Exception:
-                    raise
                     raise osv.except_osv(_('Error'), _('Could not read envoi.ini file in given ZIP file.'))
                 if not field:
                     raise osv.except_osv(_('Warning'), _('Field not found in envoi.ini file.'))
                 # Read CSV files
                 for csvfile in csvfiles:
                     try:
-                        reader = csv.reader(io.TextIOWrapper(zipobj.open(csvfile, 'r', xyargv)), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
+                        reader = csv.reader(io.TextIOWrapper(zipobj.open(csvfile, 'r', xyargv), encoding=encoding), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
                         next(reader)
                     except:
                         fileobj.close()

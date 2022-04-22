@@ -39,7 +39,6 @@ import subprocess
 import os
 import shutil
 import configparser
-import codecs
 
 def get_7z():
     if os.name == 'nt':
@@ -642,56 +641,52 @@ class hr_payroll_employee_import(osv.osv_memory):
         config_parser = False
         desc_to_close = []
         tmpdir = False
+        encoding = self.pool.get('ir.config_parameter').get_param(cr, uid, 'HOMERE_ENCODING')
+        if not encoding:
+            encoding = 'iso-8859-15'
         if is_zipfile(filename):
             zipobj = zf(filename)
             if zipobj:
                 desc_to_close.append(zipobj)
             if zipobj.namelist() and job_file in zipobj.namelist():
-                job_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(job_file)), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+                job_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(job_file), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
                 # Do not raise error for job file because it's just a useful piece of data, but not more.
             # read the contract file
             if zipobj.namelist() and contract_file in zipobj.namelist():
-                contract_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(contract_file)), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+                contract_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(contract_file), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             # read the staff file
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 # Doublequote and escapechar avoid some problems
-                staff_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(staff_file)), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+                staff_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(staff_file), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             # read the ini file
             if zipobj.namelist() and ini_file in zipobj.namelist():
-                ini_desc = zipobj.open(ini_file)
-                is_bom = ini_desc.read(3)
-                if is_bom != codecs.BOM_UTF8:
-                    ini_desc.close()
-                    ini_desc = zipobj.open(ini_file)
+                ini_desc = zipobj.open(ini_file, 'r')
                 config_parser = configparser.SafeConfigParser()
                 # io.TextIOWrapper to open the file as text instead of binary (required by config_parser)
-                config_parser.read_file(io.TextIOWrapper(ini_desc))
+                config_parser.read_file(io.TextIOWrapper(ini_desc, encoding='utf_8_sig'))
         else:
             tmpdir = self._extract_7z(cr, uid, filename)
             job_file_name = os.path.join(tmpdir, job_file)
             if os.path.isfile(job_file_name):
-                job_file_desc = open(job_file_name, 'r')
+                job_file_desc = open(job_file_name, 'r', encoding=encoding)
                 desc_to_close.append(job_file_desc)
                 job_reader = csv.DictReader(job_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
 
             contract_file_name = os.path.join(tmpdir, contract_file)
             if os.path.isfile(contract_file_name):
-                contract_file_desc = open(contract_file_name, 'r')
+                contract_file_desc = open(contract_file_name, 'r', encoding=encoding)
                 desc_to_close.append(contract_file_desc)
                 contract_reader = csv.DictReader(contract_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
 
             staff_file_name = os.path.join(tmpdir, staff_file)
             if os.path.isfile(staff_file_name):
-                staff_file_desc = open(staff_file_name, 'r')
+                staff_file_desc = open(staff_file_name, 'r', encoding=encoding)
                 desc_to_close.append(staff_file_desc)
                 staff_reader = csv.DictReader(staff_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
 
             ini_file_name = os.path.join(tmpdir, ini_file)
             if os.path.isfile(ini_file_name):
-                ini_file_desc = open(ini_file_name, 'r')
-                is_bom = ini_file_desc.read(3)
-                if is_bom != str(codecs.BOM_UTF8, 'utf8'):
-                    ini_file_desc.seek(0)
+                ini_file_desc = open(ini_file_name, 'r', encoding='utf_8_sig')
                 desc_to_close.append(ini_file_desc)
                 config_parser = configparser.SafeConfigParser()
                 config_parser.readfp(ini_file_desc)
