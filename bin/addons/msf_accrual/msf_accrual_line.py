@@ -157,7 +157,7 @@ class msf_accrual_line(osv.osv):
         'state': fields.selection([('draft', 'Draft'),
                                    ('done', 'Done'),
                                    ('running', 'Running'),
-                                   ('cancel', 'Cancelled')], 'Status', required=True),
+                                   ('cancel', 'Cancelled')], "State", required=True),
         # Field to store the third party's name for list view
         'third_party_name': fields.char('Third Party', size=64),
         'entry_sequence': fields.char("Number", size=64, readonly=True),
