@@ -82,12 +82,12 @@ class wizard_accrual_reversal(osv.osv_memory):
                     reversal_period_id = reversal_period_ids[0]
 
                 reversal_period = period_obj.browse(cr, uid, reversal_period_id, fields_to_fetch=['state'], context=context)
-                if not reversal_period or reversal_period.state not in ('draft', 'field-closed'):
+                if reversal_period.state not in ('draft', 'field-closed'):
                     raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
 
                 # post the accrual reversal
                 accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], document_date,
-                                                       posting_date, context=context)
+                                                       posting_date, reversal_period_id=reversal_period.id, context=context)
 
         # close the wizard
         return {'type' : 'ir.actions.act_window_close'}

@@ -669,7 +669,7 @@ class msf_accrual_line(osv.osv):
                             'entry_sequence': entry_seq},
                            context=context)
 
-    def accrual_reversal_post(self, cr, uid, ids, document_date, posting_date, context=None):
+    def accrual_reversal_post(self, cr, uid, ids, document_date, posting_date, reversal_period_id=False, context=None):
         """
         Reverse the selected accruals
         """
@@ -685,8 +685,9 @@ class msf_accrual_line(osv.osv):
                 move_date = accrual_line.period_id.date_stop
                 curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
 
-                reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
-                reversal_period_id = reversal_period_ids[0]
+                if not reversal_period_id:
+                    reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
+                    reversal_period_id = reversal_period_ids[0]
 
                 self._check_period_state(cr, uid, reversal_period_id, context=context)
 
