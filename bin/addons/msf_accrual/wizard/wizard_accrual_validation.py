@@ -49,7 +49,8 @@ class wizard_accrual_validation(osv.osv_memory):
                 elif not accrual_line.analytic_distribution_id:
                     for expense_line in accrual_line.expense_line_ids:
                         if not expense_line.analytic_distribution_id:
-                            raise osv.except_osv(_('Warning'), _('The Accrual "%s" has no analytic distribution!') % expense_line.description)
+                            raise osv.except_osv(_('Warning'), _('Some of the lines of the Accrual "%s" have no analytic distribution!') %
+                                                 expense_line.description)
                 # US-770/1
                 elif accrual_line.period_id.state not in ('draft', 'field-closed'):
                     raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!") % accrual_line.period_id.name)
