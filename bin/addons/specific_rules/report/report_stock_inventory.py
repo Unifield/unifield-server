@@ -162,7 +162,7 @@ class export_report_stock_inventory(osv.osv):
             'description': 'Stock inventory',
             'res_model': 'export.report.stock.inventory',
             'res_id': ids[0],
-            'datas': base64.encodestring(open(file_res.get('path'), 'rb').read()),
+            'datas': base64.b64encode(open(file_res.get('path'), 'rb').read()),
         })
         self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
 
