@@ -59,7 +59,7 @@ class wizard_accrual_reversal(osv.osv_memory):
                 if datetime.datetime.strptime(document_date, "%Y-%m-%d").date() < datetime.datetime.strptime(accrual_move_date, "%Y-%m-%d").date():
                     raise osv.except_osv(_('Warning !'), _("Document Date should be later than the accrual date."))
 
-                # check if periods are open
+                # get the period to use for the reversal
                 reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
                 if len(reversal_period_ids) == 0:
                     raise osv.except_osv(_('Warning !'), _("The reversal period wasn't found in the system!"))
@@ -79,15 +79,11 @@ class wizard_accrual_reversal(osv.osv_memory):
                         raise osv.except_osv(_('Warning !'), _("No opened reversal period!"))
                     reversal_period_id = dec_period_ids[0]
                 else:
-                    reversal_period_id = reversal_period_ids[0]
-
-                reversal_period = period_obj.browse(cr, uid, reversal_period_id, fields_to_fetch=['state'], context=context)
-                if reversal_period.state not in ('draft', 'field-closed'):
-                    raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
+                    reversal_period_id = reversal_period_ids[0]  # the period state is checked in accrual_reversal_post
 
                 # post the accrual reversal
                 accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], document_date,
-                                                       posting_date, reversal_period_id=reversal_period.id, context=context)
+                                                       posting_date, reversal_period_id=reversal_period_id, context=context)
 
         # close the wizard
         return {'type' : 'ir.actions.act_window_close'}
