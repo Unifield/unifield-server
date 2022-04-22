@@ -70,20 +70,20 @@ class wizard_accrual_reversal(osv.osv_memory):
                         start_number = accrual_line.period_id.number or 12
                     else:
                         start_number = 12
-                    reversal_period_id = False
-                    for number in range(start_number, 16):  # Period 16 excluded
-                        dec_period_ids = period_obj.search(cr, uid,
-                                                           [('id', 'in', reversal_period_ids),
-                                                            ('number', '=', number),
-                                                            ('state', 'in', ['draft', 'field-closed'])],
-                                                           limit=1, context=context)
-                        if dec_period_ids:
-                            reversal_period_id = dec_period_ids[0]
-                            break
+                    dec_period_ids = period_obj.search(cr, uid,
+                                                       [('id', 'in', reversal_period_ids),
+                                                        ('number', 'in', range(start_number, 16)),  # Period 16 excluded
+                                                        ('state', 'in', ['draft', 'field-closed'])],
+                                                       order='number', limit=1, context=context)
+                    if dec_period_ids:
+                        reversal_period_id = dec_period_ids[0]
+                    else:
+                        reversal_period_id = False
                 else:
                     reversal_period_id = reversal_period_ids[0]
 
-                reversal_period = reversal_period_id and period_obj.browse(cr, uid, reversal_period_id, context=context)
+                reversal_period = reversal_period_id and period_obj.browse(cr, uid, reversal_period_id,
+                                                                           fields_to_fetch=['state'], context=context)
                 if not reversal_period or reversal_period.state not in ('draft', 'field-closed'):
                     raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
 
