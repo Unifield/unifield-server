@@ -62,7 +62,7 @@ class wizard_accrual_validation(osv.osv_memory):
                     # use the same method to get the reversal period as from the reversal wizard
                     reversal_period_id = self.pool.get('wizard.accrual.reversal').get_period_for_reversal(cr, uid,
                                                                                                           reversal_date,
-                                                                                                          initial_period=accrual_line.period_id,
+                                                                                                          accrual_line.period_id.id,
                                                                                                           context=context)
                     accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], reversal_date, reversal_date,
                                                            reversal_period_id, context=context)
