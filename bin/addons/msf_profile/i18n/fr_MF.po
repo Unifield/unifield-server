@@ -114761,3 +114761,8 @@ msgstr "Vous ne pouvez pas Valider cette ligne de commande car elle contient un 
 #: constraint:sale.order.line:0
 msgid "You cannot validate this sale order line because it has an inactive product"
 msgstr "Vous ne pouvez pas Valider cette ligne de commande car elle contient un produit inactif"
+
+#. module: account
+#: view:account.analytic.line:0
+msgid " Sales "
+msgstr "Commandes"
