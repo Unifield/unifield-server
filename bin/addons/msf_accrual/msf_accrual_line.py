@@ -30,6 +30,7 @@ class msf_accrual_line(osv.osv):
     # this object actually corresponds to the "Accruals" and not to their lines...
     _name = 'msf.accrual.line'
     _rec_name = 'date'
+    _trace = True
 
     def onchange_period(self, cr, uid, ids, period_id, context=None):
         if period_id is False:
