@@ -300,13 +300,13 @@ class msf_accrual_line(osv.osv):
 
     def _check_period_state(self, cr, uid, period_id, context=None):
         """
-        Raises an error in case the period is either not opened yet or already Mission-Closed or HQ-Closed.
+        Raises an error in case the period is not Open
         """
         if context is None:
             context = {}
         period = self.pool.get('account.period').browse(cr, uid, period_id, fields_to_fetch=['state', 'name'], context=context)
-        if period.state not in ('draft', 'field-closed'):
-            raise osv.except_osv(_('Warning !'), _("The period \"%s\" is not Open!" % (period.name,)))
+        if period.state != 'draft':
+            raise osv.except_osv(_('Warning'), _("The period \"%s\" is not Open!" % (period.name,)))
         return True
 
     def button_cancel(self, cr, uid, ids, context=None):
@@ -676,7 +676,6 @@ class msf_accrual_line(osv.osv):
         """
         if context is None:
             context = {}
-        period_obj = self.pool.get('account.period')
         move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
         ad_obj = self.pool.get('analytic.distribution')
@@ -685,8 +684,6 @@ class msf_accrual_line(osv.osv):
             for accrual_line in self.browse(cr, uid, ids, context=context):
                 move_date = accrual_line.period_id.date_stop
                 curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
-
-                self._check_period_state(cr, uid, reversal_period_id, context=context)
 
                 reversal_move_vals = {
                     'ref': accrual_line.reference,  # the original ref is kept as is without prefix REV
