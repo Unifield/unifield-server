@@ -321,22 +321,16 @@ class msf_accrual_line(osv.osv):
         for accrual_line in self.browse(cr, uid, ids, context=context):
             # check for periods, distribution, etc.
             if accrual_line.state != 'done':
-                raise osv.except_osv(_('Warning !'), _("The line \"%s\" is not Done!") % accrual_line.description)
-
+                raise osv.except_osv(_('Warning'), _("The Accrual \"%s\" is not Done!") % accrual_line.description)
             self._check_period_state(cr, uid, accrual_line.period_id.id, context=context)
 
             move_date = accrual_line.period_id.date_stop
             curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
-            if accrual_line.accrual_type == 'reversing_accrual':
-                reversal_move_posting_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
-                reversal_move_document_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
-                reversal_period_ids = period_obj.find(cr, uid, reversal_move_posting_date, context=context)
-                reversal_period_id = reversal_period_ids[0]
-            else:
-                reversal_move_posting_date = accrual_line.rev_move_id.date
-                reversal_move_document_date = accrual_line.rev_move_id.document_date
-                reversal_period_id = accrual_line.rev_move_id.period_id.id
-
+            if not accrual_line.rev_move_id:
+                raise osv.except_osv(_('Warning'), _("Impossible to find the reversal entry to cancel!"))
+            reversal_move_posting_date = accrual_line.rev_move_id.date
+            reversal_move_document_date = accrual_line.rev_move_id.document_date
+            reversal_period_id = accrual_line.rev_move_id.period_id.id
             self._check_period_state(cr, uid, reversal_period_id, context=context)
 
             # Create moves
