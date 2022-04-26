@@ -166,9 +166,27 @@ class msf_accrual_line_expense(osv.osv):
             res.update({'reference': context['accrual_reference']})
         return res
 
+    def _check_account_compat(self, cr, uid, expense_line_ids, context=None):
+        """
+        Raises an error in case the expense account of one of the lines is not compatible with the Third Party selected
+        in the Accrual (note that Accruals aren't synchronized, so no need to check the sync_update_execution value)
+        """
+        if context is None:
+            context = {}
+        if isinstance(expense_line_ids, (int, long)):
+            expense_line_ids = [expense_line_ids]
+        account_obj = self.pool.get('account.account')
+        for expense_line in self.browse(cr, uid, expense_line_ids, fields_to_fetch=['accrual_line_id', 'expense_account_id'], context=context):
+            accrual = expense_line.accrual_line_id
+            employee_id = accrual.employee_id and accrual.employee_id.id or False
+            partner_id = accrual.partner_id and accrual.partner_id.id or False
+            account_obj.is_allowed_for_thirdparty(cr, uid, expense_line.expense_account_id.id, employee_id=employee_id,
+                                                  partner_id=partner_id, raise_it=True, context=context)
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
-        Creates the line and sets the line number.
+        Creates the line, sets the line number and triggers the check on Third Party compatibility.
         """
         if context is None:
             context = {}
@@ -177,7 +195,23 @@ class msf_accrual_line_expense(osv.osv):
             if accrual and accrual.sequence_id:
                 line_number = accrual.sequence_id.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line_number})
-        return super(msf_accrual_line_expense, self).create(cr, uid, vals, context=context)
+        accrual_line_id = super(msf_accrual_line_expense, self).create(cr, uid, vals, context=context)
+        self._check_account_compat(cr, uid, accrual_line_id, context=context)
+        return accrual_line_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Edits the lines with the values in vals and triggers the check on Third Party compatibility.
+        """
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long, )):
+            ids = [ids]
+        res = super(msf_accrual_line_expense, self).write(cr, uid, ids, vals, context=context)
+        self._check_account_compat(cr, uid, ids, context=context)
+        return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
