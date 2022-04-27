@@ -114803,3 +114803,21 @@ msgstr "Centre de Coût invalide [%s] sera ignoré."
 #, python-format
 msgid "Invalid Destination [%s] will be ignored."
 msgstr "Destination invalide [%s] sera ignorée."
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:748
+#, python-format
+msgid "There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated"
+msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Intermission n'a pas pu être modifié et activé"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:796
+#, python-format
+msgid "There is already an Internal Partner with the name '%s'. The Intermission Partner could not be created and activated"
+msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Intermission n'a pas pu être créé et activé"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:899
+#, python-format
+msgid "There is already an Internal Partner with the name '%s'. The Intermission Partner could not be activated"
+msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Intermission n'a pas pu être activé"
