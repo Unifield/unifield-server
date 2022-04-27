@@ -145,6 +145,25 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, 'US-9833: %d OUT/Pick fixed' % (cr.rowcount,))
         return True
 
+    def us_7791_gdpr_patch(self, cr, uid, *a, **b):
+        cr.execute("""UPDATE hr_employee
+        SET
+        birthday = NULL,
+        gender = NULL,
+        marital = NULL,
+        mobile_phone = NULL,
+        notes = NULL,
+        private_phone = NULL,
+        work_email = NULL,
+        work_phone = NULL,
+        country_id = NULL,
+        ssnid = NULL
+        WHERE employee_type = 'local';
+        """)
+        self.log_info(cr, uid, 'US-7791 : GDPR patch applied on %d rows' % (cr.rowcount,))
+        return True
+
+
     # UF24.0
 
     def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):

@@ -772,5 +772,8 @@
             <field name="method">us_6475_set_has_tax_on_po</field>
         </record>
 
+        <record id="us_7791_gdpr_patch" model="patch.scripts">
+            <field name="method">us_7791_gdpr_patch</field>
+        </record>
     </data>
 </openerp>
