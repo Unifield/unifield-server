@@ -206,7 +206,6 @@ def compute_location_value(cr, uid, **kwargs):
     context = kwargs.get('context', {})
     loc_id = None
     loc_name = None
-    ext_cu = False
     msg = ''
     if row.cells[cell_nb] and tools.ustr(row.cells[cell_nb]) != tools.ustr(None):
         if row.cells[cell_nb].type == 'str':
@@ -244,7 +243,6 @@ def compute_location_value(cr, uid, **kwargs):
                             % (loc_name, pick_ext_cu.name))
                     else:
                         loc_id = pick_ext_cu.id
-                        ext_cu = True
                 else:
                     if loc_ids:
                         loc_id = loc_ids[0]
@@ -262,7 +260,7 @@ def compute_location_value(cr, uid, **kwargs):
             msg = _('The Location Name has to be string.')
         if not loc_name:
             error_list.append(msg or _('The location was not valid.'))
-    return {'location_id': loc_id, 'is_ext_cu': ext_cu, 'error_list': error_list}
+    return {'location_id': loc_id, 'error_list': error_list}
 
 
 def product_value(cr, uid, **kwargs):
