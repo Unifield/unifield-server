@@ -216,7 +216,7 @@ def compute_location_value(cr, uid, **kwargs):
                 if check_type and product_id and check_type == 'src' and pick_type == 'internal':
                     domain.extend([('internal_src', '=', product_id), ('usage', '!=', 'view'), ('virtual_ok', '!=', 't')])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'internal':
-                    domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view'), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')])
+                    domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('output_ok', '=', False), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')])
                 elif check_type and product_id and check_type == 'src' and pick_type == 'in':
                     domain.extend([('usage', '=', 'supplier')])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'in':
