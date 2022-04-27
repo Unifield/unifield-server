@@ -22,7 +22,6 @@
 from osv import fields, osv
 from tools.translate import _
 import datetime
-from dateutil.relativedelta import relativedelta
 from base import currency_date
 
 
@@ -181,9 +180,8 @@ class msf_accrual_line(osv.osv):
         if context is None:
             context = {}
 
-        employee_id = partner_id = False
         if 'third_party_type' in vals:
-            # set the third_party_name + get the employee_id/partner_id for the compatibility check
+            # set the third_party_name
             if vals['third_party_type'] == 'hr.employee' and 'employee_id' in vals:
                 employee_id = vals['employee_id']
                 employee = self.pool.get('hr.employee').browse(cr, uid, employee_id, context=context)
@@ -192,10 +190,6 @@ class msf_accrual_line(osv.osv):
                 partner_id = vals['partner_id']
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
                 vals['third_party_name'] = partner.name
-
-        account_ids = []
-        if vals.get('accrual_account_id', False):
-            account_ids.append(vals.get('accrual_account_id'))
 
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
@@ -207,12 +201,6 @@ class msf_accrual_line(osv.osv):
                 currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
                 formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
                 raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
-
-        # US-672/2
-        if not context.get('sync_update_execution', False) and account_ids:
-            self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
-                                                                       account_ids, employee_id=employee_id, partner_id=partner_id,
-                                                                       raise_it=True,  context=context)
 
     def create_sequence(self, cr, uid):
         """
@@ -258,6 +246,28 @@ class msf_accrual_line(osv.osv):
             vals.update({'partner_id': False, })
         return True
 
+    def _check_account_compat(self, cr, uid, accrual_line_ids, context=None):
+        """
+        Raises an error in case the accrual account OR the expense account of one of the lines is not compatible with
+        the Third Party selected (note that Accruals aren't synchronized, so no need to check the sync_update_execution value).
+        Example UC: modify the Third Party after the creation of the lines, the new Third Party must be compatible with
+        the already selected accounts.
+        """
+        if context is None:
+            context = {}
+        if isinstance(accrual_line_ids, (int, long)):
+            accrual_line_ids = [accrual_line_ids]
+        account_obj = self.pool.get('account.account')
+        for accrual in self.browse(cr, uid, accrual_line_ids,
+                                   fields_to_fetch=['accrual_account_id', 'expense_line_ids', 'employee_id', 'partner_id'],
+                                   context=context):
+            account_ids = [accrual.accrual_account_id.id] + [expl.expense_account_id.id for expl in accrual.expense_line_ids]
+            account_obj.is_allowed_for_thirdparty(cr, uid, account_ids,
+                                                  employee_id=accrual.employee_id and accrual.employee_id.id or False,
+                                                  partner_id=accrual.partner_id and accrual.partner_id.id or False,
+                                                  raise_it=True, context=context)
+        return True
+
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -278,7 +288,9 @@ class msf_accrual_line(osv.osv):
 
         self._create_write_set_vals(cr, uid, vals, context=context)
         self._clean_third_party_fields(cr, uid, vals, context=context)
-        return super(msf_accrual_line, self).create(cr, uid, vals, context=context)
+        accrual_line_id = super(msf_accrual_line, self).create(cr, uid, vals, context=context)
+        self._check_account_compat(cr, uid, accrual_line_id, context=context)
+        return accrual_line_id
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -295,8 +307,9 @@ class msf_accrual_line(osv.osv):
         document_date = 'document_date' in vals and vals['document_date'] or current_values['document_date']
         posting_date = 'date' in vals and vals['date'] or current_values['date']
         self.pool.get('finance.tools').check_document_date(cr, uid, document_date, posting_date, context=context)
-
-        return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
+        res = super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_account_compat(cr, uid, ids, context=context)
+        return res
 
     def _check_period_state(self, cr, uid, period_id, context=None):
         """
