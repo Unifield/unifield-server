@@ -261,11 +261,13 @@ class msf_accrual_line(osv.osv):
         for accrual in self.browse(cr, uid, accrual_line_ids,
                                    fields_to_fetch=['accrual_account_id', 'expense_line_ids', 'employee_id', 'partner_id'],
                                    context=context):
-            account_ids = [accrual.accrual_account_id.id] + [expl.expense_account_id.id for expl in accrual.expense_line_ids]
-            account_obj.is_allowed_for_thirdparty(cr, uid, account_ids,
-                                                  employee_id=accrual.employee_id and accrual.employee_id.id or False,
-                                                  partner_id=accrual.partner_id and accrual.partner_id.id or False,
+            account_ids = set([accrual.accrual_account_id.id] + [expl.expense_account_id.id for expl in accrual.expense_line_ids])
+            employee_id = accrual.employee_id and accrual.employee_id.id or False
+            partner_id = accrual.partner_id and accrual.partner_id.id or False
+            account_obj.is_allowed_for_thirdparty(cr, uid, list(account_ids), employee_id=employee_id, partner_id=partner_id,
                                                   raise_it=True, context=context)
+            account_obj.check_type_for_specific_treatment(cr, uid, list(account_ids), partner_id=partner_id,
+                                                          employee_id=employee_id, context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):

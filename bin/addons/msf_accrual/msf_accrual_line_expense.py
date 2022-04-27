@@ -182,6 +182,8 @@ class msf_accrual_line_expense(osv.osv):
             partner_id = accrual.partner_id and accrual.partner_id.id or False
             account_obj.is_allowed_for_thirdparty(cr, uid, expense_line.expense_account_id.id, employee_id=employee_id,
                                                   partner_id=partner_id, raise_it=True, context=context)
+            account_obj.check_type_for_specific_treatment(cr, uid, expense_line.expense_account_id.id, partner_id=partner_id,
+                                                          employee_id=employee_id, context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):
