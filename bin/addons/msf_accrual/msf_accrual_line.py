@@ -377,7 +377,7 @@ class msf_accrual_line(osv.osv):
             }
             reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
 
-            # Create move lines
+            # create the move line...
             booking_field_cancel = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'  # reverse of initial entry
             accrual_move_line_vals = {
                 'accrual': True,
@@ -397,7 +397,7 @@ class msf_accrual_line(osv.osv):
             }
             accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
 
-            # and their reversal (source_date to keep the old change rate)
+            # ...and its reversal (use the source_date to keep the old FX rate)
             booking_field_rev = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
             reversal_accrual_move_line_vals = {
                 'accrual': True,
