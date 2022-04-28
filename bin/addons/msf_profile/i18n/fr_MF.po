@@ -41958,8 +41958,14 @@ msgstr "Créez des utilisateurs en plus et assignez-les à des groupes, ce qui l
 #: field:analytic.distribution.wizard,accrual_line_id:0
 #: view:msf.accrual.line:0
 #: field:msf.accrual.line.expense,accrual_line_id:0
+#: field:account.move.line,accrual_line_id:0
 msgid "Accrual Line"
 msgstr "Ligne de Régularisation"
+
+#. module: analytic_distribution
+#: field:analytic.distribution.wizard,accrual_expense_line_id:0
+msgid "Accrual Expense Line"
+msgstr "Ligne de Dépense de Régularisation"
 
 #. module: product_list
 #: field:product.to.list,new_list_name:0
@@ -65685,7 +65691,7 @@ msgstr "Supprimer toutes les instances propriétaires"
 msgid "Products date of expiry"
 msgstr "Products date of expiry"
 
-#. modules: account, account_mcdb, account_override, msf_accrual, analytic_distribution
+#. modules: account, account_mcdb, account_override, analytic_distribution
 #: view:account.entries.report:0
 #: selection:account.entries.report,move_state:0
 #: view:account.move:0
@@ -65697,9 +65703,7 @@ msgstr "Products date of expiry"
 #: selection:account.move.line,move_state:0
 #: report:voucher.print:0
 #: selection:account.analytic.line,move_state:0
-#: selection:msf.accrual.line,state:0
 #: selection:integrity.finance.wizard,move_state:0
-#: view:msf.accrual.line:0
 msgid "Posted"
 msgstr "Comptabilisé"
 
@@ -66319,11 +66323,6 @@ msgstr "Vous ne pouvez pas enregistrer des écritures dans une période non ouve
 #: selection:base.setup.company,ship_state_id:0
 msgid "Mississippi"
 msgstr "Mississippi"
-
-#. module: msf_accrual
-#: selection:msf.accrual.line,state:0
-msgid "Partially posted"
-msgstr "Partiellement comptabilisé"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -67950,11 +67949,6 @@ msgstr "La période n'a pas été trouvée pour cette date: %s."
 #: model:ir.ui.menu,name:base.menu_translation
 msgid "Translations"
 msgstr "Traductions"
-
-#. module: msf_accrual
-#: view:msf.accrual.line:0
-msgid "Partially Posted"
-msgstr "Partially Posted"
 
 #. modules: sales_followup, purchase_followup, account_mcdb
 #: view:account.mcdb:0
@@ -75007,11 +75001,13 @@ msgid "Line %s in your Excel file: %s: %s\n"
 msgstr "Ligne %s du fichier Excel: %s: %s\n"
 ""
 
-#. modules: account, account_subscription
+#. modules: account, account_subscription, msf_accrual
 #: view:account.subscription:0
 #: selection:account.subscription,state:0
 #: selection:account.model,state:0
 #: view:account.model:0
+#: view:msf.accrual.line:0
+#: selection:msf.accrual.line,state:0
 msgid "Running"
 msgstr "En cours"
 
@@ -82859,7 +82855,7 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product, account_subscription
+#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product, account_subscription, msf_accrual
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:report.invoice.created,state:0
@@ -82931,6 +82927,8 @@ msgstr "Sélectionner un fournisseur"
 #: selection:account.model,state:0
 #: selection:account.subscription,state:0
 #: selection:wizard.return.from.unit.import,state:0
+#: view:msf.accrual.line:0
+#: selection:msf.accrual.line,state:0
 #, python-format
 msgid "Done"
 msgstr "Terminé"
