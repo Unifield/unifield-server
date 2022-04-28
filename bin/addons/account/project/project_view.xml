@@ -210,7 +210,7 @@
                                 help="Analytic Journal Items related to an ENGI journal."
                                 />
                             <filter name="others" string="Others" domain="[('journal_id.type','in',('cash','general','situation'))]" icon="terp-folder-orange"/>
-                            <filter name="sales" string=" Sales " domain="[('journal_id.type','=','sale'), '|', ('journal_id.code', '=', 'SAL'), ('journal_id.code', '=', 'SAR')]" icon="terp-camera_test" help="Analytic Journal Items related to a sale journal."/>
+                            <filter name="sales" string=" Sales " domain="[('journal_id.type','=','sale')]" icon="terp-camera_test" help="Analytic Journal Items related to a sale journal."/>
                             <separator orientation="vertical"/>
                             <field name="document_date" select="1"/>
                             <field name="date"/>
