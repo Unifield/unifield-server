@@ -44,6 +44,7 @@ class wizard_accrual_reversal(osv.osv_memory):
         if context is None:
             context = {}
         period_obj = self.pool.get('account.period')
+        # note that Periods 0 (with active = False) are by default excluded, so a date in January should return only ONE period
         reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
         if len(reversal_period_ids) == 0:
             raise osv.except_osv(_('Warning'), _("The reversal period has not been found in the system!"))
