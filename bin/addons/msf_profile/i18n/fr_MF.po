@@ -16327,6 +16327,11 @@ msgstr "Erreur d'Accès"
 msgid " (from header)"
 msgstr " (de l'entête)"
 
+#. module: msf_accrual
+#: help:msf.accrual.line.expense,analytic_distribution_state_recap:0
+msgid "Gives the AD state and specifies \"from header\" if applicable"
+msgstr "Donne l'état de la DA et précise \"de l'entête\" le cas échéant"
+
 #. module: purchase
 #: model:product.pricelist,name:purchase.list0
 msgid "Default Purchase Pricelist"
@@ -86086,6 +86091,14 @@ msgstr "Erreur inconnue"
 #, python-format
 msgid "The period \"%s\" is not Open."
 msgstr "La période \"%s\" n'est pas Ouverte."
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:324
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:71
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:55
+#, python-format
+msgid "The period \"%s\" is not Open!"
+msgstr "La période \"%s\" n'est pas Ouverte !"
 
 #. module: hr
 #: field:hr.employee,child_ids:0

@@ -149,7 +149,7 @@ class msf_accrual_line_expense(osv.osv):
                                                        string="Distribution state"),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, store=False,
                                                              type='char', size=30, string="Distribution",
-                                                             help="Gives the AD state and specify \"from header\" if applicable"),
+                                                             help="Gives the AD state and specifies \"from header\" if applicable"),
     }
 
     _order = 'line_number'
