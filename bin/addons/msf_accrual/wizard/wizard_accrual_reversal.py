@@ -68,7 +68,7 @@ class wizard_accrual_reversal(osv.osv_memory):
             reversal_period_id = reversal_period_ids[0]
             reversal_period = period_obj.browse(cr, uid, reversal_period_id, fields_to_fetch=['state', 'name'], context=context)
             if reversal_period.state != 'draft':
-                raise osv.except_osv(_('Warning'), _("The period \"%s\" is not Open!" % (reversal_period.name,)))
+                raise osv.except_osv(_('Warning'), _("The period \"%s\" is not Open!") % (reversal_period.name,))
         return reversal_period_id
 
     def button_accrual_reversal_confirm(self, cr, uid, ids, context=None):
