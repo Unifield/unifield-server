@@ -41962,11 +41962,6 @@ msgstr "Créez des utilisateurs en plus et assignez-les à des groupes, ce qui l
 msgid "Accrual Line"
 msgstr "Ligne de Régularisation"
 
-#. module: analytic_distribution
-#: field:analytic.distribution.wizard,accrual_expense_line_id:0
-msgid "Accrual Expense Line"
-msgstr "Ligne de Dépense de Régularisation"
-
 #. module: product_list
 #: field:product.to.list,new_list_name:0
 msgid "Name of the new list"
@@ -77442,8 +77437,8 @@ msgstr "L'écriture n'est pas équilibrée pour le Modèle périodique %s!"
 #. module: res_currency_tables
 #: code:addons/res_currency_tables/res_currency.py:287
 #, python-format
-msgid "The currency you want to %s is used in at least one Draft or Partially Posted Accrual Line."
-msgstr "La devise que vous désirez %s est utilisée dans au moins une Ligne de Régularisation à l'état Brouillon ou Partiellement Comptabilisée."
+msgid "The currency you want to %s is used in at least one Draft or Running Accrual Line."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ligne de Régularisation à l'état Brouillon ou En cours."
 
 #. module: base_setup
 #: field:base.setup.installer,mrp:0
@@ -114050,9 +114045,30 @@ msgid "Accrual lines"
 msgstr "Lignes de Régularisation"
 
 #. module: msf_accrual
+#: field:msf.accrual.line,expense_line_ids:0
+msgid "Accrual Expense Lines"
+msgstr "Lignes de Dépenses de Régularisation"
+
+#. module: analytic_distribution
+#: field:analytic.distribution.wizard,accrual_expense_line_id:0
+msgid "Accrual Expense Line"
+msgstr "Ligne de Dépense de Régularisation"
+
+#. module: msf_accrual
+#: field:msf.accrual.line,sequence_id:0
+msgid "Sequence of the lines"
+msgstr "Séquence des lignes"
+
+#. module: msf_accrual
 #: view:msf.accrual.line:0
 msgid "Third Party Type"
 msgstr "Type de Tiers"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:103
+#, python-format
+msgid "No active journal of type Accrual has been found for the current instance."
+msgstr "Aucun journal actif de type \"Accrual\" (Régularisation) n'a été trouvé pour l'instance actuelle."
 
 #. module: stock
 #: field:stock.reception.wizard,final_dest_id:0
