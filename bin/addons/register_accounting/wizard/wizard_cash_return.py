@@ -139,6 +139,42 @@ class wizard_advance_line(osv.osv_memory):
                 res[absl.id] = False
         return res
 
+    def onchange_account(self, cr, uid, ids, account_id=None, context=None):
+        """
+        Update Third Party type regarding account type_for_register field.
+        """
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        acc_obj = self.pool.get('account.account')
+        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+        third_required = False
+        third_selection = 'res.partner,0'
+        # if an account is given, then attempting to change third_type and information about the third required
+        if account_id:
+            a = acc_obj.read(cr, uid, account_id, ['type_for_register'])
+            if a['type_for_register'] in ['transfer', 'transfer_same']:
+                # UF-428: transfer type shows only Journals instead of Registers as before
+                third_type = [('account.journal', 'Journal')]
+                third_required = True
+                third_selection = 'account.journal,0'
+            elif a['type_for_register'] == 'advance':
+                third_type = [('hr.employee', 'Employee')]
+                third_required = True
+                third_selection = 'hr.employee,0'
+            elif a['type_for_register'] == 'down_payment':
+                third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            elif a['type_for_register'] == 'payroll':
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+                third_required = True
+                third_selection = 'res.partner,0'
+        return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
+
     _columns = {
         'document_date': fields.date(string='Document Date', required=True),
         'description': fields.char(string='Description', size=64, required=True),
@@ -334,6 +370,7 @@ class wizard_cash_return(osv.osv_memory):
         'invoice_ids': fields.many2many('account.invoice', 'wizard_cash_return_invoice_rel', 'wizard_id', 'invoice_id', "Invoices"),
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
+        'journal_id': fields.many2one('account.journal', string="Journal", readonly=True),
         'date': fields.date(string='Date for advance return', required=True),
         'reference': fields.char(string='Advance Return Reference', size=50),
         'advance_linked_po_auto_invoice': fields.boolean(string="Operational advance linked po invoices"),
@@ -365,7 +402,8 @@ class wizard_cash_return(osv.osv_memory):
             else:
                 st_line = self.pool.get('account.bank.statement.line').browse(cr, uid, context.get('statement_line_id'), context=context)
                 currency_id = st_line.statement_id.currency.id # currency is a mandatory field on statement/register
-                res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('statement_line_id'), 'currency_id': currency_id})
+                journal_id = st_line.statement_id.journal_id.id
+                res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('statement_line_id'), 'currency_id': currency_id, 'journal_id': journal_id})
         return res
 
     def create(self, cr, uid, values, context=None):
@@ -937,7 +975,7 @@ class wizard_cash_return(osv.osv_memory):
             account_id = advance.account_id.id
 
             # check the compatibility between Third Party and Account "Type for specific treatment"
-            account_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id,
+            account_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id, journal_id=journal.id,
                                                           employee_id=line_employee_id, context=context)
 
             # Analytic distribution for this line
