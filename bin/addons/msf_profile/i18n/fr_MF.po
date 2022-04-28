@@ -7282,7 +7282,6 @@ msgstr "Vous aide à gérer et à suivre vos relations avec vos clients, comme l
 #: code:addons/analytic_distribution/invoice.py:465
 #: code:addons/analytic_distribution_supply/sale.py:360
 #: field:sale.order,analytic_distribution_id:0
-#: code:addons/msf_accrual/msf_accrual_line.py:385
 #: code:addons/register_accounting/account_direct_invoice_wizard.py:707
 #: code:addons/register_accounting/wizard/direct_invoice.py:418
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:276
@@ -11973,8 +11972,14 @@ msgstr "Liste des modules dans lesquels le champ est défini"
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:41
 #, python-format
-msgid "The line '%s' is already partially posted!"
-msgstr "La ligne '%s' est déjà partiellement comptabilisée !"
+msgid "The Accrual \"%s\" is already in Running state!"
+msgstr "La Régularisation \"%s\" est déjà à l'état En cours !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:39
+#, python-format
+msgid "The Accrual \"%s\" is already in Done state!"
+msgstr "La Régularisation \"%s\" est déjà à l'état Terminé !"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:532
@@ -14879,10 +14884,12 @@ msgid "This inform that no correction is possible for a line that come from a wr
 msgstr "Vous informe qu'aucune correction de ligne n'est possible si elle provient d'un ajustement!"
 
 #. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:50
+#: code:addons/msf_accrual/msf_accrual_line.py:324
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:71
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:55
 #, python-format
-msgid "The period '%s' is not open!"
-msgstr "La période '%s' n'est pas ouverte !"
+msgid "The period \"%s\" is not Open!"
+msgstr "La période \"%s\" n'est pas Ouverte !"
 
 #. module: res_currency_functional
 #: code:addons/res_currency_functional/res_currency_rate_functional.py:141
@@ -25253,7 +25260,7 @@ msgstr "Demande(s) de Devis En Attente de Validation"
 msgid "warning !"
 msgstr "warning !"
 
-#. modules: register_accounting, analytic_distribution, analytic_distribution_supply, account_subscription, purchase
+#. modules: register_accounting, analytic_distribution, analytic_distribution_supply, account_subscription, purchase, msf_accrual
 #: code:addons/account_subscription/account_model.py:388
 #: code:addons/analytic_distribution/account.py:361
 #: code:addons/analytic_distribution/account_commitment.py:253
@@ -25263,6 +25270,7 @@ msgstr "warning !"
 #: code:addons/purchase/purchase_order.py:1301
 #: code:addons/register_accounting/account_direct_invoice_wizard.py:414
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:1082
+#: code:addons/msf_accrual/msf_accrual_line.py:551
 #, python-format
 msgid "Global analytic distribution"
 msgstr "Distribution Analytique Globale"
@@ -39470,13 +39478,6 @@ msgstr "Account Period for MSF"
 #: model:ir.ui.menu,name:purchase_followup.menu_po_track_changes
 msgid "PO Track Changes"
 msgstr "Suivi Changements Bons de Commande"
-
-#. module: msf_accrual
-#: code:addons/msf_accrual/msf_accrual_line.py:202
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:39
-#, python-format
-msgid "The line '%s' is already posted!"
-msgstr "La ligne '%s' est déjà comptabilisée!"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:441
@@ -86092,14 +86093,6 @@ msgstr "Erreur inconnue"
 msgid "The period \"%s\" is not Open."
 msgstr "La période \"%s\" n'est pas Ouverte."
 
-#. module: msf_accrual
-#: code:addons/msf_accrual/msf_accrual_line.py:324
-#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:71
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:55
-#, python-format
-msgid "The period \"%s\" is not Open!"
-msgstr "La période \"%s\" n'est pas Ouverte !"
-
 #. module: hr
 #: field:hr.employee,child_ids:0
 msgid "Subordinates"
@@ -114082,6 +114075,12 @@ msgstr "Type de Tiers"
 #, python-format
 msgid "No active journal of type Accrual has been found for the current instance."
 msgstr "Aucun journal actif de type \"Accrual\" (Régularisation) n'a été trouvé pour l'instance actuelle."
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:338
+#, python-format
+msgid "The Accrual \"%s\" is not Done!"
+msgstr "La Régularisation \"%s\" n'est pas Terminée !"
 
 #. module: stock
 #: field:stock.reception.wizard,final_dest_id:0
