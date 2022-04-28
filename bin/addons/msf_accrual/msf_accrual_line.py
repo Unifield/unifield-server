@@ -321,7 +321,7 @@ class msf_accrual_line(osv.osv):
             context = {}
         period = self.pool.get('account.period').browse(cr, uid, period_id, fields_to_fetch=['state', 'name'], context=context)
         if period.state != 'draft':
-            raise osv.except_osv(_('Warning'), _("The period \"%s\" is not Open!" % (period.name,)))
+            raise osv.except_osv(_('Warning'), _("The period \"%s\" is not Open!") % (period.name,))
         return True
 
     def button_cancel(self, cr, uid, ids, context=None):
