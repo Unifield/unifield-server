@@ -12047,7 +12047,7 @@ msgstr "Zone Liée"
 #: model:ir.actions.act_window,name:msf_accrual.action_wizard_accrual_validation
 #: view:wizard.accrual.validation:0
 msgid "Validate Accrual Lines"
-msgstr "Valider Lignes de Régularisation "
+msgstr "Valider Lignes de Régularisation"
 
 #. module: sync_client
 #: field:sync.monitor,nb_data_not_run:0
@@ -71310,7 +71310,7 @@ msgstr "Meilleur Prix (pas encore actif!)"
 #. module: msf_accrual
 #: view:wizard.accrual.validation:0
 msgid "Are you sure you want to validate those accrual lines?"
-msgstr "Etes-vous sûrs de vouloir valider ces lignes des régularisations?"
+msgstr "Etes-vous sûr de vouloir valider ces lignes de régularisation ?"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:262

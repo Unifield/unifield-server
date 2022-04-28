@@ -99,7 +99,8 @@ class wizard_accrual_reversal(osv.osv_memory):
                                                        reversal_period_id, context=context)
 
         # close the wizard
-        return {'type' : 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window_close'}
+
 
 wizard_accrual_reversal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

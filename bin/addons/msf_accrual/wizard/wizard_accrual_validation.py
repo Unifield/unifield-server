@@ -24,6 +24,7 @@ from tools.translate import _
 import datetime
 from dateutil.relativedelta import relativedelta
 
+
 class wizard_accrual_validation(osv.osv_memory):
     _name = 'wizard.accrual.validation'
 
@@ -31,7 +32,6 @@ class wizard_accrual_validation(osv.osv_memory):
         if context is None:
             context = {}
         accrual_line_obj = self.pool.get('msf.accrual.line')
-        period_obj = self.pool.get('account.period')
         if 'active_ids' in context:
             for accrual_line in accrual_line_obj.browse(cr, uid, context['active_ids'], context=context):
                 # check for periods, distribution, etc.
@@ -40,12 +40,12 @@ class wizard_accrual_validation(osv.osv_memory):
                 elif accrual_line.state == 'running':
                     raise osv.except_osv(_('Warning'), _('The Accrual "%s" is already in Running state!') % accrual_line.description)
                 elif accrual_line.state == 'cancel':
-                    raise osv.except_osv(_('Warning !'), _('The Accrual "%s" is cancelled and can\'t be re-posted.') % accrual_line.description)
+                    raise osv.except_osv(_('Warning'), _('The Accrual "%s" is cancelled and can\'t be re-posted.') % accrual_line.description)
                 elif not accrual_line.expense_line_ids:
                     raise osv.except_osv(_('Warning'),
                                          _('Please add some lines to the Accrual "%s" before validating it!') % accrual_line.description)
                 elif not accrual_line.period_id:
-                    raise osv.except_osv(_('Warning !'), _('The Accrual "%s" has no period set!') % accrual_line.description)
+                    raise osv.except_osv(_('Warning'), _('The Accrual "%s" has no period set!') % accrual_line.description)
                 elif not accrual_line.analytic_distribution_id:
                     for expense_line in accrual_line.expense_line_ids:
                         if not expense_line.analytic_distribution_id:
@@ -67,7 +67,8 @@ class wizard_accrual_validation(osv.osv_memory):
                                                            reversal_period_id, context=context)
 
         # close the wizard
-        return {'type' : 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window_close'}
+
 
 wizard_accrual_validation()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

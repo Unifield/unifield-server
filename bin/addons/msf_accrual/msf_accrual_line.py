@@ -329,7 +329,6 @@ class msf_accrual_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        period_obj = self.pool.get('account.period')
         move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
         ad_obj = self.pool.get('analytic.distribution')
@@ -391,8 +390,8 @@ class msf_accrual_line(osv.osv):
                 'reference': accrual_line.reference,
                 'name': "CANCEL - %s" % accrual_line.description,
                 'account_id': accrual_line.accrual_account_id.id,
-                'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
+                'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
                 booking_field_cancel: abs(accrual_line.total_accrual_amount or 0.0),
                 'currency_id': accrual_line.currency_id.id,
             }
@@ -412,8 +411,8 @@ class msf_accrual_line(osv.osv):
                 'reference': accrual_line.reference,
                 'name': "CANCEL - REV - %s" % accrual_line.description,
                 'account_id': accrual_line.accrual_account_id.id,
-                'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
+                'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
                 booking_field_rev: abs(accrual_line.total_accrual_amount or 0.0),
                 'currency_id': accrual_line.currency_id.id,
             }
@@ -630,8 +629,8 @@ class msf_accrual_line(osv.osv):
                     'reference': accrual_line.reference,
                     'name': accrual_line.description,
                     'account_id': accrual_line.accrual_account_id.id,
-                    'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                    'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                    'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
+                    'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
                     booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                     'currency_id': accrual_line.currency_id.id,
                 }
@@ -724,8 +723,8 @@ class msf_accrual_line(osv.osv):
                     'reference': accrual_line.reference,
                     'name': "REV - %s" % accrual_line.description,
                     'account_id': accrual_line.accrual_account_id.id,
-                    'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
-                    'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
+                    'partner_id': accrual_line.partner_id and accrual_line.partner_id.id or False,
+                    'employee_id': accrual_line.employee_id and accrual_line.employee_id.id or False,
                     booking_field: abs(accrual_line.total_accrual_amount or 0.0),
                     'currency_id': accrual_line.currency_id.id,
                 }
@@ -763,6 +762,7 @@ class msf_accrual_line(osv.osv):
 
                 # Change the status to "Done"
                 self.write(cr, uid, [accrual_line.id], {'state': 'done', 'rev_move_id': reversal_move_id}, context=context)
+
 
 msf_accrual_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
