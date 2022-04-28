@@ -134,7 +134,8 @@ class msf_accrual_line_expense(osv.osv):
                                              string="Functional Amount",
                                              store={
                                                  'msf.accrual.line.expense': (lambda self, cr, uid, ids, c=None: ids, ['accrual_amount'], 10),
-                                                 'msf.accrual.line': (_get_expense_lines, ['currency_id'], 20),
+                                                 'msf.accrual.line': (_get_expense_lines,
+                                                                      ['currency_id', 'period_id', 'date', 'document_date'], 20),
                                              }),
         'accrual_line_id': fields.many2one('msf.accrual.line', 'Accrual Line', required=True, ondelete='cascade'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
