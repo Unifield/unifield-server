@@ -5918,6 +5918,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: code:addons/stock/report/closed_physical_inventory_report.py:123
 #: report:order.type.donation.certificate:0
 #: report:addons/product/report/product_mass_update_export_xls.mako:118
+#: field:msf.accrual.line.expense,description:0
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -7286,6 +7287,7 @@ msgstr "Vous aide à gérer et à suivre vos relations avec vos clients, comme l
 #: code:addons/register_accounting/wizard/direct_invoice.py:418
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:276
 #: code:addons/analytic_distribution/account_bank_statement.py:122
+#: code:addons/msf_accrual/msf_accrual_line_expense.py:250
 #, python-format
 msgid "Analytic distribution"
 msgstr "Distribution analytique"
@@ -16312,7 +16314,7 @@ msgstr "Les données associées avec l'événement."
 msgid "AccessError"
 msgstr "Erreur d'Accès"
 
-#. modules: analytic_distribution, analytic_distribution_supply, account_subscription, purchase, register_accounting
+#. modules: analytic_distribution, analytic_distribution_supply, account_subscription, purchase, register_accounting, msf_accrual
 #: code:addons/account_subscription/account_model.py:92
 #: code:addons/analytic_distribution/account_move_line.py:97
 #: code:addons/analytic_distribution_supply/sale.py:271
@@ -16320,6 +16322,7 @@ msgstr "Erreur d'Accès"
 #: code:addons/purchase/purchase_order_line.py:342
 #: code:addons/register_accounting/account_direct_invoice_wizard.py:501
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:107
+#: code:addons/msf_accrual/msf_accrual_line_expense.py:87
 #, python-format
 msgid " (from header)"
 msgstr " (de l'entête)"
@@ -22347,6 +22350,11 @@ msgstr "Réallocation groupée"
 msgid "Header Distrib.?"
 msgstr " Allocation depuis l'en-tête?"
 
+#. module: msf_accrual
+#: field:msf.accrual.line.expense,have_analytic_distribution_from_header:0
+msgid "Header Distribution"
+msgstr "Allocation depuis l'en-tête"
+
 #. module: hr
 #: field:hr.job,name:0
 msgid "Job Name"
@@ -22731,6 +22739,7 @@ msgstr "Sri Lanka"
 #: field:wizard.advance.line,analytic_distribution_state:0
 #: field:purchase.order.merged.line,analytic_distribution_state:0
 #: field:msf.accrual.line,analytic_distribution_state:0
+#: field:msf.accrual.line.expense,analytic_distribution_state:0
 msgid "Distribution state"
 msgstr "Statut de Distribution"
 
@@ -22870,11 +22879,12 @@ msgstr "État du traitement"
 msgid "America/Monterrey"
 msgstr "America/Monterrey"
 
-#. modules: account_override, financing_contract, register_accounting, finance
+#. modules: account_override, financing_contract, register_accounting, finance, msf_accrual
 #: report:addons/account_override/report/open_invoices_xls.mako:346
 #: field:cash.request.liquidity.total,booking_currency_id:0
 #: report:addons/financing_contract/report/project_expenses_xls.mako:503
 #: report:addons/register_accounting/report/open_advances_xls.mako:155
+#: view:msf.accrual.line:0
 msgid "Booking Currency"
 msgstr "Devise d'Enregistrement"
 
@@ -40580,6 +40590,12 @@ msgstr "Merci de supprimer les procedures d'export automatisé liées"
 
 #. module: msf_accrual
 #: field:msf.accrual.line,accrual_amount:0
+msgid "Accrual Amount (deprecated)"
+msgstr "Montant de Régularisation (obsolète)"
+
+#. module: msf_accrual
+#: field:msf.accrual.line,total_accrual_amount:0
+#: field:msf.accrual.line.expense,accrual_amount:0
 msgid "Accrual Amount"
 msgstr "Montant de Régularisation"
 
@@ -41941,6 +41957,7 @@ msgstr "Créez des utilisateurs en plus et assignez-les à des groupes, ce qui l
 #. modules: msf_accrual, analytic_distribution
 #: field:analytic.distribution.wizard,accrual_line_id:0
 #: view:msf.accrual.line:0
+#: field:msf.accrual.line.expense,accrual_line_id:0
 msgid "Accrual Line"
 msgstr "Ligne de Régularisation"
 
@@ -49800,7 +49817,7 @@ msgstr "Qté Disponible"
 msgid "The partner you want have the donations from"
 msgstr "Le partenaire duquel vous voulez voir les dons"
 
-#. modules: purchase, account, msf_outgoing, analytic_distribution_supply, purchase_override, purchase_allocation_report, register_accounting, account_subscription, analytic_distribution
+#. modules: purchase, account, msf_outgoing, analytic_distribution_supply, purchase_override, purchase_allocation_report, register_accounting, account_subscription, analytic_distribution, msf_accrual
 #: selection:account.journal.column,field:0
 #: field:account.model.line,analytic_distribution_state_recap:0
 #: field:account.invoice.line,analytic_distribution_state_recap:0
@@ -49813,6 +49830,7 @@ msgstr "Le partenaire duquel vous voulez voir les dons"
 #: field:account.direct.invoice.wizard.line,analytic_distribution_state_recap:0
 #: field:wizard.account.invoice.line,analytic_distribution_state_recap:0
 #: field:wizard.advance.line,analytic_distribution_state_recap:0
+#: field:msf.accrual.line.expense,analytic_distribution_state_recap:0
 msgid "Distribution"
 msgstr "Distribution"
 
@@ -51562,7 +51580,7 @@ msgstr "\n"
 msgid "Fields price percentage"
 msgstr "Champs Pourcentage de Prix"
 
-#. modules: account_override, register_accounting, msf_doc_import, account, msf_supply_doc_export, msf_supply_doc_export, sale, procurement_request
+#. modules: account_override, register_accounting, msf_doc_import, account, msf_supply_doc_export, msf_supply_doc_export, sale, procurement_request, msf_accrual
 #: field:account.invoice.line,line_number:0
 #: field:wizard.account.invoice.line,line_number:0
 #: selection:account.journal.column,field:0
@@ -51577,6 +51595,7 @@ msgstr "Champs Pourcentage de Prix"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:118
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:213
 #: field:internal.request.import.line,ir_line_number:0
+#: field:msf.accrual.line.expense,line_number:0
 #, python-format
 msgid "Line Number"
 msgstr "Numéro de Ligne"
@@ -52793,6 +52812,8 @@ msgstr "Journal de transfert"
 #: model:ir.model,name:sync_client.model_account_move_line
 #: model:ir.model,name:sync_so.model_account_move_line
 #: model:ir.model,name:vertical_integration.model_account_move_line
+#: view:msf.accrual.line:0
+#: field:msf.accrual.line,move_line_ids:0
 #, python-format
 msgid "Journal Items"
 msgstr "Lignes d'Ecritures Comptables"
@@ -61398,6 +61419,7 @@ msgstr "The line '%s' has no analytic distribution!"
 #: field:wizard.account.invoice,analytic_distribution_id:0
 #: field:wizard.account.invoice.line,analytic_distribution_id:0
 #: field:wizard.advance.line,analytic_distribution_id:0
+#: field:msf.accrual.line.expense,analytic_distribution_id:0
 msgid "Analytic Distribution"
 msgstr "Allocation Analytique"
 
@@ -61521,6 +61543,7 @@ msgstr "Albanie"
 #: report:addons/procurement_cycle/report_doc/product_stock_out.mako:426
 #: field:product.stock_out,name:0
 #: field:replenishment.parent.segment,name_parent_seg:0
+#: field:msf.accrual.line.expense,reference:0
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -62323,7 +62346,8 @@ msgid "Asia/Irkutsk"
 msgstr "Asie/Irkutsk"
 
 #. module: msf_accrual
-#: field:msf.accrual.line,functional_amount:0
+#: field:msf.accrual.line,total_functional_amount:0
+#: field:msf.accrual.line.expense,functional_amount:0
 msgid "Functional Amount"
 msgstr "Montant Fonctionnel"
 
@@ -65022,6 +65046,7 @@ msgstr "PO line to confirm"
 #: code:addons/account_override/res_company.py:40
 #: report:addons/account/report/export_invoice.mako:108
 #: selection:account.report.general.ledger,sortby:0
+#: view:msf.accrual.line:0
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"
@@ -70604,10 +70629,15 @@ msgstr "Date Prévue d'Expédition"
 #: view:account.chart.template:0
 #: field:product.category,property_account_expense_categ:0
 #: field:product.template,property_account_expense:0
-#: field:msf.accrual.line,expense_account_id:0
 #: field:product.mass.update,property_account_expense:0
+#: field:msf.accrual.line.expense,expense_account_id:0
 msgid "Expense Account"
 msgstr "Compte de Charge"
+
+#. module: msf_accrual
+#: field:msf.accrual.line,expense_account_id:0
+msgid "Expense Account (deprecated)"
+msgstr "Compte de Charge (obsolète)"
 
 #. module: base
 #: code:addons/base/res/res_user.py:289
@@ -71908,7 +71938,7 @@ msgstr "Sourcé-n"
 msgid "You can not drill analytic journal items of the root line"
 msgstr "You can not drill analytic journal items of the root line"
 
-#. modules: purchase, register_accounting, sale, account_override, account_subscription, analytic_distribution
+#. modules: purchase, register_accounting, sale, account_override, account_subscription, analytic_distribution, msf_accrual
 #: view:account.invoice:0
 #: view:account.model:0
 #: view:account.commitment:0
@@ -71918,6 +71948,7 @@ msgstr "You can not drill analytic journal items of the root line"
 #: view:account.direct.invoice.wizard:0
 #: view:wizard.account.invoice:0
 #: view:sale.order:0
+#: view:msf.accrual.line:0
 msgid "Reset AD at line level"
 msgstr "Restaurer la DA au niveau ligne"
 
@@ -78079,6 +78110,7 @@ msgstr "Importation échouée Ecritures HQ"
 #: report:account.general.ledger_landscape_tb:0
 #: report:addons/account/report/account_general_ledger_xls.mako:247
 #: selection:account.report.general.ledger,sortby:0
+#: view:msf.accrual.line:0
 #, python-format
 msgid "Third Party"
 msgstr "Tiers"
@@ -114008,6 +114040,21 @@ msgstr "Génère le \"Monthly Export\" (uniquement) pour toutes les missions à 
 #: field:ocp.export.wizard,warning_db_name:0
 msgid "Display a warning on database name"
 msgstr "Affiche un avertissement sur le nom de la base de données"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Accruals"
+msgstr "Régularisations"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Accrual lines"
+msgstr "Lignes de Régularisation"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Third Party Type"
+msgstr "Type de Tiers"
 
 #. module: stock
 #: field:stock.reception.wizard,final_dest_id:0
