@@ -13298,11 +13298,6 @@ msgstr "Line %s of the imported file: UoM [%s] not found ! Details: %s"
 msgid "Nothing to import."
 msgstr "Rien à importer."
 
-#. module: msf_accrual
-#: selection:msf.accrual.line,accrual_type:0
-msgid "One Time accrual"
-msgstr "One Time accrual"
-
 #. module: account_subscription
 #: selection:account.model.line,exp_in_ad_state:0
 msgid "Not expense/income"
@@ -70809,11 +70804,6 @@ msgstr "You have to choose at least one month for consumption history"
 #: selection:base.setup.company,ship_country_id:0
 msgid "Madagascar"
 msgstr "Madagascar"
-
-#. module: msf_accrual
-#: selection:msf.accrual.line,accrual_type:0
-msgid "Reversing accrual"
-msgstr "Reversing accrual"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
