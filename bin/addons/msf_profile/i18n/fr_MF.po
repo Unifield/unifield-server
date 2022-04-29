@@ -61413,7 +61413,7 @@ msgstr "Solde Initial"
 msgid "Some of the lines of the Accrual \"%s\" have no analytic distribution!"
 msgstr "Certaines lignes de la Régularisation \"%s\" n'ont pas de distribution analytique !"
 
-#. modules: purchase, register_accounting, analytic_distribution_supply, account_corrections, account_subscription, msf_accrual, analytic_override, analytic_distribution
+#. modules: purchase, register_accounting, analytic_distribution_supply, account_corrections, account_subscription, analytic_override, analytic_distribution
 #: field:wizard.journal.items.corrections.lines,analytic_distribution_id:0
 #: field:account.model,analytic_distribution_id:0
 #: field:account.model.line,analytic_distribution_id:0
@@ -61425,13 +61425,11 @@ msgstr "Certaines lignes de la Régularisation \"%s\" n'ont pas de distribution 
 #: field:analytic.distribution.wizard,distribution_id:0
 #: field:sale.order.line,analytic_distribution_id:0
 #: field:account.analytic.line,distribution_id:0
-#: field:msf.accrual.line,analytic_distribution_id:0
 #: field:purchase.order,analytic_distribution_id:0
 #: field:purchase.order.line,analytic_distribution_id:0
 #: field:wizard.account.invoice,analytic_distribution_id:0
 #: field:wizard.account.invoice.line,analytic_distribution_id:0
 #: field:wizard.advance.line,analytic_distribution_id:0
-#: field:msf.accrual.line.expense,analytic_distribution_id:0
 msgid "Analytic Distribution"
 msgstr "Allocation Analytique"
 
@@ -94072,7 +94070,7 @@ msgstr "Solde de Caisse à l'ouverture"
 msgid "Current Instance"
 msgstr "Instance actuelle"
 
-#. modules: register_accounting, msf_supply_doc_export, purchase_override, account
+#. modules: register_accounting, msf_supply_doc_export, purchase_override, account, msf_accrual
 #: selection:account.journal.column,field:0
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:184
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:206
@@ -94080,6 +94078,8 @@ msgstr "Instance actuelle"
 #: field:account.direct.invoice.wizard,analytic_distribution_id:0
 #: field:account.direct.invoice.wizard.line,analytic_distribution_id:0
 #: field:wizard.cash.return,analytic_distribution_id:0
+#: field:msf.accrual.line,analytic_distribution_id:0
+#: field:msf.accrual.line.expense,analytic_distribution_id:0
 msgid "Analytic Distribution"
 msgstr "Distribution analytique"
 
