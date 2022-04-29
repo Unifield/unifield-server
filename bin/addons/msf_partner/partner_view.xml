@@ -52,9 +52,6 @@
                         <field name="manufacturer" />
                         <field name="transporter" on_change="transporter_ticked(transporter)" />
                     </xpath>
-                    <xpath expr="/form/group/group/field[@name='zone']" position="after">
-                        <field name="active"/>
-                    </xpath>
                 </data>
             </field>
         </record>
@@ -185,8 +182,8 @@
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form//field[@name='active']" position="attributes">
-                        <attribute name="on_change">on_change_active(active)</attribute>
+                    <xpath expr="/form/group/group/field[@name='zone']" position="after">
+                        <field name="active" on_change="on_change_active(active, name, partner_type)"/>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='General']" position="replace">
                         <page string="General">

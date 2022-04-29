@@ -207,7 +207,7 @@ class account_invoice_refund(osv.osv_memory):
                 refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
                 # for Intermission Vouchers OUT: at standard creation time there is no "check_total" entered manually,
                 # its value is always 0.0 => use the "amount_total" value for the IVI generated so it won't block at validation step
-                if inv.is_intermission and inv.type == 'out_invoice':
+                if (inv.is_intermission and inv.type == 'out_invoice') or inv.doc_type == 'isi':
                     check_total = inv.amount_total or 0.0
                 else:
                     check_total = inv.check_total

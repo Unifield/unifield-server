@@ -61826,11 +61826,12 @@ msgstr "Actions d'itération"
 msgid "CORDOBA ORO"
 msgstr "CORDOBA ORO"
 
-#. modules: purchase, sale, account_override, register_accounting
+#. modules: purchase, sale, account_override, register_accounting, analytic_distribution
 #: field:purchase.order,line_count:0
 #: field:sale.order,line_count:0
 #: field:account.invoice,line_count:0
 #: field:wizard.account.invoice,line_count:0
+#: field:account.commitment,line_count:0
 msgid "Line count"
 msgstr "# de lignes"
 
@@ -84548,7 +84549,7 @@ msgstr "Grouper par partenaire"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:40
 #, python-format
 msgid "UF Payroll rounding"
-msgstr "UF Payroll rounding"
+msgstr "UF Différence sur paiement"
 
 #. module: account
 #: model:process.node,name:account.process_node_manually0
@@ -114870,3 +114871,62 @@ msgstr "Vous ne pouvez pas Valider cette ligne de commande car elle contient un 
 #: constraint:sale.order.line:0
 msgid "You cannot validate this sale order line because it has an inactive product"
 msgstr "Vous ne pouvez pas Valider cette ligne de commande car elle contient un produit inactif"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:650
+#, python-format
+msgid "Import can be processed but with the following warnings:\n"
+"-------------------- \n"
+""
+msgstr "L'import peut passer mais avec les alertes suivantes:\n"
+"-------------------- \n"
+""
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:652
+#, python-format
+msgid "No warning found for this file. Import can be now processed."
+msgstr "Aucune alerte n'a été trouvée. L'import peut passer maintenant."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:284
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:615
+#, python-format
+msgid "Payroll rounding"
+msgstr "Différence sur paiement"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:252
+#, python-format
+msgid "Salary "
+msgstr "Salaire "
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:174
+#, python-format
+msgid "Invalid Cost Center [%s] will be ignored."
+msgstr "Centre de Coût invalide [%s] sera ignoré."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:183
+#, python-format
+msgid "Invalid Destination [%s] will be ignored."
+msgstr "Destination invalide [%s] sera ignorée."
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:748
+#, python-format
+msgid "There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated"
+msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Intermission n'a pas pu être modifié et activé"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:796
+#, python-format
+msgid "There is already an Internal Partner with the name '%s'. The Intermission Partner could not be created and activated"
+msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Intermission n'a pas pu être créé et activé"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:899
+#, python-format
+msgid "There is already an Internal Partner with the name '%s'. The Intermission Partner could not be activated"
+msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Intermission n'a pas pu être activé"

@@ -968,7 +968,7 @@ class account_invoice(osv.osv):
             compute_taxes = ait_obj.compute(cr, uid, inv.id, context=ctx)
             self.check_tax_lines(cr, uid, inv, compute_taxes, ait_obj)
 
-            if inv.type in ('in_invoice', 'in_refund') and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
+            if inv.doc_type in ('si', 'sr', 'donation') and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
                 raise osv.except_osv(_('Bad total !'), _('Please verify the price of the invoice !\nThe real total does not match the computed total.'))
 
             if inv.payment_term:
