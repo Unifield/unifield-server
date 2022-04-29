@@ -52622,7 +52622,7 @@ msgstr "Dashboard main module"
 #: selection:account.invoice,journal_type:0
 #: selection:wizard.account.invoice,journal_type:0
 msgid "Accrual"
-msgstr "Accrual"
+msgstr "Régularisation"
 
 #. module: product
 #: view:product.pricelist.item:0
@@ -114076,7 +114076,7 @@ msgstr "Type de Tiers"
 #: code:addons/msf_accrual/msf_accrual_line.py:103
 #, python-format
 msgid "No active journal of type Accrual has been found for the current instance."
-msgstr "Aucun journal actif de type \"Accrual\" (Régularisation) n'a été trouvé pour l'instance actuelle."
+msgstr "Aucun journal actif de type Régularisation n'a été trouvé pour l'instance actuelle."
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:46
