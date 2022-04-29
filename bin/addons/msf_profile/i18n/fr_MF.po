@@ -114108,6 +114108,26 @@ msgstr "La période pour l'extourne n'a pas été trouvée dans le système !"
 msgid "No opened period found to post the reversal entry!"
 msgstr "Pas de période ouverte trouvée pour comptabiliser l'écriture d'extourne !"
 
+#. module: msf_accrual
+#: selection:msf.accrual.line,accrual_type:0
+msgid "Reversing accrual"
+msgstr "Régularisation contrepassée"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Reversing accruals"
+msgstr "Régularisations contrepassées"
+
+#. module: msf_accrual
+#: selection:msf.accrual.line,accrual_type:0
+msgid "One Time accrual"
+msgstr "Régularisation ponctuelle"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "One Time accruals"
+msgstr "Régularisations ponctuelles"
+
 #. module: stock
 #: field:stock.reception.wizard,final_dest_id:0
 msgid "Final Dest. Location"
