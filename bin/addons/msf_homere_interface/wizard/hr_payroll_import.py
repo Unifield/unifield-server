@@ -474,6 +474,35 @@ class hr_payroll_import(osv.osv_memory):
             #'funding_pool_id':  # default is PF
         }, context=context)
 
+    def _check_employee_cc_compatibility(self, cr, uid, employee_ids, context=None):
+        """
+        Generate an error message in case the employee "Destination and Cost Center" or "Funding Pool and Cost Center"
+        are not compatible.
+        """
+        if context is None:
+            context = {}
+        if isinstance(employee_ids, (int, long)):
+                employee_ids = [employee_ids]
+        ad_obj = self.pool.get('analytic.distribution')
+        error_msg = ''
+        employee_fields = ['destination_id', 'cost_center_id', 'funding_pool_id', 'name_resource']
+        for employee_id in employee_ids:
+            employee = self.pool.get('hr.employee').browse(cr, uid, employee_id, fields_to_fetch=employee_fields, context=context)
+            emp_dest = employee.destination_id
+            emp_cc = employee.cost_center_id
+            emp_fp = employee.funding_pool_id
+            if emp_dest and emp_cc:
+                if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
+                    error_msg += _('Employee %s: the Cost Center %s is not compatible with the Destination %s.\n') % \
+                                 (employee.name_resource, emp_cc.code or '', emp_dest.code or '')
+
+            if emp_fp and emp_cc:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, emp_fp.id, emp_cc.id, context=context):
+                    error_msg += _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.\n') % \
+                                 (employee.name_resource, emp_cc.code or '', emp_fp.code or '')
+
+        return error_msg
+
     def button_simu(self, cr, uid, ids, context=None):
         return self._do_pass(cr, uid, ids, context=context)
 
@@ -566,6 +595,7 @@ class hr_payroll_import(osv.osv_memory):
                     num_line = 1  # the header line is not taken into account
                     file_error_msg = ""  # store the error/warning messages for the current file
                     bs_only = True  # will be set to False as soon as one expense line is found in the file
+                    employee_ids = []
                     for line in reader:
                         num_line += 1
                         processed += 1
@@ -574,6 +604,8 @@ class hr_payroll_import(osv.osv_memory):
                             date_format=wiz.date_format,
                             wiz_state=wiz.state,
                             bs_only=bs_only)
+                        if vals.get('employee_id', False):
+                            employee_ids.append(vals.get('employee_id'))
                         res_amount += round(amount, 2)
                         if not update:
                             res = False
@@ -588,6 +620,8 @@ class hr_payroll_import(osv.osv_memory):
 
                         if msg:
                             file_error_msg += _("Line %s: %s\n") % (str(num_line), msg)
+                    # check if the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are compatible
+                    file_error_msg += self._check_employee_cc_compatibility(cr, uid, employee_ids, context=context)
 
                     if bs_only:
                         raise osv.except_osv(_('Error'), _('The file "%s" contains only B/S lines.') % csvfile)
