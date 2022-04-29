@@ -10924,7 +10924,7 @@ msgstr "Article unique"
 #: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:84
 #, python-format
 msgid "The Accrual \"%s\" isn't in Running state, the accrual reversal can't be posted!"
-msgstr "La Régularisation \"%s\" n'est pas à l'état En cours, l'écriture d'extourne ne peut pas être comptabilisée !"
+msgstr "La Régularisation \"%s\" n'est pas au statut En cours, l'écriture d'extourne ne peut pas être comptabilisée !"
 
 #. module: analytic_distribution
 #: field:account.analytic.line,is_unposted:0
@@ -11979,13 +11979,13 @@ msgstr "Liste des modules dans lesquels le champ est défini"
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:41
 #, python-format
 msgid "The Accrual \"%s\" is already in Running state!"
-msgstr "La Régularisation \"%s\" est déjà à l'état En cours !"
+msgstr "La Régularisation \"%s\" est déjà au statut En cours !"
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:39
 #, python-format
 msgid "The Accrual \"%s\" is already in Done state!"
-msgstr "La Régularisation \"%s\" est déjà à l'état Terminé !"
+msgstr "La Régularisation \"%s\" est déjà au statut Terminé !"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:532
@@ -37768,7 +37768,7 @@ msgstr "Délai entre le mouvement d'origine et le mouvement lié-chainé (en jou
 #: code:addons/msf_accrual/msf_accrual_line.py:404
 #, python-format
 msgid "You can only delete draft accruals"
-msgstr "Vous ne pouvez supprimer que des régularisations à l'état Brouillon."
+msgstr "Vous ne pouvez supprimer que des régularisations au statut Brouillon."
 
 #. module: analytic_distribution
 #: view:mass.reallocation.verification.wizard:0
@@ -81589,7 +81589,7 @@ msgstr "Adresse Professionnelle"
 msgid "Confirm the selected invoices"
 msgstr "Confirmer les factures sélectionnées"
 
-#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
+#. modules: purchase, res_currency_tables, tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription, msf_accrual
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
 #: field:account.entries.report,move_state:0
@@ -81810,6 +81810,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:liquidity.position.pdf:0
 #: field:wizard.import.ad.line,state:0
 #: field:supplier.performance.wizard,state:0
+#: field:msf.accrual.line,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
