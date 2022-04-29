@@ -7537,10 +7537,16 @@ msgstr "You can use the template of the export for the format that you need to u
 msgid "The batch is set manually"
 msgstr "Le numéro de Lot est défini manuellement"
 
-#. module: account_mcdb
+#. modules: account_mcdb, msf_accrual
 #: view:account.analytic.line:0
+#: view:msf.accrual.line:0
 msgid "Total Functional Amount"
-msgstr "Total Functional Amount"
+msgstr "Total Montant Fonctionnel"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Total Accrual Amount"
+msgstr "Total Montant Régularisation"
 
 #. module: base
 #: model:res.currency,currency_name:base.HTG
@@ -10915,10 +10921,10 @@ msgid "Single Item"
 msgstr "Article unique"
 
 #. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:51
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:84
 #, python-format
-msgid "The line '%s' isn't partially posted, the accrual reversal can't be posted!"
-msgstr "The line '%s' isn't partially posted, the accrual reversal can't be posted!"
+msgid "The Accrual \"%s\" isn't in Running state, the accrual reversal can't be posted!"
+msgstr "La Régularisation \"%s\" n'est pas à l'état En cours, l'écriture d'extourne ne peut pas être comptabilisée !"
 
 #. module: analytic_distribution
 #: field:account.analytic.line,is_unposted:0
@@ -14771,10 +14777,10 @@ msgid "2.  %a ,%A         ==> Fri, Friday"
 msgstr "2.  %a ,%A ==> Ven, Vendredi"
 
 #. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:45
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:48
 #, python-format
-msgid "The line '%s' has no period set!"
-msgstr "Aucune période n'a été définie pour la ligne '%s' !"
+msgid "The Accrual \"%s\" has no period set!"
+msgstr "Aucune période n'a été définie pour la Régularisation \"%s\" !"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1068
@@ -33653,12 +33659,6 @@ msgstr "Décomptes"
 msgid "Type of the Action that is to be executed"
 msgstr "Type de l'action à exécuter"
 
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:57
-#, python-format
-msgid "No period (M+1) was found in the system!"
-msgstr "No period (M+1) was found in the system!"
-
 #. module: procurement
 #: model:ir.actions.act_window,name:procurement.action_compute_schedulers
 #: model:ir.ui.menu,name:procurement.menu_stock_proc_schedulers
@@ -41962,9 +41962,9 @@ msgstr "Créez des utilisateurs en plus et assignez-les à des groupes, ce qui l
 
 #. modules: msf_accrual, analytic_distribution
 #: field:analytic.distribution.wizard,accrual_line_id:0
-#: view:msf.accrual.line:0
 #: field:msf.accrual.line.expense,accrual_line_id:0
 #: field:account.move.line,accrual_line_id:0
+#: view:msf.accrual.line.expense:0
 msgid "Accrual Line"
 msgstr "Ligne de Régularisation"
 
@@ -44487,10 +44487,11 @@ msgstr "Suivi des Lignes de commande terrain "
 msgid "L4"
 msgstr "L4"
 
-#. modules: res_currency_functional, finance, account_mcdb
+#. modules: res_currency_functional, finance, account_mcdb, msf_accrual
 #: view:account.move.line:0
 #: view:account.move.line:0
 #: view:account.move.line:0
+#: view:msf.accrual.line:0
 msgid "Total Func. Credit"
 msgstr "Total Fonc. Crédit"
 
@@ -49694,8 +49695,8 @@ msgstr "Compte créditeur pour résultat < 0 P&L<0 (Compte de Bilan)"
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:43
 #, python-format
-msgid "The line '%s' is cancelled and can't be re-posted."
-msgstr "La ligne '%s' est annulée et ne peut pas être recomptabilisée."
+msgid "The Accrual \"%s\" is cancelled and can't be re-posted."
+msgstr "La Régularisation \"%s\" est annulée et ne peut pas être recomptabilisée."
 
 #. module: return_claim
 #: field:claim.event,from_picking_wizard_claim_event:0
@@ -55107,10 +55108,11 @@ msgstr "Si vrai, cette ligne a été créée par la création d'une régularisat
 msgid "Models"
 msgstr "Modèles"
 
-#. modules: res_currency_functional, finance, account_mcdb
+#. modules: res_currency_functional, finance, account_mcdb, msf_accrual
 #: view:account.move.line:0
 #: view:account.move.line:0
 #: view:account.move.line:0
+#: view:msf.accrual.line:0
 msgid "Total Book. Credit"
 msgstr "Total Enreg. Crédit"
 
@@ -57617,10 +57619,11 @@ msgstr "Le formulaire de la liste de Picking est créé dès que la commande ter
 msgid "Return Packs to Stock..."
 msgstr "Retour de Colis vers Stock…"
 
-#. modules: res_currency_functional, finance, account_mcdb
+#. modules: res_currency_functional, finance, account_mcdb, msf_accrual
 #: view:account.move.line:0
 #: view:account.move.line:0
 #: view:account.move.line:0
+#: view:msf.accrual.line:0
 msgid "Total Book. Debit"
 msgstr "Total Enreg. Débit"
 
@@ -61403,10 +61406,10 @@ msgid "Starting Balance"
 msgstr "Solde Initial"
 
 #. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:47
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:52
 #, python-format
-msgid "The line '%s' has no analytic distribution!"
-msgstr "The line '%s' has no analytic distribution!"
+msgid "Some of the lines of the Accrual \"%s\" have no analytic distribution!"
+msgstr "Certaines lignes de la Régularisation \"%s\" n'ont pas de distribution analytique !"
 
 #. modules: purchase, register_accounting, analytic_distribution_supply, account_corrections, account_subscription, msf_accrual, analytic_override, analytic_distribution
 #: field:wizard.journal.items.corrections.lines,analytic_distribution_id:0
@@ -75420,10 +75423,11 @@ msgstr "  365 jours  "
 msgid "Decimal Accuracy"
 msgstr "Précision décimale"
 
-#. modules: res_currency_functional, finance, account_mcdb
+#. modules: res_currency_functional, finance, account_mcdb, msf_accrual
 #: view:account.move.line:0
 #: view:account.move.line:0
 #: view:account.move.line:0
+#: view:msf.accrual.line:0
 msgid "Total Func. Debit"
 msgstr "Total Fonc. Débit"
 
@@ -90494,7 +90498,7 @@ msgstr "Statut du Bon de Commande.\n"
 msgid "Internal Transfer (same currency)"
 msgstr "Transfer Interne (devise identique)"
 
-#. modules: register_accounting, account_subscription, purchase, account, register_accounting, sale, account_override, analytic_distribution
+#. modules: register_accounting, account_subscription, purchase, account, register_accounting, sale, account_override, analytic_distribution, msf_accrual
 #: view:account.move.line:0
 #: view:account.direct.invoice.wizard:0
 #: view:wizard.cash.return:0
@@ -98470,12 +98474,6 @@ msgstr "Nom de la catégorie"
 #: selection:stock.frequence,yearly_choose_day:0
 msgid "Wednesday"
 msgstr "Mercredi"
-
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:65
-#, python-format
-msgid "The reversal period wasn't found in the system!"
-msgstr "The reversal period wasn't found in the system!"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -114075,6 +114073,12 @@ msgstr "Type de Tiers"
 #, python-format
 msgid "No active journal of type Accrual has been found for the current instance."
 msgstr "Aucun journal actif de type \"Accrual\" (Régularisation) n'a été trouvé pour l'instance actuelle."
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:46
+#, python-format
+msgid "Please add some lines to the Accrual \"%s\" before validating it!"
+msgstr "Veuillez ajouter des lignes de Régularisation avant de valider !"
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/msf_accrual_line.py:338

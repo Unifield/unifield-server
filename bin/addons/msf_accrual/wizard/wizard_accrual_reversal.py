@@ -81,7 +81,8 @@ class wizard_accrual_reversal(osv.osv_memory):
                 # this option is valid only if the status is "running"
                 if accrual_line.state != 'running':
                     raise osv.except_osv(_('Warning !'),
-                                         _("The line \"%s\" isn't in Running state, the accrual reversal can't be posted!") % accrual_line.description)
+                                         _("The Accrual \"%s\" isn't in Running state, the accrual reversal can't be posted!") %
+                                         accrual_line.description)
 
                 # check for dates consistency (note that it is possible to select in the wizard the same posting date as the original entry)
                 document_date = self.browse(cr, uid, ids, context=context)[0].document_date
