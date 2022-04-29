@@ -647,7 +647,7 @@ class res_currency(osv.osv):
                                           ('state', 'in', ['draft', 'running'])], context=context):
             raise osv.except_osv(_('Currency currently used!'),
                                  _("The currency you want to %s is used in at least "
-                                   "one Draft or Running Accrual Line.") % keyword)
+                                   "one Draft or Running Accrual.") % keyword)
 
         return pricelist_ids
 
