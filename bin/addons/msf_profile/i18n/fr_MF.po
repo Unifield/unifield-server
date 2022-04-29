@@ -8994,7 +8994,7 @@ msgstr "produit '%s'"
 #. module: msf_accrual
 #: field:msf.accrual.line,move_line_id:0
 msgid "Account Move Line"
-msgstr "Account Move Line"
+msgstr "Ligne d'Ecriture Comptable"
 
 #. module: analytic_distribution
 #: field:account.commitment.line,amount:0
@@ -33374,6 +33374,7 @@ msgstr "5-Commun"
 #: selection:purchase.order.merged.line,analytic_distribution_state:0
 #: selection:msf.accrual.line,analytic_distribution_state:0
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:326
+#: selection:msf.accrual.line.expense,analytic_distribution_state:0
 msgid "None"
 msgstr "Aucun"
 
@@ -34365,6 +34366,7 @@ msgstr "IR/FO Order"
 #: selection:stock.pipe.per.product.instance.prod.lines,inst_uf_state:0
 #: selection:stock.pipe.per.product.instance.prod.lines,ud_state:0
 #: selection:product.nomenclature,status:0
+#: selection:msf.accrual.line.expense,analytic_distribution_state:0
 msgid "Valid"
 msgstr "Valide"
 
@@ -37766,7 +37768,7 @@ msgstr "Délai entre le mouvement d'origine et le mouvement lié-chainé (en jou
 #: code:addons/msf_accrual/msf_accrual_line.py:404
 #, python-format
 msgid "You can only delete draft accruals"
-msgstr "You can only delete draft accruals"
+msgstr "Vous ne pouvez supprimer que des régularisations à l'état Brouillon."
 
 #. module: analytic_distribution
 #: view:mass.reallocation.verification.wizard:0
@@ -83481,6 +83483,7 @@ msgstr "Modification"
 #: selection:msf.accrual.line,analytic_distribution_state:0
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:255
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:257
+#: selection:msf.accrual.line.expense,analytic_distribution_state:0
 msgid "Invalid"
 msgstr "Non valide"
 
@@ -99746,7 +99749,7 @@ msgstr "Il n'y a pas active_id. Veuillez contacter votre administrateur pour ré
 #. module: msf_accrual
 #: view:wizard.accrual.reversal:0
 msgid "Are you sure you want to post accrual reversal for those lines at the indicated dates?"
-msgstr "Are you sure you want to post accrual reversal for those lines at the indicated dates?"
+msgstr "Etes-vous sûr de vouloir comptabiliser les écritures d'extourne pour ces lignes aux dates indiquées ?"
 
 #. module: kit
 #: field:assign.to.kit.line,qty_assign_to_kit_by_product_uom:0
