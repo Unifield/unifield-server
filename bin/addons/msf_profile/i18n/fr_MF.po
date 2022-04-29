@@ -6992,7 +6992,7 @@ msgstr "Antarctica/Casey"
 #: model:ir.actions.act_window,name:msf_accrual.action_wizard_post_accrual_reversal
 #: view:wizard.accrual.reversal:0
 msgid "Post Accrual Reversal"
-msgstr "Post Accrual Reversal"
+msgstr "Comptabiliser les Ecritures d'Extourne"
 
 #. module: financing_contract
 #: help:account.analytic.line,contract_open:0
@@ -114082,13 +114082,31 @@ msgstr "Aucun journal actif de type \"Accrual\" (Régularisation) n'a été trou
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:46
 #, python-format
 msgid "Please add some lines to the Accrual \"%s\" before validating it!"
-msgstr "Veuillez ajouter des lignes de Régularisation avant de valider !"
+msgstr "Veuillez ajouter des lignes à la Régularisation \"%s\" avant de la valider !"
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/msf_accrual_line.py:338
 #, python-format
 msgid "The Accrual \"%s\" is not Done!"
 msgstr "La Régularisation \"%s\" n'est pas Terminée !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:344
+#, python-format
+msgid "Impossible to find the reversal entry to cancel!"
+msgstr "Impossible de trouver l'écriture d'extourne à annuler !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:50
+#, python-format
+msgid "The reversal period has not been found in the system!"
+msgstr "La période pour l'extourne n'a pas été trouvée dans le système !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:65
+#, python-format
+msgid "No opened period found to post the reversal entry!"
+msgstr "Pas de période ouverte trouvée pour comptabiliser l'écriture d'extourne !"
 
 #. module: stock
 #: field:stock.reception.wizard,final_dest_id:0
