@@ -143,37 +143,7 @@ class wizard_advance_line(osv.osv_memory):
         """
         Update Third Party type regarding account type_for_register field.
         """
-        # Some verifications
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        acc_obj = self.pool.get('account.account')
-        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
-        third_required = False
-        third_selection = 'res.partner,0'
-        # if an account is given, then attempting to change third_type and information about the third required
-        if account_id:
-            a = acc_obj.read(cr, uid, account_id, ['type_for_register'])
-            if a['type_for_register'] in ['transfer', 'transfer_same']:
-                # UF-428: transfer type shows only Journals instead of Registers as before
-                third_type = [('account.journal', 'Journal')]
-                third_required = True
-                third_selection = 'account.journal,0'
-            elif a['type_for_register'] == 'advance':
-                third_type = [('hr.employee', 'Employee')]
-                third_required = True
-                third_selection = 'hr.employee,0'
-            elif a['type_for_register'] == 'down_payment':
-                third_type = [('res.partner', 'Partner')]
-                third_required = True
-                third_selection = 'res.partner,0'
-            elif a['type_for_register'] == 'payroll':
-                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
-                third_required = True
-                third_selection = 'res.partner,0'
-        return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
+        return self.pool.get('account.bank.statement.line').onchange_account(cr, uid, ids, account_id=account_id, context=context)
 
     _columns = {
         'document_date': fields.date(string='Document Date', required=True),
