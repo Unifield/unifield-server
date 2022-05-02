@@ -736,6 +736,8 @@ class sale_order_line(osv.osv):
             if supplier and sol.product_id and supplier.partner_type in ('esc', 'external') and sol.product_id.state.code in ('forbidden', 'phase_out'):
                 # do not block FO/IR line validation if default supplier is esc/external and prod stat not allowed
                 to_write['supplier'] = False
+                if sol.po_cft == 'pli':
+                    to_write['po_cft'] = 'po'
 
             if to_write:
                 self.write(cr, uid, sol.id, to_write, context=context)
