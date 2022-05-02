@@ -1580,7 +1580,7 @@ class replenishment_segment(osv.osv):
                     if line.status in ('phasingout', 'replaced'):
                         proposed_order_qty = 0
                     else:
-                        proposed_order_qty = auto_qty
+                        proposed_order_qty = auto_qty or 0
 
                 if not valid_rr_fmc:
                     wmsg = _('Invalid FMC')
