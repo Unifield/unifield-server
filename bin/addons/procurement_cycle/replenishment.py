@@ -2443,7 +2443,7 @@ class replenishment_segment_line(osv.osv):
 
             ret[x[0]].update({'rr_fmc_%d' % num[x[0]]: x[1], 'rr_fmc_from_%d' % num[x[0]]: x[2], 'rr_fmc_to_%d' % num[x[0]]: x[3], 'rr_max_%d' % num[x[0]]: x[4]})
             if get_min_max:
-                ret[x[0]].update({'rr_min_max_%d' % num[x[0]]: '%s / %s' % (x[1] and format_digit(x[1]), x[4] and format_digit(x[4]))})
+                ret[x[0]].update({'rr_min_max_%d' % num[x[0]]: '%s / %s' % (isinstance(x[1], (int, float, long)) and format_digit(x[1]) or x[1], isinstance(x[4], (int, float, long)) and format_digit(x[4]) or x[4])})
 
         return ret
 
@@ -2865,7 +2865,6 @@ class replenishment_segment_line(osv.osv):
                     vals['rr_fmc_%d'% x] = min_value
                     vals['rr_max_%d' % x] = max_value
 
-
     def _raise_error(self, cr ,uid, vals, msg, context=None):
         if vals.get('product_id'):
             prod = self.pool.get('product.product').browse(cr, uid, vals['product_id'], fields_to_fetch=['default_code'], context=context)
@@ -2939,7 +2938,7 @@ class replenishment_segment_line(osv.osv):
 
             for x in range(1, 19):
                 if 'rr_fmc_%d' % x in vals or 'rr_fmc_from_%d' % x in vals or 'rr_fmc_to_%d' % x in vals or 'rr_max_%d' % x in vals:
-                    if not vals.get('rr_fmc_%d' % x) and not vals.get('rr_fmc_from_%d' % x) and not vals.get('rr_fmc_to_%d' % x) and not vals.get('rr_max_%d' % x):
+                    if vals.get('rr_fmc_%d' % x) is not None and not vals.get('rr_fmc_from_%d' % x) and not vals.get('rr_fmc_to_%d' % x) and vals.get('rr_max_%d' % x) is not None:
                         if len(p_ids) >= x:
                             #print cr.mogrify('delete from replenishment_segment_line_period where line_id=%s and id=%s', (_id, p_ids[x-1]))
                             cr.execute('delete from replenishment_segment_line_period where line_id=%s and id=%s', (_id, p_ids[x-1]))
@@ -2958,7 +2957,9 @@ class replenishment_segment_line(osv.osv):
                             except:
                                 pass
                         if 'rr_max_%d' % x in vals:
-                            data['max_value'] = vals.get('rr_max_%d' % x) or None
+                            data['max_value'] = vals.get('rr_max_%d' % x)
+                            if data['max_value'] is False:
+                                data['max_value'] = None
 
                         if len(p_ids) >= x:
                             data['id'] = p_ids[x-1]
