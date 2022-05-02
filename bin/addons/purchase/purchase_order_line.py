@@ -54,8 +54,9 @@ class purchase_order_line(osv.osv):
             for tag in form.xpath('//page[@name="nomenselection"]'):
                 tag.getparent().remove(tag)
             nb = form.xpath('//notebook')
-            nb[0].tag = 'empty'
-            view['arch'] = etree.tostring(form)
+            if nb:
+                nb[0].tag = 'empty'
+                view['arch'] = etree.tostring(form)
         return view
 
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):
@@ -2263,6 +2264,28 @@ class purchase_order_line(osv.osv):
         res['keep_open'] = True
         res['res_id'] = pol.order_id.id
         return res
+
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Show error message
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        view_id = obj_data.get_object_reference(cr, uid, 'purchase', 'po_line_error_message_view')[1]
+        return {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'purchase.order.line',
+            'type': 'ir.actions.act_window',
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+            'view_id': [view_id],
+        }
+
 
 purchase_order_line()
 

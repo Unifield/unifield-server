@@ -3259,6 +3259,27 @@ class sale_order_line(osv.osv):
                     }
         return {}
 
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Show error message
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        view_id = obj_data.get_object_reference(cr, uid, 'sale', 'fo_ir_line_error_message_view')[1]
+        return {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'sale.order.line',
+            'type': 'ir.actions.act_window',
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+            'view_id': [view_id],
+        }
+
     def _check_max_price(self, cr, uid, ids, context=None):
         if not context:
             context = {}
