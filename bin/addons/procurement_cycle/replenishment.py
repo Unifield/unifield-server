@@ -2881,7 +2881,6 @@ class replenishment_segment_line(osv.osv):
             if vals['status'] not in  ('replaced', 'phasingout'):
                 vals['replacing_product_id'] = False
 
-        # TODO
         if context and context.get('sync_update_execution'):
             # manage migration: in-pipe updates between UF23.0 and UF24.0
             if vals.get('auto_qty') and not vals.get('rr_fmc_1'):
@@ -2889,7 +2888,6 @@ class replenishment_segment_line(osv.osv):
             elif (vals.get('min_qty') or vals.get('max_qty')) and not vals.get('rr_fmc_1') and not vals.get('rr_max_1'):
                 vals['rr_fmc_1'] = vals['min_qty']
                 vals['rr_max_1'] = vals['max_qty']
-        # END TODO
         else:
             self._set_merge_minmax(cr, uid, vals, context)
 
