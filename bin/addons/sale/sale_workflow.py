@@ -206,7 +206,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        sol = self.browse(cr, uid, ids[0], context=context)
+        sol = self.browse(cr, uid, ids[0], fields_to_fetch=['state', 'order_id', 'product_id', 'dpo_line_id'], context=context)
         if sol.state.startswith('cancel'):
             return False
 

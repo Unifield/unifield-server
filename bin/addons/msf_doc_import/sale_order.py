@@ -191,12 +191,20 @@ class sale_order_line(osv.osv):
         '''
         Check if the Sale order line has an inactive product
         '''
-        inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('id', 'in', ids),
-                                               ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context={'procurement_request': True})
-
+        if not ids:
+            return True
+        cr.execute('''select count(sol.id) from
+            sale_order_line sol, product_product p
+            where
+                sol.product_id = p.id and
+                sol.state not in ('draft', 'cancel', 'cancel_r', 'done') and
+                p.active = 'f' and
+                sol.id in %s
+        ''', (tuple(ids),))
+        inactive_lines = cr.fetchone()[0]
         if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            plural = inactive_lines == 1 and _('A product has') or _('Some products have')
+            l_plural = inactive_lines == 1 and _('line') or _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this line you have to remove/correct the line containing the inactive product (see red %s of the document)') % (plural, l_plural))
         return True
 

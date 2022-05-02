@@ -22,7 +22,7 @@
 
                     <group attrs="{'invisible':  [('type', '=', 'out')]}" colspan="4">
                         <separator colspan="4" string="New destination location" />
-                        <field name="dest_location_id" colspan="4" domain="[('usage', 'not in', ['view', 'supplier', 'customer']), ('input_ok', '!=', True), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')]" attrs="{'readonly': [('state', '=', 'end')], 'required': [('type', '=', 'internal')]}" />
+                        <field name="dest_location_id" colspan="4" domain="[('usage', 'not in', ['view', 'supplier', 'customer']), ('input_ok', '!=', True), ('output_ok', '=', False), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')]" attrs="{'readonly': [('state', '=', 'end')], 'required': [('type', '=', 'internal')]}" />
                     </group>
 
                     <group attrs="{'invisible':  [('type', '=', 'internal')]}" colspan="4">
