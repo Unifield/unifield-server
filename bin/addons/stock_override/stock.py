@@ -190,26 +190,6 @@ class stock_picking(osv.osv):
         return res
 
     _columns = {
-        'state': fields.selection([
-            ('draft', 'Draft'),
-            ('auto', 'Waiting'),
-            ('confirmed', 'Confirmed'),
-            ('assigned', 'Available'),
-            ('shipped', 'Available Shipped'),  # UF-1617: new state of IN for partial shipment
-            ('updated', 'Available Updated'),
-            ('done', 'Closed'),
-            ('delivered', 'Delivered'),
-            ('cancel', 'Cancelled'),
-            ('import', 'Import in progress'),
-        ], 'State', readonly=True, select=True,
-            help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
-                 "* Confirmed: still waiting for the availability of products\n"\
-                 "* Available: products reserved, simply waiting for confirmation.\n"\
-                 "* Available Shipped: products already shipped at supplier, simply waiting for arrival confirmation.\n"\
-                 "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
-                 "* Closed: has been processed, can't be modified or cancelled anymore. Can still be processed to Delivered if the document is an OUT\n"
-                 "* Delivered: has been delivered, only for a closed OUT\n"\
-                 "* Cancelled: has been cancelled, can't be confirmed anymore"),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'ext_cu': fields.many2one('stock.location', string='Ext. C.U.'),
@@ -427,7 +407,7 @@ class stock_picking(osv.osv):
                 if vals.get('partner_id2'):
                     vals['ext_cu'] = False
                 if vals.get('ext_cu'):
-                    vals.update({'partner_id': False, 'partner_id2': False})
+                    vals.update({'partner_id': False, 'partner_id2': False, 'address_id': False})
 
         return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context)
 
@@ -1151,7 +1131,7 @@ class stock_move(osv.osv):
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'sync_dpo': fields.boolean(string='Sync. DPO'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
-        'is_ext_cu': fields.boolean(string='Ext. CU'),
+        'is_ext_cu': fields.related('picking_id', 'ext_cu', type='boolean', string='Ext. CU', write_relate=False),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
@@ -1731,8 +1711,8 @@ class stock_move(osv.osv):
             'auto_picking': picking.type == 'in' and any(m.direct_incoming for m in picking.move_lines),
             'reason_type_id': reason_type_id,
             'previous_chained_pick_id': picking.id,
+            'from_wkf': picking.from_wkf,
         }
-
         return picking_obj.create(cr, uid, pick_values, context=context)
 
 stock_move()
