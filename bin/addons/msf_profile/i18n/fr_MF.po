@@ -114797,7 +114797,7 @@ msgstr "DE 1 doit être au 1er jour du mois"
 #. module: procurement_cycle
 #: field:replenishment.segment.line.period,max_value:0
 msgid "Max value"
-msgstr "Veleur Max"
+msgstr "Valeur Max"
 
 #. module: procurement_cycle
 #: help:replenishment.segment.line.period,max_value:0
