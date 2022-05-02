@@ -245,18 +245,18 @@ class wizard_import_po_line(osv.osv_memory):
                             warning_list=price_value['warning_list'],
                             price_unit_defined=price_value['price_unit_defined'])
 
-                        # Cell 5: Delivery Request Date
-                        # for Rfq 'Delivery requested date' tolerated (5th column)
-                        cell_nb = header_index[_('Delivery Request Date')] if _('Delivery Request Date') in header_index else 6
+                        # Cell 5: Requested Delivery Date
+                        # for Rfq 'Requested Delivery Date' tolerated (5th column)
+                        cell_nb = header_index[_('Requested Delivery Date')] if _('Requested Delivery Date') in header_index else 6
                         date_value = check_line.compute_date_value(
                             cell_nb=cell_nb, row=row, to_write=to_write, context=context)
                         to_write.update(
                             date_planned=date_value['date_planned'],
                             error_list=date_value['error_list'])
 
-                        # Cell 7: Delivery confirmed date
+                        # Cell 7: Confirmed Delivery Date
                         if is_rfq:
-                            cell_nb = header_index[_('Delivery confirmed date')] if _('Delivery confirmed date') in header_index else 7
+                            cell_nb = header_index[_('Confirmed Delivery Date')] if _('Confirmed Delivery Date') in header_index else 7
                             cdd_value = check_line.compute_confirmed_delivery_date_value(
                                 cell_nb=cell_nb, row=row, to_write=to_write, context=context)
                             to_write.update(
