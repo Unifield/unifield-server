@@ -1073,6 +1073,7 @@ class stock_picking(osv.osv):
                         # => analytic_distribution_supply/stock.py _invoice_hook
                         #    picking.purchase_id was False
                         back_order_post_copy_vals['purchase_id'] = picking_dict['purchase_id'][0]
+                        back_order_post_copy_vals['from_wkf'] = True
 
                     if imp_shipment_ref:
                         back_order_post_copy_vals['shipment_ref'] = imp_shipment_ref

@@ -28001,11 +28001,6 @@ msgstr "Valor forzado"
 msgid "Group Name"
 msgstr "Nombre de grupo"
 
-#. module: msf_supply_doc_export
-#: model:ir.actions.report.xml,name:msf_supply_doc_export.report_stock_inventory_xls
-msgid "Stock Inventory Excel Export"
-msgstr "Stock Inventory Excel Export"
-
 #. module: msf_outgoing
 #: report:pre.packing.list:0
 msgid "PrePackingList -"

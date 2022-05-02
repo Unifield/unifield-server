@@ -518,7 +518,8 @@ class account_account(osv.osv):
     }
 
     _defaults = {
-        'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
+        # US-8607 : set default activation_date to first day of current month
+        'activation_date': lambda *a: (datetime.datetime.today().replace(day=1)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
         'display_in_reports': lambda *a: True,

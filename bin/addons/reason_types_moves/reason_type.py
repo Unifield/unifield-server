@@ -366,7 +366,7 @@ class stock_picking(osv.osv):
                                                                                     'reason_type_return_from_unit')[1]
 
         if reason_type_id == return_reason_type_id:
-            return {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False}}
+            return {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False, 'address_id': False}}
         else:
             return {'value': {'ret_from_unit_rt': False}}
 

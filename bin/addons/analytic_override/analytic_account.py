@@ -24,7 +24,6 @@ from osv import fields
 from datetime import datetime
 from datetime import date
 import decimal_precision as dp
-from dateutil.relativedelta import relativedelta
 from tools.translate import _
 from lxml import etree
 
@@ -571,7 +570,8 @@ class analytic_account(osv.osv):
     }
 
     _defaults ={
-        'date_start': lambda *a: (datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
+        # US-8607 : set default date_start to first day of current month
+        'date_start': lambda *a: (datetime.today().replace(day=1)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
         'allow_all_cc': lambda *a: False,
         'allow_all_cc_with_fp': lambda *a: False,
