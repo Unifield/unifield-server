@@ -138,12 +138,14 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No field given for payroll import!'))
         # Prepare some values
         employee_id = False
+        employee_data = False
         partner_id = False
         line_date = False
         name = ''
         ref = ''
         destination_id = False
         cost_center_id = False
+        funding_pool_id = False
         # US-671: This flag is used to indicate whether the DEST and CC of employee needs to be updated
         to_update_employee = False
         partner_obj = self.pool.get('res.partner')
@@ -312,7 +314,9 @@ class hr_payroll_import(osv.osv_memory):
         }
         # Retrieve analytic distribution from employee
         if employee_id:
-            employee_data = self.pool.get('hr.employee').read(cr, uid, employee_id, ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
+            employee_data = self.pool.get('hr.employee')\
+                .read(cr, uid, employee_id,
+                      ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id', 'name_resource', 'destination_id'])
             #US-671: use the cost center from the import, if not retrieve from employee
             temp_cc = employee_data and employee_data.get('cost_center_id', False) and employee_data.get('cost_center_id')[0] or False
             if cost_center_id and cost_center_id != temp_cc:
@@ -325,12 +329,17 @@ class hr_payroll_import(osv.osv_memory):
                 'free1_id': employee_data and employee_data.get('free1_id', False) and employee_data.get('free1_id')[0] or False,
                 'free2_id': employee_data and employee_data.get('free2_id', False) and employee_data.get('free2_id')[0] or False,
             })
+        # check if the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are compatible
+        emp_name = employee_data and employee_data.get('name_resource', False)
+        funding_pool_id = funding_pool_id or vals and vals.get('funding_pool_id', False)
+        destination_id = destination_id or employee_data and employee_data.get('destination_id', False)
+        error_message += self._check_employee_cc_compatibility(cr, uid, emp_name, destination_id, cost_center_id, funding_pool_id, context=context)
         # Write payroll entry
         if wiz_state != 'simu':
             #US-671: In the process mode, update the employee cost center and destination, and use also this one for the payroll object.
             ############################ UPDATE THE EMPLOYEE! AND PREPARE THE LOG FILE WITH WARNING!
             if to_update_employee and employee_id:
-                self.pool.get('hr.employee').write(cr, uid, [employee_id], {'cost_center_id': cost_center_id, 'destination_id': destination_id,}, context)
+                self.pool.get('hr.employee').write(cr, uid, [employee_id], {'cost_center_id': cost_center_id, 'destination_id': destination_id}, context)
 
             res = self.pool.get('hr.payroll.msf').create(cr, uid, vals,
                                                          context={'from': 'import'})
@@ -474,33 +483,28 @@ class hr_payroll_import(osv.osv_memory):
             #'funding_pool_id':  # default is PF
         }, context=context)
 
-    def _check_employee_cc_compatibility(self, cr, uid, employee_ids, context=None):
+    def _check_employee_cc_compatibility(self, cr, uid, employee_name, destination_id, cost_center_id, funding_pool_id, context=None):
         """
         Generate an error message in case the employee "Destination and Cost Center" or "Funding Pool and Cost Center"
         are not compatible.
         """
         if context is None:
             context = {}
-        if isinstance(employee_ids, (int, long)):
-                employee_ids = [employee_ids]
         ad_obj = self.pool.get('analytic.distribution')
         error_msg = ''
-        employee_fields = ['destination_id', 'cost_center_id', 'funding_pool_id', 'name_resource']
-        for employee_id in employee_ids:
-            employee = self.pool.get('hr.employee').browse(cr, uid, employee_id, fields_to_fetch=employee_fields, context=context)
-            emp_dest = employee.destination_id
-            emp_cc = employee.cost_center_id
-            emp_fp = employee.funding_pool_id
-            if emp_dest and emp_cc:
-                if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
-                    error_msg += _('Employee %s: the Cost Center %s is not compatible with the Destination %s.\n') % \
-                                 (employee.name_resource, emp_cc.code or '', emp_dest.code or '')
 
-            if emp_fp and emp_cc:
-                if not ad_obj.check_fp_cc_compatibility(cr, uid, emp_fp.id, emp_cc.id, context=context):
-                    error_msg += _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.\n') % \
-                                 (employee.name_resource, emp_cc.code or '', emp_fp.code or '')
-
+        if cost_center_id:
+            cc_code = self.pool.get('account.analytic.account').read(cr, uid, cost_center_id, ['code'], context=context)['code'] or False
+            if destination_id:
+                dest_code = self.pool.get('account.analytic.account').read(cr, uid, destination_id, ['code'], context=context)['code'] or False
+                if not ad_obj.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
+                    error_msg += _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') % \
+                                 (employee_name, cc_code or '', dest_code or '')
+            if funding_pool_id:
+                fp_code = self.pool.get('account.analytic.account').read(cr, uid, funding_pool_id, ['code'], context=context)['code'] or False
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id, context=context):
+                    error_msg += _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.') % \
+                                 (employee_name, cc_code or '', fp_code or '')
         return error_msg
 
     def button_simu(self, cr, uid, ids, context=None):
@@ -595,7 +599,6 @@ class hr_payroll_import(osv.osv_memory):
                     num_line = 1  # the header line is not taken into account
                     file_error_msg = ""  # store the error/warning messages for the current file
                     bs_only = True  # will be set to False as soon as one expense line is found in the file
-                    employee_ids = []
                     for line in reader:
                         num_line += 1
                         processed += 1
@@ -604,8 +607,6 @@ class hr_payroll_import(osv.osv_memory):
                             date_format=wiz.date_format,
                             wiz_state=wiz.state,
                             bs_only=bs_only)
-                        if vals.get('employee_id', False):
-                            employee_ids.append(vals.get('employee_id'))
                         res_amount += round(amount, 2)
                         if not update:
                             res = False
@@ -620,8 +621,6 @@ class hr_payroll_import(osv.osv_memory):
 
                         if msg:
                             file_error_msg += _("Line %s: %s\n") % (str(num_line), msg)
-                    # check if the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are compatible
-                    file_error_msg += self._check_employee_cc_compatibility(cr, uid, employee_ids, context=context)
 
                     if bs_only:
                         raise osv.except_osv(_('Error'), _('The file "%s" contains only B/S lines.') % csvfile)
