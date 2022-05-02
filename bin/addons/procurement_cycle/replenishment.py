@@ -2062,7 +2062,7 @@ class replenishment_segment(osv.osv):
                 l.segment_id in %s and
                 to_date < now()
             returning l.id
-        ''', (list(ids), ))
+        ''', (tuple(ids), ))
         nb_fmc = cr.rowcount
         if not nb_fmc:
             self.pool.get('res.log').create(cr, uid, {'name': _('No outdated FMC')}, context=context)
