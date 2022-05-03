@@ -33,8 +33,8 @@ class wizard_accrual_reversal(osv.osv_memory):
     }
 
     _defaults = {
-        'document_date': datetime.datetime.now(),
-        'posting_date': datetime.datetime.now(),
+        'document_date': lambda *a: datetime.datetime.now(),
+        'posting_date': lambda *a: datetime.datetime.now(),
     }
 
     def get_period_for_reversal(self, cr, uid, posting_date, initial_period_id, context=None):
