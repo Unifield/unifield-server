@@ -206,29 +206,6 @@
    <Interior/>
    <Protection ss:Protected="0"/>
   </Style>
-  <Style ss:ID="s96m">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <Interior/>
-   <Protection ss:Protected="0"/>
-  </Style>
-  <Style ss:ID="s96mn">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <Interior/>
-   <Protection ss:Protected="0"/>
-   <NumberFormat ss:Format="Fixed"/>
-  </Style>
   <Style ss:ID="s97">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -538,8 +515,8 @@
            <Cell ss:StyleID="s97u"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
            <Cell ss:StyleID="s97u"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
            <Cell ss:StyleID="s97u"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-           <Cell ss:StyleID="s96m"><Data ss:Type="Number"></Data></Cell>
-           <Cell ss:StyleID="s96mn"><Data ss:Type="Number"></Data></Cell>
+           <Cell ss:StyleID="s97"><Data ss:Type="Number"></Data></Cell>
+           <Cell ss:StyleID="s97n"><Data ss:Type="Number"></Data></Cell>
            % if objects[0].rule == 'cycle':
            <Cell ss:StyleID="s97u"><Data ss:Type="Number"></Data></Cell>
            % endif
@@ -613,7 +590,7 @@
    <AllowUsePivotTables/>
   </WorksheetOptions>
     <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-    <Range>R11C4:R${len(objects[0].line_ids)+11}C4</Range>
+    <Range>R11C4:R${(len(objects[0].line_ids) or 5) + 10}C4</Range>
     <Type>List</Type>
     <CellRangeList/>
     <Value>&quot;${_('Active')|x},${_('New')|x},${_('Replaced')|x},${_('Replacing')|x},${_('Phasing Out')|x},${_('Active-Replacing')|x}&quot;</Value>
