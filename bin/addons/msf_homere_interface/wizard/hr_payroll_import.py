@@ -702,7 +702,7 @@ class hr_payroll_import(osv.osv_memory):
             # US-671: Show message in the wizard if there was warning or not.
             if error_msg:
                 if blocking_error:
-                    error_msg = "Please correct following errors to allow Import to be processed:\n-------------------- \n" + error_msg
+                    error_msg = "Please correct following employee analytic distribution errors to allow Import to be processed:\n-------------------- \n" + error_msg
                 else:
                     error_msg = "Import can be processed but with the following warnings:\n-------------------- \n" + error_msg
             else:
