@@ -988,6 +988,13 @@ class stock_picking(osv.osv):
                                 extra_fo_qty = extra_qty
                                 extra_qty = 0
                             remaining_out_qty = 0
+
+                    if extra_qty and context.get('auto_import_ok'):
+                        move_obj.write(cr, uid, [done_moves[-1]], {'auto_vi_extra_qty': True}, context=context)
+
+                    if move.auto_vi_extra_qty:
+                        extra_fo_qty += line.quantity
+
                     if extra_fo_qty:
                         if move.purchase_line_id.sale_order_line_id:
                             sol_extra = self.pool.get('sale.order.line').browse(cr, uid, move.purchase_line_id.sale_order_line_id.id, fields_to_fetch=['extra_qty'], context=context)

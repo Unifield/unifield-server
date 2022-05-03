@@ -619,6 +619,7 @@ class stock_move(osv.osv):
         'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
         'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
         'in_forced': fields.boolean('IN line forced'),
+        'auto_vi_extra_qty': fields.boolean('New line to store extra qty from auto import'),
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
@@ -1651,12 +1652,12 @@ class stock_move(osv.osv):
                 pol_product_qty = pol_info['product_qty']
                 partially_cancelled = False
 
-                cancelled_qty = move.product_qty
+                qty_to_cancel = move.product_qty
                 if move.product_uom.id != move.purchase_line_id.product_uom.id:
-                    cancelled_qty = self.pool.get('product.uom')._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.purchase_line_id.product_uom.id)
+                    qty_to_cancel = self.pool.get('product.uom')._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.purchase_line_id.product_uom.id)
 
                 if move.purchase_line_id.order_id.order_type != 'direct':
-                    qty_to_cancel = cancelled_qty - pol_info['max_qty_cancellable']
+                    qty_to_cancel = qty_to_cancel - pol_info['max_qty_cancellable']
                     if  qty_to_cancel <= 0.001:
                         # nothing to do: extra qty cancelled
                         continue
@@ -2064,7 +2065,7 @@ class stock_move(osv.osv):
         # objects
         res = {}
         for obj in self.browse(cr, uid, ids, context=context,
-                               fields_to_fetch=['picking_id', 'purchase_line_id', 'id', 'sale_line_id']):
+                               fields_to_fetch=['picking_id', 'purchase_line_id', 'id', 'sale_line_id', 'auto_vi_extra_qty', 'product_qty', 'product_uos_qty', 'product_uos', 'product_uom']):
             res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0, 'moves': []}
             if obj.picking_id and obj.picking_id.type == 'in':
                 move_ids = False
@@ -2078,6 +2079,12 @@ class stock_move(osv.osv):
                                                      ('picking_id.type', '=', 'out'),
                                                      ('processed_stock_move', '=', False),
                                                      ], order="state desc", context=context)
+                    if not move_ids and obj.auto_vi_extra_qty:
+                        pick_to_use = self.pool.get('sale.order.line').get_existing_pick(cr, uid, obj.purchase_line_id.linked_sol_id.order_id.id, context=context)
+                        move_data = self.pool.get('sale.order')._get_move_data(cr, uid, obj.purchase_line_id.linked_sol_id.order_id, obj.purchase_line_id.linked_sol_id, pick_to_use, context=context)
+                        move_data.update({'product_qty': obj.product_qty, 'product_uos_qty': obj.product_qty, 'product_uos': obj.product_uom.id, 'product_uom': obj.product_uom.id})
+                        move_ids = [self.pool.get('stock.move').create(cr, uid, move_data, context=context)]
+
                 elif obj.sale_line_id and ('replacement' in obj.picking_id.name or 'missing' in obj.picking_id.name):
                     # find the corresponding OUT move if SO line id
                     move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']),
