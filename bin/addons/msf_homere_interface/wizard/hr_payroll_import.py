@@ -131,6 +131,7 @@ class hr_payroll_import(osv.osv_memory):
         created = 0
         vals = {}
         error_message = ""
+        blocking_error = False
         # verify that some data exists
         if not data:
             return False, res_amount, created, vals, "", error_message, bs_only
@@ -345,7 +346,8 @@ class hr_payroll_import(osv.osv_memory):
             destination_id = dest_ids[0]  # overwriting with data from SAGA file
         destination_id = destination_id or employee_data and employee_data.get('destination_id', False)
 
-        error_message += self._check_employee_cc_compatibility(cr, uid, emp_name, destination_id, cost_center_id, funding_pool_id, context=context)
+        err_msg, blocking_error = self._check_employee_cc_compatibility(cr, uid, emp_name, destination_id, cost_center_id, funding_pool_id, context=context)
+        error_message += err_msg
         # Write payroll entry
         if wiz_state != 'simu':
             #US-671: In the process mode, update the employee cost center and destination, and use also this one for the payroll object.
@@ -359,7 +361,7 @@ class hr_payroll_import(osv.osv_memory):
                 created += 1
         else:
             created += 1
-        return True, amount, created, vals, currency[0], error_message, bs_only
+        return True, amount, created, vals, currency[0], error_message, blocking_error, bs_only
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -504,19 +506,22 @@ class hr_payroll_import(osv.osv_memory):
             context = {}
         ad_obj = self.pool.get('analytic.distribution')
         error_msg = ''
+        blocking_error = False
         if cost_center_id:
             cc_code = self.pool.get('account.analytic.account').read(cr, uid, cost_center_id, ['code'], context=context)['code'] or False
             if destination_id:
                 dest_code = self.pool.get('account.analytic.account').read(cr, uid, destination_id, ['code'], context=context)['code'] or False
                 if not ad_obj.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
+                    blocking_error = True
                     error_msg += _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') % \
                                  (employee_name, cc_code or '', dest_code or '')
             if funding_pool_id:
                 fp_code = self.pool.get('account.analytic.account').read(cr, uid, funding_pool_id, ['code'], context=context)['code'] or False
                 if not ad_obj.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id, context=context):
+                    blocking_error = True
                     error_msg += _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.') % \
                                  (employee_name, cc_code or '', fp_code or '')
-        return error_msg
+        return error_msg, blocking_error
 
     def button_simu(self, cr, uid, ids, context=None):
         return self._do_pass(cr, uid, ids, context=context)
@@ -542,6 +547,7 @@ class hr_payroll_import(osv.osv_memory):
         file_ext = "csv"
         message = _("Payroll import failed.")
         res = False
+        blocking_error = False
         created = 0
         processed = 0
 
@@ -613,7 +619,7 @@ class hr_payroll_import(osv.osv_memory):
                     for line in reader:
                         num_line += 1
                         processed += 1
-                        update, amount, nb_created, vals, ccy, msg, bs_only = self.update_payroll_entries(
+                        update, amount, nb_created, vals, ccy, msg, blocking_err, bs_only = self.update_payroll_entries(
                             cr, uid, data=line, field=field,
                             date_format=wiz.date_format,
                             wiz_state=wiz.state,
@@ -621,6 +627,10 @@ class hr_payroll_import(osv.osv_memory):
                         res_amount += round(amount, 2)
                         if not update:
                             res = False
+                        if blocking_err:
+                            # if blocking_err is True at least one time during the for loop,
+                            # we set the blocking_error flag to True
+                            blocking_error = blocking_err
                         if num_line == 2:  # the first line containing data
                             header_vals = vals
                             header_vals['currency_code'] = ccy  # note that the curr. is different from one file to another
@@ -691,7 +701,10 @@ class hr_payroll_import(osv.osv_memory):
             # US_201: if check raise no error, change state to process
             # US-671: Show message in the wizard if there was warning or not.
             if error_msg:
-                error_msg = "Import can be processed but with the following warnings:\n-------------------- \n" + error_msg
+                if blocking_error:
+                    error_msg = "Please correct following errors to allow Import to be processed:\n-------------------- \n" + error_msg
+                else:
+                    error_msg = "Import can be processed but with the following warnings:\n-------------------- \n" + error_msg
             else:
                 error_msg = "No warning found for this file. Import can be now processed."
 
