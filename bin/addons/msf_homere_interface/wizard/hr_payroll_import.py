@@ -332,7 +332,19 @@ class hr_payroll_import(osv.osv_memory):
         # check if the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are compatible
         emp_name = employee_data and employee_data.get('name_resource', False)
         funding_pool_id = funding_pool_id or vals and vals.get('funding_pool_id', False)
+        # For destination and cost center, use data from SAGA file if available, otherwise retrieve it from employee
+        cc_ids = aaa_obj.search(cr, uid,
+                                [('category', '=', 'OC'), ('type', '!=', 'view'), ('code', '=ilike', project[0])],
+                                context=context)
+        if cc_ids and cc_ids[0]:
+            cost_center_id = cc_ids[0]  # overwrite CC from employee with the one from SAGA if available
+        dest_ids = aaa_obj.search(cr, uid,
+                                  [('category', '=', 'DEST'), ('type', '!=', 'view'), ('code', '=ilike', axis1[0])],
+                                  context=context)
+        if dest_ids and dest_ids[0]:
+            destination_id = dest_ids[0]  # overwriting with data from SAGA file
         destination_id = destination_id or employee_data and employee_data.get('destination_id', False)
+
         error_message += self._check_employee_cc_compatibility(cr, uid, emp_name, destination_id, cost_center_id, funding_pool_id, context=context)
         # Write payroll entry
         if wiz_state != 'simu':
@@ -492,7 +504,6 @@ class hr_payroll_import(osv.osv_memory):
             context = {}
         ad_obj = self.pool.get('analytic.distribution')
         error_msg = ''
-
         if cost_center_id:
             cc_code = self.pool.get('account.analytic.account').read(cr, uid, cost_center_id, ['code'], context=context)['code'] or False
             if destination_id:
