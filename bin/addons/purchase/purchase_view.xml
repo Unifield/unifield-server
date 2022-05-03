@@ -386,6 +386,23 @@
                                     <field name="currency_id"/>
                                 </tree>
                             </field>
+                                <field name="has_tax_at_line_level" invisible="1" />
+                                <field name="tax_line" nolabel="1" attrs="{'invisible': [('partner_type', '!=', 'external')], 'readonly': ['|', ('not_beyond_validated','=', False), ('has_tax_at_line_level', '=', True)]}">
+                                    <tree editable="bottom" string="Taxes">
+                                        <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)" />
+                                        <field name="name"/>
+
+                                        <field name="account_id"
+                                               domain="[('type', 'not in', ['view', 'consolidation']),
+                                                        ('user_type_code', '=', 'tax')]"/>
+
+                                        <field name="partner_id" readonly="1"/>
+                                        <field name="base" readonly="1"/>
+                                        <field name="amount" />
+                                        <field name="base_amount" invisible="1"/>
+                                    </tree>
+                                </field>
+
                         </page>
                         <page string="Notes">
                             <group colspan="4" col="6">
@@ -430,6 +447,7 @@
                         <field name="functional_amount_untaxed"/>
                         <field name="functional_amount_tax"/>
                         <field name="functional_amount_total"/>
+                        <button type="object" string="Remove taxes on lines" name="remove_line_tax" attrs="{'invisible': ['|', ('has_tax_at_line_level', '=', False), ('not_beyond_validated', '=', False)]}" icon="gtk-cut" confirm="Remove taxes on all PO lines ?"/>
                         <newline/>
                         <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                         <newline/>

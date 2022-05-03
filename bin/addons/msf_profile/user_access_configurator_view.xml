@@ -391,6 +391,7 @@
                     <filter name="inactive" string="Inactive" icon="terp-personal-" domain="[('active', '=', False)]" />
                     <separator orientation="vertical"/>
                     <filter name="show_synchronized" string="Show synchronized" icon="gtk-ok" domain="[('synchronize', '=', True)]"/>
+                    <filter name="show_not_synchronized" string="Show not synchronized" icon="gtk-cancel" domain="[('synchronize', '=', False)]"/>
                     <field name="name" />
                     <field name="login" />
                     <field name="address_id" string="Address" />

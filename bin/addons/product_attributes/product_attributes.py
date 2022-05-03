@@ -1812,7 +1812,8 @@ class product_attributes(osv.osv):
             if context.get('sync_update_execution'):
                 fields_to_update += ['active_sync_change_date=%(now)s']
             cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
-        elif ids and vals.get('standard_ok') in ('standard', 'non_standard'):
+
+        if ids and unidata_product and not context.get('sync_update_execution') and vals.get('standard_ok') in ('standard', 'non_standard'):
             # active update must be trigger if product is active and was NSL (because created as inactive on lower instance)
             cr.execute("update product_product set active_change_date=%(now)s where id in %(ids)s and active = 't' and standard_ok='non_standard_local'", {'now': fields.datetime.now(), 'ids': tuple(ids)})
 

@@ -395,14 +395,44 @@ class account_account(osv.osv):
         """
         if context is None:
             context = {}
-        contract_obj = self.pool.get('financing.contract.contract')
-        analytic_acc_obj = self.pool.get('account.analytic.account')
         acc_ids = set()
         if context.get('contract_id'):
-            contract = contract_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids'], context=context)
-            for contract_fp_line in contract.funding_pool_ids:
-                acc_ids.update([t[0] for t in
-                                analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, contract_fp_line.funding_pool_id.id, context=context)])
+            cr.execute('''
+                select
+                    distinct(rel.account_id)
+                from
+                    financing_contract_funding_pool_line fpl,
+                    financing_contract_contract contract,
+                    account_analytic_account fp,
+                    fp_account_rel rel
+                where
+                    contract.id = %s and
+                    fpl.contract_id = contract.format_id and
+                    fp.id = fpl.funding_pool_id and
+                    fp.select_accounts_only = 't' and
+                    rel.fp_id = fp.id
+                ''', (context['contract_id'], ))
+            acc_ids.update([x[0] for x in cr.fetchall()])
+
+            cr.execute('''
+                select
+                    distinct(lnk.account_id)
+                from
+                    financing_contract_funding_pool_line fpl,
+                    financing_contract_contract contract,
+                    account_analytic_account fp,
+                    account_destination_link lnk,
+                    funding_pool_associated_destinations rel
+                where
+                    contract.id = %s and
+                    fpl.contract_id = contract.format_id and
+                    fp.id = fpl.funding_pool_id and
+                    fp.select_accounts_only = 'f' and
+                    rel.funding_pool_id = fp.id and
+                    rel.tuple_id = lnk.id
+                ''', (context['contract_id'], ))
+            acc_ids.update([x[0] for x in cr.fetchall()])
+
         return [('id', 'in', list(acc_ids))]
 
     def _get_selected_in_contract(self, cr, uid, account_ids, name=False, args=False, context=None):
@@ -488,7 +518,8 @@ class account_account(osv.osv):
     }
 
     _defaults = {
-        'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
+        # US-8607 : set default activation_date to first day of current month
+        'activation_date': lambda *a: (datetime.datetime.today().replace(day=1)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
         'display_in_reports': lambda *a: True,
