@@ -637,7 +637,7 @@ class msf_accrual_line(osv.osv):
                 accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
 
                 # negative amount for expense would result in an opposite
-                # behavior, expense in credit and a accrual in debit for the
+                # behavior, expense in credit and an accrual in debit for the
                 # initial entry
                 booking_field_exp = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 for expense_line in accrual_line.expense_line_ids:
