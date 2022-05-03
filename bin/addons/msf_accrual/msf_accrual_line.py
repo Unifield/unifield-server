@@ -383,6 +383,7 @@ class msf_accrual_line(osv.osv):
                 'accrual': True,
                 'accrual_line_id': accrual_line.id,
                 'move_id': move_id,
+                # same dates as the original accrual = same FX rate
                 'date': move_date,
                 'document_date': accrual_line.document_date,
                 'journal_id': accrual_line.journal_id.id,
@@ -426,6 +427,7 @@ class msf_accrual_line(osv.osv):
                     'accrual': True,
                     'accrual_line_id': accrual_line.id,
                     'move_id': move_id,
+                    # same dates as the original accrual = same FX rate
                     'date': move_date,
                     'document_date': accrual_line.document_date,
                     'journal_id': accrual_line.journal_id.id,
