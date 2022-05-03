@@ -868,6 +868,7 @@ class stock_picking(osv.osv):
                         all_pack_info[line.pack_info_id.id] = True
                     remaining_out_qty = line.quantity
                     extra_qty = max(0, line.quantity - line.ordered_quantity)
+                    extra_fo_qty = 0
                     out_move = None
 
                     # Sort the OUT moves to get the closest quantities as the IN quantity
@@ -965,6 +966,7 @@ class stock_picking(osv.osv):
                                 if extra_qty > 0 and not context.get('auto_import_ok'):
                                     # IN pre-processing : do not add extra qty in OUT, it will be added later on IN processing
                                     out_qty = out_move.product_qty + extra_qty
+                                    extra_fo_qty = extra_qty
                                     extra_qty = 0
                                 else:
                                     out_qty = out_move.product_qty
@@ -983,8 +985,16 @@ class stock_picking(osv.osv):
                             if extra_qty > 0 and not context.get('auto_import_ok'):
                                 product_qty = move_obj.read(cr, uid, out_move.id, ['product_qty'], context=context)['product_qty'] + extra_qty
                                 move_obj.write(cr, uid, out_move.id, {'product_qty': product_qty}, context=context)
+                                extra_fo_qty = extra_qty
                                 extra_qty = 0
                             remaining_out_qty = 0
+                    if extra_fo_qty:
+                        if move.purchase_line_id.sale_order_line_id:
+                            sol_extra = self.pool.get('sale.order.line').browse(cr, uid, move.purchase_line_id.sale_order_line_id.id, fields_to_fetch=['extra_qty'], context=context)
+                            extra_fo_qty += sol_extra.extra_qty or 0
+                            self.pool.get('sale.order.line').write(cr, uid, move.purchase_line_id.sale_order_line_id.id, {'extra_qty': extra_fo_qty}, context=context)
+
+                        extra_fo_qty = 0
 
 
                 # Decrement the inital move, cannot be less than zero

@@ -467,19 +467,33 @@ class purchase_order_line(osv.osv):
         return ret
 
     def _in_qty_remaining(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+            compute po qty - sum(IN cancel / cancel_r / done)
+        """
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
 
         res = {}
         for pol in self.browse(cr, uid, ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
-            move_processed_ids = move_obj.search(cr, uid, [('purchase_line_id', '=', pol.id), ('state', 'in', ['cancel', 'cancel_r', 'done'])], context=context)
+            move_processed_ids = move_obj.search(cr, uid, [('purchase_line_id', '=', pol.id), ('type', '=', 'in'), ('state', 'in', ['cancel', 'cancel_r', 'done'])], context=context)
             qty = pol.product_qty
-            for move_processed in move_obj.browse(cr, uid, move_processed_ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
+            max_qty_cancellable = -pol.product_qty
+            for move_processed in move_obj.browse(cr, uid, move_processed_ids, fields_to_fetch=['product_qty', 'product_uom', 'state'], context=context):
+                move_qty = move_processed['product_qty']
                 if move_processed.product_uom.id != pol.product_uom.id:
-                    qty -= uom_obj._compute_qty(cr, uid, move_processed.product_uom.id, move_processed['product_qty'], pol.product_uom.id)
+                    move_qty = uom_obj._compute_qty(cr, uid, move_processed.product_uom.id, move_processed['product_qty'], pol.product_uom.id)
+                qty -= move_qty
+                if move_processed['state'] == 'done':
+                    max_qty_cancellable += move_qty
+            res[pol.id] = {'in_qty_remaining': qty}
+
+            remaining_in_ids = move_obj.search(cr, uid, [('purchase_line_id', '=', pol.id), ('type', '=', 'in'), ('state', 'in', ['assigned', 'confirm'])], context=context)
+            for move_remaining in move_obj.browse(cr, uid, remaining_in_ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
+                if move_remaining.product_uom.id != pol.product_uom.id:
+                    max_qty_cancellable += uom_obj._compute_qty(cr, uid, move_remaining.product_uom.id, move_remaining['product_qty'], pol.product_uom.id)
                 else:
-                    qty -= move_processed['product_qty']
-            res[pol.id] = qty
+                    max_qty_cancellable += move_remaining['product_qty']
+            res[pol.id] = {'max_qty_cancellable': max_qty_cancellable}
         return res
 
 
@@ -618,7 +632,8 @@ class purchase_order_line(osv.osv):
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
         'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR/FO name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
-        'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
+        'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1, multi='in_remain'),
+        'max_qty_cancellable': fields.function(_in_qty_remaining, type='float', string='IN to process', method=1, multi='in_remain'),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
