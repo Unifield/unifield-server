@@ -80,7 +80,7 @@ class account_analytic_journal(osv.osv):
     }
 
     _defaults = {
-        'type': 'general',
+        'type': lambda *a: 'general',  # Accrual
     }
 
     def name_get(self, cr, user, ids, context=None):
