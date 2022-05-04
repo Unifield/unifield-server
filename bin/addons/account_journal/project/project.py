@@ -79,6 +79,10 @@ class account_analytic_journal(osv.osv):
         'has_ajis': fields.function(_get_has_ajis, type='boolean', method=True, string='Has Analytic Journal Items', store=False),
     }
 
+    _defaults = {
+        'type': 'general',
+    }
+
     def name_get(self, cr, user, ids, context=None):
         """
         Get code for Journals
