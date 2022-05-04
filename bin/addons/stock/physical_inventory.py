@@ -414,7 +414,8 @@ class PhysicalInventory(osv.osv):
                     attr_changed.append(_('Line %s, batch %s product is not BN anymore, please correct the line') % (line_number, batch_n))
                 else:
                     attr_changed.append(_('Line %s, expiry %s product is not ED anymore, please correct the line') % (line_number, exp_date))
-            else:
+            elif not prod_info.get(prod_id) or \
+                    (batch_n and prod_info[prod_id]['batch_management']) or (exp_date and prod_info[prod_id]['perishable']):
                 filtered_all_product_batch_expirydate.add((prod_id, batch_n, exp_date))
 
         if attr_changed:
@@ -427,12 +428,12 @@ class PhysicalInventory(osv.osv):
 
         for product_batch_expirydate in filtered_all_product_batch_expirydate:
             # If the key is not known, assume 0
-            theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
+            theoretical_qty = theoretical_quantities.get(product_batch_expirydate, -1.0)
             counted_qty = counted_quantities.get(product_batch_expirydate, -1.0)
 
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
-            if counted_qty == theoretical_qty or theoretical_qty == 0 and counted_qty == -1:
+            if counted_qty is not False and counted_qty == theoretical_qty or (theoretical_qty == -1 and counted_qty == -1):
                 if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                     counting_line_id = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]["line_id"]
                     counting_lines_with_no_discrepancy.append(counting_line_id)

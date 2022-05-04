@@ -1078,6 +1078,9 @@ class stock_picking(osv.osv):
                     if imp_shipment_ref:
                         back_order_post_copy_vals['shipment_ref'] = imp_shipment_ref
 
+                    if wizard.imp_filename:
+                        back_order_post_copy_vals['last_imported_filename'] = wizard.imp_filename
+
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
@@ -1191,6 +1194,8 @@ class stock_picking(osv.osv):
                     to_write.update({'physical_reception_date': wizard.physical_reception_date})
                 if imp_shipment_ref:
                     to_write.update({'shipment_ref': imp_shipment_ref})
+                if wizard.imp_filename:
+                    to_write.update({'last_imported_filename': wizard.imp_filename})
                 if to_write:
                     self.write(cr, uid, picking_id, to_write, context=context)
 
