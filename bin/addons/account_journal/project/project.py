@@ -42,7 +42,7 @@ class account_analytic_journal(osv.osv):
             ('correction_manual', 'Correction Manual'),
             ('cur_adj', 'Currency Adjustment'),
             ('engagement', 'Engagement'),
-            ('general','General'),
+            ('general', 'Accrual'),  # US-8023: the old type "General" was in fact used for Accruals only
             ('hq', 'HQ'),
             ('hr', 'HR'),
             ('inkind', 'In-kind Donation'),

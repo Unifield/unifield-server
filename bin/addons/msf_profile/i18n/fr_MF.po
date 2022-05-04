@@ -52616,6 +52616,9 @@ msgstr "Dashboard main module"
 #: view:account.account:0
 #: selection:account.invoice,journal_type:0
 #: selection:wizard.account.invoice,journal_type:0
+#: selection:account.analytic.journal,type:0
+#: selection:account.analytic.line,journal_type:0
+#: selection:account.analytic.journal.fake,type:0
 msgid "Accrual"
 msgstr "Régularisation"
 
@@ -66187,18 +66190,15 @@ msgid "Picking list"
 msgstr "Liste de Picking"
 
 #. modules: account, base, msf_partner, account_mcdb, account_override, register_accounting, msf_instance, finance, consumption_calculation
-#: selection:account.analytic.line,journal_type:0
 #: selection:account.move,journal_type:0
 #: selection:account.move.line,journal_type:0
 #: selection:cash.request.liquidity,type:0
 #: selection:cash.request.liquidity.bank,type:0
 #: selection:cash.request.liquidity.cash,type:0
 #: selection:cash.request.liquidity.cheque,type:0
-#: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: report:account.analytic.account.journal:0
-#: selection:account.analytic.journal,type:0
 #: selection:account.bank.statement.line,type:0
 #: selection:account.journal,type:0
 #: view:account.mcdb:0
