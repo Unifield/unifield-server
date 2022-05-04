@@ -621,6 +621,20 @@ class account_move_reconcile(osv.osv):
                 cr.execute(sql, sql_params)
         return True
 
+    def _update_accrual_state(self, cr, rec_id):
+        """
+        Sets Accruals to Done if applicable (note that only the header line of the Accruals, on the accrual account, is reconcilable)
+        """
+        if rec_id:
+            accrual_sql = """
+            UPDATE msf_accrual_line
+            SET state = 'done'
+            WHERE state = 'running'
+            AND id IN (SELECT accrual_line_id FROM account_move_line WHERE reconcile_id = %s)
+            """
+            cr.execute(accrual_sql, (rec_id,))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
@@ -672,6 +686,7 @@ class account_move_reconcile(osv.osv):
 
         if context.get('sync_update_execution'):
             self.pool.get('account.move.line').reconciliation_update(cr, uid, [res], context=context)
+        self._update_accrual_state(cr, res)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
