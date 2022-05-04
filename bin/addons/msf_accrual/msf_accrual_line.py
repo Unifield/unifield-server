@@ -166,12 +166,12 @@ class msf_accrual_line(osv.osv):
     }
 
     _defaults = {
-        'third_party_type': 'res.partner',
+        'third_party_type': lambda *a: 'res.partner',
         'journal_id': _get_accrual_journal,
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
-        'state': 'draft',
-        'accrual_type': 'reversing_accrual',
-        'entry_sequence': '',
+        'state': lambda *a: 'draft',
+        'accrual_type': lambda *a: 'reversing_accrual',
+        'entry_sequence': lambda *a: '',
     }
 
     _order = 'id desc'
