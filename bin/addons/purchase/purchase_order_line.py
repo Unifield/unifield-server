@@ -493,7 +493,7 @@ class purchase_order_line(osv.osv):
                     max_qty_cancellable += uom_obj._compute_qty(cr, uid, move_remaining.product_uom.id, move_remaining['product_qty'], pol.product_uom.id)
                 else:
                     max_qty_cancellable += move_remaining['product_qty']
-            res[pol.id] = {'max_qty_cancellable': max_qty_cancellable}
+            res[pol.id]['max_qty_cancellable'] = max_qty_cancellable
         return res
 
 
