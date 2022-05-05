@@ -12494,7 +12494,7 @@ msgstr "Wizard to process an incoming shipment"
 #: selection:account.journal.column,field:0
 #: field:account.move.line,reversal_line_id:0
 msgid "Reversal Line"
-msgstr "Ligne de Contre passement"
+msgstr "Ligne de Contrepassation"
 
 #. module: account_override
 #: code:addons/account_override/finance_export.py:231
@@ -35837,7 +35837,7 @@ msgstr "Autoriser le Lettrage"
 #: field:account.analytic.line,is_reversal:0
 #: field:account.move.line,reversal:0
 msgid "Reversal?"
-msgstr "Contre passement?"
+msgstr "Contrepassation ?"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:249
