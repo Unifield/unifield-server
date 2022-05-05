@@ -1530,7 +1530,7 @@ class replenishment_segment(osv.osv):
                                     max_qty = max_x
                                     break
                             else:
-                                if oc >= from_fmc and today <= to_fmc:
+                                if oc >= from_fmc and rdd <= to_fmc:
                                     min_qty = max(min_qty, min_x)
                                     max_qty = max(max_qty, max_x)
                         elif fmc_d == 1:
@@ -1569,14 +1569,13 @@ class replenishment_segment(osv.osv):
                                     auto_qty = auto_x
                                     break
                             else:
-                                if oc >= from_fmc and today <= to_fmc:
+                                if oc >= from_fmc and rdd <= to_fmc:
                                     auto_qty = max(auto_qty, auto_x)
                         elif fmc_d == 1:
                             auto_qty = auto_x
                             break
 
-
-                    valid_line = bool(auto_qty)
+                    valid_line = isinstance(auto_qty, (int, float, long))
                     if line.status in ('phasingout', 'replaced'):
                         proposed_order_qty = 0
                     else:
