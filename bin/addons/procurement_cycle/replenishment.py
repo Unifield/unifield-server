@@ -3576,7 +3576,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
 
         existing_line = {}
         for line in calc.order_calc_line_ids:
-            existing_line[line.product_id.default_code] = line.id
+            existing_line[(line.product_id.default_code, line.segment_id.name_seg)] = line.id
 
         qty_col = 20
         comment_col = 23
@@ -3598,14 +3598,19 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
                 continue
             prod_code = prod_code.strip()
 
-            if prod_code not in existing_line:
+            seg_ref = row.cells[3].data
+            if not seg_ref:
+                continue
+            seg_ref = seg_ref.strip()
+
+            if (prod_code, seg_ref) not in existing_line:
                 error.append(_('Line %d: product %s not found.') % (idx+1, prod_code))
                 continue
 
             if row.cells[qty_col].data and not isinstance(row.cells[qty_col].data, (int, long, float)):
                 error.append(_('Line %d: Agreed Order Qty  must be a number, found %s') % (idx+1, row.cells[qty_col].data))
 
-            calc_line_obj.write(cr, uid, existing_line[prod_code], {
+            calc_line_obj.write(cr, uid, existing_line[(prod_code, seg_ref)], {
                 'agreed_order_qty': row.cells[qty_col].data,
                 'order_qty_comment': row.cells[comment_col].data or '',
             }, context=context)
@@ -3714,7 +3719,7 @@ replenishment_order_calc()
 class replenishment_order_calc_line(osv.osv):
     _name ='replenishment.order_calc.line'
     _description = 'Order Calculation Lines'
-    _order = 'product_id, order_calc_id'
+    _order = 'product_id, segment_id, order_calc_id'
 
     def __init__(self, pool, cr):
         super(replenishment_order_calc_line, self).__init__(pool, cr)
