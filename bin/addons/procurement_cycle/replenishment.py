@@ -3748,7 +3748,7 @@ class replenishment_inventory_review_line(osv.osv):
         'pas_ids': fields.one2many('replenishment.inventory.review.line.pas', 'review_line_id', 'PAS by month'),
         'detail_ids': fields.one2many('replenishment.inventory.review.line.stock', 'review_line_id', 'Exp by month'),
         'detail_exp_nocons':  fields.one2many('replenishment.inventory.review.line.exp.nocons', 'review_line_id', 'Exp.'),
-        'segment_line_id': fields.integer('Segment line id', 'Seg line id', internal=1, select=1),
+        'segment_line_id': fields.integer_big('Segment line id', 'Seg line id', internal=1, select=1),
 
         'std_dev_hmc': fields.float('Standard Deviation HMC'),
         'coef_var_hmc': fields.float('Coefficient of Variation of HMC (%)'),

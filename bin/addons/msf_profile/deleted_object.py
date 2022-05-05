@@ -35,7 +35,7 @@ class deleted_object(osv.osv):
 
     _columns={
         'model': fields.char('Object Model', size=64, readonly=True),
-        'deleted_obj_id': fields.integer('Deleted Object ID', readonly=True),
+        'deleted_obj_id': fields.integer_big('Deleted Object ID', readonly=True),
         'deleted_obj_sd_ref': fields.char('Deleted Object SD Ref', size=128,
                                           read_only=True),
         'deletion_date': fields.datetime('Deletion Date', read_only=True),

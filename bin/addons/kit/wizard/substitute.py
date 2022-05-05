@@ -521,7 +521,7 @@ class substitute(osv.osv_memory):
 
         return result
 
-    _columns = {'wizard_id': fields.integer(string='Wizard Id', readonly=True),
+    _columns = {'wizard_id': fields.integer_big(string='Wizard Id', readonly=True),
                 'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
                 'step_substitute': fields.char(string='Step', size=1024, readonly=True),
                 'product_id_substitute': fields.many2one('product.product', string='Product', readonly=True),
@@ -1121,7 +1121,7 @@ class substitute_item_mirror(osv.osv_memory):
         '''
         return self._validate_item_mirror(cr, uid, id, context=context)
 
-    _columns = {'item_id_mirror': fields.integer(string='Id of original Item', readonly=True),
+    _columns = {'item_id_mirror': fields.integer_big(string='Id of original Item', readonly=True),
                 'kit_id_mirror': fields.many2one('composition.kit', string='Kit', readonly=True),
                 'lot_mirror': fields.char(string='Batch Nb', size=1024),
                 }

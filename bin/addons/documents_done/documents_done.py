@@ -200,7 +200,7 @@ class documents_done_wizard(osv.osv):
 
     _columns = {
         'name': fields.char(size=256, string='Name', readonly=True),
-        'res_id': fields.integer(string='Res. Id'),
+        'res_id': fields.integer_big(string='Res. Id'),
         'real_model': fields.char(size=64, string='Real model'),
         'model': fields.selection(REAL_MODEL_LIST, string='Doc. Type', readonly=True),
         'creation_date': fields.date(string='Creation date', readonly=True),
@@ -591,7 +591,7 @@ class documents_done_problem_line(osv.osv_memory):
         'doc_state_str': fields.function(_get_state, method=True, string='State', type='char', readonly=True),
         'doc_type': fields.char(size=64, string='Doc. Type'),
         'doc_model': fields.char(size=64, string='Doc. Model'),
-        'doc_id': fields.integer(string='Doc. Id'),
+        'doc_id': fields.integer_big(string='Doc. Id'),
     }
 
     def go_to_doc(self, cr, uid, ids, context=None):

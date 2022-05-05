@@ -141,7 +141,7 @@ class report_stock_lines_date(osv.osv):
     _auto = False
     _order = "date"
     _columns = {
-        'id': fields.integer('Inventory Line Id', readonly=True),
+        'id': fields.integer_big('Inventory Line Id', readonly=True),
         'product_id': fields.many2one('product.product', 'Product', readonly=True, select=True),
         'product_code': fields.related('product_id', 'default_code', type='char', readonly=True),
         'product_name': fields.related('product_id', 'name', type='char', readonly=True),

@@ -59,7 +59,7 @@ class finance_sync_query(osv.osv):
             ('account.partner.ledger', 'Partner Ledger'),
             ('wizard.account.partner.balance.tree', 'Partner Balance'),
         ], string='Type', size=128, readonly=1, required=1),
-        'template_id': fields.integer('Template id', readonly=1),
+        'template_id': fields.integer_big('Template id', readonly=1),
         'last_modification': fields.datetime('Last Modification', readonly=1),
         'synced': fields.boolean('Synced query', readonly=1),
         'user_id': fields.many2one('res.users', 'User', readonly=1),

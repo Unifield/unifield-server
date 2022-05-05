@@ -1516,7 +1516,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product"), related_uom='product_uom_id'),
         'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product")),
         'ignored': fields.boolean('Ignored', readonly=True),
-        'move_id': fields.integer(readonly=True)
+        'move_id': fields.integer_big(readonly=True)
     }
 
 

@@ -3002,8 +3002,8 @@ class product_deactivation_error_line(osv.osv_memory):
         'type': fields.char(size=64, string='Documents type'),
         'internal_type': fields.char(size=64, string='Internal document type'),
         'doc_ref': fields.char(size=128, string='Reference'),
-        'doc_id': fields.integer(string='Internal Reference'),
-        'view_id': fields.integer(string='Reference of the view to open'),
+        'doc_id': fields.integer_big(string='Internal Reference'),
+        'view_id': fields.integer_big(string='Reference of the view to open'),
     }
 
     def open_doc(self, cr, uid, ids, context=None):

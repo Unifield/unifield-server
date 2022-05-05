@@ -27,9 +27,9 @@ from tools.translate import _
 class change_product_move_processor(osv.osv_memory):
     _name = 'change.product.move.processor'
     _description = 'Wizard to switch products on picking processor lines'
-    
+
     _columns = {
-        'processor_line_id': fields.integer(string='ID of the processor line', required=True),
+        'processor_line_id': fields.integer_big(string='ID of the processor line', required=True),
         'processor_type': fields.char(size=256, string='Model of the processor line', required=True),
         'move_location_ids': fields.char(size=256, string='Move locations', readonly=True),
         'old_product_id': fields.many2one('product.product', string='Present Product', readonly=True),
@@ -42,7 +42,7 @@ class change_product_move_processor(osv.osv_memory):
     _defaults = {
         'move_location_ids': [],
     }
-    
+
     """
     Model methods
     """
@@ -61,7 +61,7 @@ class change_product_move_processor(osv.osv_memory):
                 })
 
         return super(change_product_move_processor, self).create(cr, uid, vals, context=context)
-    
+
     """
     Controller methods
     """
@@ -71,22 +71,22 @@ class change_product_move_processor(osv.osv_memory):
         '''
         if isinstance(ids, int):
             ids = [ids]
-            
+
         if not ids:
             raise osv.except_osv(
                 _('Error'),
                 _('No wizard found !')
             )
-        
+
         res_model = 'stock.picking.processor'
         res_id = False
-        
+
         for wiz in self.read(cr, uid, ids, ['processor_type', 'processor_line_id'], context=context):
             line_model = self.pool.get(wiz['processor_type'])
             line = line_model.browse(cr, uid, wiz['processor_line_id'], context=context)
             res_model = line_model._columns['wizard_id']._obj
             res_id = line.wizard_id.id
-            
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': res_model,
@@ -109,22 +109,22 @@ class change_product_move_processor(osv.osv_memory):
         """
         if isinstance(ids, int):
             ids = [ids]
-            
+
         if not ids:
             raise osv.except_osv(
                 _('Error'),
                 _('No wizard found !'),
             )
         # class corresponding to calling object
-        
+
         for wiz in self.browse(cr, uid, ids, context=context):
             line_model = self.pool.get(wiz.processor_type)
-            
+
             # Put the treatment at stock.move.processor side
             line_model.change_product(cr, uid, wiz.processor_line_id, wiz.change_reason, wiz.new_product_id.id, context=context)
-        
+
         return self.return_to_wizard(cr, uid, ids, context=context)
-    
+
 change_product_move_processor()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -122,7 +122,7 @@ class PhysicalInventoryImportLineWizard(osv.osv_memory):
 
     _columns = {
         'parent_id': fields.many2one('physical.inventory.import.wizard', string='Parent'),
-        'line_id': fields.integer('Line ID', readonly=True),
+        'line_id': fields.integer_big('Line ID', readonly=True),
         'message': fields.text('Message', readonly=True),
         'action': fields.selection(ACTION_LIST, string='Action')
     }

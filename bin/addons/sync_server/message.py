@@ -38,7 +38,7 @@ class message(osv.osv):
         'destination': fields.many2one('sync.server.entity', string="Destination Instance", select=True),
         'source': fields.many2one('sync.server.entity', string="Source Instance", select=True),
         'sequence': fields.integer('Sequence', required=True, select=True),
-        'client_db_id': fields.integer('DB Id of client msg', select=1),
+        'client_db_id': fields.integer_big('DB Id of client msg', select=1),
     }
 
     _order = 'sequence asc'

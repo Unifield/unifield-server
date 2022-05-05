@@ -54,7 +54,7 @@ class local_message_rule(osv.osv):
 
     _columns = {
         'name' : fields.char('Rule name', size=64, readonly=True),
-        'server_id' : fields.integer('Server ID'),
+        'server_id' : fields.integer_big('Server ID'),
         'model' : fields.char('Model Name',size=128),
         'domain' : fields.text('Domain', required=False, readonly=True),
         'filter_method' : fields.char('Filter Method', size=64, help='The method to use to find target records instead of a domain.', readonly=True),
@@ -391,9 +391,9 @@ class message_received(osv.osv):
         'rule_sequence': fields.integer('Sequence of the linked rule', required=True),
         'manually_ran': fields.boolean('Has been manually tried', readonly=True),
         'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
-        'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
+        'sync_id': fields.integer_big('Sync server seq. id', required=True, select=1),
         'target_object': fields.char('Target Object', size=254, readonly=1, select=1),
-        'target_id': fields.integer('Target Id', size=254, readonly=1, select=1),
+        'target_id': fields.integer_big('Target Id', size=254, readonly=1, select=1),
     }
 
     _sql_constraints = [

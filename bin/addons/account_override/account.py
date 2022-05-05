@@ -963,7 +963,7 @@ class account_move(osv.osv):
         'manual_name': fields.char('Description', size=64, required=True),
         'imported': fields.boolean('Imported', help="Is this Journal Entry imported?", required=False, readonly=True),
         'register_line_id': fields.many2one('account.bank.statement.line', required=False, readonly=True),
-        'posted_sync_sequence': fields.integer('Seq. number of sync update that posted the move', readonly=True, internal=True),
+        'posted_sync_sequence': fields.integer_big('Seq. number of sync update that posted the move', readonly=True, internal=True),
     }
 
     _defaults = {

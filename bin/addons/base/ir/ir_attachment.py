@@ -328,8 +328,8 @@ class ir_attachment(osv.osv):
                                     string='Resource Name', method=True, store=True),
         'res_model': fields.char('Resource Object',size=64, readonly=True,
                                  help="The database object this attachment will be attached to"),
-        'res_id': fields.integer('Resource ID', readonly=True,
-                                 help="The record id this is attached to"),
+        'res_id': fields.integer_big('Resource ID', readonly=True,
+                                     help="The record id this is attached to"),
         'url': fields.char('Url', size=512, oldname="link"),
         'type': fields.selection(
             [ ('url','URL'), ('binary','Binary'), ],

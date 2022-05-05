@@ -497,7 +497,7 @@ class purchase_order_line(osv.osv):
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State',
                                       help='for internal use only'),
         # openerp bug: id is not given to onchanqge call if we are into one2many view
-        'fake_id': fields.function(_get_fake_id, type='integer', method=True, string='Id',
+        'fake_id': fields.function(_get_fake_id, type='integer_big', method=True, string='Id',
                                    help='for internal use only'),
         'old_price_unit': fields.float(string='Old price',
                                        digits_compute=dp.get_precision('Purchase Price Computation')),
@@ -613,8 +613,8 @@ class purchase_order_line(osv.osv):
         'closed_date': fields.date('Closed Date', readonly=True),
         'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR/FO name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
         'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
-        'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
-        'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
+        'from_dpo_line_id': fields.integer_big('DPO line id on the remote', internal=1),
+        'from_dpo_id': fields.integer_big('DPO id on the remote', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
     }
 

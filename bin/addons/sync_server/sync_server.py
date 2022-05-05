@@ -157,7 +157,7 @@ class entity_activity(osv.osv):
     _description = "Instance Activity"
     _log_access = False
     _columns = {
-        'entity_id': fields.integer('Entity db id', select=1),
+        'entity_id': fields.integer_big('Entity db id', select=1),
         'datetime': fields.datetime('Last Activity'),
         'activity': fields.char('Activity', size=128),
     }
@@ -254,13 +254,13 @@ class entity(osv.osv):
         'last_dateactivity': fields.function(_get_activity, type='datetime', string="Date of last activity", method=True, multi="_get_act"),
         #'last_activity' : fields.datetime("Date of last activity", readonly=True),
 
-        'parent_left' : fields.integer("Left Parent", select=1),
-        'parent_right' : fields.integer("Right Parent", select=1),
+        'parent_left' : fields.integer_big("Left Parent", select=1),
+        'parent_right' : fields.integer_big("Right Parent", select=1),
 
         'msg_ids_tmp':fields.text('List of temporary ids of message to be pulled'),
         'version': fields.integer('version'),
-        'last_sequence': fields.integer('Last update sequence pulled',
-                                        readonly=True),
+        'last_sequence': fields.integer_big('Last update sequence pulled',
+                                            readonly=True),
 
         'country_id': fields.many2one('res.country', 'Country', ondelete="restrict"),
         'city': fields.char('City', size=256),

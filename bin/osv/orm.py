@@ -374,7 +374,7 @@ def get_pg_type(f):
         fields.time: 'time',
         fields.datetime: 'timestamp',
         fields.binary: 'bytea',
-        fields.many2one: 'int4',
+        fields.many2one: 'int8',
     }
     if type(f) in type_dict:
         f_type = (type_dict[type(f)], type_dict[type(f)])
@@ -3114,13 +3114,26 @@ class orm(orm_template):
             if not self.pool.get(f._obj):
                 raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
             ref = self.pool.get(f._obj)._table
-            cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s"))' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2)) # not_a_user_entry
+            cr.execute('CREATE TABLE "%s" ("%s" BIGINT NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" BIGINT NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s"))' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2)) # not_a_user_entry
             cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id1, f._rel, f._id1)) # not_a_user_entry
             cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id2, f._rel, f._id2)) # not_a_user_entry
             cr.execute("COMMENT ON TABLE \"%s\" IS 'RELATION BETWEEN %s AND %s'" % (f._rel, self._table, ref)) # not_a_user_entry
             cr.commit()
             self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
                                 f._rel, self._table, ref)
+        else:
+            cr.execute("""
+                SELECT a.attname
+                     FROM pg_class c,pg_attribute a,pg_type t
+                     WHERE c.relname = %s
+                     AND a.attname in %s
+                     AND c.oid=a.attrelid
+                     AND a.atttypid=t.oid
+                     AND typname='int4'
+                    """, (f._rel, (f._id1, f._id2)))
+            for x in cr.fetchall():
+                self.__schema.warn("Table '%s': column '%s' changed from int4 to int8", f._rel, x[0])
+                cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" type int8' % (f._rel, x[0])) # not_a_user_entry
 
 
     def _auto_init(self, cr, context=None):
@@ -3136,7 +3149,7 @@ class orm(orm_template):
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
-                cr.execute('CREATE TABLE "%s" (id SERIAL NOT NULL, PRIMARY KEY(id)) WITHOUT OIDS' % (self._table,))  # not_a_user_entry
+                cr.execute('CREATE TABLE "%s" (id BIGSERIAL NOT NULL, PRIMARY KEY(id))' % (self._table,))  # not_a_user_entry
                 cr.execute("COMMENT ON TABLE \"%s\" IS '%s'" % (self._table, self._description.replace("'", "''")))  # not_a_user_entry
                 create = True
                 self.__schema.debug("Table '%s': created", self._table)
@@ -3148,13 +3161,13 @@ class orm(orm_template):
                     WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid
                     """, (self._table, 'parent_left'))
                 if not cr.rowcount:
-                    cr.execute('ALTER TABLE "%s" ADD COLUMN "parent_left" INTEGER' % (self._table,))  # not_a_user_entry
-                    cr.execute('ALTER TABLE "%s" ADD COLUMN "parent_right" INTEGER' % (self._table,))  # not_a_user_entry
+                    cr.execute('ALTER TABLE "%s" ADD COLUMN "parent_left" BIGINT' % (self._table,))  # not_a_user_entry
+                    cr.execute('ALTER TABLE "%s" ADD COLUMN "parent_right" BIGINT' % (self._table,))  # not_a_user_entry
                     if 'parent_left' not in self._columns:
                         self.__logger.error('create a column parent_left on object %s: fields.integer(\'Left Parent\', select=1)',
                                             self._table)
                         self.__schema.debug("Table '%s': added column '%s' with definition=%s",
-                                            self._table, 'parent_left', 'INTEGER')
+                                            self._table, 'parent_left', 'BIGINT')
                     elif not self._columns['parent_left'].select:
                         self.__logger.error('parent_left column on object %s must be indexed! Add select=1 to the field definition)',
                                             self._table)
@@ -3162,7 +3175,7 @@ class orm(orm_template):
                         self.__logger.error('create a column parent_right on object %s: fields.integer(\'Right Parent\', select=1)',
                                             self._table)
                         self.__schema.debug("Table '%s': added column '%s' with definition=%s",
-                                            self._table, 'parent_right', 'INTEGER')
+                                            self._table, 'parent_right', 'BIGINT')
                     elif not self._columns['parent_right'].select:
                         self.__logger.error('parent_right column on object %s must be indexed! Add select=1 to the field definition)',
                                             self._table)
@@ -3175,9 +3188,9 @@ class orm(orm_template):
 
             if self._log_access:
                 logs = {
-                    'create_uid': 'INTEGER REFERENCES res_users ON DELETE SET NULL',
+                    'create_uid': 'BIGINT REFERENCES res_users ON DELETE SET NULL',
                     'create_date': 'TIMESTAMP',
-                    'write_uid': 'INTEGER REFERENCES res_users ON DELETE SET NULL',
+                    'write_uid': 'BIGINT REFERENCES res_users ON DELETE SET NULL',
                     'write_date': 'TIMESTAMP'
                 }
                 for k in logs:
@@ -3205,10 +3218,25 @@ class orm(orm_template):
                        "AND a.atttypid=t.oid", (self._table,))
             col_data = dict([(x['attname'], x) for x in cr.dictfetchall()])
 
+            for k in ('id', 'write_uid', 'create_uid'):
+                cr.execute("""
+                    SELECT c.relname,a.attname,a.attlen,a.atttypmod,a.attnotnull,a.atthasdef,t.typname,CASE WHEN a.attlen=-1 THEN a.atttypmod-4 ELSE a.attlen END as size
+                         FROM pg_class c,pg_attribute a,pg_type t
+                         WHERE c.relname=%s
+                         AND a.attname=%s
+                         AND c.oid=a.attrelid
+                         AND a.atttypid=t.oid
+                         AND typname='int4'
+                        """, (self._table, k))
+                if cr.rowcount:
+                    self.__schema.warn("Table '%s': column '%s' changed from int4 to int8", self._table, k)
+                    cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" type int8' % (self._table, k)) # not_a_user_entry
 
             for k in self._columns:
-                if k in ('id', 'write_uid', 'write_date', 'create_uid', 'create_date'):
+
+                if k in ('write_date', 'create_date', 'id', 'write_uid', 'create_uid'):
                     continue
+
                 #Not Updating Custom fields
                 if k.startswith('x_') and not update_custom_fields:
                     continue
@@ -3253,7 +3281,6 @@ class orm(orm_template):
                             res[0]['attname'] = k
                             self.__schema.debug("Table '%s': renamed column '%s' to '%s'",
                                                 self._table, f.oldname, k)
-
                     if len(res) == 1:
                         f_pg_def = res[0]
                         f_pg_type = f_pg_def['typname']
@@ -3282,6 +3309,8 @@ class orm(orm_template):
                                 ('numeric', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                                 ('float8', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                                 ('int4', 'integer_big', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
+                                ('int4', 'int8', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
+                                ('int4', 'many2one', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                             ]
 
                             if f_pg_type == 'varchar' and f._type in ('char', 'selection') and f.size and f_pg_size < f.size:
@@ -3292,10 +3321,15 @@ class orm(orm_template):
                                 cr.commit()
                                 self.__schema.warn("Table '%s': column '%s' (type varchar) changed size from %s to %s",
                                                    self._table, k, f_pg_size, f.size)
+
                             for c in casts:
                                 if (f_pg_type==c[0]) and (f._type==c[1]):
                                     if f_pg_type != f_obj_type:
                                         ok = True
+                                        if f_pg_type == 'int4' and c[2] == 'int8':
+                                            self.__schema.warn("Table '%s': column '%s' changed from int4 to int8", self._table, k)
+                                            cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" type int8' % (self._table, k)) # not_a_user_entry
+                                            break
                                         cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))  # not_a_user_entry
                                         cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, c[2]))  # not_a_user_entry
                                         cr.execute(('UPDATE "%s" SET "%s"=temp_change_size'+c[3]) % (self._table, k))  # not_a_user_entry

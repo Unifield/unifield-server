@@ -79,7 +79,7 @@ class sync_client_survey(osv.osv):
     _columns = {
         'included_group_ids': fields.many2many('res.groups', 'client_survey_group_included_rel', 'survey_id', 'group_id', 'Included Groups'),
         'excluded_group_ids': fields.many2many('res.groups', 'client_survey_group_excluded_rel', 'survey_id', 'group_id', 'Excluded Groups'),
-        'sync_server_id': fields.integer('Sync Server ID', select=1),
+        'sync_server_id': fields.integer_big('Sync Server ID', select=1),
         'stat_by_users': fields.one2many('sync_client.survey.user', 'survey_id', 'Stats'),
         'users': fields.function(_get_users, method=1, type='one2many', relation='res.users', string='Matching Users'),
     }

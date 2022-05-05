@@ -75,8 +75,8 @@ class res_partner_category(osv.osv):
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Full Name'),
         'child_ids': fields.one2many('res.partner.category', 'parent_id', 'Child Categories'),
         'active' : fields.boolean('Active', help="The active field allows you to hide the category without removing it."),
-        'parent_left' : fields.integer('Left parent', select=True),
-        'parent_right' : fields.integer('Right parent', select=True),
+        'parent_left' : fields.integer_big('Left parent', select=True),
+        'parent_right' : fields.integer_big('Right parent', select=True),
     }
     _constraints = [
         (osv.osv._check_recursion, 'Error ! You can not create recursive categories.', ['parent_id'])

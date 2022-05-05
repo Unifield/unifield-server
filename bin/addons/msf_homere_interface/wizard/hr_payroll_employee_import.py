@@ -186,7 +186,7 @@ class hr_payroll_employee_import_errors(osv.osv):
     _description = 'Employee Import Errors'
 
     _columns = {
-        'wizard_id': fields.integer("Payroll employee import wizard", readonly=True, required=True),
+        'wizard_id': fields.integer_big("Payroll employee import wizard", readonly=True, required=True),
         'msg': fields.text("Message", readonly=True, required=True),
     }
 

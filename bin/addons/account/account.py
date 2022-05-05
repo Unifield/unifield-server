@@ -337,8 +337,8 @@ class account_account(osv.osv):
         'company_id': fields.many2one('res.company', 'Company', required=True),
         'active': fields.boolean('Active', select=2, help="If the active field is set to False, it will allow you to hide the account without removing it."),
 
-        'parent_left': fields.integer('Parent Left', select=1),
-        'parent_right': fields.integer('Parent Right', select=1),
+        'parent_left': fields.integer_big('Parent Left', select=1),
+        'parent_right': fields.integer_big('Parent Right', select=1),
         'currency_mode': fields.selection([('current', 'At Date'), ('average', 'Average Rate')], 'Outgoing Currencies Rate',
                                           help=
                                           'This will select how the current currency rate for outgoing transactions is computed. '\
@@ -676,7 +676,7 @@ class account_journal(osv.osv):
         'is_active': fields.boolean('Active'),
         'is_default': fields.function(_get_is_default, method=True, type='boolean', string='Default Journal',
                                       store=False, help="Journals created by default in new instances"),
-        'current_id': fields.function(_get_current_id, method=True, type='integer', string="DB Id (used by the UI)",
+        'current_id': fields.function(_get_current_id, method=True, type='integer_big', string="DB Id (used by the UI)",
                                       store=False, internal=True),
     }
 

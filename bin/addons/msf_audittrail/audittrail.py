@@ -427,7 +427,7 @@ class audittrail_log_sequence(osv.osv):
     _rec_name = 'model'
     _columns = {
         'model': fields.char(size=64, string='Model', select=1),
-        'res_id': fields.integer(string='Res Id', select=1),
+        'res_id': fields.integer_big(string='Res Id', select=1),
         'sequence': fields.many2one('ir.sequence', 'Logs Sequence', required=True, ondelete='cascade'),
     }
 
@@ -1042,7 +1042,7 @@ class audittrail_log_line(osv.osv):
         'user_id': fields.many2one('res.users', string='User'),
         'method': fields.selection([('create', 'Creation'), ('write', 'Modification'), ('unlink', 'Deletion')], string='Method'),
         'timestamp': fields.datetime(string='Date'),
-        'res_id': fields.integer(string='Resource Id'),
+        'res_id': fields.integer_big(string='Resource Id'),
         'field_id': fields.many2one('ir.model.fields', 'Fields'),
         'log': fields.integer("Log ID"),
         'old_value_fct': fields.function(_get_values, method=True, string='Old Value Fct', type='char', store=False, multi='values'),
@@ -1057,7 +1057,7 @@ class audittrail_log_line(osv.osv):
         'sub_obj_name': fields.char(size=64, string='Order line'),
         # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
         'rule_id': fields.many2one('audittrail.rule', string='Rule'),
-        'fct_res_id': fields.integer(string='Res. Id'),
+        'fct_res_id': fields.integer_big(string='Res. Id'),
         'fct_object_id': fields.many2one('ir.model', string='Fct. Object'),
     }
 

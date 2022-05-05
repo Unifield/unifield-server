@@ -28,7 +28,7 @@ class procurement_request_line_wizard(osv.osv_memory):
     _description = 'Original Data Internal Request line'
 
     _columns = {
-        'id': fields.integer('id'),
+        'id': fields.integer_big('id'),
         'product_id': fields.many2one('product.product', 'Current Product', readonly=True),
         'original_product': fields.many2one('product.product', 'Original Product', readonly=True),
         'product_uom_qty': fields.float('Current Qty', readonly=True, related_uom='product_uom'),

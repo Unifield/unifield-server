@@ -422,7 +422,7 @@ class wizard_delete_lines(osv.osv_memory):
     _name = 'wizard.delete.lines'
 
     _columns = {
-        'initial_doc_id': fields.integer(string='ID of the initial document', required=True),
+        'initial_doc_id': fields.integer_big(string='ID of the initial document', required=True),
         'initial_doc_type': fields.char(size=128, string='Model of the initial document', required=True),
         'to_remove_type': fields.char(size=128, string='Model of the lines', required=True),
         'linked_field_name': fields.char(size=128, string='Field name of the link between lines and original doc', required=True),

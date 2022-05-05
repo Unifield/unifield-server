@@ -712,7 +712,7 @@ class ir_model_data(osv.osv):
         'name': fields.char('XML Identifier', required=True, size=128, select=1),
         'model': fields.char('Object', required=True, size=64, select=1),
         'module': fields.char('Module', required=True, size=64, select=1),
-        'res_id': fields.integer('Resource ID', select=1),
+        'res_id': fields.integer_big('Resource ID', select=1),
         'noupdate': fields.boolean('Non Updatable'),
         'date_update': fields.datetime('Update Date'),
         'date_init': fields.datetime('Init Date')

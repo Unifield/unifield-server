@@ -1973,7 +1973,7 @@ class procurement_request_sourcing_document(osv.osv):
 
     _columns = {
         'order_id': fields.many2one('sale.order', string='Internal request'),
-        'linked_id': fields.integer('Document Id'),
+        'linked_id': fields.integer_big('Document Id'),
         'linked_name': fields.char('Document name', size=255),
         'linked_model': fields.selection(SOURCE_DOCUMENT_MODELS, 'Document model'),
     }

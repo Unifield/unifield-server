@@ -397,8 +397,8 @@ class stock_location(osv.osv):
         'posy': fields.integer('Shelves (Y)', help="Optional localization details, for information purpose only"),
         'posz': fields.integer('Height (Z)', help="Optional localization details, for information purpose only"),
 
-        'parent_left': fields.integer('Left Parent', select=1),
-        'parent_right': fields.integer('Right Parent', select=1),
+        'parent_left': fields.integer_big('Left Parent', select=1),
+        'parent_right': fields.integer_big('Right Parent', select=1),
         'stock_real_value': fields.function(_product_value, method=True, type='float', string='Real Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
         'stock_virtual_value': fields.function(_product_value, method=True, type='float', string='Virtual Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
         'company_id': fields.many2one('res.company', 'Company', select=1, help='Let this field empty if this location is shared between all companies'),
@@ -406,7 +406,7 @@ class stock_location(osv.osv):
         'valuation_in_account_id': fields.many2one('account.account', 'Stock Input Account',domain = [('type','=','other')], help='This account will be used to value stock moves that have this location as destination, instead of the stock output account from the product.'),
         'valuation_out_account_id': fields.many2one('account.account', 'Stock Output Account',domain = [('type','=','other')], help='This account will be used to value stock moves that have this location as source, instead of the stock input account from the product.'),
         'coordo_id': fields.function(_get_coordo_db_id, type='many2one', relation='msf.instance', method=True, fnct_search=_search_coordo_id, string='Destination of sync', internal=True, multi='coordo_db_id'),
-        'db_id': fields.function(_get_coordo_db_id, type='integer', method=True, string='DB id for sync', internal=True, multi='coordo_db_id'),
+        'db_id': fields.function(_get_coordo_db_id, type='integer_big', method=True, string='DB id for sync', internal=True, multi='coordo_db_id'),
         'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
         'from_config': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_config, string='Set in Loc. Config', internal=1),
         'from_histo': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_histo, string='Set in Historical Consumption', internal=1),
@@ -2140,7 +2140,7 @@ class stock_location_instance(osv.osv):
         'usage': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], string='Usage'),
         'location_category': fields.selection( [('stock', 'Stock'), ('consumption_unit', 'Consumption Unit'), ('transition', 'Transition'), ('eprep', 'EPrep'), ('other', 'Other')], string='Location Category', required=True),
         'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
-        'instance_db_id': fields.integer('DB Id in the instance'),
+        'instance_db_id': fields.integer_big('DB Id in the instance'),
         'full_name': fields.char('Name', size=256, readonly=1),
         'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
     }

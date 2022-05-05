@@ -104,7 +104,7 @@ class ir_values(osv.osv):
         'meta': fields.text('Meta Datas'),
         'meta_unpickle': fields.function(_value_unpickle, fnct_inv=_value_pickle,
                                          method=True, type='text', string='Metadata'),
-        'res_id': fields.integer('Object ID', help="Keep 0 if the action must appear on all resources.", select=True),
+        'res_id': fields.integer_big('Object ID', help="Keep 0 if the action must appear on all resources.", select=True),
         'user_id': fields.many2one('res.users', 'User', ondelete='cascade', select=True),
         'company_id': fields.many2one('res.company', 'Company', select=True),
         'sequence': fields.integer('Sequence'),

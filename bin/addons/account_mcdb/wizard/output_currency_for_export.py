@@ -259,10 +259,10 @@ class background_report(osv.osv_memory):
     _columns = {
         'file_name': fields.char('Filename', size=256),
         'report_name': fields.char('Report Name', size=256),
-        'report_id': fields.integer('Report id'),
+        'report_id': fields.integer_big('Report id'),
         'percent': fields.float('Percent'),
         'finished': fields.boolean('Finished'),
-        'real_uid': fields.integer('User Id', readonly=1),
+        'real_uid': fields.integer_big('User Id', readonly=1),
     }
 
     _defaults = {

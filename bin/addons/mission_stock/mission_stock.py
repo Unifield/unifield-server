@@ -1335,7 +1335,7 @@ class stock_mission_report_line_location(osv.osv):
         #super(stock_mission_report_line_location, self).init(cr)
 
         # psql function to trigger sync updates on stock.mission.report.line.location
-        cr.execute('''CREATE OR REPLACE FUNCTION update_ir_model_data(id integer) RETURNS void AS $$
+        cr.execute('''CREATE OR REPLACE FUNCTION update_ir_model_data(id int8) RETURNS void AS $$
         BEGIN
             UPDATE ir_model_data set last_modification=NOW(), touched='[''quantity'']' where res_id = $1 AND module='sd' AND model='stock.mission.report.line.location';
         END;
@@ -1343,7 +1343,7 @@ class stock_mission_report_line_location(osv.osv):
         ''')
 
         # psql function to create stock.mission.report.line.location entry in ir_model_data
-        cr.execute("""CREATE OR REPLACE FUNCTION create_ir_model_data(id integer) RETURNS void AS $$
+        cr.execute("""CREATE OR REPLACE FUNCTION create_ir_model_data(id int8) RETURNS void AS $$
         DECLARE
             instance_id varchar;
             query varchar;
@@ -1355,7 +1355,7 @@ class stock_mission_report_line_location(osv.osv):
         """)
 
         # psql function to convert uom
-        cr.execute('''CREATE OR REPLACE FUNCTION stock_qty(qty numeric, from_uom integer, to_uom integer) RETURNS numeric AS $$
+        cr.execute('''CREATE OR REPLACE FUNCTION stock_qty(qty numeric, from_uom int8, to_uom int8) RETURNS numeric AS $$
         DECLARE
             from_uom_factor numeric;
             to_uom_factor numeric;
@@ -1372,9 +1372,9 @@ class stock_mission_report_line_location(osv.osv):
         ''')
 
         # psql function get default uom
-        cr.execute('''CREATE OR REPLACE FUNCTION get_ref_uom(product integer) RETURNS integer AS $$
+        cr.execute('''CREATE OR REPLACE FUNCTION get_ref_uom(product int8) RETURNS int8 AS $$
         DECLARE
-           uom_id integer;
+           uom_id int8;
         BEGIN
            SELECT t.uom_id INTO uom_id FROM product_product p, product_template t
               WHERE p.product_tmpl_id = t.id AND p.id = $1;
@@ -1388,7 +1388,7 @@ class stock_mission_report_line_location(osv.osv):
   RETURNS trigger AS $stock_move$
   DECLARE
     changes_on_done boolean := false;
-    t_id integer;
+    t_id int8;
   BEGIN
 
   changes_on_done := TG_OP = 'UPDATE' AND OLD.state = 'done' AND NEW.state = 'done' AND
@@ -1487,7 +1487,7 @@ class stock_mission_report_line_location(osv.osv):
 
         'remote_instance_id': fields.many2one('msf.instance', 'Instance', select=1),
         'remote_location_name': fields.char('Location', size=128, select=1),
-        'remote_location_id': fields.integer('ID of remote location'),
+        'remote_location_id': fields.integer_big('ID of remote location'),
         #  TODO JFB RR
         # force sync ??
     }

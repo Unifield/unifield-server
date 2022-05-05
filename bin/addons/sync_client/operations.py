@@ -122,7 +122,7 @@ class operations_event(osv.osv, ratelimit):
     _columns = {
         'time': fields.datetime('Time', readonly=True, select=True, required=True, help="When the event happened."),
         'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
-        'remote_id': fields.integer('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during event centralization."),
+        'remote_id': fields.integer_big('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during event centralization."),
         'kind': fields.char('Kind', readonly=True, size=64, required=True, help="What kind of event it was."),
         'data': fields.text('Data', readonly=True, help="The data associated with the event."),
         'data_short': fields.function(_shorten_data, method=True, type='char'),
@@ -250,7 +250,7 @@ class operations_count(osv.osv, ratelimit):
     _columns = {
         'time': fields.datetime('Time', readonly=True, select=True, required=True, help="When the measurement was collected."),
         'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
-        'remote_id': fields.integer('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during count centralization."),
+        'remote_id': fields.integer_big('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during count centralization."),
         'kind': fields.char('Kind', readonly=True, size=64, required=True, help="What kind of count."),
         'count': fields.integer('Count', readonly=True, required=True, help="The count/measurement."),
     }
@@ -344,7 +344,7 @@ class memory_usage(osv.osv, ratelimit):
     _columns = {
         'time': fields.datetime('Time', readonly=True, select=True, required=True, help="When the measurement was collected."),
         'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
-        'remote_id': fields.integer('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during count centralization."),
+        'remote_id': fields.integer_big('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during count centralization."),
         'process': fields.char('Process', readonly=True, size=64, required=True, help="Which process is concerned?"),
         'memory_usage': fields.integer_big('Memory Usage', readonly=True, required=True, help="Size of RAM (in bytes) used by the process.")
     }

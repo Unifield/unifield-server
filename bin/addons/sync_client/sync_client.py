@@ -486,9 +486,9 @@ class Entity(osv.osv):
                                'Operational Center'), # not required here because _auto_init create
         # before to know from witch OC it is part of
         'parent':fields.char('Parent Instance', size=64, readonly=True),
-        'update_last': fields.integer('Last update', required=True),
-        'update_offset' : fields.integer('Update Offset', required=True, readonly=True),
-        'message_last': fields.integer('Last message', required=True),
+        'update_last': fields.integer_big('Last update', required=True),
+        'update_offset' : fields.integer_big('Update Offset', required=True, readonly=True),
+        'message_last': fields.integer_big('Last message', required=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True),
         'session_id' : fields.char('Push Session Id', size=128),

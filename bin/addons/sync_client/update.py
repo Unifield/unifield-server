@@ -89,7 +89,7 @@ class local_rule(osv.osv):
     _name = "sync.client.rule"
 
     _columns = {
-        'server_id' : fields.integer('Server ID', required=True, readonly=True),
+        'server_id' : fields.integer_big('Server ID', required=True, readonly=True),
         'name' : fields.char('Rule name', size=64, readonly=True),
         'model' : fields.char('Model', size=64, readonly=True, select=True),
         'domain' : fields.text('Domain', readonly=True),

@@ -192,7 +192,7 @@ class abstract_wizard_import(osv.osv_memory):
             readonly=True,
             help="To go back to the parent when the window is closed",
         ),
-        'parent_record_id': fields.integer(
+        'parent_record_id': fields.integer_big(
             string='ID of the parent record',
             readonly=True,
         ),

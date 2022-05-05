@@ -15,8 +15,8 @@ class hq_monitor(osv.osv):
         'title': fields.char('Title', size=1024, required=1),
         'not_run_data': fields.integer('Notification threshold for update'),
         'not_run_msg': fields.integer('Notification threshold for message'),
-        'last_instance_id': fields.integer('ID of the last message checked for this instance'),
-        'last_other_instances_id': fields.integer('ID of the last message checked for the other instances'),
+        'last_instance_id': fields.integer_big('ID of the last message checked for this instance'),
+        'last_other_instances_id': fields.integer_big('ID of the last message checked for the other instances'),
     }
 
     _defaults = {

@@ -1119,7 +1119,7 @@ user_rights_tools()
 class job_in_progress(osv.osv_memory):
     _name = 'job.in_progress'
     _columns = {
-        'res_id': fields.integer('Db Id'),
+        'res_id': fields.integer_big('Db Id'),
         'model': fields.char('Object', size=256),
         'name': fields.char('Name', size=256),
         'total': fields.integer('Total to process'),

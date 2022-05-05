@@ -207,7 +207,7 @@ class view_sc(osv.osv):
     _name = 'ir.ui.view_sc'
     _columns = {
         'name': fields.char('Shortcut Name', size=64), # Kept for backwards compatibility only - resource name used instead (translatable)
-        'res_id': fields.integer('Resource Ref.', help="Reference of the target resource, whose model/table depends on the 'Resource Name' field."),
+        'res_id': fields.integer_big('Resource Ref.', help="Reference of the target resource, whose model/table depends on the 'Resource Name' field."),
         'sequence': fields.integer('Sequence'),
         'user_id': fields.many2one('res.users', 'User Ref.', required=True, ondelete='cascade', select=True),
         'resource': fields.char('Resource Name', size=64, required=True, select=True)

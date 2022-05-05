@@ -181,7 +181,7 @@ class wkf_instance(osv.osv):
     _log_access = False
     _columns = {
         'wkf_id': fields.many2one('workflow', 'Workflow', ondelete='cascade', select=True),
-        'res_id': fields.integer('Resource ID'),
+        'res_id': fields.integer_big('Resource ID'),
         'res_type': fields.char('Resource Object', size=64),
         'state': fields.char('State', size=32),
     }
@@ -215,7 +215,7 @@ class wkf_triggers(osv.osv):
     _name = "workflow.triggers"
     _log_access = False
     _columns = {
-        'res_id': fields.integer('Resource ID', size=128),
+        'res_id': fields.integer_big('Resource ID', size=128),
         'model': fields.char('Object', size=128),
         'instance_id': fields.many2one('workflow.instance', 'Destination Instance', ondelete="cascade"),
         'workitem_id': fields.many2one('workflow.workitem', 'Workitem', required=True, ondelete="cascade"),
