@@ -114119,6 +114119,12 @@ msgstr "Régularisation ponctuelle"
 msgid "One Time accruals"
 msgstr "Régularisations ponctuelles"
 
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:765
+#, python-format
+msgid "The line %s is already included into the reconciliation %s."
+msgstr "La ligne %s est déjà incluse dans le lettrage %s."
+
 #. module: stock
 #: field:stock.reception.wizard,final_dest_id:0
 msgid "Final Dest. Location"

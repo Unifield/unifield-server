@@ -760,7 +760,11 @@ class msf_accrual_line(osv.osv):
                 move_obj.post(cr, uid, reversal_move_id, context=context)
 
                 # Reconcile the accrual move line with its reversal
-                move_line_obj.reconcile_partial(cr, uid, [accrual_line.move_line_id.id, reversal_accrual_move_line_id], context=context)
+                if accrual_line.move_line_id:
+                    if accrual_line.move_line_id.reconcile_id or accrual_line.move_line_id.reconcile_partial_id:
+                        raise osv.except_osv(_('Warning'), _('The line %s is already included into the reconciliation %s.') %
+                                             (accrual_line.entry_sequence or '', accrual_line.move_line_id.reconcile_txt or ''))
+                    move_line_obj.reconcile_partial(cr, uid, [accrual_line.move_line_id.id, reversal_accrual_move_line_id], context=context)
 
                 # Change the status to "Done"
                 self.write(cr, uid, [accrual_line.id], {'state': 'done', 'rev_move_id': reversal_move_id}, context=context)
