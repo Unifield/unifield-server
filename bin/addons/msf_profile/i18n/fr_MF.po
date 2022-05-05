@@ -272,7 +272,7 @@ msgstr "Le produit [%s] %s est déjà inactif."
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Accrual reversal entries"
-msgstr "Ecritures d'extourne comptes de régul."
+msgstr "Ecritures de contrepassation"
 
 #. module: account_mcdb
 #: view:account.analytic.line:0
@@ -2205,7 +2205,7 @@ msgstr "Poids[kg]"
 #. module: account_mcdb
 #: selection:account.mcdb,reversed:0
 msgid "Reversed"
-msgstr "Contre-passé"
+msgstr "Contrepassé"
 
 #. module: msf_doc_import
 #: field:msf.import.export,hide_download_all_entries:0
@@ -4433,7 +4433,7 @@ msgstr "Commandes de Terrain en Exception"
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #, python-format
 msgid "Reversal Origin"
-msgstr "Origine Contre-passation"
+msgstr "Origine Contrepassation"
 
 #. module: kit
 #: view:kit.creation:0
@@ -6991,8 +6991,8 @@ msgstr "Antarctica/Casey"
 #. module: msf_accrual
 #: model:ir.actions.act_window,name:msf_accrual.action_wizard_post_accrual_reversal
 #: view:wizard.accrual.reversal:0
-msgid "Post Accrual Reversal"
-msgstr "Comptabiliser les Ecritures d'Extourne"
+msgid "Post Accrual Reversals"
+msgstr "Comptabiliser les Ecritures de Contrepassation"
 
 #. module: financing_contract
 #: help:account.analytic.line,contract_open:0
@@ -7899,7 +7899,7 @@ msgstr "Lors de l'utilisation du calcul automatique la date par défaut utilisé
 #. module: account_mcdb
 #: field:account.mcdb,reversed:0
 msgid "Reversed?"
-msgstr "Contre-passé?"
+msgstr "Contrepassé ?"
 
 #. module: account_mcdb
 #: field:account.mcdb,amount_book_from:0
@@ -10924,7 +10924,7 @@ msgstr "Article unique"
 #: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:84
 #, python-format
 msgid "The Accrual \"%s\" isn't in Running state, the accrual reversal can't be posted!"
-msgstr "La Régularisation \"%s\" n'est pas au statut En cours, l'écriture d'extourne ne peut pas être comptabilisée !"
+msgstr "La Régularisation \"%s\" n'est pas au statut En cours, l'écriture de contrepassation ne peut pas être comptabilisée !"
 
 #. module: analytic_distribution
 #: field:account.analytic.line,is_unposted:0
@@ -12059,8 +12059,8 @@ msgstr "Zone Liée"
 #. module: msf_accrual
 #: model:ir.actions.act_window,name:msf_accrual.action_wizard_accrual_validation
 #: view:wizard.accrual.validation:0
-msgid "Validate Accrual Lines"
-msgstr "Valider Lignes de Régularisation"
+msgid "Post Accruals"
+msgstr "Comptabiliser les Régularisations"
 
 #. module: sync_client
 #: field:sync.monitor,nb_data_not_run:0
@@ -19507,7 +19507,7 @@ msgstr "Expédié"
 #. module: account_mcdb
 #: selection:account.mcdb,reallocated:0
 msgid "NOT reallocated"
-msgstr "NON réallouée"
+msgstr "NON réalloué"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:271
@@ -25119,7 +25119,7 @@ msgstr "Rapport Intéractif"
 #. module: account_mcdb
 #: selection:account.mcdb,reversed:0
 msgid "NOT reversed"
-msgstr "NOT contre-passée"
+msgstr "NON contrepassé"
 
 #. module: vertical_integration
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:74
@@ -43645,7 +43645,7 @@ msgstr "Date à laquelle le bon de commande a été approuvé"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you post Accrual Reversal entries?"
-msgstr "Avez-vous comptabilisé les écritures d'extourne des comptes de régularisation ?"
+msgstr "Avez-vous comptabilisé les écritures de contrepassation des comptes de régularisation ?"
 
 #. module: base
 #: model:res.currency,currency_name:base.MKD
@@ -51826,7 +51826,7 @@ msgstr "Veuillez fournir un fichier à importer !"
 #: field:account.analytic.line,reversal_origin:0
 #: field:account.analytic.line,reversal_origin_txt:0
 msgid "Reversal origin"
-msgstr "Origine de la contre-passation"
+msgstr "Origine de la contrepassation"
 
 #. module: res_currency_tables
 #: field:res.currency.table,name:0
@@ -71328,8 +71328,8 @@ msgstr "Meilleur Prix (pas encore actif!)"
 
 #. module: msf_accrual
 #: view:wizard.accrual.validation:0
-msgid "Are you sure you want to validate those accrual lines?"
-msgstr "Etes-vous sûr de vouloir valider ces lignes de régularisation ?"
+msgid "Are you sure you want to post those accruals?"
+msgstr "Etes-vous sûr de vouloir comptabiliser ces régularisations ?"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:262
@@ -77776,7 +77776,7 @@ msgstr "Instance de Synchronisation "
 #: field:account.mcdb,reallocated:0
 #: field:account.analytic.line,is_reallocated:0
 msgid "Reallocated?"
-msgstr "Réalloué?"
+msgstr "Réalloué ?"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:98
@@ -84538,7 +84538,7 @@ msgstr "La colonne '%s' n'est pas présente dans le fichier."
 #: report:addons/register_accounting/report/fully_report_xls.mako:1150
 #: report:addons/register_accounting/report/fully_report_xls.mako:1197
 msgid "Reversal"
-msgstr "Contre-passation"
+msgstr "Contrepassation"
 
 #. module: stock
 #: field:stock.invoice.onshipping,group:0
@@ -99741,7 +99741,7 @@ msgstr "Il n'y a pas active_id. Veuillez contacter votre administrateur pour ré
 #. module: msf_accrual
 #: view:wizard.accrual.reversal:0
 msgid "Are you sure you want to post accrual reversal for those lines at the indicated dates?"
-msgstr "Etes-vous sûr de vouloir comptabiliser les écritures d'extourne pour ces lignes aux dates indiquées ?"
+msgstr "Etes-vous sûr de vouloir comptabiliser les écritures de contrepassation pour ces lignes aux dates indiquées ?"
 
 #. module: kit
 #: field:assign.to.kit.line,qty_assign_to_kit_by_product_uom:0
@@ -114072,8 +114072,8 @@ msgstr "Aucun journal actif de type Régularisation n'a été trouvé pour l'ins
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:46
 #, python-format
-msgid "Please add some lines to the Accrual \"%s\" before validating it!"
-msgstr "Veuillez ajouter des lignes à la Régularisation \"%s\" avant de la valider !"
+msgid "Please add some lines to the Accrual \"%s\" before posting it!"
+msgstr "Veuillez ajouter des lignes à la Régularisation \"%s\" avant de la comptabiliser !"
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/msf_accrual_line.py:338
@@ -114085,19 +114085,19 @@ msgstr "La Régularisation \"%s\" n'est pas Terminée !"
 #: code:addons/msf_accrual/msf_accrual_line.py:344
 #, python-format
 msgid "Impossible to find the reversal entry to cancel!"
-msgstr "Impossible de trouver l'écriture d'extourne à annuler !"
+msgstr "Impossible de trouver l'écriture de contrepassation à annuler !"
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:50
 #, python-format
 msgid "The reversal period has not been found in the system!"
-msgstr "La période pour l'extourne n'a pas été trouvée dans le système !"
+msgstr "La période pour la contrepassation n'a pas été trouvée dans le système !"
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:65
 #, python-format
 msgid "No opened period found to post the reversal entry!"
-msgstr "Pas de période ouverte trouvée pour comptabiliser l'écriture d'extourne !"
+msgstr "Pas de période ouverte trouvée pour comptabiliser l'écriture de contrepassation !"
 
 #. module: msf_accrual
 #: selection:msf.accrual.line,accrual_type:0
