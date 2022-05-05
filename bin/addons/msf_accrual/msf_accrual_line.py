@@ -336,12 +336,13 @@ class msf_accrual_line(osv.osv):
             # check for periods, distribution, etc.
             if accrual_line.state != 'done':
                 raise osv.except_osv(_('Warning'), _("The Accrual \"%s\" is not Done!") % accrual_line.description)
+            if not accrual_line.rev_move_id:
+                raise osv.except_osv(_('Warning'), _("Impossible to find the reversal entry to cancel: "
+                                                     "please check if the lines have been reconciled manually."))
             self._check_period_state(cr, uid, accrual_line.period_id.id, context=context)
 
             move_date = accrual_line.period_id.date_stop
             curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
-            if not accrual_line.rev_move_id:
-                raise osv.except_osv(_('Warning'), _("Impossible to find the reversal entry to cancel!"))
             reversal_move_posting_date = accrual_line.rev_move_id.date
             reversal_move_document_date = accrual_line.rev_move_id.document_date
             reversal_period_id = accrual_line.rev_move_id.period_id.id

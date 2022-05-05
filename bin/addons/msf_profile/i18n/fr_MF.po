@@ -114082,10 +114082,10 @@ msgid "The Accrual \"%s\" is not Done!"
 msgstr "La Régularisation \"%s\" n'est pas Terminée !"
 
 #. module: msf_accrual
-#: code:addons/msf_accrual/msf_accrual_line.py:344
+#: code:addons/msf_accrual/msf_accrual_line.py:340
 #, python-format
-msgid "Impossible to find the reversal entry to cancel!"
-msgstr "Impossible de trouver l'écriture de contrepassation à annuler !"
+msgid "Impossible to find the reversal entry to cancel: please check if the lines have been reconciled manually."
+msgstr "Impossible de trouver l'écriture de contrepassation à annuler : veuillez vérifier si les lignes ont été lettrées manuellement."
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:50
