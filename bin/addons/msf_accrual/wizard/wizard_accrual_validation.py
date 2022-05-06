@@ -46,13 +46,18 @@ class wizard_accrual_validation(osv.osv_memory):
                                          _('Please add some lines to the Accrual "%s" before posting it!') % accrual_line.description)
                 elif not accrual_line.period_id:
                     raise osv.except_osv(_('Warning'), _('The Accrual "%s" has no period set!') % accrual_line.description)
-                elif not accrual_line.analytic_distribution_id:
+                elif accrual_line.period_id.state != 'draft':
+                    raise osv.except_osv(_('Warning'), _("The period \"%s\" is not Open!") % accrual_line.period_id.name)
+                if not accrual_line.analytic_distribution_id:
                     for expense_line in accrual_line.expense_line_ids:
                         if not expense_line.analytic_distribution_id:
                             raise osv.except_osv(_('Warning'), _('Some of the lines of the Accrual "%s" have no analytic distribution!') %
                                                  expense_line.description)
-                elif accrual_line.period_id.state != 'draft':
-                    raise osv.except_osv(_('Warning'), _("The period \"%s\" is not Open!") % accrual_line.period_id.name)
+                same_symbol = all(l.accrual_amount >= 0 for l in accrual_line.expense_line_ids) or \
+                              all(l.accrual_amount < 0 for l in accrual_line.expense_line_ids)
+                if not same_symbol:
+                    raise osv.except_osv(_('Warning'),
+                                         _('The Accrual "%s" has both positive and negative lines!') % accrual_line.description)
                 # post the accrual
                 accrual_line_obj.accrual_post(cr, uid, [accrual_line.id], context=context)
                 # post its reversal only if it is a reversing accrual
