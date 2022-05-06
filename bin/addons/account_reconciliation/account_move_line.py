@@ -629,10 +629,10 @@ class account_move_reconcile(osv.osv):
         """
         if rec_id:
             accrual_sql = """
-            UPDATE msf_accrual_line
-            SET state = 'done'
-            WHERE state = 'running'
-            AND id IN (SELECT accrual_line_id FROM account_move_line WHERE reconcile_id = %s)
+                UPDATE msf_accrual_line
+                SET state = 'done'
+                WHERE state = 'running'
+                AND id IN (SELECT accrual_line_id FROM account_move_line WHERE reconcile_id = %s)
             """
             cr.execute(accrual_sql, (rec_id,))
         return True
@@ -645,10 +645,10 @@ class account_move_reconcile(osv.osv):
             if isinstance(rec_ids, (int, long)):
                 rec_ids = [rec_ids]
             accrual_sql = """
-            UPDATE msf_accrual_line
-            SET state = 'running'
-            WHERE accrual_type = 'one_time_accrual' AND state = 'done'
-            AND id IN (SELECT accrual_line_id FROM account_move_line WHERE reconcile_id IN %s)
+                UPDATE msf_accrual_line
+                SET state = 'running'
+                WHERE accrual_type = 'one_time_accrual' AND state = 'done'
+                AND id IN (SELECT accrual_line_id FROM account_move_line WHERE reconcile_id IN %s)
             """
             cr.execute(accrual_sql, (tuple(rec_ids),))
         return True
