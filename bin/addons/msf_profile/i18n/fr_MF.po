@@ -114825,3 +114825,8 @@ msgstr "À %d doit être le dernier jour du mois"
 #: help:replenishment.location.config,sync_remote_location_txt:0
 msgid "Used to sync remote_location_ids"
 msgstr "Utilisé pour sync remote_location_ids"
+
+#. module: account
+#: view:account.analytic.line:0
+msgid " Sales "
+msgstr "Commandes"
