@@ -114830,3 +114830,21 @@ msgstr "Utilisé pour sync remote_location_ids"
 #: view:account.analytic.line:0
 msgid " Sales "
 msgstr "Commandes"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:264
+msgid "PENDING INVOICES"
+msgstr "FACTURES EN ATTENTE"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:238
+#: code:ir.actions.report.xml:name:open.invoices.2
+#: model:ir.actions.report.xml,name:account_override.open_invoices_2
+#, python-format
+msgid "Pending Invoices"
+msgstr "Factures en Attente"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:355
+msgid " (OPEN FISCAL YEAR ONLY)"
+msgstr " (EXERCICE COMPTABLE OUVERT UNIQUEMENT)"
