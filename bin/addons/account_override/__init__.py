@@ -164,6 +164,7 @@ ACCOUNT_RESTRICTED_AREA = {
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [
         ('type', 'not in', ['view', 'consolidation', 'closed']),
+        ('filter_active', '=', True),
         '!', ('code', '=like', '8%'),  # US-791 exclude 8 accounts
         '!', ('code', '=like', '9%'),  # US-791 exclude 9 accounts
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
