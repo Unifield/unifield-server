@@ -164,7 +164,7 @@
                                     domain="[('accrual_type', '=', 'one_time_accrual')]"/>
                             <filter name="filter_reversing_accrual" icon="gtk-revert-to-saved" string="Reversing accruals"
                                     domain="[('accrual_type', '=', 'reversing_accrual')]"/>
-                            <field name="period_id"/>
+                            <field name="period_id" domain="[('state', '!=', 'created'), ('is_system', '=', False)]"/>
                             <field name="accrual_account_id"/>
                         </group>
                     </search>

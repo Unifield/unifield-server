@@ -139,7 +139,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('user_type_code', '=', 'expense'),
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Do not allow extra-expense accounts
     ],
-    # ACCRUALS - accrual field
+    # ACCRUALS - accrual account
     'accruals_accrual': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
