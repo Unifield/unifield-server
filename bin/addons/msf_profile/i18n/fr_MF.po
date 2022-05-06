@@ -37762,7 +37762,7 @@ msgstr "Délai entre le mouvement d'origine et le mouvement lié-chainé (en jou
 #. module: msf_accrual
 #: code:addons/msf_accrual/msf_accrual_line.py:404
 #, python-format
-msgid "You can only delete draft accruals"
+msgid "You can only delete draft accruals."
 msgstr "Vous ne pouvez supprimer que des régularisations au statut Brouillon."
 
 #. module: analytic_distribution
