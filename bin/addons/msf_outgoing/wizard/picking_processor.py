@@ -292,6 +292,9 @@ class stock_picking_processor(osv.osv):
                             'currency': move.price_currency_id.id,
                             'pack_info_id': move.pack_info_id.id,
                         })
+                # IN sync message uses an already shipped IN
+                if context.get('sync_message_execution') and wizard.picking_id.state == 'shipped':
+                    line_data['quantity'] = move.product_qty
                 line_obj.create(cr, uid, line_data, context=context)
 
         return True

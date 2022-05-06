@@ -1647,11 +1647,20 @@ class stock_move(osv.osv):
             if pick_type == 'in' and move.purchase_line_id:
                 # cancel the linked PO line partially or fully:
                 resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or context.get('do_resource', False)
-                pol_info = self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['product_qty', 'in_qty_remaining']) # because value in move.purchase_line_id.product_qty has changed since
+                pol_info = self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['product_qty', 'in_qty_remaining', 'max_qty_cancellable']) # because value in move.purchase_line_id.product_qty has changed since
                 pol_product_qty = pol_info['product_qty']
                 partially_cancelled = False
-                if pol_product_qty - move.product_qty != 0:
-                    new_line = self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
+                qty_to_cancel = move.product_qty
+                if move.product_uom.id != move.purchase_line_id.product_uom.id:
+                    qty_to_cancel = self.pool.get('product.uom')._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.purchase_line_id.product_uom.id)
+                if move.purchase_line_id.order_id.order_type != 'direct':
+                    # do not cancel extra IN qty on po line
+                    qty_to_cancel = qty_to_cancel - pol_info['max_qty_cancellable']
+                    if  qty_to_cancel <= 0.001:
+                        # nothing to do: extra qty cancelled
+                        continue
+                if pol_product_qty - qty_to_cancel > 0.001:
+                    new_line = self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=qty_to_cancel, resource=resource, context=context)
                     self.write(cr, uid, [move.id], {'purchase_line_id': new_line}, context=context)
                     partially_cancelled = True
                     if move.purchase_line_id.order_id.order_type == 'direct' and abs(pol_info['in_qty_remaining']) < 0.001:

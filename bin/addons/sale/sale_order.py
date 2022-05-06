@@ -2187,6 +2187,7 @@ class sale_order_line(osv.osv):
         'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Unit of Measure ', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'product_uos_qty': fields.float('Quantity (UoS)', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uos'),
+        'extra_qty': fields.float('Extra Qty from IN', readonly=True),
         'product_uos': fields.many2one('product.uom', 'Product UoS'),
         'product_packaging': fields.many2one('product.packaging', 'Packaging'),
         'move_ids': fields.one2many('stock.move', 'sale_line_id', 'Inventory Moves', readonly=True),
@@ -2409,6 +2410,7 @@ class sale_order_line(osv.osv):
             'dpo_line_id': False,
             'sync_pushed_from_po': False,
             'cv_line_ids': False,
+            'extra_qty': False,
         })
 
         reset_if_not_set = ['ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'instance_sync_order_ref']
@@ -2454,6 +2456,7 @@ class sale_order_line(osv.osv):
             'dpo_line_id': False,
             'sync_pushed_from_po': False,
             'cv_line_ids': False,
+            'extra_qty': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
@@ -2804,6 +2807,15 @@ class sale_order_line(osv.osv):
         order = line.order_id and line.order_id.id
 
         context['cancel_only'] = not resource
+
+        if line.extra_qty:
+            self.infolog(cr, uid, 'Cancel Extra - FO %s  line id:%s, qty cancelled %s, extra qty: %s' % (line.order_id.name, line.id, qty_diff, line.extra_qty))
+            if line.extra_qty >= qty_diff:
+                self.write(cr, uid, [line.id], {'extra_qty': line.extra_qty - qty_diff}, context=context)
+                return line.id
+            self.write(cr, uid, [line.id], {'extra_qty': 0}, context=context)
+            qty_diff = qty_diff - line.extra_qty
+
         if qty_diff >= line.product_uom_qty:
             if signal == 'done':
                 self.write(cr, uid, [line.id], {'from_cancel_out': True}, context=context)
