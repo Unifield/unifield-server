@@ -74,6 +74,8 @@ class wizard_accrual_reversal(osv.osv_memory):
     def button_accrual_reversal_confirm(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         accrual_line_obj = self.pool.get('msf.accrual.line')
 
         if 'active_ids' in context:
@@ -85,8 +87,9 @@ class wizard_accrual_reversal(osv.osv_memory):
                                          accrual_line.description)
 
                 # check for dates consistency (note that it is possible to select in the wizard the same posting date as the original entry)
-                document_date = self.browse(cr, uid, ids, context=context)[0].document_date
-                posting_date = self.browse(cr, uid, ids, context=context)[0].posting_date
+                wizard = self.browse(cr, uid, ids, context=context)[0]
+                document_date = wizard.document_date
+                posting_date = wizard.posting_date
                 accrual_move_date = accrual_line.period_id.date_stop
                 if datetime.datetime.strptime(posting_date, "%Y-%m-%d").date() < datetime.datetime.strptime(document_date, "%Y-%m-%d").date():
                     raise osv.except_osv(_('Warning !'), _("Posting date should be later than Document Date."))
