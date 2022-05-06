@@ -44,8 +44,6 @@ class wizard_accrual_validation(osv.osv_memory):
                 elif not accrual_line.expense_line_ids:
                     raise osv.except_osv(_('Warning'),
                                          _('Please add some lines to the Accrual "%s" before posting it!') % accrual_line.description)
-                elif not accrual_line.period_id:
-                    raise osv.except_osv(_('Warning'), _('The Accrual "%s" has no period set!') % accrual_line.description)
                 elif accrual_line.period_id.state != 'draft':
                     raise osv.except_osv(_('Warning'), _("The period \"%s\" is not Open!") % accrual_line.period_id.name)
                 if not accrual_line.analytic_distribution_id:

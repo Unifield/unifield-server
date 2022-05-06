@@ -14771,12 +14771,6 @@ msgstr "L'article doit être uniquement utilisé dans un programme correctement 
 msgid "2.  %a ,%A         ==> Fri, Friday"
 msgstr "2.  %a ,%A ==> Ven, Vendredi"
 
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:48
-#, python-format
-msgid "The Accrual \"%s\" has no period set!"
-msgstr "Aucune période n'a été définie pour la Régularisation \"%s\" !"
-
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1068
 #: code:addons/product_attributes/product_attributes.py:1201
