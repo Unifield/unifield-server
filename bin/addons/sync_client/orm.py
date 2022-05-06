@@ -547,6 +547,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
 
         result = original_write(self, cr, uid, ids, values,context=context)
+        if self._name == 'replenishment.segment.line':
+            self._set_period(cr, uid, ids, values, context=context)
+
         current_values = dict((x['id'], x) for x in self.read(
             cr, uid, isinstance(ids, (int, long)) and [ids] or ids,
             values.keys()+funct_field, context=context)

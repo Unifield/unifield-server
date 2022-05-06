@@ -4250,7 +4250,7 @@ msgstr "Rechercher Processus de Transition"
 msgid "Free Gift Certificate"
 msgstr "Certificat de Don Gratuit"
 
-#. modules: consumption_calculation, product_asset, sale, base, product_manufacturer, object_query, stock, msf_profile, specific_rules, msf_outgoing
+#. modules: consumption_calculation, product_asset, sale, base, product_manufacturer, object_query, stock, msf_profile, specific_rules, msf_outgoing, procurement_cycle
 #: field:ir.config_parameter,value:0
 #: field:ir.property,value_binary:0
 #: field:ir.property,value_datetime:0
@@ -4280,6 +4280,7 @@ msgstr "Certificat de Don Gratuit"
 #: view:physical.inventory:0
 #: code:addons/specific_rules/report/report_stock_inventory.py:886
 #: field:shipment.additionalitems,value:0
+#: field:replenishment.segment.line.period,value:0
 msgid "Value"
 msgstr "Valeur"
 
@@ -37396,6 +37397,7 @@ msgstr "Do reconfigure..."
 #: field:stock.expired.damaged.report,date_from:0
 #: report:addons/stock_override/report/stock_card_report_xls.mako:112
 #: view:replenishment.segment:0
+#: field:replenishment.segment.line.period,from_date:0
 msgid "From"
 msgstr "De"
 
@@ -87264,6 +87266,7 @@ msgstr "À déf."
 #: field:supplier.performance.wizard,date_to:0
 #: code:addons/stock_override/report/report_stock_move.py:740
 #: view:replenishment.segment:0
+#: field:replenishment.segment.line.period,to_date:0
 msgid "To"
 msgstr "Au"
 
@@ -108664,6 +108667,7 @@ msgstr "Description du Segment"
 
 #. module: procurement_cycle
 #: field:replenishment.segment.line.amc,segment_line_id:0
+#: field:replenishment.segment.line.period,line_id:0
 msgid "Segment Line"
 msgstr "Ligne de Segment"
 
@@ -113475,48 +113479,6 @@ msgid "Duplication not allowed. Please set an account on all lines first."
 msgstr "Duplication non autorisée. Veuillez d'abord définir un compte sur toutes les lignes."
 
 #. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:2728
-#, python-format
-msgid "%s, FROM %d must be a day after TO %d"
-msgstr "%s, DE %d doit être le jour d'après À %d"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:2730
-#, python-format
-msgid "%s, FROM %d must be later than TO %d"
-msgstr "%s, DE %s doit être après À %s"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:2711
-#, python-format
-msgid "%s, FROM %d must start the 1st day of the month"
-msgstr "%s, DE %s doit être le 1er jour du mois"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:2704
-#, python-format
-msgid "%s, FROM / TO %d: please fill or empty both values"
-msgstr "%s, DE / À %d: veuillez renseigner ou vider les deux valeurs"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:2718
-#, python-format
-msgid "%s, TO %d can't be empty if FROM is set"
-msgstr "%s, À %d ne peut être vide si DE est renseigné"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:2724
-#, python-format
-msgid "%s, TO %d must be later than FROM"
-msgstr "%s, À %d doit être plus tard que DE"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:2722
-#, python-format
-msgid "%s, TO %d must be the last day of the month"
-msgstr "%s, À %d doit être le dernier jour du mois"
-
-#. module: procurement_cycle
 #: field:replenishment.segment.line,auto_qty:0
 msgid "Auto. Supply Qty (deprecated)"
 msgstr "Qté réappro. auto (obsolète)"
@@ -113794,14 +113756,6 @@ msgstr "Min / Max 9"
 #: field:replenishment.segment.line,min_qty:0
 msgid "Min Qty (deprecated)"
 msgstr "Min Qté (obsolète)"
-
-#. module: procurement_cycle
-#: code:addons/procurement_cycle/replenishment.py:2733
-#, python-format
-msgid "Please correct the following  values:\n"
-"%s"
-msgstr "Veuillez corriger ces valeurs:\n"
-"%s"
 
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:819
@@ -114821,3 +114775,53 @@ msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Int
 #, python-format
 msgid "There is already an Internal Partner with the name '%s'. The Intermission Partner could not be activated"
 msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Intermission n'a pas pu être activé"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2903
+#, python-format
+msgid "FROM 1 / TO 1: please fill or empty both values"
+msgstr "DE 1 / A 1: veuillez renseigner ou vider les deux valeurs"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2901
+#, python-format
+msgid "FROM 1 must be before TO 1"
+msgstr "DE 1 doit être avant À 1"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2907
+#, python-format
+msgid "FROM 1 must start the 1st day of the month"
+msgstr "DE 1 doit être au 1er jour du mois"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line.period,max_value:0
+msgid "Max value"
+msgstr "Valeur Max"
+
+#. module: procurement_cycle
+#: help:replenishment.segment.line.period,max_value:0
+msgid "Only used for min/max"
+msgstr "Uniquement utilisé pour min/max"
+
+#. module: procurement_cycle
+#: constraint:replenishment.segment.line:0
+msgid "Remove from hidden"
+msgstr "Supprime les masqués"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2918
+#, python-format
+msgid "TO %d must be before TO %d"
+msgstr "À %d doit être avant À %d"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:2912
+#, python-format
+msgid "TO %d must be the last day of the month"
+msgstr "À %d doit être le dernier jour du mois"
+
+#. module: procurement_cycle
+#: help:replenishment.location.config,sync_remote_location_txt:0
+msgid "Used to sync remote_location_ids"
+msgstr "Utilisé pour sync remote_location_ids"

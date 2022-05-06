@@ -55,41 +55,21 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
-    # UF24.1
-    def us_9849_trigger_upd_former_nsl(self, cr, uid, *a, **b):
-        # UD prod changer from NSL to ST/NS => trigger sync to update active field on missions
-        if not self.pool.get('sync.client.entity'):
-            # exclude new instances
-            return True
-        if _get_instance_level(self, cr, uid) == 'hq':
-            cr.execute("""
-                update
-                    product_product
-                set
-                    active_change_date=NOW()
-                where id in (
-                    select
-                        p.id
-                    from
-                        product_product p, product_international_status c
-                    where
-                        p.international_status = c.id and
-                        c.code = 'unidata' and
-                        p.active = 't' and
-                        p.standard_ok != 'non_standard_local' and
-                        p.product_tmpl_id in (
-                            select
-                                distinct(res_id)
-                            from
-                                audittrail_log_line
-                            where
-                                old_value_text='non_standard_local' and
-                                object_id = (select id from ir_model where model='product.template')
-                        )
-                )
-            """)
-            self.log_info(cr, uid, 'US-9849: %d updates' % (cr.rowcount, ))
+
+
+    # UF25.0
+    def us_8451_split_rr(self, cr, uid, *a, **b):
+        for x in range(1, 19):
+            cr.execute('''
+            insert into replenishment_segment_line_period (line_id, value, from_date, to_date, max_value)
+                select id, rr_fmc_%(x)s, rr_fmc_from_%(x)s, rr_fmc_to_%(x)s, rr_max_%(x)s
+                from replenishment_segment_line
+                where rr_fmc_%(x)s is not null
+            ''', {'x': x})
+        cr.execute('''update replenishment_segment_line_period set from_date='2020-01-01' where from_date is null and value is not null''')
+        cr.execute('''update replenishment_segment_line_period set to_date='2222-02-28' where to_date is null and value is not null''')
         return True
+
 
     def fol_order_id_join_change_rules(self, cr, uid, *a, **b):
         """
@@ -128,23 +108,6 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, 'US-6475: set PO has tax on %d records' % cr.rowcount)
         return True
 
-
-    # UF24.1
-    def us_9833_set_pick_from_wkf(self, cr, uid, *a, **b):
-        cr.execute("""
-            update
-                stock_picking
-            set
-                from_wkf='t'
-            where
-                from_wkf='f' and
-                sale_id is not null and
-                type = 'out' and
-                subtype in ('standard', 'picking')
-        """)
-        self.log_info(cr, uid, 'US-9833: %d OUT/Pick fixed' % (cr.rowcount,))
-        return True
-
     def us_7791_gdpr_patch(self, cr, uid, *a, **b):
         cr.execute("""UPDATE hr_employee
         SET
@@ -161,6 +124,59 @@ class patch_scripts(osv.osv):
         WHERE employee_type = 'local';
         """)
         self.log_info(cr, uid, 'US-7791 : GDPR patch applied on %d rows' % (cr.rowcount,))
+        return True
+
+
+
+    # UF24.1
+    def us_9849_trigger_upd_former_nsl(self, cr, uid, *a, **b):
+        # UD prod changer from NSL to ST/NS => trigger sync to update active field on missions
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                update
+                    product_product
+                set
+                    active_change_date=NOW()
+                where id in (
+                    select
+                        p.id
+                    from
+                        product_product p, product_international_status c
+                    where
+                        p.international_status = c.id and
+                        c.code = 'unidata' and
+                        p.active = 't' and
+                        p.standard_ok != 'non_standard_local' and
+                        p.product_tmpl_id in (
+                            select
+                                distinct(res_id)
+                            from
+                                audittrail_log_line
+                            where
+                                old_value_text='non_standard_local' and
+                                object_id = (select id from ir_model where model='product.template')
+                        )
+                )
+            """)
+            self.log_info(cr, uid, 'US-9849: %d updates' % (cr.rowcount, ))
+        return True
+
+    def us_9833_set_pick_from_wkf(self, cr, uid, *a, **b):
+        cr.execute("""
+            update
+                stock_picking
+            set
+                from_wkf='t'
+            where
+                from_wkf='f' and
+                sale_id is not null and
+                type = 'out' and
+                subtype in ('standard', 'picking')
+        """)
+        self.log_info(cr, uid, 'US-9833: %d OUT/Pick fixed' % (cr.rowcount,))
         return True
 
 

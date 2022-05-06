@@ -720,7 +720,6 @@
             <field name="method">us_9044_add_location_colors</field>
         </record>
 
-
         <!-- UF24.0 -->
         <record id="us_8870_partner_instance_creator" model="patch.scripts">
             <field name="method">us_8870_partner_instance_creator</field>
@@ -774,6 +773,10 @@
 
         <record id="us_7791_gdpr_patch" model="patch.scripts">
             <field name="method">us_7791_gdpr_patch</field>
+        </record>
+
+        <record id="us_8451_split_rr" model="patch.scripts">
+            <field name="method">us_8451_split_rr</field>
         </record>
     </data>
 </openerp>

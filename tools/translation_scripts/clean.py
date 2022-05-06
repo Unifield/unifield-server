@@ -43,7 +43,7 @@ def clean(pofile, output=False):
         o = sys.stdout
     for entry in keep:
         o.write("%s\n" % entry)
-    
+
     if output:
         o.close()
 
