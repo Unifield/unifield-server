@@ -42,6 +42,7 @@
         'wizard/fo_follow_up_finance_wizard_view.xml',
         'cash_request_data.xml',
         'cash_request_view.xml',
+        'wizard/account_report_employee_balance_tree_view.xml',  # US-6392
     ],
     'test': [],
     'installable': True,
