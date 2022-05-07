@@ -817,7 +817,7 @@ class stock_picking(osv.osv):
 
                 line = False
 
-                if move.purchase_line_id.id not in po_line_qty:
+                if move.purchase_line_id and move.purchase_line_id.id not in po_line_qty:
                     po_line_qty[move.purchase_line_id.id] = move.purchase_line_id.regular_qty_remaining
 
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
@@ -875,10 +875,12 @@ class stock_picking(osv.osv):
 
                     extra_qty = 0
                     extra_fo_qty = 0
-                    if line.quantity > po_line_qty[move.purchase_line_id.id]:
-                        extra_qty = line.quantity - po_line_qty[move.purchase_line_id.id]
 
-                    po_line_qty[move.purchase_line_id.id] = max(0, po_line_qty[move.purchase_line_id.id] - line.quantity)
+                    if move.purchase_line_id:
+                        if line.quantity > po_line_qty[move.purchase_line_id.id]:
+                            extra_qty = line.quantity - po_line_qty[move.purchase_line_id.id]
+
+                        po_line_qty[move.purchase_line_id.id] = max(0, po_line_qty[move.purchase_line_id.id] - line.quantity)
 
                     out_move = None
 
