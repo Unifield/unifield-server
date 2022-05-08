@@ -1161,7 +1161,7 @@ class account_period(osv.osv):
 
     def find(self, cr, uid, dt=None, context=None):
         """
-        Gets the period(s) in which the dt is included, whatever the state and including special December periods
+        Gets the period(s) in which the dt is included, whatever the period state and including special December periods
         (note that Periods 0 with active = False are by default excluded)
         """
         if not dt:

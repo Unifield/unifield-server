@@ -40,7 +40,7 @@ class msf_accrual_line(osv.osv):
 
     def _get_accrual_amounts(self, cr, uid, ids, fields, arg, context=None):
         """
-        Computes the values for fields.function fields, retrieving the sum of the Accrual amounts of all lines:
+        Computes the values for "fields.function" fields, retrieving the sum of the Accrual amounts of all lines:
         - in booking curr. => total_accrual_amount
         - in functional curr. => total_functional_amount
         """
@@ -105,7 +105,7 @@ class msf_accrual_line(osv.osv):
 
     def _get_move_line_ids(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
-        Gets the JIs linked to the original Accrual, and the REV and CANCEL entries (if any)
+        Gets the JIs linked to the original Accrual, and the automatic REV and CANCEL entries (if any)
         """
         if context is None:
             context = {}
@@ -334,7 +334,6 @@ class msf_accrual_line(osv.osv):
         move_line_obj = self.pool.get('account.move.line')
         ad_obj = self.pool.get('analytic.distribution')
         for accrual_line in self.browse(cr, uid, ids, context=context):
-            # check for periods, distribution, etc.
             if accrual_line.state != 'done':
                 raise osv.except_osv(_('Warning'), _("The Accrual \"%s\" is not Done!") % accrual_line.description)
             if not accrual_line.rev_move_id:
@@ -400,7 +399,7 @@ class msf_accrual_line(osv.osv):
             }
             accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
 
-            # ...and its reversal (use the source_date to keep the old FX rate)
+            # ...and its reversal (use the source_date to keep the original FX rate)
             booking_field_rev = accrual_line.total_accrual_amount > 0 and 'credit_currency' or 'debit_currency'
             reversal_accrual_move_line_vals = {
                 'accrual': True,
@@ -480,7 +479,7 @@ class msf_accrual_line(osv.osv):
     def copy(self, cr, uid, acc_line_id, default=None, context=None):
         """
         Duplicates the msf_accrual_line:
-        - adds "(copy) " before the description
+        - adds " (copy)" after the description
         - links the new record to a COPY of the AD from the initial record
         - resets the links to JI, JE...
         """
@@ -530,8 +529,8 @@ class msf_accrual_line(osv.osv):
                                    context=context)
         # the total amount in the AD wizard is the sum of all lines (they are all on expense accounts)
         amount = 0.0
-        for line in accrual_line.expense_line_ids:
-            amount += line.accrual_amount or 0.0
+        for expense_line in accrual_line.expense_line_ids:
+            amount += expense_line.accrual_amount or 0.0
         # get the current AD of the header if any
         distrib_id = accrual_line.analytic_distribution_id and accrual_line.analytic_distribution_id.id or False
         vals = {
@@ -640,9 +639,8 @@ class msf_accrual_line(osv.osv):
                 }
                 accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
 
-                # negative amount for expense would result in an opposite
-                # behavior, expense in credit and an accrual in debit for the
-                # initial entry
+                # negative amount for expense would result in an opposite behavior, expense in credit and
+                # an accrual in debit for the initial entry
                 booking_field_exp = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 for expense_line in accrual_line.expense_line_ids:
                     expense_move_line_vals = {
@@ -713,7 +711,7 @@ class msf_accrual_line(osv.osv):
 
                 reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
 
-                # Create move lines / reversal entry (source_date to keep the old change rate):
+                # Create move lines for the reversal entry (use the source_date to keep the original FX rate):
                 booking_field = accrual_line.total_accrual_amount > 0 and 'debit_currency' or 'credit_currency'
                 reversal_accrual_move_line_vals = {
                     'accrual': True,

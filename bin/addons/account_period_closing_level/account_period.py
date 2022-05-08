@@ -793,7 +793,7 @@ class account_period(osv.osv):
 
     def button_accrual_reversal(self, cr, uid, ids, context=None):
         """
-        Opens Accruals Management menu with the "Running" filter activated
+        Opens the Accruals Management view with the "Running" filter activated
         """
         if context is None:
             context = {}

@@ -127,7 +127,7 @@
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <separator colspan="4" string="Cost Center and Funding Pool allocation"/>
                         <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list"
-                               context="{'mode': entry_mode, 'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'direct_invoice_id': direct_invoice_id, 'from_move': move_id, 'parent_id':active_id, 'posting_date': posting_date, 'document_date': document_date, 'from_cash_return': cash_return_id, 'from_accrual': accrual_line_id}"
+                               context="{'mode': entry_mode, 'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'direct_invoice_id': direct_invoice_id, 'from_move': move_id, 'parent_id': active_id, 'posting_date': posting_date, 'document_date': document_date, 'from_cash_return': cash_return_id, 'from_accrual': accrual_line_id}"
                                attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="6" attrs="{'invisible': ['|', '|', ('state', 'in', ['draft', 'cc']), ('commitment_id', '!=', False), ('commitment_line_id', '!=', False)]}">

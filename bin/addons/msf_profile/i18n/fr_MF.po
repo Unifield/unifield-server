@@ -72180,11 +72180,11 @@ msgid "boolean"
 msgstr "booléen"
 
 #. modules: account_corrections, account_override
-#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:184
-#: code:addons/account_override/account.py:939
+#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:206
+#: code:addons/account_override/account.py:1156
 #, python-format
 msgid "No period found for creating sequence on the given date: %s"
-msgstr "No period found for creating sequence on the given date: %s"
+msgstr "Aucune période trouvée pour créer la séquence à la date donnée : %s"
 
 #. module: procurement
 #: help:procurement.order,state:0

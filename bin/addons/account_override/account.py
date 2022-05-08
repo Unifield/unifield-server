@@ -1147,13 +1147,14 @@ class account_move(osv.osv):
             vals['name'] = context['seqnums'][journal.id]
         else:
             # Create sequence for move lines
-            if 'period_id' in vals:
+            if vals.get('period_id'):
                 # use the period selected in the form if any
-                period_ids = vals['period_id'] and [vals['period_id']] or []
+                period_ids = [vals['period_id']]
             else:
                 period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
-            if not period_ids:
-                raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
+                if not period_ids:
+                    raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') %
+                                         (vals.get('date') or '',))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
             # UF-2479: If the period is not open yet, raise exception for the move
             # US-2563: do not raise in case of duplicate

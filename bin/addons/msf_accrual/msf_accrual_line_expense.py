@@ -239,7 +239,7 @@ class msf_accrual_line_expense(osv.osv):
             'document_date': expense_line.accrual_line_id.document_date,
         }
         if distrib_id:
-            vals.update({'distribution_id': distrib_id,})
+            vals.update({'distribution_id': distrib_id, })
         # create and open the wizard
         wiz_id = self.pool.get('analytic.distribution.wizard').create(cr, uid, vals, context=context)
         context.update({
