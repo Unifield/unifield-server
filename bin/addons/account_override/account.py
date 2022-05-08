@@ -1151,7 +1151,7 @@ class account_move(osv.osv):
                 # use the period selected in the form if any
                 period_ids = [vals['period_id']]
             else:
-                period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
+                period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals.get('date'))
                 if not period_ids:
                     raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') %
                                          (vals.get('date') or '',))
