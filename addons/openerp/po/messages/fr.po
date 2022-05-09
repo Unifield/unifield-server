@@ -1876,3 +1876,6 @@ msgstr "Avez vous des questions sur comment utiliser UniField ? Vous pouvez cliq
 msgid "on the top right of the screen to reach the User Manuals website."
 msgstr "en haut à droite de l'écran pour être redirigé sur la documentation web des manuels utilisateurs"
 
+#: controllers/templates/header.mako:76 controllers/templates/header.mako:78
+msgid "User Manuals"
+msgstr "Manuels d'Utilisateur"
