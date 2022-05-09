@@ -2470,3 +2470,13 @@ table #rr-chrono  {
 #rr-chrono .hlt {
   width: 25%;
 }
+
+#help_banner_icon {
+    width: 26px;
+    height: 35px;
+    overflow: hidden;
+    background: url(../images/top-tools-a.png) no-repeat;
+    display:inline-block;
+    background-position: -94px 1px;
+    vertical-align: middle;
+}
