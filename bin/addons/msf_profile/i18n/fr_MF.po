@@ -114283,6 +114283,6 @@ msgid "Platform"
 msgstr "Plate-forme"
 
 #. module: kit
-#: view:composition.kit:0
+#: view:substitute:0
 msgid "Update products whose BN/ED attributes have changed"
 msgstr "MàJ les produits dont les attributs BL/DE ont changé"

@@ -96,6 +96,8 @@ class composition_kit(osv.osv):
         # basic check
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # data
         name = _("Modify Expiry Date")
         model = 'modify.expiry.date'
@@ -268,6 +270,9 @@ class composition_kit(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.composition_item_ids:
                 # create a mirror object which can be later selected and modified in the many2many field
+                lot_name = item.item_lot
+                if lot_name and item.item_product_id.perishable and not item.item_product_id.batch_management:
+                    lot_name = False
                 values = {'wizard_id': wizard_data['res_id'],
                           'item_id_mirror': item.id,
                           'kit_id_mirror': item.item_kit_id.id,
@@ -276,7 +281,7 @@ class composition_kit(osv.osv):
                           'qty_substitute_item': item.item_qty,
                           'uom_id_substitute_item': item.item_uom_id.id,
                           'asset_id_substitute_item': item.item_asset_id.id,
-                          'lot_mirror': item.item_lot,
+                          'lot_mirror': lot_name,
                           'exp_substitute_item': item.item_exp,
                           'comment': item.comment,
                           }
@@ -918,32 +923,6 @@ class composition_kit(osv.osv):
             'domain': [('composition_type', '=', 'theoretical')],
             'context': {'composition_type': 'theoretical'},
         }
-
-    def update_lines_bned(self, cr, uid, ids, context=None):
-        '''
-        Update products whose BN/ED attributes have changed
-        '''
-        if context is None:
-            context = {}
-
-        for kcl in self.browse(cr, uid, ids, context=context):
-            # Remove the BN/ED from non-BN/ED KCL items of the KCLs
-            cr.execute('''UPDATE composition_item SET item_lot = NULL, item_exp = NULL 
-                WHERE id IN (SELECT i.id FROM composition_item i 
-                                        LEFT JOIN composition_kit k ON i.item_kit_id = k.id 
-                                        LEFT JOIN product_product p ON i.item_product_id = p.id 
-                                WHERE k.state = 'completed' AND i.item_lot IS NOT NULL AND p.batch_management = 'f' AND p.perishable = 'f' AND k.composition_type = 'real')
-                    AND item_kit_id = %s''', (kcl.id,))
-
-            # Add a temporary BN/ED to BN/ED KCL items of the KCLs
-            cr.execute('''UPDATE composition_item SET item_lot = 'TO-BE-REPLACED', item_exp = '2999-12-31' 
-                WHERE id IN (SELECT i.id FROM composition_item i 
-                                        LEFT JOIN composition_kit k ON i.item_kit_id = k.id 
-                                        LEFT JOIN product_product p ON i.item_product_id = p.id 
-                            WHERE k.state = 'completed' AND i.item_lot IS NULL AND (p.batch_management = 't' OR p.perishable = 't') AND k.composition_type = 'real') 
-                    AND item_kit_id = %s''', (kcl.id,))
-
-        return True
 
 
 composition_kit()
