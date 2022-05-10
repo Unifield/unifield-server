@@ -264,10 +264,10 @@ class account_employee_balance_tree(osv.osv):
             other_employees_sql_end_params = []
             if p_seen:
                 # exclude employees already found if any
-                other_employees_sql_end = " AND id NOT IN %s "
+                other_employees_sql_end = " AND emp.id NOT IN %s "
                 other_employees_sql_end_params.append(tuple(p_seen.keys()))
             other_employees_sql = """
-                        SELECT emp.id as id, emp.identification_id, emp.name_resource 
+                        SELECT emp.id , emp.identification_id, emp.name_resource 
                         FROM hr_employee emp
                         INNER JOIN resource_resource res ON emp.resource_id = res.id
                         WHERE res.active IN %s """ + other_employees_sql_end + """ ;
