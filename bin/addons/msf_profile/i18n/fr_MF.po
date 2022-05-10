@@ -73567,6 +73567,10 @@ msgstr "Date Prévue de Colisage"
 #: selection:product.history.consumption,fake_status:0
 #: selection:product.history.consumption,status:0
 #: selection:wizard.import.ad.line,state:0
+#: selection:wizard.import.fo.line,state:0
+#: selection:wizard.import.ir.line,state:0
+#: selection:wizard.import.po.line,state:0
+#: selection:wizard.import.tender.line,state:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -103433,13 +103437,27 @@ msgstr "Voir les lignes non traitées"
 msgid "Show unprocessed available lines"
 msgstr "Voir les lignes disponibles non traitées"
 
-#. modules: purchase, order_nomenclature
+#. modules: purchase, order_nomenclature, sale, msf_doc_import
 #: code:addons/purchase/purchase_order_line.py:604
 #: constraint:purchase.order.line:0
 #: constraint:purchase.order.merged.line:0
+#: code:addons/sale/sale_order.py:0
+#: constraint:sale.order.line:0
 #, python-format
 msgid "The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"
-msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs acutelles ne sont pas autorisées"
+msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs actuelles ne sont pas autorisées"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:710
+#, python-format
+msgid "The Total amount is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed. "
+msgstr "Le montant total est trop élevé (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs actuelles ne sont pas autorisées. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1645
+#, python-format
+msgid "The Total amount is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"
+msgstr "Le montant total est trop élevé (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs actuelles ne sont pas autorisées"
 
 #. modules: msf_supply_doc_export, msf_outgoing
 #: view:stock.picking:0
@@ -103850,6 +103868,12 @@ msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
 #, python-format
 msgid "The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
 msgstr "Le montant total de la ligne est sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
+
+#. module: tender_flow
+#: code:addons/tender_flow/tender_flow.py:865
+#, python-format
+msgid "The quantity of the line has more than 10 digits. Please check the Qty to avoid loss of exact information"
+msgstr "La quantité de la ligne a plus de 10 chiffres. Veuillez vérifier la Qté pour éviter des pertes d'information"
 
 #. module: purchase
 #: view:purchase.order:0
@@ -114643,6 +114667,32 @@ msgstr "Machine"
 msgid "Platform"
 msgstr "Plate-forme"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:345
+#, python-format
+msgid "The Product Quantity can not have more than 10 digits"
+msgstr "La Quantité de Produit ne peut pas avoir plus de 10 chiffres"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:386
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:478
+#: code:addons/msf_doc_import/wizard/wiz_common_import.py:538
+#, python-format
+msgid "The Quantity of the product %s can not have more than 10 digits."
+msgstr "La Quantité du produit %s ne peut pas avoir plus de 10 chiffres."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1594
+#, python-format
+msgid "Quantity can not have more than 10 digits."
+msgstr "La Quantité ne peut pas avoir plus de 10 chiffres."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:659
+#, python-format
+msgid "Quantity can not have more than 10 digits. "
+msgstr "La Quantité ne peut pas avoir plus de 10 chiffres. "
+
 #. module: purchase
 #: view:purchase.order:0
 msgid "Remove taxes on all PO lines ?"
@@ -114963,3 +115013,23 @@ msgstr " (EXERCICE COMPTABLE OUVERT UNIQUEMENT)"
 #: view:substitute:0
 msgid "Update products whose BN/ED attributes have changed"
 msgstr "MàJ les produits dont les attributs BL/DE ont changé"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:295
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:258
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:373
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:196
+#, python-format
+msgid "Line #%s of the file, product: %s"
+msgstr "Ligne %s du fichier, produit: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:316
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:273
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:416
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:226
+#, python-format
+msgid "Warning this/these lines cannot be imported due to too many digits in Qty field. Please check:\n"
+"%s"
+msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de chiffres dans le champ Qté. Veuillez vérifier:\n"
+"%s"

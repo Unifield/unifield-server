@@ -54,8 +54,9 @@ class purchase_order_line(osv.osv):
             for tag in form.xpath('//page[@name="nomenselection"]'):
                 tag.getparent().remove(tag)
             nb = form.xpath('//notebook')
-            nb[0].tag = 'empty'
-            view['arch'] = etree.tostring(form)
+            if nb:
+                nb[0].tag = 'empty'
+                view['arch'] = etree.tostring(form)
         return view
 
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):
@@ -1816,8 +1817,11 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
 
+        pol = {}
+        if ids:
+            pol = self.read(cr, uid, ids[0], ['product_qty'], context=context)
         if not product_id or not product_uom or not product_qty:
-            self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
+            self.check_digits(cr, uid, res, pol, qty=product_qty, price_unit=price_unit, context=context)
             return res
 
         order_id = context.get('purchase_id', False)
@@ -1841,7 +1845,7 @@ class purchase_order_line(osv.osv):
         else:
             res['value'].update({'old_price_unit': price_unit})
 
-        self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
+        self.check_digits(cr, uid, res, pol, qty=product_qty, price_unit=price_unit, context=context)
         return res
 
     def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):
@@ -2260,6 +2264,28 @@ class purchase_order_line(osv.osv):
         res['keep_open'] = True
         res['res_id'] = pol.order_id.id
         return res
+
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Show error message
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        view_id = obj_data.get_object_reference(cr, uid, 'purchase', 'po_line_error_message_view')[1]
+        return {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'purchase.order.line',
+            'type': 'ir.actions.act_window',
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+            'view_id': [view_id],
+        }
+
 
 purchase_order_line()
 

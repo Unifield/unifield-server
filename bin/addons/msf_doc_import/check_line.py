@@ -316,6 +316,9 @@ def product_value(cr, uid, **kwargs):
         'cost_price': cost_price, 'product_code':product_code, 'product_id': p_id}
 
 
+class ExceptionWrongQuantity(Exception):
+    pass
+
 def quantity_value(**kwargs):
     """
     Compute qty value of the cell.
@@ -329,6 +332,7 @@ def quantity_value(**kwargs):
         product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']
     cell_nb = kwargs.get('cell_nb', 2)
+    max_qty = kwargs.get('max_qty', 0)
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     try:
@@ -336,7 +340,10 @@ def quantity_value(**kwargs):
             warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
         else:
             if row.cells[cell_nb].type in ['int', 'float']:
-                product_qty = row.cells[cell_nb].data
+                if not max_qty or row.cells[cell_nb].data < max_qty:
+                    product_qty = row.cells[cell_nb].data
+                else:
+                    raise ExceptionWrongQuantity(_('The Product Quantity can not have more than 10 digits'))
             else:
                 error_list.append(_('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.'))
             if product_qty <= 0.00:

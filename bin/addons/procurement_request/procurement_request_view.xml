@@ -55,8 +55,11 @@
                                 on_change="order_line_change(order_line)"
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2">
-                                <tree string="Products" hide_delete_button="True" editable="top" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}">
+                                <tree string="Products" hide_delete_button="True" editable="top" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}"
+                                    colors="red:to_correct_ok == True or inactive_product == True;blue: soq_updated == True">
                                     <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
+                                    <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
+                                    <field name="line_number" readonly="1"/>
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)"
                                     context="available_for_restriction='consumption',search_default_not_restricted=1"
                                     attrs="{'required': [('product_ok', '=', False)]}" />
@@ -78,11 +81,11 @@
                                     type="object" 
                                     attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"
                                     icon="terp-go-week" />
-                                    <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
+                                    <field name="product_uom_qty" on_change="onchange_ir_qty(product_id, product_uom, product_uom_qty, price_unit)" />
                                     <field name="original_changed" readonly="1"/>
                                     <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom"
                                             attrs="{'invisible': [('original_qty', '=', False), ('modification_comment', '=', False), ('original_changed', '=', False)]}"/>
-                                    <field name="price_unit"/>
+                                    <field name="price_unit" on_change="change_price_unit(product_uom_qty, price_unit)"/>
                                     <field name="notes" />
                                     <field name="display_resourced_orig_line" />
                                     <field name="display_confirm_button" invisible="1" />
