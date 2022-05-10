@@ -96,10 +96,6 @@ class account_employee_balance_tree(osv.osv):
         if instance_ids:
             self.INSTANCE_REQUEST = " AND l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
 
-        # UFTP-312: take tax exclusion in account if user asked for it
-        self.TAX_REQUEST = ''
-        if data['form'].get('tax', False):
-            self.TAX_REQUEST = "AND at.code != 'tax'"
 
         self.EMPLOYEE_REQUEST = 'AND l.employee_id IS NOT NULL'
         if data['form'].get('employee_ids', False):  # some employees are specifically selected
@@ -109,7 +105,7 @@ class account_employee_balance_tree(osv.osv):
             else:
                 self.EMPLOYEE_REQUEST = 'AND p.id IN %s' % (tuple(employee_ids),)
         elif data['form'].get('only_active_employees'):  # check if we should include only active employees
-            self.EMPLOYEE_REQUEST = "AND p.active = 't'"
+            self.EMPLOYEE_REQUEST = "AND pn.active = 't'"
 
         self.ACCOUNT_REQUEST = ''
         if data['form'].get('account_ids', False):  # some accounts are specifically selected
@@ -121,6 +117,7 @@ class account_employee_balance_tree(osv.osv):
             CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit,
             CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit
             FROM account_move_line l INNER JOIN hr_employee p ON (l.employee_id=p.id)
+            INNER JOIN res_partner pn ON (pn.id = p.id)
             JOIN account_account ac ON (l.account_id = ac.id)
             JOIN account_move am ON (am.id = l.move_id)
             JOIN account_account_type at ON (ac.user_type = at.id)
@@ -129,8 +126,7 @@ class account_employee_balance_tree(osv.osv):
             %s %s %s %s %s %s
             GROUP BY p.id, p.identification_id, p.name_resource
             ORDER BY p.name_resource;""" % (account_type, move_state,  # not_a_user_entry
-                                   where, self.INSTANCE_REQUEST, self.TAX_REQUEST,
-                                   self.EMPLOYEE_REQUEST, self.ACCOUNT_REQUEST,
+                                   where, self.INSTANCE_REQUEST, self.EMPLOYEE_REQUEST, self.ACCOUNT_REQUEST,
                                    self.RECONCILE_REQUEST)
         cr.execute(query)
         res = cr.dictfetchall()
