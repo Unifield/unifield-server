@@ -72,6 +72,53 @@ class patch_scripts(osv.osv):
         cr.execute('''update replenishment_segment_line_period set to_date='2222-02-28' where to_date is null and value is not null''')
         return True
 
+    def us_5722_update_accruals(self, cr, uid, *a, **b):
+        """
+        Updates the existing accruals:
+        - A) renames the states:
+          ==> Partially Posted becomes Running, and Posted becomes Done
+        - B) some pieces of data are now handled at line level:
+          ==> moves them from the accrual itself (msf.accrual.line) to the expense line (msf.accrual.line.expense)
+        - C) initializes the sequence on the existing Accruals so that the line numbers are consistent (Line number = 1 for point B)
+        - D) sets the value to use for the fields "entry_sequence" (previously based on the JI linked to the global AD)
+        """
+        if self.pool.get('sync.client.entity') and not self.pool.get('sync.server.update'):  # existing instances
+            accrual_obj = self.pool.get('msf.accrual.line')
+            ml_obj = self.pool.get('account.move.line')
+            cr.execute("UPDATE msf_accrual_line SET state = 'running' WHERE state = 'partially_posted'")
+            self.log_info(cr, uid, '%d Accrual(s) set to: Running.' % (cr.rowcount,))
+            cr.execute("UPDATE msf_accrual_line SET state = 'done' WHERE state = 'posted'")
+            self.log_info(cr, uid, '%d Accrual(s) set to: Done.' % (cr.rowcount,))
+            # NOTE: in all the Accruals created before this ticket there is NO sequence_id and NO Expense Lines
+            cr.execute('''SELECT id, description, reference, expense_account_id, accrual_amount, state, move_line_id
+                          FROM msf_accrual_line''')
+            accruals = cr.fetchall()
+            for accrual_data in accruals:
+                accrual_id = accrual_data[0]
+                # get the entry_sequence to set at doc level
+                entry_seq = ''
+                move_line_id = accrual_data[6]
+                if accrual_data[5] != 'draft' and move_line_id:
+                    ml = ml_obj.browse(cr, uid, move_line_id, fields_to_fetch=['move_id'])
+                    entry_seq = ml and ml.move_id.name or ''
+                # initialize the sequence for line numbering (ir_sequences are not synchronized)
+                line_seq_id = accrual_obj.create_sequence(cr, uid)
+                cr.execute("UPDATE msf_accrual_line "
+                           "SET entry_sequence = %s, sequence_id = %s "
+                           "WHERE id = %s", (entry_seq, line_seq_id, accrual_id))
+                new_expense_line_vals = {
+                    # the line_number will be automatically filled in, using the sequence created above
+                    # no analytic_distribution_id is defined on the line, the global AD is kept
+                    'accrual_line_id': accrual_id,
+                    'description': accrual_data[1],
+                    'reference': accrual_data[2] or '',
+                    'expense_account_id': accrual_data[3],
+                    'accrual_amount': accrual_data[4] or 0.0,
+                }
+                # call the standard "create" method on Accrual Expense Lines, which are not synchronized
+                self.pool.get('msf.accrual.line.expense').create(cr, uid, new_expense_line_vals)
+            self.log_info(cr, uid, '%d Accrual Expense Line(s) created.' % (len(accruals),))
+        return True
 
     def fol_order_id_join_change_rules(self, cr, uid, *a, **b):
         """

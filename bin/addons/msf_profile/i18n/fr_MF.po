@@ -272,7 +272,7 @@ msgstr "Le produit [%s] %s est déjà inactif."
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Accrual reversal entries"
-msgstr "Ecritures d'extourne comptes de régul."
+msgstr "Ecritures de contrepassation"
 
 #. module: account_mcdb
 #: view:account.analytic.line:0
@@ -2205,7 +2205,7 @@ msgstr "Poids[kg]"
 #. module: account_mcdb
 #: selection:account.mcdb,reversed:0
 msgid "Reversed"
-msgstr "Contre-passé"
+msgstr "Contrepassé"
 
 #. module: msf_doc_import
 #: field:msf.import.export,hide_download_all_entries:0
@@ -4434,7 +4434,7 @@ msgstr "Commandes de Terrain en Exception"
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #, python-format
 msgid "Reversal Origin"
-msgstr "Origine Contre-passation"
+msgstr "Origine Contrepassation"
 
 #. module: kit
 #: view:kit.creation:0
@@ -5919,6 +5919,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: code:addons/stock/report/closed_physical_inventory_report.py:123
 #: report:order.type.donation.certificate:0
 #: report:addons/product/report/product_mass_update_export_xls.mako:118
+#: field:msf.accrual.line.expense,description:0
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -6991,8 +6992,8 @@ msgstr "Antarctica/Casey"
 #. module: msf_accrual
 #: model:ir.actions.act_window,name:msf_accrual.action_wizard_post_accrual_reversal
 #: view:wizard.accrual.reversal:0
-msgid "Post Accrual Reversal"
-msgstr "Post Accrual Reversal"
+msgid "Post Accrual Reversals"
+msgstr "Comptabiliser les Ecritures de Contrepassation"
 
 #. module: financing_contract
 #: help:account.analytic.line,contract_open:0
@@ -7282,11 +7283,11 @@ msgstr "Vous aide à gérer et à suivre vos relations avec vos clients, comme l
 #: code:addons/analytic_distribution/invoice.py:465
 #: code:addons/analytic_distribution_supply/sale.py:360
 #: field:sale.order,analytic_distribution_id:0
-#: code:addons/msf_accrual/msf_accrual_line.py:385
 #: code:addons/register_accounting/account_direct_invoice_wizard.py:707
 #: code:addons/register_accounting/wizard/direct_invoice.py:418
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:276
 #: code:addons/analytic_distribution/account_bank_statement.py:122
+#: code:addons/msf_accrual/msf_accrual_line_expense.py:250
 #, python-format
 msgid "Analytic distribution"
 msgstr "Distribution analytique"
@@ -7537,10 +7538,16 @@ msgstr "You can use the template of the export for the format that you need to u
 msgid "The batch is set manually"
 msgstr "Le numéro de Lot est défini manuellement"
 
-#. module: account_mcdb
+#. modules: account_mcdb, msf_accrual
 #: view:account.analytic.line:0
+#: view:msf.accrual.line:0
 msgid "Total Functional Amount"
-msgstr "Total Functional Amount"
+msgstr "Total Montant Fonctionnel"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Total Accrual Amount"
+msgstr "Total Montant Régularisation"
 
 #. module: base
 #: model:res.currency,currency_name:base.HTG
@@ -7893,7 +7900,7 @@ msgstr "Lors de l'utilisation du calcul automatique la date par défaut utilisé
 #. module: account_mcdb
 #: field:account.mcdb,reversed:0
 msgid "Reversed?"
-msgstr "Contre-passé?"
+msgstr "Contrepassé ?"
 
 #. module: account_mcdb
 #: field:account.mcdb,amount_book_from:0
@@ -8988,7 +8995,7 @@ msgstr "produit '%s'"
 #. module: msf_accrual
 #: field:msf.accrual.line,move_line_id:0
 msgid "Account Move Line"
-msgstr "Account Move Line"
+msgstr "Ligne d'Ecriture Comptable"
 
 #. module: analytic_distribution
 #: field:account.commitment.line,amount:0
@@ -10915,10 +10922,10 @@ msgid "Single Item"
 msgstr "Article unique"
 
 #. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:51
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:84
 #, python-format
-msgid "The line '%s' isn't partially posted, the accrual reversal can't be posted!"
-msgstr "The line '%s' isn't partially posted, the accrual reversal can't be posted!"
+msgid "The Accrual \"%s\" isn't in Running state, the accrual reversal can't be posted!"
+msgstr "La Régularisation \"%s\" n'est pas au statut En cours, l'écriture de contrepassation ne peut pas être comptabilisée !"
 
 #. module: analytic_distribution
 #: field:account.analytic.line,is_unposted:0
@@ -11972,8 +11979,14 @@ msgstr "Liste des modules dans lesquels le champ est défini"
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:41
 #, python-format
-msgid "The line '%s' is already partially posted!"
-msgstr "La ligne '%s' est déjà partiellement comptabilisée !"
+msgid "The Accrual \"%s\" is already in Running state!"
+msgstr "La Régularisation \"%s\" est déjà au statut En cours !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:39
+#, python-format
+msgid "The Accrual \"%s\" is already in Done state!"
+msgstr "La Régularisation \"%s\" est déjà au statut Terminé !"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:532
@@ -12047,8 +12060,8 @@ msgstr "Zone Liée"
 #. module: msf_accrual
 #: model:ir.actions.act_window,name:msf_accrual.action_wizard_accrual_validation
 #: view:wizard.accrual.validation:0
-msgid "Validate Accrual Lines"
-msgstr "Valider Lignes de Régularisation "
+msgid "Post Accruals"
+msgstr "Comptabiliser les Régularisations"
 
 #. module: sync_client
 #: field:sync.monitor,nb_data_not_run:0
@@ -12482,7 +12495,7 @@ msgstr "Wizard to process an incoming shipment"
 #: selection:account.journal.column,field:0
 #: field:account.move.line,reversal_line_id:0
 msgid "Reversal Line"
-msgstr "Ligne de Contre passement"
+msgstr "Ligne de Contrepassation"
 
 #. module: account_override
 #: code:addons/account_override/finance_export.py:231
@@ -13285,11 +13298,6 @@ msgstr "Line %s of the imported file: UoM [%s] not found ! Details: %s"
 #, python-format
 msgid "Nothing to import."
 msgstr "Rien à importer."
-
-#. module: msf_accrual
-#: selection:msf.accrual.line,accrual_type:0
-msgid "One Time accrual"
-msgstr "One Time accrual"
 
 #. module: account_subscription
 #: selection:account.model.line,exp_in_ad_state:0
@@ -14764,12 +14772,6 @@ msgstr "L'article doit être uniquement utilisé dans un programme correctement 
 msgid "2.  %a ,%A         ==> Fri, Friday"
 msgstr "2.  %a ,%A ==> Ven, Vendredi"
 
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:45
-#, python-format
-msgid "The line '%s' has no period set!"
-msgstr "Aucune période n'a été définie pour la ligne '%s' !"
-
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1068
 #: code:addons/product_attributes/product_attributes.py:1201
@@ -14878,10 +14880,12 @@ msgid "This inform that no correction is possible for a line that come from a wr
 msgstr "Vous informe qu'aucune correction de ligne n'est possible si elle provient d'un ajustement!"
 
 #. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:50
+#: code:addons/msf_accrual/msf_accrual_line.py:324
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:71
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:55
 #, python-format
-msgid "The period '%s' is not open!"
-msgstr "La période '%s' n'est pas ouverte !"
+msgid "The period \"%s\" is not Open!"
+msgstr "La période \"%s\" n'est pas Ouverte !"
 
 #. module: res_currency_functional
 #: code:addons/res_currency_functional/res_currency_rate_functional.py:141
@@ -16313,7 +16317,7 @@ msgstr "Les données associées avec l'événement."
 msgid "AccessError"
 msgstr "Erreur d'Accès"
 
-#. modules: analytic_distribution, analytic_distribution_supply, account_subscription, purchase, register_accounting
+#. modules: analytic_distribution, analytic_distribution_supply, account_subscription, purchase, register_accounting, msf_accrual
 #: code:addons/account_subscription/account_model.py:92
 #: code:addons/analytic_distribution/account_move_line.py:97
 #: code:addons/analytic_distribution_supply/sale.py:271
@@ -16321,9 +16325,15 @@ msgstr "Erreur d'Accès"
 #: code:addons/purchase/purchase_order_line.py:342
 #: code:addons/register_accounting/account_direct_invoice_wizard.py:501
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:107
+#: code:addons/msf_accrual/msf_accrual_line_expense.py:87
 #, python-format
 msgid " (from header)"
 msgstr " (de l'entête)"
+
+#. module: msf_accrual
+#: help:msf.accrual.line.expense,analytic_distribution_state_recap:0
+msgid "Gives the AD state and specifies \"from header\" if applicable"
+msgstr "Donne l'état de la DA et précise \"de l'entête\" le cas échéant"
 
 #. module: purchase
 #: model:product.pricelist,name:purchase.list0
@@ -19492,7 +19502,7 @@ msgstr "Expédié"
 #. module: account_mcdb
 #: selection:account.mcdb,reallocated:0
 msgid "NOT reallocated"
-msgstr "NON réallouée"
+msgstr "NON réalloué"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:271
@@ -22342,6 +22352,11 @@ msgstr "Réallocation groupée"
 msgid "Header Distrib.?"
 msgstr " Allocation depuis l'en-tête?"
 
+#. module: msf_accrual
+#: field:msf.accrual.line.expense,have_analytic_distribution_from_header:0
+msgid "Header Distribution"
+msgstr "Allocation depuis l'en-tête"
+
 #. module: hr
 #: field:hr.job,name:0
 msgid "Job Name"
@@ -22726,6 +22741,7 @@ msgstr "Sri Lanka"
 #: field:wizard.advance.line,analytic_distribution_state:0
 #: field:purchase.order.merged.line,analytic_distribution_state:0
 #: field:msf.accrual.line,analytic_distribution_state:0
+#: field:msf.accrual.line.expense,analytic_distribution_state:0
 msgid "Distribution state"
 msgstr "Statut de Distribution"
 
@@ -22865,11 +22881,12 @@ msgstr "État du traitement"
 msgid "America/Monterrey"
 msgstr "America/Monterrey"
 
-#. modules: account_override, financing_contract, register_accounting, finance
+#. modules: account_override, financing_contract, register_accounting, finance, msf_accrual
 #: report:addons/account_override/report/open_invoices_xls.mako:346
 #: field:cash.request.liquidity.total,booking_currency_id:0
 #: report:addons/financing_contract/report/project_expenses_xls.mako:503
 #: report:addons/register_accounting/report/open_advances_xls.mako:155
+#: view:msf.accrual.line:0
 msgid "Booking Currency"
 msgstr "Devise d'Enregistrement"
 
@@ -25091,7 +25108,7 @@ msgstr "Rapport Intéractif"
 #. module: account_mcdb
 #: selection:account.mcdb,reversed:0
 msgid "NOT reversed"
-msgstr "NOT contre-passée"
+msgstr "NON contrepassé"
 
 #. module: vertical_integration
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:74
@@ -25233,7 +25250,7 @@ msgstr "Demande(s) de Devis En Attente de Validation"
 msgid "warning !"
 msgstr "warning !"
 
-#. modules: register_accounting, analytic_distribution, analytic_distribution_supply, account_subscription, purchase
+#. modules: register_accounting, analytic_distribution, analytic_distribution_supply, account_subscription, purchase, msf_accrual
 #: code:addons/account_subscription/account_model.py:388
 #: code:addons/analytic_distribution/account.py:361
 #: code:addons/analytic_distribution/account_commitment.py:253
@@ -25243,6 +25260,7 @@ msgstr "warning !"
 #: code:addons/purchase/purchase_order.py:1301
 #: code:addons/register_accounting/account_direct_invoice_wizard.py:414
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:1082
+#: code:addons/msf_accrual/msf_accrual_line.py:551
 #, python-format
 msgid "Global analytic distribution"
 msgstr "Distribution Analytique Globale"
@@ -33340,6 +33358,7 @@ msgstr "5-Commun"
 #: selection:purchase.order.merged.line,analytic_distribution_state:0
 #: selection:msf.accrual.line,analytic_distribution_state:0
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:326
+#: selection:msf.accrual.line.expense,analytic_distribution_state:0
 msgid "None"
 msgstr "Aucun"
 
@@ -33624,12 +33643,6 @@ msgstr "Décomptes"
 #: help:ir.actions.server,state:0
 msgid "Type of the Action that is to be executed"
 msgstr "Type de l'action à exécuter"
-
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:57
-#, python-format
-msgid "No period (M+1) was found in the system!"
-msgstr "No period (M+1) was found in the system!"
 
 #. module: procurement
 #: model:ir.actions.act_window,name:procurement.action_compute_schedulers
@@ -34337,6 +34350,7 @@ msgstr "IR/FO Order"
 #: selection:stock.pipe.per.product.instance.prod.lines,inst_uf_state:0
 #: selection:stock.pipe.per.product.instance.prod.lines,ud_state:0
 #: selection:product.nomenclature,status:0
+#: selection:msf.accrual.line.expense,analytic_distribution_state:0
 msgid "Valid"
 msgstr "Valide"
 
@@ -35812,7 +35826,7 @@ msgstr "Autoriser le Lettrage"
 #: field:account.analytic.line,is_reversal:0
 #: field:account.move.line,reversal:0
 msgid "Reversal?"
-msgstr "Contre passement?"
+msgstr "Contrepassation ?"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:249
@@ -37738,8 +37752,8 @@ msgstr "Délai entre le mouvement d'origine et le mouvement lié-chainé (en jou
 #. module: msf_accrual
 #: code:addons/msf_accrual/msf_accrual_line.py:404
 #, python-format
-msgid "You can only delete draft accruals"
-msgstr "You can only delete draft accruals"
+msgid "You can only delete draft accruals."
+msgstr "Vous ne pouvez supprimer que des régularisations au statut Brouillon."
 
 #. module: analytic_distribution
 #: view:mass.reallocation.verification.wizard:0
@@ -39452,13 +39466,6 @@ msgstr "Account Period for MSF"
 msgid "PO Track Changes"
 msgstr "Suivi Changements Bons de Commande"
 
-#. module: msf_accrual
-#: code:addons/msf_accrual/msf_accrual_line.py:202
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:39
-#, python-format
-msgid "The line '%s' is already posted!"
-msgstr "La ligne '%s' est déjà comptabilisée!"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:441
 #, python-format
@@ -40576,6 +40583,12 @@ msgstr "Merci de supprimer les procedures d'export automatisé liées"
 
 #. module: msf_accrual
 #: field:msf.accrual.line,accrual_amount:0
+msgid "Accrual Amount (deprecated)"
+msgstr "Montant de Régularisation (obsolète)"
+
+#. module: msf_accrual
+#: field:msf.accrual.line,total_accrual_amount:0
+#: field:msf.accrual.line.expense,accrual_amount:0
 msgid "Accrual Amount"
 msgstr "Montant de Régularisation"
 
@@ -41936,7 +41949,9 @@ msgstr "Créez des utilisateurs en plus et assignez-les à des groupes, ce qui l
 
 #. modules: msf_accrual, analytic_distribution
 #: field:analytic.distribution.wizard,accrual_line_id:0
-#: view:msf.accrual.line:0
+#: field:msf.accrual.line.expense,accrual_line_id:0
+#: field:account.move.line,accrual_line_id:0
+#: view:msf.accrual.line.expense:0
 msgid "Accrual Line"
 msgstr "Ligne de Régularisation"
 
@@ -43620,7 +43635,7 @@ msgstr "Date à laquelle le bon de commande a été approuvé"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Did you post Accrual Reversal entries?"
-msgstr "Avez-vous comptabilisé les écritures d'extourne des comptes de régularisation ?"
+msgstr "Avez-vous comptabilisé les écritures de contrepassation des comptes de régularisation ?"
 
 #. module: base
 #: model:res.currency,currency_name:base.MKD
@@ -44459,10 +44474,11 @@ msgstr "Suivi des Lignes de commande terrain "
 msgid "L4"
 msgstr "L4"
 
-#. modules: res_currency_functional, finance, account_mcdb
+#. modules: res_currency_functional, finance, account_mcdb, msf_accrual
 #: view:account.move.line:0
 #: view:account.move.line:0
 #: view:account.move.line:0
+#: view:msf.accrual.line:0
 msgid "Total Func. Credit"
 msgstr "Total Fonc. Crédit"
 
@@ -49666,8 +49682,8 @@ msgstr "Compte créditeur pour résultat < 0 P&L<0 (Compte de Bilan)"
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:43
 #, python-format
-msgid "The line '%s' is cancelled and can't be re-posted."
-msgstr "La ligne '%s' est annulée et ne peut pas être recomptabilisée."
+msgid "The Accrual \"%s\" is cancelled and can't be re-posted."
+msgstr "La Régularisation \"%s\" est annulée et ne peut pas être recomptabilisée."
 
 #. module: return_claim
 #: field:claim.event,from_picking_wizard_claim_event:0
@@ -49796,7 +49812,7 @@ msgstr "Qté Disponible"
 msgid "The partner you want have the donations from"
 msgstr "Le partenaire duquel vous voulez voir les dons"
 
-#. modules: purchase, account, msf_outgoing, analytic_distribution_supply, purchase_override, purchase_allocation_report, register_accounting, account_subscription, analytic_distribution
+#. modules: purchase, account, msf_outgoing, analytic_distribution_supply, purchase_override, purchase_allocation_report, register_accounting, account_subscription, analytic_distribution, msf_accrual
 #: selection:account.journal.column,field:0
 #: field:account.model.line,analytic_distribution_state_recap:0
 #: field:account.invoice.line,analytic_distribution_state_recap:0
@@ -49809,6 +49825,7 @@ msgstr "Le partenaire duquel vous voulez voir les dons"
 #: field:account.direct.invoice.wizard.line,analytic_distribution_state_recap:0
 #: field:wizard.account.invoice.line,analytic_distribution_state_recap:0
 #: field:wizard.advance.line,analytic_distribution_state_recap:0
+#: field:msf.accrual.line.expense,analytic_distribution_state_recap:0
 msgid "Distribution"
 msgstr "Distribution"
 
@@ -51558,7 +51575,7 @@ msgstr "\n"
 msgid "Fields price percentage"
 msgstr "Champs Pourcentage de Prix"
 
-#. modules: account_override, register_accounting, msf_doc_import, account, msf_supply_doc_export, msf_supply_doc_export, sale, procurement_request
+#. modules: account_override, register_accounting, msf_doc_import, account, msf_supply_doc_export, msf_supply_doc_export, sale, procurement_request, msf_accrual
 #: field:account.invoice.line,line_number:0
 #: field:wizard.account.invoice.line,line_number:0
 #: selection:account.journal.column,field:0
@@ -51573,6 +51590,7 @@ msgstr "Champs Pourcentage de Prix"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:118
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:213
 #: field:internal.request.import.line,ir_line_number:0
+#: field:msf.accrual.line.expense,line_number:0
 #, python-format
 msgid "Line Number"
 msgstr "Numéro de Ligne"
@@ -51798,7 +51816,7 @@ msgstr "Veuillez fournir un fichier à importer !"
 #: field:account.analytic.line,reversal_origin:0
 #: field:account.analytic.line,reversal_origin_txt:0
 msgid "Reversal origin"
-msgstr "Origine de la contre-passation"
+msgstr "Origine de la contrepassation"
 
 #. module: res_currency_tables
 #: field:res.currency.table,name:0
@@ -52588,8 +52606,11 @@ msgstr "Dashboard main module"
 #: view:account.account:0
 #: selection:account.invoice,journal_type:0
 #: selection:wizard.account.invoice,journal_type:0
+#: selection:account.analytic.journal,type:0
+#: selection:account.analytic.line,journal_type:0
+#: selection:account.analytic.journal.fake,type:0
 msgid "Accrual"
-msgstr "Accrual"
+msgstr "Régularisation"
 
 #. module: product
 #: view:product.pricelist.item:0
@@ -52789,6 +52810,8 @@ msgstr "Journal de transfert"
 #: model:ir.model,name:sync_client.model_account_move_line
 #: model:ir.model,name:sync_so.model_account_move_line
 #: model:ir.model,name:vertical_integration.model_account_move_line
+#: view:msf.accrual.line:0
+#: field:msf.accrual.line,move_line_ids:0
 #, python-format
 msgid "Journal Items"
 msgstr "Lignes d'Ecritures Comptables"
@@ -55075,10 +55098,11 @@ msgstr "Si vrai, cette ligne a été créée par la création d'une régularisat
 msgid "Models"
 msgstr "Modèles"
 
-#. modules: res_currency_functional, finance, account_mcdb
+#. modules: res_currency_functional, finance, account_mcdb, msf_accrual
 #: view:account.move.line:0
 #: view:account.move.line:0
 #: view:account.move.line:0
+#: view:msf.accrual.line:0
 msgid "Total Book. Credit"
 msgstr "Total Enreg. Crédit"
 
@@ -57585,10 +57609,11 @@ msgstr "Le formulaire de la liste de Picking est créé dès que la commande ter
 msgid "Return Packs to Stock..."
 msgstr "Retour de Colis vers Stock…"
 
-#. modules: res_currency_functional, finance, account_mcdb
+#. modules: res_currency_functional, finance, account_mcdb, msf_accrual
 #: view:account.move.line:0
 #: view:account.move.line:0
 #: view:account.move.line:0
+#: view:msf.accrual.line:0
 msgid "Total Book. Debit"
 msgstr "Total Enreg. Débit"
 
@@ -61371,12 +61396,12 @@ msgid "Starting Balance"
 msgstr "Solde Initial"
 
 #. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:47
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:54
 #, python-format
-msgid "The line '%s' has no analytic distribution!"
-msgstr "The line '%s' has no analytic distribution!"
+msgid "Some of the lines of the Accrual \"%s\" have no analytic distribution!"
+msgstr "Certaines lignes de la Régularisation \"%s\" n'ont pas de distribution analytique !"
 
-#. modules: purchase, register_accounting, analytic_distribution_supply, account_corrections, account_subscription, msf_accrual, analytic_override, analytic_distribution
+#. modules: purchase, register_accounting, analytic_distribution_supply, account_corrections, account_subscription, analytic_override, analytic_distribution
 #: field:wizard.journal.items.corrections.lines,analytic_distribution_id:0
 #: field:account.model,analytic_distribution_id:0
 #: field:account.model.line,analytic_distribution_id:0
@@ -61388,7 +61413,6 @@ msgstr "The line '%s' has no analytic distribution!"
 #: field:analytic.distribution.wizard,distribution_id:0
 #: field:sale.order.line,analytic_distribution_id:0
 #: field:account.analytic.line,distribution_id:0
-#: field:msf.accrual.line,analytic_distribution_id:0
 #: field:purchase.order,analytic_distribution_id:0
 #: field:purchase.order.line,analytic_distribution_id:0
 #: field:wizard.account.invoice,analytic_distribution_id:0
@@ -61517,6 +61541,7 @@ msgstr "Albanie"
 #: report:addons/procurement_cycle/report_doc/product_stock_out.mako:426
 #: field:product.stock_out,name:0
 #: field:replenishment.parent.segment,name_parent_seg:0
+#: field:msf.accrual.line.expense,reference:0
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -62320,7 +62345,8 @@ msgid "Asia/Irkutsk"
 msgstr "Asie/Irkutsk"
 
 #. module: msf_accrual
-#: field:msf.accrual.line,functional_amount:0
+#: field:msf.accrual.line,total_functional_amount:0
+#: field:msf.accrual.line.expense,functional_amount:0
 msgid "Functional Amount"
 msgstr "Montant Fonctionnel"
 
@@ -65019,6 +65045,7 @@ msgstr "PO line to confirm"
 #: code:addons/account_override/res_company.py:40
 #: report:addons/account/report/export_invoice.mako:108
 #: selection:account.report.general.ledger,sortby:0
+#: view:msf.accrual.line:0
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"
@@ -65657,7 +65684,7 @@ msgstr "Supprimer toutes les instances propriétaires"
 msgid "Products date of expiry"
 msgstr "Products date of expiry"
 
-#. modules: account, account_mcdb, account_override, msf_accrual, analytic_distribution
+#. modules: account, account_mcdb, account_override, analytic_distribution
 #: view:account.entries.report:0
 #: selection:account.entries.report,move_state:0
 #: view:account.move:0
@@ -65669,9 +65696,7 @@ msgstr "Products date of expiry"
 #: selection:account.move.line,move_state:0
 #: report:voucher.print:0
 #: selection:account.analytic.line,move_state:0
-#: selection:msf.accrual.line,state:0
 #: selection:integrity.finance.wizard,move_state:0
-#: view:msf.accrual.line:0
 msgid "Posted"
 msgstr "Comptabilisé"
 
@@ -66155,18 +66180,15 @@ msgid "Picking list"
 msgstr "Liste de Picking"
 
 #. modules: account, base, msf_partner, account_mcdb, account_override, register_accounting, msf_instance, finance, consumption_calculation
-#: selection:account.analytic.line,journal_type:0
 #: selection:account.move,journal_type:0
 #: selection:account.move.line,journal_type:0
 #: selection:cash.request.liquidity,type:0
 #: selection:cash.request.liquidity.bank,type:0
 #: selection:cash.request.liquidity.cash,type:0
 #: selection:cash.request.liquidity.cheque,type:0
-#: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
 #: report:account.analytic.account.journal:0
-#: selection:account.analytic.journal,type:0
 #: selection:account.bank.statement.line,type:0
 #: selection:account.journal,type:0
 #: view:account.mcdb:0
@@ -66291,11 +66313,6 @@ msgstr "Vous ne pouvez pas enregistrer des écritures dans une période non ouve
 #: selection:base.setup.company,ship_state_id:0
 msgid "Mississippi"
 msgstr "Mississippi"
-
-#. module: msf_accrual
-#: selection:msf.accrual.line,state:0
-msgid "Partially posted"
-msgstr "Partiellement comptabilisé"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -67925,11 +67942,6 @@ msgstr "La période n'a pas été trouvée pour cette date: %s."
 #: model:ir.ui.menu,name:base.menu_translation
 msgid "Translations"
 msgstr "Traductions"
-
-#. module: msf_accrual
-#: view:msf.accrual.line:0
-msgid "Partially Posted"
-msgstr "Partially Posted"
 
 #. modules: sales_followup, purchase_followup, account_mcdb
 #: view:account.mcdb:0
@@ -70604,10 +70616,15 @@ msgstr "Date Prévue d'Expédition"
 #: view:account.chart.template:0
 #: field:product.category,property_account_expense_categ:0
 #: field:product.template,property_account_expense:0
-#: field:msf.accrual.line,expense_account_id:0
 #: field:product.mass.update,property_account_expense:0
+#: field:msf.accrual.line.expense,expense_account_id:0
 msgid "Expense Account"
 msgstr "Compte de Charge"
+
+#. module: msf_accrual
+#: field:msf.accrual.line,expense_account_id:0
+msgid "Expense Account (deprecated)"
+msgstr "Compte de Charge (obsolète)"
 
 #. module: base
 #: code:addons/base/res/res_user.py:289
@@ -70781,11 +70798,6 @@ msgstr "You have to choose at least one month for consumption history"
 #: selection:base.setup.company,ship_country_id:0
 msgid "Madagascar"
 msgstr "Madagascar"
-
-#. module: msf_accrual
-#: selection:msf.accrual.line,accrual_type:0
-msgid "Reversing accrual"
-msgstr "Reversing accrual"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -71309,8 +71321,8 @@ msgstr "Meilleur Prix (pas encore actif!)"
 
 #. module: msf_accrual
 #: view:wizard.accrual.validation:0
-msgid "Are you sure you want to validate those accrual lines?"
-msgstr "Etes-vous sûrs de vouloir valider ces lignes des régularisations?"
+msgid "Are you sure you want to post those accruals?"
+msgstr "Etes-vous sûr de vouloir comptabiliser ces régularisations ?"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:262
@@ -71908,7 +71920,7 @@ msgstr "Sourcé-n"
 msgid "You can not drill analytic journal items of the root line"
 msgstr "You can not drill analytic journal items of the root line"
 
-#. modules: purchase, register_accounting, sale, account_override, account_subscription, analytic_distribution
+#. modules: purchase, register_accounting, sale, account_override, account_subscription, analytic_distribution, msf_accrual
 #: view:account.invoice:0
 #: view:account.model:0
 #: view:account.commitment:0
@@ -71918,6 +71930,7 @@ msgstr "You can not drill analytic journal items of the root line"
 #: view:account.direct.invoice.wizard:0
 #: view:wizard.account.invoice:0
 #: view:sale.order:0
+#: view:msf.accrual.line:0
 msgid "Reset AD at line level"
 msgstr "Restaurer la DA au niveau ligne"
 
@@ -72166,11 +72179,11 @@ msgid "boolean"
 msgstr "booléen"
 
 #. modules: account_corrections, account_override
-#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:184
-#: code:addons/account_override/account.py:939
+#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:206
+#: code:addons/account_override/account.py:1156
 #, python-format
 msgid "No period found for creating sequence on the given date: %s"
-msgstr "No period found for creating sequence on the given date: %s"
+msgstr "Aucune période trouvée pour créer la séquence à la date donnée : %s"
 
 #. module: procurement
 #: help:procurement.order,state:0
@@ -74976,11 +74989,13 @@ msgid "Line %s in your Excel file: %s: %s\n"
 msgstr "Ligne %s du fichier Excel: %s: %s\n"
 ""
 
-#. modules: account, account_subscription
+#. modules: account, account_subscription, msf_accrual
 #: view:account.subscription:0
 #: selection:account.subscription,state:0
 #: selection:account.model,state:0
 #: view:account.model:0
+#: view:msf.accrual.line:0
+#: selection:msf.accrual.line,state:0
 msgid "Running"
 msgstr "En cours"
 
@@ -75392,10 +75407,11 @@ msgstr "  365 jours  "
 msgid "Decimal Accuracy"
 msgstr "Précision décimale"
 
-#. modules: res_currency_functional, finance, account_mcdb
+#. modules: res_currency_functional, finance, account_mcdb, msf_accrual
 #: view:account.move.line:0
 #: view:account.move.line:0
 #: view:account.move.line:0
+#: view:msf.accrual.line:0
 msgid "Total Func. Debit"
 msgstr "Total Fonc. Débit"
 
@@ -77415,8 +77431,8 @@ msgstr "L'écriture n'est pas équilibrée pour le Modèle périodique %s!"
 #. module: res_currency_tables
 #: code:addons/res_currency_tables/res_currency.py:287
 #, python-format
-msgid "The currency you want to %s is used in at least one Draft or Partially Posted Accrual Line."
-msgstr "La devise que vous désirez %s est utilisée dans au moins une Ligne de Régularisation à l'état Brouillon ou Partiellement Comptabilisée."
+msgid "The currency you want to %s is used in at least one Draft or Running Accrual."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Régularisation au statut Brouillon ou En cours."
 
 #. module: base_setup
 #: field:base.setup.installer,mrp:0
@@ -77753,7 +77769,7 @@ msgstr "Instance de Synchronisation "
 #: field:account.mcdb,reallocated:0
 #: field:account.analytic.line,is_reallocated:0
 msgid "Reallocated?"
-msgstr "Réalloué?"
+msgstr "Réalloué ?"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:98
@@ -78079,6 +78095,7 @@ msgstr "Importation échouée Ecritures HQ"
 #: report:account.general.ledger_landscape_tb:0
 #: report:addons/account/report/account_general_ledger_xls.mako:247
 #: selection:account.report.general.ledger,sortby:0
+#: view:msf.accrual.line:0
 #, python-format
 msgid "Third Party"
 msgstr "Tiers"
@@ -81553,7 +81570,7 @@ msgstr "Adresse Professionnelle"
 msgid "Confirm the selected invoices"
 msgstr "Confirmer les factures sélectionnées"
 
-#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
+#. modules: purchase, res_currency_tables, tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription, msf_accrual
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
 #: field:account.entries.report,move_state:0
@@ -81774,6 +81791,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:liquidity.position.pdf:0
 #: field:wizard.import.ad.line,state:0
 #: field:supplier.performance.wizard,state:0
+#: field:msf.accrual.line,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -82824,7 +82842,7 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product, account_subscription
+#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product, account_subscription, msf_accrual
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:report.invoice.created,state:0
@@ -82896,6 +82914,8 @@ msgstr "Sélectionner un fournisseur"
 #: selection:account.model,state:0
 #: selection:account.subscription,state:0
 #: selection:wizard.return.from.unit.import,state:0
+#: view:msf.accrual.line:0
+#: selection:msf.accrual.line,state:0
 #, python-format
 msgid "Done"
 msgstr "Terminé"
@@ -83443,6 +83463,7 @@ msgstr "Modification"
 #: selection:msf.accrual.line,analytic_distribution_state:0
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:255
 #: code:addons/procurement_cycle/report_doc/replenishment_inventory_review.py:257
+#: selection:msf.accrual.line.expense,analytic_distribution_state:0
 msgid "Invalid"
 msgstr "Non valide"
 
@@ -84507,7 +84528,7 @@ msgstr "La colonne '%s' n'est pas présente dans le fichier."
 #: report:addons/register_accounting/report/fully_report_xls.mako:1150
 #: report:addons/register_accounting/report/fully_report_xls.mako:1197
 msgid "Reversal"
-msgstr "Contre-passation"
+msgstr "Contrepassation"
 
 #. module: stock
 #: field:stock.invoice.onshipping,group:0
@@ -90461,7 +90482,7 @@ msgstr "Statut du Bon de Commande.\n"
 msgid "Internal Transfer (same currency)"
 msgstr "Transfer Interne (devise identique)"
 
-#. modules: register_accounting, account_subscription, purchase, account, register_accounting, sale, account_override, analytic_distribution
+#. modules: register_accounting, account_subscription, purchase, account, register_accounting, sale, account_override, analytic_distribution, msf_accrual
 #: view:account.move.line:0
 #: view:account.direct.invoice.wizard:0
 #: view:wizard.cash.return:0
@@ -92661,8 +92682,8 @@ msgstr "Kit Théorique - Article"
 
 #. module: msf_accrual
 #: view:msf.accrual.line:0
-msgid "Are you sure you want to cancel this accrual line ?"
-msgstr "Etes-vous sûr de vouloir annuler cette ligne de régularisation ?"
+msgid "Are you sure you want to cancel this accrual?"
+msgstr "Etes-vous sûr de vouloir annuler cette régularisation ?"
 
 #. module: account
 #: field:account.account,parent_left:0
@@ -94033,7 +94054,7 @@ msgstr "Solde de Caisse à l'ouverture"
 msgid "Current Instance"
 msgstr "Instance actuelle"
 
-#. modules: register_accounting, msf_supply_doc_export, purchase_override, account
+#. modules: register_accounting, msf_supply_doc_export, purchase_override, account, msf_accrual
 #: selection:account.journal.column,field:0
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:184
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:206
@@ -94041,6 +94062,8 @@ msgstr "Instance actuelle"
 #: field:account.direct.invoice.wizard,analytic_distribution_id:0
 #: field:account.direct.invoice.wizard.line,analytic_distribution_id:0
 #: field:wizard.cash.return,analytic_distribution_id:0
+#: field:msf.accrual.line,analytic_distribution_id:0
+#: field:msf.accrual.line.expense,analytic_distribution_id:0
 msgid "Analytic Distribution"
 msgstr "Distribution analytique"
 
@@ -98439,12 +98462,6 @@ msgstr "Nom de la catégorie"
 msgid "Wednesday"
 msgstr "Mercredi"
 
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:65
-#, python-format
-msgid "The reversal period wasn't found in the system!"
-msgstr "The reversal period wasn't found in the system!"
-
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
@@ -99716,7 +99733,7 @@ msgstr "Il n'y a pas active_id. Veuillez contacter votre administrateur pour ré
 #. module: msf_accrual
 #: view:wizard.accrual.reversal:0
 msgid "Are you sure you want to post accrual reversal for those lines at the indicated dates?"
-msgstr "Are you sure you want to post accrual reversal for those lines at the indicated dates?"
+msgstr "Etes-vous sûr de vouloir comptabiliser les écritures de contrepassation pour ces lignes aux dates indiquées ?"
 
 #. module: kit
 #: field:assign.to.kit.line,qty_assign_to_kit_by_product_uom:0
@@ -113958,6 +113975,104 @@ msgstr "Génère le \"Monthly Export\" (uniquement) pour toutes les missions à 
 #: field:ocp.export.wizard,warning_db_name:0
 msgid "Display a warning on database name"
 msgstr "Affiche un avertissement sur le nom de la base de données"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Accruals"
+msgstr "Régularisations"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Accrual lines"
+msgstr "Lignes de Régularisation"
+
+#. module: msf_accrual
+#: field:msf.accrual.line,expense_line_ids:0
+msgid "Accrual Expense Lines"
+msgstr "Lignes de Charges de Régularisation"
+
+#. module: analytic_distribution
+#: field:analytic.distribution.wizard,accrual_expense_line_id:0
+msgid "Accrual Expense Line"
+msgstr "Ligne de Charge de Régularisation"
+
+#. module: msf_accrual
+#: field:msf.accrual.line,sequence_id:0
+msgid "Sequence of the lines"
+msgstr "Séquence des lignes"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Third Party Type"
+msgstr "Type de Tiers"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:103
+#, python-format
+msgid "No active journal of type Accrual has been found for the current instance."
+msgstr "Aucun journal actif de type Régularisation n'a été trouvé pour l'instance actuelle."
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:46
+#, python-format
+msgid "Please add some lines to the Accrual \"%s\" before posting it!"
+msgstr "Veuillez ajouter des lignes à la Régularisation \"%s\" avant de la comptabiliser !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:338
+#, python-format
+msgid "The Accrual \"%s\" is not Done!"
+msgstr "La Régularisation \"%s\" n'est pas Terminée !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:340
+#, python-format
+msgid "Impossible to find the reversal entry to cancel: please check if the lines have been reconciled manually."
+msgstr "Impossible de trouver l'écriture de contrepassation à annuler : veuillez vérifier si les lignes ont été lettrées manuellement."
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:50
+#, python-format
+msgid "The reversal period has not been found in the system!"
+msgstr "La période pour la contrepassation n'a pas été trouvée dans le système !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_reversal.py:65
+#, python-format
+msgid "No opened period found to post the reversal entry!"
+msgstr "Pas de période ouverte trouvée pour comptabiliser l'écriture de contrepassation !"
+
+#. module: msf_accrual
+#: selection:msf.accrual.line,accrual_type:0
+msgid "Reversing accrual"
+msgstr "Régularisation contrepassée"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Reversing accruals"
+msgstr "Régularisations contrepassées"
+
+#. module: msf_accrual
+#: selection:msf.accrual.line,accrual_type:0
+msgid "One Time accrual"
+msgstr "Régularisation ponctuelle"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "One Time accruals"
+msgstr "Régularisations ponctuelles"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:60
+#, python-format
+msgid "The Accrual \"%s\" has both positive and negative lines!"
+msgstr "La Régularisation \"%s\" contient à la fois des lignes positives et négatives !"
+
+#. module: msf_accrual
+#: code:addons/msf_accrual/msf_accrual_line.py:765
+#, python-format
+msgid "The line %s is already included into the reconciliation %s."
+msgstr "La ligne %s est déjà incluse dans le lettrage %s."
 
 #. module: stock
 #: field:stock.reception.wizard,final_dest_id:0
