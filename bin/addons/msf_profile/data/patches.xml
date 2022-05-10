@@ -775,8 +775,13 @@
             <field name="method">us_7791_gdpr_patch</field>
         </record>
 
+        <record id="us_9173_fix_msf_customer_location" model="patch.scripts">
+            <field name="method">us_9173_fix_msf_customer_location</field>
+        </record>
+
         <record id="us_8451_split_rr" model="patch.scripts">
             <field name="method">us_8451_split_rr</field>
         </record>
+
     </data>
 </openerp>

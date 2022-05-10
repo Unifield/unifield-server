@@ -56,7 +56,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-
     # UF25.0
     def us_8451_split_rr(self, cr, uid, *a, **b):
         if not cr.column_exists('replenishment_segment_line', 'rr_fmc_1'):
@@ -130,6 +129,25 @@ class patch_scripts(osv.osv):
         return True
 
 
+    def us_9173_fix_msf_customer_location(self, cr, uid, *a, **b):
+        '''
+        Remove the unbreakable spaces from the default 'MSF Cutsomer' location
+        Rename manually created 'MSF Customer' locations into 'Other_MSF_Customer
+        '''
+        msf_cust_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1]
+
+        # Removing the unbreakable space from the location and the translations
+        cr.execute("""UPDATE stock_location SET name = replace(name, E'\u00a0', ' ') WHERE id = %s""", (msf_cust_id,))
+        cr.execute("""UPDATE ir_translation SET src = replace(src, E'\u00a0', ' '), value = replace(value, E'\u00a0', ' ') 
+            WHERE name = 'stock.location,name' AND res_id = %s""", (msf_cust_id,))
+
+        # Renaming the non-default 'MSF Customer' locations and their translations
+        cr.execute("""UPDATE stock_location SET name = 'Other_MSF_Customer' WHERE name = 'MSF Customer' AND id != %s""", (msf_cust_id,))
+        cr.execute("""UPDATE ir_translation SET src = 'Other_MSF_Customer', value = 'Other_MSF_Customer' 
+            WHERE name = 'stock.location,name' AND src = 'MSF Customer' AND res_id != %s
+        """, (msf_cust_id,))
+
+        return True
 
     # UF24.1
     def us_9849_trigger_upd_former_nsl(self, cr, uid, *a, **b):
