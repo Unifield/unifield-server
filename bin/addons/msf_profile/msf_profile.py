@@ -59,6 +59,9 @@ class patch_scripts(osv.osv):
 
     # UF25.0
     def us_8451_split_rr(self, cr, uid, *a, **b):
+        if not cr.column_exists('replenishment_segment_line', 'rr_fmc_1'):
+            return True
+
         for x in range(1, 19):
             cr.execute('''
             insert into replenishment_segment_line_period (line_id, value, from_date, to_date, max_value)
@@ -294,7 +297,7 @@ class patch_scripts(osv.osv):
         return True
 
     def us_8449_migrate_rr_min_max_auto_to_periods(self, cr, uid, *a, **b):
-        if cr.column_exists('replenishment_segment_line', 'min_qty'):
+        if cr.column_exists('replenishment_segment_line', 'min_qty') and cr.column_exists('replenishment_segment_line', 'rr_fmc_1'):
             cr.execute("""update replenishment_segment_line line set rr_fmc_1=min_qty, rr_max_1=max_qty, min_qty=NULL, max_qty=NULL
                 from replenishment_segment seg
                 where
@@ -302,7 +305,7 @@ class patch_scripts(osv.osv):
                     seg.rule='minmax'
             """)
 
-        if cr.column_exists('replenishment_segment_line', 'auto_qty'):
+        if cr.column_exists('replenishment_segment_line', 'auto_qty') and cr.column_exists('replenishment_segment_line', 'rr_fmc_1'):
             cr.execute("""update replenishment_segment_line line set rr_fmc_1=auto_qty, auto_qty=NULL
                 from replenishment_segment seg
                 where
