@@ -514,12 +514,11 @@ def compute_confirmed_delivery_date_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     cell_nb = kwargs.get('cell_nb', 7)
     try:
-        if not row.cells[cell_nb].data:
-            warning_list.append(_('Confirmed delivery date not found. The date from the header has been taken (if any)'))
-        elif row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
-            confirmed_delivery_date = row.cells[cell_nb].data.strftime('%Y-%m-%d')
-        else:
-            warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
+        if row.cells[cell_nb] and row.cells[cell_nb].data:
+            if row.cells[cell_nb].type == 'datetime':
+                confirmed_delivery_date = row.cells[cell_nb].data.strftime('%Y-%m-%d')
+            else:
+                warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
         warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))

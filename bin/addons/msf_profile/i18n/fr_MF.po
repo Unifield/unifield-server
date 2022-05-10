@@ -20270,12 +20270,6 @@ msgstr "EDD (Date Prévue de Départ)"
 msgid "Soft closed"
 msgstr "Clôturé temporairement "
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/check_line.py:490
-#, python-format
-msgid "Confirmed delivery date not found. The date from the header has been taken (if any)"
-msgstr "Date de livraison confirmée non trouvée, le système a pris la date de l'en-tête"
-
 #. modules: sync_client, base, msf_button_access_rights, msf_profile
 #: sql_constraint:ir.model.data:0
 #: sql_constraint:ir.model.data:0
@@ -23830,7 +23824,6 @@ msgstr "\n"
 
 #. modules: msf_supply_doc_export, purchase_followup, msf_budget, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:231
-#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:75
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:75
 #: field:purchase.order.followup,delivery_requested_date:0
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:212
@@ -24677,6 +24670,7 @@ msgstr "Produits Supprimés"
 #: field:substitute.item.mirror,comment:0
 #: code:addons/msf_doc_import/report/return_from_unit_export.py:124
 #: code:addons/stock/report/closed_physical_inventory_report.py:134
+#: code:addons/msf_doc_import/wizard/__init__.py:57
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -25681,9 +25675,13 @@ msgstr "Date de Livraison Demandée"
 msgid "Delivery Requested Date"
 msgstr "Date Demandée"
 
-#. modules: purchase, msf_supply_doc_export
+#. modules: purchase, msf_supply_doc_export, msf_doc_import
 #: field:purchase.order,delivery_requested_date:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1065
+#: code:addons/msf_doc_import/wizard/__init__.py:57
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:249
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:75
 #, python-format
 msgid "Requested Delivery Date"
 msgstr "Date de Livraison Demandée"
@@ -29327,13 +29325,9 @@ msgstr "Février"
 msgid "Import Translations request"
 msgstr "Import Translations request"
 
-#. modules: msf_budget, purchase_followup, msf_doc_import, msf_supply_doc_export
+#. modules: msf_budget, purchase_followup
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:213
 #: field:purchase.order.followup,delivery_confirmed_date:0
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:173
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:258
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:454
-#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:76
 #, python-format
 msgid "Delivery confirmed date"
 msgstr "Date de Livraison Confirmée"
@@ -66485,9 +66479,12 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 msgid "Delivery Confirmed Date"
 msgstr "Date de Livraison Confirmée"
 
-#. modules: purchase, msf_supply_doc_export, msf_order_date
+#. modules: purchase, msf_supply_doc_export, msf_doc_import, msf_order_date
 #: field:purchase.order,delivery_confirmed_date:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1067
+#: code:addons/msf_doc_import/wizard/__init__.py:57
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:258
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:76
 #: field:update.lines,delivery_confirmed_date:0
 #, python-format
 msgid "Confirmed Delivery Date"
@@ -80077,10 +80074,7 @@ msgid "Current available quantity of products with this Batch Numbre Number in c
 msgstr "Quantité de produits actuellement disponibles sous ce Numéro de Lot dans les entrepôts de la société."
 
 #. modules: msf_supply_doc_export, msf_doc_import
-#: code:addons/msf_doc_import/wizard/__init__.py:57
-#: code:addons/msf_doc_import/wizard/__init__.py:62
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:103
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:249
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:75
 #, python-format
 msgid "Delivery Request Date"
@@ -92951,6 +92945,7 @@ msgstr "America/Anguilla"
 #: report:addons/account/report/export_invoice.mako:96
 #: report:msf.purchase.quotation:0
 #: selection:account.report.general.ledger,sortby:0
+#: code:addons/msf_doc_import/wizard/__init__.py:57
 #, python-format
 msgid "Currency"
 msgstr "Devise"

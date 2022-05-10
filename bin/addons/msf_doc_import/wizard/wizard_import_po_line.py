@@ -28,6 +28,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
 from msf_doc_import import check_line
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
+from msf_doc_import.wizard import RFQ_LINE_COLUMNS_FOR_IMPORT as columns_for_rfq_line_import
 import itertools
 
 
@@ -169,7 +170,7 @@ class wizard_import_po_line(osv.osv_memory):
                     if col_count != template_col_count and col_count != mandatory_col_count:
                         message += _("Line %s: You should have exactly %s columns in this order: %s \n") % (
                             line_num, template_col_count,
-                            ','.join(is_rfq and columns_for_po_line_import + [_('Delivery confirmed date')] or columns_for_po_line_import[1:]))
+                            ','.join(is_rfq and columns_for_rfq_line_import or columns_for_po_line_import[1:]))
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False,
@@ -244,18 +245,18 @@ class wizard_import_po_line(osv.osv_memory):
                             warning_list=price_value['warning_list'],
                             price_unit_defined=price_value['price_unit_defined'])
 
-                        # Cell 5: Delivery Request Date
-                        # for Rfq 'Delivery requested date' tolerated (5th column)
-                        cell_nb = header_index[_('Delivery Request Date')] if _('Delivery Request Date') in header_index else 6
+                        # Cell 5: Requested Delivery Date
+                        # for Rfq 'Requested Delivery Date' tolerated (5th column)
+                        cell_nb = header_index[_('Requested Delivery Date')] if _('Requested Delivery Date') in header_index else 6
                         date_value = check_line.compute_date_value(
                             cell_nb=cell_nb, row=row, to_write=to_write, context=context)
                         to_write.update(
                             date_planned=date_value['date_planned'],
                             error_list=date_value['error_list'])
 
-                        # Cell 7: Delivery confirmed date
+                        # Cell 7: Confirmed Delivery Date
                         if is_rfq:
-                            cell_nb = header_index[_('Delivery confirmed date')] if _('Delivery confirmed date') in header_index else 7
+                            cell_nb = header_index[_('Confirmed Delivery Date')] if _('Confirmed Delivery Date') in header_index else 7
                             cdd_value = check_line.compute_confirmed_delivery_date_value(
                                 cell_nb=cell_nb, row=row, to_write=to_write, context=context)
                             to_write.update(
@@ -451,7 +452,7 @@ Importation completed in %s!
                 rfq = purchase_obj.read(cr, uid, po_id, ['state', 'rfq_ok'], context=context)
                 is_rfq = rfq['rfq_ok']
                 res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index, is_rfq and columns_for_po_line_import + [_('Delivery confirmed date')] \
+                    cr, uid, ids, context, header_index, is_rfq and columns_for_rfq_line_import
                     or columns_for_po_line_import[1:], origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
