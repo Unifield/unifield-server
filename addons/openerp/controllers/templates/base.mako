@@ -25,7 +25,7 @@
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/menu.css?v=2.7b1"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/tips.css?v=7.0"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/waitbox.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/screen.css?v=16.0rc2"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/screen.css?v=25.0rc1"/>
 
     <link rel="stylesheet" type="text/css" href="/openerp/static/jscal/calendar-blue.css"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/dashboard.css"/>

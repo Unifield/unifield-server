@@ -278,6 +278,14 @@ p#cmp_logo {
     text-indent: 0;
 }
 
+#corner ul.tools li a.user_manuals {
+    background-position: -94px 0;
+}
+
+#corner ul.tools li a.user_manuals:hover {
+    background-position: -94px -34px;
+}
+
 #corner ul.tools li a.home {
     background-position: -22px 0;
 }
@@ -2469,4 +2477,14 @@ table #rr-chrono  {
 }
 #rr-chrono .hlt {
   width: 25%;
+}
+
+#help_banner_icon {
+    width: 26px;
+    height: 35px;
+    overflow: hidden;
+    background: url(../images/top-tools-a.png) no-repeat;
+    display:inline-block;
+    background-position: -94px 1px;
+    vertical-align: middle;
 }
