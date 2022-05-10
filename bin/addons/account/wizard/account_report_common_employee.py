@@ -54,6 +54,17 @@ class account_common_employee_report(osv.osv_memory):
         res['value'] = {'account_domain': '%s' % account_domain}
         return res
 
+    def onchange_payment_method(self, cr, uid, ids, payment_method, context=None):
+        """
+        Exclude expatriate when one method of payment is chosen and only display Nat staff using this method of payment.
+        """
+        if context is None:
+            context = {}
+        res = {}
+        if payment_method and payment_method != 'blank':
+            res['value'] = {'employee_type': 'nat_staff'}
+        return res
+
     _defaults = {
         'result_selection': 'customer',
     }

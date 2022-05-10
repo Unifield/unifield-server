@@ -408,7 +408,7 @@ employee_name = (p_obj.name or '')
 </Row>
 
 ## account move line row
-% for aml in get_employee_account_move_lines(p_obj.partner_id.id, data):
+% for aml in get_employee_account_move_lines(p_obj.employee_id.id, data):
 <Row>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
@@ -440,7 +440,7 @@ employee_name = (p_obj.name or '')
 </Row>
 
 <!-- SUBTOTALS per currency -->
-% for detail_line in get_lines_per_currency(p_obj.partner_id.id, data, aml.get('account', '')):
+% for detail_line in get_lines_per_currency(p_obj.employee_id.id, data, aml.get('account', '')):
 <Row>
 <Cell ss:StyleID="ssSubtotalLine" ss:MergeAcross="2">
     <Data ss:Type="String"></Data>

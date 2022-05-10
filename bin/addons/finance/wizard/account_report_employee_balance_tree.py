@@ -25,6 +25,7 @@ import decimal_precision as dp
 import datetime
 from datetime import timedelta
 
+
 class account_employee_balance_tree(osv.osv):
     _name = 'account.employee.balance.tree'
     _description = 'Print Account Employee Balance View'
@@ -36,9 +37,9 @@ class account_employee_balance_tree(osv.osv):
             ('receivable', 'Receivable')
         ],
             'Account type'),  # not used since US-3873
-        'partner_id': fields.many2one('hr.employee', 'Employee', invisible=True),
+        'employee_id': fields.many2one('hr.employee', 'Employee', invisible=True),
         'name': fields.char('Employee', size=168),  # employee name
-        'employee_ref': fields.char('Employee Ref', size=64 ),
+        'employee_identification_id': fields.char('Employee Identification number', size=64 ),
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),
         'balance': fields.float('Balance', digits_compute=dp.get_precision('Account')),
@@ -47,7 +48,7 @@ class account_employee_balance_tree(osv.osv):
         'ib_balance': fields.float('IB Balance', digits_compute=dp.get_precision('Account')),  # not used since US-3873
     }
 
-    _order = "name, partner_id"
+    _order = "name, employee_id"
 
     def __init__(self, pool, cr):
         super(account_employee_balance_tree, self).__init__(pool, cr)
@@ -100,7 +101,7 @@ class account_employee_balance_tree(osv.osv):
         if data['form'].get('tax', False):
             self.TAX_REQUEST = "AND at.code != 'tax'"
 
-        self.EMPLOYEE_REQUEST = 'AND l.partner_id IS NOT NULL'
+        self.EMPLOYEE_REQUEST = 'AND l.employee_id IS NOT NULL'
         if data['form'].get('employee_ids', False):  # some employees are specifically selected
             employee_ids = data['form']['employee_ids']
             if len(employee_ids) == 1:
@@ -115,19 +116,19 @@ class account_employee_balance_tree(osv.osv):
             self.ACCOUNT_REQUEST = " AND ac.id IN (%s)" % (",".join(map(str, data['form']['account_ids'])))
 
         where = where and 'AND %s' % where or ''
-        query = """SELECT p.id as partner_id, p.ref as partner_ref, p.name as partner_name,
+        query = """SELECT p.id as employee_id, p.identification_id as employee_identification_id, p.name_resource as employee_name,
             COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit,
             CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit,
             CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit
-            FROM account_move_line l INNER JOIN res_partner p ON (l.partner_id=p.id)
+            FROM account_move_line l INNER JOIN hr_employee p ON (l.employee_id=p.id)
             JOIN account_account ac ON (l.account_id = ac.id)
             JOIN account_move am ON (am.id = l.move_id)
             JOIN account_account_type at ON (ac.user_type = at.id)
             WHERE ac.type IN %s
             AND am.state IN %s
             %s %s %s %s %s %s
-            GROUP BY p.id, p.ref, p.name
-            ORDER BY p.name;""" % (account_type, move_state,  # not_a_user_entry
+            GROUP BY p.id, p.identification_id, p.name_resource
+            ORDER BY p.name_resource;""" % (account_type, move_state,  # not_a_user_entry
                                    where, self.INSTANCE_REQUEST, self.TAX_REQUEST,
                                    self.EMPLOYEE_REQUEST, self.ACCOUNT_REQUEST,
                                    self.RECONCILE_REQUEST)
@@ -140,9 +141,9 @@ class account_employee_balance_tree(osv.osv):
             res2 = [r for r in res]
         return res2
 
-    def _execute_query_selected_employee_move_line_ids(self, cr, uid, partner_id, data):
+    def _execute_query_selected_employee_move_line_ids(self, cr, uid, employee_id, data):
         # if this method is re-called with the same arguments don't recompute the result
-        if not self.move_line_ids or partner_id != self.move_line_ids['partner_id'] or data != self.move_line_ids['data']:
+        if not self.move_line_ids or employee_id != self.move_line_ids['employee_id'] or data != self.move_line_ids['data']:
             obj_move = self.pool.get('account.move.line')
             where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context', {})) or ''
 
@@ -162,8 +163,8 @@ class account_employee_balance_tree(osv.osv):
                 " JOIN account_account ac ON (l.account_id = ac.id)" \
                 " JOIN account_move am ON (am.id = l.move_id)" \
                 " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
-            if partner_id:
-                query += "l.partner_id = " + str(partner_id) + "" \
+            if employee_id:
+                query += "l.employee_id = " + str(employee_id) + "" \
                     " AND ac.type IN " + account_type + "" \
                     " AND am.state IN " + move_state + ""
             else:
@@ -195,7 +196,7 @@ class account_employee_balance_tree(osv.osv):
                 self.move_line_ids['res'] = res2
             else:
                 self.move_line_ids['res'] = False
-            self.move_line_ids['partner_id'] = partner_id
+            self.move_line_ids['employee_id'] = employee_id
             self.move_line_ids['data'] = data
         return self.move_line_ids['res']
 
@@ -242,16 +243,16 @@ class account_employee_balance_tree(osv.osv):
         for r in res:
             debit = r['debit']
             credit = r['credit']
-            if r['partner_id'] not in p_seen:
-                p_seen[r['partner_id']] = {}
-                p_seen[r['partner_id']]['name'] = r['employee_name']
-                p_seen[r['partner_id']]['employee_ref'] = r['employee_ref']
+            if r['employee_id'] not in p_seen:
+                p_seen[r['employee_id']] = {}
+                p_seen[r['employee_id']]['name'] = r['employee_name']
+                p_seen[r['employee_id']]['employee_identification_id'] = r['employee_identification_id']
             vals = {
                 'uid': uid,
                 'build_ts': data['build_ts'],
-                'partner_id': r['partner_id'],
+                'employee_id': r['employee_id'],
                 'name': r['employee_name'],
-                'employee_ref': r['employee_ref'],
+                'employee_identification_id': r['employee_identification_id'],
                 'debit': debit,
                 'credit': credit,
                 'balance': debit - credit,
@@ -268,12 +269,12 @@ class account_employee_balance_tree(osv.osv):
             if p_seen:
                 # exclude employees already found if any
                 other_employees_sql_end = " AND id NOT IN %s "
-                other_partners_sql_end_params.append(tuple(p_seen.keys()))
+                other_employees_sql_end_params.append(tuple(p_seen.keys()))
             other_employees_sql = """
-                        SELECT id, ref, name 
-                        FROM res_partner
-                        WHERE active IN %s 
-                        AND name != 'To be defined' """ + other_employees_sql_end + """ ;
+                        SELECT emp.id, emp.identification_id, emp.name_resource 
+                        FROM hr_employee emp
+                        INNER JOIN resource_resource res ON emp.resource_id = res.id
+                        WHERE res.active IN %s """ + other_employees_sql_end + """ ;
                         """
             other_employees_params = (active_selection,) + tuple(other_employees_sql_end_params)
             cr.execute(other_employees_sql, other_employees_params) # not_a_user_entry
@@ -282,9 +283,9 @@ class account_employee_balance_tree(osv.osv):
                 vals = {
                     'uid': uid,
                     'build_ts': data['build_ts'],
-                    'partner_id': partner['id'],
-                    'name': employee['name'],
-                    'employee_ref': employee['ref'] or '',
+                    'employee_id': employee['id'],
+                    'name': employee['name_resource'],
+                    'employee_identification_id': employee['employee_identification_id'] or '',
                     'debit': 0.0,
                     'credit': 0.0,
                     'balance': 0.0,
@@ -299,10 +300,10 @@ class account_employee_balance_tree(osv.osv):
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            r = self.read(cr, uid, ids, ['partner_id'], context=context)
-            if r and r[0] and r[0]['partner_id']:
+            r = self.read(cr, uid, ids, ['employee_id'], context=context)
+            if r and r[0] and r[0]['employee_id']:
                 if context and 'data' in context and 'form' in context['data']:
-                    move_line_ids = self._execute_query_selected_partner_move_line_ids(
+                    move_line_ids = self._execute_query_selected_employee_move_line_ids(
                         cr, uid,
                         r[0]['employee_id'][0],
                         context['data'])
@@ -322,7 +323,7 @@ class account_employee_balance_tree(osv.osv):
                             'res_model': 'account.move.line',
                             'view_mode': 'tree,form',
                             'view_type': 'form',
-                            'domain': [('id','in',tuple(move_line_ids))],
+                            'domain': [('id', 'in', tuple(move_line_ids))],
                             'context': new_context,
                         }
                         if view_id:
@@ -346,8 +347,8 @@ class account_employee_balance_tree(osv.osv):
             return self.browse(cr, uid, ids, context=context)
         return []
 
-    def get_employee_account_move_lines_data(self, cr, uid, partner_id, data, context=None):
-        ids = self._execute_query_selected_employee_move_line_ids(cr, uid, partner_id, data)
+    def get_employee_account_move_lines_data(self, cr, uid, employee_id, data, context=None):
+        ids = self._execute_query_selected_employee_move_line_ids(cr, uid, employee_id, data)
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
@@ -361,15 +362,15 @@ class account_employee_balance_tree(osv.osv):
             return res
         return []
 
-    def get_lines_per_currency(self, cr, uid, partner_id, data, account_code):
+    def get_lines_per_currency(self, cr, uid, employee_id, data, account_code):
         """
         Returns a list of dicts, each containing the subtotal per currency for the given employee and account
         """
         res = []
-        if partner_id and data and account_code:
+        if employee_id and data and account_code:
             # the subtotal lines for the selected employee must be limited to the ids corresponding to
             # the criteria selected in the wizard
-            ids = self._execute_query_selected_employee_move_line_ids(cr, uid, partner_id, data)
+            ids = self._execute_query_selected_employee_move_line_ids(cr, uid, employee_id, data)
             if ids:
                 sql = """SELECT c.name as currency_booking,
                         SUM(aml.debit_currency) as debit_booking, SUM(aml.credit_currency) as credit_booking, 
@@ -415,22 +416,32 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
     _name = 'wizard.account.employee.balance.tree'
     _description = 'Print Account Employee Balance View'
 
+    def _get_payment_methods(self, cr, uid, context):
+        return self.pool.get('account.employee.ledger')._get_payment_methods(cr, uid, context)
+
     _columns = {
         'display_employee': fields.selection([('all', 'All Employees'),
                                              ('with_movements', 'With movements'),
                                              ('non-zero_balance', 'With balance is not equal to 0')],
                                             string='Display Employees', required=True),
-        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
-        'employee_ids': fields.many2many('hr.employee', 'wizard_id', 'employee_id',
-                                        string='Employees', help='Display the report for specific employees only'),
-        'only_active_employees': fields.boolean('Only active employees', help='Display the report for active employees only'),
-        'account_ids': fields.many2many('account.account', 'account_employee_balance_account_rel', 'wizard_id', 'account_id',
-                                        string='Accounts', help='Display the report for specific accounts only'),
+        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id',
+                                         'argl_id', 'Proprietary Instances'),
+        'employee_ids': fields.many2many('hr.employee', 'account_employee_balance_employee_rel', 'wizard_id',
+                                         'employee_id', string='Employees',
+                                         help='Display the report for specific employees only'),
+        'only_active_employees': fields.boolean('Only active employees',
+                                                help='Display the report for active employees only'),
+        'account_ids': fields.many2many('account.account', 'account_employee_balance_account_rel', 'wizard_id',
+                                        'account_id', string='Accounts',
+                                        help='Display the report for specific accounts only'),
         'reconciled': fields.selection([
             ('empty', ''),
             ('yes', 'Yes'),
             ('no', 'No'),
         ], string='Reconciled'),
+        'employee_type': fields.selection([('blank', ''), ('nat_staff', 'Nat Staff'), ('expatriate', 'Expatriate')],
+                                          string='Employee Type', required=True),
+        'payment_method': fields.selection(_get_payment_methods, string='Method of Payment', required=True),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -447,6 +458,8 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
         'only_active_employees': False,
         'reconciled': 'empty',
         'fiscalyear_id': False,
+        'employee_type': 'blank',
+        'payment_method': 'blank',
     }
 
     def _get_data(self, cr, uid, ids, context=None):
@@ -477,9 +490,7 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
     def show(self, cr, buid, ids, context=None):
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data = self._get_data(cr, uid, ids, context=context)
-        self.pool.get('account.employee.balance.tree').build_data(cr,
-                                                                 uid, data,
-                                                                 context=context)
+        self.pool.get('account.employee.balance.tree').build_data(cr, uid, data, context=context)
         self._check_dates_fy_consistency(cr, uid, data, context)
         return {
             'type': 'ir.actions.act_window',
@@ -515,9 +526,7 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data = self._get_data(cr, uid, ids, context=context)
         self._check_dates_fy_consistency(cr, uid, data, context)
-        self.pool.get('account.employee.balance.tree').build_data(cr,
-                                                                 uid, data,
-                                                                 context=context)
+        self.pool.get('account.employee.balance.tree').build_data(cr, uid, data, context=context)
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.employee.balance.tree_xls',
@@ -526,7 +535,7 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
 
     def remove_journals(self, cr, uid, ids, context=None):
         if ids:
-            self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
+            self.write(cr, uid, ids, {'journal_ids': [(6, 0, [])]},
                        context=context)
         return {}
 

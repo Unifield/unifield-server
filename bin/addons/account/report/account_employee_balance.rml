@@ -273,7 +273,7 @@
                 <td><para style="P4Bold" fontSize="8.5">[[ formatLang(p_obj.balance or 0.0) ]]</para></td>
               </tr>
               <tr>
-                [[ repeatIn(get_employee_account_move_lines(p_obj.partner_id.id, data), 'aml') ]]
+                [[ repeatIn(get_employee_account_move_lines(p_obj.employee_id.id, data), 'aml') ]]
                 <!-- For each account: display one line with the total in functional currency,
                      and one line per booking currency used -->
                 <td>
@@ -288,7 +288,7 @@
                      <td><para style="P4Bold">[[ formatLang(aml.get('total') or 0.0) ]]</para></td>
                    </tr>
                    <tr>
-                     [[ repeatIn(get_lines_per_currency(p_obj.partner_id.id, data, aml.get('account')), 'detail_line') ]]
+                     [[ repeatIn(get_lines_per_currency(p_obj.employee_id.id, data, aml.get('account')), 'detail_line') ]]
                      <td><para style="P4"></para></td>
                      <td><para style="P4">Subtotal</para></td>
                      <td><para style="P4">[[ detail_line.get('currency_booking', '') ]]</para></td>

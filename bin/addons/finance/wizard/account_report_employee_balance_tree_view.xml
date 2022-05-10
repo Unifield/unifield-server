@@ -17,7 +17,7 @@
             <field name="name">account.employee.balance.tree.view</field>
             <field name="model">account.employee.balance.tree</field>
             <field name="type">tree</field>
-            <field name="priority" eval="200"/>
+            <field name="priority" eval="300"/>
             <field name="arch" type="xml">
                 <tree string="Employee Balance View"
                     editable="top" noteditable="1"
@@ -41,7 +41,7 @@
             <field name="name">account.move.line.tree</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
-            <field name="priority" eval="201"/>
+            <field name="priority" eval="301"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1">
                     <field name="journal_id"/>
@@ -89,18 +89,19 @@
                 <field name="display_employee"/>
                 <field name="reconciled"/>
                 <field name="only_active_employees"/>
+                <field name="employee_type"/>
+                <field name="payment_method" on_change="onchange_payment_method(payment_method)"/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                             <field name="code" />
                             <field name="name" />
                     </tree>
                 </field>
-                <field name="employee_ids"
-                       domain="['&amp;', '|', ('supplier', '=', True), ('customer', '=', True), ('name', '!=', 'To be defined')]"
+                <field name="employee_ids" domain="[('payment_method_id','=', payment_method)]"
                        context="{'active_test': only_active_employees}">
                     <tree noteditable="1">
-                        <field name="name"/>
-                        <field name="ref"/>
+                        <field name="name_resource"/>
+                        <field name="identification_id"/>
                         <field name="employee_type"/>
                     </tree>
                 </field>

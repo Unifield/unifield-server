@@ -19,6 +19,8 @@
                 <field name="page_split"/>
                 <field name="reconciled"/>
                 <field name="only_active_employees"/>
+                <field name="employee_type"/>
+                <field name="payment_method" on_change="onchange_payment_method(payment_method)"/>
                 <newline/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1">
@@ -26,8 +28,7 @@
                         <field name="name"/>
                     </tree>
                 </field>
-                <field name="employee_ids"
-                       domain="['&amp;', '|', ('supplier', '=', True), ('customer', '=', True), ('name', '!=', 'To be defined')]"
+                <field name="employee_ids" domain="[('payment_method_id','=', payment_method)]"
                        context="{'active_test': only_active_employees}">
                     <tree noteditable="1">
                         <field name="name_resource"/>
