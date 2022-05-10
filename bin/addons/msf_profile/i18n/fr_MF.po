@@ -73555,6 +73555,10 @@ msgstr "Date Prévue de Colisage"
 #: selection:product.history.consumption,fake_status:0
 #: selection:product.history.consumption,status:0
 #: selection:wizard.import.ad.line,state:0
+#: selection:wizard.import.fo.line,state:0
+#: selection:wizard.import.ir.line,state:0
+#: selection:wizard.import.po.line,state:0
+#: selection:wizard.import.tender.line,state:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -103418,11 +103422,12 @@ msgstr "Voir les lignes non traitées"
 msgid "Show unprocessed available lines"
 msgstr "Voir les lignes disponibles non traitées"
 
-#. modules: purchase, order_nomenclature, sale
+#. modules: purchase, order_nomenclature, sale, msf_doc_import
 #: code:addons/purchase/purchase_order_line.py:604
 #: constraint:purchase.order.line:0
 #: constraint:purchase.order.merged.line:0
 #: code:addons/sale/sale_order.py:0
+#: constraint:sale.order.line:0
 #, python-format
 msgid "The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"
 msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs actuelles ne sont pas autorisées"
@@ -114866,3 +114871,23 @@ msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Int
 #, python-format
 msgid "There is already an Internal Partner with the name '%s'. The Intermission Partner could not be activated"
 msgstr "Il y a déjà un Partenaire Interne ayant le nom '%s'. Le Partenaire Intermission n'a pas pu être activé"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:295
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:258
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:373
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:196
+#, python-format
+msgid "Line #%s of the file, product: %s"
+msgstr "Ligne %s du fichier, produit: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:316
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:273
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:416
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:226
+#, python-format
+msgid "Warning this/these lines cannot be imported due to too many digits in Qty field. Please check:\n"
+"%s"
+msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de chiffres dans le champ Qté. Veuillez vérifier:\n"
+"%s"

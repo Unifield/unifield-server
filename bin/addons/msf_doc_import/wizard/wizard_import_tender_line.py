@@ -193,7 +193,7 @@ class wizard_import_tender_line(osv.osv_memory):
                     prod = ''
                     if p_value.get('default_code'):
                         prod = self.pool.get('product.product').browse(cr, uid, p_value.get('default_code'), fields_to_fetch=['default_code'], context=context).default_code
-                        blocker_msg.append(_('Line in file #%s, product: %s') % (line_num+1, prod))
+                        blocker_msg.append(_('Line #%s of the file, product: %s') % (line_num+1, prod))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     cr.rollback()
                     continue
