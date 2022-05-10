@@ -123,7 +123,7 @@ class account_employee_balance_tree(osv.osv):
             JOIN account_account_type at ON (ac.user_type = at.id)
             WHERE ac.type IN %s
             AND am.state IN %s
-            %s %s %s %s %s %s
+            %s %s %s %s %s
             GROUP BY p.id, p.identification_id, p.name_resource
             ORDER BY p.name_resource;""" % (account_type, move_state,  # not_a_user_entry
                                    where, self.INSTANCE_REQUEST, self.EMPLOYEE_REQUEST, self.ACCOUNT_REQUEST,
