@@ -281,7 +281,7 @@ class account_employee_balance_tree(osv.osv):
                     'build_ts': data['build_ts'],
                     'employee_id': employee['id'],
                     'name': employee['name_resource'],
-                    'employee_identification_id': employee['employee_identification_id'] or '',
+                    'employee_identification_id': employee['identification_id'] or '',
                     'debit': 0.0,
                     'credit': 0.0,
                     'balance': 0.0,
