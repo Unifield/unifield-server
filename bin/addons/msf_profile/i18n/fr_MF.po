@@ -114848,3 +114848,8 @@ msgstr "Factures en Attente"
 #: report:addons/account_override/report/open_invoices_xls.mako:355
 msgid " (OPEN FISCAL YEAR ONLY)"
 msgstr " (EXERCICE COMPTABLE OUVERT UNIQUEMENT)"
+
+#. module: kit
+#: view:substitute:0
+msgid "Update products whose BN/ED attributes have changed"
+msgstr "MàJ les produits dont les attributs BL/DE ont changé"
