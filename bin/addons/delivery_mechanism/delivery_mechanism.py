@@ -877,10 +877,15 @@ class stock_picking(osv.osv):
                     extra_fo_qty = 0
 
                     if move.purchase_line_id:
-                        if line.quantity > po_line_qty[move.purchase_line_id.id]:
-                            extra_qty = line.quantity - po_line_qty[move.purchase_line_id.id]
+                        if line.uom_id.id != move.purchase_line_id.product_uom.id:
+                            in_qty_po_uom = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, move.purchase_line_id.product_uom.id)
+                        else:
+                            in_qty_po_uom = line.quantity
 
-                        po_line_qty[move.purchase_line_id.id] = max(0, po_line_qty[move.purchase_line_id.id] - line.quantity)
+                        if in_qty_po_uom > po_line_qty[move.purchase_line_id.id]:
+                            extra_qty = in_qty_po_uom - po_line_qty[move.purchase_line_id.id]
+
+                        po_line_qty[move.purchase_line_id.id] = max(0, po_line_qty[move.purchase_line_id.id] - in_qty_po_uom)
 
                     out_move = None
 
@@ -987,8 +992,11 @@ class stock_picking(osv.osv):
                                 if extra_qty > 0 and not context.get('auto_import_ok') and not context.get('sync_message_execution'):
                                     self.infolog(cr, uid, '%s, in line id %s Extra qty %s received' % (move.picking_id.name, move.id, extra_qty))
                                     # IN pre-processing : do not add extra qty in OUT, it will be added later on IN processing
-                                    out_qty = out_move.product_qty + extra_qty
                                     extra_fo_qty = extra_qty
+                                    if out_move.product_uom.id != move.purchase_line_id.product_uom.id:
+                                        out_qty = out_move.product_qty + uom_obj._compute_qty(cr, uid, move.purchase_line_id.product_uom.id, extra_qty, out_move.product_uom.id)
+                                    else:
+                                        out_qty = out_move.product_qty + extra_qty
                                     extra_qty = 0
                                 else:
                                     out_qty = out_move.product_qty
@@ -1006,17 +1014,24 @@ class stock_picking(osv.osv):
                             # OK all OUT lines processed and still have extra qty !
                             if extra_qty > 0 and not context.get('auto_import_ok') and not context.get('sync_message_execution'):
                                 self.infolog(cr, uid, '%s, (2) in line id %s Extra qty %s received' % (move.picking_id.name, move.id, extra_qty))
-                                product_qty = move_obj.read(cr, uid, out_move.id, ['product_qty'], context=context)['product_qty'] + extra_qty
-                                move_obj.write(cr, uid, out_move.id, {'product_qty': product_qty}, context=context)
                                 extra_fo_qty = extra_qty
+                                product_qty = move_obj.read(cr, uid, out_move.id, ['product_qty'], context=context)['product_qty']
+                                if out_move.product_uom.id != move.purchase_line_id.product_uom.id:
+                                    product_qty += uom_obj._compute_qty(cr, uid, move.purchase_line_id.product_uom.id, extra_qty, out_move.product_uom.id)
+                                else:
+                                    product_qty += extra_qty
+                                move_obj.write(cr, uid, out_move.id, {'product_qty': product_qty}, context=context)
                                 extra_qty = 0
                             remaining_out_qty = 0
 
                     if extra_fo_qty:
                         if move.purchase_line_id.sale_order_line_id:
                             self.infolog(cr, uid, '%s, in line id %s Extra qty %s received for %s' % (move.picking_id.name, move.id, extra_fo_qty, move.purchase_line_id.sale_order_line_id.order_id.name))
-                            sol_extra = self.pool.get('sale.order.line').browse(cr, uid, move.purchase_line_id.sale_order_line_id.id, fields_to_fetch=['extra_qty'], context=context)
-                            extra_fo_qty += sol_extra.extra_qty or 0
+                            sol_extra = self.pool.get('sale.order.line').browse(cr, uid, move.purchase_line_id.sale_order_line_id.id, fields_to_fetch=['extra_qty', 'product_uom'], context=context)
+                            if sol_extra.product_uom.id != move.purchase_line_id.product_uom.id:
+                                extra_fo_qty = (sol_extra.extra_qty or 0) + uom_obj._compute_qty(cr, uid, move.purchase_line_id.product_uom.id, extra_fo_qty, sol_extra.product_uom.id)
+                            else:
+                                extra_fo_qty += sol_extra.extra_qty or 0
                             self.pool.get('sale.order.line').write(cr, uid, move.purchase_line_id.sale_order_line_id.id, {'extra_qty': extra_fo_qty}, context=context)
                         extra_fo_qty = 0
 
