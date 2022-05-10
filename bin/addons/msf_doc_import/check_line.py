@@ -316,6 +316,9 @@ def product_value(cr, uid, **kwargs):
         'cost_price': cost_price, 'product_code':product_code, 'product_id': p_id}
 
 
+class ExceptionWrongQuantity(Exception):
+    pass
+
 def quantity_value(**kwargs):
     """
     Compute qty value of the cell.
@@ -340,7 +343,7 @@ def quantity_value(**kwargs):
                 if not max_qty or row.cells[cell_nb].data < max_qty:
                     product_qty = row.cells[cell_nb].data
                 else:
-                    error_list.append(_('The Product Quantity can not have more than 10 digits'))
+                    raise ExceptionWrongQuantity(_('The Product Quantity can not have more than 10 digits'))
             else:
                 error_list.append(_('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.'))
             if product_qty <= 0.00:
