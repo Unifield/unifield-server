@@ -896,7 +896,7 @@ class analytic_account(osv.osv):
                 all_cc = all_cc_ids and self.browse(cr, uid, all_cc_ids, context=context) or []
                 prop_instance_id = False
                 if is_pf and pf_restrict_instance_id:
-                    # UC2: PF with restriction on an Prop. Instance
+                    # UC2: PF with restriction on a Prop. Instance
                     prop_instance_id = pf_restrict_instance_id
                 elif allow_all_cc:
                     # UC3: Allow all Cost Centers
