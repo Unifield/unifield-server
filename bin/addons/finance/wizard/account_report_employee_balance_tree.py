@@ -141,7 +141,7 @@ class account_employee_balance_tree(osv.osv):
         res = cr.dictfetchall()
 
         if data['form'].get('display_employee', '') == 'non-zero_balance':
-            res2 = [r for r in res if r['sdebit'] > 0.0001 or r['scredit'] > 0.0001]
+            res2 = [r for r in res if r['sdebit'] > 0.0001 or r['scredit'] > 0.0001]  # 0.0001 instead of 0 to fix float rounding errors
         else:  # with_movements or all
             res2 = [r for r in res]
         return res2
@@ -443,7 +443,7 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
             ('yes', 'Yes'),
             ('no', 'No'),
         ], string='Reconciled'),
-        'employee_type': fields.selection(get_employee_type, string='Employee Type', required=True),
+        'employee_type': fields.selection(get_employee_type, string='Employee Type', required=False),
         'payment_method': fields.selection(get_payment_methods, string='Method of Payment', required=True),
     }
 
@@ -477,6 +477,8 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
                                                 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_employee',
                                                 'instance_ids', 'employee_ids', 'employee_type', 'payment_method',
                                                 'only_active_employees', 'account_ids', 'reconciled'])[0]
+        if not data['form']['employee_type']:
+            data['form']['employee_type'] = ''
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:
