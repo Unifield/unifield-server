@@ -141,7 +141,7 @@ class account_employee_balance_tree(osv.osv):
         res = cr.dictfetchall()
 
         if data['form'].get('display_employee', '') == 'non-zero_balance':
-            res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
+            res2 = [r for r in res if r['sdebit'] > 0.0001 or r['scredit'] > 0.0001]
         else:  # with_movements or all
             res2 = [r for r in res]
         return res2
