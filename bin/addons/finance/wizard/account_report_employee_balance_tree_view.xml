@@ -28,6 +28,7 @@
                         type="object"
                         icon="terp-gtk-go-back-rtl"
                     />
+                    <field name="employee_id" invisible="1"/>
                     <field name="name"/>
                     <field name="debit" sum="Debit" />
                     <field name="credit" sum="Credit" />
@@ -59,7 +60,7 @@
                     <field name="employee_id" invisible="1"/>
                     <field name="transfer_journal_id" invisible="1"/>
                     <field name="partner_txt" invisible="1"/>
-                    <field name="employee_type"/>
+                    <field name="partner_type"/>
                     <field name="debit_currency" sum="Total Book. Debit"/>
                     <field name="credit_currency" sum="Total Book. Credit"/>
                     <field name="currency_id"/>
@@ -97,8 +98,7 @@
                             <field name="name" />
                     </tree>
                 </field>
-                <field name="employee_ids" domain="[('payment_method_id','=', payment_method)]"
-                       context="{'active_test': only_active_employees}">
+                <field name="employee_ids" >
                     <tree noteditable="1">
                         <field name="name_resource"/>
                         <field name="identification_id"/>

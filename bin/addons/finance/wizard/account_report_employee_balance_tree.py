@@ -97,15 +97,24 @@ class account_employee_balance_tree(osv.osv):
             self.INSTANCE_REQUEST = " AND l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
 
 
-        self.EMPLOYEE_REQUEST = 'AND l.employee_id IS NOT NULL'
+        self.EMPLOYEE_REQUEST = ' AND l.employee_id IS NOT NULL'
         if data['form'].get('employee_ids', False):  # some employees are specifically selected
             employee_ids = data['form']['employee_ids']
             if len(employee_ids) == 1:
-                self.EMPLOYEE_REQUEST = 'AND p.id = %s' % employee_ids[0]
+                self.EMPLOYEE_REQUEST = ' AND p.id = %s' % employee_ids[0]
             else:
-                self.EMPLOYEE_REQUEST = 'AND p.id IN %s' % (tuple(employee_ids),)
-        elif data['form'].get('only_active_employees'):  # check if we should include only active employees
-            self.EMPLOYEE_REQUEST = "AND pn.active = 't'"
+                self.EMPLOYEE_REQUEST = ' AND p.id IN %s' % (tuple(employee_ids),)
+        else:  # if there is not specifically selected employees
+            if data['form'].get('only_active_employees'):  # check if we should include only active employees
+                self.EMPLOYEE_REQUEST = " AND res.active = 't'"
+            # check if we should include only a selected type of employees
+            emp_type = data['form'].get('employee_type')
+            if emp_type != '':
+                self.EMPLOYEE_REQUEST += " AND p.employee_type = '%s'" % emp_type.encode("utf-8")
+            # check if we should include only employees using a selected method of payment
+            pay_method = data['form'].get('payment_method')
+            if pay_method != 'blank':
+                self.EMPLOYEE_REQUEST += " AND pay.name = '%s'" % pay_method
 
         self.ACCOUNT_REQUEST = ''
         if data['form'].get('account_ids', False):  # some accounts are specifically selected
@@ -117,10 +126,10 @@ class account_employee_balance_tree(osv.osv):
             CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit,
             CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit
             FROM account_move_line l INNER JOIN hr_employee p ON (l.employee_id=p.id)
-            INNER JOIN res_partner pn ON (pn.id = p.id)
+            INNER JOIN resource_resource res ON p.resource_id = res.id
             JOIN account_account ac ON (l.account_id = ac.id)
             JOIN account_move am ON (am.id = l.move_id)
-            JOIN account_account_type at ON (ac.user_type = at.id)
+            JOIN hr_payment_method pay ON (p.payment_method_id = pay.id)
             WHERE ac.type IN %s
             AND am.state IN %s
             %s %s %s %s %s
@@ -157,8 +166,7 @@ class account_employee_balance_tree(osv.osv):
 
             query = "SELECT l.id FROM account_move_line l" \
                 " JOIN account_account ac ON (l.account_id = ac.id)" \
-                " JOIN account_move am ON (am.id = l.move_id)" \
-                " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
+                " JOIN account_move am ON (am.id = l.move_id) WHERE "
             if employee_id:
                 query += "l.employee_id = " + str(employee_id) + "" \
                     " AND ac.type IN " + account_type + "" \
@@ -166,9 +174,6 @@ class account_employee_balance_tree(osv.osv):
             else:
                 query += "ac.type IN " + account_type + "" \
                          " AND am.state IN " + move_state + ""
-            # UFTP-312: Filtering regarding tax account (if user asked it)
-            if data['form'].get('tax', False):
-                query += " AND at.code != 'tax' "
 
             reconcile_filter = data['form'].get('reconciled', '')
             if reconcile_filter == 'yes':
@@ -412,8 +417,11 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
     _name = 'wizard.account.employee.balance.tree'
     _description = 'Print Account Employee Balance View'
 
-    def _get_payment_methods(self, cr, uid, context):
-        return self.pool.get('account.employee.ledger')._get_payment_methods(cr, uid, context)
+    def get_payment_methods(self, cr, uid, context):
+        return self.pool.get('account.employee.ledger').get_payment_methods(cr, uid, context)
+
+    def get_employee_type(self, cr, uid, context):
+        return self.pool.get('account.employee.ledger').get_employee_type(cr, uid, context)
 
     _columns = {
         'display_employee': fields.selection([('all', 'All Employees'),
@@ -435,9 +443,8 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
             ('yes', 'Yes'),
             ('no', 'No'),
         ], string='Reconciled'),
-        'employee_type': fields.selection([('blank', ''), ('nat_staff', 'Nat Staff'), ('expatriate', 'Expatriate')],
-                                          string='Employee Type', required=True),
-        'payment_method': fields.selection(_get_payment_methods, string='Method of Payment', required=True),
+        'employee_type': fields.selection(get_employee_type, string='Employee Type', required=True),
+        'payment_method': fields.selection(get_payment_methods, string='Method of Payment', required=True),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -450,11 +457,10 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
         'result_selection': 'customer_supplier',
         'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
         'journal_ids': _get_journals,
-        'tax': False,
         'only_active_employees': False,
         'reconciled': 'empty',
         'fiscalyear_id': False,
-        'employee_type': 'blank',
+        'employee_type': '',
         'payment_method': 'blank',
     }
 
@@ -469,7 +475,7 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
                                                 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_employee',
-                                                'instance_ids', 'tax', 'employee_ids',
+                                                'instance_ids', 'employee_ids', 'employee_type', 'payment_method',
                                                 'only_active_employees', 'account_ids', 'reconciled'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)

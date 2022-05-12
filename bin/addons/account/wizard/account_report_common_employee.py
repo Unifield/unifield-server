@@ -62,7 +62,7 @@ class account_common_employee_report(osv.osv_memory):
             context = {}
         res = {}
         if payment_method and payment_method != 'blank':
-            res['value'] = {'employee_type': 'nat_staff'}
+            res['value'] = {'employee_type': 'local'}
         return res
 
     _defaults = {

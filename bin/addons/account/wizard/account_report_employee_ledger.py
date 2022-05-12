@@ -30,13 +30,16 @@ class account_employee_ledger(osv.osv_memory):
     _inherit = 'account.common.employee.report'
     _description = 'Account Employee Ledger'
 
-    def _get_payment_methods(self, cr, uid, context):
+    def get_payment_methods(self, cr, uid, context):
         pm_obj = self.pool.get('hr.payment.method')
         pm_ids = pm_obj.search(cr, uid, [], context=context)
         pm_names = pm_obj.read(cr, uid, pm_ids, ['name'], context=context)
         res = [('blank', '')]
         res += [(pm_name['name'], pm_name['name']) for pm_name in pm_names]
         return res
+
+    def get_employee_type(self, cr, uid, context):
+        return self.pool.get('hr.employee').fields_get(cr, uid, ['employee_type'], context=context)['employee_type']['selection']
 
     _columns = {
         'reconciled': fields.selection([
@@ -55,10 +58,9 @@ class account_employee_ledger(osv.osv_memory):
         'display_employee': fields.selection([('all', 'All Employees'), ('with_movements', 'With movements'),
                                              ('non-zero_balance', 'With balance is not equal to 0')],
                                              string='Display Employees', required=True),
-        'employee_type': fields.selection([('blank', ''), ('nat_staff', 'Nat Staff'),
-                                           ('expatriate', 'Expatriate')],
+        'employee_type': fields.selection(get_employee_type,
                                           string='Employee Type', required=True),
-        'payment_method': fields.selection(_get_payment_methods,
+        'payment_method': fields.selection(get_payment_methods,
                                           string='Method of Payment', required=True),
     }
 
@@ -70,7 +72,7 @@ class account_employee_ledger(osv.osv_memory):
         'only_active_employees': False,
         'fiscalyear_id': False,
         'display_employee': 'with_movements',
-        'employee_type': 'blank',
+        'employee_type': '',
         'payment_method': 'blank',
     }
 

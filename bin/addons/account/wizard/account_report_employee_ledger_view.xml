@@ -28,8 +28,7 @@
                         <field name="name"/>
                     </tree>
                 </field>
-                <field name="employee_ids" domain="[('payment_method_id','=', payment_method)]"
-                       context="{'active_test': only_active_employees}">
+                <field name="employee_ids">
                     <tree noteditable="1">
                         <field name="name_resource"/>
                         <field name="identification_id"/>
