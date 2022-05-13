@@ -129,7 +129,7 @@ class account_employee_balance_tree(osv.osv):
             INNER JOIN resource_resource res ON p.resource_id = res.id
             JOIN account_account ac ON (l.account_id = ac.id)
             JOIN account_move am ON (am.id = l.move_id)
-            JOIN hr_payment_method pay ON (p.payment_method_id = pay.id)
+            LEFT JOIN hr_payment_method pay ON (p.payment_method_id = pay.id)
             WHERE ac.type IN %s
             AND am.state IN %s
             %s %s %s %s %s
@@ -278,7 +278,7 @@ class account_employee_balance_tree(osv.osv):
                         WHERE res.active IN %s """ + other_employees_sql_end + """ ;
                         """
             other_employees_params = (active_selection,) + tuple(other_employees_sql_end_params)
-            cr.execute(other_employees_sql, other_employees_params) # not_a_user_entry
+            cr.execute(other_employees_sql, other_employees_params)  # not_a_user_entry
             other_employees = cr.dictfetchall()
             for employee in other_employees:
                 vals = {
