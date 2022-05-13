@@ -115,6 +115,10 @@ class account_employee_balance_tree(osv.osv):
             pay_method = data['form'].get('payment_method')
             if pay_method != 'blank':
                 self.EMPLOYEE_REQUEST += " AND pay.name = '%s'" % pay_method
+                # do join with payment_method only when local staff is selected because exp staff don't always have payment method registered
+                if emp_type == 'local':
+                    self.EMPLOYEE_PAY_METHOD = " JOIN hr_payment_method pay ON (p.payment_method_id = pay.id)"
+
 
         self.ACCOUNT_REQUEST = ''
         if data['form'].get('account_ids', False):  # some accounts are specifically selected
@@ -129,12 +133,12 @@ class account_employee_balance_tree(osv.osv):
             INNER JOIN resource_resource res ON p.resource_id = res.id
             JOIN account_account ac ON (l.account_id = ac.id)
             JOIN account_move am ON (am.id = l.move_id)
-            LEFT JOIN hr_payment_method pay ON (p.payment_method_id = pay.id)
+            %s
             WHERE ac.type IN %s
             AND am.state IN %s
             %s %s %s %s %s
             GROUP BY p.id, p.identification_id, p.name_resource
-            ORDER BY p.name_resource;""" % (account_type, move_state,  # not_a_user_entry
+            ORDER BY p.name_resource;""" % (self.EMPLOYEE_PAY_METHOD, account_type, move_state,  # not_a_user_entry
                                    where, self.INSTANCE_REQUEST, self.EMPLOYEE_REQUEST, self.ACCOUNT_REQUEST,
                                    self.RECONCILE_REQUEST)
         cr.execute(query)
