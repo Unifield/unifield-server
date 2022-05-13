@@ -65,6 +65,17 @@ class account_common_employee_report(osv.osv_memory):
             res['value'] = {'employee_type': 'local'}
         return res
 
+    def onchange_employee_type(self, cr, uid, ids, employee_type, context=None):
+        """
+        When expatriate is selected set method of payment to blank
+        """
+        if context is None:
+            context = {}
+        res = {}
+        if employee_type and employee_type == 'ex':
+            res['value'] = {'payment_method': 'blank'}
+        return res
+
     _defaults = {
         'result_selection': 'customer',
     }

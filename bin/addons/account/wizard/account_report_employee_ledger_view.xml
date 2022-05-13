@@ -19,7 +19,7 @@
                 <field name="page_split"/>
                 <field name="reconciled"/>
                 <field name="only_active_employees"/>
-                <field name="employee_type"/>
+                <field name="employee_type" on_change="onchange_employee_type(employee_type)"/>
                 <field name="payment_method" on_change="onchange_payment_method(payment_method)"/>
                 <newline/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">

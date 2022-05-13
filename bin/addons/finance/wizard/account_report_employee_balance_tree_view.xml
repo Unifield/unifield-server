@@ -90,7 +90,7 @@
                 <field name="display_employee"/>
                 <field name="reconciled"/>
                 <field name="only_active_employees"/>
-                <field name="employee_type"/>
+                <field name="employee_type" on_change="onchange_employee_type(employee_type)"/>
                 <field name="payment_method" on_change="onchange_payment_method(payment_method)"/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
