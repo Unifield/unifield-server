@@ -115033,3 +115033,9 @@ msgid "Warning this/these lines cannot be imported due to too many digits in Qty
 "%s"
 msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de chiffres dans le champ Qté. Veuillez vérifier:\n"
 "%s"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:362
+#, python-format
+msgid "You can not process an Incoming Shipment which is not Available or Available Shipped."
+msgstr "Vous ne pouvez pas traiter une Livraison Entrante qui n'est pas Disponible ou Disponible Expédiée."
