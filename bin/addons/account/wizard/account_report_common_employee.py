@@ -72,7 +72,7 @@ class account_common_employee_report(osv.osv_memory):
         if context is None:
             context = {}
         res = {}
-        if employee_type and employee_type == 'ex':
+        if not employee_type or employee_type in ('', 'ex'):
             res['value'] = {'payment_method': 'blank'}
         return res
 
