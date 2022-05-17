@@ -29,7 +29,7 @@ from tools.translate import _
 
 
 class employee_ledger(report_sxw.rml_parse, common_report_header):
-
+    _inherit = 'account.common.employee.report'
     def __init__(self, cr, uid, name, context=None):
         super(employee_ledger, self).__init__(cr, uid, name, context=context)
         self.fctal_totals = {}  # to store the totals in functional currency
@@ -72,35 +72,6 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
             'get_payment_methods': self._get_payment_methods,
         })
 
-    def _get_employee_type(self, data):
-        """
-        Returns the String to display in the "Employee Type" section of the report header
-        """
-        emp_type = _('All')
-        # if specific employees are selected don't display emp type
-        if data['form'].get('employee_ids', False):
-            emp_type = '-'
-        else:
-            emp = data['form'].get('employee_type', False)
-            if emp == 'local':
-                emp_type = _('Local Staff')
-            if emp == 'ex':
-                emp_type = _('Expatriate Staff')
-        return emp_type
-
-    def _get_payment_methods(self, data):
-        """
-        Returns the String to display in the "Payment Method" section of the report header
-        """
-        pay_method = _('All')
-        # if specific employees are selected don't display payment method
-        if data['form'].get('employee_ids', False):
-            pay_method = '-'
-        else:
-            method = data['form'].get('payment_method')
-            if method in ('CHQ', 'ESP', 'VIR'):
-                return method
-        return pay_method
 
     def set_context(self, objects, data, ids, report_type=None):
         obj_move = self.pool.get('account.move.line')
