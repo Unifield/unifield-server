@@ -25,7 +25,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import pooler
 
 class account_employee_balance_tree(report_sxw.rml_parse):
-    _inherit = 'account.common.employee.report'
+
     def __init__(self, cr, uid, name, context=None):
         super(account_employee_balance_tree, self).__init__(cr, uid, name, context=context)
         self.aebt_obj = self.pool.get('account.employee.balance.tree')
@@ -64,6 +64,36 @@ class account_employee_balance_tree(report_sxw.rml_parse):
         self.result_selection = data['form'].get('result_selection')
         self.target_move = data['form'].get('target_move', 'all')
         return super(account_employee_balance_tree, self).set_context(objects, data, ids, report_type=report_type)
+
+    def _get_employee_type(self, data):
+        """
+        Returns the String to display in the "Employee Type" section of the report header
+        """
+        emp_type = _('All')
+        # if specific employees are selected don't display emp type
+        if data['form'].get('employee_ids', False):
+            emp_type = '-'
+        else:
+            emp = data['form'].get('employee_type', False)
+            if emp == 'local':
+                emp_type = _('Local Staff')
+            if emp == 'ex':
+                emp_type = _('Expatriate Staff')
+        return emp_type
+
+    def _get_payment_methods(self, data):
+        """
+        Returns the String to display in the "Payment Method" section of the report header
+        """
+        pay_method = _('All')
+        # if specific employees are selected don't display payment method
+        if data['form'].get('employee_ids', False):
+            pay_method = '-'
+        else:
+            method = data['form'].get('payment_method')
+            if method in ('CHQ', 'ESP', 'VIR'):
+                return method
+        return pay_method
 
     def _get_type_of_accounts(self):
         if self.result_selection == 'customer':
@@ -246,7 +276,18 @@ class account_employee_balance_tree(report_sxw.rml_parse):
         """
         Returns the list of instances as a String (cut if > 300 characters)
         """
-        return self.pool.get('account.partner.balance.tree')._get_prop_instances_str(data, pdf=False)
+        display_limit = 300
+        if pdf:
+            # in the PDF version instances are listed one below the other and instance names are cut if > 20 characters
+            instances_str = ',\n'.join([(len(inst) <= 20) and inst or ("%s%s" % (inst[:17], '...'))
+                                        for inst in self._get_prop_instances(data)])
+            if len(instances_str) > display_limit:
+                instances_str = "%s%s" % (instances_str[:display_limit-3], '...')
+        else:
+            # otherwise instances are simply separated by a comma
+            data_tools_obj = self.pool.get('data.tools')
+            instances_str = data_tools_obj.truncate_list(self._get_prop_instances(data), limit=display_limit)
+        return instances_str
 
 
 class account_employee_balance_tree_xls(SpreadsheetReport):

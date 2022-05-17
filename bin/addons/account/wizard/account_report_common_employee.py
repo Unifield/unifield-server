@@ -75,36 +75,6 @@ class account_common_employee_report(osv.osv_memory):
         if not employee_type or employee_type in ('', 'ex'):
             res['value'] = {'payment_method': 'blank'}
         return res
-    
-    def _get_employee_type(self, data):
-        """
-        Returns the String to display in the "Employee Type" section of the report header
-        """
-        emp_type = _('All')
-        # if specific employees are selected don't display emp type
-        if data['form'].get('employee_ids', False):
-            emp_type = '-'
-        else:
-            emp = data['form'].get('employee_type', False)
-            if emp == 'local':
-                emp_type = _('Local Staff')
-            if emp == 'ex':
-                emp_type = _('Expatriate Staff')
-        return emp_type
-
-    def _get_payment_methods(self, data):
-        """
-        Returns the String to display in the "Payment Method" section of the report header
-        """
-        pay_method = _('All')
-        # if specific employees are selected don't display payment method
-        if data['form'].get('employee_ids', False):
-            pay_method = '-'
-        else:
-            method = data['form'].get('payment_method')
-            if method in ('CHQ', 'ESP', 'VIR'):
-                return method
-        return pay_method
 
     _defaults = {
         'result_selection': 'customer',
