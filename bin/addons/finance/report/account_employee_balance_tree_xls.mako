@@ -312,11 +312,13 @@ selected_filter = get_filter(data) or ''
      <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-     <Data ss:Type="String">${ "%s: %s, %s: %s, %s: %s, %s: %s" % (
+     <Data ss:Type="String">${ "%s: %s, %s: %s, %s: %s, %s: %s, %s: %s, %s: %s" % (
                             _("Employee's"), get_type_of_accounts() or '',
                             _('Target Moves'), get_target_move(data) or '',
                             _('Reconciled'), get_reconcile_selection(data),
                             _('Display Employees'), get_display_employees_selection(data),
+                            _('Employee Type'), get_employee_type(data) or '-',
+                            _('Payment Method'), get_payment_methods(data) or '-',
                             )|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">

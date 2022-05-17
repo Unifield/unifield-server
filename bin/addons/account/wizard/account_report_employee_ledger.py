@@ -80,7 +80,7 @@ class account_employee_ledger(osv.osv_memory):
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'employee_ids',
                                                      'only_active_employees', 'instance_ids', 'account_ids',
-                                                     'display_employee'])[0])
+                                                     'display_employee', 'employee_type', 'payment_method'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
         if data['form']['page_split']:
             return {
@@ -111,7 +111,7 @@ class account_employee_ledger(osv.osv_memory):
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'employee_ids',
                                                      'only_active_employees', 'instance_ids', 'account_ids',
-                                                     'display_employee'])[0])
+                                                     'display_employee', 'employee_type', 'payment_method'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
         return {
             'type': 'ir.actions.report.xml',

@@ -68,7 +68,39 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
             'nb_employees': lambda employees: len(self._employees_to_display(employees)),
             'update_current_employee_number': self._update_current_employee_number,
             'get_current_employee_number': lambda: self.current_employee_number,
+            'get_employee_type': self._get_employee_type,
+            'get_payment_methods': self._get_payment_methods,
         })
+
+    def _get_employee_type(self, data):
+        """
+        Returns the String to display in the "Employee Type" section of the report header
+        """
+        emp_type = _('All')
+        # if specific employees are selected don't display emp type
+        if data['form'].get('employee_ids', False):
+            emp_type = '-'
+        else:
+            emp = data['form'].get('employee_type', False)
+            if emp == 'local':
+                emp_type = _('Local Staff')
+            if emp == 'ex':
+                emp_type = _('Expatriate Staff')
+        return emp_type
+
+    def _get_payment_methods(self, data):
+        """
+        Returns the String to display in the "Payment Method" section of the report header
+        """
+        pay_method = _('All')
+        # if specific employees are selected don't display payment method
+        if data['form'].get('employee_ids', False):
+            pay_method = '-'
+        else:
+            method = data['form'].get('payment_method')
+            if method in ('CHQ', 'ESP', 'VIR'):
+                return method
+        return pay_method
 
     def set_context(self, objects, data, ids, report_type=None):
         obj_move = self.pool.get('account.move.line')
@@ -84,6 +116,8 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
         self.account_ids = data['form'].get('account_ids', False)
         self.display_employee = data['form'].get('display_employee', '')
         self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
+        self.employee_type = data['form'].get('employee_type', '')
+        self.payment_method = data['form'].get('payment_method', '')
         if self.fiscalyear_id:
             fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=used_context)
         else:
@@ -128,26 +162,40 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
         # get the account list (if some accounts have been specifically selected use them directly)
         if not self.account_ids:
             self.cr.execute(
-                "SELECT a.id " \
-                "FROM account_account a " \
-                "LEFT JOIN account_account_type t " \
-                "ON (a.user_type=t.id) " \
-                'WHERE a.type IN %s' \
+                "SELECT a.id "
+                "FROM account_account a "
+                "LEFT JOIN account_account_type t "
+                "ON (a.user_type=t.id) "
+                'WHERE a.type IN %s'
                 " " + "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
             self.account_ids = [a for (a,) in self.cr.fetchall()]
         if data['form'].get('employee_ids', False):
             new_ids = data['form']['employee_ids']  # some employees are specifically selected
         else:
             employee_to_use = []
+            pay_method_request = ''
+            emp_request = ''
             # check if we should display all employees or only active ones
             active_selection = data['form'].get('only_active_employees') and ('t',) or ('t', 'f')
-            self.cr.execute(
-                "SELECT emp.id as employee_id, emp.name_resource "
-                "FROM hr_employee emp "
-                "INNER JOIN resource_resource res ON emp.resource_id = res.id "
-                "WHERE res.active IN %s "
-                "ORDER BY name_resource;",
-                (active_selection,))
+            # check if we should include only a selected type of employees
+            emp_type = data['form'].get('employee_type')
+            if emp_type != '':
+                emp_request += "AND emp.employee_type = '%s' " % emp_type.encode("utf-8")
+            # check if we should include only employees using a selected method of payment
+            pay_method = data['form'].get('payment_method')
+            if pay_method != 'blank':
+                emp_request += "AND pay.name = '%s' " % pay_method.encode("utf-8")
+                # do join with payment_method only when local staff is selected because exp staff don't always have payment method registered
+                if emp_type == 'local':
+                    pay_method_request = "JOIN hr_payment_method pay ON (emp.payment_method_id = pay.id) "
+            emp_query = """SELECT emp.id as employee_id, emp.name_resource
+                        FROM hr_employee emp
+                        INNER JOIN resource_resource res ON emp.resource_id = res.id
+                        %s
+                        WHERE res.active IN %s
+                        %s
+                        ORDER BY emp.name_resource;""" % (pay_method_request, active_selection, emp_request,)
+            self.cr.execute(emp_query)
             res = self.cr.dictfetchall()
             for res_line in res:
                 employee_to_use.append(res_line['employee_id'])

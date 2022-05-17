@@ -273,11 +273,13 @@ else:
     <Data ss:Type="String">${ filter|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-    <Data ss:Type="String">${ "%s: %s, %s: %s, %s: %s, %s: %s" % (
+    <Data ss:Type="String">${ "%s: %s, %s: %s, %s: %s, %s: %s, %s: %s, %s: %s" % (
                             _("Employee's"), get_employees(),
                             _('Target Moves'), get_target_move(data),
                             _('Reconciled'), get_reconcile_selection(),
                             _('Display Employees'), get_display_employees_selection(),
+                            _('Employee Type'), get_employee_type(data) or '-',
+                            _('Payment Method'), get_payment_methods(data) or '-',
                             )|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">

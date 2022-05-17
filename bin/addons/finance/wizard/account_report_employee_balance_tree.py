@@ -96,7 +96,7 @@ class account_employee_balance_tree(osv.osv):
         if instance_ids:
             self.INSTANCE_REQUEST = " AND l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
 
-
+        self.EMPLOYEE_PAY_METHOD = ''
         self.EMPLOYEE_REQUEST = ' AND l.employee_id IS NOT NULL'
         if data['form'].get('employee_ids', False):  # some employees are specifically selected
             employee_ids = data['form']['employee_ids']

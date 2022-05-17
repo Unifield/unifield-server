@@ -48,6 +48,8 @@ class account_employee_balance_tree(report_sxw.rml_parse):
             'get_accounts_str': self._get_accounts_str,
             'get_reconcile_selection': self._get_reconcile_selection,
             'get_display_employees_selection': self._get_display_employees_selection,
+            'get_employee_type': self._get_employee_type,
+            'get_payment_methods': self._get_payment_methods,
 
             # data
             'get_employees': self._get_employees,
@@ -62,6 +64,36 @@ class account_employee_balance_tree(report_sxw.rml_parse):
         self.result_selection = data['form'].get('result_selection')
         self.target_move = data['form'].get('target_move', 'all')
         return super(account_employee_balance_tree, self).set_context(objects, data, ids, report_type=report_type)
+
+    def _get_employee_type(self, data):
+        """
+        Returns the String to display in the "Employee Type" section of the report header
+        """
+        emp_type = _('All')
+        # if specific employees are selected don't display emp type
+        if data['form'].get('employee_ids', False):
+            emp_type = '-'
+        else:
+            emp = data['form'].get('employee_type', False)
+            if emp == 'local':
+                emp_type = _('Local Staff')
+            if emp == 'ex':
+                emp_type = _('Expatriate Staff')
+        return emp_type
+
+    def _get_payment_methods(self, data):
+        """
+        Returns the String to display in the "Payment Method" section of the report header
+        """
+        pay_method = _('All')
+        # if specific employees are selected don't display payment method
+        if data['form'].get('employee_ids', False):
+            pay_method = '-'
+        else:
+            method = data['form'].get('payment_method')
+            if method in ('CHQ', 'ESP', 'VIR'):
+                return method
+        return pay_method
 
     def _get_type_of_accounts(self):
         if self.result_selection == 'customer':
