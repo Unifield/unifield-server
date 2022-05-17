@@ -406,8 +406,8 @@
                     </para>
                 </td>
                 <td>
-                    <para style="terp_default_Centre_8"></para>
-                </td>[[ "%s: %s, %s: %s, %s: %s, %s: %s, %s: %s, %s: %s" % (translate("Employee's"), get_employees(), translate('Target Moves'), get_target_move(data), translate('Reconciled'), get_reconcile_selection(), translate('Display Employees'), get_display_employees_selection(), translate('Employee Type'), get_employee_type(data),translate('Payment Method'), get_payment_methods(data)) ]]
+                    <para style="terp_default_Centre_8">[[ "%s: %s, %s: %s, %s: %s, %s: %s, %s: %s, %s: %s" % (translate("Employee's"), get_employees(), translate('Target Moves'), get_target_move(data), translate('Reconciled'), get_reconcile_selection(), translate('Display Employees'), get_display_employees_selection(), translate('Employee Type'), get_employee_type(data),translate('Payment Method'), get_payment_methods(data)) ]]</para>
+                </td>
                 <td>
                   <para style="terp_default_Centre_8">[[ company.currency_id.name ]]</para>
                 </td>
