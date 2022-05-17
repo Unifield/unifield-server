@@ -447,63 +447,95 @@
     % endfor
    </Row>
 
-   % for prod in objects[0].line_ids:
-   <Row ss:AutoFitHeight="0" ss:Height="15.75">
-    <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Y') or _('N')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97u"><Data ss:Type="String">${getSel(prod, 'status')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replacing_product_id and prod.replacing_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replaced_product_id and prod.replaced_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
-    <Cell ss:StyleID="s97n"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
-    % if objects[0].rule == 'cycle':
-        <Cell ss:StyleID="s97u">
-        % if prod.buffer_qty is not False:
-            <Data ss:Type="Number">${prod.buffer_qty}</Data>
-        % endif
-        </Cell>
-    % endif
-
-    <!-- s144+s145 / s165/s151 -->
-    <% i = 0 %>
-    <% styles = [('s144', 's145'), ('s165', 's151')] %>
-     % for fmc in range(1, 19):
-        <Cell ss:StyleID="${styles[i][0]}">
-        % if objects[0].rule == 'minmax':
-            <Data ss:Type="String">${getattr(prod, 'rr_min_max_%d'%fmc)}</Data>
-
-        % else:
-            % if getattr(prod, 'rr_fmc_%d'%fmc) is False:
-                <Data ss:Type="String" />
-            % else:
-                <Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data>
-            % endif
-        % endif
-        </Cell>
-        % if fmc == 1:
-            <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
-            <Cell ss:StyleID="${styles[i][1]}">
-             % if isDate(from_date):
-                <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
-            % else:
-                <Data ss:Type="String"></Data>
+   % if objects[0].line_ids:
+       % for prod in objects[0].line_ids:
+       <Row ss:AutoFitHeight="0" ss:Height="15.75">
+        <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+        <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+        <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Y') or _('N')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+        <Cell ss:StyleID="s97u"><Data ss:Type="String">${getSel(prod, 'status')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+        <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replacing_product_id and prod.replacing_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+        <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replaced_product_id and prod.replaced_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
+        <Cell ss:StyleID="s97n"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
+        % if objects[0].rule == 'cycle':
+            <Cell ss:StyleID="s97u">
+            % if prod.buffer_qty is not False:
+                <Data ss:Type="Number">${prod.buffer_qty}</Data>
             % endif
             </Cell>
         % endif
 
-        <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
-        <Cell ss:StyleID="${styles[i][1]}">
-         % if isDate(to_date):
-            <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
-        % else:
-            <Data ss:Type="String"></Data>
-        % endif
-        </Cell>
-        <% i = 1 - i %>
-    % endfor
-   </Row>
-   % endfor
+        <!-- s144+s145 / s165/s151 -->
+        <% i = 0 %>
+        <% styles = [('s144', 's145'), ('s165', 's151')] %>
+         % for fmc in range(1, 19):
+            <Cell ss:StyleID="${styles[i][0]}">
+            % if objects[0].rule == 'minmax':
+                <Data ss:Type="String">${getattr(prod, 'rr_min_max_%d'%fmc)}</Data>
+
+            % else:
+                % if getattr(prod, 'rr_fmc_%d'%fmc) is False:
+                    <Data ss:Type="String" />
+                % else:
+                    <Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data>
+                % endif
+            % endif
+            </Cell>
+            % if fmc == 1:
+                <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
+                <Cell ss:StyleID="${styles[i][1]}">
+                 % if isDate(from_date):
+                    <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
+                % else:
+                    <Data ss:Type="String"></Data>
+                % endif
+                </Cell>
+            % endif
+
+            <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
+            <Cell ss:StyleID="${styles[i][1]}">
+             % if isDate(to_date):
+                <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+            </Cell>
+            <% i = 1 - i %>
+        % endfor
+       </Row>
+       % endfor
+   % else:
+     <% i = 0 %>
+     % while i < 5:
+       <Row ss:AutoFitHeight="0" ss:Height="15.75">
+           <Cell ss:StyleID="s97u"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+           <Cell ss:StyleID="s96"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+           <Cell ss:StyleID="s96"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+           <Cell ss:StyleID="s97u"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+           <Cell ss:StyleID="s97u"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+           <Cell ss:StyleID="s97u"><Data ss:Type="String"></Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+           <Cell ss:StyleID="s97"><Data ss:Type="Number"></Data></Cell>
+           <Cell ss:StyleID="s97n"><Data ss:Type="Number"></Data></Cell>
+           % if objects[0].rule == 'cycle':
+           <Cell ss:StyleID="s97u"><Data ss:Type="Number"></Data></Cell>
+           % endif
+           <!-- s144+s145 / s165/s151 -->
+           <% j = 0 %>
+           <% styles = [('s144', 's145'), ('s165', 's151')] %>
+           % for fmc in range(1, 19):
+             <Cell ss:StyleID="${styles[j][0]}"><Data ss:Type="String"></Data></Cell>
+             % if fmc == 1:
+                <Cell ss:StyleID="${styles[j][1]}"><Data ss:Type="String"></Data></Cell>
+             % endif
+
+             <Cell ss:StyleID="${styles[j][1]}"><Data ss:Type="String"></Data></Cell>
+           <% j = 1 - j %>
+           % endfor
+       </Row>
+       <% i = i + 1 %>
+     % endwhile
+   % endif
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
@@ -558,7 +590,7 @@
    <AllowUsePivotTables/>
   </WorksheetOptions>
     <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-    <Range>R11C4:R${len(objects[0].line_ids)+11}C4</Range>
+    <Range>R11C4:R${(len(objects[0].line_ids) or 5) + 10}C4</Range>
     <Type>List</Type>
     <CellRangeList/>
     <Value>&quot;${_('Active')|x},${_('New')|x},${_('Replaced')|x},${_('Replacing')|x},${_('Phasing Out')|x},${_('Active-Replacing')|x}&quot;</Value>

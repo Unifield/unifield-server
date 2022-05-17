@@ -200,17 +200,17 @@
                 <search string="Search Analytic Lines">
                     <group col='6' colspan='4'>
                         <group>
-                            <filter name="sales" string="Sales" domain="[('journal_id.type','=','sale')]" icon="terp-camera_test" help="Analytic Journal Items related to a sale journal."/>
                             <filter name="purchases" string="Purchases" domain="[('journal_id.type','=','purchase')]" icon="terp-purchase" help="Analytic Journal Items related to a purchase journal."/>
                             <!-- Add a filter to search engagement journal lines -->
-                            <filter name="engagements" string="Engagements" domain="[('journal_id.type','=','engagement')]" icon="terp-folder-violet"
+                            <filter name="engagements" string="Engagements" domain="['&amp;', ('journal_id.type','=','engagement'), ('journal_id.code', '!=', 'ENGI')]" icon="terp-folder-violet"
                                     help="Analytic Journal Items related to an engagement journal."/>
                             <filter name="intl_engagements" string="ENGI"
-                                domain="[('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
+                                domain="[('journal_id.code', '=', 'ENGI')]"
                                 icon="terp-folder-violet"
                                 help="Analytic Journal Items related to an ENGI journal."
                                 />
                             <filter name="others" string="Others" domain="[('journal_id.type','in',('cash','general','situation'))]" icon="terp-folder-orange"/>
+                            <filter name="sales" string=" Sales " domain="[('journal_id.type','=','sale')]" icon="terp-camera_test" help="Analytic Journal Items related to a sale journal."/>
                             <separator orientation="vertical"/>
                             <field name="document_date" select="1"/>
                             <field name="date"/>

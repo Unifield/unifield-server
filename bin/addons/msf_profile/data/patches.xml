@@ -720,7 +720,6 @@
             <field name="method">us_9044_add_location_colors</field>
         </record>
 
-
         <!-- UF24.0 -->
         <record id="us_8870_partner_instance_creator" model="patch.scripts">
             <field name="method">us_8870_partner_instance_creator</field>
@@ -754,6 +753,14 @@
             <field name="method">us_9570_ocb_auto_sync_time</field>
         </record>
 
+        <!-- UF24.1 -->
+        <record id="us_9833_set_pick_from_wkf" model="patch.scripts">
+            <field name="method">us_9833_set_pick_from_wkf</field>
+        </record>
+
+        <record id="us_9849_trigger_upd_former_nsl" model="patch.scripts">
+            <field name="method">us_9849_trigger_upd_former_nsl</field>
+        </record>
 
         <!-- UF25.0 -->
         <record id="fol_order_id_join_change_rules" model="patch.scripts">
@@ -763,5 +770,22 @@
         <record id="us_6475_set_has_tax_on_po" model="patch.scripts">
             <field name="method">us_6475_set_has_tax_on_po</field>
         </record>
+
+        <record id="us_7791_gdpr_patch" model="patch.scripts">
+            <field name="method">us_7791_gdpr_patch</field>
+        </record>
+
+        <record id="us_9173_fix_msf_customer_location" model="patch.scripts">
+            <field name="method">us_9173_fix_msf_customer_location</field>
+        </record>
+
+        <record id="us_8451_split_rr" model="patch.scripts">
+            <field name="method">us_8451_split_rr</field>
+        </record>
+
+        <record id="us_5722_update_accruals" model="patch.scripts">
+            <field name="method">us_5722_update_accruals</field>
+        </record>
+
     </data>
 </openerp>

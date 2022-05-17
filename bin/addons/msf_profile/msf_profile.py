@@ -56,6 +56,70 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF25.0
+    def us_8451_split_rr(self, cr, uid, *a, **b):
+        if not cr.column_exists('replenishment_segment_line', 'rr_fmc_1') or not cr.column_exists('replenishment_segment_line', 'rr_max_1'):
+            return True
+
+        for x in range(1, 19):
+            cr.execute('''
+            insert into replenishment_segment_line_period (line_id, value, from_date, to_date, max_value)
+                select id, rr_fmc_%(x)s, rr_fmc_from_%(x)s, rr_fmc_to_%(x)s, rr_max_%(x)s
+                from replenishment_segment_line
+                where rr_fmc_%(x)s is not null
+            ''', {'x': x})
+        cr.execute('''update replenishment_segment_line_period set from_date='2020-01-01' where from_date is null and value is not null''')
+        cr.execute('''update replenishment_segment_line_period set to_date='2222-02-28' where to_date is null and value is not null''')
+        return True
+
+    def us_5722_update_accruals(self, cr, uid, *a, **b):
+        """
+        Updates the existing accruals:
+        - A) renames the states:
+          ==> Partially Posted becomes Running, and Posted becomes Done
+        - B) some pieces of data are now handled at line level:
+          ==> moves them from the accrual itself (msf.accrual.line) to the expense line (msf.accrual.line.expense)
+        - C) initializes the sequence on the existing Accruals so that the line numbers are consistent (Line number = 1 for point B)
+        - D) sets the value to use for the fields "entry_sequence" (previously based on the JI linked to the global AD)
+        """
+        if self.pool.get('sync.client.entity') and not self.pool.get('sync.server.update'):  # existing instances
+            accrual_obj = self.pool.get('msf.accrual.line')
+            ml_obj = self.pool.get('account.move.line')
+            cr.execute("UPDATE msf_accrual_line SET state = 'running' WHERE state = 'partially_posted'")
+            self.log_info(cr, uid, '%d Accrual(s) set to: Running.' % (cr.rowcount,))
+            cr.execute("UPDATE msf_accrual_line SET state = 'done' WHERE state = 'posted'")
+            self.log_info(cr, uid, '%d Accrual(s) set to: Done.' % (cr.rowcount,))
+            # NOTE: in all the Accruals created before this ticket there is NO sequence_id and NO Expense Lines
+            cr.execute('''SELECT id, description, reference, expense_account_id, accrual_amount, state, move_line_id
+                          FROM msf_accrual_line''')
+            accruals = cr.fetchall()
+            for accrual_data in accruals:
+                accrual_id = accrual_data[0]
+                # get the entry_sequence to set at doc level
+                entry_seq = ''
+                move_line_id = accrual_data[6]
+                if accrual_data[5] != 'draft' and move_line_id:
+                    ml = ml_obj.browse(cr, uid, move_line_id, fields_to_fetch=['move_id'])
+                    entry_seq = ml and ml.move_id.name or ''
+                # initialize the sequence for line numbering (ir_sequences are not synchronized)
+                line_seq_id = accrual_obj.create_sequence(cr, uid)
+                cr.execute("UPDATE msf_accrual_line "
+                           "SET entry_sequence = %s, sequence_id = %s "
+                           "WHERE id = %s", (entry_seq, line_seq_id, accrual_id))
+                new_expense_line_vals = {
+                    # the line_number will be automatically filled in, using the sequence created above
+                    # no analytic_distribution_id is defined on the line, the global AD is kept
+                    'accrual_line_id': accrual_id,
+                    'description': accrual_data[1],
+                    'reference': accrual_data[2] or '',
+                    'expense_account_id': accrual_data[3],
+                    'accrual_amount': accrual_data[4] or 0.0,
+                }
+                # call the standard "create" method on Accrual Expense Lines, which are not synchronized
+                self.pool.get('msf.accrual.line.expense').create(cr, uid, new_expense_line_vals)
+            self.log_info(cr, uid, '%d Accrual Expense Line(s) created.' % (len(accruals),))
+        return True
+
     def fol_order_id_join_change_rules(self, cr, uid, *a, **b):
         """
             order_id now uses sql join for queries like order_id.state = draft
@@ -93,7 +157,99 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, 'US-6475: set PO has tax on %d records' % cr.rowcount)
         return True
 
+    def us_7791_gdpr_patch(self, cr, uid, *a, **b):
+        cr.execute("""UPDATE hr_employee
+        SET
+        birthday = NULL,
+        gender = NULL,
+        marital = NULL,
+        mobile_phone = NULL,
+        notes = NULL,
+        private_phone = NULL,
+        work_email = NULL,
+        work_phone = NULL,
+        country_id = NULL,
+        ssnid = NULL
+        WHERE employee_type = 'local';
+        """)
+        self.log_info(cr, uid, 'US-7791 : GDPR patch applied on %d rows' % (cr.rowcount,))
+        return True
+
+
+    def us_9173_fix_msf_customer_location(self, cr, uid, *a, **b):
+        '''
+        Remove the unbreakable spaces from the default 'MSF Cutsomer' location
+        Rename manually created 'MSF Customer' locations into 'Other_MSF_Customer
+        '''
+        msf_cust_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1]
+
+        # Removing the unbreakable space from the location and the translations
+        cr.execute("""UPDATE stock_location SET name = replace(name, E'\u00a0', ' ') WHERE id = %s""", (msf_cust_id,))
+        cr.execute("""UPDATE ir_translation SET src = replace(src, E'\u00a0', ' '), value = replace(value, E'\u00a0', ' ') 
+            WHERE name = 'stock.location,name' AND res_id = %s""", (msf_cust_id,))
+
+        # Renaming the non-default 'MSF Customer' locations and their translations
+        cr.execute("""UPDATE stock_location SET name = 'Other_MSF_Customer' WHERE name = 'MSF Customer' AND id != %s""", (msf_cust_id,))
+        cr.execute("""UPDATE ir_translation SET src = 'Other_MSF_Customer', value = 'Other_MSF_Customer' 
+            WHERE name = 'stock.location,name' AND src = 'MSF Customer' AND res_id != %s
+        """, (msf_cust_id,))
+
+        return True
+
+    # UF24.1
+    def us_9849_trigger_upd_former_nsl(self, cr, uid, *a, **b):
+        # UD prod changer from NSL to ST/NS => trigger sync to update active field on missions
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                update
+                    product_product
+                set
+                    active_change_date=NOW()
+                where id in (
+                    select
+                        p.id
+                    from
+                        product_product p, product_international_status c
+                    where
+                        p.international_status = c.id and
+                        c.code = 'unidata' and
+                        p.active = 't' and
+                        p.standard_ok != 'non_standard_local' and
+                        p.product_tmpl_id in (
+                            select
+                                distinct(res_id)
+                            from
+                                audittrail_log_line
+                            where
+                                old_value_text='non_standard_local' and
+                                object_id = (select id from ir_model where model='product.template')
+                        )
+                )
+            """)
+            self.log_info(cr, uid, 'US-9849: %d updates' % (cr.rowcount, ))
+        return True
+
+    def us_9833_set_pick_from_wkf(self, cr, uid, *a, **b):
+        cr.execute("""
+            update
+                stock_picking
+            set
+                from_wkf='t'
+            where
+                from_wkf='f' and
+                sale_id is not null and
+                type = 'out' and
+                subtype in ('standard', 'picking')
+        """)
+        self.log_info(cr, uid, 'US-9833: %d OUT/Pick fixed' % (cr.rowcount,))
+        return True
+
+
     # UF24.0
+
     def us_9570_ocb_auto_sync_time(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
         if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
@@ -206,7 +362,9 @@ class patch_scripts(osv.osv):
         return True
 
     def us_8449_migrate_rr_min_max_auto_to_periods(self, cr, uid, *a, **b):
-        if cr.column_exists('replenishment_segment_line', 'min_qty'):
+        if cr.column_exists('replenishment_segment_line', 'min_qty') and \
+                cr.column_exists('replenishment_segment_line', 'rr_fmc_1') and \
+                cr.column_exists('replenishment_segment_line', 'rr_max_1'):
             cr.execute("""update replenishment_segment_line line set rr_fmc_1=min_qty, rr_max_1=max_qty, min_qty=NULL, max_qty=NULL
                 from replenishment_segment seg
                 where
@@ -214,7 +372,7 @@ class patch_scripts(osv.osv):
                     seg.rule='minmax'
             """)
 
-        if cr.column_exists('replenishment_segment_line', 'auto_qty'):
+        if cr.column_exists('replenishment_segment_line', 'auto_qty') and cr.column_exists('replenishment_segment_line', 'rr_fmc_1'):
             cr.execute("""update replenishment_segment_line line set rr_fmc_1=auto_qty, auto_qty=NULL
                 from replenishment_segment seg
                 where

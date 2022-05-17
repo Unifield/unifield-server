@@ -21,6 +21,7 @@
 import account
 import account_move_line
 import msf_accrual_line
+import msf_accrual_line_expense
 import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

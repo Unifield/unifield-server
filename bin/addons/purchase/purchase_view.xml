@@ -246,6 +246,7 @@
                                 default_selector="'3'" o2m_selectable="2"
                                 >
                                 <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" editable="both">
+                                    <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
@@ -1139,6 +1140,66 @@ action = {
             <field name="key">action</field>
             <field name="model">ir.ui.menu</field>
             <field eval="ref('ir_ui_menu_po_custom_text')" name="res_id"/>
+        </record>
+
+        <record id="po_line_error_message_view" model="ir.ui.view">
+            <field name="name">po.line.error.message.view</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">form</field>
+            <field name="priority" eval="998" />
+            <field name="arch" type="xml">
+                <form>
+                    <field name="to_correct_ok" invisible="1"/>
+                    <field name="inactive_product" invisible="1" />
+                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
+                        <html>
+                            <style>
+                                #error_message_unifield
+                                {
+                                    border-style: solid;
+                                    border-width: 1px;
+                                    border-radius: 5px;
+                                    border-color: black;
+                                    background-color: #F0EBA4;
+                                }
+
+                                #view_form #error_message_unifield .readonlyfield
+                                {
+                                    border-style: none;
+                                    padding: 5px;
+                                    color: red;
+                                    background-color: #F0EBA4;
+                                    font-weight: bold;
+                                    text-transform: uppercase;
+                                    width: 90%%;
+                                }
+
+                                #error_message_unifield p, #error_message_unifield span
+                                {
+                                    height: 1em;
+                                    min-height: 1em;
+                                        color: red;
+                                    font-weight: bold;
+                                    text-transform: uppercase;
+                                    padding: 5px;
+                                    width: 90%%;
+                                }
+
+                                #error_message_unifield .grip
+                                {
+                                    visibility: hidden;
+                                }
+                            </style>
+
+                            <div id="error_message_unifield">
+                                <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" readonly="1" />
+                                <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" string="Error" colspan="4" />
+                            </div>
+                        </html>
+                    </group>
+                    <button special="cancel" icon="gtk-cancel" string="Close window" colspan="4" />
+                </form>
+            </field>
         </record>
 
     </data>

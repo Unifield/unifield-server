@@ -108,12 +108,20 @@ class purchase_order_line(osv.osv):
 
         return result
 
-    def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
-        if result.get('value', {}).get('product_qty', qty) >= self._max_qty or result.get('value', {}).get('product_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_amount:
+    def check_digits(self, cr, uid, result, pol, qty=0, price_unit=0, context=None):
+        if context is None:
+            context = {}
+        new_qty = result.get('value', {}).get('product_qty', qty)
+        new_price = result.get('value', {}).get('price_unit', price_unit)
+        if new_qty >= self._max_qty or new_qty * new_price >= self._max_amount:
             result.setdefault('warning', {'title': '', 'message': ''})
             result['warning'].setdefault('title', '')
             result['warning'].setdefault('message', '')
             result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
+            if new_qty >= self._max_qty:
+                result.update({
+                    'value': {'product_qty': pol.get('product_qty', 0.00)},
+                })
         return True
 
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
@@ -127,9 +135,16 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
+        pol = {}
+        if ids:
+            pol = self.read(cr, uid, ids[0], ['product_qty', 'price_unit'], context=context)
+
         if not product and not comment and not nomen_manda_0 and qty != 0.00:
             if qty >= self._max_qty or qty*price_unit >= self._max_amount:
-                return {'warning': {'title': '', 'message': _(self._max_msg)}}
+                return {
+                    'value': {'product_qty': pol.get('product_qty', 0.00), 'price_unit': pol.get('price_unit', 0.00)},
+                    'warning': {'title': '', 'message': _(self._max_msg)}
+                }
             return {}
 
         prod_context = context.copy()
@@ -154,7 +169,7 @@ class purchase_order_line(osv.osv):
             uom = uom or result.get('value', {}).get('product_uom')
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
 
-        self.check_digits(cr, uid, result, context=context)
+        self.check_digits(cr, uid, result, pol, context=context)
         return result
 
     def _relatedFields(self, cr, uid, vals, context=None):
@@ -379,17 +394,30 @@ class sale_order_line(osv.osv):
 
         return result
 
-    def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
-        if result.get('value', {}).get('product_uom_qty', qty) >= self._max_value or result.get('value', {}).get('product_uom_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_value:
+    def check_digits(self, cr, uid, result, sol, qty=0, price_unit=0, context=None):
+        if context is None:
+            context = {}
+        new_qty = result.get('value', {}).get('product_uom_qty', qty)
+        new_price = result.get('value', {}).get('price_unit', price_unit)
+        if new_qty >= self._max_value or new_qty * new_price >= self._max_value:
             result.setdefault('warning', {'title': '', 'message': ''})
             result['warning'].setdefault('title', '')
             result['warning'].setdefault('message', '')
             result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
+            if new_qty >= self._max_value:
+                result.update({
+                    'value': {'product_uom_qty': sol.get('product_uom_qty', 0.00), 'product_uos_qty': sol.get('product_uos_qty', 0.00)},
+                })
         return True
 
-    def change_price_unit(self, cr, uid, ids, product_uom_qty, price_unit, context):
+    def change_price_unit(self, cr, uid, ids, product_uom_qty, price_unit, context=None):
+        if context is None:
+            context = {}
         result = {}
-        self.check_digits(cr, uid, result, product_uom_qty, price_unit, context)
+        sol = {}
+        if ids:
+            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty'], context=context)
+        self.check_digits(cr, uid, result, sol, product_uom_qty, price_unit, context=context)
         return result
 
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,
@@ -398,6 +426,10 @@ class sale_order_line(osv.osv):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
+        sol = {}
+        if ids:
+            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty'], context=context)
+
         result = self.product_id_change(cr, uid, ids, pricelist, product, qty,
                                         uom, qty_uos, uos, name, partner_id,
                                         lang, update_tax, date_order, packaging, fiscal_position, flag)
@@ -422,7 +454,7 @@ class sale_order_line(osv.osv):
         if qty:
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, ['product_uom_qty', 'product_uos_qty'], result=result)
 
-        self.check_digits(cr, uid, result, qty, price_unit, context)
+        self.check_digits(cr, uid, result, sol, qty, price_unit, context=context)
         return result
 
     def product_packaging_change(self, cr, uid, ids, pricelist, product, qty=0,

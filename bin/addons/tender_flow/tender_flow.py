@@ -861,6 +861,8 @@ class tender_line(osv.osv):
     _trace = True
 
     _SELECTION_TENDER_STATE = [('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ]
+    _max_qty = 10**10
+    _max_msg = _('The quantity of the line has more than 10 digits. Please check the Qty to avoid loss of exact information')
 
     def on_product_change(self, cr, uid, id, product_id, uom_id, product_qty, categ, context=None):
         '''
@@ -907,8 +909,20 @@ class tender_line(osv.osv):
         '''
         res = {}
 
+        tl = {}
+        if ids:
+            tl = self.read(cr, uid, ids[0], ['qty'])
         if qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty', result=res)
+
+        if qty >= self._max_qty:
+            res.setdefault('warning', {'title': '', 'message': ''})
+            res['warning'].setdefault('title', '')
+            res['warning'].setdefault('message', '')
+            res.update({
+                'value': {'qty': tl.get('qty', 0.00)},
+                'warning': {'title': 'Warning', 'message': "\n".join([res['warning']['message'], _(self._max_msg)])}
+            })
 
         return res
 

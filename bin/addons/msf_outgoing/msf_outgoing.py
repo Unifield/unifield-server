@@ -350,7 +350,7 @@ class shipment(osv.osv):
         'consignee_date': fields.date(string='Date'),
         'consignee_signature': fields.char(string='Signature', size=1024),
         # functions
-        'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
+        'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True, write_relate=False),
         'partner_id2': fields.many2one('res.partner', string='Customer', required=False),
         'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
         'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
@@ -1955,7 +1955,7 @@ class stock_picking(osv.osv):
             context = {}
 
         context['web_copy'] = True
-        default.update({'partner_id': False, 'partner_id2': False, 'ext_cu': False, 'sale_id': False})
+        default.update({'partner_id': False, 'partner_id2': False, 'address_id': False, 'ext_cu': False, 'sale_id': False})
 
         return self.copy(cr, uid, id, default, context=context)
 

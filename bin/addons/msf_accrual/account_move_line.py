@@ -23,17 +23,16 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
-from time import strftime
-from tools.misc import flatten
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
     _columns = {
-        'accrual': fields.boolean(string="Accrual?", readonly=True, 
-            help="If true, this line was created by an accrual generation."),
+        'accrual': fields.boolean(string="Accrual?", readonly=True,
+                                  help="If true, this line was created by an accrual generation."),
+        # for Accruals: the JIs of the original, the "REV", and the "CANCEL" entries will have the same accrual_line_id
+        'accrual_line_id': fields.many2one('msf.accrual.line', "Accrual Line"),
     }
 
     _defaults = {

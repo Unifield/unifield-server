@@ -822,8 +822,17 @@ class account_journal(osv.osv):
                                              _("Please post all the manual Journal Entries on the journal %s before inactivating it.") %
                                              journal.code)
                     if journal.type in ['bank', 'cash']:
-                        last_reg_id = reg_obj.search(cr, uid, [('journal_id', '=', journal.id)],
-                                                     order='period_start_date DESC', limit=1, context=context)
+                        last_reg_sql = """
+                            SELECT reg.id
+                            FROM account_bank_statement reg
+                            INNER JOIN account_period p ON reg.period_id = p.id
+                            INNER JOIN account_journal j ON reg.journal_id = j.id
+                            WHERE j.id = %s
+                            ORDER BY p.date_start DESC LIMIT 1
+                        """
+                        cr.execute(last_reg_sql, (journal.id,))
+                        last_reg_id = cr.fetchone()
+
                         if last_reg_id:
                             balance_end = reg_obj.browse(cr, uid, last_reg_id[0], fields_to_fetch=['balance_end']).balance_end or 0.0
                             if abs(balance_end) > 10**-3:
@@ -1151,10 +1160,13 @@ class account_period(osv.osv):
         return False
 
     def find(self, cr, uid, dt=None, context=None):
+        """
+        Gets the period(s) in which the dt is included, whatever the period state and including special December periods
+        (note that Periods 0 with active = False are by default excluded)
+        """
         if not dt:
             dt = time.strftime('%Y-%m-%d')
-#CHECKME: shouldn't we check the state of the period?
-        ids = self.search(cr, uid, [('date_start','<=',dt),('date_stop','>=',dt)])
+        ids = self.search(cr, uid, [('date_start', '<=', dt), ('date_stop', '>=', dt)], order='date_start, number')
         if not ids:
             raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create a fiscal year.')%dt)
         return ids
