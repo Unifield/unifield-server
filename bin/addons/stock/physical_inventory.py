@@ -428,12 +428,12 @@ class PhysicalInventory(osv.osv):
 
         for product_batch_expirydate in filtered_all_product_batch_expirydate:
             # If the key is not known, assume 0
-            theoretical_qty = theoretical_quantities.get(product_batch_expirydate, -1.0)
+            theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
             counted_qty = counted_quantities.get(product_batch_expirydate, -1.0)
 
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
-            if counted_qty is not False and counted_qty == theoretical_qty or (theoretical_qty == -1 and counted_qty == -1):
+            if counted_qty is not False and counted_qty == theoretical_qty or (theoretical_qty == 0 and counted_qty == -1):
                 if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                     counting_line_id = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]["line_id"]
                     counting_lines_with_no_discrepancy.append(counting_line_id)
