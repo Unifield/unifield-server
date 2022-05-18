@@ -180,7 +180,7 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
             if data['form'].get('only_active_employees'):
                 active_selection = "= 't'"
             # check if we should include only a selected type of employees
-            emp_type = data['form'].get('employee_type')
+            emp_type = data['form'].get('employee_type', '')
             if emp_type != '':
                 emp_request += "AND emp.employee_type = '%s' " % emp_type.encode("utf-8")
             # check if we should include only employees using a selected method of payment

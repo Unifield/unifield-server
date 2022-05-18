@@ -114,6 +114,8 @@ class account_employee_ledger(osv.osv_memory):
         data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'employee_ids',
                                                      'only_active_employees', 'instance_ids', 'account_ids',
                                                      'display_employee', 'employee_type', 'payment_method'])[0])
+        if not data['form']['employee_type']:
+            data['form']['employee_type'] = ''
         self._check_dates_fy_consistency(cr, uid, data, context)
         return {
             'type': 'ir.actions.report.xml',
