@@ -24,6 +24,7 @@ from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import pooler
 
+
 class account_employee_balance_tree(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context=None):

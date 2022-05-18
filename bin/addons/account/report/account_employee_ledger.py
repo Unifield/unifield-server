@@ -175,8 +175,10 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
             employee_to_use = []
             pay_method_request = ''
             emp_request = ''
+            active_selection = "IN ('t','f')"
             # check if we should display all employees or only active ones
-            active_selection = data['form'].get('only_active_employees') and ('t',) or ('t', 'f')
+            if data['form'].get('only_active_employees'):
+                active_selection = "= 't'"
             # check if we should include only a selected type of employees
             emp_type = data['form'].get('employee_type')
             if emp_type != '':
@@ -190,10 +192,8 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
                     pay_method_request = "JOIN hr_payment_method pay ON (emp.payment_method_id = pay.id) "
             emp_query = """SELECT emp.id as employee_id, emp.name_resource
                         FROM hr_employee emp
-                        INNER JOIN resource_resource res ON emp.resource_id = res.id
-                        %s
-                        WHERE res.active IN %s
-                        %s
+                        INNER JOIN resource_resource res ON emp.resource_id = res.id %s
+                        WHERE res.active %s %s
                         ORDER BY emp.name_resource;""" % (pay_method_request, active_selection, emp_request,)
             self.cr.execute(emp_query)
             res = self.cr.dictfetchall()
