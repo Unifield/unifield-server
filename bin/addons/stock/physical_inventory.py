@@ -549,13 +549,10 @@ class PhysicalInventory(osv.osv):
         Then theoretical_qties and counted_qties are indexed with (product_id, batchnumber, expirydate)
         """
         discl_obj = self.pool.get('physical.inventory.discrepancy')
-        disc_lines_ids = discl_obj.search(cr, uid, [('inventory_id', '=', inventory_id)], context=context)
-        discl_to_del = []
-        for discl in discl_obj.browse(cr, uid, disc_lines_ids, fields_to_fetch=['counted_qty', 'theoretical_qty'], context=context):
-            if discl.counted_qty == discl.theoretical_qty == 0:
-                discl_to_del.append(discl.id)
-        if discl_to_del:
-            discl_obj.unlink(cr, uid, discl_to_del, context=context)
+        discl_dom = [('inventory_id', '=', inventory_id), ('counted_qty', '=', 0), ('theoretical_qty', '=', 0)]
+        disc_lines_ids = discl_obj.search(cr, uid, discl_dom, context=context)
+        if disc_lines_ids:
+            discl_obj.unlink(cr, uid, disc_lines_ids, context=context)
 
         cr.execute('update physical_inventory_discrepancy set total_product_theoretical_qty=0, total_product_counted_qty=0 where inventory_id = %s', (inventory_id, ))
         # theo qty of ignored lines must be counted as qty after inv
