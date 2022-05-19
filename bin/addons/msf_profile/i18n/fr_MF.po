@@ -9848,6 +9848,12 @@ msgid "Location 'MSF Customer' not found in the instance or is not activated !"
 msgstr "Localisation 'Client MSF' ne peut être trouvée dans ce cas ou n'est pas activée!"
 
 #. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:492
+#, python-format
+msgid "The location name must not contain the word \"EPREP\" if its usage is not \"EPREP\" as well"
+msgstr "Le nom de la Zone ne doit pas contenir le mot \"EPREP\" si son utilisation n'est pas aussi \"EPREP\""
+
+#. module: msf_config_locations
 #: code:addons/msf_config_locations/stock_configuration.py:514
 #, python-format
 msgid "The location name must contain the word \"EPREP\""
