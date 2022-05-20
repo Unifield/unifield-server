@@ -833,6 +833,10 @@ class replenishment_segment(osv.osv):
 
     def _get_safety_and_buffer_warn(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
+
+        if not ids:
+            return {}
+
         for _id in ids:
             ret[_id] = False
         cr.execute('''select segment.id
@@ -963,14 +967,15 @@ class replenishment_segment(osv.osv):
         if not context.get('sync_update_execution'):
             if vals.get('specific_period') is False:
                 cr.execute("""
-                    select seg.name_seg, count(line.id)
-                    from replenishment_segment seg, replenishment_segment_line line
+                    select seg.name_seg, count(distinct(line.id))
+                    from replenishment_segment seg, replenishment_segment_line line, replenishment_segment_line_period period
                     where
                         seg.id in %s and
                         line.segment_id = seg.id and
                         seg.rule != 'cycle' and
                         seg.specific_period = 't' and
-                        line.rr_fmc_from_1 is not null
+                        period.line_id = line.id and
+                        ( period.from_date != '2020-01-01' or period.to_date != '2222-02-28' )
                     group by seg.name_seg
                     """, (tuple(ids), ))
                 error = []
@@ -2620,7 +2625,7 @@ class replenishment_segment_line(osv.osv):
                 rr_fmc = getattr(line, 'rr_fmc_%d'%x)
                 rr_from = getattr(line, 'rr_fmc_from_%d'%x)
                 rr_to = getattr(line, 'rr_fmc_to_%d'%x)
-                if rr_fmc and rr_from and rr_to:
+                if rr_fmc is not None and rr_fmc is not False and rr_from and rr_to:
                     rr_from_dt = datetime.strptime(rr_from, '%Y-%m-%d')
                     rr_to_dt = datetime.strptime(rr_to, '%Y-%m-%d')
                     if rr_from_dt.year == rr_to_dt.year:
@@ -2632,9 +2637,9 @@ class replenishment_segment_line(osv.osv):
                         date_txt = '%s/%s - %s/%s' % (misc.month_abbr[rr_from_dt.month], rr_from_dt.year, misc.month_abbr[rr_to_dt.month], rr_to_dt.year)
                     if line.segment_id.rule == 'minmax':
                         max_value = getattr(line, 'rr_max_%d'%x) or 0
-                        add.append("%s: %s/%s" % (date_txt, round(rr_fmc), round(max_value)))
+                        add.append("%s: %g/%g" % (date_txt, round(rr_fmc), round(max_value)))
                     else:
-                        add.append("%s: %s" % (date_txt, round(rr_fmc)))
+                        add.append("%s: %g" % (date_txt, round(rr_fmc)))
                 else:
                     break
             ret[line.id] = ' | '.join(add)
@@ -2774,8 +2779,8 @@ class replenishment_segment_line(osv.osv):
                  orig_period.line_id = orig_seg_line.id and
                  orig_seg.parent_id = orig_parent_seg.id and
                  period.line_id = seg_line.id and
-                 coalesce(orig_period.value, 0) != 0 and
-                 coalesce(period.value, 0) != 0 and
+                 ( coalesce(orig_period.value, 0) != 0 or  coalesce(orig_period.max_value, 0) != 0 ) and
+                 ( coalesce(period.value, 0) != 0 or  coalesce(period.max_value, 0) != 0 ) and
                  (orig_period.from_date, orig_period.to_date) overlaps (period.from_date, period.to_date) and
                  seg_line.segment_id = seg.id and
                  seg.state = 'complete' and
@@ -2889,7 +2894,7 @@ class replenishment_segment_line(osv.osv):
         else:
             self._set_merge_minmax(cr, uid, vals, context)
 
-        if vals.get('rr_fmc_1') and not vals.get('rr_fmc_from_1') and not vals.get('rr_fmc_to_1'):
+        if vals.get('rr_fmc_1') is not False and vals.get('rr_fmc_1') is not None and not vals.get('rr_fmc_from_1') and not vals.get('rr_fmc_to_1'):
             vals['rr_fmc_from_1'] = '2020-01-01'
             vals['rr_fmc_to_1'] = '2222-02-28'
 
