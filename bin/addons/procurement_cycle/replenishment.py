@@ -1864,9 +1864,14 @@ class replenishment_segment(osv.osv):
                     idx += 1
                     if idx < 10:
                         # header
-                        if idx == 6 and seg.rule != 'cycle' and len(row.cells) > 0:
-                            specific_period = row.cells[1].data in (_('Yes'), 'Yes', 'Oui')
+                        if idx == 6:
+                            if seg.rule != 'cycle' and len(row.cells) > 0:
+                                specific_period = row.cells[1].data in (_('Yes'), 'Yes', 'Oui')
+                            if len(row.cells) > 4 and row.cells[4].data and {'cycle': _('Order Cycle'), 'minmax': _('Min/Max'), 'auto': _('Automatic Supply')}.get(seg.rule, '').strip().lower() != row.cells[4].data.strip().lower():
+                                self.write(cr, uid, seg.id, {'file_to_import': False}, context=context)
+                                return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message=_('Header cell E7: Replenishment Rule on file: "%s" does not match Segment: "%s".') % (row.cells[4].data, {'cycle': _('Order Cycle'), 'minmax': _('Min/Max'), 'auto': _('Automatic Supply')}.get(seg.rule, '')))
                         continue
+
 
                     if not len(row.cells):
                         # empty line
