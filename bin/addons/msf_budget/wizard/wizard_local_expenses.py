@@ -26,6 +26,12 @@ from tools.translate import _
 class wizard_local_expenses(osv.osv_memory):
     _name = "wizard.local.expenses"
 
+    def _get_cc_id(self, cr, uid, c):
+        cc = self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.top_cost_center_id
+        if cc.name != 'OC':
+            return cc.id
+        return None
+
     _columns = {
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
         'start_period_id': fields.many2one('account.period', 'Period From'),
@@ -36,7 +42,7 @@ class wizard_local_expenses(osv.osv_memory):
                                          ('parent','By parent account')], 'Granularity', select=1, required=True),
         'booking_currency_id': fields.many2one('res.currency', 'Booking currency'),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', required=True),
-        'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre', domain=[('category', '=', 'OC')], required=True),
+        'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre', domain=[('category', '=', 'OC'), ('code', '!=', 'OC')], required=True),
     }
 
     _defaults = {
@@ -45,7 +51,7 @@ class wizard_local_expenses(osv.osv_memory):
         'breakdown': 'year',
         'granularity': 'parent',
         'output_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
-        'cost_center_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.top_cost_center_id.id,
+        'cost_center_id': _get_cc_id,
     }
 
     def button_create_report(self, cr, uid, ids, context=None):
