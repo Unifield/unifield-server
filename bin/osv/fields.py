@@ -592,6 +592,7 @@ class many2many(_column):
     _prefetch = False
     _type = 'many2many'
     def __init__(self, obj, rel, id1, id2, string='unknown', limit=None, **args):
+        self.display_inactive = False
         _column.__init__(self, string=string, **args)
         self._obj = obj
         if '.' in rel:
@@ -625,9 +626,10 @@ class many2many(_column):
         # FIXME: make this distinction explicit in API!
         domain = isinstance(self._domain, list) and self._domain or []
 
-        wquery = obj._where_calc(cr, user, domain, context=context)
+        wquery = obj._where_calc(cr, user, domain, active_test=not self.display_inactive, context=context)
         obj._apply_ir_rules(cr, user, wquery, 'read', context=context)
         from_c, where_c, where_params = wquery.get_sql()
+
         if where_c:
             where_c = ' AND ' + where_c
 
