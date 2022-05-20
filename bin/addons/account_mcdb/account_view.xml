@@ -162,7 +162,7 @@
                         </group>
                         <newline/>
                         <group>
-                            <field name="partner_id" select='1' string="3RD Party Partner"/>
+                            <field name="partner_id" select='1' string="3RD Party Partner" context="{'show_button_show_inactive': True}"/>
                             <field name="employee_id" select='1' string="3RD Party Employee"/>
                             <field name="transfer_journal_id" select='1' string="3RD Party Journal"
                                    context="{'exclude_journals': ['IB'], 'search_default_filter_is_active': 1}"/>
