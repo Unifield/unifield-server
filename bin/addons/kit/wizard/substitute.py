@@ -559,10 +559,10 @@ class substitute(osv.osv_memory):
                 to_write['exp_substitute_item'] = '2999-12-31'
             if line.product_id_substitute_item.batch_management and not line.lot_mirror:
                 to_write['lot_mirror'] = 'TO-BE-REPLACED'
-            elif line.product_id_substitute_item.batch_management:
+            elif line.product_id_substitute_item.batch_management and line.lot_mirror and line.lot_mirror.startswith('MSFBN/'):
                 if not lot_obj.search_exists(cr, uid, [('product_id', '=', line.product_id_substitute_item.id), ('name', '=', line.lot_mirror), ('type', '=', 'standard')], context=context):
                     to_write['lot_mirror'] = 'TO-BE-REPLACED'
-            elif line.product_id_substitute_item.perishable and not line.product_id_substitute_item.batch_management:
+            elif line.product_id_substitute_item.perishable and not line.product_id_substitute_item.batch_management and line.lot_mirror:
                 to_write['lot_mirror'] = False
             if not line.product_id_substitute_item.batch_management and not line.product_id_substitute_item.perishable and (line.exp_substitute_item or line.lot_mirror):
                 to_write.update({'lot_mirror': False, 'exp_substitute_item': False})
