@@ -115033,3 +115033,10 @@ msgid "Warning this/these lines cannot be imported due to too many digits in Qty
 "%s"
 msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de chiffres dans le champ Qté. Veuillez vérifier:\n"
 "%s"
+
+#. module: kit
+#: code:addons/kit/wizard/substitute.py:592
+#, python-format
+msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
+msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
