@@ -115042,3 +115042,9 @@ msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de 
 #, python-format
 msgid "Header cell E7: Replenishment Rule on file: \"%s\" does not match Segment: \"%s\"."
 msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas au Segment: \"%s\"."
+
+#. module: kit
+#: code:addons/kit/wizard/substitute.py:592
+#, python-format
+msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
+msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
