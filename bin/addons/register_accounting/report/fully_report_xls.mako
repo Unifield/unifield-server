@@ -429,7 +429,7 @@
 % for o in objects:
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
     <Names>
-      <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
+      <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R9"/>
     </Names>
     <Table>
       <Column ss:Width="93.75"/>
