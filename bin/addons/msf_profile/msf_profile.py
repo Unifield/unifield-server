@@ -56,6 +56,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):
+        cr.execute("delete from wkf_workitem where act_id in (select id from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table'))")
+        cr.execute("delete from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table')")
+        cr.execute("delete from wkf where name='wkf.res.currency.table' and osv='res.currency.table'")
+        return True
+
     # UF25.0
     def us_8451_split_rr(self, cr, uid, *a, **b):
         if not cr.column_exists('replenishment_segment_line', 'rr_fmc_1') or not cr.column_exists('replenishment_segment_line', 'rr_max_1'):
