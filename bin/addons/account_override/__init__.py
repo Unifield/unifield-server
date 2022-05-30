@@ -38,7 +38,7 @@ ACCOUNT_RESTRICTED_AREA = {
     # CASH RETURN - ADVANCE LINES
     'cash_return': [
         ('type', '!=', 'view'),
-        ('type_for_register', '!=', 'donation'),
+        ('type_for_register', 'not in', ['donation', 'advance']),
         '|', '|', '|',
         ('user_type_code', 'in', ['income', 'expense']),
         '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash']),
