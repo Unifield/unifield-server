@@ -1780,7 +1780,7 @@ class account_bank_statement_line(osv.osv):
                 try:
                     # Optimization: Do not check line because of account_move.write() method at the end of this method
                     acc_move_line_obj.write(cr, uid, [other_line.get('id')], move_line_values, context=context, check=False, update_check=False)
-                except osv.except_osv, e:
+                except osv.except_osv as e:
                     msg = e.value
                     if 'account_id' in values and st_line.state == 'temp' and other_line.get('analytic_distribution_state') == 'invalid':
                         msg = _('The account modification required makes the analytic distribution previously defined invalid; please perform the account modification through the analytic distribution wizard')
@@ -2209,7 +2209,8 @@ class account_bank_statement_line(osv.osv):
                     old_distrib = line.get('analytic_distribution_id')[0]
 
                 # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync
-                if not context.get('sync_update_execution'):
+                # US-9752: Keep AD that is applied on the entry when we correct info on the entry in temp state
+                if not context.get('sync_update_execution') and state != 'temp':
                     values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance
 
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
