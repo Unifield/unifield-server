@@ -448,7 +448,7 @@ class wizard_account_employee_balance_tree(osv.osv_memory):
             ('no', 'No'),
         ], string='Reconciled'),
         'employee_type': fields.selection(get_employee_type, string='Employee Type', required=False),
-        'payment_method': fields.selection(get_payment_methods, string='Method of Payment', required=True),
+        'payment_method': fields.selection(get_payment_methods, string='Method of Payment', required=False),
     }
 
     def _get_journals(self, cr, uid, context=None):

@@ -98,7 +98,7 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
             pay_method = '-'
         else:
             method = data['form'].get('payment_method')
-            if method in ('CHQ', 'ESP', 'VIR'):
+            if method != 'blank':
                 return method
         return pay_method
 

@@ -92,7 +92,7 @@ class account_employee_balance_tree(report_sxw.rml_parse):
             pay_method = '-'
         else:
             method = data['form'].get('payment_method')
-            if method in ('CHQ', 'ESP', 'VIR'):
+            if method != 'blank':
                 return method
         return pay_method
 

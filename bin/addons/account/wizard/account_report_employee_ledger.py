@@ -59,7 +59,7 @@ class account_employee_ledger(osv.osv_memory):
                                              ('non-zero_balance', 'With balance is not equal to 0')],
                                              string='Display Employees', required=True),
         'employee_type': fields.selection(get_employee_type, string='Employee Type', required=False),
-        'payment_method': fields.selection(get_payment_methods, string='Method of Payment', required=True),
+        'payment_method': fields.selection(get_payment_methods, string='Method of Payment', required=False),
     }
 
     _defaults = {
