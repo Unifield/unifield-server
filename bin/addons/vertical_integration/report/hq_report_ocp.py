@@ -524,12 +524,12 @@ class hq_report_ocp(report_sxw.report_sxw):
             include_period_opening = [0]
             exclude_period_closing = [0]
 
-            if period.number in (13, 14):
-                include_period_opening = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('number', 'in', [12, 13]), ('number', '<', period.number)], context=context)
+            if period.number in (13, 14, 15):
+                include_period_opening = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('number', 'in', [12, 13, 14]), ('number', '<', period.number)], context=context)
                 if not include_period_opening:
                     include_period_opening = [0]
 
-            if period.number in (12, 13):
+            if period.number in (12, 13, 14):
                 exclude_period_closing = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('special', '=', 't'), ('number', '>', period.number)], context=context)
                 if not exclude_period_closing:
                     exclude_period_closing = [0]
