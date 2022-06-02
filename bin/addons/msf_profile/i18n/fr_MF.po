@@ -36458,6 +36458,7 @@ msgstr "\"Delivery Confirmed Date (PO)\" has a wrong format and was reset to \"3
 #: view:stock.cost.reevaluation:0
 #: view:stock.picking:0
 #: view:supplier.catalogue:0
+#: view:modify.responsible:0
 msgid "Confirm"
 msgstr "Confirmer"
 
@@ -96626,6 +96627,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:view.expired.expiring.stock:0
 #: view:multiple.cc.selection.wizard:0
 #: view:stock.location.convert_eprep:0
+#: view:modify.responsible:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -115033,3 +115035,28 @@ msgid "Warning this/these lines cannot be imported due to too many digits in Qty
 "%s"
 msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de chiffres dans le champ Qté. Veuillez vérifier:\n"
 "%s"
+
+#. module: register_accounting
+#: field:modify.responsible,registers_ids:0
+msgid "Impacted Registers"
+msgstr "Registres Impactés"
+
+#. module: register_accounting
+#: view:modify.responsible:0
+msgid "Modify Responsible - Wizard"
+msgstr "Modifier Responsables - Assistant"
+
+#. module: register_accounting
+#: model:ir.actions.act_window,name:register_accounting.action_modify_responsible
+msgid "Modify register responsible"
+msgstr "Modifier les responsables de registre"
+
+#. module: register_accounting
+#: field:modify.responsible,responsible_ids:0
+msgid "Responsibles"
+msgstr "Responsables"
+
+#. module: register_accounting
+#: view:modify.responsible:0
+msgid "The provided responsibles list must be exhaustive and will update all selected registers!"
+msgstr "La liste fournie des responsable de registre doit être exhaustive et va impacter tous les registres séléctionnés"
