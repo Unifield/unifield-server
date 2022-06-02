@@ -2454,11 +2454,13 @@ class account_tax(osv.osv):
         product_obj = self.pool.get('product.template')
         acc_obj = self.pool.get('account.account')
         acc_inv_obj = self.pool.get('account.invoice.line')
+        acc_inv_tax_obj = self.pool.get('account.invoice.tax')
         purch_obj = self.pool.get('purchase.order.line')
         sale_obj = self.pool.get('sale.order.line')
         if product_obj.search_exists(cr, uid, ['|', ('taxes_id', 'in', ids), ('supplier_taxes_id', 'in', ids)], context=context) or \
             acc_obj.search_exists(cr, uid, [('tax_ids', 'in', ids)], context=context) or \
             acc_inv_obj.search_exists(cr, uid, [('invoice_line_tax_id', 'in', ids)], context=context) or \
+            acc_inv_tax_obj.search_exists(cr, uid, [('account_tax_id', 'in', ids)], context=context) or \
             purch_obj.search_exists(cr, uid, [('taxes_id', 'in', ids)], context=context) or \
             sale_obj.search_exists(cr, uid, [('tax_id', 'in', ids)], context=context):
             raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
