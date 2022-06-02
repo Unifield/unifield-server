@@ -8,8 +8,16 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Modify Responsible - Wizard">
-                    <separator string="Add or remove users from the register responsible list"/>
+                    <separator string="The provided responsibles list must be exhaustive and will update all selected registers!"/>
                     <field name='responsible_ids'/>
+                    <field name='registers_ids' readonly="True">
+                            <tree>
+                                <field name="name"/>
+                                <field name="period_id"/>
+                                <field name="currency"/>
+                                <field name="journal_id"/>
+                            </tree>
+                    </field>
                     <newline />
                     <group colspan="4">
                         <button string='Cancel' special='cancel' icon='gtk-cancel' />

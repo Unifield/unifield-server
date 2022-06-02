@@ -29,21 +29,23 @@ from tools.translate import _
 class modify_responsible(osv.osv_memory):
     _name = 'modify.responsible'
 
-    def _get_responsible(self, cr, uid, ids):
-        responsibles = self.pool.get('account.bank.statement').read(cr, uid, ids['active_id'], ['responsible_ids'])
-        return responsibles['responsible_ids']
+    def _get_registers(self, cr, uid, ids):
+        active_ids = ids.get('active_ids', False)
+        return active_ids
 
     _columns = {
+        'registers_ids': fields.many2many('account.bank.statement','modify_responsible_bank_statement_rel',
+                                          'statement_id', 'wizard_id', string="Impacted Registers"),
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id',
-                                            'Responsible'),
+                                            'Responsibles'),
     }
     _defaults = {
-        'responsible_ids': _get_responsible,
+        'registers_ids': _get_registers,
     }
 
     def modify_responsible(self, cr, uid, ids, context=None):
         '''
-        US-8003: Add or remove users from the register responsible list
+        US-8003: Write the list of users in the selected registers responsible list
         '''
         if context is None:
             context = {}
